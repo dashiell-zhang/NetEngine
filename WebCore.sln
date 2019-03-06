@@ -3,7 +3,31 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cms", "Cms\Cms.csproj", "{D6F2DAD5-513A-4F23-A8AF-7C68508C3989}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models", "Models\Models.csproj", "{4994804E-0E7A-49AB-9FA6-721D5B88DA30}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Methods", "Methods\Methods.csproj", "{D73883A0-7892-4348-B8DD-1C3782AF26C8}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6F2DAD5-513A-4F23-A8AF-7C68508C3989}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6F2DAD5-513A-4F23-A8AF-7C68508C3989}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6F2DAD5-513A-4F23-A8AF-7C68508C3989}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6F2DAD5-513A-4F23-A8AF-7C68508C3989}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4994804E-0E7A-49AB-9FA6-721D5B88DA30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4994804E-0E7A-49AB-9FA6-721D5B88DA30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4994804E-0E7A-49AB-9FA6-721D5B88DA30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4994804E-0E7A-49AB-9FA6-721D5B88DA30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D73883A0-7892-4348-B8DD-1C3782AF26C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D73883A0-7892-4348-B8DD-1C3782AF26C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D73883A0-7892-4348-B8DD-1C3782AF26C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D73883A0-7892-4348-B8DD-1C3782AF26C8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection

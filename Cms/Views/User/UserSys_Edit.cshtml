@@ -1,0 +1,114 @@
+﻿@model Models.WebCore.TUserSys
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>编辑用户</title>
+
+    <script src="~/lib/jquery.js"></script>
+
+    <link href="~/Admin/css/style.css" rel="stylesheet" />
+</head>
+
+<body class="mainbody">
+    <form method="post" id="form1" action="/User/UserSys_Edit_Run/">
+
+        <input type="hidden" value="@Model.Id" name="Id" />
+        <input type="hidden" value="@Model.Createtime" name="Createtime" />
+
+        <!--导航栏-->
+        <div class="location">
+            <a href="javascript:history.back(-1);" class="back"><i></i><span>返回上一页</span></a>
+            <a href="/Home/Center/" class="home"><i></i><span>首页</span></a>
+            <i class="arrow"></i>
+            <a href="/Admin/Users/"><span>系统用户</span></a>
+            <i class="arrow"></i>
+            <span>用户信息</span>
+        </div>
+        <div class="line10"></div>
+        <!--/导航栏-->
+        <!--内容-->
+        <div class="content-tab-wrap">
+            <div id="floatHead" class="content-tab">
+                <div class="content-tab-ul-wrap">
+                    <ul>
+                        <li><a href="javascript:;" onclick="tabs(this);" class="selected">基本资料</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="tab-content">
+            <dl>
+                <dt>用户名</dt>
+                <dd>
+                    <input name="Name" type="text" class="input normal" value="@Model.Name" />
+                    <span class="Validform_checktip">
+                        *请输入用户名
+                    </span>
+                </dd>
+            </dl>
+            <dl>
+                <dt>登录密码</dt>
+                <dd>
+                    <input name="Password" type="password" class="input normal" value="@Model.Password" />
+                    <span class="Validform_checktip">
+                        *请输入登录密码
+                    </span>
+                </dd>
+            </dl>
+            <dl>
+                <dt>确认密码</dt>
+                <dd>
+                    <input name="Password1" type="password" class="input normal" value="@Model.Password" />
+                    <span class="Validform_checktip">
+                        *请再次输入登录密码
+                    </span>
+                </dd>
+            </dl>
+            <dl>
+                <dt>昵称</dt>
+                <dd>
+                    <input name="Nickname" type="text" class="input normal" value="@Model.Nickname" />
+                    <span class="Validform_checktip">
+                        *请输入昵称
+                    </span>
+                </dd>
+            </dl>
+            <dl>
+                <dt>电话</dt>
+                <dd>
+                    <input name="Phone" type="text" class="input normal" value="@Model.Phone" />
+                    <span class="Validform_checktip">
+                        *请输入电话
+                    </span>
+                </dd>
+            </dl>
+            <dl>
+                <dt>邮箱</dt>
+                <dd>
+                    <input name="Email" type="text" class="input normal" value="@Model.Email" />
+                    <span class="Validform_checktip">
+                        *请输入邮箱
+                    </span>
+                </dd>
+            </dl>
+
+        </div>
+
+        <!--工具栏-->
+        <div class="page-footer">
+            <div class="btn-list">
+                <input type="submit" id="loginOk" value="提交保存" class="btn" />
+                <input name="btnReturn" type="button" value="返回上一页" class="btn yellow" onclick="javascript: history.back(-1);" />
+            </div>
+            <div class="clear"></div>
+        </div>
+        <!--/工具栏-->
+
+    </form>
+</body>
+</html>

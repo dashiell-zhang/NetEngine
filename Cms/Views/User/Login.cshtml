@@ -1,0 +1,89 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>管理员登录</title>
+    <link href="~/Admin/css/style.css" rel="stylesheet" />
+    <script src="~/lib/jquery.js"></script>
+    <script src="~/lib/sweetalert.min.js"></script>
+
+    <script type="text/javascript">
+        function Login_Run() {
+            $("#btnSubmit").val("正在登录,请稍候...");
+
+            var name = $("#txtName").val();
+            var pwd = $("#txtPassWord").val();
+
+            $.ajax({
+
+                type: 'POST',
+                url: "/User/Login_Run/",
+                data: { name: name, pwd: pwd }, // 你的formid
+                success: function (Data) {
+                    if (Data.status) {
+                        location.replace("/");
+                    }
+                    else {
+
+                        swal({
+                            icon: "error",
+                            text: "用户名和密码不匹配，请重试！",
+                        }).then(
+                            function () {
+                                location.replace("")
+                            });
+                    }
+
+                }
+            });
+
+        }
+
+    </script>
+    <script>
+        function Name_Run(e) {
+            e = e || window.event;
+            var code = e.keyCode;
+            if (code == 13) {
+                document.getElementById('PassWord').focus()
+            }
+        }
+        function Pwd_Run(e) {
+            e = e || window.event;
+            var code = e.keyCode;
+            if (code == 13) {
+                Login_Run();
+            }
+        }
+    </script>
+
+</head>
+
+<body class="loginbody">
+
+    <div class="login-screen">
+        <div class="login-form">
+            <h1>系统管理登录</h1>
+            <div class="control-group">
+                <input id="txtName" type="text" class="login-field" placeholder="用户名" onkeyup="Name_Run(event)" />
+
+                <label class="login-field-icon user" for="txtUserName"></label>
+            </div>
+            <div class="control-group">
+                <input id="txtPassWord" name="PassWord" type="password" placeholder="密码" class="login-field" onkeyup="Pwd_Run(event)" />
+                <label class="login-field-icon pwd" for="txtPassword"></label>
+            </div>
+            <div>
+                <input id="btnSubmit" type="button" value="登录" class="btn-login" onclick="Login_Run()" />
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

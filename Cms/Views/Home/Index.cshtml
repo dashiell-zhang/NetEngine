@@ -1,8 +1,216 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    Layout = null;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>奢度数据综合管理系统</title>
+    <link href="~/Admin/css/style.css" rel="stylesheet" />
+    <script src="~/lib/jquery.js"></script>
+</head>
+
+<body class="indexbody">
+    <form id="form1">
+        <div class="header">
+            <div class="header-box">
+                <h1 class="logo"></h1>
+                <ul id="nav" class="nav">
+                    <a href="./"><li id="li1" onclick="MenuShow(1)" class="main_b">产品信息</li></a>
+                    <li id="li2" onclick="MenuShow(2)" class="main_a">系统设置</li>
+                </ul>
+                <div class="nav-right">
+                    <div class="icon-info">
+                        <span>您好<br />@ViewBag.NickName</span>
+                    </div>
+                    <div class="icon-option">
+                        <i></i>
+                        <div class="drop-box">
+                            <div class="arrow"></div>
+                            <ul class="drop-item">
+                                @*<li><a target="_blank" href="../">预览网站</a></li>*@
+                                <li><a href="/Home/Center/" target="mainframe">管理中心</a></li>
+                                <li><a href="/User/UserSys_Edit/?id=@ViewBag.UserId" target="mainframe">修改密码</a></li>
+                                <li>
+                                    <a href="/User/Login_Exit/">注销登录</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-sidebar">
+            <div id="sidebar-nav" class="sidebar-nav" style="overflow: visible" tabindex="5000">
+                <div class="list-box" id="exp1">
+                    <div class="list-group" style="display: block;" name="产品管理">
+                        <div id="w_service">
+                            <div class="QA">
+                                <a id='question_1_ly' class="question">产品管理</a>
+                                <div id='answer_1_ly' class="answer">
+                                    <ul>
+                                        <li>
+                                            <a navid="plugin_link" href="/Admin/Lytj_Xk/" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>所有产品</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="QA">
+                                <a id='question_2_ly' class="question">品牌管理</a>
+                                <div id='answer_2_ly' class="answer">
+                                    <ul>
+                                        <li>
+                                            <a navid="plugin_link" href="/Brand/Index/" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>所有品牌</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a navid="plugin_link" href="/Brand/Brand_Edit/" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>添加品牌</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="QA">
+                                <a id='question_3_ly' class="question">类型管理</a>
+                                <div id='answer_3_ly' class="answer">
+                                    <ul>
+                                        <li>
+                                            <a navid="plugin_link" href="/Category/Index/" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>所有类型</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a navid="plugin_link" href="/Category/Category_Edit/" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>添加类型</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+
+                            <div class="QA">
+                                <a id='question_3_user' class="question">客户管理</a>
+                                <div id='answer_3_user' class="answer">
+                                    <ul>
+                                        <li>
+                                            <a navid="plugin_link" href="/User/" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>所有客户</span>
+                                            </a>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="QA">
+                                <a id='question_3_price' class="question">价格参数</a>
+                                <div id='answer_3_price' class="answer">
+                                    <ul>
+                                        <li>
+                                            <a navid="plugin_link" href="/Price/SecondRule1" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>SecondRule1</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a navid="plugin_feedback" href="/Price/SecondRule2" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>SecondRule2</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="list-box exp2" id="exp2">
+                    <div class="list-group" style="display: block;" name="系统设置">
+                        <div id="w_service">
+
+                            <div class="QA">
+                                <a id='question_3_sys' class="question">系统用户</a>
+                                <div id='answer_3_sys' class="answer">
+                                    <ul>
+                                        <li>
+                                            <a navid="plugin_link" href="/User/UserSys" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>所有用户</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a navid="plugin_feedback" href="/User/UserSys_Edit?id=0" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>添加用户</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <iframe id="mainframe" name="mainframe" frameborder="0" src="/Home/Center/"></iframe>
+        </div>
+    </form>
+    <script type="text/javascript">
+        $(".QA a.question").click(function () {
+            $(this).toggleClass("active");
+            $('#answer_' + this.id.replace('question_', '')).slideToggle("fast");
+        });
+
+    </script>
+    <script type="text/javascript">
+        var time;
+        function Show(id) {
+            for (var i = 1; i < 7; i++) {
+                var li = document.getElementById('li' + (i));
+                var divCont = document.getElementById('exp' + (i));
+                if (i == id) {
+                    li.className = "main_b";
+                    divCont.style.display = 'block';
+                }
+                else {
+                    li.className = "main_a";
+                    divCont.style.display = 'none';
+                }
+            }
+        }
+        function MenuShow(id) {
+            time = setTimeout(function () {
+                Show(id);
+            }, 200);
+        }
+    </script>
+</body>
+</html>

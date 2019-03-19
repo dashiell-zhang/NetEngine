@@ -1,0 +1,6 @@
+﻿Microsoft.EntityFrameworkCore.Design
+
+Microsoft.EntityFrameworkCore.SqlServer
+
+
+Scaffold-DbContext "Data Source=139.196.92.35;Initial Catalog=SheDu;User ID=shedu;Password=shedu@geji" Microsoft.EntityFrameworkCore.SqlServer -OutputDir LuxuryData -Force

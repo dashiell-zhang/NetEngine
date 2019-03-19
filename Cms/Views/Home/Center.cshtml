@@ -1,0 +1,42 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>管理首页</title>
+    <link href="~/Admin/css/style.css" rel="stylesheet" />
+    <script src="~/lib/jquery.js"></script>
+</head>
+
+<body class="mainbody">
+    <!--导航栏-->
+    <div class="location">
+        <a href="javascript:history.back(-1);" class="back"><i></i><span>返回上一页</span></a>
+        <a class="home"><i></i><span>首页</span></a>
+        <i class="arrow"></i>
+        <span>管理中心</span>
+    </div>
+    <!--/导航栏-->
+    <!--内容-->
+
+    <div class="line20"></div>
+
+    <div class="nlist-2">
+        <h3><i></i>站点信息</h3>
+        <ul>
+            <li>服务器名称：@Environment.MachineName</li>
+            <li>服务器IP：@ViewBag.LocalIpAddress</li>
+            <li>NET框架版本：@ViewBag.Framework</li>
+            <li>操作系统：@Environment.OSVersion.ToString()</li>
+            <li>服务器端口：@ViewBag.LocalPort</li>
+            <li>目录物理路径：@Environment.CurrentDirectory</li>
+            <li>服务器CPU：@(Environment.ProcessorCount.ToString())核</li>
+            <li>本网站占用内存：@(((Double)GC.GetTotalMemory(false) / 1048576).ToString("N2") + "M")</li>
+        </ul>
+    </div>
+    <!--/内容-->
+</body>
+</html>

@@ -1,0 +1,86 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>用户管理</title>
+    <link href="~/Admin/css/style.css" rel="stylesheet" />
+    <script src="~/lib/jquery.js"></script>
+    <script>
+        function Delete(id) {
+            if (confirm("确定要删除？")) {
+                $.ajax({
+                    type: 'POST',
+                    url: "/User/UserSys_Delete/",
+                    data: { id: id },
+                    success: function (data) {
+                        alert(data.msg);
+                        location.reload();
+                    }
+                });
+            }
+        }
+
+
+
+    </script>
+</head>
+
+<body class="mainbody">
+    <form name="form1" method="post" id="form1">
+        <!--导航栏-->
+        <div class="location">
+            <a href="javascript:history.back(-1);" class="back"><i></i><span>返回上一页</span></a>
+            <a href="/Home/Center/" class="home"><i></i><span>首页</span></a>
+            <i class="arrow"></i>
+            <span>系统用户</span>
+            <i class="arrow"></i>
+            <span>所有用户</span>
+        </div>
+        <!--/导航栏-->
+        <!--工具栏-->
+        <div class="toolbar-wrap">
+            <div id="floatHead" class="toolbar">
+                <div class="l-list">
+                    <ul class="icon-list">
+                        <li><a class="add" href="/User/UserSys_Edit/?id=0"><i></i><span>新增</span></a></li>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!--/工具栏-->
+        <!--列表-->
+
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" class="ltable">
+            <tr>
+                <th align="center" width="5%">编号</th>
+                <th align="left" width="10%">用户名</th>
+                <th align="left" width="10%">昵称</th>
+                <th align="left" width="10%">电话</th>
+                <th align="left" width="10%">邮箱</th>
+                <th align="left" width="10%">创建时间</th>
+                <th align="left" width="8%">操作</th>
+            </tr>
+            @foreach (var item in (List<Models.WebCore.TUserSys>)Model["t_user_sys"])
+            {
+            <tr>
+                <td align="center">@item.Id</td>
+                <td align="left"><a href="/User/UserSys_Edit/?id=@item.Id" title="点击编辑详情">@item.Name</a></td>
+                <td align="left">@item.Nickname</td>
+                <td align="left">@item.Phone</td>
+                <td align="left">@item.Email</td>
+                <td align="left">@item.Createtime</td>
+                <td align="left"><a href="#" onclick="Delete(@item.Id)">删除</a></td>
+            </tr>
+            }
+        </table>
+        <br />
+
+        <!--/列表-->
+    </form>
+</body>
+</html>

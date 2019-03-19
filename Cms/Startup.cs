@@ -27,10 +27,17 @@ namespace Cms
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-                options.CheckConsentNeeded = context => true;
+                options.CheckConsentNeeded = context => false;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+
+            //注册HttpContext
+            Libraries.HttpContext.Add(services);
+
+
+            //注册Session
+            services.AddSession();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
@@ -52,6 +59,14 @@ namespace Cms
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
+
+            //注册HttpContext
+            Cms.Libraries.HttpContext.Initialize(app, env);
+
+            //注册Session
+            app.UseSession();
+
 
             app.UseMvc(routes =>
             {

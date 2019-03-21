@@ -6,7 +6,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>客户管理</title>
+    <title>频道管理</title>
     <link href="~/Admin/css/style.css" rel="stylesheet" />
 
     <script src="~/lib/jquery.js"></script>
@@ -21,7 +21,7 @@
     <script>
 
 
-        function DeleteUserSys(id) {
+        function DeleteChannel(id) {
 
             var dataJson = { id: id };
 
@@ -36,7 +36,7 @@
 
                     $.ajax({
                         type: "POST",//方法类型
-                        url: "/User/UserSys_Delete/",
+                        url: "/Channel/Channel_Delete/",
                         data: dataJson,
                         success: function (data) {
                             if (data.status == true) {
@@ -46,7 +46,7 @@
                                 }).then(function (data) {
                                     if (data) {
                                         //刷新表格数据并保留分页信息
-                                        $('#dtUserSysList').DataTable().ajax.reload(null, false);
+                                        $('#dtChannelList').DataTable().ajax.reload(null, false);
                                     }
                                 });
 
@@ -65,23 +65,23 @@
         }
 
 
-        function GetUserSysList() {
+        function GetChannelList() {
 
 
-            $('#dtUserSysList').DataTable().destroy();
+            $('#dtChannelList').DataTable().destroy();
 
 
-            $("#dtUserSysList").DataTable({
+            $("#dtChannelList").DataTable({
                 "ajax": {
-                    url: "/User/GetUserSysList",
+                    url: "/Channel/GetChannelList",
                     type: "get",
                 },
                 "columns": [
                     { "data": "id" },
                     { "data": "name" },
-                    { "data": "nickname" },
-                    { "data": "phone" },
-                    { "data": "email" },
+                    { "data": "urlrole" },
+                    { "data": "remark" },
+                    { "data": "sort" },
                     { "data": "createtime" },
                     { "data": null }
                 ],
@@ -90,7 +90,7 @@
                         "orderable": false,
                         "targets": [6],
                         "render": function (data, type, row) {
-                            return "<a href='/User/UserSys_Edit/" + data.id + "'>编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"javascript:DeleteUserSys(" + data.id + ");\"'>删除</a>";
+                            return "<a href='/Channel/Channel_Edit/" + data.id + "'>编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"javascript:DeleteChannel(" + data.id + ");\"'>删除</a>";
                         }
                     }
                 ],
@@ -105,7 +105,7 @@
 
 
         $(function () {// 初始化内容
-            GetUserSysList();
+            GetChannelList();
         });
     </script>
 </head>
@@ -137,14 +137,14 @@
         <!--/工具栏-->
         <!--列表-->
 
-        <table class="table table-striped table-bordered" data-toggle="table" id="dtUserSysList" style="width:100%">
+        <table class="table table-striped table-bordered" data-toggle="table" id="dtChannelList" style="width:100%">
             <thead>
                 <tr>
                     <th width="5em">编号</th>
-                    <th width="12em">用户名</th>
-                    <th width="12em">昵称</th>
-                    <th width="12em">电话</th>
-                    <th width="18em">邮箱</th>
+                    <th width="12em">名称</th>
+                    <th width="12em">Url别名</th>
+                    <th width="12em">注释</th>
+                    <th width="18em">排序</th>
                     <th width="18em">创建时间</th>
                     <th>操作</th>
                 </tr>

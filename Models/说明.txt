@@ -3,4 +3,6 @@
 Microsoft.EntityFrameworkCore.SqlServer
 
 
+Scaffold-DbContext "Data Source=cloud.blackbaby.net;Initial Catalog=WebCore;User ID=WebCore;Password=webcore@321" Microsoft.EntityFrameworkCore.SqlServer -OutputDir WebCore -Force
+
 Scaffold-DbContext "Data Source=139.196.92.35;Initial Catalog=SheDu;User ID=shedu;Password=shedu@geji" Microsoft.EntityFrameworkCore.SqlServer -OutputDir LuxuryData -Force

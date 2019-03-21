@@ -17,7 +17,7 @@
             <div class="header-box">
                 <h1 class="logo"></h1>
                 <ul id="nav" class="nav">
-                    <a href="./"><li id="li1" onclick="MenuShow(1)" class="main_b">产品信息</li></a>
+                    <a href="./"><li id="li1" onclick="MenuShow(1)" class="main_b">内容管理</li></a>
                     <li id="li2" onclick="MenuShow(2)" class="main_a">系统设置</li>
                 </ul>
                 <div class="nav-right">
@@ -47,102 +47,36 @@
                 <div class="list-box" id="exp1">
                     <div class="list-group" style="display: block;" name="产品管理">
                         <div id="w_service">
-                            <div class="QA">
-                                <a id='question_1_ly' class="question">产品管理</a>
-                                <div id='answer_1_ly' class="answer">
-                                    <ul>
-                                        <li>
-                                            <a navid="plugin_link" href="/Admin/Lytj_Xk/" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>所有产品</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="QA">
-                                <a id='question_2_ly' class="question">品牌管理</a>
-                                <div id='answer_2_ly' class="answer">
-                                    <ul>
-                                        <li>
-                                            <a navid="plugin_link" href="/Brand/Index/" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>所有品牌</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a navid="plugin_link" href="/Brand/Brand_Edit/" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>添加品牌</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div class="QA">
-                                <a id='question_3_ly' class="question">类型管理</a>
-                                <div id='answer_3_ly' class="answer">
-                                    <ul>
-                                        <li>
-                                            <a navid="plugin_link" href="/Category/Index/" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>所有类型</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a navid="plugin_link" href="/Category/Category_Edit/" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>添加类型</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
+                            @{
+                                int i = 0;
+                                foreach (var item in (List<Models.WebCore.TChannel>)Model["TChannel"])
+                                {
+                                    i = i+1;
+                                    <div class="QA">
+                                        <a id='question_@(i)_ly' class="question">@item.Name</a>
+                                        <div id='answer_@(i)_ly' class="answer">
+                                            <ul>
+                                                <li>
+                                                    <a navid="plugin_link" href="/Admin/Lytj_Xk/" target="mainframe" class="item">
+                                                        <div class="arrow"></div>
+                                                        <div class="folder open"></div>
+                                                        <span>内容管理</span>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a navid="plugin_link" href="/Category/Index?ChannelId=@item.Id" target="mainframe" class="item">
+                                                        <div class="arrow"></div>
+                                                        <div class="folder open"></div>
+                                                        <span>栏目管理</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                }
+                            }
 
 
-                            <div class="QA">
-                                <a id='question_3_user' class="question">客户管理</a>
-                                <div id='answer_3_user' class="answer">
-                                    <ul>
-                                        <li>
-                                            <a navid="plugin_link" href="/User/" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>所有客户</span>
-                                            </a>
-                                        </li>
-
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div class="QA">
-                                <a id='question_3_price' class="question">价格参数</a>
-                                <div id='answer_3_price' class="answer">
-                                    <ul>
-                                        <li>
-                                            <a navid="plugin_link" href="/Price/SecondRule1" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>SecondRule1</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a navid="plugin_feedback" href="/Price/SecondRule2" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>SecondRule2</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
 
                         </div>
                     </div>
@@ -167,6 +101,29 @@
                                                 <div class="arrow"></div>
                                                 <div class="folder open"></div>
                                                 <span>添加用户</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+
+                            <div class="QA">
+                                <a id='question_4_sys' class="question">频道管理</a>
+                                <div id='answer_4_sys' class="answer">
+                                    <ul>
+                                        <li>
+                                            <a navid="plugin_link" href="/Channel/Index" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>所有频道</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a navid="plugin_feedback" href="/Channel/Channel_Edit?id=0" target="mainframe" class="item">
+                                                <div class="arrow"></div>
+                                                <div class="folder open"></div>
+                                                <span>添加频道</span>
                                             </a>
                                         </li>
                                     </ul>

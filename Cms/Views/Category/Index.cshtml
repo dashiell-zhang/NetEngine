@@ -6,7 +6,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>客户管理</title>
+    <title>栏目管理</title>
     <link href="~/Admin/css/style.css" rel="stylesheet" />
 
     <script src="~/lib/jquery.js"></script>
@@ -21,7 +21,7 @@
     <script>
 
 
-        function DeleteUserSys(id) {
+        function DeleteCategory(id) {
 
             var dataJson = { id: id };
 
@@ -36,7 +36,7 @@
 
                     $.ajax({
                         type: "POST",//方法类型
-                        url: "/User/UserSys_Delete/",
+                        url: "/Category/Category_Delete/",
                         data: dataJson,
                         success: function (data) {
                             if (data.status == true) {
@@ -46,7 +46,7 @@
                                 }).then(function (data) {
                                     if (data) {
                                         //刷新表格数据并保留分页信息
-                                        $('#dtUserSysList').DataTable().ajax.reload(null, false);
+                                        $('#dtCategoryList').DataTable().ajax.reload(null, false);
                                     }
                                 });
 
@@ -65,32 +65,34 @@
         }
 
 
-        function GetUserSysList() {
+        function GetCategoryList() {
 
 
-            $('#dtUserSysList').DataTable().destroy();
+            $('#dtCategoryList').DataTable().destroy();
 
 
-            $("#dtUserSysList").DataTable({
+            $("#dtCategoryList").DataTable({
                 "ajax": {
-                    url: "/User/GetUserSysList",
+                    url: "/Category/GetCategoryList",
+                    data: {ChannelId:@(ViewBag.ChannelId)},
                     type: "get",
                 },
                 "columns": [
                     { "data": "id" },
                     { "data": "name" },
-                    { "data": "nickname" },
-                    { "data": "phone" },
-                    { "data": "email" },
+                    { "data": "urlrole" },
+                    { "data": "remark" },
+                    { "data": "sort" },
+                    { "data": "sort" },
                     { "data": "createtime" },
                     { "data": null }
                 ],
                 "columnDefs": [
                     {
                         "orderable": false,
-                        "targets": [6],
+                        "targets": [7],
                         "render": function (data, type, row) {
-                            return "<a href='/User/UserSys_Edit/" + data.id + "'>编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"javascript:DeleteUserSys(" + data.id + ");\"'>删除</a>";
+                            return "<a href='/Category/Category_Edit?id=" + data.id + "&channelid=" + data.channelid + "'>编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"javascript:DeleteCategory(" + data.id + ");\"'>删除</a>";
                         }
                     }
                 ],
@@ -105,7 +107,7 @@
 
 
         $(function () {// 初始化内容
-            GetUserSysList();
+            GetCategoryList();
         });
     </script>
 </head>
@@ -123,12 +125,11 @@
         </div>
         <!--/导航栏-->
         <!--工具栏-->
-        <br />
-        <div class="toolbar-wrap" style="display:none">
+        <div class="toolbar-wrap" >
             <div id="floatHead" class="toolbar">
                 <div class="l-list">
                     <ul class="icon-list">
-                        <li><a class="add" href="/User/UserSys_Edit/?id=0" style="display:inline-table"><i></i><span>新增</span></a></li>
+                        <li><a class="add" href="/Category/Category_Edit/?id=0&channelid=@(ViewBag.ChannelId)" style="display:inline-table"><i></i><span>新增</span></a></li>
 
                     </ul>
                 </div>
@@ -137,15 +138,16 @@
         <!--/工具栏-->
         <!--列表-->
 
-        <table class="table table-striped table-bordered" data-toggle="table" id="dtUserSysList" style="width:100%">
+        <table class="table table-striped table-bordered" data-toggle="table" id="dtCategoryList" style="width:100%">
             <thead>
                 <tr>
                     <th width="5em">编号</th>
-                    <th width="12em">用户名</th>
-                    <th width="12em">昵称</th>
-                    <th width="12em">电话</th>
-                    <th width="18em">邮箱</th>
-                    <th width="18em">创建时间</th>
+                    <th width="7em">名称</th>
+                    <th width="7em">Url别名</th>
+                    <th width="30em">注释</th>
+                    <th width="7em">父级栏目</th>
+                    <th width="3em">排序</th>
+                    <th width="13em">创建时间</th>
                     <th>操作</th>
                 </tr>
             </thead>

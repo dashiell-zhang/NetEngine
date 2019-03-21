@@ -1,4 +1,4 @@
-﻿@model Models.WebCore.TUserSys
+﻿@model Models.WebCore.TChannel
 @{
     Layout = null;
 }
@@ -7,7 +7,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>编辑用户</title>
+    <title>编辑频道</title>
 
     <script src="~/lib/jquery.js"></script>
 
@@ -15,7 +15,7 @@
 </head>
 
 <body class="mainbody">
-    <form method="post" id="form1" action="/User/UserSys_Edit_Run/">
+    <form method="post" id="form1" action="/Channel/Channel_Edit_Run/">
 
         <input type="hidden" value="@Model.Id" name="Id" />
         <input type="hidden" value="@Model.Createtime" name="Createtime" />
@@ -25,9 +25,9 @@
             <a href="javascript:history.back(-1);" class="back"><i></i><span>返回上一页</span></a>
             <a href="/Home/Center/" class="home"><i></i><span>首页</span></a>
             <i class="arrow"></i>
-            <a href="/User/UserSys/"><span>系统用户</span></a>
+            <a href="/Channel/Index/"><span>频道管理</span></a>
             <i class="arrow"></i>
-            <span>用户信息</span>
+            <span>频道信息</span>
         </div>
         <div class="line10"></div>
         <!--/导航栏-->
@@ -36,67 +36,68 @@
             <div id="floatHead" class="content-tab">
                 <div class="content-tab-ul-wrap">
                     <ul>
-                        <li><a href="javascript:;" onclick="tabs(this);" class="selected">基本资料</a></li>
+                        <li><a href="javascript:;" onclick="tabs(this);" class="selected">频道基本信息</a></li>
                     </ul>
                 </div>
             </div>
         </div>
         <div class="tab-content">
+
             <dl>
-                <dt>用户名</dt>
+                <dt>频道名称</dt>
                 <dd>
-                    <input name="Name" type="text" class="input normal" value="@Model.Name" />
+                    <input name="Name" type="text" value="@Model.Name" class="input normal" />
                     <span class="Validform_checktip">
-                        *请输入用户名
+                        <span id="RvName" style="visibility:hidden;">*请输入频道名称</span>
                     </span>
-                </dd>
-            </dl>
-            <dl>
-                <dt>登录密码</dt>
-                <dd>
-                    <input name="Password" type="password" class="input normal" value="@Model.Password" />
-                    <span class="Validform_checktip">
-                        *请输入登录密码
-                    </span>
-                </dd>
-            </dl>
-            <dl>
-                <dt>确认密码</dt>
-                <dd>
-                    <input name="Password1" type="password" class="input normal" value="@Model.Password" />
-                    <span class="Validform_checktip">
-                        *请再次输入登录密码
-                    </span>
-                </dd>
-            </dl>
-            <dl>
-                <dt>昵称</dt>
-                <dd>
-                    <input name="Nickname" type="text" class="input normal" value="@Model.Nickname" />
-                    <span class="Validform_checktip">
-                        *请输入昵称
-                    </span>
-                </dd>
-            </dl>
-            <dl>
-                <dt>电话</dt>
-                <dd>
-                    <input name="Phone" type="text" class="input normal" value="@Model.Phone" />
-                    <span class="Validform_checktip">
-                        *请输入电话
-                    </span>
-                </dd>
-            </dl>
-            <dl>
-                <dt>邮箱</dt>
-                <dd>
-                    <input name="Email" type="text" class="input normal" value="@Model.Email" />
-                    <span class="Validform_checktip">
-                        *请输入邮箱
-                    </span>
+
                 </dd>
             </dl>
 
+            <dl>
+                <dt>Url别名</dt>
+                <dd>
+                    <input name="Urlrole" type="text" value="@Model.Urlrole" class="input normal" />
+                    <span class="Validform_checktip">*频道别名，不允许中文</span>
+                </dd>
+            </dl>
+
+            <dl>
+                <dt>注释</dt>
+                <dd>
+                    <input name="Remark" type="text"  value="@Model.Remark"  class="input normal" />
+                </dd>
+            </dl>
+
+            <dl>
+                <dt>排序数字</dt>
+                <dd>
+                    <input name="Sort" type="text" value="@Model.Sort"  class="input small" />
+                    <span class="Validform_checktip">*数字，越小越向前</span>
+                </dd>
+            </dl>
+
+            <dl>
+                <dt>SEO标题</dt>
+                <dd>
+                    <input name="Seot" type="text" value="@Model.Seot" class="input normal" />
+                </dd>
+            </dl>
+
+            <dl>
+                <dt>SEO关键词</dt>
+                <dd>
+                    <input name="Seok" type="text" value="@Model.Seok" class="input normal" />
+                    <span class="Validform_checktip">*以“,”逗号区分开</span>
+                </dd>
+            </dl>
+
+            <dl>
+                <dt>SEO描述</dt>
+                <dd>
+                    <textarea name="Seod" rows="2" cols="20" class="input normal" style="height:150px;width:500px;">@Model.Seod</textarea>
+                </dd>
+            </dl>
         </div>
 
         <!--工具栏-->

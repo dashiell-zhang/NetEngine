@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Cms.Models;
 using Cms.Filters;
 using Microsoft.AspNetCore.Http;
+using Models.WebCore;
 
 namespace Cms.Controllers
 {
@@ -19,7 +20,15 @@ namespace Cms.Controllers
             ViewBag.NickName = HttpContext.Session.GetString("nickname");
             ViewBag.UserId = HttpContext.Session.GetInt32("userid");
 
-            return View();
+
+            using (WebCoreContext db = new WebCoreContext())
+            {
+                IDictionary<string, object> list = new Dictionary<string, object>();
+                var TChannel = db.TChannel.ToList();
+                list.Add("TChannel", TChannel);
+                return View(list);
+            }
+
         }
 
 

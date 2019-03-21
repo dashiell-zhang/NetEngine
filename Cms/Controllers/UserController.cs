@@ -63,14 +63,22 @@ namespace Cms.Controllers
 
         public IActionResult UserSys()
         {
+            return View();
+        }
+
+
+
+        [HttpGet]
+        public JsonResult GetUserSysList()
+        {
             using (WebCoreContext db = new WebCoreContext())
             {
-                IDictionary<string, object> list = new Dictionary<string, object>();
-                var t_user = db.TUserSys.ToList();
-                list.Add("t_user_sys", t_user);
-                return View(list);
+                IList<TUserSys> list = db.TUserSys.ToList();
+
+                return Json(new { data = list });
             }
         }
+
 
 
         public IActionResult UserSys_Edit(int id = 0)
@@ -132,7 +140,7 @@ namespace Cms.Controllers
                 db.TUserSys.Remove(UserSys);
                 db.SaveChanges();
 
-                var data = new { ret = 1, msg = "删除成功！" };
+                var data = new { status = true, msg = "删除成功！" };
                 return Json(data);
             }
 

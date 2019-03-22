@@ -30,6 +30,9 @@ namespace Models.WebCore
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
                 optionsBuilder.UseSqlServer("Data Source=cloud.blackbaby.net;Initial Catalog=WebCore;User ID=WebCore;Password=webcore@321");
+
+                //启用懒加载模块
+                optionsBuilder.UseLazyLoadingProxies();
             }
         }
 
@@ -97,7 +100,7 @@ namespace Models.WebCore
                     .WithMany(p => p.TArticle)
                     .HasForeignKey(d => d.Categoryid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__t_article__categ__3A81B327");
+                    .HasConstraintName("FK__t_article__categ__4F7CD00D");
             });
 
             modelBuilder.Entity<TCategory>(entity =>
@@ -147,7 +150,7 @@ namespace Models.WebCore
                     .WithMany(p => p.TCategory)
                     .HasForeignKey(d => d.Channelid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__t_categor__chann__38996AB5");
+                    .HasConstraintName("FK__t_categor__chann__5070F446");
             });
 
             modelBuilder.Entity<TChannel>(entity =>

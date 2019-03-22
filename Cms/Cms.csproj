@@ -17,7 +17,6 @@
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
     <Folder Include="wwwroot\lib\" />
-    <Folder Include="Filters\" />
   </ItemGroup>
 
 

@@ -9,18 +9,30 @@ namespace Methods.Http
     public class Post
     {
 
-        /// <summary>
-        /// Post数据到指定Url，并返回String类型
-        /// </summary>
-        /// <param name="Url"></param>
-        /// <param name="Data"></param>
-        /// <returns></returns>
-        public static string Run(string Url, string Data)
+        //Post数据到指定url
+        public static string Run(string Url, string Data, string type)
         {
+
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(Url);
             byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(Data);
             req.Method = "POST";
-            req.ContentType = "application/x-www-form-urlencoded";
+            if (type == "form")
+            {
+                req.ContentType = "application/x-www-form-urlencoded";
+            }
+            else if (type == "data")
+            {
+                req.ContentType = "multipart/form-data";
+            }
+            else if (type == "json")
+            {
+                req.ContentType = "application/json";
+            }
+            else if (type == "xml")
+            {
+                req.ContentType = "text/xml";
+            }
+
             req.ContentLength = requestBytes.Length;
             Stream requestStream = req.GetRequestStream();
             requestStream.Write(requestBytes, 0, requestBytes.Length);
@@ -31,6 +43,7 @@ namespace Methods.Http
             string PostJie = sr.ReadToEnd();
             sr.Close();
             res.Close();
+
             return PostJie;
         }
     }

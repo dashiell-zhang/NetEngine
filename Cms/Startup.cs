@@ -33,7 +33,7 @@ namespace Cms
 
 
             //注册HttpContext
-            Libraries.HttpContext.Add(services);
+            Methods.Http.HttpContext.Add(services);
 
 
             //注册Session
@@ -62,7 +62,7 @@ namespace Cms
 
 
             //注册HttpContext
-            Cms.Libraries.HttpContext.Initialize(app, env);
+            Methods.Http.HttpContext.Initialize(app, env);
 
             //注册Session
             app.UseSession();

@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 
-namespace Cms.Libraries
+namespace Methods.Http
 {
     public static class HttpContext
     {

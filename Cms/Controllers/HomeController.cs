@@ -8,6 +8,7 @@ using Cms.Models;
 using Cms.Filters;
 using Microsoft.AspNetCore.Http;
 using Models.WebCore;
+using Cms.Libraries;
 
 namespace Cms.Controllers
 {
@@ -17,6 +18,8 @@ namespace Cms.Controllers
     {
         public IActionResult Index()
         {
+       
+
             ViewBag.NickName = HttpContext.Session.GetString("nickname");
             ViewBag.UserId = HttpContext.Session.GetInt32("userid");
 

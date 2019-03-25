@@ -7,7 +7,7 @@ namespace Methods.Crypto
 {
     public class Aes
     {
-        public static byte[] hexStringToByte(string hex)
+        private static byte[] hexStringToByte(string hex)
         {
             int target_length = hex.Length >> 1;
             byte[] result = new byte[target_length];
@@ -53,7 +53,7 @@ namespace Methods.Crypto
             return result;
         }
 
-        public static string byte2HexString(byte[] b)
+        private static string byte2HexString(byte[] b)
         {
             char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7',
                       '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -67,6 +67,12 @@ namespace Methods.Crypto
         }
 
 
+        /// <summary>
+        /// AES 加密
+        /// </summary>
+        /// <param name="param">字符串</param>
+        /// <param name="skey">密钥</param>
+        /// <returns></returns>
         public static string Encode(string param, string skey)
         {
             byte[] key = hexStringToByte(skey.ToLower());
@@ -82,6 +88,14 @@ namespace Methods.Crypto
 
         }
 
+
+
+        /// <summary>
+        /// AES 解密
+        /// </summary>
+        /// <param name="param">字符串</param>
+        /// <param name="skey">密钥</param>
+        /// <returns></returns>
         public static string Decode(string param, string skey)
         {
             try

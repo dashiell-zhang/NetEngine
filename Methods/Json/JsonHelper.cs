@@ -61,14 +61,14 @@ namespace Methods.Json
         /// </summary> 
         /// <param name="obj">对象</param> 
         /// <returns>JSON格式的字符串</returns> 
-        public static object ObjectToJSON(object obj)
+        public static string ObjectToJSON(object obj)
         {
             try
             {
                 JsonSerializerSettings jset = new JsonSerializerSettings();
                 jset.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                 jset.Converters.Add(new IsoDateTimeConverter { DateTimeFormat = "yyyy'/'MM'/'dd' 'HH':'mm':'ss" });
-                return JsonConvert.SerializeObject(obj, jset);
+                return JsonConvert.SerializeObject(obj, jset).ToString();
             }
             catch (Exception ex)
             {

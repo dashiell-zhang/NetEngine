@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Models;
 using WebApi.Methods;
+using WebApi.Actions;
 
 namespace WebApi.Controllers
 {
@@ -33,7 +34,7 @@ namespace WebApi.Controllers
                 {
                     
                     case "Test":
-                        return Out.NewUser.Run(run.data);
+                        return TestAction.Run(run.data);
 
 
                     default:

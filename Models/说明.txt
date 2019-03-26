@@ -8,6 +8,13 @@ Scaffold-DbContext "Data Source=private.cloud.blackbaby.net;Initial Catalog=WebC
 MySql
 
 MySql.Data.EntityFrameworkCore
-MySql.Data.EntityFrameworkCore.Design
 
 Scaffold-DbContext "server=private.cloud.blackbaby.net;userid=webcore;pwd=webcore@321;port=3306;database=webcore;sslmode=none;" MySql.Data.EntityFrameworkCore -OutputDir MySqlWebCore -Force
+
+
+MsSql迁移 MySql
+在MySql中执行  CREATE TABLE `__EFMigrationsHistory` ( `MigrationId` nvarchar(150) NOT NULL, `ProductVersion` nvarchar(32) NOT NULL, PRIMARY KEY (`MigrationId`) );
+
+
+Add-Migration init 生成命令
+Update-Database init  刷新数据库命令

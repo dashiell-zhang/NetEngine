@@ -1,8 +1,13 @@
 ﻿Microsoft.EntityFrameworkCore.Design
-
 Microsoft.EntityFrameworkCore.SqlServer
 
 
-Scaffold-DbContext "Data Source=cloud.blackbaby.net;Initial Catalog=WebCore;User ID=WebCore;Password=webcore@321" Microsoft.EntityFrameworkCore.SqlServer -OutputDir WebCore -Force
+Scaffold-DbContext "Data Source=private.cloud.blackbaby.net;Initial Catalog=WebCore;User ID=WebCore;Password=webcore@321" Microsoft.EntityFrameworkCore.SqlServer -OutputDir WebCore -Force
 
-Scaffold-DbContext "Data Source=139.196.92.35;Initial Catalog=SheDu;User ID=shedu;Password=shedu@geji" Microsoft.EntityFrameworkCore.SqlServer -OutputDir LuxuryData -Force
+
+MySql
+
+MySql.Data.EntityFrameworkCore
+MySql.Data.EntityFrameworkCore.Design
+
+Scaffold-DbContext "server=private.cloud.blackbaby.net;userid=webcore;pwd=webcore@321;port=3306;database=webcore;sslmode=none;" MySql.Data.EntityFrameworkCore -OutputDir MySqlWebCore -Force

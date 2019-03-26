@@ -29,10 +29,7 @@ namespace Models.WebCore
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Data Source=cloud.blackbaby.net;Initial Catalog=WebCore;User ID=WebCore;Password=webcore@321");
-
-                //启用懒加载模块
-                optionsBuilder.UseLazyLoadingProxies();
+                optionsBuilder.UseSqlServer("Data Source=private.cloud.blackbaby.net;Initial Catalog=WebCore;User ID=WebCore;Password=webcore@321");
             }
         }
 

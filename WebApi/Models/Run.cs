@@ -55,6 +55,6 @@ namespace WebApi.Models
         /// <summary>
         /// 序列化后的业务数据
         /// </summary>
-        public string data { get; set; }
+        public object data { get; set; }
     }
 }

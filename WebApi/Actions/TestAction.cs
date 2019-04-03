@@ -23,7 +23,7 @@ namespace WebApi.Actions
 
             runResult.status = 1;
             runResult.msg = "ok";
-            runResult.data = JsonHelper.ObjectToJSON(response);
+            runResult.data = response;
 
 
             return runResult;

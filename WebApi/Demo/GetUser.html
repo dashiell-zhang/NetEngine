@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="Js/jquery.js"></script>
+    <script src="Js/md5.js"></script>
+    <script src="Js/json2.js"></script>
+    <script>
+
+        $(function () {
+
+            var run = 'GetUser';
+            var data = {
+                Tenantid : 'd9237f4f-51f9-11e9-9f26-f8f8f8f8f8f8',
+                Weixinopenid:'033RkKGg0JIDcv1sJ7Jg0B2YGg0RkKGK'
+            };
+
+            var key = md5(run + JSON.stringify(data) + "gejinet");
+
+            var Run = {
+                run: run,
+                key: key,
+                data: JSON.stringify(data),
+            }
+
+            $.ajax({
+                type: 'get',
+                url: "https://localhost:44389/Api",
+                data: {json: JSON.stringify(Run) }  ,
+                success: function (Data) {
+                    console.log(Data);
+                }
+            });
+        });
+
+
+    </script>
+</head>
+<body>
+
+</body>
+</html>

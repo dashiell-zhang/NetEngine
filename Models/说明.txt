@@ -1,14 +1,14 @@
-﻿Microsoft.EntityFrameworkCore.Design
+﻿All
+Microsoft.EntityFrameworkCore.Tool
+
+
+MsSql
 Microsoft.EntityFrameworkCore.SqlServer
-
-
 Scaffold-DbContext "Data Source=private.cloud.blackbaby.net;Initial Catalog=WebCore;User ID=WebCore;Password=webcore@321" Microsoft.EntityFrameworkCore.SqlServer -OutputDir WebCore -Force
 
 
 MySql
-
 MySql.Data.EntityFrameworkCore
-
 Scaffold-DbContext "server=private.cloud.blackbaby.net;userid=webcore;pwd=webcore@321;port=3306;database=webcore;sslmode=none;" MySql.Data.EntityFrameworkCore -OutputDir MySqlWebCore -Force
 
 

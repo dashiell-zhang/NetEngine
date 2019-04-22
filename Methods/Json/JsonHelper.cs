@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -8,6 +9,22 @@ namespace Methods.Json
 {
     public class JsonHelper
     {
+
+
+        /// <summary>
+        /// 通过 Key 获取 Value
+        /// </summary>
+        /// <returns></returns>
+        public static string GetValueByKey(string json,string key)
+        {
+            JObject jo = (JObject)JsonConvert.DeserializeObject(json);
+
+            return jo[key].ToString();
+        }
+
+
+
+
         /// <summary>
         /// DataRow转JSON
         /// </summary>

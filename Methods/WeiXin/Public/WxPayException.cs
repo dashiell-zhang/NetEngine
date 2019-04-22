@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Methods.Pay.WeiXin
+namespace Methods.WeiXin.Public
 {
     public class WxPayException : Exception 
     {

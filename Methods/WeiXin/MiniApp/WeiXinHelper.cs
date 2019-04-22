@@ -1,7 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Security.Cryptography;
 using System.Text;
+using System.Xml;
 using Methods.Http;
+using Methods.WeiXin.MiniApp.Models;
+using Methods.WeiXin.Public;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Methods.WeiXin.MiniApp
 {
@@ -11,29 +19,116 @@ namespace Methods.WeiXin.MiniApp
 
         public string secret;
 
-        public WeiXinHelper(string in_appid, string in_secret)
+        public string mchid;
+
+        public string mchkey;
+
+        public string notifyurl;
+
+        public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null,string in_notifyurl =null)
         {
             appid = in_appid;
             secret = in_secret;
+            mchid = in_mchid;
+            mchkey = in_mchkey;
+            notifyurl = in_notifyurl;
         }
 
+        /// <summary>
+        /// 获取用户OpenId
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
         public string GetOpenId(string code)
         {
-
             string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appid + "&secret=" + secret + "&js_code=" + code + "&grant_type=authorization_code";
 
             string httpret = Get.Run(url);
 
-            tempClass tempClass = Json.JsonHelper.JSONToObject<tempClass>(httpret);
+            string openid = Json.JsonHelper.GetValueByKey(httpret, "openid");
 
-            return tempClass.openid;
+            return openid;
         }
 
-        private class tempClass
+
+        /// <summary>
+        /// 微信统一下单获取prepay_id & 再次签名返回数据
+        /// </summary>
+        /// <param name="openid">用户 OpenId</param>
+        /// <param name="orderno">订单号</param>
+        /// <param name="title">商品名称</param>
+        /// <param name="body">商品描述</param>
+        /// <param name="price">价格，单位为分</param>
+        /// <returns></returns>
+        public CreatePay CreatePay(string openid, string orderno, string title, string body, int price)
         {
-            public string session_key { get; set; }
 
-            public string openid { get; set; }
+            string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
+
+
+            var url = "https://api.mch.weixin.qq.com/pay/unifiedorder";//微信统一下单请求地址
+
+
+            //参与统一下单签名的参数，除最后的key外，已经按参数名ASCII码从小到大排序
+            var unifiedorderSignParam = string.Format("appid={0}&body={1}&mch_id={2}&nonce_str={3}&notify_url={4}&openid={5}&out_trade_no={6}&total_fee={7}&trade_type={8}&key={9}"
+                , appid, body, mchid, nonceStr, notifyurl
+                , openid, orderno, price, "JSAPI", mchkey);
+
+
+            var unifiedorderSign = Crypto.Md5.GetMd5(unifiedorderSignParam).ToUpper();
+
+            //构造统一下单的请求参数
+            var zhi = string.Format(@"<xml>
+                                <appid>{0}</appid>                                              
+                                <body>{1}</body>
+                                <mch_id>{2}</mch_id>   
+                                <nonce_str>{3}</nonce_str>
+                                <notify_url>{4}</notify_url>
+                                <openid>{5}</openid>
+                                <out_trade_no>{6}</out_trade_no>
+                                <total_fee>{7}</total_fee>
+                                <trade_type>{8}</trade_type>
+                                <sign>{9}</sign>
+                               </xml>
+                    ", appid, body, mchid, nonceStr, notifyurl, openid
+                              , orderno, price, "JSAPI", unifiedorderSign);
+
+
+            //请求数据
+
+            var getdata = Http.Post.Run(url, zhi, "form");                    /// 统一下单请求数据（方法二）
+
+            //获取xml数据
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(getdata);
+
+
+            //xml格式转json
+            string json = Newtonsoft.Json.JsonConvert.SerializeXmlNode(doc);
+            JObject jo = (JObject)JsonConvert.DeserializeObject(json);
+
+
+            if (jo["xml"]["return_code"]["#cdata-section"].ToString() == "SUCCESS")
+            {
+                string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
+
+                CreatePay info = new CreatePay();
+                info.nonceStr = nonceStr;
+                info.package = "prepay_id=" + prepay_id;
+
+                //再次签名返回数据至小程序
+                string strB = "appId=" + appid + "&nonceStr=" + nonceStr + "&package=prepay_id=" + prepay_id + "&signType=MD5&timeStamp=" + info.timeStamp + "&key=" + mchkey;
+
+                info.paySign = Crypto.Md5.GetMd5(strB).ToUpper();
+
+                return info;
+            }
+            else
+            {
+                return null;
+            }
         }
+
+
     }
 }

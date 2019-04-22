@@ -2,10 +2,28 @@
 using System;
 using System.Text;
 
-namespace Methods.Pay.WeiXin
+namespace Methods.WeiXin.Public
 {
     public class JsApiPay
     {
+
+        public string appid;
+
+        public string secret;
+
+        public string mchid;
+
+        public string mchkey;
+
+
+        public JsApiPay(string in_appid, string in_secret, string in_mchid, string in_mchkey)
+        {
+            appid = in_appid;
+            secret = in_secret;
+            mchid = in_mchid;
+            mchkey = in_mchkey;
+        }
+
         /**
 	    * 
 	    * 测速上报
@@ -13,7 +31,7 @@ namespace Methods.Pay.WeiXin
 	    * @param int timeCost 接口耗时
 	    * @param WxPayData inputObj参数数组
 	    */
-        public static void ReportCostTime( string interface_url, int timeCost, WxPayData inputObj)
+        public void ReportCostTime( string interface_url, int timeCost, WxPayData inputObj)
         {
             //如果仅失败上报
             if (inputObj.IsSet("return_code") && inputObj.GetValue("return_code").ToString() == "SUCCESS" &&
@@ -80,9 +98,8 @@ namespace Methods.Pay.WeiXin
 	    * @throws WxPayException
 	    * @return 成功时返回测速上报接口返回的结果，其他抛异常
 	    */
-        public static WxPayData Report( WxPayData inputObj, int timeOut = 1)
+        public WxPayData Report( WxPayData inputObj, int timeOut = 1)
         {
-            JsApiConfig jsApiConfig = new JsApiConfig();
             string url = "https://api.mch.weixin.qq.com/payitil/report";
             //检测必填参数
             if (!inputObj.IsSet("interface_url"))
@@ -106,18 +123,18 @@ namespace Methods.Pay.WeiXin
                 throw new WxPayException("接口耗时，缺少必填参数execute_time_！");
             }
 
-            inputObj.SetValue("appid", jsApiConfig.AppId);//公众账号ID
-            inputObj.SetValue("mch_id", jsApiConfig.Partner);//商户号
+            inputObj.SetValue("appid", appid);//公众账号ID
+            inputObj.SetValue("mch_id", mchid);//商户号
             inputObj.SetValue("user_ip", Http.HttpContext.Current().Connection.RemoteIpAddress.ToString());//终端ip
             inputObj.SetValue("time", DateTime.Now.ToString("yyyyMMddHHmmss"));//商户上报时间	 
             inputObj.SetValue("nonce_str", GenerateNonceStr());//随机字符串
-            inputObj.SetValue("sign", inputObj.MakeSign(jsApiConfig.Key));//签名
+            inputObj.SetValue("sign", inputObj.MakeSign(mchkey));//签名
             string xml = inputObj.ToXml();
 
             string response = HttpService.Post(xml, url, false, timeOut);
 
             WxPayData result = new WxPayData();
-            result.FromXml(response, jsApiConfig.Key);
+            result.FromXml(response, mchkey);
             return result;
         }
 
@@ -184,7 +201,7 @@ namespace Methods.Pay.WeiXin
         * @throws WxPayException
         * @return 成功时返回订单查询结果，其他抛异常
         */
-        public static WxPayData OrderQuery( WxPayData inputObj, int timeOut = 6)
+        public WxPayData OrderQuery( WxPayData inputObj, int timeOut = 6)
         {
             string sendUrl = "https://api.mch.weixin.qq.com/pay/orderquery";
             //检测必填参数
@@ -192,11 +209,10 @@ namespace Methods.Pay.WeiXin
             {
                 throw new WxPayException("订单查询接口中，out_trade_no、transaction_id至少填一个！");
             }
-            JsApiConfig jsApiConfig = new JsApiConfig();
-            inputObj.SetValue("appid", jsApiConfig.AppId);//公众账号ID
-            inputObj.SetValue("mch_id", jsApiConfig.Partner);//商户号
+            inputObj.SetValue("appid", appid);//公众账号ID
+            inputObj.SetValue("mch_id", mchid);//商户号
             inputObj.SetValue("nonce_str", GenerateNonceStr());//随机字符串
-            inputObj.SetValue("sign", inputObj.MakeSign(jsApiConfig.Key));//签名
+            inputObj.SetValue("sign", inputObj.MakeSign(mchkey));//签名
             string xml = inputObj.ToXml();
             var startTime = DateTime.Now; //开始时间
             string response = HttpService.Post(xml, sendUrl, false, timeOut);//调用HTTP通信接口提交数据
@@ -204,7 +220,7 @@ namespace Methods.Pay.WeiXin
             int timeCost = (int)((endTime - startTime).TotalMilliseconds); //计算所用时间
             //将xml格式的数据转化为对象以返回
             WxPayData result = new WxPayData();
-            result.FromXml(response, jsApiConfig.Key);
+            result.FromXml(response, mchkey);
             ReportCostTime( sendUrl, timeCost, result);//测速上报
             return result;
         }

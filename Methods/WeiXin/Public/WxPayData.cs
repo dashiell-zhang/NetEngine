@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
 
-namespace Methods.Pay.WeiXin
+namespace Methods.WeiXin.Public
 {
     /// <summary>
     /// 微信支付协议接口数据类，所有的API接口通信都依赖这个数据结构，

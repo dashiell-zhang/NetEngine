@@ -16,7 +16,6 @@ namespace Methods.IO
         {
             try
             {
-                path = Path.SitePath() + path.Substring(1);
                 FileInfo file = new FileInfo(path);
                 if (file.Exists)//判断文件是否存在
                 {

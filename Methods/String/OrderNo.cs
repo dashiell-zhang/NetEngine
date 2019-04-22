@@ -10,7 +10,7 @@ namespace Methods.String
         /// 生成一个订单号
         /// </summary>
         /// <returns></returns>
-        public static string GetOrderNo()
+        public static string GetOrderNo(string sign)
         {
             string orderno = "";
 
@@ -18,7 +18,7 @@ namespace Methods.String
             int RandKey = ran.Next(10000, 99999);
 
 
-            orderno = "N" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + RandKey;
+            orderno = sign + DateTime.Now.ToString("yyyyMMddHHmmssfff") + RandKey;
 
             return orderno;
         }

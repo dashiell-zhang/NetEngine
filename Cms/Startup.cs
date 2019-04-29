@@ -40,6 +40,13 @@ namespace Cms
             services.AddSession();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+
+            services.AddMvc().AddJsonOptions(options =>
+            {
+                //设置 Json 默认时间格式
+                options.SerializerSettings.DateFormatString = "yyyy-MM-dd hh:mm:ss";
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

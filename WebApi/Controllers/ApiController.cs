@@ -10,11 +10,21 @@ using Methods.Json;
 
 namespace WebApi.Controllers
 {
+
+
     [Route("[controller]")]
     [ApiController]
     public class ApiController : ControllerBase
     {
-
+        /// <summary>
+        /// get请求接口
+        /// </summary>
+        /// <remarks>
+        /// 例子:
+        /// Get api/Values/1
+        /// </remarks>
+        /// <param name="json">业务数据</param>
+        /// <returns></returns>
         [HttpGet]
         public RunResult Get(string json)
         {
@@ -57,6 +67,11 @@ namespace WebApi.Controllers
 
 
 
+        /// <summary>
+        /// post请求接口
+        /// </summary>
+        /// <param name="run"></param>
+        /// <returns></returns>
         [HttpPost]
         public RunResult Post([FromBody]Run run)
         {

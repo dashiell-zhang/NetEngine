@@ -25,7 +25,7 @@ namespace WebApi.Controllers
         /// </remarks>
         /// <param name="json">业务数据</param>
         /// <returns></returns>
-        [HttpGet]
+        [HttpGet("id")]
         public RunResult Get(string json)
         {
             RunResult result = new RunResult();
@@ -65,6 +65,11 @@ namespace WebApi.Controllers
         }
 
 
+        [HttpGet("{name}")]
+        public string ceshi(string name)
+        {
+            return name;
+        }
 
 
         /// <summary>

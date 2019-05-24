@@ -9,6 +9,7 @@ using Cms.Filters;
 using Microsoft.AspNetCore.Http;
 using Models.WebCore;
 using Cms.Libraries;
+using Microsoft.Extensions.Configuration;
 
 namespace Cms.Controllers
 {
@@ -18,19 +19,21 @@ namespace Cms.Controllers
     {
         public IActionResult Index()
         {
-       
 
             ViewBag.NickName = HttpContext.Session.GetString("nickname");
             ViewBag.UserId = HttpContext.Session.GetInt32("userid");
 
 
-            using (WebCoreContext db = new WebCoreContext())
-            {
-                IDictionary<string, object> list = new Dictionary<string, object>();
-                var TChannel = db.TChannel.ToList();
-                list.Add("TChannel", TChannel);
-                return View(list);
-            }
+            //using (WebCoreContext db = new WebCoreContext())
+            //{
+            //    IDictionary<string, object> list = new Dictionary<string, object>();
+            //    var TChannel = db.TChannel.ToList();
+            //    list.Add("TChannel", TChannel);
+            //    return View(list);
+            //}
+
+
+            return View();
 
         }
 

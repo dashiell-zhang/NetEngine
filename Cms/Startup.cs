@@ -38,6 +38,9 @@ namespace Cms
             Methods.Http.HttpContext.Add(services);
 
 
+            //注册配置文件信息
+            Methods.Start.StartConfiguration.Add(Configuration);
+
             //注册Session
             services.AddSession();
 
@@ -78,6 +81,10 @@ namespace Cms
 
             //注册Session
             app.UseSession();
+
+
+            //注册HostingEnvironment
+            Methods.Start.StartHostingEnvironment.Add(env);
 
 
             app.UseMvc(routes =>

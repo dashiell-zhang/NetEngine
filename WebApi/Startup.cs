@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
+using PublicMethods = Methods;
 
 namespace WebApi
 {
@@ -41,6 +42,8 @@ namespace WebApi
                 options.SerializerSettings.DateFormatString = "yyyy-MM-dd hh:mm:ss";
             });
 
+            //注册配置文件信息
+            PublicMethods.Start.StartConfiguration.Add(Configuration);
 
 
             //注册Swagger生成器，定义一个和多个Swagger 文档
@@ -71,6 +74,10 @@ namespace WebApi
 
             app.UseHttpsRedirection();
             app.UseMvc();
+
+
+            //注册HostingEnvironment
+            PublicMethods.Start.StartHostingEnvironment.Add(env);
 
 
             //启用中间件服务生成Swagger作为JSON端点

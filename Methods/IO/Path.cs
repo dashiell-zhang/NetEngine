@@ -1,19 +1,34 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Hosting;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using Methods.Start;
 
 namespace Methods.IO
 {
-    public class AppPath
+    public class Path
     {
+       
 
         /// <summary>
-        /// 获取网站物理根目录
+        /// 获取 wwwroot 路径
         /// </summary>
         /// <returns></returns>
-        public static string GetPath()
+        public static string WebRootPath()
         {
-            return AppContext.BaseDirectory;
+            return StartHostingEnvironment.hostingEnvironment.WebRootPath;
         }
+
+
+
+        /// <summary>
+        /// 获取 项目运行 路径
+        /// </summary>
+        /// <returns></returns>
+        public static string ContentRootPath()
+        {
+            return StartHostingEnvironment.hostingEnvironment.ContentRootPath;
+        }
+            
     }
 }

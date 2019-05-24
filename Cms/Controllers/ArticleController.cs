@@ -12,5 +12,11 @@ namespace Cms.Controllers
         {
             return View();
         }
+
+
+        public IActionResult UeditorCeshi()
+        {
+            return View();
+        }
     }
 }

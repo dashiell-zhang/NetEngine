@@ -1,0 +1,32 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>UeditorCeshi</title>
+</head>
+<body>
+
+    <script src="~/lib/ueditor/ueditor.config.js"></script>
+    <script src="~/lib/ueditor/ueditor.all.js"></script>
+
+    <textarea id="TextArea1" rows="2" cols="20"></textarea>
+
+    <script>
+             var UEditor1 = new baidu.editor.ui.Editor({
+            autoFloatEnabled: false,
+            enableAutoSave: false,
+            pasteplain: true
+
+
+        });
+
+        UEditor1.render("TextArea1")
+    </script>
+</body>
+</html>

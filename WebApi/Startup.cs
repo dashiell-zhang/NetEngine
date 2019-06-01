@@ -29,6 +29,9 @@ namespace WebApi
         public void ConfigureServices(IServiceCollection services)
         {
 
+            //注册HttpContext
+            PublicMethods.Http.HttpContext.Add(services);
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
 
@@ -68,6 +71,10 @@ namespace WebApi
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            //注册HttpContext
+            PublicMethods.Http.HttpContext.Initialize(app, env);
+
 
             //注册跨域信息
             app.UseCors("cors");

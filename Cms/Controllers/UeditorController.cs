@@ -11,6 +11,14 @@ namespace Cms.Controllers
 {
     public class UeditorController : Controller
     {
+
+        public IActionResult Index()
+        {
+
+            return View();
+        }
+
+
         public string ProcessRequest([FromServices]IHostingEnvironment environment)
         {
 

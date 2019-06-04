@@ -37,6 +37,10 @@ namespace Cms
             //注册HttpContext
             Methods.Http.HttpContext.Add(services);
 
+            //注册跨域信息
+            services.AddCors(options => options.AddPolicy("cors", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().AllowAnyOrigin()));
+
+
 
             //注册配置文件信息
             Methods.Start.StartConfiguration.Add(Configuration);
@@ -78,6 +82,9 @@ namespace Cms
 
             //注册HttpContext
             Methods.Http.HttpContext.Initialize(app, env);
+
+            //注册跨域信息
+            app.UseCors("cors");
 
             //注册Session
             app.UseSession();

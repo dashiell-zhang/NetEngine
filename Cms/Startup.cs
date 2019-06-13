@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using System.Threading.Tasks;
+using Cms.Filters;
+using Cms.Libraries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -37,6 +39,9 @@ namespace Cms
             //注册HttpContext
             Methods.Http.HttpContext.Add(services);
 
+            //注册全局过滤器
+            services.AddMvc(config => config.Filters.Add(new GlobalFiler()));
+
             //注册跨域信息
             services.AddCors(options => options.AddPolicy("cors", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().AllowAnyOrigin()));
 
@@ -64,8 +69,13 @@ namespace Cms
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+
+            //注册全局异常处理机制
+            app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
+
             if (env.IsDevelopment())
             {
+                //默认错误输出页面
                 app.UseDeveloperExceptionPage();
             }
             else
@@ -74,6 +84,7 @@ namespace Cms
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();

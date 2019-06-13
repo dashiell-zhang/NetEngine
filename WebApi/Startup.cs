@@ -12,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
+using WebApi.Actions;
+using WebApi.Filters;
 using PublicMethods = Methods;
 
 namespace WebApi
@@ -31,6 +33,10 @@ namespace WebApi
 
             //注册HttpContext
             PublicMethods.Http.HttpContext.Add(services);
+
+            //注册全局过滤器
+            services.AddMvc(config => config.Filters.Add(new GlobalFiler()));
+
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
@@ -55,15 +61,20 @@ namespace WebApi
                 options.SwaggerDoc("v1", new Info { Title = "WebApi", Version = "v1" });
                 var basePath = AppContext.BaseDirectory;
                 var xmlPath = Path.Combine(basePath, "WebApi.xml");
-                options.IncludeXmlComments(xmlPath,true);
+                options.IncludeXmlComments(xmlPath, true);
             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+
+            //注册全局异常处理机制
+            app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
+
             if (env.IsDevelopment())
             {
+                //默认错误输出页面
                 app.UseDeveloperExceptionPage();
             }
             else

@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -11,6 +13,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Models.JwtBearer;
 using Swashbuckle.AspNetCore.Swagger;
 using WebApi.Actions;
 using WebApi.Filters;
@@ -30,6 +34,43 @@ namespace WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //注册JWT认证机制
+            services.Configure<JwtSettings>(Configuration.GetSection("JwtSettings"));
+            var jwtSettings = new JwtSettings();
+            Configuration.Bind("JwtSettings", jwtSettings);
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(o =>
+            {
+                //主要是jwt  token参数设置
+                o.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+
+                    /***********************************TokenValidationParameters的参数默认值***********************************/
+                    // RequireSignedTokens = true,
+                    // SaveSigninToken = false,
+                    // ValidateActor = false,
+                    // 将下面两个参数设置为false，可以不验证Issuer和Audience，但是不建议这样做。
+                    // ValidateAudience = true,
+                    // ValidateIssuer = true, 
+                    // ValidateIssuerSigningKey = false,
+                    // 是否要求Token的Claims中必须包含Expires
+                    // RequireExpirationTime = true,
+                    // 允许的服务器时间偏移量
+                    // ClockSkew = TimeSpan.FromSeconds(300),
+                    // 是否验证Token有效期，使用当前时间与Token的Claims中的NotBefore和Expires对比
+                    // ValidateLifetime = true
+
+                };
+            });
+
 
             //注册HttpContext
             PublicMethods.Http.HttpContext.Add(services);
@@ -68,6 +109,9 @@ namespace WebApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+
+            //注册用户认证机制
+            app.UseAuthentication();
 
             //注册全局异常处理机制
             app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));

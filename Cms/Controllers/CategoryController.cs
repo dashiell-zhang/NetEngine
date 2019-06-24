@@ -20,7 +20,7 @@ namespace Cms.Controllers
         [HttpGet]
         public JsonResult GetCategoryList(int ChannelId)
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
                 IList<TCategory> list = db.TCategory.Where(t => t.Channelid == ChannelId).ToList();
 
@@ -33,7 +33,7 @@ namespace Cms.Controllers
         public IActionResult Category_Edit(int channelid,int id = 0)
         {
 
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
 
                 IDictionary<string, object> list = new Dictionary<string, object>();
@@ -61,7 +61,7 @@ namespace Cms.Controllers
 
         public void Category_Edit_Run(TCategory Category)
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
 
                 if (Category.Id == 0)
@@ -92,7 +92,7 @@ namespace Cms.Controllers
 
         public JsonResult Category_Delete(int id)
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
                 TCategory Category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
                 db.TCategory.Remove(Category);

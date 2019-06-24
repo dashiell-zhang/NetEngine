@@ -13,9 +13,9 @@ namespace Models.WebCore
         public int Sort { get; set; }
         public int? Clickcount { get; set; }
         public string Abstract { get; set; }
-        public bool? Openstate { get; set; }
-        public bool? Recommendstate { get; set; }
-        public bool? Commentstate { get; set; }
+        public short? Openstate { get; set; }
+        public short? Recommendstate { get; set; }
+        public short? Commentstate { get; set; }
         public string Seot { get; set; }
         public string Seok { get; set; }
         public string Seod { get; set; }

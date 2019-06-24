@@ -30,7 +30,7 @@ namespace Cms.Controllers
             var Data = new { status = true };
 
 
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
                 var user = db.TUserSys.Where(t => t.Name == name & t.Password == pwd).FirstOrDefault();
 
@@ -71,7 +71,7 @@ namespace Cms.Controllers
         [HttpGet]
         public JsonResult GetUserSysList()
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
                 IList<TUserSys> list = db.TUserSys.ToList();
 
@@ -90,7 +90,7 @@ namespace Cms.Controllers
             }
             else
             {
-                using (WebCoreContext db = new WebCoreContext())
+                using (webcoreContext db = new webcoreContext())
                 {
                     var UserSys = db.TUserSys.Where(t => t.Id == id).FirstOrDefault();
                     return View(UserSys);
@@ -102,7 +102,7 @@ namespace Cms.Controllers
 
         public void UserSys_Edit_Run(TUserSys UserSys)
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
 
 
@@ -134,7 +134,7 @@ namespace Cms.Controllers
 
         public JsonResult UserSys_Delete(int id)
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
                 TUserSys UserSys = db.TUserSys.Where(t => t.Id == id).FirstOrDefault();
                 db.TUserSys.Remove(UserSys);

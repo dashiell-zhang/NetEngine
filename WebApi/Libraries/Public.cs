@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using WebApi.Models;
 using Methods.Crypto;
 
-namespace WebApi.Methods
+namespace WebApi.Libraries
 {
     public class Public
     {

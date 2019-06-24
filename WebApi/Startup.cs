@@ -18,7 +18,7 @@ using Models.JwtBearer;
 using Swashbuckle.AspNetCore.Swagger;
 using WebApi.Actions;
 using WebApi.Filters;
-using PublicMethods = Methods;
+using Methods;
 
 namespace WebApi
 {
@@ -73,7 +73,7 @@ namespace WebApi
 
 
             //注册HttpContext
-            PublicMethods.Http.HttpContext.Add(services);
+           Methods.Http.HttpContext.Add(services);
 
             //注册全局过滤器
             services.AddMvc(config => config.Filters.Add(new GlobalFiler()));
@@ -93,7 +93,7 @@ namespace WebApi
             });
 
             //注册配置文件信息
-            PublicMethods.Start.StartConfiguration.Add(Configuration);
+            Methods.Start.StartConfiguration.Add(Configuration);
 
 
             //注册Swagger生成器，定义一个和多个Swagger 文档
@@ -128,7 +128,7 @@ namespace WebApi
             }
 
             //注册HttpContext
-            PublicMethods.Http.HttpContext.Initialize(app, env);
+            Methods.Http.HttpContext.Initialize(app, env);
 
 
             //注册跨域信息
@@ -139,7 +139,7 @@ namespace WebApi
 
 
             //注册HostingEnvironment
-            PublicMethods.Start.StartHostingEnvironment.Add(env);
+            Methods.Start.StartHostingEnvironment.Add(env);
 
 
             //启用中间件服务生成Swagger作为JSON端点

@@ -24,7 +24,7 @@ namespace Cms.Controllers
             ViewBag.UserId = HttpContext.Session.GetInt32("userid");
 
 
-            //using (WebCoreContext db = new WebCoreContext())
+            //using (webcoreContext db = new webcoreContext())
             //{
             //    IDictionary<string, object> list = new Dictionary<string, object>();
             //    var TChannel = db.TChannel.ToList();

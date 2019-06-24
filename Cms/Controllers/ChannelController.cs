@@ -19,7 +19,7 @@ namespace Cms.Controllers
         [HttpGet]
         public JsonResult GetChannelList()
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
                 IList<TChannel> list = db.TChannel.ToList();
 
@@ -38,7 +38,7 @@ namespace Cms.Controllers
             }
             else
             {
-                using (WebCoreContext db = new WebCoreContext())
+                using (webcoreContext db = new webcoreContext())
                 {
                     var Channel = db.TChannel.Where(t => t.Id == id).FirstOrDefault();
                     return View(Channel);
@@ -50,7 +50,7 @@ namespace Cms.Controllers
 
         public void Channel_Edit_Run(TChannel Channel)
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
 
 
@@ -82,7 +82,7 @@ namespace Cms.Controllers
 
         public JsonResult Channel_Delete(int id)
         {
-            using (WebCoreContext db = new WebCoreContext())
+            using (webcoreContext db = new webcoreContext())
             {
                 TChannel Channel = db.TChannel.Where(t => t.Id == id).FirstOrDefault();
                 db.TChannel.Remove(Channel);

@@ -34,12 +34,14 @@ namespace Methods.WeiXin.MiniApp
             notifyurl = in_notifyurl;
         }
 
+
+
         /// <summary>
-        /// 获取用户OpenId
+        /// 获取用户OpenId 和 SessionKey
         /// </summary>
         /// <param name="code"></param>
         /// <returns></returns>
-        public string GetOpenId(string code)
+        public (string openid, string sessionkey) GetOpenIdAndSessionKey(string code)
         {
             string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appid + "&secret=" + secret + "&js_code=" + code + "&grant_type=authorization_code";
 
@@ -47,7 +49,9 @@ namespace Methods.WeiXin.MiniApp
 
             string openid = Json.JsonHelper.GetValueByKey(httpret, "openid");
 
-            return openid;
+            string sessionkey = Json.JsonHelper.GetValueByKey(httpret, "session_key");
+
+            return (openid, sessionkey);
         }
 
 
@@ -129,6 +133,52 @@ namespace Methods.WeiXin.MiniApp
             }
         }
 
+
+
+
+
+        /// <summary>
+        /// 微信小程序 encryptedData 解密
+        /// </summary>
+        /// <param name="encryptedDataStr">encryptedDataStr</param>
+        /// <param name="key">session_key</param>
+        /// <param name="iv">iv</param>
+        /// <returns></returns>
+        public static string DecryptionData(string encryptedDataStr, string key, string iv)
+        {
+            var rijalg = Aes.Create();
+            // RijndaelManaged rijalg = new RijndaelManaged();
+            //----------------- 
+            //设置 cipher 格式 AES-128-CBC 
+
+            rijalg.KeySize = 128;
+
+            rijalg.Padding = PaddingMode.PKCS7;
+            rijalg.Mode = CipherMode.CBC;
+
+            rijalg.Key = Convert.FromBase64String(key);
+            rijalg.IV = Convert.FromBase64String(iv);
+
+
+            byte[] encryptedData = Convert.FromBase64String(encryptedDataStr);
+            //解密 
+            ICryptoTransform decryptor = rijalg.CreateDecryptor(rijalg.Key, rijalg.IV);
+
+            string result;
+
+            using (MemoryStream msDecrypt = new MemoryStream(encryptedData))
+            {
+                using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                {
+                    using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                    {
+
+                        result = srDecrypt.ReadToEnd();
+                    }
+                }
+            }
+            return result;
+        }
 
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Models.Dtos;
 using Models.WebCore;
 
 namespace WebApi.Controllers
@@ -82,6 +83,85 @@ namespace WebApi.Controllers
 
         }
 
+
+        /// <summary>
+        /// 多文件上传接口
+        /// </summary>
+        /// <param name="Authorization"></param>
+        /// <returns></returns>
+        /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
+        [Authorize]
+        [HttpPost("BatchUploadFile")]
+        public List<dtoFileInfo> BatchUploadFile([Required][FromHeader] string Authorization)
+        {
+
+            var fileInfos = new List<dtoFileInfo>();
+
+            var ReqFiles = Request.Form.Files;
+
+            string userid = Methods.Verify.JwtToken.GetClaims("userid");
+
+            List<IFormFile> Attachments = new List<IFormFile>();
+            for (int i = 0; i < ReqFiles.Count; i++)
+            {
+                Attachments.Add(ReqFiles[i]);
+            }
+
+            foreach (var file in Attachments)
+            {
+                var url = string.Empty;
+                var fileName = string.Empty;
+                var fileExtension = string.Empty;
+                var fullFileName = string.Empty;
+
+                string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
+                string filepath = Methods.IO.Path.ContentRootPath() + basepath;
+
+                Directory.CreateDirectory(filepath);
+
+                fileName = Guid.NewGuid().ToString();
+                fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                fullFileName = string.Format("{0}{1}", fileName, fileExtension);
+
+                string path = "";
+
+                if (file != null && file.Length > 0)
+                {
+                    path = filepath + "\\" + fullFileName;
+
+                    using (FileStream fs = System.IO.File.Create(path))
+                    {
+                        file.CopyTo(fs);
+                        fs.Flush();
+                    }
+
+                    path = basepath + "\\" + fullFileName;
+                }
+
+                using (webcoreContext db = new webcoreContext())
+                {
+                    var f = new TFile();
+                    f.Id = fileName;
+                    f.Name = file.FileName;
+                    f.Path = path;
+                    f.Createuserid = userid;
+                    f.Createtime = DateTime.Now;
+
+                    db.TFile.Add(f);
+                    db.SaveChanges();
+
+                    var fileinfo = new dtoFileInfo();
+
+                    fileinfo.fileid = f.Id;
+                    fileinfo.filename = f.Name;
+
+                    fileInfos.Add(fileinfo);
+                }
+
+            }
+
+            return fileInfos;
+        }
 
 
 

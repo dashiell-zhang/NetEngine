@@ -26,6 +26,12 @@ namespace Models.DataBases.WebCore
 
 
         /// <summary>
+        /// 文件唯一值
+        /// </summary>
+        public string Unique { get; set; }
+
+
+        /// <summary>
         /// 分片数
         /// </summary>
         public int Slicing { get; set; }

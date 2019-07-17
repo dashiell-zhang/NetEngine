@@ -208,39 +208,51 @@ namespace WebApi.Controllers
         /// <param name="Authorization">Token</param>
         /// <param name="filename">文件名称</param>
         /// <param name="slicing">总切片数</param>
+        /// <param name="unique">文件校验值</param>
         /// <returns></returns>
         [HttpGet("CreateGroupFileId")]
-        public string CreateGroupFileId([Required][FromHeader] string Authorization, string filename, int slicing)
+        public string CreateGroupFileId([Required][FromHeader] string Authorization, [Required]string filename, [Required] int slicing, [Required]string unique)
         {
             var userid = Methods.Verify.JwtToken.GetClaims("userid");
             using (webcoreContext db = new webcoreContext())
             {
 
-                var fileid = Guid.NewGuid().ToString() + Path.GetExtension(filename).ToLowerInvariant(); ;
+                var dbfileinfo = db.TFileGroup.Where(t => t.Unique.ToLower() == unique.ToLower()).FirstOrDefault();
 
-                string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileid;
+                if (dbfileinfo == null)
+                {
+
+                    var fileid = Guid.NewGuid().ToString() + Path.GetExtension(filename).ToLowerInvariant(); ;
+
+                    string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileid;
 
 
-                var f = new TFile();
-                f.Id = Guid.NewGuid().ToString();
-                f.Name = filename;
-                f.Path = basepath;
-                f.CreateUserId = userid;
-                f.CreateTime = DateTime.Now;
+                    var f = new TFile();
+                    f.Id = Guid.NewGuid().ToString();
+                    f.Name = filename;
+                    f.Path = basepath;
+                    f.CreateUserId = userid;
+                    f.CreateTime = DateTime.Now;
 
-                db.TFile.Add(f);
-                db.SaveChanges();
+                    db.TFile.Add(f);
+                    db.SaveChanges();
 
-                var group = new TFileGroup();
-                group.Id = Guid.NewGuid().ToString();
-                group.FileId = f.Id;
-                group.Slicing = slicing;
-                group.Issynthesis = false;
-                group.Isfull = false;
-                db.TFileGroup.Add(group);
-                db.SaveChanges();
+                    var group = new TFileGroup();
+                    group.Id = Guid.NewGuid().ToString();
+                    group.FileId = f.Id;
+                    group.Unique = unique;
+                    group.Slicing = slicing;
+                    group.Issynthesis = false;
+                    group.Isfull = false;
+                    db.TFileGroup.Add(group);
+                    db.SaveChanges();
 
-                return f.Id;
+                    return f.Id;
+                }
+                else
+                {
+                    return "The file already exists, and the file ID is:" + dbfileinfo.FileId;
+                }
             }
         }
 

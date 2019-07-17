@@ -6,9 +6,9 @@ namespace Models.DataBases.Bases
 {
 
     /// <summary>
-    /// 创建，编辑，删除
+    /// 创建，删除
     /// </summary>
-    public class CUD
+    public class CD
     {
 
         /// <summary>
@@ -27,12 +27,7 @@ namespace Models.DataBases.Bases
         /// 创建时间
         /// </summary>
         public DateTime CreateTime { get; set; }
-
-
-        /// <summary>
-        /// 更新时间
-        /// </summary>
-        public DateTime? UpdateTime { get; set; }
+        
 
 
         /// <summary>
@@ -40,14 +35,10 @@ namespace Models.DataBases.Bases
         /// </summary>
         public bool? IsDeleteTime { get; set; }
 
-
         /// <summary>
         /// 删除时间
         /// </summary>
         public DateTime? DeleteTime { get; set; }
-
-
-      
 
     }
 }

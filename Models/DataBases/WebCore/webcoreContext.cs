@@ -15,9 +15,16 @@ namespace Models.DataBases.WebCore
         {
         }
 
-       
-        public virtual DbSet<TFile> TFile { get; set; }
-        public virtual DbSet<TUser> TUser { get; set; }
+        public DbSet<TUser> TUser { get; set; }
+
+        public DbSet<TUserToken> TUserToken { get; set; }
+
+        public DbSet<TFile> TFile { get; set; }
+
+        public DbSet<TFileGroup> TFileGroup { get; set; }
+
+        public DbSet<TFileGroupFile> TFileGroupFile { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

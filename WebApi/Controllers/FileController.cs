@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Models.Dtos;
-using Models.WebCore;
+using Models.DataBases.WebCore;
 
 namespace WebApi.Controllers
 {
@@ -72,8 +72,8 @@ namespace WebApi.Controllers
                 f.Id = fileName;
                 f.Name = file.FileName;
                 f.Path = path;
-                f.Createuserid = userid;
-                f.Createtime = DateTime.Now;
+                f.CreateUserId = userid;
+                f.CreateTime = DateTime.Now;
 
                 db.TFile.Add(f);
                 db.SaveChanges();
@@ -144,8 +144,8 @@ namespace WebApi.Controllers
                     f.Id = fileName;
                     f.Name = file.FileName;
                     f.Path = path;
-                    f.Createuserid = userid;
-                    f.Createtime = DateTime.Now;
+                    f.CreateUserId = userid;
+                    f.CreateTime = DateTime.Now;
 
                     db.TFile.Add(f);
                     db.SaveChanges();
@@ -190,11 +190,8 @@ namespace WebApi.Controllers
                 var provider = new FileExtensionContentTypeProvider();
 
                 //通过文件后缀寻找对呀的mime类型
-                var memi = provider.Mappings[fileExt];
+                var memi = provider.Mappings.ContainsKey(fileExt) ? provider.Mappings[fileExt] : provider.Mappings[".zip"];
 
-
-                //通过路径获取文件名称
-                //Path.GetFileName(path)
 
                 return File(stream, memi, file.Name);
 
@@ -202,6 +199,164 @@ namespace WebApi.Controllers
 
         }
 
+
+
+
+        /// <summary>
+        /// 多文件切片上传，获取初始化文件ID
+        /// </summary>
+        /// <param name="Authorization">Token</param>
+        /// <param name="filename">文件名称</param>
+        /// <param name="slicing">总切片数</param>
+        /// <returns></returns>
+        [HttpGet("CreateGroupFileId")]
+        public string CreateGroupFileId([Required][FromHeader] string Authorization, string filename, int slicing)
+        {
+            var userid = Methods.Verify.JwtToken.GetClaims("userid");
+            using (webcoreContext db = new webcoreContext())
+            {
+
+                var fileid = Guid.NewGuid().ToString() + Path.GetExtension(filename).ToLowerInvariant(); ;
+
+                string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileid;
+
+
+                var f = new TFile();
+                f.Id = Guid.NewGuid().ToString();
+                f.Name = filename;
+                f.Path = basepath;
+                f.CreateUserId = userid;
+                f.CreateTime = DateTime.Now;
+
+                db.TFile.Add(f);
+                db.SaveChanges();
+
+                var group = new TFileGroup();
+                group.Id = Guid.NewGuid().ToString();
+                group.FileId = f.Id;
+                group.Slicing = slicing;
+                group.Issynthesis = false;
+                group.Isfull = false;
+                db.TFileGroup.Add(group);
+                db.SaveChanges();
+
+                return f.Id;
+            }
+        }
+
+
+        /// <summary>
+        /// 文件切片上传接口
+        /// </summary>
+        /// <param name="Authorization">token</param>
+        /// <param name="fileid">文件组ID</param>
+        /// <param name="index">切片索引</param>
+        /// <param name="file">file</param>
+        /// <returns>文件ID</returns>
+        [HttpPost("UploadGroupFile")]
+        public bool UploadGroupFile([Required][FromHeader] string Authorization, [Required][FromForm]string fileid, [Required][FromForm]int index, [Required]IFormFile file)
+        {
+
+            try
+            {
+                var url = string.Empty;
+                var fileName = string.Empty;
+                var fileExtension = string.Empty;
+                var fullFileName = string.Empty;
+
+                string basepath = "\\Files\\Group\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileid;
+                string filepath = Methods.IO.Path.ContentRootPath() + basepath;
+
+                Directory.CreateDirectory(filepath);
+
+                fileName = Guid.NewGuid().ToString();
+                fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                fullFileName = string.Format("{0}{1}", fileName, fileExtension);
+
+                string path = "";
+
+                if (file != null && file.Length > 0)
+                {
+                    path = filepath + "\\" + fullFileName;
+
+                    using (FileStream fs = System.IO.File.Create(path))
+                    {
+                        file.CopyTo(fs);
+                        fs.Flush();
+                    }
+
+                    path = basepath + "\\" + fullFileName;
+                }
+
+                using (webcoreContext db = new webcoreContext())
+                {
+                    var group = db.TFileGroup.Where(t => t.FileId == fileid).FirstOrDefault();
+
+                    var groupfile = new TFileGroupFile();
+                    groupfile.Id = Guid.NewGuid().ToString();
+                    groupfile.FileId = group.FileId;
+                    groupfile.Path = path;
+                    groupfile.Index = index;
+                    groupfile.CreateTime = DateTime.Now;
+
+                    db.TFileGroupFile.Add(groupfile);
+
+                    if (index == group.Slicing)
+                    {
+                        group.Isfull = true;
+                    }
+
+                    db.SaveChanges();
+
+                    if (group.Isfull == true)
+                    {
+
+                        try
+                        {
+                            byte[] buffer = new byte[1024 * 100];
+
+                            var fileinfo = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
+
+                            var fullfilepath = Methods.IO.Path.ContentRootPath() + fileinfo.Path;
+
+                            using (FileStream outStream = new FileStream(fullfilepath, FileMode.Create))
+                            {
+                                int readedLen = 0;
+                                FileStream srcStream = null;
+
+                                var filelist = db.TFileGroupFile.Where(t => t.FileId == fileinfo.Id).OrderBy(t => t.Index).ToList();
+
+                                foreach (var item in filelist)
+                                {
+                                    string p = Methods.IO.Path.ContentRootPath() + item.Path;
+                                    srcStream = new FileStream(p, FileMode.Open);
+                                    while ((readedLen = srcStream.Read(buffer, 0, buffer.Length)) > 0)
+                                    {
+                                        outStream.Write(buffer, 0, readedLen);
+                                    }
+                                    srcStream.Close();
+                                }
+                            }
+
+                            group.Issynthesis = true;
+
+                            db.SaveChanges();
+                        }
+                        catch
+                        {
+
+                        }
+
+                    }
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
     }
 }

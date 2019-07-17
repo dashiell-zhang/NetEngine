@@ -8,7 +8,7 @@ namespace Models.DataBases.WebCore
 
 
     [Table("t_user")]
-    public partial class TUser:CUD
+    public class TUser:CUD
     {
 
         /// <summary>

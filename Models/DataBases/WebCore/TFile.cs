@@ -1,4 +1,5 @@
 ﻿using Models.DataBases.Bases;
+using Models.DataBases.WebCore.Bases;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,7 +12,7 @@ namespace Models.DataBases.WebCore
     /// 文件表
     /// </summary>
     [Table("t_file")]
-    public partial class TFile :CUD
+    public class TFile :CD_User
     {
 
 

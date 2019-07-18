@@ -1,10 +1,17 @@
 ﻿using Models.DataBases.Bases;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace Models.DataBases.WebCore
 {
+
+
+    /// <summary>
+    /// 用户和微信绑定关系表
+    /// </summary>
+    [Table("t_user_bind_weixin")]
     public class TUserBindWeixin :CD
     {
 

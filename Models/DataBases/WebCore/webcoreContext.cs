@@ -25,6 +25,15 @@ namespace Models.DataBases.WebCore
 
         public DbSet<TFileGroupFile> TFileGroupFile { get; set; }
 
+        public DbSet<TOrder> TOrder { get; set; }
+
+        public DbSet<TProduct> TProduct { get; set; }
+
+        public DbSet<TWeiXinKey> TWeiXinKey { get; set; }
+
+        public DbSet<TUserBindWeixin> TUserBindWeixin { get; set; }
+
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

@@ -34,5 +34,8 @@ namespace Models.DataBases.WebCore
         /// </summary>
         public string PassWord { get; set; }
 
+
+        public ICollection<TUserBindWeixin> TUserBindWeixin { get; set; }
+
     }
 }

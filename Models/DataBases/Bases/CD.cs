@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace Models.DataBases.Bases
@@ -27,13 +28,16 @@ namespace Models.DataBases.Bases
         /// 创建时间
         /// </summary>
         public DateTime CreateTime { get; set; }
-        
+
 
 
         /// <summary>
         /// 是否删除
         /// </summary>
-        public bool? IsDeleteTime { get; set; }
+        [Column(TypeName = "bit")]
+        public bool? IsDelete { get; set; }
+
+
 
         /// <summary>
         /// 删除时间

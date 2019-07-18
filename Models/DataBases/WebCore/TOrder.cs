@@ -63,6 +63,7 @@ namespace Models.DataBases.WebCore
         /// <summary>
         /// 支付状态
         /// </summary>
+        [Column(TypeName = "bit")]
         public bool Paystate { get; set; }
 
 

@@ -19,5 +19,19 @@ namespace Models.DataBases.WebCore
         /// </summary>
         public string UserId { get; set; }
         public TUser User { get; set; }
+
+
+
+        /// <summary>
+        /// Token
+        /// </summary>
+        public string Token { get; set; }
+
+
+        /// <summary>
+        /// 上一次有效的 tokenid
+        /// </summary>
+        public string LastId { get; set; }
+
     }
 }

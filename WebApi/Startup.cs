@@ -51,7 +51,8 @@ namespace WebApi
                 {
                     ValidIssuer = jwtSettings.Issuer,
                     ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+                    ValidateLifetime = false
 
                     /***********************************TokenValidationParameters的参数默认值***********************************/
                     // RequireSignedTokens = true,

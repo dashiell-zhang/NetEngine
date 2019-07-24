@@ -25,7 +25,10 @@ namespace WebApi.Filters
 
                 using (webcoreContext db = new webcoreContext())
                 {
-                    var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid).FirstOrDefault();
+
+                    var endtime = DateTime.Now.AddMinutes(-3);
+
+                    var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid || (t.LastId == tokenid & t.CreateTime > endtime)).FirstOrDefault();
 
                     if (tokeninfo == null)
                     {
@@ -54,32 +57,53 @@ namespace WebApi.Filters
                 using (webcoreContext db = new webcoreContext())
                 {
 
-                    var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid).FirstOrDefault();
+                    var endtime = DateTime.Now.AddMinutes(-3);
 
-                    db.TUserToken.Remove(tokeninfo);
+                    var newtoken = db.TUserToken.Where(t => t.LastId == tokenid & t.CreateTime > endtime).FirstOrDefault();
 
-                    TUserToken userToken = new TUserToken();
-                    userToken.Id = Guid.NewGuid().ToString();
-                    userToken.UserId = userid;
-                    userToken.CreateTime = DateTime.Now;
+                    if (newtoken == null)
+                    {
 
-                    db.TUserToken.Add(userToken);
+                        var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid).FirstOrDefault();
 
-                    var oldtime = DateTime.Now.AddDays(-7);
-                    var oldlist = db.TUserToken.Where(t => t.CreateTime < oldtime).ToList();
-                    db.TUserToken.RemoveRange(oldlist);
+                        if (tokeninfo != null)
+                        {
 
-                    db.SaveChanges();
+                            TUserToken userToken = new TUserToken();
+                            userToken.Id = Guid.NewGuid().ToString();
+                            userToken.UserId = userid;
+                            userToken.LastId = tokenid;
+                            userToken.CreateTime = DateTime.Now;
 
-                    var claim = new Claim[]{
+
+                            var claim = new Claim[]{
                         new Claim("tokenid",userToken.Id),
                              new Claim("userid",userid)
                         };
 
+                            var token = Methods.Verify.JwtToken.GetToken(claim);
+                            context.HttpContext.Response.Headers.Add("NewToken", token);
 
-                    var token = Methods.Verify.JwtToken.GetToken(claim);
 
-                    context.HttpContext.Response.Headers.Add("NewToken", token);
+                            userToken.Token = token;
+
+                            db.TUserToken.Add(userToken);
+
+
+                            db.TUserToken.Remove(tokeninfo);
+                            db.SaveChanges();
+
+                            var oldtime = DateTime.Now.AddDays(-7);
+                            var oldlist = db.TUserToken.Where(t => t.CreateTime < oldtime).ToList();
+                            db.TUserToken.RemoveRange(oldlist);
+
+                            db.SaveChanges();
+                        }
+                    }
+                    else
+                    {
+                        context.HttpContext.Response.Headers.Add("NewToken", newtoken.Token);
+                    }
                 }
             }
 

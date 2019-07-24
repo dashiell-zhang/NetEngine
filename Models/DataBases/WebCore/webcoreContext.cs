@@ -33,6 +33,7 @@ namespace Models.DataBases.WebCore
 
         public DbSet<TUserBindWeixin> TUserBindWeixin { get; set; }
 
+        public DbSet<TCount> TCount { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

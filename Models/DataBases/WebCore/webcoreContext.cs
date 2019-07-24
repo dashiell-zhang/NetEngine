@@ -29,6 +29,11 @@ namespace Models.DataBases.WebCore
 
         public DbSet<TProduct> TProduct { get; set; }
 
+        public DbSet<TProductImg> TProductImg { get; set; }
+
+        public DbSet<TProductImgBaiduAi> TProductImgBaiduAi { get; set; }
+
+
         public DbSet<TWeiXinKey> TWeiXinKey { get; set; }
 
         public DbSet<TUserBindWeixin> TUserBindWeixin { get; set; }

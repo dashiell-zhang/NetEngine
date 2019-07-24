@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Methods", "Methods\Methods.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "WebApi\WebApi.csproj", "{E98137D8-4199-490C-B530-BC172D3046CD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskService", "TaskService\TaskService.csproj", "{13F1569D-C69B-493F-BC4F-1D3604686B4C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{E98137D8-4199-490C-B530-BC172D3046CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E98137D8-4199-490C-B530-BC172D3046CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E98137D8-4199-490C-B530-BC172D3046CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13F1569D-C69B-493F-BC4F-1D3604686B4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13F1569D-C69B-493F-BC4F-1D3604686B4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13F1569D-C69B-493F-BC4F-1D3604686B4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13F1569D-C69B-493F-BC4F-1D3604686B4C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

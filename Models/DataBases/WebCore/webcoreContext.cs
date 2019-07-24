@@ -35,6 +35,8 @@ namespace Models.DataBases.WebCore
 
         public DbSet<TCount> TCount { get; set; }
 
+        public DbSet<TGuidToInt> TGuidToInt { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

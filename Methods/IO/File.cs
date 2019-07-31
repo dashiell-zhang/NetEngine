@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 
 namespace Methods.IO
@@ -33,6 +34,47 @@ namespace Methods.IO
             catch
             {
 
+            }
+        }
+
+
+
+
+
+
+        /// <summary>
+        /// 下载远程文件保存到本地
+        /// </summary>
+        /// <param name="url">文件URL</param>
+        /// <param name="filepath">保存路径，以 \ 结束</param>
+        /// <param name="filename">保存文件名称,不传则自动通过 url 获取名称</param>
+        /// <returns></returns>
+        public static bool DownloadFile(string url, string filepath, string filename = null)
+        {
+            try
+            {
+                if (filename == null)
+                {
+                    filename = System.IO.Path.GetFileName(url);
+                }
+
+                //检查目标路径文件夹是否存在不存在则创建
+                if (!Directory.Exists(filepath))
+                {
+                    Directory.CreateDirectory(filepath);
+                }
+
+                WebClient webClient = new WebClient();
+
+
+                //下载文件
+                webClient.DownloadFile(url, filepath + filename);
+
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

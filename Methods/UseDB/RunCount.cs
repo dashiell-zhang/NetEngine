@@ -14,7 +14,7 @@ namespace Methods.UseDB
 
 
         /// <summary>
-        /// 获取指定类型的计数
+        /// 为指定类型的计数 +1
         /// </summary>
         /// <param name="tag">标签</param>
         /// <returns></returns>

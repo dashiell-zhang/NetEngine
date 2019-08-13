@@ -46,7 +46,7 @@ namespace Methods.IO
         /// <param name="filepath">保存路径，以 \ 结束，否则将取最后一个 \ 之前的路径,\之后的当作自定义文件名前缀</param>
         /// <param name="filename">保存文件名称,不传则自动通过 url 获取名称</param>
         /// <returns></returns>
-        public static bool DownloadFile(string url, string filepath, string filename = null)
+        public static string DownloadFile(string url, string filepath, string filename = null)
         {
             try
             {
@@ -76,15 +76,16 @@ namespace Methods.IO
 
                 WebClient webClient = new WebClient();
 
+                string fullpath = filepath + filename;
 
                 //下载文件
-                webClient.DownloadFile(url, filepath + filename);
+                webClient.DownloadFile(url, filepath);
 
-                return true;
+                return fullpath;
             }
             catch
             {
-                return false;
+                return null;
             }
         }
     }

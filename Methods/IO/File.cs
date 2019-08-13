@@ -39,14 +39,11 @@ namespace Methods.IO
 
 
 
-
-
-
         /// <summary>
         /// 下载远程文件保存到本地
         /// </summary>
         /// <param name="url">文件URL</param>
-        /// <param name="filepath">保存路径，以 \ 结束</param>
+        /// <param name="filepath">保存路径，以 \ 结束，否则将取最后一个 \ 之前的路径,\之后的当作自定义文件名前缀</param>
         /// <param name="filename">保存文件名称,不传则自动通过 url 获取名称</param>
         /// <returns></returns>
         public static bool DownloadFile(string url, string filepath, string filename = null)
@@ -61,7 +58,20 @@ namespace Methods.IO
                 //检查目标路径文件夹是否存在不存在则创建
                 if (!Directory.Exists(filepath))
                 {
-                    Directory.CreateDirectory(filepath);
+                    //如果路径结尾不是 \ 则说明尾端可能是自定义的文件名前缀
+
+                    var lastindex = filepath.Length - filepath.LastIndexOf("\\");
+
+                    if (lastindex == 1)
+                    {
+                        Directory.CreateDirectory(filepath);
+                    }
+                    else
+                    {
+                        string temp = filepath.Substring(0, filepath.LastIndexOf("\\"));
+                        Directory.CreateDirectory(temp);
+
+                    }
                 }
 
                 WebClient webClient = new WebClient();

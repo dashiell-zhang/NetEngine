@@ -59,7 +59,7 @@ namespace Cms
             services.AddMvc().AddJsonOptions(options =>
             {
                 //设置 Json 默认时间格式
-                options.SerializerSettings.DateFormatString = "yyyy-MM-dd hh:mm:ss";
+                options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
             });
 
             //解决中文被编码

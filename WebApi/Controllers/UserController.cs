@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Methods.WeiXin.MiniApp;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.DataBases.WebCore;
@@ -14,6 +16,8 @@ namespace WebApi.Controllers
     /// 用户数据操作控制器
     /// </summary>
     [Route("api/[controller]")]
+    [Authorize]
+    [TokenVerify]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -99,14 +103,20 @@ namespace WebApi.Controllers
         /// <summary>
         /// 通过 UserId 获取用户信息 
         /// </summary>
+        /// <param name="Authorization"></param>
         /// <param name="userid">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
-        [CacheData(TTL = 60)]
-        public TUser GetUser(string userid)
+        [CacheData(TTL = 60,UseToken =true)]
+        public TUser GetUser([Required][FromHeader] string Authorization, string userid)
         {
             using (webcoreContext db = new webcoreContext())
             {
+                if (string.IsNullOrEmpty(userid))
+                {
+                    userid = Methods.Verify.JwtToken.GetClaims("userid");
+                }
+
                 return db.TUser.Where(t => t.Id == userid).FirstOrDefault();
             }
         }

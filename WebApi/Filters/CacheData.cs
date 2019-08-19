@@ -18,10 +18,28 @@ namespace WebApi.Filters
 
 
 
+        /// <summary>
+        /// 是否使用 Token
+        /// </summary>
+        public bool UseToken { get; set; }
+
+
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
-            var key = context.ActionDescriptor.DisplayName+"_"+ context.HttpContext.Request.QueryString;
-            key = "CacheData_"+ Methods.Crypto.Md5.GetMd5(key);
+            string key = "";
+
+            if (UseToken)
+            {
+                var token = context.HttpContext.Request.Headers.Where(t=>t.Key== "Authorization").Select(t=>t.Value).FirstOrDefault();
+
+                key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString+"_"+token;
+            }
+            else
+            {
+                key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
+            }
+
+            key = "CacheData_" + Methods.Crypto.Md5.GetMd5(key);
 
             try
             {
@@ -48,9 +66,21 @@ namespace WebApi.Filters
             {
                 var value = Methods.Json.JsonHelper.ObjectToJSON(context.Result);
 
-                var key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
+                string key = "";
+
+                if (UseToken)
+                {
+                    var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
+
+                    key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString + "_" + token;
+                }
+                else
+                {
+                    key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
+                }
 
                 key = "CacheData_" + Methods.Crypto.Md5.GetMd5(key);
+
 
 
                 Methods.NoSql.Redis.StrSet(key, value,TimeSpan.FromSeconds(TTL));

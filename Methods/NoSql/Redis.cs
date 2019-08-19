@@ -9,7 +9,7 @@ namespace Methods.NoSql
     public class Redis
     {
 
-        static string host = "127.0.0.1,Password=gwbnsh@Redis@10722511,DefaultDatabase=0 ";
+        static string host = "127.0.0.1,Password=123456,DefaultDatabase=0 ";
         static ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(host);
         static IDatabase db = redis.GetDatabase();
 

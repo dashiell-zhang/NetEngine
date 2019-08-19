@@ -6,6 +6,7 @@ using Methods.WeiXin.MiniApp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.DataBases.WebCore;
+using WebApi.Filters;
 
 namespace WebApi.Controllers
 {
@@ -101,6 +102,7 @@ namespace WebApi.Controllers
         /// <param name="userid">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
+        [CacheData(TTL = 60)]
         public TUser GetUser(string userid)
         {
             using (webcoreContext db = new webcoreContext())

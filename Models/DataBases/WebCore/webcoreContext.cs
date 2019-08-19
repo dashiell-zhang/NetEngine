@@ -47,7 +47,7 @@ namespace Models.DataBases.WebCore
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseMySQL("server=cloud.blackbaby.net;userid=webcore;pwd=webcore@321;database=webcore;");
+                optionsBuilder.UseMySQL("server=127.0.0.1;userid=webcore;pwd=webcore@321;database=webcore;");
                 //optionsBuilder.UseSqlServer("Data Source=cloud.blackbaby.net;Initial Catalog=webcore;User ID=webcore;Password=webcore@321");
             }
         }

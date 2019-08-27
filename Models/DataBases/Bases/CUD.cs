@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
@@ -15,6 +16,7 @@ namespace Models.DataBases.Bases
         /// <summary>
         /// 主键标识ID
         /// </summary>
+        [MaxLength(64)]
         public string Id { get; set; }
 
 

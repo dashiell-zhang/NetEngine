@@ -1,6 +1,7 @@
 ﻿using Models.DataBases.Bases;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace Models.DataBases.WebCore.Bases
@@ -15,7 +16,8 @@ namespace Models.DataBases.WebCore.Bases
         /// <summary>
         /// 创建人ID
         /// </summary>
-     
+
+        [MaxLength(64)]
         public string CreateUserId { get; set; }
         public TUser CreateUser { get; set; }
 
@@ -24,6 +26,7 @@ namespace Models.DataBases.WebCore.Bases
         /// <summary>
         /// 删除人ID
         /// </summary>
+        [MaxLength(64)]
         public string DeleteUserId { get; set; }
         public TUser DeleteUser { get; set; }
     }

@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Alipay.AopSdk.Core" Version="2.4.3" />
     <PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.9.1" />
     <PackageReference Include="Baidu.AI" Version="3.6.14" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.0" />

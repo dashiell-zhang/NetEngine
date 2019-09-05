@@ -149,9 +149,8 @@ namespace Methods.AliPay
         /// <param name="title">商品名称</param>
         /// <param name="price">商品价格</param>
         /// <param name="describe">商品描述</param>
-        /// <param name="notifyUrl">支付成功异步回调URL</param>
         /// <returns></returns>
-        public string CreatePay_App(string orderno, string title, string price, string describe,string notifyUrl)
+        public string CreatePay_App(string orderno, string title, string price, string describe)
         {
             IAopClient client = new DefaultAopClient("https://openapi.alipay.com/gateway.do", appid, appprivatekey, "json", "1.0", "RSA2", alipaypublickey, "utf-8", false);
 

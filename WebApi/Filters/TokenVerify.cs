@@ -1,111 +1,82 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Models.DataBases.WebCore;
 using System;
 using System.Linq;
-using System.Security.Claims;
 
 namespace WebApi.Filters
 {
 
+    /// <summary>
+    /// 预设固定 PrivateKey 双方验签 Token 验证方法
+    /// </summary>
     public class TokenVerify : Attribute, IActionFilter
     {
 
-
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
+            var token = context.HttpContext.Request.Headers["Token"].ToString().ToLower();
 
-            var exp = Convert.ToInt64(Methods.Verify.JwtToken.GetClaims("exp"));
+            var rip = context.HttpContext.Connection.RemoteIpAddress.ToString();
 
-            var exptime = Methods.DataTime.DateTimeHelper.UnixToTime(exp);
-
-            if (exptime < DateTime.Now)
+            if (!rip.Contains("127.0.0.1"))
             {
-                var tokenid = Methods.Verify.JwtToken.GetClaims("tokenid");
+                var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
+                var time = Convert.ToDateTime(timeStr);
 
-                using (webcoreContext db = new webcoreContext())
+                if (time.AddMinutes(10) > DateTime.Now)
                 {
+                    string privatekey = "gejinet";
 
-                    var endtime = DateTime.Now.AddMinutes(-3);
+                    string strdata = privatekey + timeStr;
 
-                    var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid || (t.LastId == tokenid & t.CreateTime > endtime)).FirstOrDefault();
 
-                    if (tokeninfo == null)
+                    if (context.HttpContext.Request.Method == "POST")
+                    {
+                        string body = Methods.Http.HttpContext.GetBody();
+
+                        if (!string.IsNullOrEmpty(body))
+                        {
+                            strdata = strdata + body;
+                        }
+                        else if (context.HttpContext.Request.HasFormContentType)
+                        {
+                            var fromlist = context.HttpContext.Request.Form.ToList();
+
+                            foreach (var fm in fromlist)
+                            {
+                                strdata = strdata + fm.Key + ":" + fm.Value.ToString();
+                            }
+                        }
+                    }
+                    else if (context.HttpContext.Request.Method == "GET")
+                    {
+                        var qrStr = context.HttpContext.Request.Query.ToString();
+
+                        strdata = strdata + qrStr;
+                    }
+
+
+                    string tk = Methods.Crypto.Md5.GetMd5(strdata.ToLower()).ToLower();
+
+                    if (token != tk)
                     {
                         context.HttpContext.Response.StatusCode = 401;
 
                         context.Result = new JsonResult(new { errMsg = "非法 Token ！" });
                     }
                 }
+                else
+                {
+                    context.HttpContext.Response.StatusCode = 401;
+                    context.Result = new JsonResult(new { errMsg = "Token 有效期以过！" });
+                }
             }
+
         }
 
 
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
-
-            var exp = Convert.ToInt64(Methods.Verify.JwtToken.GetClaims("exp"));
-
-            var exptime = Methods.DataTime.DateTimeHelper.UnixToTime(exp);
-
-            if (exptime < DateTime.Now)
-            {
-
-                var tokenid = Methods.Verify.JwtToken.GetClaims("tokenid");
-                var userid = Methods.Verify.JwtToken.GetClaims("userid");
-
-                using (webcoreContext db = new webcoreContext())
-                {
-
-                    var endtime = DateTime.Now.AddMinutes(-3);
-
-                    var newtoken = db.TUserToken.Where(t => t.LastId == tokenid & t.CreateTime > endtime).FirstOrDefault();
-
-                    if (newtoken == null)
-                    {
-
-                        var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid).FirstOrDefault();
-
-                        if (tokeninfo != null)
-                        {
-
-                            TUserToken userToken = new TUserToken();
-                            userToken.Id = Guid.NewGuid().ToString();
-                            userToken.UserId = userid;
-                            userToken.LastId = tokenid;
-                            userToken.CreateTime = DateTime.Now;
-
-
-                            var claim = new Claim[]{
-                        new Claim("tokenid",userToken.Id),
-                             new Claim("userid",userid)
-                        };
-
-                            var token = Methods.Verify.JwtToken.GetToken(claim);
-                            context.HttpContext.Response.Headers.Add("NewToken", token);
-
-
-                            userToken.Token = token;
-
-                            db.TUserToken.Add(userToken);
-
-
-                            db.TUserToken.Remove(tokeninfo);
-                            db.SaveChanges();
-
-                            var oldtime = DateTime.Now.AddDays(-7);
-                            var oldlist = db.TUserToken.Where(t => t.CreateTime < oldtime).ToList();
-                            db.TUserToken.RemoveRange(oldlist);
-
-                            db.SaveChanges();
-                        }
-                    }
-                    else
-                    {
-                        context.HttpContext.Response.Headers.Add("NewToken", newtoken.Token);
-                    }
-                }
-            }
 
         }
     }

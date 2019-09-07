@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
+using System.IO;
 
 namespace Methods.Http
 {
@@ -42,6 +43,30 @@ namespace Methods.Http
         public static string GetUrl()
         {
             return $"{HttpContext.Current().Request.Scheme}://{HttpContext.Current().Request.Host.Host}{HttpContext.Current().Request.Path}{HttpContext.Current().Request.QueryString}";
+        }
+
+
+
+        /// <summary>
+        /// 获取Body信息
+        /// </summary>
+        /// <returns></returns>
+        public static string GetBody()
+        {
+            try
+            {
+                Current().Request.Body.Seek(0, 0);
+
+                var requestReader = new StreamReader(Current().Request.Body);
+
+                var requestContent = requestReader.ReadToEnd();
+
+                return requestContent;
+            }
+            catch
+            {
+                return "";
+            }
         }
     }
 }

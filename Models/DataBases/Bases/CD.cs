@@ -21,12 +21,6 @@ namespace Models.DataBases.Bases
 
 
         /// <summary>
-        /// 标记
-        /// </summary>
-        public string Mark { get; set; }
-
-
-        /// <summary>
         /// 创建时间
         /// </summary>
         public DateTime CreateTime { get; set; }

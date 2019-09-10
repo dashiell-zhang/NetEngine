@@ -21,11 +21,11 @@ namespace WebApi.Filters
             if (!rip.Contains("127.0.0.1"))
             {
                 var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
-                var time = Convert.ToDateTime(timeStr);
+                var time = Methods.DataTime.DateTimeHelper.JsToTime(long.Parse(timeStr));
 
                 if (time.AddMinutes(10) > DateTime.Now)
                 {
-                    string privatekey = "gejinet";
+                    string privatekey = "gPmgRr9Dp3wzubTaGIgmMSpfNiKqkIAA0C8gkaBSN0ca3GWxk3W6682KuXRpxnDq";
 
                     string strdata = privatekey + timeStr;
 
@@ -40,23 +40,26 @@ namespace WebApi.Filters
                         }
                         else if (context.HttpContext.Request.HasFormContentType)
                         {
-                            var fromlist = context.HttpContext.Request.Form.ToList();
+                            var fromlist = context.HttpContext.Request.Form.OrderBy(t => t.Key).ToList();
 
                             foreach (var fm in fromlist)
                             {
-                                strdata = strdata + fm.Key + ":" + fm.Value.ToString();
+                                strdata = strdata + fm.Key + fm.Value.ToString();
                             }
                         }
                     }
                     else if (context.HttpContext.Request.Method == "GET")
                     {
-                        var qrStr = context.HttpContext.Request.Query.ToString();
+                        var queryList = context.HttpContext.Request.Query.ToList();
 
-                        strdata = strdata + qrStr;
+                        foreach (var query in queryList)
+                        {
+                            strdata = strdata + query.Key + query.Value;
+                        }
                     }
 
 
-                    string tk = Methods.Crypto.Md5.GetMd5(strdata.ToLower()).ToLower();
+                    string tk = Methods.Crypto.Md5.GetMd5(strdata).ToLower();
 
                     if (token != tk)
                     {

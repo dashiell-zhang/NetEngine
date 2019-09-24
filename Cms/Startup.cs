@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Encodings.Web;
-using System.Text.Unicode;
-using System.Threading.Tasks;
-using Cms.Filters;
+﻿using Cms.Filters;
 using Cms.Libraries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 namespace Cms
 {
@@ -28,12 +22,8 @@ namespace Cms
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-                options.CheckConsentNeeded = context => false;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
-            });
+
+            services.AddControllersWithViews();
 
 
             //注册HttpContext
@@ -43,9 +33,16 @@ namespace Cms
             services.AddMvc(config => config.Filters.Add(new GlobalFiler()));
 
             //注册跨域信息
-            services.AddCors(options => options.AddPolicy("cors", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().AllowAnyOrigin()));
-
-
+            services.AddCors(option =>
+            {
+                option.AddPolicy("cors", policy =>
+                {
+                    policy.SetIsOriginAllowed(origin => true)
+                       .AllowAnyHeader()
+                       .AllowAnyMethod()
+                       .AllowCredentials();
+                });
+            });
 
             //注册配置文件信息
             Methods.Start.StartConfiguration.Add(Configuration);
@@ -53,26 +50,24 @@ namespace Cms
             //注册Session
             services.AddSession();
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-
-            services.AddMvc().AddJsonOptions(options =>
+            //调整Json操作类库为 NewtonsoftJson ,并设置默认时间格式，需要安装 Microsoft.AspNetCore.Mvc.NewtonsoftJson
+            services.AddControllers().AddNewtonsoftJson(options =>
             {
-                //设置 Json 默认时间格式
                 options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
             });
+
 
             //解决中文被编码
             services.AddSingleton(HtmlEncoder.Create(UnicodeRanges.All));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
             //注册全局异常处理机制
             app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
-
             if (env.IsDevelopment())
             {
                 //默认错误输出页面
@@ -86,9 +81,11 @@ namespace Cms
             }
 
 
+            //强制重定向到Https
             app.UseHttpsRedirection();
+
+
             app.UseStaticFiles();
-            app.UseCookiePolicy();
 
 
             //注册HttpContext
@@ -96,7 +93,6 @@ namespace Cms
 
             //注册跨域信息
             app.UseCors("cors");
-
             //注册Session
             app.UseSession();
 
@@ -105,12 +101,20 @@ namespace Cms
             Methods.Start.StartHostingEnvironment.Add(env);
 
 
-            app.UseMvc(routes =>
+            app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapRoute(
+                endpoints.MapControllerRoute(
+                    name: "areas",
+                    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+                endpoints.MapControllerRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
+
+
         }
     }
 }

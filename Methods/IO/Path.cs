@@ -16,7 +16,7 @@ namespace Methods.IO
         /// <returns></returns>
         public static string WebRootPath()
         {
-            return StartHostingEnvironment.hostingEnvironment.WebRootPath;
+            return StartHostingEnvironment.webHostEnvironment.WebRootPath;
         }
 
 
@@ -27,7 +27,7 @@ namespace Methods.IO
         /// <returns></returns>
         public static string ContentRootPath()
         {
-            return StartHostingEnvironment.hostingEnvironment.ContentRootPath;
+            return StartHostingEnvironment.webHostEnvironment.ContentRootPath;
         }
             
     }

@@ -1,24 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Models.JwtBearer;
-using Swashbuckle.AspNetCore.Swagger;
+using System;
+using System.IO;
+using System.Text;
 using WebApi.Actions;
 using WebApi.Filters;
-using Methods;
 
 namespace WebApi
 {
@@ -34,6 +27,9 @@ namespace WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            services.AddControllers();
+
             //注册JWT认证机制
             services.Configure<JwtSettings>(Configuration.GetSection("JwtSettings"));
             var jwtSettings = new JwtSettings();
@@ -74,20 +70,26 @@ namespace WebApi
 
 
             //注册HttpContext
-           Methods.Http.HttpContext.Add(services);
+            Methods.Http.HttpContext.Add(services);
 
             //注册全局过滤器
             services.AddMvc(config => config.Filters.Add(new GlobalFiler()));
 
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
-
             //注册跨域信息
-            services.AddCors(options => options.AddPolicy("cors", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().AllowAnyOrigin()));
+            services.AddCors(option =>
+            {
+                option.AddPolicy("cors", policy =>
+                {
+                    policy.SetIsOriginAllowed(origin => true)
+                       .AllowAnyHeader()
+                       .AllowAnyMethod()
+                       .AllowCredentials();
+                });
+            });
 
 
-            services.AddMvc().AddJsonOptions(options =>
+            services.AddControllers().AddNewtonsoftJson(options =>
             {
                 //设置 Json 默认时间格式
                 options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
@@ -100,7 +102,7 @@ namespace WebApi
             //注册Swagger生成器，定义一个和多个Swagger 文档
             services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("v1", new Info { Title = "WebApi", Version = "v1" });
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApi", Version = "v1" });
                 var basePath = AppContext.BaseDirectory;
                 var xmlPath = Path.Combine(basePath, "WebApi.xml");
                 options.IncludeXmlComments(xmlPath, true);
@@ -108,7 +110,7 @@ namespace WebApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
             //注册用户认证机制
@@ -135,9 +137,16 @@ namespace WebApi
             //注册跨域信息
             app.UseCors("cors");
 
-            app.UseHttpsRedirection();
-            app.UseMvc();
+            //强制重定向到Https
+            //app.UseHttpsRedirection();
 
+
+            app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
 
             //注册HostingEnvironment
             Methods.Start.StartHostingEnvironment.Add(env);

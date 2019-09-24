@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Methods.Property;
-using Models.WebCore;
+using Models.DataBases.WebCore;
 
 namespace Cms.Controllers
 {
@@ -32,12 +32,12 @@ namespace Cms.Controllers
 
             using (webcoreContext db = new webcoreContext())
             {
-                var user = db.TUserSys.Where(t => t.Name == name & t.Password == pwd).FirstOrDefault();
+                var user = db.TUser.Where(t => t.Name == name & t.PassWord == pwd).FirstOrDefault();
 
                 if (user != null)
                 {
-                    HttpContext.Session.SetInt32("userid", user.Id);
-                    HttpContext.Session.SetString("nickname", user.Nickname);
+                    HttpContext.Session.SetString("userid", user.Id);
+                    HttpContext.Session.SetString("nickname", user.Name);
                 }
                 else
                 {
@@ -53,7 +53,7 @@ namespace Cms.Controllers
         public void Login_Exit()
         {
          
-            HttpContext.Session.SetInt32("userid", 0);
+            HttpContext.Session.SetString("userid", "");
             HttpContext.Session.SetString("nickname", "");
 
             Response.Redirect("/User/Login/");
@@ -73,7 +73,7 @@ namespace Cms.Controllers
         {
             using (webcoreContext db = new webcoreContext())
             {
-                IList<TUserSys> list = db.TUserSys.ToList();
+                IList<TUser> list = db.TUser.ToList();
 
                 return Json(new { data = list });
             }
@@ -81,18 +81,18 @@ namespace Cms.Controllers
 
 
 
-        public IActionResult UserSys_Edit(int id = 0)
+        public IActionResult UserSys_Edit(string id)
         {
 
-            if (id == 0)
+            if (string.IsNullOrEmpty(id))
             {
-                return View(new TUserSys());
+                return View(new TUser());
             }
             else
             {
                 using (webcoreContext db = new webcoreContext())
                 {
-                    var UserSys = db.TUserSys.Where(t => t.Id == id).FirstOrDefault();
+                    var UserSys = db.TUser.Where(t => t.Id == id).FirstOrDefault();
                     return View(UserSys);
                 }
             }
@@ -100,28 +100,28 @@ namespace Cms.Controllers
         }
 
 
-        public void UserSys_Edit_Run(TUserSys UserSys)
+        public void UserSys_Edit_Run(TUser UserSys)
         {
             using (webcoreContext db = new webcoreContext())
             {
 
 
-                if (UserSys.Id == 0)
+                if (string.IsNullOrEmpty(UserSys.Id))
                 {
                     //执行添加
 
-                    UserSys.Createtime = DateTime.Now;
+                    UserSys.CreateTime = DateTime.Now;
 
-                    db.TUserSys.Add(UserSys);
+                    db.TUser.Add(UserSys);
                 }
                 else
                 {
                     //执行修改
-                    var dbUserSys = db.TUserSys.Where(t => t.Id == UserSys.Id).FirstOrDefault();
+                    var dbUserSys = db.TUser.Where(t => t.Id == UserSys.Id).FirstOrDefault();
 
-                    PropertyHelper.Assignment<TUserSys>(dbUserSys, UserSys);
+                    PropertyHelper.Assignment<TUser>(dbUserSys, UserSys);
 
-                    dbUserSys.Updatetime = DateTime.Now;
+                    dbUserSys.UpdateTime = DateTime.Now;
 
                 }
 
@@ -132,12 +132,12 @@ namespace Cms.Controllers
         }
 
 
-        public JsonResult UserSys_Delete(int id)
+        public JsonResult UserSys_Delete(string id)
         {
             using (webcoreContext db = new webcoreContext())
             {
-                TUserSys UserSys = db.TUserSys.Where(t => t.Id == id).FirstOrDefault();
-                db.TUserSys.Remove(UserSys);
+                var UserSys = db.TUser.Where(t => t.Id == id).FirstOrDefault();
+                db.TUser.Remove(UserSys);
                 db.SaveChanges();
 
                 var data = new { status = true, msg = "删除成功！" };

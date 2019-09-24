@@ -1,4 +1,4 @@
-﻿@model Models.WebCore.TUserSys
+﻿@model TUser
 @{
     Layout = null;
 }
@@ -18,7 +18,7 @@
     <form method="post" id="form1" action="/User/UserSys_Edit_Run/">
 
         <input type="hidden" value="@Model.Id" name="Id" />
-        <input type="hidden" value="@Model.Createtime" name="Createtime" />
+        <input type="hidden" value="@Model.CreateTime" name="Createtime" />
 
         <!--导航栏-->
         <div class="location">
@@ -54,7 +54,7 @@
             <dl>
                 <dt>登录密码</dt>
                 <dd>
-                    <input name="Password" type="password" class="input normal" value="@Model.Password" />
+                    <input name="Password" type="password" class="input normal" value="@Model.PassWord" />
                     <span class="Validform_checktip">
                         *请输入登录密码
                     </span>
@@ -63,7 +63,7 @@
             <dl>
                 <dt>确认密码</dt>
                 <dd>
-                    <input name="Password1" type="password" class="input normal" value="@Model.Password" />
+                    <input name="Password1" type="password" class="input normal" value="@Model.PassWord" />
                     <span class="Validform_checktip">
                         *请再次输入登录密码
                     </span>
@@ -72,7 +72,7 @@
             <dl>
                 <dt>昵称</dt>
                 <dd>
-                    <input name="Nickname" type="text" class="input normal" value="@Model.Nickname" />
+                    <input name="Nickname" type="text" class="input normal" value="@Model.Name" />
                     <span class="Validform_checktip">
                         *请输入昵称
                     </span>

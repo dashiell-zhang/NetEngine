@@ -12,7 +12,7 @@ namespace Methods.Http
     {
         private static IServiceProvider ServiceProvider { get; set; }
 
-        private static IHostingEnvironment HostingEnvironment { get; set; }
+        private static IWebHostEnvironment HostingEnvironment { get; set; }
 
 
         public static void Add(IServiceCollection services)
@@ -21,7 +21,7 @@ namespace Methods.Http
         }
 
 
-        public static void Initialize(IApplicationBuilder app, IHostingEnvironment env)
+        public static void Initialize(IApplicationBuilder app, IWebHostEnvironment env)
         {
             ServiceProvider = app.ApplicationServices;
             HostingEnvironment = env;

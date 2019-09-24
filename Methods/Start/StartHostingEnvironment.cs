@@ -7,11 +7,11 @@ namespace Methods.Start
 {
     public class StartHostingEnvironment
     {
-        public static IHostingEnvironment hostingEnvironment;
+        public static IWebHostEnvironment webHostEnvironment;
 
-        public static void Add(IHostingEnvironment in_hostingEnvironment)
+        public static void Add(IWebHostEnvironment in_webHostEnvironment)
         {
-            hostingEnvironment = in_hostingEnvironment;
+            webHostEnvironment = in_webHostEnvironment;
         }
 
     }

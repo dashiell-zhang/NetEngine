@@ -19,7 +19,7 @@ namespace Cms.Controllers
         }
 
 
-        public string ProcessRequest([FromServices]IHostingEnvironment environment)
+        public string ProcessRequest([FromServices]IWebHostEnvironment environment)
         {
 
             var context = HttpContext;

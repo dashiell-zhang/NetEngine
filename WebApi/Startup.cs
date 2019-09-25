@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Models.JwtBearer;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.IO;
 using System.Text;
@@ -89,11 +90,16 @@ namespace WebApi
             });
 
 
+            //调整Json操作类库为 NewtonsoftJson ，需要安装 Microsoft.AspNetCore.Mvc.NewtonsoftJson
             services.AddControllers().AddNewtonsoftJson(options =>
             {
                 //设置 Json 默认时间格式
                 options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
+
+                //设置返回的属性名全部小写
+                options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
+
 
             //注册配置文件信息
             Methods.Start.StartConfiguration.Add(Configuration);

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json.Serialization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 
@@ -51,10 +52,14 @@ namespace Cms
             services.AddSession();
 
 
-            //调整Json操作类库为 NewtonsoftJson ,并设置默认时间格式，需要安装 Microsoft.AspNetCore.Mvc.NewtonsoftJson
+            //调整Json操作类库为 NewtonsoftJson ，需要安装 Microsoft.AspNetCore.Mvc.NewtonsoftJson
             services.AddControllers().AddNewtonsoftJson(options =>
             {
+                //设置 Json 默认时间格式
                 options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
+
+                //设置返回的属性名全部小写
+                options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
 
 

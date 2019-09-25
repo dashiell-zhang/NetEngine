@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -15,7 +16,7 @@ namespace Methods.Json
         /// 通过 Key 获取 Value
         /// </summary>
         /// <returns></returns>
-        public static string GetValueByKey(string json,string key)
+        public static string GetValueByKey(string json, string key)
         {
             JObject jo = (JObject)JsonConvert.DeserializeObject(json);
 
@@ -85,6 +86,10 @@ namespace Methods.Json
                 JsonSerializerSettings jset = new JsonSerializerSettings();
                 jset.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                 jset.Converters.Add(new IsoDateTimeConverter { DateTimeFormat = "yyyy'/'MM'/'dd' 'HH':'mm':'ss" });
+
+                //设置属性名小写
+                jset.ContractResolver = new CamelCasePropertyNamesContractResolver();
+
                 return JsonConvert.SerializeObject(obj, jset).ToString();
             }
             catch (Exception ex)

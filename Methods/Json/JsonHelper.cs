@@ -153,5 +153,16 @@ namespace Methods.Json
         {
             return JsonConvert.DeserializeObject(strJson, typeof(DataTable)) as DataTable;
         }
+
+
+        /// <summary>
+        /// 没有Key的 Json 转 数组List
+        /// </summary>
+        /// <param name="strJson"></param>
+        /// <returns></returns>
+        public static List<JToken> JsonToArrayList(string strJson)
+        {
+            return ((JArray)JsonConvert.DeserializeObject(strJson)).ToList();
+        }
     }
 }

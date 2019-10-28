@@ -17,7 +17,7 @@ namespace Models.DataBases.WebCore.Bases
         /// 创建人ID
         /// </summary>
 
-        [MaxLength(64)]
+        [MaxLength(36)]
         public string CreateUserId { get; set; }
         public TUser CreateUser { get; set; }
 
@@ -26,7 +26,7 @@ namespace Models.DataBases.WebCore.Bases
         /// <summary>
         /// 删除人ID
         /// </summary>
-        [MaxLength(64)]
+        [MaxLength(36)]
         public string DeleteUserId { get; set; }
         public TUser DeleteUser { get; set; }
     }

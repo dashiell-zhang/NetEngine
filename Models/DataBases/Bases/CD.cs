@@ -16,7 +16,7 @@ namespace Models.DataBases.Bases
         /// <summary>
         /// 主键标识ID
         /// </summary>
-        [MaxLength(64)]
+        [MaxLength(36)]
         public string Id { get; set; }
 
 
@@ -31,7 +31,7 @@ namespace Models.DataBases.Bases
         /// 是否删除
         /// </summary>
         [Column(TypeName = "bit")]
-        public bool? IsDelete { get; set; }
+        public bool IsDelete { get; set; }
 
 
 

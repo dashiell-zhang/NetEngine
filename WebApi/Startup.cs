@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Models.JwtBearer;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.IO;
@@ -98,6 +99,9 @@ namespace WebApi
 
                 //设置返回的属性名全部小写
                 options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+
+                //忽略循环引用
+                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
 

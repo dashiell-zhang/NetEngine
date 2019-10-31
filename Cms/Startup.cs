@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
@@ -60,6 +61,9 @@ namespace Cms
 
                 //设置返回的属性名全部小写
                 options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+
+                //忽略循环引用
+                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
 
@@ -80,7 +84,6 @@ namespace Cms
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }

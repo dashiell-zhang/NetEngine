@@ -18,14 +18,20 @@ namespace Models.DataBases.WebCore
         /// <summary>
         /// 标记
         /// </summary>
-        public string type { get; set; }
+        public string Sign { get; set; }
+
+
+        /// <summary>
+        /// 类型
+        /// </summary>
+        public string Type { get; set; }
 
 
 
         /// <summary>
-        /// 计数
+        /// 内容
         /// </summary>
-        public int count { get; set; }
+        public string Content { get; set; }
 
     }
 }

@@ -20,6 +20,23 @@ namespace WebApi.Actions
                 errMsg = error.Message
             };
 
+
+            string path = Methods.Http.HttpContext.GetUrl();
+
+            var parameter = Methods.Http.HttpContext.GetParameter();
+
+            var content = new
+            {
+                path = path,
+                parameter = parameter,
+                error = error
+            };
+
+            string strContent = JsonHelper.ObjectToJSON(content);
+
+            Methods.UseDB.Log.Set("WebApi", "errorlog", strContent);
+
+
             return context.Response.WriteAsync(JsonHelper.ObjectToJSON(ret));
         }
     }

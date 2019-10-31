@@ -15,15 +15,17 @@ namespace Models.DataBases.WebCore
         {
         }
 
-        public DbSet<TUser> TUser { get; set; }
-
-        public DbSet<TUserToken> TUserToken { get; set; }
+        public DbSet<TCount> TCount { get; set; }
 
         public DbSet<TFile> TFile { get; set; }
 
         public DbSet<TFileGroup> TFileGroup { get; set; }
 
         public DbSet<TFileGroupFile> TFileGroupFile { get; set; }
+
+        public DbSet<TGuidToInt> TGuidToInt { get; set; }
+
+        public DbSet<TLog> TLog { get; set; }
 
         public DbSet<TOrder> TOrder { get; set; }
 
@@ -33,14 +35,15 @@ namespace Models.DataBases.WebCore
 
         public DbSet<TProductImgBaiduAi> TProductImgBaiduAi { get; set; }
 
-
-        public DbSet<TWeiXinKey> TWeiXinKey { get; set; }
+        public DbSet<TUser> TUser { get; set; }
 
         public DbSet<TUserBindWeixin> TUserBindWeixin { get; set; }
 
-        public DbSet<TCount> TCount { get; set; }
+        public DbSet<TUserToken> TUserToken { get; set; }
 
-        public DbSet<TGuidToInt> TGuidToInt { get; set; }
+        public DbSet<TWeiXinKey> TWeiXinKey { get; set; }
+
+
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

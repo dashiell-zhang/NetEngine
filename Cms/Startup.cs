@@ -75,6 +75,9 @@ namespace Cms
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
+            //注册中间件将请求中的 Request.Body 内容设置到静态变量
+            app.UseMiddleware<Methods.Http.SetRequestBody>();
+
             //注册全局异常处理机制
             app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
             if (env.IsDevelopment())

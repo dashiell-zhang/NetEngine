@@ -32,7 +32,7 @@ namespace WebApi.Filters
 
                     if (context.HttpContext.Request.Method == "POST")
                     {
-                        string body = Methods.Http.HttpContext.GetBody();
+                        string body = Methods.Http.HttpContext.RequestBody;
 
                         if (!string.IsNullOrEmpty(body))
                         {

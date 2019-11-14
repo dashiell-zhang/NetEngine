@@ -123,6 +123,9 @@ namespace WebApi
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
+            //注册中间件将请求中的 Request.Body 内容设置到静态变量
+            app.UseMiddleware<Methods.Http.SetRequestBody>();
+
             //注册用户认证机制
             app.UseAuthentication();
 

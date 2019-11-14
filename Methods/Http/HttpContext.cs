@@ -50,27 +50,11 @@ namespace Methods.Http
 
 
 
+
         /// <summary>
-        /// 获取Body信息
+        /// RequestBody中的内容
         /// </summary>
-        /// <returns></returns>
-        public static string GetBody()
-        {
-            try
-            {
-                Current().Request.Body.Seek(0, 0);
-
-                var requestReader = new StreamReader(Current().Request.Body);
-
-                var requestContent = requestReader.ReadToEnd();
-
-                return requestContent;
-            }
-            catch
-            {
-                return "";
-            }
-        }
+        public static string RequestBody;
 
 
 
@@ -85,7 +69,7 @@ namespace Methods.Http
 
             if (context.Request.Method == "POST")
             {
-                string body = Methods.Http.HttpContext.GetBody();
+                string body = Methods.Http.HttpContext.RequestBody;
 
                 if (!string.IsNullOrEmpty(body))
                 {

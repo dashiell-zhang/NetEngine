@@ -12,66 +12,80 @@ namespace WebApi.Filters
     public class TokenVerify : Attribute, IActionFilter
     {
 
+
+        /// <summary>
+        /// 是否跳过Token验证，可用于控制器下单个接口指定跳过Token验证
+        /// </summary>
+        public bool IsSkip { get; set; }
+
+
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
-            var token = context.HttpContext.Request.Headers["Token"].ToString().ToLower();
 
-            var rip = context.HttpContext.Connection.RemoteIpAddress.ToString();
+            var filter = (TokenVerify)context.Filters.Where(t => t.ToString() == "WebApi.Filters.TokenVerify").ToList().LastOrDefault();
 
-            if (!rip.Contains("127.0.0.1"))
+
+            if (!filter.IsSkip)
             {
-                var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
-                var time = Methods.DataTime.DateTimeHelper.JsToTime(long.Parse(timeStr));
+                var token = context.HttpContext.Request.Headers["Token"].ToString().ToLower();
 
-                if (time.AddMinutes(10) > DateTime.Now)
+                var rip = context.HttpContext.Connection.RemoteIpAddress.ToString();
+
+                if (!rip.Contains("127.0.0.1"))
                 {
-                    string privatekey = "gPmgRr9Dp3wzubTaGIgmMSpfNiKqkIAA0C8gkaBSN0ca3GWxk3W6682KuXRpxnDq";
+                    var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
+                    var time = Methods.DataTime.DateTimeHelper.JsToTime(long.Parse(timeStr));
 
-                    string strdata = privatekey + timeStr;
-
-
-                    if (context.HttpContext.Request.Method == "POST")
+                    if (time.AddMinutes(10) > DateTime.Now)
                     {
-                        string body = Methods.Http.HttpContext.RequestBody;
+                        string privatekey = "gPmgRr9Dp3wzubTaGIgmMSpfNiKqkIAA0C8gkaBSN0ca3GWxk3W6682KuXRpxnDq";
 
-                        if (!string.IsNullOrEmpty(body))
-                        {
-                            strdata = strdata + body;
-                        }
-                        else if (context.HttpContext.Request.HasFormContentType)
-                        {
-                            var fromlist = context.HttpContext.Request.Form.OrderBy(t => t.Key).ToList();
+                        string strdata = privatekey + timeStr;
 
-                            foreach (var fm in fromlist)
+
+                        if (context.HttpContext.Request.Method == "POST")
+                        {
+                            string body = Methods.Http.HttpContext.RequestBody;
+
+                            if (!string.IsNullOrEmpty(body))
                             {
-                                strdata = strdata + fm.Key + fm.Value.ToString();
+                                strdata = strdata + body;
+                            }
+                            else if (context.HttpContext.Request.HasFormContentType)
+                            {
+                                var fromlist = context.HttpContext.Request.Form.OrderBy(t => t.Key).ToList();
+
+                                foreach (var fm in fromlist)
+                                {
+                                    strdata = strdata + fm.Key + fm.Value.ToString();
+                                }
                             }
                         }
-                    }
-                    else if (context.HttpContext.Request.Method == "GET")
-                    {
-                        var queryList = context.HttpContext.Request.Query.ToList();
-
-                        foreach (var query in queryList)
+                        else if (context.HttpContext.Request.Method == "GET")
                         {
-                            strdata = strdata + query.Key + query.Value;
+                            var queryList = context.HttpContext.Request.Query.ToList();
+
+                            foreach (var query in queryList)
+                            {
+                                strdata = strdata + query.Key + query.Value;
+                            }
+                        }
+
+
+                        string tk = Methods.Crypto.Md5.GetMd5(strdata).ToLower();
+
+                        if (token != tk)
+                        {
+                            context.HttpContext.Response.StatusCode = 401;
+
+                            context.Result = new JsonResult(new { errMsg = "非法 Token ！" });
                         }
                     }
-
-
-                    string tk = Methods.Crypto.Md5.GetMd5(strdata).ToLower();
-
-                    if (token != tk)
+                    else
                     {
                         context.HttpContext.Response.StatusCode = 401;
-
-                        context.Result = new JsonResult(new { errMsg = "非法 Token ！" });
+                        context.Result = new JsonResult(new { errMsg = "Token 有效期以过！" });
                     }
-                }
-                else
-                {
-                    context.HttpContext.Response.StatusCode = 401;
-                    context.Result = new JsonResult(new { errMsg = "Token 有效期以过！" });
                 }
             }
 

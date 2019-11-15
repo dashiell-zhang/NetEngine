@@ -8,7 +8,7 @@ using Methods.Json;
 
 namespace WebApi.Filters
 {
-    public class GlobalFiler : Attribute, IActionFilter
+    public class GlobalFilter : Attribute, IActionFilter
     {
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)

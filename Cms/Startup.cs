@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 
@@ -60,8 +61,20 @@ namespace Cms
             //注册配置文件信息
             Methods.Start.StartConfiguration.Add(Configuration);
 
+
+            //添加redis
+            services.AddDistributedRedisCache(options =>
+            {
+                options.Configuration = "localhost,Password=123456,DefaultDatabase=0";
+            });
+
+
             //注册Session
-            services.AddSession();
+            services.AddSession(options =>
+            {
+                //设置Session过期时间
+                options.IdleTimeout = TimeSpan.FromHours(3);
+            });
 
 
             //调整Json操作类库为 NewtonsoftJson ，需要安装 Microsoft.AspNetCore.Mvc.NewtonsoftJson

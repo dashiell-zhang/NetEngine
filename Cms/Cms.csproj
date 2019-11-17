@@ -70,6 +70,7 @@
     <None Include="wwwroot\lib\layui\lay\modules\tree.js" />
     <None Include="wwwroot\lib\layui\lay\modules\upload.js" />
     <None Include="wwwroot\lib\layui\lay\modules\util.js" />
+    <None Include="wwwroot\private\time.js" />
   </ItemGroup>
 
 

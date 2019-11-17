@@ -1,4 +1,6 @@
-﻿function timeTosec (time) {
+﻿
+//时间转秒
+function timeTosec(time) {
     var s = '';
 
     var hour = time.split(':')[0];
@@ -11,6 +13,7 @@
 };
 
 
+//秒转时间
 function secTotime (s) {
     var t;
     if (s > -1) {
@@ -30,3 +33,12 @@ function secTotime (s) {
     }
     return t.substring(0, 8);
 };
+
+
+//js进程休眠指定时间，单位毫秒
+function sleep(delay) {
+    var start = (new Date()).getTime();
+    while ((new Date()).getTime() - start < delay) {
+        continue;
+    }
+}

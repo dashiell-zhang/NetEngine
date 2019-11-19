@@ -163,9 +163,9 @@ textarea.input{ width:300px; height:65px; }
 .toolbar-wrap{ padding:10px 0; min-height:52px; *position:relative; *z-index:1; }
 .toolbar{ left:15px; right:15px; padding:10px 0; background:#fff; z-index:2; }
 	.toolbar:after{clear:both;content:".";display:block;height:0;visibility:hidden;}
-	.toolbar .l-list{ float:left; }
+	.toolbar .l-list{ }
 	.toolbar .l-list .icon-list{ margin-right:10px; }
-	.toolbar .l-list .icon-list,.toolbar .l-list .icon-list li{ float:left; }
+	.toolbar .l-list .icon-list,.toolbar .l-list .icon-list li{  }
 	.toolbar .l-list .icon-list li:first-child a{ border-left:solid 1px #dbdbdb; }
 	.toolbar .l-list .icon-list li a{ display:inline-block; padding:5px 10px 5px 8px; line-height:20px; height:20px; border:solid 1px #e1e1e1; border-left:none; color:#333; font-size:12px; text-decoration:none; background:#fafafa; }
 	.toolbar .l-list .icon-list li a:hover{ color:#2A72C5; }

@@ -129,6 +129,32 @@ namespace WebApi
                 options.IncludeXmlComments(xmlPath, true);
                 xmlPath = Path.Combine(basePath, "Models.xml");
                 options.IncludeXmlComments(xmlPath, true);
+
+
+                //开启 Swagger JWT 鉴权模块
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Description = "在下框中输入请求头中需要添加Jwt授权Token：Bearer Token",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                }
+                            },
+                        new string[] { }
+                    }
+                });
             });
         }
 
@@ -168,6 +194,7 @@ namespace WebApi
             app.UseRouting();
 
             //注册用户认证机制,必须放在 UseCors UseRouting 之后
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

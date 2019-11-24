@@ -13,7 +13,6 @@ namespace WebApi.Filters
     /// <summary>
     /// JWT 访问鉴权 Token 验证方法
     /// </summary>
-    [Authorize]
     public class JwtTokenVerify : Attribute, IActionFilter
     {
 

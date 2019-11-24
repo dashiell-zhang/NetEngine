@@ -17,6 +17,7 @@ namespace WebApi.Controllers
     /// <summary>
     /// 文件上传控制器
     /// </summary>
+    [Authorize]
     [JwtTokenVerify]
     [Route("api/[controller]")]
     [ApiController]
@@ -28,11 +29,10 @@ namespace WebApi.Controllers
         /// <summary>
         /// 单文件上传接口
         /// </summary>
-        /// <param name="Authorization">token</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [HttpPost("UploadFile")]
-        public string UploadFile([Required][FromHeader] string Authorization, [Required]IFormFile file)
+        public string UploadFile([Required]IFormFile file)
         {
 
             string userid = Methods.Verify.JwtToken.GetClaims("userid");
@@ -87,12 +87,11 @@ namespace WebApi.Controllers
         /// <summary>
         /// 多文件上传接口
         /// </summary>
-        /// <param name="Authorization"></param>
         /// <returns></returns>
         /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
         [Authorize]
         [HttpPost("BatchUploadFile")]
-        public List<dtoFileInfo> BatchUploadFile([Required][FromHeader] string Authorization)
+        public List<dtoFileInfo> BatchUploadFile()
         {
 
             var fileInfos = new List<dtoFileInfo>();
@@ -168,11 +167,10 @@ namespace WebApi.Controllers
         /// <summary>
         /// 通过文件ID获取文件
         /// </summary>
-        /// <param name="Authorization">Authorization</param>
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
         [HttpGet("GetFile")]
-        public FileResult GetFile([Required][FromHeader] string Authorization, [Required]string fileid)
+        public FileResult GetFile([Required]string fileid)
         {
             using (webcoreContext db = new webcoreContext())
             {
@@ -205,13 +203,12 @@ namespace WebApi.Controllers
         /// <summary>
         /// 多文件切片上传，获取初始化文件ID
         /// </summary>
-        /// <param name="Authorization">Token</param>
         /// <param name="filename">文件名称</param>
         /// <param name="slicing">总切片数</param>
         /// <param name="unique">文件校验值</param>
         /// <returns></returns>
         [HttpGet("CreateGroupFileId")]
-        public string CreateGroupFileId([Required][FromHeader] string Authorization, [Required]string filename, [Required] int slicing, [Required]string unique)
+        public string CreateGroupFileId([Required]string filename, [Required] int slicing, [Required]string unique)
         {
             var userid = Methods.Verify.JwtToken.GetClaims("userid");
             using (webcoreContext db = new webcoreContext())
@@ -260,13 +257,12 @@ namespace WebApi.Controllers
         /// <summary>
         /// 文件切片上传接口
         /// </summary>
-        /// <param name="Authorization">token</param>
         /// <param name="fileid">文件组ID</param>
         /// <param name="index">切片索引</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [HttpPost("UploadGroupFile")]
-        public bool UploadGroupFile([Required][FromHeader] string Authorization, [Required][FromForm]string fileid, [Required][FromForm]int index, [Required]IFormFile file)
+        public bool UploadGroupFile([Required][FromForm]string fileid, [Required][FromForm]int index, [Required]IFormFile file)
         {
 
             try

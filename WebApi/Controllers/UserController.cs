@@ -15,8 +15,9 @@ namespace WebApi.Controllers
     /// <summary>
     /// 用户数据操作控制器
     /// </summary>
+    [Authorize]
+    [JwtTokenVerify]
     [Route("api/[controller]")]
-    [TokenVerify]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -102,12 +103,11 @@ namespace WebApi.Controllers
         /// <summary>
         /// 通过 UserId 获取用户信息 
         /// </summary>
-        /// <param name="Authorization"></param>
         /// <param name="userid">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
-        [CacheData(TTL = 60,UseToken =true)]
-        public TUser GetUser([Required][FromHeader] string Authorization, string userid)
+        [CacheData(TTL = 60, UseToken = true)]
+        public TUser GetUser(string userid)
         {
             using (webcoreContext db = new webcoreContext())
             {

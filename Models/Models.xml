@@ -1,0 +1,484 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Models</name>
+    </assembly>
+    <members>
+        <member name="T:Models.DataBases.Bases.CD">
+            <summary>
+            创建，删除
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.Bases.CD.Id">
+            <summary>
+            主键标识ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.Bases.CD.CreateTime">
+            <summary>
+            创建时间
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.Bases.CD.IsDelete">
+            <summary>
+            是否删除
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.Bases.CD.DeleteTime">
+            <summary>
+            删除时间
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.Bases.CUD">
+            <summary>
+            创建，编辑，删除
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.Bases.CUD.UpdateTime">
+            <summary>
+            更新时间
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.Bases.CD_User">
+            <summary>
+            创建，编辑，删除，并关联了用户
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.Bases.CD_User.CreateUserId">
+            <summary>
+            创建人ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.Bases.CD_User.DeleteUserId">
+            <summary>
+            删除人ID
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.Bases.CUD_User">
+            <summary>
+            创建，编辑，删除，并关联了用户
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.Bases.CUD_User.CreateUserId">
+            <summary>
+            创建人ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.Bases.CUD_User.UpdateUserId">
+            <summary>
+            编辑人ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.Bases.CUD_User.DeleteUserId">
+            <summary>
+            删除人ID
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TCount">
+            <summary>
+            计数表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TCount.Tag">
+            <summary>
+            标记
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TCount.Count">
+            <summary>
+            计数
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TFile">
+            <summary>
+            文件表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFile.Name">
+            <summary>
+            文件名称
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFile.Path">
+            <summary>
+            保存路径
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFile.Type">
+            <summary>
+            文件类型
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TFileGroup">
+            <summary>
+            文件分片上传状态记录表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFileGroup.FileId">
+            <summary>
+            文件ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFileGroup.Unique">
+            <summary>
+            文件唯一值
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFileGroup.Slicing">
+            <summary>
+            分片数
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFileGroup.Issynthesis">
+            <summary>
+            合成状态
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFileGroup.Isfull">
+            <summary>
+            是否已完整传输
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TFileGroupFile">
+            <summary>
+            分片上传时的切片文件记录表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFileGroupFile.FileId">
+            <summary>
+            文件ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFileGroupFile.Index">
+            <summary>
+            文件索引值
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TFileGroupFile.Path">
+            <summary>
+            文件保存路径
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TGuidToInt.Id">
+            <summary>
+            Id
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TGuidToInt.Guid">
+            <summary>
+            Guid 字符串
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TLog">
+            <summary>
+            日志表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TLog.Sign">
+            <summary>
+            标记
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TLog.Type">
+            <summary>
+            类型
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TLog.Content">
+            <summary>
+            内容
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TOrder">
+            <summary>
+            订单表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.OrderNo">
+            <summary>
+            订单号
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.ProductId">
+            <summary>
+            产品ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.Type">
+            <summary>
+            订单类型
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.Price">
+            <summary>
+            价格
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.SerialNo">
+            <summary>
+            支付流水号
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.State">
+            <summary>
+            订单状态
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.PayType">
+            <summary>
+            支付方式
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.Paystate">
+            <summary>
+            支付状态
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.Paytime">
+            <summary>
+            支付时间
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TOrder.Payprice">
+            <summary>
+            实际支付金额
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TProduct">
+            <summary>
+            产品表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProduct.Number">
+            <summary>
+            编号
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProduct.Name">
+            <summary>
+            名称
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProduct.Price">
+            <summary>
+            价格
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProduct.Detail">
+            <summary>
+            描述
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TProductImg">
+            <summary>
+            产品图片表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProductImg.ProductId">
+            <summary>
+            产品ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProductImg.FileId">
+            <summary>
+            图片文件ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProductImg.Sort">
+            <summary>
+            排序
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TProductImgBaiduAi">
+            <summary>
+            产品图片对应百度AI信息表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProductImgBaiduAi.ProductImgId">
+            <summary>
+            产品图片ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProductImgBaiduAi.Unique">
+            <summary>
+            图片库唯一标识符
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TProductImgBaiduAi.Result">
+            <summary>
+            接口返回值
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUser.Name">
+            <summary>
+            用户名
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUser.Phone">
+            <summary>
+            手机号
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUser.Email">
+            <summary>
+            邮箱
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUser.PassWord">
+            <summary>
+            密码
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TUserBindWeixin">
+            <summary>
+            用户和微信绑定关系表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUserBindWeixin.UserId">
+            <summary>
+            用户ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUserBindWeixin.WeiXinKeyId">
+            <summary>
+            关联微信账户
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUserBindWeixin.WeiXinOpenId">
+            <summary>
+            微信OpenId
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TUserToken">
+            <summary>
+            用户Token记录表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUserToken.UserId">
+            <summary>
+            用户ID
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUserToken.Token">
+            <summary>
+            Token
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TUserToken.LastId">
+            <summary>
+            上一次有效的 tokenid
+            </summary>
+        </member>
+        <member name="T:Models.DataBases.WebCore.TWeiXinKey">
+            <summary>
+            微信商户平台账户配置表
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TWeiXinKey.WxAppId">
+            <summary>
+            WxAppId
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TWeiXinKey.WxAppSecret">
+            <summary>
+            WxAppSecret
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TWeiXinKey.MchId">
+            <summary>
+            MchId
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TWeiXinKey.MchKey">
+            <summary>
+            MchKey
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TWeiXinKey.Sort">
+            <summary>
+            排序
+            </summary>
+        </member>
+        <member name="P:Models.DataBases.WebCore.TWeiXinKey.Remark">
+            <summary>
+            备注
+            </summary>
+        </member>
+        <member name="T:Models.Dtos.dtoFileInfo">
+            <summary>
+            文件信息
+            </summary>
+        </member>
+        <member name="P:Models.Dtos.dtoFileInfo.fileid">
+            <summary>
+            文件ID
+            </summary>
+        </member>
+        <member name="P:Models.Dtos.dtoFileInfo.filename">
+            <summary>
+            文件名称
+            </summary>
+        </member>
+        <member name="P:Models.Dtos.dtoKeyValue.Key">
+            <summary>
+            键
+            </summary>
+        </member>
+        <member name="P:Models.Dtos.dtoKeyValue.Value">
+            <summary>
+            值
+            </summary>
+        </member>
+        <member name="T:Models.Dtos.dtoLogin">
+            <summary>
+            登录信息
+            </summary>
+        </member>
+        <member name="P:Models.Dtos.dtoLogin.name">
+            <summary>
+            用户名
+            </summary>
+        </member>
+        <member name="P:Models.Dtos.dtoLogin.password">
+            <summary>
+            密码
+            </summary>
+        </member>
+        <member name="T:Models.Dtos.dtoPageList`1">
+            <summary>
+            分页数据信息基类
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="P:Models.Dtos.dtoPageList`1.total">
+            <summary>
+            数据总量
+            </summary>
+        </member>
+        <member name="P:Models.Dtos.dtoPageList`1.list">
+            <summary>
+            具体数据内容
+            </summary>
+        </member>
+        <member name="T:Models.JwtBearer.JwtSettings">
+            <summary>
+            JWT 配置信息
+            </summary>
+        </member>
+        <member name="P:Models.JwtBearer.JwtSettings.Issuer">
+            <summary>
+            token是谁颁发的
+            </summary>
+        </member>
+        <member name="P:Models.JwtBearer.JwtSettings.Audience">
+            <summary>
+            token可以给哪些客户端使用
+            </summary>
+        </member>
+        <member name="P:Models.JwtBearer.JwtSettings.SecretKey">
+            <summary>
+            加密的key
+            </summary>
+        </member>
+    </members>
+</doc>

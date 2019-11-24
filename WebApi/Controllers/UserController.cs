@@ -16,7 +16,6 @@ namespace WebApi.Controllers
     /// 用户数据操作控制器
     /// </summary>
     [Route("api/[controller]")]
-    [Authorize]
     [TokenVerify]
     [ApiController]
     public class UserController : ControllerBase

@@ -1,15 +1,15 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
+using Models.DataBases.WebCore;
+using Models.Dtos;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.StaticFiles;
-using Models.Dtos;
-using Models.DataBases.WebCore;
+using WebApi.Filters;
 
 namespace WebApi.Controllers
 {
@@ -17,7 +17,7 @@ namespace WebApi.Controllers
     /// <summary>
     /// 文件上传控制器
     /// </summary>
-    [Authorize]
+    [JwtTokenVerify]
     [Route("api/[controller]")]
     [ApiController]
     public class FileController : ControllerBase

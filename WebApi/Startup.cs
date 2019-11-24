@@ -127,6 +127,8 @@ namespace WebApi
                 var basePath = AppContext.BaseDirectory;
                 var xmlPath = Path.Combine(basePath, "WebApi.xml");
                 options.IncludeXmlComments(xmlPath, true);
+                xmlPath = Path.Combine(basePath, "Models.xml");
+                options.IncludeXmlComments(xmlPath, true);
             });
         }
 
@@ -137,8 +139,6 @@ namespace WebApi
             //注册中间件将请求中的 Request.Body 内容设置到静态变量
             app.UseMiddleware<Methods.Http.SetRequestBody>();
 
-            //注册用户认证机制
-            app.UseAuthentication();
 
             //注册全局异常处理机制
             app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
@@ -166,6 +166,9 @@ namespace WebApi
 
 
             app.UseRouting();
+
+            //注册用户认证机制,必须放在 UseCors UseRouting 之后
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

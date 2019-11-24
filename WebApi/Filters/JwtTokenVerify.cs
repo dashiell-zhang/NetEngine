@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Models.DataBases.WebCore;
 using System;
@@ -12,6 +13,7 @@ namespace WebApi.Filters
     /// <summary>
     /// JWT 访问鉴权 Token 验证方法
     /// </summary>
+    [Authorize]
     public class JwtTokenVerify : Attribute, IActionFilter
     {
 

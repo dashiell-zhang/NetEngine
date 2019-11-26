@@ -19,9 +19,16 @@ namespace Methods.Json
         /// <returns></returns>
         public static string GetValueByKey(string json, string key)
         {
-            JObject jo = (JObject)JsonConvert.DeserializeObject(json);
+            try
+            {
+                JObject jo = (JObject)JsonConvert.DeserializeObject(json);
 
-            return jo[key].ToString();
+                return jo[key].ToString();
+            }
+            catch
+            {
+                throw new Exception(json);
+            }
         }
 
 

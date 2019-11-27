@@ -16,32 +16,45 @@ namespace WebApi.Filters
     public class JwtTokenVerify : Attribute, IActionFilter
     {
 
+        /// <summary>
+        /// 是否跳过Token验证，可用于控制器下单个接口指定跳过Token验证
+        /// </summary>
+        public bool IsSkip { get; set; }
+
+
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
 
-            var exp = Convert.ToInt64(Methods.Verify.JwtToken.GetClaims("exp"));
+            var filter = (TokenVerify)context.Filters.Where(t => t.ToString() == "WebApi.Filters.JwtTokenVerify").ToList().LastOrDefault();
 
-            var exptime = Methods.DataTime.DateTimeHelper.UnixToTime(exp);
-
-            if (exptime < DateTime.Now)
+            if (!filter.IsSkip)
             {
-                var tokenid = Methods.Verify.JwtToken.GetClaims("tokenid");
 
-                using (webcoreContext db = new webcoreContext())
+                var exp = Convert.ToInt64(Methods.Verify.JwtToken.GetClaims("exp"));
+
+                var exptime = Methods.DataTime.DateTimeHelper.UnixToTime(exp);
+
+                if (exptime < DateTime.Now)
                 {
+                    var tokenid = Methods.Verify.JwtToken.GetClaims("tokenid");
 
-                    var endtime = DateTime.Now.AddMinutes(-3);
-
-                    var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid || (t.LastId == tokenid & t.CreateTime > endtime)).FirstOrDefault();
-
-                    if (tokeninfo == null)
+                    using (webcoreContext db = new webcoreContext())
                     {
-                        context.HttpContext.Response.StatusCode = 401;
 
-                        context.Result = new JsonResult(new { errMsg = "非法 Token ！" });
+                        var endtime = DateTime.Now.AddMinutes(-3);
+
+                        var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid || (t.LastId == tokenid & t.CreateTime > endtime)).FirstOrDefault();
+
+                        if (tokeninfo == null)
+                        {
+                            context.HttpContext.Response.StatusCode = 401;
+
+                            context.Result = new JsonResult(new { errMsg = "非法 Token ！" });
+                        }
                     }
                 }
+
             }
         }
 

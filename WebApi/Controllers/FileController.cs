@@ -89,7 +89,6 @@ namespace WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
-        [Authorize]
         [HttpPost("BatchUploadFile")]
         public List<dtoFileInfo> BatchUploadFile()
         {
@@ -169,6 +168,8 @@ namespace WebApi.Controllers
         /// </summary>
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
+        [AllowAnonymous]
+        [JwtTokenVerify(IsSkip = true)]
         [HttpGet("GetFile")]
         public FileResult GetFile([Required]string fileid)
         {

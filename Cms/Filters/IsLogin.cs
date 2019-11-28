@@ -19,7 +19,7 @@ namespace Cms.Filters
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
 
-            if (context.HttpContext.Session.GetInt32("userid") != null)
+            if (!string.IsNullOrEmpty(context.HttpContext.Session.GetString("userid")))
             {
                 //成功登录
 

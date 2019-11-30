@@ -102,6 +102,10 @@ namespace WebApi.Filters
                             var token = Methods.Verify.JwtToken.GetToken(claim);
                             context.HttpContext.Response.Headers.Add("NewToken", token);
 
+                            //解决 Ionic 取不到 Header中的信息问题
+                            context.HttpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");
+
+
 
                             userToken.Token = token;
 

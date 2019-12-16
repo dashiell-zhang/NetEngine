@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Methods.Http;
+using WebApi.Libraries.Http;
 using System.Linq;
 using System.Security.Cryptography;
-using Methods.WeiXin.H5.Models;
+using WebApi.Libraries.WeiXin.H5.Models;
+using Methods.Json;
 
-namespace Methods.WeiXin.H5
+namespace WebApi.Libraries.WeiXin.H5
 {
 
     public class WeiXinHelper
@@ -41,9 +42,9 @@ namespace Methods.WeiXin.H5
 
             string url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + appsecret;
 
-            var returnJson = Http.Post.Run(url, "", "form");
+            var returnJson = Methods.Http.Post.Run(url, "", "form");
 
-            var token = Json.JsonHelper.GetValueByKey(returnJson, "access_token");
+            var token = JsonHelper.GetValueByKey(returnJson, "access_token");
 
             return token;
         }
@@ -59,9 +60,9 @@ namespace Methods.WeiXin.H5
 
             string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken() + "&type=jsapi";
 
-            string returnJson = Http.Post.Run(getUrl, "", "form");
+            string returnJson = Methods.Http.Post.Run(getUrl, "", "form");
 
-            var ticketid = Json.JsonHelper.GetValueByKey(returnJson, "ticket");
+            var ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
 
             return ticketid;
         }

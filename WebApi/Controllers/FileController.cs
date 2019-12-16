@@ -35,7 +35,7 @@ namespace WebApi.Controllers
         public string UploadFile([Required]IFormFile file)
         {
 
-            string userid = Methods.Verify.JwtToken.GetClaims("userid");
+            string userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
 
             var url = string.Empty;
             var fileName = string.Empty;
@@ -43,7 +43,7 @@ namespace WebApi.Controllers
             var fullFileName = string.Empty;
 
             string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
-            string filepath = Methods.IO.Path.ContentRootPath() + basepath;
+            string filepath = WebApi.Libraries.IO.Path.ContentRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
 
@@ -97,7 +97,7 @@ namespace WebApi.Controllers
 
             var ReqFiles = Request.Form.Files;
 
-            string userid = Methods.Verify.JwtToken.GetClaims("userid");
+            string userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
 
             List<IFormFile> Attachments = new List<IFormFile>();
             for (int i = 0; i < ReqFiles.Count; i++)
@@ -113,7 +113,7 @@ namespace WebApi.Controllers
                 var fullFileName = string.Empty;
 
                 string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
-                string filepath = Methods.IO.Path.ContentRootPath() + basepath;
+                string filepath = WebApi.Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);
 
@@ -176,7 +176,7 @@ namespace WebApi.Controllers
             using (webcoreContext db = new webcoreContext())
             {
                 var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
-                string path = Methods.IO.Path.ContentRootPath() + file.Path;
+                string path = WebApi.Libraries.IO.Path.ContentRootPath() + file.Path;
 
 
                 //读取文件入流
@@ -211,7 +211,7 @@ namespace WebApi.Controllers
         [HttpGet("CreateGroupFileId")]
         public string CreateGroupFileId([Required]string filename, [Required] int slicing, [Required]string unique)
         {
-            var userid = Methods.Verify.JwtToken.GetClaims("userid");
+            var userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
             using (webcoreContext db = new webcoreContext())
             {
 
@@ -274,7 +274,7 @@ namespace WebApi.Controllers
                 var fullFileName = string.Empty;
 
                 string basepath = "\\Files\\Group\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileid;
-                string filepath = Methods.IO.Path.ContentRootPath() + basepath;
+                string filepath = WebApi.Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);
 
@@ -326,7 +326,7 @@ namespace WebApi.Controllers
 
                             var fileinfo = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
 
-                            var fullfilepath = Methods.IO.Path.ContentRootPath() + fileinfo.Path;
+                            var fullfilepath = WebApi.Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
 
                             using (FileStream outStream = new FileStream(fullfilepath, FileMode.Create))
                             {
@@ -337,7 +337,7 @@ namespace WebApi.Controllers
 
                                 foreach (var item in filelist)
                                 {
-                                    string p = Methods.IO.Path.ContentRootPath() + item.Path;
+                                    string p = WebApi.Libraries.IO.Path.ContentRootPath() + item.Path;
                                     srcStream = new FileStream(p, FileMode.Open);
                                     while ((readedLen = srcStream.Read(buffer, 0, buffer.Length)) > 0)
                                     {

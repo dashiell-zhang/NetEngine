@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Methods.WeiXin.H5.Models
+namespace WebApi.Libraries.WeiXin.H5.Models
 {
     public class WeiXinJsSdkSign
     {

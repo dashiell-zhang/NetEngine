@@ -36,10 +36,10 @@ namespace Cms.Libraries.Ueditor
             if (UploadConfig.Base64)
             {
                 uploadFileName = UploadConfig.Base64Filename;
-                uploadFileBytes = Convert.FromBase64String(Methods.Http.HttpContext.Current().Request.Form[UploadConfig.UploadFieldName]);
+                uploadFileBytes = Convert.FromBase64String(Http.HttpContext.Current().Request.Form[UploadConfig.UploadFieldName]);
 
                 var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat);
-                var localPath = Methods.IO.Path.WebRootPath() + savePath;
+                var localPath = IO.Path.WebRootPath() + savePath;
 
                 try
                 {
@@ -69,7 +69,7 @@ namespace Cms.Libraries.Ueditor
             }
             else
             {
-                var file =Methods.Http.HttpContext.Current().Request.Form.Files[UploadConfig.UploadFieldName];
+                var file = Http.HttpContext.Current().Request.Form.Files[UploadConfig.UploadFieldName];
                 uploadFileName = file.FileName;
 
                 if (!CheckFileType(uploadFileName))
@@ -92,7 +92,7 @@ namespace Cms.Libraries.Ueditor
                     file.OpenReadStream();
 
                     var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat);
-                    var localPath = Methods.IO.Path.WebRootPath() + savePath ;
+                    var localPath = IO.Path.WebRootPath() + savePath;
 
                     try
                     {
@@ -110,7 +110,7 @@ namespace Cms.Libraries.Ueditor
                         }
 
 
-               
+
                         Result.Url = savePath;
                         Result.State = UploadState.Success;
                     }
@@ -132,8 +132,8 @@ namespace Cms.Libraries.Ueditor
                 }
             }
 
-     
-           
+
+
 
             return value;
         }

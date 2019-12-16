@@ -45,7 +45,7 @@ namespace WebApi.Filters
 
                         if (context.HttpContext.Request.Method == "POST")
                         {
-                            string body = Methods.Http.HttpContext.RequestBody;
+                            string body = WebApi.Libraries.Http.HttpContext.RequestBody;
 
                             if (!string.IsNullOrEmpty(body))
                             {

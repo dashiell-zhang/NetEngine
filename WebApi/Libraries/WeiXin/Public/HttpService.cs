@@ -5,7 +5,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
-namespace Methods.WeiXin.Public
+namespace WebApi.Libraries.WeiXin.Public
 {
     /// <summary>
     /// http连接基础类，负责底层的http通信

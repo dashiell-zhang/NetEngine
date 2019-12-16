@@ -8,7 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
-namespace Methods.Verify
+namespace WebApi.Libraries.Verify
 {
     public class JwtToken
     {
@@ -45,7 +45,7 @@ namespace Methods.Verify
         /// <returns></returns>
         public static string GetToken(Claim[] claims)
         {
-            var conf = Methods.Start.StartConfiguration.configuration;
+            var conf = Libraries.Start.StartConfiguration.configuration;
 
             var jwtSettings = new JwtSettings();
             conf.Bind("JwtSettings", jwtSettings);

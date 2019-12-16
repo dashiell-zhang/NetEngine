@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Methods.Start
+namespace WebApi.Libraries.Start
 {
     public class StartHostingEnvironment
     {

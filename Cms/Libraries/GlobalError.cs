@@ -21,9 +21,9 @@ namespace Cms.Libraries
             };
 
 
-            string path = Methods.Http.HttpContext.GetUrl();
+            string path = Libraries.Http.HttpContext.GetUrl();
 
-            var parameter = Methods.Http.HttpContext.GetParameter();
+            var parameter = Libraries.Http.HttpContext.GetParameter();
 
             var content = new
             {

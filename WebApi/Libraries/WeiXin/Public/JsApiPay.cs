@@ -2,7 +2,7 @@
 using System;
 using System.Text;
 
-namespace Methods.WeiXin.Public
+namespace WebApi.Libraries.WeiXin.Public
 {
     public class JsApiPay
     {

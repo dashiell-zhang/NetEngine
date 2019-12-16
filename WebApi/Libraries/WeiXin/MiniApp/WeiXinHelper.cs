@@ -5,13 +5,15 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
-using Methods.Http;
-using Methods.WeiXin.MiniApp.Models;
-using Methods.WeiXin.Public;
+using WebApi.Libraries.Http;
+using WebApi.Libraries.WeiXin.MiniApp.Models;
+using WebApi.Libraries.WeiXin.Public;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Methods.Crypto;
+using Methods.Json;
 
-namespace Methods.WeiXin.MiniApp
+namespace WebApi.Libraries.WeiXin.MiniApp
 {
     public class WeiXinHelper
     {
@@ -45,11 +47,11 @@ namespace Methods.WeiXin.MiniApp
         {
             string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appid + "&secret=" + secret + "&js_code=" + code + "&grant_type=authorization_code";
 
-            string httpret = Get.Run(url);
+            string httpret = Methods.Http.Get.Run(url);
 
-            string openid = Json.JsonHelper.GetValueByKey(httpret, "openid");
+            string openid = JsonHelper.GetValueByKey(httpret, "openid");
 
-            string sessionkey = Json.JsonHelper.GetValueByKey(httpret, "session_key");
+            string sessionkey = JsonHelper.GetValueByKey(httpret, "session_key");
 
             return (openid, sessionkey);
         }
@@ -79,7 +81,7 @@ namespace Methods.WeiXin.MiniApp
                 , openid, orderno, price, "JSAPI", mchkey);
 
 
-            var unifiedorderSign = Crypto.Md5.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Md5.GetMd5(unifiedorderSignParam).ToUpper();
 
             //构造统一下单的请求参数
             var zhi = string.Format(@"<xml>
@@ -100,7 +102,7 @@ namespace Methods.WeiXin.MiniApp
 
             //请求数据
 
-            var getdata = Http.Post.Run(url, zhi, "form");                    /// 统一下单请求数据（方法二）
+            var getdata = Methods.Http.Post.Run(url, zhi, "form");                    /// 统一下单请求数据（方法二）
 
             //获取xml数据
             XmlDocument doc = new XmlDocument();
@@ -123,7 +125,7 @@ namespace Methods.WeiXin.MiniApp
                 //再次签名返回数据至小程序
                 string strB = "appId=" + appid + "&nonceStr=" + nonceStr + "&package=prepay_id=" + prepay_id + "&signType=MD5&timeStamp=" + info.timeStamp + "&key=" + mchkey;
 
-                info.paySign = Crypto.Md5.GetMd5(strB).ToUpper();
+                info.paySign = Md5.GetMd5(strB).ToUpper();
 
                 return info;
             }
@@ -146,7 +148,7 @@ namespace Methods.WeiXin.MiniApp
         /// <returns></returns>
         public static string DecryptionData(string encryptedDataStr, string key, string iv)
         {
-            var rijalg = Aes.Create();
+            var rijalg = System.Security.Cryptography.Aes.Create();
             // RijndaelManaged rijalg = new RijndaelManaged();
             //----------------- 
             //设置 cipher 格式 AES-128-CBC 

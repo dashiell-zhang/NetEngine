@@ -41,7 +41,7 @@ namespace Cms
 
 
             //注册HttpContext
-            Methods.Http.HttpContext.Add(services);
+            Libraries.Http.HttpContext.Add(services);
 
             //注册全局过滤器
             services.AddMvc(config => config.Filters.Add(new GlobalFiler()));
@@ -59,7 +59,7 @@ namespace Cms
             });
 
             //注册配置文件信息
-            Methods.Start.StartConfiguration.Add(Configuration);
+            Libraries.Start.StartConfiguration.Add(Configuration);
 
 
             //添加redis
@@ -100,7 +100,7 @@ namespace Cms
         {
 
             //注册中间件将请求中的 Request.Body 内容设置到静态变量
-            app.UseMiddleware<Methods.Http.SetRequestBody>();
+            app.UseMiddleware<Libraries.Http.SetRequestBody>();
 
             //注册全局异常处理机制
             app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
@@ -124,7 +124,7 @@ namespace Cms
 
 
             //注册HttpContext
-            Methods.Http.HttpContext.Initialize(app, env);
+            Libraries.Http.HttpContext.Initialize(app, env);
 
             //注册跨域信息
             app.UseCors("cors");
@@ -133,7 +133,7 @@ namespace Cms
 
 
             //注册HostingEnvironment
-            Methods.Start.StartHostingEnvironment.Add(env);
+            Libraries.Start.StartHostingEnvironment.Add(env);
 
 
             app.UseRouting();

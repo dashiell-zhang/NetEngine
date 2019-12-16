@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using Methods.WeiXin.MiniApp;
+using WebApi.Libraries.WeiXin.MiniApp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -113,7 +113,7 @@ namespace WebApi.Controllers
             {
                 if (string.IsNullOrEmpty(userid))
                 {
-                    userid = Methods.Verify.JwtToken.GetClaims("userid");
+                    userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
                 }
 
                 return db.TUser.Where(t => t.Id == userid).FirstOrDefault();

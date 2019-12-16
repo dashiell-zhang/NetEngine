@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Methods.Http
+namespace Cms.Libraries.Http
 {
     public static class HttpContext
     {
@@ -69,7 +69,7 @@ namespace Methods.Http
 
             if (context.Request.Method == "POST")
             {
-                string body = Methods.Http.HttpContext.RequestBody;
+                string body = Cms.Libraries.Http.HttpContext.RequestBody;
 
                 if (!string.IsNullOrEmpty(body))
                 {

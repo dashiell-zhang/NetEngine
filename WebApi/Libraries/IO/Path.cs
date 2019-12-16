@@ -1,10 +1,6 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Methods.Start;
+﻿using WebApi.Libraries.Start;
 
-namespace Methods.IO
+namespace WebApi.Libraries.IO
 {
     public class Path
     {

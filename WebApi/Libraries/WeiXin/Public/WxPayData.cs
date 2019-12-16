@@ -1,4 +1,4 @@
-﻿using Methods.Http;
+﻿using WebApi.Libraries.Http;
 using Methods.Json;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
 
-namespace Methods.WeiXin.Public
+namespace WebApi.Libraries.WeiXin.Public
 {
     /// <summary>
     /// 微信支付协议接口数据类，所有的API接口通信都依赖这个数据结构，

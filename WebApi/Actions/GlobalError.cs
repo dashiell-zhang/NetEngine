@@ -21,9 +21,9 @@ namespace WebApi.Actions
             };
 
 
-            string path = Methods.Http.HttpContext.GetUrl();
+            string path = WebApi.Libraries.Http.HttpContext.GetUrl();
 
-            var parameter = Methods.Http.HttpContext.GetParameter();
+            var parameter = WebApi.Libraries.Http.HttpContext.GetParameter();
 
             var content = new
             {

@@ -31,13 +31,13 @@ namespace WebApi.Filters
             if (!filter.IsSkip)
             {
 
-                var exp = Convert.ToInt64(Methods.Verify.JwtToken.GetClaims("exp"));
+                var exp = Convert.ToInt64(WebApi.Libraries.Verify.JwtToken.GetClaims("exp"));
 
                 var exptime = Methods.DataTime.DateTimeHelper.UnixToTime(exp);
 
                 if (exptime < DateTime.Now)
                 {
-                    var tokenid = Methods.Verify.JwtToken.GetClaims("tokenid");
+                    var tokenid = WebApi.Libraries.Verify.JwtToken.GetClaims("tokenid");
 
                     using (webcoreContext db = new webcoreContext())
                     {
@@ -62,15 +62,15 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
 
-            var exp = Convert.ToInt64(Methods.Verify.JwtToken.GetClaims("exp"));
+            var exp = Convert.ToInt64(WebApi.Libraries.Verify.JwtToken.GetClaims("exp"));
 
             var exptime = Methods.DataTime.DateTimeHelper.UnixToTime(exp);
 
             if (exptime < DateTime.Now)
             {
 
-                var tokenid = Methods.Verify.JwtToken.GetClaims("tokenid");
-                var userid = Methods.Verify.JwtToken.GetClaims("userid");
+                var tokenid = WebApi.Libraries.Verify.JwtToken.GetClaims("tokenid");
+                var userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
 
                 using (webcoreContext db = new webcoreContext())
                 {
@@ -99,7 +99,7 @@ namespace WebApi.Filters
                              new Claim("userid",userid)
                         };
 
-                            var token = Methods.Verify.JwtToken.GetToken(claim);
+                            var token = WebApi.Libraries.Verify.JwtToken.GetToken(claim);
                             context.HttpContext.Response.Headers.Add("NewToken", token);
 
                             //解决 Ionic 取不到 Header中的信息问题

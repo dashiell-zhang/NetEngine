@@ -50,7 +50,7 @@ namespace WebApi.Controllers
                         };
 
 
-                    var ret = Methods.Verify.JwtToken.GetToken(claim);
+                    var ret = WebApi.Libraries.Verify.JwtToken.GetToken(claim);
 
                     return ret;
                 }

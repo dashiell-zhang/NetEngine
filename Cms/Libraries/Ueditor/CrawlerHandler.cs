@@ -19,10 +19,10 @@ namespace Cms.Libraries.Ueditor
 
         public override string Process()
         {
-            Sources = Methods.Http.HttpContext.Current().Request.Form["source[]"];
+            Sources = Http.HttpContext.Current().Request.Form["source[]"];
             if (Sources == null || Sources.Length == 0)
             {
-               return WriteJson(new
+                return WriteJson(new
                 {
                     state = "参数错误：没有指定抓取源"
                 });
@@ -77,7 +77,7 @@ namespace Cms.Libraries.Ueditor
                     return this;
                 }
                 ServerUrl = PathFormatter.Format(Path.GetFileName(this.SourceUrl), Config.GetString("catcherPathFormat"));
-                var savePath = Methods.IO.Path.WebRootPath()+ ServerUrl;
+                var savePath = IO.Path.WebRootPath() + ServerUrl;
                 if (!Directory.Exists(Path.GetDirectoryName(savePath)))
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(savePath));

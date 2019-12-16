@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Methods.Http
+namespace WebApi.Libraries.Http
 {
 
 
@@ -25,7 +25,7 @@ namespace Methods.Http
 
             var requestContent = requestReader.ReadToEnd();
 
-            Methods.Http.HttpContext.RequestBody = requestContent;
+            WebApi.Libraries.Http.HttpContext.RequestBody = requestContent;
 
             context.Request.Body.Position = 0;
 

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Methods.WeiXin.Web
+namespace WebApi.Libraries.WeiXin.Web
 {
     public class WeiXinHelper
     {

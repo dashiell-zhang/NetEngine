@@ -83,7 +83,7 @@ namespace WebApi
 
 
             //注册HttpContext
-            Methods.Http.HttpContext.Add(services);
+            WebApi.Libraries.Http.HttpContext.Add(services);
 
             //注册全局过滤器
             services.AddMvc(config => config.Filters.Add(new GlobalFilter()));
@@ -117,7 +117,7 @@ namespace WebApi
 
 
             //注册配置文件信息
-            Methods.Start.StartConfiguration.Add(Configuration);
+            Libraries.Start.StartConfiguration.Add(Configuration);
 
 
             //注册Swagger生成器，定义一个和多个Swagger 文档
@@ -163,7 +163,7 @@ namespace WebApi
         {
 
             //注册中间件将请求中的 Request.Body 内容设置到静态变量
-            app.UseMiddleware<Methods.Http.SetRequestBody>();
+            app.UseMiddleware<Libraries.Http.SetRequestBody>();
 
 
             //注册全局异常处理机制
@@ -181,7 +181,7 @@ namespace WebApi
             }
 
             //注册HttpContext
-            Methods.Http.HttpContext.Initialize(app, env);
+            WebApi.Libraries.Http.HttpContext.Initialize(app, env);
 
 
             //注册跨域信息
@@ -203,7 +203,7 @@ namespace WebApi
             });
 
             //注册HostingEnvironment
-            Methods.Start.StartHostingEnvironment.Add(env);
+            Libraries.Start.StartHostingEnvironment.Add(env);
 
 
             //启用中间件服务生成Swagger作为JSON端点

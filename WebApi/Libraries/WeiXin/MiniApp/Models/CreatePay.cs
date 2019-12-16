@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Methods.WeiXin.MiniApp.Models
+namespace WebApi.Libraries.WeiXin.MiniApp.Models
 {
 
     /// <summary>

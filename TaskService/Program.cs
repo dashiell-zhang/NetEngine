@@ -4,23 +4,25 @@ namespace TaskService
 {
     class Program
     {
+        public static System.Timers.Timer tim = new System.Timers.Timer(1000 * 60 * 60 * 6);
+
+
         static void Main(string[] args)
         {
-            int minute = 2;
+            tim.Elapsed += Tim_Elapsed;
+            tim.Start();
+        }
 
-            minute = minute * 60 * 1000;
+        private static void Tim_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            Run();
+        }
 
 
-            for (int i = 0; 0 == 0; i++)
-            {
-                Console.WriteLine(DateTime.Now.ToString() + " Task Service Start !");
+        private static void Run()
+        {
 
-                Tasks.SyncData.Main.Run();
 
-                Console.WriteLine(DateTime.Now.ToString() + " Task Service End !");
-
-                System.Threading.Thread.Sleep(10000);
-            }
         }
     }
 }

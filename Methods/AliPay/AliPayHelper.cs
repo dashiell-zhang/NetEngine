@@ -1,10 +1,8 @@
-﻿using Alipay.AopSdk.Core;
-using Alipay.AopSdk.Core.Domain;
-using Alipay.AopSdk.Core.Request;
-using Alipay.AopSdk.Core.Response;
+﻿using Aop.Api;
+using Aop.Api.Domain;
+using Aop.Api.Request;
+using Aop.Api.Response;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Methods.AliPay
 {
@@ -54,7 +52,7 @@ namespace Methods.AliPay
         /// <param name="in_notifyUrl">支付回调 异步URL</param>
         /// <param name="in_quitUrl">支付中途退出后跳转URL</param>
         /// <remarks>H5 支付初始化</remarks>
-        public AliPayHelper(string in_appid, string in_appprivatekey, string in_alipaypublickey, string in_returnUrl, string in_notifyUrl,string in_quitUrl)
+        public AliPayHelper(string in_appid, string in_appprivatekey, string in_alipaypublickey, string in_returnUrl, string in_notifyUrl, string in_quitUrl)
         {
             appid = in_appid;
             appprivatekey = in_appprivatekey;
@@ -129,7 +127,7 @@ namespace Methods.AliPay
             {
 
                 //调用 SDK 集成方法构造HTML表单代码
-                response = client.PageExecute(request, null, "post");
+                response = client.pageExecute(request, null, "post");
                 return response.Body;
             }
             catch (Exception ex)
@@ -143,35 +141,36 @@ namespace Methods.AliPay
 
 
         /// <summary>
-        /// 创建支付宝商户订单_APP
+        /// 统一收单交易创建接口
         /// </summary>
-        /// <param name="orderno">商户订单号</param>
+        /// <param name="orderNo">商户订单号</param>
         /// <param name="title">商品名称</param>
         /// <param name="price">商品价格</param>
-        /// <param name="describe">商品描述</param>
+        /// <param name="buyerId">购买人支付宝用户ID</param>
         /// <returns></returns>
-        public string CreatePay_App(string orderno, string title, string price, string describe)
+        public string AlipayTradeCreate(string orderNo, string title, string price, string buyerId)
         {
             IAopClient client = new DefaultAopClient("https://openapi.alipay.com/gateway.do", appid, appprivatekey, "json", "1.0", "RSA2", alipaypublickey, "utf-8", false);
 
-            AlipayTradeAppPayRequest request = new AlipayTradeAppPayRequest();
+            AlipayTradeCreateRequest request = new AlipayTradeCreateRequest();
 
-            AlipayTradeAppPayModel model = new AlipayTradeAppPayModel
+
+            AlipayTradeCreateModel model = new AlipayTradeCreateModel
             {
                 TotalAmount = price,
-                Body = describe,
                 Subject = title,
-                OutTradeNo = orderno
+                OutTradeNo = orderNo,
+                BuyerId = buyerId
             };
 
             request.SetBizModel(model);
+
             request.SetNotifyUrl(notifyUrl);
 
-            AlipayTradeAppPayResponse response = client.SdkExecute(request);
+            AlipayTradeCreateResponse response = client.Execute(request);
 
-            string url =  "https://openapi.alipay.com/gateway.do?"+ response.Body;
 
-            return url;
+            return response.TradeNo;
         }
     }
 }

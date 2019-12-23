@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Alipay.AopSdk.Core" Version="2.5.0" />
+    <PackageReference Include="AlipaySDKNet.Standard" Version="4.1.38" />
     <PackageReference Include="aliyun-net-sdk-core" Version="1.5.3" />
     <PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.9.1" />
     <PackageReference Include="Baidu.AI" Version="3.6.14" />

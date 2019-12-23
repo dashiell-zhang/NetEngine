@@ -15,6 +15,8 @@ namespace Models.DataBases.WebCore
         {
         }
 
+        public DbSet<TAlipayKey> TAlipayKey { get; set; }
+
         public DbSet<TCount> TCount { get; set; }
 
         public DbSet<TFile> TFile { get; set; }
@@ -36,6 +38,8 @@ namespace Models.DataBases.WebCore
         public DbSet<TProductImgBaiduAi> TProductImgBaiduAi { get; set; }
 
         public DbSet<TUser> TUser { get; set; }
+
+        public DbSet<TUserBindAlipay> TUserBindAlipay { get; set; }
 
         public DbSet<TUserBindWeixin> TUserBindWeixin { get; set; }
 

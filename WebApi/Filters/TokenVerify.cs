@@ -65,7 +65,7 @@ namespace WebApi.Filters
                         }
                         else if (context.HttpContext.Request.Method == "GET")
                         {
-                            var queryList = context.HttpContext.Request.Query.ToList();
+                            var queryList = context.HttpContext.Request.Query.OrderBy(t => t.Key).ToList();
 
                             foreach (var query in queryList)
                             {

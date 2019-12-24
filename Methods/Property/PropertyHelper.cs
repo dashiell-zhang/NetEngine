@@ -43,12 +43,10 @@ namespace Methods.Property
 
 
         /// <summary>
-        /// 给对象赋值的方法(不赋地址)(同一个类型),含过滤
+        /// 给对象赋值的方法(不赋地址)(同一个类型)
         /// </summary>
-        /// <typeparam name="T"><peparam>
         /// <param name="left">=号左边</param>
         /// <param name="right">=号右边</param>
-        /// <param name="id">过滤条件</param>
         public static void Assignment<T>(T left, T right)
         {
             Type type = left.GetType();
@@ -64,6 +62,45 @@ namespace Methods.Property
                 {
                     //设置属性的值
                     gc.SetValue(left, pList[i].GetValue(right, null), null);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// 给对象赋值的方法(不赋地址)(不同类型)
+        /// </summary>
+        /// <param name="left">=号左边</param>
+        /// <param name="right">=号右边</param>
+        public static void Assignment<L,R>(L left, R right)
+        {
+            var ltype = left.GetType();
+
+            List<PropertyInfo> lList = ltype.GetProperties().ToList();
+
+            List<PropertyInfo> rList = right.GetType().GetProperties().ToList();
+
+            for (int i = 0; i < lList.Count; i++)
+            {
+                //根据属性名获得指定的属性对象
+                PropertyInfo gc = ltype.GetProperty(lList[i].Name);
+
+
+                //验证属性是否可以Set
+                if (gc.CanWrite == true)
+                {
+                    try
+                    {
+                        var value = rList.Where(t => t.Name == gc.Name).FirstOrDefault().GetValue(right, null);
+
+                        //设置属性的值
+                        gc.SetValue(left, value, null);
+                    }
+                    catch
+                    {
+
+                    }
+                   
                 }
             }
         }

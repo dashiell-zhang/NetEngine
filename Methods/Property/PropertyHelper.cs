@@ -11,7 +11,6 @@ namespace Methods.Property
 
         /// <summary>  
         /// 反射得到实体类的字段名称和值  
-        /// var dict = GetProperties(model);  
         /// </summary>  
         /// <typeparam name="T">实体类</typeparam>  
         /// <param name="t">实例化</param>  
@@ -38,8 +37,6 @@ namespace Methods.Property
             }
             return ret;
         }
-
-
 
 
         /// <summary>
@@ -72,7 +69,7 @@ namespace Methods.Property
         /// </summary>
         /// <param name="left">=号左边</param>
         /// <param name="right">=号右边</param>
-        public static void Assignment<L,R>(L left, R right)
+        public static void Assignment<L, R>(L left, R right)
         {
             var ltype = left.GetType();
 
@@ -100,9 +97,31 @@ namespace Methods.Property
                     {
 
                     }
-                   
+
                 }
             }
+        }
+
+
+        /// <summary>
+        /// 将一组List赋值到另一组List(不同类型)
+        /// </summary>
+        /// <param name="lift"></param>
+        /// <param name="right"></param>
+        public static List<L> Assignment<L, R>(List<R> right) where L : new()
+        {
+            var lift = new List<L>();
+
+            foreach (var r in right)
+            {
+                var l = new L();
+
+                Assignment<L, R>(l, r);
+
+                lift.Add(l);
+            }
+
+            return lift;
         }
     }
 }

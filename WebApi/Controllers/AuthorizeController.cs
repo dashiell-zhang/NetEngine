@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Models.DataBases.WebCore;
 using Models.Dtos;
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 
@@ -26,7 +25,7 @@ namespace WebApi.Controllers
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
         [HttpPost("GetToken")]
-        public string GetToken([Required][FromForm] dtoLogin login)
+        public string GetToken([FromBody] dtoLogin login)
         {
 
 

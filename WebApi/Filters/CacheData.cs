@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Methods.Json;
+using Common.Json;
 
 namespace WebApi.Filters
 {
@@ -39,12 +39,12 @@ namespace WebApi.Filters
                 key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
             }
 
-            key = "CacheData_" + Methods.Crypto.Md5.GetMd5(key);
+            key = "CacheData_" + Common.Crypto.Md5.GetMd5(key);
 
             try
             {
 
-                var cacheInfo = Methods.NoSql.Redis.StrGet(key);
+                var cacheInfo = Common.NoSql.Redis.StrGet(key);
 
                 if (!string.IsNullOrEmpty(cacheInfo))
                 {
@@ -64,7 +64,7 @@ namespace WebApi.Filters
         {
             try
             {
-                var value = Methods.Json.JsonHelper.ObjectToJSON(context.Result);
+                var value = Common.Json.JsonHelper.ObjectToJSON(context.Result);
 
                 string key = "";
 
@@ -79,11 +79,11 @@ namespace WebApi.Filters
                     key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
                 }
 
-                key = "CacheData_" + Methods.Crypto.Md5.GetMd5(key);
+                key = "CacheData_" + Common.Crypto.Md5.GetMd5(key);
 
 
 
-                Methods.NoSql.Redis.StrSet(key, value,TimeSpan.FromSeconds(TTL));
+                Common.NoSql.Redis.StrSet(key, value,TimeSpan.FromSeconds(TTL));
 
             }
             catch

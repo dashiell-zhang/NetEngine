@@ -89,7 +89,7 @@ namespace WebApi.Controllers
 
                 var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid & t.WeiXinKeyId == weixinkeyid).Select(t => t.User).FirstOrDefault();
 
-                user.Phone = Methods.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
+                user.Phone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
 
                 db.SaveChanges();
 

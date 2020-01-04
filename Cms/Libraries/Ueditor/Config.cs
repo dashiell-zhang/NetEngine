@@ -6,7 +6,7 @@ using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Web;
-using Methods.Http;
+using Common.Http;
 
 
 namespace Cms.Libraries.Ueditor

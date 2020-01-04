@@ -34,7 +34,7 @@ namespace WebApi.Filters
                 if (!rip.Contains("127.0.0.1"))
                 {
                     var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
-                    var time = Methods.DataTime.DateTimeHelper.JsToTime(long.Parse(timeStr));
+                    var time = Common.DataTime.DateTimeHelper.JsToTime(long.Parse(timeStr));
 
                     if (time.AddMinutes(10) > DateTime.Now)
                     {
@@ -49,7 +49,7 @@ namespace WebApi.Filters
 
                             if (!string.IsNullOrEmpty(body))
                             {
-                                body = Methods.String.NoEmoji.Run(body);
+                                body = Common.String.NoEmoji.Run(body);
                                 strdata = strdata + body;
                             }
                             else if (context.HttpContext.Request.HasFormContentType)
@@ -58,7 +58,7 @@ namespace WebApi.Filters
 
                                 foreach (var fm in fromlist)
                                 {
-                                    string fmv = Methods.String.NoEmoji.Run(fm.Value.ToString());
+                                    string fmv = Common.String.NoEmoji.Run(fm.Value.ToString());
                                     strdata = strdata + fm.Key + fmv;
                                 }
                             }
@@ -69,13 +69,13 @@ namespace WebApi.Filters
 
                             foreach (var query in queryList)
                             {
-                                string qv = Methods.String.NoEmoji.Run(query.Value);
+                                string qv = Common.String.NoEmoji.Run(query.Value);
                                 strdata = strdata + query.Key + qv;
                             }
                         }
 
 
-                        string tk = Methods.Crypto.Md5.GetMd5(strdata).ToLower();
+                        string tk = Common.Crypto.Md5.GetMd5(strdata).ToLower();
 
                         if (token != tk)
                         {

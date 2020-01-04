@@ -1,4 +1,4 @@
-﻿using Methods.Json;
+﻿using Common.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -34,7 +34,7 @@ namespace WebApi.Actions
 
             string strContent = JsonHelper.ObjectToJSON(content);
 
-            Methods.UseDB.Log.Set("WebApi", "errorlog", strContent);
+            Common.UseDB.Log.Set("WebApi", "errorlog", strContent);
 
 
             return context.Response.WriteAsync(JsonHelper.ObjectToJSON(ret));

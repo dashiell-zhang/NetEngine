@@ -1,4 +1,4 @@
-﻿using Methods.Json;
+﻿using Common.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -34,7 +34,7 @@ namespace Cms.Libraries
 
             string strContent = JsonHelper.ObjectToJSON(content);
 
-            Methods.UseDB.Log.Set("Cms", "errorlog", strContent);
+            Common.UseDB.Log.Set("Cms", "errorlog", strContent);
 
             return context.Response.WriteAsync(JsonHelper.ObjectToJSON(ret));
         }

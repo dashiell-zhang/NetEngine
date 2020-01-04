@@ -75,7 +75,7 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\Methods\Methods.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
 ﻿using Aop.Api.Util;
-using Methods.AliPay;
+using Common.AliPay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.DataBases.WebCore;

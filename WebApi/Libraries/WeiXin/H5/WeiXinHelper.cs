@@ -5,7 +5,7 @@ using WebApi.Libraries.Http;
 using System.Linq;
 using System.Security.Cryptography;
 using WebApi.Libraries.WeiXin.H5.Models;
-using Methods.Json;
+using Common.Json;
 
 namespace WebApi.Libraries.WeiXin.H5
 {
@@ -42,7 +42,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
             string url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + appsecret;
 
-            var returnJson = Methods.Http.Post.Run(url, "", "form");
+            var returnJson = Common.Http.Post.Run(url, "", "form");
 
             var token = JsonHelper.GetValueByKey(returnJson, "access_token");
 
@@ -60,7 +60,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
             string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken() + "&type=jsapi";
 
-            string returnJson = Methods.Http.Post.Run(getUrl, "", "form");
+            string returnJson = Common.Http.Post.Run(getUrl, "", "form");
 
             var ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
 
@@ -79,7 +79,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
             sdkSign.appid = appid;
             string url = HttpContext.GetUrl();
-            sdkSign.timestamp = Methods.DataTime.DateTimeHelper.TimeToUnix(DateTime.Now);
+            sdkSign.timestamp = Common.DataTime.DateTimeHelper.TimeToUnix(DateTime.Now);
             sdkSign.noncestr = Guid.NewGuid().ToString().Replace("-", "");
             string jsapi_ticket = GetTicketID();
 

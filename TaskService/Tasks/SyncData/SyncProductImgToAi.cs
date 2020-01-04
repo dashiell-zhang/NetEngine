@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Models.DataBases.WebCore;
-using Methods.BaiduAi;
-using Methods.UseDB;
+using Common.BaiduAi;
+using Common.UseDB;
 using Models.BaiduAi.ImageClassify;
 
 namespace TaskService.Tasks.SyncData
@@ -41,7 +41,7 @@ namespace TaskService.Tasks.SyncData
 
 
 
-                    var result = ImageSearch.ProductAdd(path, Methods.Json.JsonHelper.ObjectToJSON(info), 1, 1);
+                    var result = ImageSearch.ProductAdd(path, Common.Json.JsonHelper.ObjectToJSON(info), 1, 1);
 
                     if (result != null)
                     {
@@ -96,7 +96,7 @@ namespace TaskService.Tasks.SyncData
 
                     var info = new { imgid = img.imgid, productid = img.productid };
 
-                    var result = ImageSearch.ProductUpdate(path, Methods.Json.JsonHelper.ObjectToJSON(info), 1, 1);
+                    var result = ImageSearch.ProductUpdate(path, Common.Json.JsonHelper.ObjectToJSON(info), 1, 1);
 
                     if (result != null)
                     {
@@ -137,7 +137,7 @@ namespace TaskService.Tasks.SyncData
 
                         var newpath = "D:\\Products\\screenshot_" + img.imgname;
 
-                        var screen = Methods.Img.Screenshot.Run(path, rtinfo.left, rtinfo.top, newpath, rtinfo.width, rtinfo.height);
+                        var screen = Common.Img.Screenshot.Run(path, rtinfo.left, rtinfo.top, newpath, rtinfo.width, rtinfo.height);
 
                         if (screen)
                         {

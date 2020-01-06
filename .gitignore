@@ -260,5 +260,6 @@ paket-files/
 __pycache__/
 *.pyc
 /WebApi/WebApi.xml
+/WebApi/Models.xml
 /WebApi/Files
-/Models/Models.xml
+

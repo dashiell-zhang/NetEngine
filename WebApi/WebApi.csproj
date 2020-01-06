@@ -27,6 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Models.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="WebApi.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

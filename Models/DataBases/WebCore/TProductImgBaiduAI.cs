@@ -1,8 +1,4 @@
 ﻿using Models.DataBases.Bases;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace Models.DataBases.WebCore
 {
@@ -10,7 +6,6 @@ namespace Models.DataBases.WebCore
     /// <summary>
     /// 产品图片对应百度AI信息表
     /// </summary>
-    [Table("t_product_img_baiduai")]
     public class TProductImgBaiduAi : CUD
     {
 

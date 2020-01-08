@@ -1,8 +1,4 @@
 ﻿using Models.DataBases.Bases;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace Models.DataBases.WebCore
 {
@@ -11,7 +7,6 @@ namespace Models.DataBases.WebCore
     /// <summary>
     /// 微信商户平台账户配置表
     /// </summary>
-    [Table("t_weixinkey")]
     public class TWeiXinKey : CD
     {
 

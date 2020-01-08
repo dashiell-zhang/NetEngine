@@ -1,5 +1,4 @@
 ﻿using Models.DataBases.Bases;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models.DataBases.WebCore
 {
@@ -8,7 +7,6 @@ namespace Models.DataBases.WebCore
     /// <summary>
     /// 支付宝平台账户配置表
     /// </summary>
-    [Table("t_alipaykey")]
     public class TAlipayKey : CD
     {
 

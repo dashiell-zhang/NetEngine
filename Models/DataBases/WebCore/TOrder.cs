@@ -1,8 +1,5 @@
-﻿
-using Models.DataBases.Bases;
-using Models.DataBases.WebCore.Bases;
+﻿using Models.DataBases.WebCore.Bases;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models.DataBases.WebCore
@@ -12,7 +9,6 @@ namespace Models.DataBases.WebCore
     /// <summary>
     /// 订单表
     /// </summary>
-    [Table("t_order")]
     public class TOrder : CUD_User
     {
 

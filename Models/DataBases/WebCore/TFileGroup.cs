@@ -1,9 +1,4 @@
 ﻿using Models.DataBases.Bases;
-using Models.DataBases.WebCore.Bases;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace Models.DataBases.WebCore
 {
@@ -12,7 +7,6 @@ namespace Models.DataBases.WebCore
     /// <summary>
     /// 文件分片上传状态记录表
     /// </summary>
-    [Table("t_file_group")]
     public class TFileGroup :CUD
     {
 

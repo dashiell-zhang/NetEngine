@@ -1,8 +1,4 @@
 ﻿using Models.DataBases.Bases;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace Models.DataBases.WebCore
 {
@@ -11,7 +7,6 @@ namespace Models.DataBases.WebCore
     /// <summary>
     /// 用户和支付宝绑定关系表
     /// </summary>
-    [Table("t_user_bind_alipay")]
     public class TUserBindAlipay :CD
     {
 

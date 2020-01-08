@@ -1,9 +1,4 @@
-﻿
-using Models.DataBases.Bases;
-using Models.DataBases.WebCore.Bases;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using Models.DataBases.WebCore.Bases;
 
 namespace Models.DataBases.WebCore
 {
@@ -12,7 +7,6 @@ namespace Models.DataBases.WebCore
     /// <summary>
     /// 产品表
     /// </summary>
-    [Table("t_product")]
     public class TProduct : CUD_User
     {
 

@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Models.DataBases.WebCore
 {
@@ -57,6 +55,28 @@ namespace Models.DataBases.WebCore
                 optionsBuilder.UseSqlServer("Data Source=cloud.blackbaby.net;Initial Catalog=webcore;User ID=webcore;Password=webcore@321");
 
                 //optionsBuilder.UseMySQL("server=127.0.0.1;userid=webcore;pwd=webcore@321;database=webcore;");
+            }
+        }
+
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            foreach (var entity in modelBuilder.Model.GetEntityTypes())
+            {
+                modelBuilder.Entity(entity.Name, builder =>
+                {
+
+                    //设置生成数据库时的表名为小写格式并添加前缀 t_
+                    string tablename = "t_" + entity.ClrType.Name.ToLower().Substring(1);
+                    builder.ToTable(tablename);
+
+
+                    //循环转换数据库表字段名全部为小写
+                    foreach (var property in entity.GetProperties())
+                    {
+                        builder.Property(property.Name).HasColumnName(property.Name.ToLower());
+                    }
+                });
             }
         }
     }

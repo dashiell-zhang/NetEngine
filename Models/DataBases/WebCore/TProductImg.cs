@@ -1,8 +1,5 @@
 ﻿using Models.DataBases.Bases;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace Models.DataBases.WebCore
 {
@@ -10,7 +7,6 @@ namespace Models.DataBases.WebCore
     /// <summary>
     /// 产品图片表
     /// </summary>
-    [Table("t_product_img")]
     public class TProductImg:CUD
     {
 

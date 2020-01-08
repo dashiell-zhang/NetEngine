@@ -1,13 +1,10 @@
 ﻿using Models.DataBases.Bases;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models.DataBases.WebCore
 {
 
 
-    [Table("t_user")]
     public class TUser:CUD
     {
 

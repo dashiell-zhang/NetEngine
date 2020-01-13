@@ -76,6 +76,9 @@ namespace Common.IO
 
                 WebClient webClient = new WebClient();
 
+                //添加来源属性，解决部分资源防盗链伪验证
+                webClient.Headers.Add(HttpRequestHeader.Referer, "");
+
                 string fullpath = filepath + filename;
 
                 //下载文件

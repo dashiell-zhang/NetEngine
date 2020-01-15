@@ -6,9 +6,9 @@ namespace Common.String
 {
 
     /// <summary>
-    /// GUID压缩和还原
+    /// GUID自定义操作类
     /// </summary>
-    public static class GuidReduce
+    public static class GuidHelper
     {
 
         /// <summary>

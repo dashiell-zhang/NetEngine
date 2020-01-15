@@ -49,7 +49,7 @@ namespace WebApi.Filters
 
                             if (!string.IsNullOrEmpty(body))
                             {
-                                body = Common.String.NoEmoji.Run(body);
+                                body = Common.String.StringHelper.NoEmoji(body);
                                 strdata = strdata + body;
                             }
                             else if (context.HttpContext.Request.HasFormContentType)
@@ -58,7 +58,7 @@ namespace WebApi.Filters
 
                                 foreach (var fm in fromlist)
                                 {
-                                    string fmv = Common.String.NoEmoji.Run(fm.Value.ToString());
+                                    string fmv = Common.String.StringHelper.NoEmoji(fm.Value.ToString());
                                     strdata = strdata + fm.Key + fmv;
                                 }
                             }
@@ -69,7 +69,7 @@ namespace WebApi.Filters
 
                             foreach (var query in queryList)
                             {
-                                string qv = Common.String.NoEmoji.Run(query.Value);
+                                string qv = Common.String.StringHelper.NoEmoji(query.Value);
                                 strdata = strdata + query.Key + qv;
                             }
                         }

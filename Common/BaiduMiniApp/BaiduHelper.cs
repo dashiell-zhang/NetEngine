@@ -1,9 +1,4 @@
-﻿using Common.Http;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Common.BaiduMiniApp
+﻿namespace Common.BaiduMiniApp
 {
     public class BaiduHelper
     {
@@ -30,7 +25,7 @@ namespace Common.BaiduMiniApp
         {
             string url = "https://spapi.baidu.com/oauth/jscode2sessionkey?code="+code+"&client_id="+AppKey+"&sk="+AppSecret+"";
 
-            string httpret = Get.Run(url);
+            string httpret = Http.HttpHelper.Get(url);
 
             string openid = Json.JsonHelper.GetValueByKey(httpret, "openid");
 

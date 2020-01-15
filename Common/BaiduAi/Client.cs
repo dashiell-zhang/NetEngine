@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Common.BaiduAi
+﻿namespace Common.BaiduAi
 {
     public class Client
     {

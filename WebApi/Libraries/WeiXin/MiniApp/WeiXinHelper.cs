@@ -47,7 +47,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         {
             string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appid + "&secret=" + secret + "&js_code=" + code + "&grant_type=authorization_code";
 
-            string httpret = Common.Http.Get.Run(url);
+            string httpret = Common.Http.HttpHelper.Get(url);
 
             string openid = JsonHelper.GetValueByKey(httpret, "openid");
 
@@ -102,7 +102,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
             //请求数据
 
-            var getdata = Common.Http.Post.Run(url, zhi, "form");                    /// 统一下单请求数据（方法二）
+            var getdata = Common.Http.HttpHelper.Post(url, zhi, "form");                    /// 统一下单请求数据（方法二）
 
             //获取xml数据
             XmlDocument doc = new XmlDocument();

@@ -6,8 +6,40 @@ using System.Text;
 
 namespace Common.Http
 {
-    public class Post
+
+    /// <summary>
+    /// 常用Http操作类集合
+    /// </summary>
+    public static class HttpHelper
     {
+
+
+        /// <summary>
+        /// Get方式获取远程资源
+        /// </summary>
+        /// <param name="Url"></param>
+        /// <returns></returns>
+        public static string Get(string Url)
+        {
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
+            request.Method = "GET";
+            request.ContentType = "text/html;charset=UTF-8";
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            Stream myResponseStream = response.GetResponseStream();
+            StreamReader myStreamReader = new StreamReader(myResponseStream, Encoding.UTF8);
+            string retString = myStreamReader.ReadToEnd();
+            myStreamReader.Close();
+            myResponseStream.Close();
+            var obj = new
+            {
+                Result = retString,
+                IsSuccess = true
+            };
+            return retString;
+        }
+
+
 
         /// <summary>
         /// Post数据到指定url
@@ -16,7 +48,7 @@ namespace Common.Http
         /// <param name="Data">数据</param>
         /// <param name="type">form,data,json,xml</param>
         /// <returns></returns>
-        public static string Run(string Url, string Data, string type)
+        public static string Post(string Url, string Data, string type)
         {
 
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(Url);
@@ -61,7 +93,7 @@ namespace Common.Http
         /// <param name="Data">数据</param>
         /// <param name="type">form,data,json,xml</param>
         /// <returns></returns>
-        public async static void RunAsync(string Url, string Data, string type)
+        public async static void PostAsync(string Url, string Data, string type)
         {
 
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(Url);
@@ -97,6 +129,4 @@ namespace Common.Http
 
         }
     }
-
-
 }

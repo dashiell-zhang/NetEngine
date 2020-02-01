@@ -1,6 +1,6 @@
-﻿using Models.DataBases.Bases;
+﻿using Repository.DataBases.Bases;
 
-namespace Models.DataBases.WebCore
+namespace Repository.WebCore
 {
 
 

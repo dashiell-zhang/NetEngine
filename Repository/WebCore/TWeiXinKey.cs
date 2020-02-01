@@ -1,38 +1,38 @@
-﻿using Models.DataBases.Bases;
+﻿using Repository.DataBases.Bases;
 
-namespace Models.DataBases.WebCore
+namespace Repository.WebCore
 {
 
 
     /// <summary>
-    /// 支付宝平台账户配置表
+    /// 微信商户平台账户配置表
     /// </summary>
-    public class TAlipayKey : CD
+    public class TWeiXinKey : CD
     {
 
 
         /// <summary>
-        /// AppId
+        /// WxAppId
         /// </summary>
-        public string AppId { get; set; }
+        public string WxAppId { get; set; }
 
 
         /// <summary>
-        /// App私钥
+        /// WxAppSecret
         /// </summary>
-        public string AppPrivateKey { get; set; }
+        public string WxAppSecret { get; set; }
 
 
         /// <summary>
-        /// 支付宝公钥
+        /// MchId
         /// </summary>
-        public string AlipayPublicKey { get; set; }
+        public string MchId { get; set; }
 
 
         /// <summary>
-        /// 支付宝加密解密密钥
+        /// MchKey
         /// </summary>
-        public string AesKey { get; set; }
+        public string MchKey { get; set; }
 
         /// <summary>
         /// 排序

@@ -1,17 +1,19 @@
-﻿using Models.DataBases.Bases;
+﻿using Repository.DataBases.Bases;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Models.DataBases.WebCore.Bases
+namespace Repository.WebCore.Bases
 {
+
 
     /// <summary>
     /// 创建，编辑，删除，并关联了用户
     /// </summary>
-    public class CD_User:CD
+    public class CUD_User : CUD
     {
+
 
         /// <summary>
         /// 创建人ID
@@ -22,6 +24,13 @@ namespace Models.DataBases.WebCore.Bases
         public TUser CreateUser { get; set; }
 
 
+        /// <summary>
+        /// 编辑人ID
+        /// </summary>
+        [MaxLength(36)]
+        public string UpdateUserId { get; set; }
+        public TUser UpdateUser { get; set; }
+
 
         /// <summary>
         /// 删除人ID
@@ -29,5 +38,7 @@ namespace Models.DataBases.WebCore.Bases
         [MaxLength(36)]
         public string DeleteUserId { get; set; }
         public TUser DeleteUser { get; set; }
+
+
     }
 }

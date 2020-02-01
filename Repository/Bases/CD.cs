@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
-namespace Models.DataBases.Bases
+namespace Repository.DataBases.Bases
 {
 
     /// <summary>

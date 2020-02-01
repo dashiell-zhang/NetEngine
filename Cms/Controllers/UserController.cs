@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Common.Property;
-using Models.DataBases.WebCore;
+using Repository.WebCore;
 
 namespace Cms.Controllers
 {

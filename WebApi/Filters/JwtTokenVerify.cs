@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Models.DataBases.WebCore;
+using Repository.WebCore;
 using System;
 using System.Linq;
 using System.Security.Claims;

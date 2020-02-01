@@ -1,8 +1,8 @@
-﻿using Models.DataBases.WebCore.Bases;
+﻿using Repository.WebCore.Bases;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Models.DataBases.WebCore
+namespace Repository.WebCore
 {
 
 

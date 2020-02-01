@@ -1,4 +1,4 @@
-﻿namespace Models.DataBases.WebCore
+﻿namespace Repository.WebCore
 {
 
 

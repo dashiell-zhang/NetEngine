@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Models.DataBases.WebCore;
+using Repository.WebCore;
 using Models.Dtos;
 using System;
 using System.Linq;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Models.DataBases.WebCore;
+using Repository.WebCore;
 using System.Linq;
 
 namespace Common.UseDB

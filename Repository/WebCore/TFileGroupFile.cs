@@ -1,6 +1,6 @@
-﻿using Models.DataBases.Bases;
+﻿using Repository.DataBases.Bases;
 
-namespace Models.DataBases.WebCore
+namespace Repository.WebCore
 {
     /// <summary>
     /// 分片上传时的切片文件记录表

@@ -1,7 +1,7 @@
-﻿using Models.DataBases.Bases;
+﻿using Repository.DataBases.Bases;
 using System.Collections.Generic;
 
-namespace Models.DataBases.WebCore
+namespace Repository.WebCore
 {
 
     /// <summary>

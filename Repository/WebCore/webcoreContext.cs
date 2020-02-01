@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Models.DataBases.WebCore
+namespace Repository.WebCore
 {
     public partial class webcoreContext : DbContext
     {
@@ -53,6 +53,9 @@ namespace Models.DataBases.WebCore
             if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseSqlServer("Data Source=cloud.blackbaby.net;Initial Catalog=webcore;User ID=webcore;Password=webcore@321");
+
+                ///开启全局懒加载
+                optionsBuilder.UseLazyLoadingProxies();
 
                 //optionsBuilder.UseMySQL("server=127.0.0.1;userid=webcore;pwd=webcore@321;database=webcore;");
             }

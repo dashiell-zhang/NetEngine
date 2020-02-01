@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Models.DataBases.WebCore;
+using Microsoft.EntityFrameworkCore;
+using Repository.WebCore;
 using System.Linq;
 using WebApi.Filters;
 using WebApi.Libraries.WeiXin.MiniApp;
@@ -83,6 +84,9 @@ namespace WebApi.Controllers
                 var strJson = WeiXinHelper.DecryptionData(encryptedData, sessionkey, iv);
 
                 var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid & t.WeiXinKeyId == weixinkeyid).Select(t => t.User).FirstOrDefault();
+
+
+                var xxx = db.TUser.Where(t => t.Id == "xxx").Include(t=>t.TUserBindWeixin).FirstOrDefault();
 
                 user.Phone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
 

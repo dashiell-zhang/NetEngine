@@ -205,5 +205,16 @@ namespace Common.String
 
             return text;
         }
+
+
+        /// <summary>
+        /// Unicode转换中文
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string UnicodeToString(string text)
+        {
+            return Regex.Unescape(text);
+        }
     }
 }

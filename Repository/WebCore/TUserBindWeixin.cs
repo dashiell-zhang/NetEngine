@@ -1,4 +1,4 @@
-﻿using Repository.DataBases.Bases;
+﻿using Repository.Bases;
 
 namespace Repository.WebCore
 {

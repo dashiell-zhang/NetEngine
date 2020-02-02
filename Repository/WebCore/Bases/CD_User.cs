@@ -1,4 +1,4 @@
-﻿using Repository.DataBases.Bases;
+﻿using Repository.Bases;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;

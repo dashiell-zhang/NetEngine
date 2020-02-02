@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using System;
+using System.Linq;
 
 namespace Cms.Filters
 {
@@ -12,6 +10,14 @@ namespace Cms.Filters
 
     public class IsLogin : Attribute, IActionFilter
     {
+
+        /// <summary>
+        /// 是否跳过验证，可用于控制器下单个Action指定跳过验证
+        /// </summary>
+        public bool IsSkip { get; set; }
+
+
+
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
 
@@ -19,27 +25,32 @@ namespace Cms.Filters
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
+            var filter = (IsLogin)context.Filters.Where(t => t.ToString() == "Cms.Filters.IsLogin").ToList().LastOrDefault();
 
-            if (!string.IsNullOrEmpty(context.HttpContext.Session.GetString("userid")))
+            if (!filter.IsSkip)
             {
-                //成功登录
 
-            }
-            else
-            {
-                //阻断跳转原先的请求信息到登录页
-                var result = new ViewResult
+
+                if (!string.IsNullOrEmpty(context.HttpContext.Session.GetString("userid")))
                 {
-                    ViewName = "~/Views/User/Login.cshtml"
-                };
+                    //成功登录
 
-                context.Result = result;
+                }
+                else
+                {
+                    //阻断跳转原先的请求信息到登录页
+                    var result = new ViewResult
+                    {
+                        ViewName = "~/Views/User/Login.cshtml"
+                    };
+
+                    context.Result = result;
 
 
-                //302跳转到登录页面 
-                context.HttpContext.Response.Redirect("/User/Login/");
+                    //302跳转到登录页面 
+                    context.HttpContext.Response.Redirect("/User/Login/");
+                }
             }
-
         }
     }
 }

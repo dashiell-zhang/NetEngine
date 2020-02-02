@@ -49,6 +49,14 @@ namespace WebApi.Libraries.Http
         }
 
 
+        /// <summary>
+        /// 获取基础Url信息
+        /// </summary>
+        /// <returns></returns>
+        public static string GetBaseUrl()
+        {
+            return $"{HttpContext.Current().Request.Scheme}://{HttpContext.Current().Request.Host.Host}:{HttpContext.Current().Request.Host.Port}";
+        }
 
 
         /// <summary>

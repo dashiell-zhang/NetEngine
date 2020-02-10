@@ -62,7 +62,17 @@ namespace WebApi.Libraries.Http
         /// <summary>
         /// RequestBody中的内容
         /// </summary>
-        public static string RequestBody;
+        public static string GetRequestBody()
+        {
+
+            Current().Request.Body.Position = 0;
+
+            var requestReader = new StreamReader(Current().Request.Body);
+
+
+            var requestContent = requestReader.ReadToEnd();
+            return requestContent;
+        }
 
 
 
@@ -77,7 +87,7 @@ namespace WebApi.Libraries.Http
 
             if (context.Request.Method == "POST")
             {
-                string body = WebApi.Libraries.Http.HttpContext.RequestBody;
+                string body = WebApi.Libraries.Http.HttpContext.GetRequestBody();
 
                 if (!string.IsNullOrEmpty(body))
                 {

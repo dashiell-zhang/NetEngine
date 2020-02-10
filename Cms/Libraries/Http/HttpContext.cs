@@ -59,10 +59,21 @@ namespace Cms.Libraries.Http
         }
 
 
+
         /// <summary>
         /// RequestBody中的内容
         /// </summary>
-        public static string RequestBody;
+        public static string GetRequestBody()
+        {
+
+            Current().Request.Body.Position = 0;
+
+            var requestReader = new StreamReader(Current().Request.Body);
+
+
+            var requestContent = requestReader.ReadToEnd();
+            return requestContent;
+        }
 
 
 
@@ -77,7 +88,7 @@ namespace Cms.Libraries.Http
 
             if (context.Request.Method == "POST")
             {
-                string body = Cms.Libraries.Http.HttpContext.RequestBody;
+                string body = Cms.Libraries.Http.HttpContext.GetRequestBody();
 
                 if (!string.IsNullOrEmpty(body))
                 {

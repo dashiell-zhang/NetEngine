@@ -24,7 +24,11 @@ namespace Common.Http
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
             request.Method = "GET";
-            request.ContentType = "text/html;charset=UTF-8";
+            request.Accept = "*/*";
+            request.UserAgent = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)";
+            request.Headers.Add("Accept-Language", "zh-CN,zh;q=0.9");
+
+
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             Stream myResponseStream = response.GetResponseStream();
             StreamReader myStreamReader = new StreamReader(myResponseStream, Encoding.UTF8);

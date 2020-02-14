@@ -36,6 +36,7 @@ namespace WebApi.Actions
 
             Common.UseDB.Log.Set("WebApi", "errorlog", strContent);
 
+            context.Response.StatusCode = 400;
 
             return context.Response.WriteAsync(JsonHelper.ObjectToJSON(ret));
         }

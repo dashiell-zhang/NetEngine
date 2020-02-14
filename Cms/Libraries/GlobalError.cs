@@ -36,6 +36,8 @@ namespace Cms.Libraries
 
             Common.UseDB.Log.Set("Cms", "errorlog", strContent);
 
+            context.Response.StatusCode = 400;
+
             return context.Response.WriteAsync(JsonHelper.ObjectToJSON(ret));
         }
     }

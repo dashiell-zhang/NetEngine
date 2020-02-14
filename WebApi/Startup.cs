@@ -174,16 +174,8 @@ namespace WebApi
             //注册全局异常处理机制
             app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
 
-            if (env.IsDevelopment())
-            {
-                //默认错误输出页面
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
+            app.UseHsts();
+
 
             //注册HttpContext
             WebApi.Libraries.Http.HttpContext.Initialize(app, env);

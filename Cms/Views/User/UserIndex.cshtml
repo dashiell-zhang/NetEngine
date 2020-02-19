@@ -6,14 +6,17 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>客户管理</title>
-    <link href="~/Admin/css/style.css" rel="stylesheet" />
+    <title>用户管理</title>
 
     <script src="~/lib/jquery.js"></script>
+
+    <script src="~/lib/layui/layui.js"></script>
 
     <script src="~/lib/sweetalert.min.js"></script>
 
     <link href="~/lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
+
+    <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
 
     <script src="~/lib/datatables/datatables.min.js"></script>
     <link href="~/lib/datatables/datatables.min.css" rel="stylesheet" />
@@ -21,7 +24,7 @@
     <script>
 
 
-        function DeleteUserSys(id) {
+        function DeleteUser(id) {
 
             var dataJson = { id: id };
 
@@ -36,7 +39,7 @@
 
                     $.ajax({
                         type: "POST",//方法类型
-                        url: "/User/UserSys_Delete/",
+                        url: "/User/UserDelete/",
                         data: dataJson,
                         success: function (data) {
                             if (data.status == true) {
@@ -46,7 +49,7 @@
                                 }).then(function (data) {
                                     if (data) {
                                         //刷新表格数据并保留分页信息
-                                        $('#dtUserSysList').DataTable().ajax.reload(null, false);
+                                        $('#dtUserList').DataTable().ajax.reload(null, false);
                                     }
                                 });
 
@@ -65,95 +68,94 @@
         }
 
 
-        function GetUserSysList() {
+        function GetUserList() {
 
 
-            $('#dtUserSysList').DataTable().destroy();
+            $('#dtUserList').DataTable().destroy();
 
 
-            $("#dtUserSysList").DataTable({
+            $("#dtUserList").DataTable({
                 "ajax": {
-                    url: "/User/GetUserSysList",
+                    url: "/User/GetUserList",
                     type: "get",
                 },
                 "columns": [
-                    { "data": "id" },
                     { "data": "name" },
-                    { "data": "nickname" },
+                    { "data": "nickName" },
                     { "data": "phone" },
                     { "data": "email" },
-                    { "data": "createtime" },
+                    { "data": "createTime" },
                     { "data": null }
                 ],
                 "columnDefs": [
                     {
                         "orderable": false,
-                        "targets": [6],
+                        "targets": [5],
                         "render": function (data, type, row) {
-                            return "<a href='/User/UserSys_Edit/" + data.id + "'>编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"javascript:DeleteUserSys(" + data.id + ");\"'>删除</a>";
+                            return "<a href='/User/UserEdit/" + data.id + "'>编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"javascript:DeleteUser('" + data.id + "');\"'>删除</a>";
                         }
                     }
                 ],
                 "searching": true,
                 "paging": true,
-
-                "pageLength": 15
-
+                "pageLength": 15,
+                "lengthChange": false
             })
 
         }
 
 
         $(function () {// 初始化内容
-            GetUserSysList();
+            GetUserList();
+        });
+    </script>
+
+    <script>
+        layui.use('element', function () {
+            var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
         });
     </script>
 </head>
 
-<body class="mainbody">
+<body style="width: 99%;padding-left: 1em;">
     <form name="form1" method="post" id="form1">
-        <!--导航栏-->
-        <div class="location" style="box-sizing:initial">
-            <a href="javascript:history.back(-1);" class="back"><i></i><span>返回上一页</span></a>
-            <a href="/Home/Center/" class="home"><i></i><span>首页</span></a>
-            <i class="arrow"></i>
-            <span>客户管理</span>
-            <i class="arrow"></i>
-            <span>所有客户</span>
+
+        <div style="margin-top:20px">
+            <span class="layui-breadcrumb" lay-separator=">">
+
+                <a href="javascript:history.back(-1);">返回上一页</a>
+                <a href="/Home/Center/">首页</a>
+                <a href="">用户管理</a>
+                <a><cite>所有用户</cite></a>
+            </span>
         </div>
-        <!--/导航栏-->
-        <!--工具栏-->
-        <br />
-        <div class="toolbar-wrap" style="display:none">
-            <div id="floatHead" class="toolbar">
-                <div class="l-list">
-                    <ul class="icon-list">
-                        <li><a class="add" href="/User/UserSys_Edit/?id=0" style="display:inline-table"><i></i><span>新增</span></a></li>
+        <hr class="layui-bg-cyan" style="margin-top:8px">
 
-                    </ul>
-                </div>
-            </div>
+        <div style="margin-top:10px">
+            <a href="/User/UserEdit">
+                <button type="button" class="layui-btn">
+                    <i class="layui-icon">&#xe608;</i> 新增
+                </button>
+            </a>
         </div>
-        <!--/工具栏-->
-        <!--列表-->
 
-        <table class="table table-striped table-bordered" data-toggle="table" id="dtUserSysList" style="width:100%">
-            <thead>
-                <tr>
-                    <th width="5em">编号</th>
-                    <th width="12em">用户名</th>
-                    <th width="12em">昵称</th>
-                    <th width="12em">电话</th>
-                    <th width="18em">邮箱</th>
-                    <th width="18em">创建时间</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
 
-        </table>
-        <br />
 
-        <!--/列表-->
+        <div style="margin-top:-2.3em">
+            <table class="table table-striped table-bordered" data-toggle="table" id="dtUserList" style="width:100%">
+                <thead>
+                    <tr>
+                        <th width="12em">用户名</th>
+                        <th width="12em">昵称</th>
+                        <th width="12em">电话</th>
+                        <th width="18em">邮箱</th>
+                        <th width="18em">创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+
+            </table>
+        </div>
     </form>
 </body>
 </html>

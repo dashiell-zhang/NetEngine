@@ -3,162 +3,121 @@
 }
 
 <!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
-    <title>奢度数据综合管理系统</title>
-    <link href="~/Admin/css/style.css" rel="stylesheet" />
-    <script src="~/lib/jquery.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>数据综合管理系统</title>
+
+    <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
 </head>
+<body class="layui-layout-body">
+    <div class="layui-layout layui-layout-admin">
+        <div class="layui-header">
+            <div class="layui-logo"><img src="~/Admin/images/logo.png" /></div>
+            <!-- 头部区域（可配合layui已有的水平导航） -->
+            <ul class="layui-nav layui-layout-left">
+                <li class="layui-nav-item layui-this"><a href="javascript:MenuShow(0)">内容管理</a></li>
+                <li class="layui-nav-item"><a href="javascript:MenuShow(1)">系统设置</a></li>
+            </ul>
+            <ul class="layui-nav layui-layout-right">
+                <li class="layui-nav-item">
+                    <a href="javascript:;">
+                        <img src="~/Admin/images/touxiang.jpg" class="layui-nav-img" />
+                        您好，@ViewBag.NickName
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/User/UserEdit/?id=@ViewBag.UserId" target="mainframe">修改密码</a></dd>
+                        <dd><a href="/User/Login_Exit/">注销登录</a></dd>
+                    </dl>
+                </li>
 
-<body class="indexbody">
-    <form id="form1">
-        <div class="header">
-            <div class="header-box">
-                <h1 class="logo"></h1>
-                <ul id="nav" class="nav">
-                    <a href="./"><li id="li1" onclick="MenuShow(1)" class="main_b">内容管理</li></a>
-                    <li id="li2" onclick="MenuShow(2)" class="main_a">系统设置</li>
+            </ul>
+        </div>
+
+        <div class="layui-side layui-bg-black">
+            <div class="layui-side-scroll">
+
+                <ul class="layui-nav layui-nav-tree" id="exp0" style="display: block;">
+                    @{
+                        int i = 0;
+                        foreach (var item in (List<TChannel>)Model["TChannel"])
+                        {
+                            i = i + 1;
+
+                            <li class="layui-nav-item">
+                                <a class="" href="javascript:;">@item.Name</a>
+                                <dl class="layui-nav-child">
+                                    <dd><a href="/Article/ArticleIndex?ChannelId=@item.Id" target="mainframe">文章管理</a></dd>
+                                    <dd><a href="/Article/CategoryIndex?ChannelId=@item.Id" target="mainframe">栏目管理</a></dd>
+                                </dl>
+                            </li>
+                        }
+                    }
                 </ul>
-                <div class="nav-right">
-                    <div class="icon-info">
-                        <span>您好<br />@ViewBag.NickName</span>
-                    </div>
-                    <div class="icon-option">
-                        <i></i>
-                        <div class="drop-box">
-                            <div class="arrow"></div>
-                            <ul class="drop-item">
-                                @*<li><a target="_blank" href="../">预览网站</a></li>*@
-                                <li><a href="/Home/Center/" target="mainframe">管理中心</a></li>
-                                <li><a href="/User/UserSys_Edit/?id=@ViewBag.UserId" target="mainframe">修改密码</a></li>
-                                <li>
-                                    <a href="/User/Login_Exit/">注销登录</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+
+                <ul class="layui-nav layui-nav-tree" id="exp1" style="display: none;">
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">系统用户</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="/User/UserIndex" target="mainframe">所有用户</a></dd>
+                            <dd><a href="/User/UserEdit" target="mainframe">添加用户</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a href="javascript:;">频道管理</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="/Article/ChannelIndex" target="mainframe">所有频道</a></dd>
+                            <dd><a href="/Article/ChannelEdit" target="mainframe">添加频道</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a href="javascript:;">友链管理</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="/Link/LinkIndex" target="mainframe">所有友链</a></dd>
+                            <dd><a href="/Link/LinkEdit" target="mainframe">添加友链</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a href="javascript:;">网站信息</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="/Home/WebInfo" target="mainframe">信息维护</a></dd>
+                        </dl>
+                    </li>
+                </ul>
             </div>
         </div>
 
-        <div class="main-sidebar">
-            <div id="sidebar-nav" class="sidebar-nav" style="overflow: visible" tabindex="5000">
-                <div class="list-box" id="exp1">
-                    <div class="list-group" style="display: block;" name="产品管理">
-                        <div id="w_service">
-                            @{
-                                int i = 0;
-                                @*foreach (var item in (List<Models.WebCore.TChannel>)Model["TChannel"])
-                                {
-                                    i = i+1;
-                                    <div class="QA">
-                                        <a id='question_@(i)_ly' class="question">@item.Name</a>
-                                        <div id='answer_@(i)_ly' class="answer">
-                                            <ul>
-                                                <li>
-                                                    <a navid="plugin_link" href="/Admin/Lytj_Xk/" target="mainframe" class="item">
-                                                        <div class="arrow"></div>
-                                                        <div class="folder open"></div>
-                                                        <span>内容管理</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a navid="plugin_link" href="/Category/Index?ChannelId=@item.Id" target="mainframe" class="item">
-                                                        <div class="arrow"></div>
-                                                        <div class="folder open"></div>
-                                                        <span>栏目管理</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                }*@
-                            }
-
-
-
-                        </div>
-                    </div>
-                </div>
-                <div class="list-box exp2" id="exp2">
-                    <div class="list-group" style="display: block;" name="系统设置">
-                        <div id="w_service">
-
-                            <div class="QA">
-                                <a id='question_3_sys' class="question">系统用户</a>
-                                <div id='answer_3_sys' class="answer">
-                                    <ul>
-                                        <li>
-                                            <a navid="plugin_link" href="/User/UserSys" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>所有用户</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a navid="plugin_feedback" href="/User/UserSys_Edit?id=0" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>添加用户</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-
-                            <div class="QA">
-                                <a id='question_4_sys' class="question">频道管理</a>
-                                <div id='answer_4_sys' class="answer">
-                                    <ul>
-                                        <li>
-                                            <a navid="plugin_link" href="/Channel/Index" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>所有频道</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a navid="plugin_feedback" href="/Channel/Channel_Edit?id=0" target="mainframe" class="item">
-                                                <div class="arrow"></div>
-                                                <div class="folder open"></div>
-                                                <span>添加频道</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
+        <div class="layui-body" style="bottom:0px">
+            <!-- 内容主体区域 -->
+            <div style="height:100%">
+                <iframe id="mainframe" name="mainframe" frameborder="0" src="/Home/Center/" style="width:100%;height:100%"></iframe>
             </div>
         </div>
 
-        <div class="main-container">
-            <iframe id="mainframe" name="mainframe" frameborder="0" src="/Home/Center/"></iframe>
-        </div>
-    </form>
-    <script type="text/javascript">
-        $(".QA a.question").click(function () {
-            $(this).toggleClass("active");
-            $('#answer_' + this.id.replace('question_', '')).slideToggle("fast");
+
+    </div>
+
+    <script src="~/lib/layui/layui.js"></script>
+    <script>
+        layui.use('element', function () {
+            var element = layui.element;
+
         });
-
     </script>
+
     <script type="text/javascript">
         var time;
         function Show(id) {
-            for (var i = 1; i < 7; i++) {
-                var li = document.getElementById('li' + (i));
+
+            window.frames['mainframe'].location.href = "/Home/Center/";
+
+            for (var i = 0; i < 2; i++) {
                 var divCont = document.getElementById('exp' + (i));
                 if (i == id) {
-                    li.className = "main_b";
                     divCont.style.display = 'block';
                 }
                 else {
-                    li.className = "main_a";
                     divCont.style.display = 'none';
                 }
             }

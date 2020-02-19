@@ -1,4 +1,4 @@
-﻿using Repository.WebCore.Bases;
+﻿using Repository.Bases;
 
 namespace Repository.WebCore
 {
@@ -7,7 +7,7 @@ namespace Repository.WebCore
     /// <summary>
     /// 文件表
     /// </summary>
-    public class TFile :CD_User
+    public class TFile : CD
     {
 
 
@@ -17,7 +17,6 @@ namespace Repository.WebCore
         public string Name { get; set; }
 
 
-
         /// <summary>
         /// 保存路径
         /// </summary>
@@ -25,9 +24,26 @@ namespace Repository.WebCore
 
 
         /// <summary>
-        /// 文件类型
+        /// 外链表名
         /// </summary>
-        public string Type { get; set; } 
+        public string Table { get; set; }
 
+
+        /// <summary>
+        /// 外链表ID
+        /// </summary>
+        public string TableId { get; set; }
+
+
+        /// <summary>
+        /// 标记
+        /// </summary>
+        public string Sign { get; set; }
+
+
+        /// <summary>
+        /// 排序
+        /// </summary>
+        public int Sort { get; set; }
     }
 }

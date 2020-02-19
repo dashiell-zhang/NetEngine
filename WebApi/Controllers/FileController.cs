@@ -72,9 +72,7 @@ namespace WebApi.Controllers
                 f.Id = fileName;
                 f.Name = file.FileName;
                 f.Path = path;
-                f.CreateUserId = userid;
                 f.CreateTime = DateTime.Now;
-
                 db.TFile.Add(f);
                 db.SaveChanges();
             }
@@ -142,7 +140,6 @@ namespace WebApi.Controllers
                     f.Id = fileName;
                     f.Name = file.FileName;
                     f.Path = path;
-                    f.CreateUserId = userid;
                     f.CreateTime = DateTime.Now;
 
                     db.TFile.Add(f);
@@ -229,7 +226,6 @@ namespace WebApi.Controllers
                     f.Id = Guid.NewGuid().ToString();
                     f.Name = filename;
                     f.Path = basepath;
-                    f.CreateUserId = userid;
                     f.CreateTime = DateTime.Now;
 
                     db.TFile.Add(f);

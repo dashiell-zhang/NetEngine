@@ -15,6 +15,12 @@ namespace Repository.WebCore
 
         public DbSet<TAlipayKey> TAlipayKey { get; set; }
 
+        public DbSet<TArticle> TArticle { get; set; }
+
+        public DbSet<TCategory> TCategory { get; set; }
+
+        public DbSet<TChannel> TChannel { get; set; }
+
         public DbSet<TCount> TCount { get; set; }
 
         public DbSet<TFile> TFile { get; set; }
@@ -24,6 +30,8 @@ namespace Repository.WebCore
         public DbSet<TFileGroupFile> TFileGroupFile { get; set; }
 
         public DbSet<TGuidToInt> TGuidToInt { get; set; }
+
+        public DbSet<TLink> TLink { get; set; }
 
         public DbSet<TLog> TLog { get; set; }
 
@@ -43,6 +51,8 @@ namespace Repository.WebCore
 
         public DbSet<TUserToken> TUserToken { get; set; }
 
+        public DbSet<TWebInfo> TWebInfo { get; set; }
+
         public DbSet<TWeiXinKey> TWeiXinKey { get; set; }
 
 
@@ -56,7 +66,7 @@ namespace Repository.WebCore
 
                 //optionsBuilder.UseMySql("server=127.0.0.1;userid=webcore;pwd=webcore@321;database=webcore;");
 
-                optionsBuilder.UseSqlite("Data Source=database.db");
+                optionsBuilder.UseSqlite("Data Source=..\\Repository\\database.db");
 
                 //开启全局懒加载
                 //optionsBuilder.UseLazyLoadingProxies();

@@ -6,22 +6,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Views\Article\**" />
     <Compile Remove="Views\Category\**" />
     <Compile Remove="Views\Channel\**" />
-    <Content Remove="Views\Article\**" />
+    <Compile Remove="wwwroot\css\**" />
+    <Compile Remove="wwwroot\js\**" />
     <Content Remove="Views\Category\**" />
     <Content Remove="Views\Channel\**" />
-    <EmbeddedResource Remove="Views\Article\**" />
+    <Content Remove="wwwroot\css\**" />
+    <Content Remove="wwwroot\js\**" />
     <EmbeddedResource Remove="Views\Category\**" />
     <EmbeddedResource Remove="Views\Channel\**" />
-    <None Remove="Views\Article\**" />
+    <EmbeddedResource Remove="wwwroot\css\**" />
+    <EmbeddedResource Remove="wwwroot\js\**" />
     <None Remove="Views\Category\**" />
     <None Remove="Views\Channel\**" />
+    <None Remove="wwwroot\css\**" />
+    <None Remove="wwwroot\js\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Controllers\ArticleController.cs" />
     <Compile Remove="Controllers\CategoryController.cs" />
     <Compile Remove="Controllers\ChannelController.cs" />
   </ItemGroup>
@@ -36,16 +39,21 @@
 
 
   <ItemGroup>
-    <Folder Include="wwwroot\css\" />
-    <Folder Include="wwwroot\js\" />
+    <Folder Include="Models\" />
     <Folder Include="wwwroot\upload\image\" />
   </ItemGroup>
 
 
   <ItemGroup>
+    <None Include="Views\Article\ArticleEdit.cshtml" />
+    <None Include="Views\Article\ArticleIndex.cshtml" />
+    <None Include="Views\Article\CategoryEdit.cshtml" />
+    <None Include="Views\Article\CategoryIndex.cshtml" />
+    <None Include="Views\Article\ChannelEdit.cshtml" />
+    <None Include="Views\Article\ChannelIndex.cshtml" />
+    <None Include="Views\Link\LinkEdit.cshtml" />
+    <None Include="Views\Link\LinkIndex.cshtml" />
     <None Include="Views\User\Login.cshtml" />
-    <None Include="Views\User\UserSys.cshtml" />
-    <None Include="Views\User\UserSys_Edit.cshtml" />
     <None Include="wwwroot\lib\layui\font\iconfont.svg" />
     <None Include="wwwroot\lib\layui\font\iconfont.woff2" />
     <None Include="wwwroot\lib\layui\layui.all.js" />

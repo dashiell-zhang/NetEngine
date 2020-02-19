@@ -4,11 +4,12 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Cms.Models;
 using Cms.Filters;
 using Microsoft.AspNetCore.Http;
 using Cms.Libraries;
 using Microsoft.Extensions.Configuration;
+using Repository.WebCore;
+using Cms.Models;
 
 namespace Cms.Controllers
 {
@@ -20,20 +21,16 @@ namespace Cms.Controllers
         {
 
             ViewBag.NickName = HttpContext.Session.GetString("nickname");
-            ViewBag.UserId = HttpContext.Session.GetInt32("userid");
+            ViewBag.UserId = HttpContext.Session.GetString("userid");
 
 
-            //using (webcoreContext db = new webcoreContext())
-            //{
-            //    IDictionary<string, object> list = new Dictionary<string, object>();
-            //    var TChannel = db.TChannel.ToList();
-            //    list.Add("TChannel", TChannel);
-            //    return View(list);
-            //}
-
-
-            return View();
-
+            using (var db = new webcoreContext())
+            {
+                IDictionary<string, object> list = new Dictionary<string, object>();
+                var TChannel = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
+                list.Add("TChannel", TChannel);
+                return View(list);
+            }
         }
 
 
@@ -42,13 +39,45 @@ namespace Cms.Controllers
 
             ViewBag.LocalIpAddress = HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
             ViewBag.LocalPort = HttpContext.Connection.LocalPort;
-            ViewBag.Framework = Microsoft.Extensions.DependencyModel.DependencyContext.Default.Target.Framework;
-
 
             return View();
         }
 
 
+        public IActionResult WebInfo()
+        {
+            using (var db = new webcoreContext())
+            {
+                var webInfo = db.TWebInfo.FirstOrDefault();
+                return View(webInfo);
+            }
+        }
+
+
+
+        public bool WebInfoSave(TWebInfo webInfo)
+        {
+
+            using (var db = new webcoreContext())
+            {
+                var dbInfo = db.TWebInfo.FirstOrDefault();
+
+                dbInfo.WebUrl = webInfo.WebUrl;
+                dbInfo.ManagerName = webInfo.ManagerName;
+                dbInfo.ManagerAddress = webInfo.ManagerAddress;
+                dbInfo.ManagerPhone = webInfo.ManagerPhone;
+                dbInfo.ManagerEmail = webInfo.ManagerEmail;
+                dbInfo.RecordNumber = webInfo.RecordNumber;
+                dbInfo.SeoTitle = webInfo.SeoTitle;
+                dbInfo.SeoKeyWords = webInfo.SeoKeyWords;
+                dbInfo.SeoDescription = webInfo.SeoDescription;
+                dbInfo.FootCode = webInfo.FootCode;
+
+                db.SaveChanges();
+
+                return true;
+            }
+        }
 
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

@@ -1,17 +1,26 @@
 ﻿using Repository.Bases;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.WebCore
 {
 
-
-    public class TUser:CUD
+    /// <summary>
+    /// 用户表
+    /// </summary>
+    public class TUser : CUD
     {
 
         /// <summary>
         /// 用户名
         /// </summary>
         public string Name { get; set; }
+
+
+        /// <summary>
+        /// 昵称
+        /// </summary>
+        public string NickName { get; set; }
 
 
         /// <summary>
@@ -32,7 +41,27 @@ namespace Repository.WebCore
         public string PassWord { get; set; }
 
 
+        /// <summary>
+        /// 角色
+        /// </summary>
+        public string Role { get; set; }
+
+
+
+        /// <summary>
+        /// 该用户所有得订单信息
+        /// </summary>
+        [InverseProperty("CreateUser")]
+        public ICollection<TOrder> TOrder { get; set; }
+
+
+        //用户绑定的微信信息
         public ICollection<TUserBindWeixin> TUserBindWeixin { get; set; }
+
+
+        //用户绑定的支付宝信息
+        public ICollection<TUserBindAlipay> TUserBindAlipay { get; set; }
+
 
     }
 }

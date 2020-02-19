@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Cms.Filters;
 using Cms.Libraries.Ueditor;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace Cms.Controllers
 {
+    [IsLogin]
     public class UeditorController : Controller
     {
 
@@ -26,9 +24,9 @@ namespace Cms.Controllers
 
             Handler action = null;
 
-           var x=  AppContext.BaseDirectory;
+            var x = AppContext.BaseDirectory;
 
-            switch (Request.Query["action"].Count!=0? Request.Query["action"] .ToString(): "")
+            switch (Request.Query["action"].Count != 0 ? Request.Query["action"].ToString() : "")
             {
                 case "config":
                     action = new ConfigHandler(context);
@@ -85,7 +83,7 @@ namespace Cms.Controllers
                     action = new NotSupportedHandler(context);
                     break;
             }
-           return action.Process();
+            return action.Process();
         }
 
         public bool IsReusable

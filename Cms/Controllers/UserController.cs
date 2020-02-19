@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Cms.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Common.Property;
 using Repository.WebCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Cms.Controllers
 {
+    [IsLogin]
     public class UserController : Controller
     {
 
@@ -18,26 +18,28 @@ namespace Cms.Controllers
         }
 
 
-
+        [IsLogin(IsSkip = true)]
         public IActionResult Login()
         {
             return View();
         }
 
 
+        [IsLogin(IsSkip = true)]
         public JsonResult Login_Run(string name, string pwd)
         {
             var Data = new { status = true };
 
 
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
-                var user = db.TUser.Where(t => t.Name == name & t.PassWord == pwd).FirstOrDefault();
+                var userlist = db.TUser.ToList();
+                var user = db.TUser.Where(t => t.Name == name & t.PassWord == pwd & t.IsDelete == false).FirstOrDefault();
 
                 if (user != null)
                 {
                     HttpContext.Session.SetString("userid", user.Id);
-                    HttpContext.Session.SetString("nickname", user.Name);
+                    HttpContext.Session.SetString("nickname", user.NickName);
                 }
                 else
                 {
@@ -52,7 +54,7 @@ namespace Cms.Controllers
         //退出系统
         public void Login_Exit()
         {
-         
+
             HttpContext.Session.SetString("userid", "");
             HttpContext.Session.SetString("nickname", "");
 
@@ -61,7 +63,7 @@ namespace Cms.Controllers
 
 
 
-        public IActionResult UserSys()
+        public IActionResult UserIndex()
         {
             return View();
         }
@@ -69,11 +71,11 @@ namespace Cms.Controllers
 
 
         [HttpGet]
-        public JsonResult GetUserSysList()
+        public JsonResult GetUserList()
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
-                IList<TUser> list = db.TUser.ToList();
+                IList<TUser> list = db.TUser.Where(t => t.IsDelete == false && t.Role == "admin").ToList();
 
                 return Json(new { data = list });
             }
@@ -81,7 +83,7 @@ namespace Cms.Controllers
 
 
 
-        public IActionResult UserSys_Edit(string id)
+        public IActionResult UserEdit(string id)
         {
 
             if (string.IsNullOrEmpty(id))
@@ -90,7 +92,7 @@ namespace Cms.Controllers
             }
             else
             {
-                using (webcoreContext db = new webcoreContext())
+                using (var db = new webcoreContext())
                 {
                     var UserSys = db.TUser.Where(t => t.Id == id).FirstOrDefault();
                     return View(UserSys);
@@ -100,41 +102,43 @@ namespace Cms.Controllers
         }
 
 
-        public void UserSys_Edit_Run(TUser UserSys)
+        public void UserSave(TUser user)
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
 
 
-                if (string.IsNullOrEmpty(UserSys.Id))
+                if (string.IsNullOrEmpty(user.Id))
                 {
                     //执行添加
+                    user.Id = Guid.NewGuid().ToString();
+                    user.CreateTime = DateTime.Now;
+                    user.Role = "admin";
 
-                    UserSys.CreateTime = DateTime.Now;
-
-                    db.TUser.Add(UserSys);
+                    db.TUser.Add(user);
                 }
                 else
                 {
                     //执行修改
-                    var dbUserSys = db.TUser.Where(t => t.Id == UserSys.Id).FirstOrDefault();
+                    var dbUserSys = db.TUser.Where(t => t.Id == user.Id).FirstOrDefault();
 
-                    PropertyHelper.Assignment<TUser>(dbUserSys, UserSys);
-
-                    dbUserSys.UpdateTime = DateTime.Now;
-
+                    dbUserSys.Name = user.Name;
+                    dbUserSys.NickName = user.NickName;
+                    dbUserSys.Phone = user.Phone;
+                    dbUserSys.Email = user.Email;
+                    dbUserSys.PassWord = user.PassWord;
                 }
 
                 db.SaveChanges();
 
-                Response.Redirect("/User/UserSys");
+                Response.Redirect("/User/UserIndex");
             }
         }
 
 
-        public JsonResult UserSys_Delete(string id)
+        public JsonResult UserDelete(string id)
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 var UserSys = db.TUser.Where(t => t.Id == id).FirstOrDefault();
                 db.TUser.Remove(UserSys);

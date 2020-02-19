@@ -9,13 +9,13 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>管理员登录</title>
-    <link href="~/Admin/css/style.css" rel="stylesheet" />
+    <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
     <script src="~/lib/jquery.js"></script>
     <script src="~/lib/sweetalert.min.js"></script>
 
     <script type="text/javascript">
         function Login_Run() {
-            $("#btnSubmit").val("正在登录,请稍候...");
+            $("#btnSubmit").text("正在登录,请稍候...");
 
             var name = $("#txtName").val();
             var pwd = $("#txtPassWord").val();
@@ -24,7 +24,7 @@
 
                 type: 'POST',
                 url: "/User/Login_Run/",
-                data: { name: name, pwd: pwd }, // 你的formid
+                data: { name: name, pwd: pwd },
                 success: function (Data) {
                     if (Data.status) {
                         location.replace("/");
@@ -65,25 +65,18 @@
 
 </head>
 
-<body class="loginbody">
-
-    <div class="login-screen">
-        <div class="login-form">
-            <h1>系统管理登录</h1>
-            <div class="control-group">
-                <input id="txtName" type="text" class="login-field" placeholder="用户名" onkeyup="Name_Run(event)" />
-
-                <label class="login-field-icon user" for="txtUserName"></label>
-            </div>
-            <div class="control-group">
-                <input id="txtPassWord" name="PassWord" type="password" placeholder="密码" class="login-field" onkeyup="Pwd_Run(event)" />
-                <label class="login-field-icon pwd" for="txtPassword"></label>
-            </div>
-            <div>
-                <input id="btnSubmit" type="button" value="登录" class="btn-login" onclick="Login_Run()" />
-            </div>
+<body>
+    <div style="width: 100vw;height: 100vh;text-align: center;background-image: url('../..//Admin/images/bg.svg');">
+        <div style="min-width: 360px;display: inline-block;padding-top: calc(50vh - 170px);">
+            <h1>管理系统登录</h1>
+            <input type="text" id="txtName" lay-verify="title" autocomplete="off" placeholder="用户名" class="layui-input" style="margin-top:20px" onkeyup="Name_Run(event)">
+            <input type="password" id="txtPassWord" name="title" lay-verify="title" autocomplete="off" placeholder="密码" class="layui-input" style="margin-top:20px" onkeyup="Pwd_Run(event)">
+            <button id="btnSubmit" onclick="Login_Run()" type="button" class="layui-btn" style="width:100%;margin-top:20px">登录</button>
         </div>
     </div>
 
+
 </body>
+
+
 </html>

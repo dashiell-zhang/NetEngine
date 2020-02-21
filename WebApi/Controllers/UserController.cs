@@ -5,6 +5,7 @@ using Repository.WebCore;
 using System.Linq;
 using WebApi.Filters;
 using WebApi.Libraries.WeiXin.MiniApp;
+using WebApi.Models.User;
 
 namespace WebApi.Controllers
 {
@@ -86,7 +87,7 @@ namespace WebApi.Controllers
                 var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid & t.WeiXinKeyId == weixinkeyid).Select(t => t.User).FirstOrDefault();
 
 
-                var xxx = db.TUser.Where(t => t.Id == "xxx").Include(t=>t.TUserBindWeixin).FirstOrDefault();
+                var xxx = db.TUser.Where(t => t.Id == "xxx").Include(t => t.TUserBindWeixin).FirstOrDefault();
 
                 user.Phone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
 
@@ -106,7 +107,7 @@ namespace WebApi.Controllers
         /// <returns></returns>
         [HttpGet("GetUser")]
         [CacheData(TTL = 60, UseToken = true)]
-        public TUser GetUser(string userid)
+        public dtoUser GetUser(string userid)
         {
             using (webcoreContext db = new webcoreContext())
             {
@@ -115,7 +116,17 @@ namespace WebApi.Controllers
                     userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
                 }
 
-                return db.TUser.Where(t => t.Id == userid).FirstOrDefault();
+                var user = db.TUser.Where(t => t.Id == userid && t.IsDelete == false).Select(t => new dtoUser
+                {
+                    Name = t.Name,
+                    NickName = t.NickName,
+                    Phone = t.Phone,
+                    Email = t.Email,
+                    Role = t.Role,
+                    CreateTime = t.CreateTime
+                }).FirstOrDefault();
+
+                return user;
             }
         }
 

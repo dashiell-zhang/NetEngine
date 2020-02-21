@@ -79,6 +79,22 @@ namespace Common.AliPay
 
 
 
+        /// <param name="in_appid">AppId</param>
+        /// <param name="in_appprivatekey">应用私钥</param>
+        /// <param name="in_alipaypublickey">支付宝公钥</param>
+        /// <param name="in_notifyUrl">支付回调 异步URL</param>
+        /// <remarks>WEB网站支付初始化</remarks>
+        public AliPayHelper(string in_appid, string in_appprivatekey, string in_alipaypublickey, string in_notifyUrl, string in_returnUrl)
+        {
+            appid = in_appid;
+            appprivatekey = in_appprivatekey;
+            alipaypublickey = in_alipaypublickey;
+            notifyUrl = in_notifyUrl;
+            returnUrl = in_returnUrl;
+        }
+
+
+
         /// <summary>
         /// 创建支付宝商户订单_H5
         /// </summary>
@@ -171,6 +187,45 @@ namespace Common.AliPay
 
 
             return response.TradeNo;
+        }
+
+
+
+
+        /// <summary>
+        /// PC网页支付创建方法
+        /// </summary>
+        /// <param name="orderNo">订单号</param>
+        /// <param name="price">价格，精确到分</param>
+        /// <param name="title">订单标题</param>
+        /// <param name="body">订单描述</param>
+        /// <returns></returns>
+        public string CreatePayPC(string orderNo, string price, string title, string body = "")
+        {
+            DefaultAopClient client = new DefaultAopClient("https://openapi.alipay.com/gateway.do", appid, appprivatekey, "json", "2.0", "RSA2", alipaypublickey, "UTF-8", false);
+
+            // 组装业务参数model
+            AlipayTradePagePayModel model = new AlipayTradePagePayModel();
+            model.Body = body;
+            model.Subject = title;
+            model.TotalAmount = price;
+            model.OutTradeNo = orderNo;
+            model.ProductCode = "FAST_INSTANT_TRADE_PAY";
+
+            AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
+            // 设置同步回调地址
+            request.SetReturnUrl(returnUrl);
+            // 设置异步通知接收地址
+            request.SetNotifyUrl(notifyUrl);
+            // 将业务model载入到request
+            request.SetBizModel(model);
+
+            var response = client.SdkExecute(request);
+
+            //跳转支付宝支付
+            string url = "https://openapi.alipay.com/gateway.do" + "?" + response.Body;
+
+            return url;
         }
     }
 }

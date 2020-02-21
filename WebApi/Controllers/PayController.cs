@@ -43,7 +43,7 @@ namespace WebApi.Controllers
 
                 int price = Convert.ToInt32(order.Price * 100);
 
-                string productname = db.TOrder.Where(t=>t.OrderNo==orderno).Select(t=>t.Product.Name).FirstOrDefault();
+                string productname = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => t.Product.Name).FirstOrDefault();
 
 
                 var openid = db.TUserBindWeixin.Where(t => t.UserId == order.CreateUserId & t.WeiXinKeyId == weixinkeyid).Select(t => t.WeiXinOpenId).FirstOrDefault();
@@ -81,6 +81,8 @@ namespace WebApi.Controllers
             string order_no = notifyData.GetValue("out_trade_no").ToString().ToUpper(); //商户订单号
             string total_fee = notifyData.GetValue("total_fee").ToString(); //获取总金额
 
+            string appid = notifyData.GetValue("appid").ToString();
+
 
             //从微信验证信息真实性
             WxPayData req = new WxPayData();
@@ -90,7 +92,7 @@ namespace WebApi.Controllers
             using (webcoreContext db = new webcoreContext())
             {
 
-                var weixinkey = db.TOrder.Where(t => t.OrderNo==order_no).Select(t=>t.CreateUser.TUserBindWeixin.FirstOrDefault().WeiXinKey).FirstOrDefault();
+                var weixinkey = db.TWeiXinKey.Where(t => t.WxAppId == appid).FirstOrDefault();
 
                 JsApiPay jsApiPay = new JsApiPay(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey);
 
@@ -134,7 +136,7 @@ namespace WebApi.Controllers
 
                         if (order.Type == "")
                         {
-                           //执行业务处理逻辑
+                            //执行业务处理逻辑
                         }
 
 
@@ -207,6 +209,40 @@ namespace WebApi.Controllers
         }
 
 
+
+        /// <summary>
+        /// 通过订单号获取支付宝付款URL
+        /// </summary>
+        /// <param name="orderNo"></param>
+        /// <returns></returns>
+        [HttpGet("GetAlipayWebUrl")]
+        public string GetAlipayWebUrl(string orderNo)
+        {
+            using (var db = new webcoreContext())
+            {
+                var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
+
+                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, ProductName = t.Product.Name }).FirstOrDefault();
+
+                if (order != null && order.State == "待支付")
+                {
+
+                    AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, "https://xxx.com/api/Pay/AliPayNotify", "https://xxx.com/");
+
+                    string price = order.Price.ToString();
+
+                    string url = helper.CreatePayPC(order.OrderNo, price, order.ProductName, "");
+
+                    return url;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+        }
+
+
         /// <summary>
         /// 支付宝异步通知接口
         /// </summary>
@@ -259,7 +295,7 @@ namespace WebApi.Controllers
                         {
                             case "业务逻辑":
                                 {
-                    
+
                                     retValue = "success";
 
                                     break;

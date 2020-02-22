@@ -62,71 +62,78 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
 
-            var exp = Convert.ToInt64(WebApi.Libraries.Verify.JwtToken.GetClaims("exp"));
+            var filter = (JwtTokenVerify)context.Filters.Where(t => t.ToString() == "WebApi.Filters.JwtTokenVerify").ToList().LastOrDefault();
 
-            var exptime = Common.DataTime.DateTimeHelper.UnixToTime(exp);
-
-            if (exptime < DateTime.Now)
+            if (!filter.IsSkip)
             {
 
-                var tokenid = WebApi.Libraries.Verify.JwtToken.GetClaims("tokenid");
-                var userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
 
-                using (webcoreContext db = new webcoreContext())
+                var exp = Convert.ToInt64(WebApi.Libraries.Verify.JwtToken.GetClaims("exp"));
+
+                var exptime = Common.DataTime.DateTimeHelper.UnixToTime(exp);
+
+                if (exptime < DateTime.Now)
                 {
 
-                    var endtime = DateTime.Now.AddMinutes(-3);
+                    var tokenid = WebApi.Libraries.Verify.JwtToken.GetClaims("tokenid");
+                    var userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
 
-                    var newtoken = db.TUserToken.Where(t => t.LastId == tokenid & t.CreateTime > endtime).FirstOrDefault();
-
-                    if (newtoken == null)
+                    using (webcoreContext db = new webcoreContext())
                     {
 
-                        var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid).FirstOrDefault();
+                        var endtime = DateTime.Now.AddMinutes(-3);
 
-                        if (tokeninfo != null)
+                        var newtoken = db.TUserToken.Where(t => t.LastId == tokenid & t.CreateTime > endtime).FirstOrDefault();
+
+                        if (newtoken == null)
                         {
 
-                            TUserToken userToken = new TUserToken();
-                            userToken.Id = Guid.NewGuid().ToString();
-                            userToken.UserId = userid;
-                            userToken.LastId = tokenid;
-                            userToken.CreateTime = DateTime.Now;
+                            var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid).FirstOrDefault();
+
+                            if (tokeninfo != null)
+                            {
+
+                                TUserToken userToken = new TUserToken();
+                                userToken.Id = Guid.NewGuid().ToString();
+                                userToken.UserId = userid;
+                                userToken.LastId = tokenid;
+                                userToken.CreateTime = DateTime.Now;
 
 
-                            var claim = new Claim[]{
-                        new Claim("tokenid",userToken.Id),
-                             new Claim("userid",userid)
-                        };
+                                var claim = new Claim[]{
+                                    new Claim("tokenid",userToken.Id),
+                                    new Claim("userid",userid)
+                                };
 
-                            var token = WebApi.Libraries.Verify.JwtToken.GetToken(claim);
-                            context.HttpContext.Response.Headers.Add("NewToken", token);
+                                var token = WebApi.Libraries.Verify.JwtToken.GetToken(claim);
+                                context.HttpContext.Response.Headers.Add("NewToken", token);
 
-                            //解决 Ionic 取不到 Header中的信息问题
-                            context.HttpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");
-
-
-
-                            userToken.Token = token;
-
-                            db.TUserToken.Add(userToken);
+                                //解决 Ionic 取不到 Header中的信息问题
+                                context.HttpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");
 
 
-                            db.TUserToken.Remove(tokeninfo);
-                            db.SaveChanges();
+                                userToken.Token = token;
 
-                            var oldtime = DateTime.Now.AddDays(-7);
-                            var oldlist = db.TUserToken.Where(t => t.CreateTime < oldtime).ToList();
-                            db.TUserToken.RemoveRange(oldlist);
+                                db.TUserToken.Add(userToken);
 
-                            db.SaveChanges();
+
+                                db.TUserToken.Remove(tokeninfo);
+                                db.SaveChanges();
+
+                                var oldtime = DateTime.Now.AddDays(-7);
+                                var oldlist = db.TUserToken.Where(t => t.CreateTime < oldtime).ToList();
+                                db.TUserToken.RemoveRange(oldlist);
+
+                                db.SaveChanges();
+                            }
+                        }
+                        else
+                        {
+                            context.HttpContext.Response.Headers.Add("NewToken", newtoken.Token);
                         }
                     }
-                    else
-                    {
-                        context.HttpContext.Response.Headers.Add("NewToken", newtoken.Token);
-                    }
                 }
+
             }
 
         }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Models.Dtos
 {
@@ -15,7 +12,7 @@ namespace Models.Dtos
         /// <summary>
         /// 用户名
         /// </summary>
-        [Required]
+        [Required(ErrorMessage = "用户名不可以空")]
         public string name { get; set; }
 
 
@@ -23,7 +20,7 @@ namespace Models.Dtos
         /// <summary>
         /// 密码
         /// </summary>
-        [Required]
+        [Required(ErrorMessage = "密码不可以为空")]
         public string password { get; set; }
     }
 }

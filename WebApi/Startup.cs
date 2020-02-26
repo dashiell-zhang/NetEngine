@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using WebApi.Actions;
 using WebApi.Filters;
@@ -157,6 +159,30 @@ namespace WebApi
                     }
                 });
             });
+
+
+            //注册统一模型验证
+            services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.InvalidModelStateResponseFactory = actionContext =>
+                {
+
+                    //获取验证失败的模型字段 
+                    var errors = actionContext.ModelState.Where(e => e.Value.Errors.Count > 0).Select(e => e.Value.Errors.First().ErrorMessage).ToList();
+
+                    var dataStr = string.Join(" | ", errors);
+
+                    //设置返回内容
+                    var result = new
+                    {
+                        errMsg = dataStr
+                    };
+
+                    return new BadRequestObjectResult(result);
+                };
+            });
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -36,16 +36,12 @@ namespace Cms.Controllers
 
 
         [HttpPost]
-        public bool UploadFile()
+        public bool UploadFile(string Table, string TableId, string Sign)
         {
             try
             {
 
                 var ReqFiles = Request.Form.Files;
-
-                string Table = HttpContext.Request.Form["Table"];
-                string TableId = HttpContext.Request.Form["TableId"];
-                string Sign = HttpContext.Request.Form["Sign"];
 
 
                 List<IFormFile> Attachments = new List<IFormFile>();

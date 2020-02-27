@@ -88,5 +88,41 @@ namespace Common.IO
                 return null;
             }
         }
+
+
+
+        /// <summary>
+        /// 获取指定文件的大小
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string GetFileSize(string path)
+        {
+            FileInfo fileInfo = null;
+            fileInfo = new System.IO.FileInfo(path);
+
+            string m_strSize = "";
+
+            long FactSize = fileInfo.Length;
+
+            if (FactSize < 1024.00)
+            {
+                m_strSize = FactSize.ToString("F2") + " Byte";
+            }
+            else if (FactSize >= 1024.00 && FactSize < 1048576)
+            {
+                m_strSize = (FactSize / 1024.00).ToString("F2") + " K";
+            }
+            else if (FactSize >= 1048576 && FactSize < 1073741824)
+            {
+                m_strSize = (FactSize / 1024.00 / 1024.00).ToString("F2") + " M";
+            }
+            else if (FactSize >= 1073741824)
+            {
+                m_strSize = (FactSize / 1024.00 / 1024.00 / 1024.00).ToString("F2") + " G";
+            }
+
+            return m_strSize;
+        }
     }
 }

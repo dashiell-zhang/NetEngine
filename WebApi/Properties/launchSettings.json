@@ -10,13 +10,13 @@
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
     "WebApi": {
-      "commandName": "Executable",
+      "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "swagger/index.html",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://api.local.blackbaby.net:56001"
+      "applicationUrl": "https://localhost:9801"
     },
     "Docker": {
       "commandName": "Docker",

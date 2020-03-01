@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common.Img;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Repository.WebCore;
 using Models.Dtos;
+using Repository.WebCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -361,6 +362,52 @@ namespace WebApi.Controllers
             {
                 return false;
             }
+        }
+
+
+
+        /// <summary>
+        /// 通过文件ID删除文件方法
+        /// </summary>
+        /// <param name="id">文件ID</param>
+        /// <returns></returns>
+        [HttpDelete("DeleteFile")]
+        public bool DeleteFile(string id)
+        {
+            try
+            {
+
+                using (var db = new webcoreContext())
+                {
+                    var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
+
+                    file.IsDelete = true;
+                    file.DeleteTime = DateTime.Now;
+
+                    db.SaveChanges();
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
+
+        /// <summary>
+        /// 自定义二维码生成方法
+        /// </summary>
+        /// <param name="text">数据内容</param>
+        /// <returns></returns>
+        [HttpGet("GetQrCode")]
+        public FileResult GetQrCode(string text)
+        {
+            var image = QRCodeHelper.GetQrCode(text);
+            MemoryStream ms = new MemoryStream();
+            image.Save(ms, System.DrawingCore.Imaging.ImageFormat.Png);
+            return File(ms.ToArray(), "image/png");
         }
 
     }

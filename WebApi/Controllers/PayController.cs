@@ -7,9 +7,11 @@ using Models.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WebApi.Libraries.WeiXin.MiniApp;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
 using WebApi.Libraries.WeiXin.Public;
+using Common.Img;
+using System.IO;
+using WebApi.Libraries.WeiXin.APP.Models;
 
 namespace WebApi.Controllers
 {
@@ -28,31 +30,99 @@ namespace WebApi.Controllers
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinPay")]
-        public CreatePay CreateWeiXinPay(string orderno, string weixinkeyid)
+        public CreatePay_MiniApp CreateWeiXinPay(string orderno, string weixinkeyid)
         {
 
             using (webcoreContext db = new webcoreContext())
             {
-                var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
-
-                var userinfo = db.TUser.Where(t => t.Id == order.CreateUserId).FirstOrDefault();
+                var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
+                {
+                    t.OrderNo,
+                    t.Price,
+                    ProductName = t.Product.Name,
+                    t.CreateUserId,
+                    UserOpenId = t.CreateUser.TUserBindWeixin.Where(w => w.WeiXinKeyId == weixinkeyid).Select(w => w.WeiXinOpenId).FirstOrDefault()
+                }).FirstOrDefault();
 
                 var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
-                WeiXinHelper weiXinHelper = new WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, "http://www.mikekeji.com/api/Pay/WeiXinPayNotify");
+                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, "http://xxxx.com/api/Pay/WeiXinPayNotify");
 
                 int price = Convert.ToInt32(order.Price * 100);
 
-                string productname = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => t.Product.Name).FirstOrDefault();
-
-
-                var openid = db.TUserBindWeixin.Where(t => t.UserId == order.CreateUserId & t.WeiXinKeyId == weixinkeyid).Select(t => t.WeiXinOpenId).FirstOrDefault();
-
-                var pay = weiXinHelper.CreatePay(openid, order.OrderNo, productname, productname + "购买", price);
+                var pay = weiXinHelper.CreatePay(order.UserOpenId, order.OrderNo, order.ProductName, order.ProductName, price);
 
                 return pay;
             }
 
+        }
+
+
+
+        /// <summary>
+        /// 微信APP商户平台下单接口
+        /// </summary>
+        /// <remarks>用于在微信商户平台创建订单</remarks>
+        /// <returns></returns>
+        [HttpGet("CreateWeiXinAppPay")]
+        public CreatePay_APP CreateWeiXinAppPay(string orderno, string weixinkeyid)
+        {
+
+            using (var db = new webcoreContext())
+            {
+                var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
+
+                var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
+
+                var weiXinHelper = new Libraries.WeiXin.APP.WeiXinHelper(weixinkey.WxAppId, weixinkey.MchId, weixinkey.MchKey, "http://xxxx.com/api/Pay/WeiXinPayNotify");
+
+                int price = Convert.ToInt32(order.Price * 100);
+
+                var pay = weiXinHelper.CreatePay(order.OrderNo, "订单号：" + orderno, "订单号：" + orderno, price, "119.29.29.29");
+
+                return pay;
+            }
+
+        }
+
+
+
+        /// <summary>
+        /// 获取微信支付PC版URL
+        /// </summary>
+        /// <param name="orderNo"></param>
+        /// <returns></returns>
+        [HttpGet("GetWxPayPCUrl")]
+        public FileResult GetWxPayPCUrl(string orderNo)
+        {
+
+            string key = "wxpayPCUrl" + orderNo;
+
+            string codeUrl = Common.NoSql.Redis.StrGet(key);
+
+            if (string.IsNullOrEmpty(codeUrl))
+            {
+
+                using (var db = new webcoreContext())
+                {
+                    var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price, t.ProductId, ProductName = t.Product.Name }).FirstOrDefault();
+
+                    var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
+
+                    var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, "http://xxxx.com/api/Pay/WeiXinPayNotify");
+
+                    int price = Convert.ToInt32(order.Price * 100);
+
+                    codeUrl = weiXinHelper.CreatePay(order.ProductId, order.OrderNo, order.ProductName, price, "119.29.29.29");
+
+                    Common.NoSql.Redis.StrSet(key, codeUrl, TimeSpan.FromMinutes(115));
+                }
+            }
+
+            var image = QRCodeHelper.GetQrCode(codeUrl);
+            MemoryStream ms = new MemoryStream();
+            image.Save(ms, System.DrawingCore.Imaging.ImageFormat.Png);
+            return File(ms.ToArray(), "image/png");
         }
 
 
@@ -83,6 +153,8 @@ namespace WebApi.Controllers
 
             string appid = notifyData.GetValue("appid").ToString();
 
+            string paytimeStr = notifyData.GetValue("time_end").ToString();
+            var payTime = DateTime.ParseExact(paytimeStr, "yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture);
 
             //从微信验证信息真实性
             WxPayData req = new WxPayData();
@@ -128,7 +200,7 @@ namespace WebApi.Controllers
                         order.Payprice = decimal.Parse(total_fee) / 100;
                         order.SerialNo = transaction_id;
                         order.Paystate = true;
-                        order.Paytime = DateTime.Now;
+                        order.Paytime = payTime;
                         order.PayType = "微信支付";
                         order.State = "已支付";
 
@@ -165,30 +237,27 @@ namespace WebApi.Controllers
         /// </summary>
         /// <remarks>用于在支付宝商户平台创建订单</remarks>
         /// <returns></returns>
-        [HttpGet("CreateAliPay")]
-        public dtoKeyValue CreateAliPay(string orderno, string alipaykeyid)
+        [HttpGet("CreateAliPayMiniApp")]
+        public dtoKeyValue CreateAliPayMiniApp(string orderno, string alipaykeyid)
         {
 
             using (webcoreContext db = new webcoreContext())
             {
-                var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
-
-                var userinfo = db.TUser.Where(t => t.Id == order.CreateUserId).FirstOrDefault();
-
+                var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
+                {
+                    t.OrderNo,
+                    t.Price,
+                    ProductName = t.Product.Name,
+                    AliPayUserId = t.CreateUser.TUserBindAlipay.Where(a => a.AlipayKeyId == alipaykeyid).Select(a => a.AlipayUserId).FirstOrDefault()
+                }).FirstOrDefault();
 
                 var alipaykey = db.TAlipayKey.Where(t => t.Id == alipaykeyid).FirstOrDefault();
 
                 AliPayHelper aliPayHelper = new AliPayHelper(alipaykey.AppId, alipaykey.AppPrivateKey, alipaykey.AlipayPublicKey, "http://xxx.com/api/Pay/AliPayNotify");
 
-
                 string price = Convert.ToString(order.Price);
 
-                string productname = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => t.Product.Name).FirstOrDefault();
-
-
-                var buyuserid = db.TUserBindAlipay.Where(t => t.UserId == order.CreateUserId).Select(t => t.AlipayUserId).FirstOrDefault();
-
-                var TradeNo = aliPayHelper.AlipayTradeCreate(order.OrderNo, productname, price, buyuserid);
+                var TradeNo = aliPayHelper.AlipayTradeCreate(order.OrderNo, order.ProductName, price, order.AliPayUserId);
 
                 if (string.IsNullOrEmpty(TradeNo))
                 {
@@ -211,7 +280,7 @@ namespace WebApi.Controllers
 
 
         /// <summary>
-        /// 通过订单号获取支付宝付款URL
+        /// 通过订单号获取支付宝电脑网页付款URL
         /// </summary>
         /// <param name="orderNo"></param>
         /// <returns></returns>
@@ -222,7 +291,13 @@ namespace WebApi.Controllers
             {
                 var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
-                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, ProductName = t.Product.Name }).FirstOrDefault();
+                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
+                {
+                    t.OrderNo,
+                    t.Price,
+                    t.State,
+                    ProductName = t.Product.Name
+                }).FirstOrDefault();
 
                 if (order != null && order.State == "待支付")
                 {
@@ -241,6 +316,41 @@ namespace WebApi.Controllers
                 }
             }
         }
+
+
+
+        /// <summary>
+        /// 通过订单号获取支付宝H5网页付款URL
+        /// </summary>
+        /// <param name="orderNo"></param>
+        /// <returns></returns>
+        [HttpGet("GetAlipayH5Url")]
+        public string GetAlipayH5Url(string orderNo)
+        {
+            using (var db = new webcoreContext())
+            {
+                var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
+
+                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, ProductName = t.Product.Name }).FirstOrDefault();
+
+                if (order != null && order.State == "待支付")
+                {
+
+                    AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, "https://xxxx.com/api/Pay/AliPayNotify", "https://xxxxx.com/mypage", "");
+
+                    string price = order.Price.ToString();
+
+                    string html = helper.CreatePayH5(order.OrderNo, order.ProductName, price, "");
+
+                    return html;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+        }
+
 
 
         /// <summary>

@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Xml;
+using WebApi.Libraries.WeiXin.APP.Models;
 
-namespace WebApi.Libraries.WeiXin.Web
+namespace WebApi.Libraries.WeiXin.APP
 {
     public class WeiXinHelper
     {
         private string appid;
-
-        private string secret;
 
         private string mchid;
 
@@ -19,10 +16,9 @@ namespace WebApi.Libraries.WeiXin.Web
 
         private string notifyurl;
 
-        public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
+        public WeiXinHelper(string in_appid, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
         {
             appid = in_appid;
-            secret = in_secret;
             mchid = in_mchid;
             mchkey = in_mchkey;
             notifyurl = in_notifyurl;
@@ -32,15 +28,15 @@ namespace WebApi.Libraries.WeiXin.Web
 
 
         /// <summary>
-        /// 微信网页支付商户平台下单方法
+        /// 微信APP支付商户平台下单方法
         /// </summary>
-        /// <param name="productid">产品ID</param>
         /// <param name="orderno">订单号</param>
+        /// <param name="title">商品名称</param>
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <param name="ip">服务器IP</param>
         /// <returns></returns>
-        public string CreatePay(string productid, string orderno, string body, int price, string ip)
+        public CreatePay_APP CreatePay(string orderno, string title, string body, int price, string ip)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -52,9 +48,9 @@ namespace WebApi.Libraries.WeiXin.Web
 
 
             //参与统一下单签名的参数，除最后的key外，已经按参数名ASCII码从小到大排序
-            var unifiedorderSignParam = string.Format("appid={0}&body={1}&mch_id={2}&nonce_str={3}&notify_url={4}&out_trade_no={5}&product_id={6}&spbill_create_ip={7}&total_fee={8}&trade_type={9}&key={10}"
+            var unifiedorderSignParam = string.Format("appid={0}&body={1}&mch_id={2}&nonce_str={3}&notify_url={4}&out_trade_no={5}&spbill_create_ip={6}&total_fee={7}&trade_type={8}&key={9}"
                 , appid, body, mchid, nonceStr, notifyurl
-                , orderno, productid, ip, price, "NATIVE", mchkey);
+                , orderno, ip, price, "APP", mchkey);
 
 
             var unifiedorderSign = Common.Crypto.Md5.GetMd5(unifiedorderSignParam).ToUpper();
@@ -67,14 +63,13 @@ namespace WebApi.Libraries.WeiXin.Web
                                 <nonce_str>{3}</nonce_str>
                                 <notify_url>{4}</notify_url>
                                 <out_trade_no>{5}</out_trade_no>
-                                <product_id>{6}</product_id>
-                                <spbill_create_ip>{7}</spbill_create_ip>
-                                <total_fee>{8}</total_fee>
-                                <trade_type>{9}</trade_type>
-                                <sign>{10}</sign>
+                                <spbill_create_ip>{6}</spbill_create_ip>
+                                <total_fee>{7}</total_fee>
+                                <trade_type>{8}</trade_type>
+                                <sign>{9}</sign>
                                </xml>
                     ", appid, body, mchid, nonceStr, notifyurl
-                              , orderno, productid, ip, price, "NATIVE", unifiedorderSign);
+                              , orderno, ip, price, "APP", unifiedorderSign);
 
 
 
@@ -95,18 +90,25 @@ namespace WebApi.Libraries.WeiXin.Web
             {
                 string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
 
+                CreatePay_APP info = new CreatePay_APP();
+                info.appid = appid;
+                info.partnerid = mchid;
+                info.prepayid = prepay_id;
+                info.package = "Sign=WXPay";
+                info.noncestr = nonceStr;
 
-                string codeUrl = jo["xml"]["code_url"]["#cdata-section"].ToString();
+                //再次签名返回数据至APP
+                string strB = "appid=" + appid + "&noncestr=" + nonceStr + "&package=Sign=WXPay&partnerid=" + info.partnerid + "&prepayid=" + prepay_id + "&timestamp=" + info.timestamp + "&key=" + mchkey;
 
+                info.sign = Common.Crypto.Md5.GetMd5(strB).ToUpper();
 
-                return codeUrl;
+                return info;
             }
             else
             {
                 return null;
             }
         }
-
 
     }
 }

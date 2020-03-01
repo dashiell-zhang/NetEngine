@@ -1,33 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using System.Xml;
-using WebApi.Libraries.Http;
-using WebApi.Libraries.WeiXin.MiniApp.Models;
-using WebApi.Libraries.WeiXin.Public;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Common.Crypto;
-using Common.Json;
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Xml;
+using WebApi.Libraries.WeiXin.MiniApp.Models;
 
 namespace WebApi.Libraries.WeiXin.MiniApp
 {
     public class WeiXinHelper
     {
-        public string appid;
+        private string appid;
 
-        public string secret;
+        private string secret;
 
-        public string mchid;
+        private string mchid;
 
-        public string mchkey;
+        private string mchkey;
 
-        public string notifyurl;
+        private string notifyurl;
 
-        public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null,string in_notifyurl =null)
+        public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
         {
             appid = in_appid;
             secret = in_secret;
@@ -49,16 +42,16 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
             string httpret = Common.Http.HttpHelper.Get(url);
 
-            string openid = JsonHelper.GetValueByKey(httpret, "openid");
+            string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid");
 
-            string sessionkey = JsonHelper.GetValueByKey(httpret, "session_key");
+            string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key");
 
             return (openid, sessionkey);
         }
 
 
         /// <summary>
-        /// 微信统一下单获取prepay_id & 再次签名返回数据
+        /// 微信小程序支付商户平台下单方法
         /// </summary>
         /// <param name="openid">用户 OpenId</param>
         /// <param name="orderno">订单号</param>
@@ -66,7 +59,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <returns></returns>
-        public CreatePay CreatePay(string openid, string orderno, string title, string body, int price)
+        public CreatePay_MiniApp CreatePay(string openid, string orderno, string title, string body, int price)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -81,7 +74,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 , openid, orderno, price, "JSAPI", mchkey);
 
 
-            var unifiedorderSign = Md5.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Common.Crypto.Md5.GetMd5(unifiedorderSignParam).ToUpper();
 
             //构造统一下单的请求参数
             var zhi = string.Format(@"<xml>
@@ -100,9 +93,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                               , orderno, price, "JSAPI", unifiedorderSign);
 
 
-            //请求数据
-
-            var getdata = Common.Http.HttpHelper.Post(url, zhi, "form");                    /// 统一下单请求数据（方法二）
+            var getdata = Common.Http.HttpHelper.Post(url, zhi, "form");
 
             //获取xml数据
             XmlDocument doc = new XmlDocument();
@@ -118,14 +109,14 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             {
                 string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
 
-                CreatePay info = new CreatePay();
+                CreatePay_MiniApp info = new CreatePay_MiniApp();
                 info.nonceStr = nonceStr;
                 info.package = "prepay_id=" + prepay_id;
 
                 //再次签名返回数据至小程序
                 string strB = "appId=" + appid + "&nonceStr=" + nonceStr + "&package=prepay_id=" + prepay_id + "&signType=MD5&timeStamp=" + info.timeStamp + "&key=" + mchkey;
 
-                info.paySign = Md5.GetMd5(strB).ToUpper();
+                info.paySign = Common.Crypto.Md5.GetMd5(strB).ToUpper();
 
                 return info;
             }
@@ -134,8 +125,6 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 return null;
             }
         }
-
-
 
 
 
@@ -148,7 +137,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <returns></returns>
         public static string DecryptionData(string encryptedDataStr, string key, string iv)
         {
-            var rijalg = System.Security.Cryptography.Aes.Create();
+            var rijalg = Aes.Create();
             // RijndaelManaged rijalg = new RijndaelManaged();
             //----------------- 
             //设置 cipher 格式 AES-128-CBC 

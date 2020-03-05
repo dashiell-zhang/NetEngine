@@ -30,13 +30,16 @@ namespace WebApi.Controllers
         /// <summary>
         /// 单文件上传接口
         /// </summary>
+        /// <param name="table">表名</param>
+        /// <param name="tableId">记录ID</param>
+        /// <param name="sign">自定义标记</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [HttpPost("UploadFile")]
-        public string UploadFile([Required]IFormFile file)
+        public string UploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign, [FromBody][Required]IFormFile file)
         {
 
-            string userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
+            string userid = Libraries.Verify.JwtToken.GetClaims("userid");
 
             var url = string.Empty;
             var fileName = string.Empty;
@@ -44,7 +47,7 @@ namespace WebApi.Controllers
             var fullFileName = string.Empty;
 
             string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
-            string filepath = WebApi.Libraries.IO.Path.ContentRootPath() + basepath;
+            string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
 
@@ -73,6 +76,9 @@ namespace WebApi.Controllers
                 f.Id = fileName;
                 f.Name = file.FileName;
                 f.Path = path;
+                f.Table = table;
+                f.TableId = tableId;
+                f.Sign = sign;
                 f.CreateTime = DateTime.Now;
                 db.TFile.Add(f);
                 db.SaveChanges();
@@ -86,17 +92,20 @@ namespace WebApi.Controllers
         /// <summary>
         /// 多文件上传接口
         /// </summary>
+        /// <param name="table">表名</param>
+        /// <param name="tableId">记录ID</param>
+        /// <param name="sign">标记</param>
         /// <returns></returns>
         /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
         [HttpPost("BatchUploadFile")]
-        public List<dtoFileInfo> BatchUploadFile()
+        public List<dtoFileInfo> BatchUploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign)
         {
 
             var fileInfos = new List<dtoFileInfo>();
 
             var ReqFiles = Request.Form.Files;
 
-            string userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
+            string userid = Libraries.Verify.JwtToken.GetClaims("userid");
 
             List<IFormFile> Attachments = new List<IFormFile>();
             for (int i = 0; i < ReqFiles.Count; i++)
@@ -112,7 +121,7 @@ namespace WebApi.Controllers
                 var fullFileName = string.Empty;
 
                 string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
-                string filepath = WebApi.Libraries.IO.Path.ContentRootPath() + basepath;
+                string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);
 
@@ -141,6 +150,9 @@ namespace WebApi.Controllers
                     f.Id = fileName;
                     f.Name = file.FileName;
                     f.Path = path;
+                    f.Table = table;
+                    f.TableId = tableId;
+                    f.Sign = sign;
                     f.CreateTime = DateTime.Now;
 
                     db.TFile.Add(f);
@@ -174,7 +186,7 @@ namespace WebApi.Controllers
             using (webcoreContext db = new webcoreContext())
             {
                 var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
-                string path = WebApi.Libraries.IO.Path.ContentRootPath() + file.Path;
+                string path = Libraries.IO.Path.ContentRootPath() + file.Path;
 
 
                 //读取文件入流
@@ -198,16 +210,18 @@ namespace WebApi.Controllers
 
 
 
-
         /// <summary>
         /// 多文件切片上传，获取初始化文件ID
         /// </summary>
-        /// <param name="filename">文件名称</param>
+        /// <param name="table">表名</param>
+        /// <param name="tableId">记录ID</param>
+        /// <param name="sign">自定义标记</param>
+        /// <param name="fileName">文件名称</param>
         /// <param name="slicing">总切片数</param>
         /// <param name="unique">文件校验值</param>
         /// <returns></returns>
         [HttpGet("CreateGroupFileId")]
-        public string CreateGroupFileId([Required]string filename, [Required] int slicing, [Required]string unique)
+        public string CreateGroupFileId([Required]string table, [Required]string tableId, [Required]string sign, [Required]string fileName, [Required] int slicing, [Required]string unique)
         {
             var userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
             using (webcoreContext db = new webcoreContext())
@@ -225,8 +239,11 @@ namespace WebApi.Controllers
 
                     var f = new TFile();
                     f.Id = Guid.NewGuid().ToString();
-                    f.Name = filename;
+                    f.Name = fileName;
                     f.Path = basepath;
+                    f.Table = table;
+                    f.TableId = tableId;
+                    f.Sign = sign;
                     f.CreateTime = DateTime.Now;
 
                     db.TFile.Add(f);
@@ -255,12 +272,12 @@ namespace WebApi.Controllers
         /// <summary>
         /// 文件切片上传接口
         /// </summary>
-        /// <param name="fileid">文件组ID</param>
+        /// <param name="fileId">文件组ID</param>
         /// <param name="index">切片索引</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [HttpPost("UploadGroupFile")]
-        public bool UploadGroupFile([Required][FromForm]string fileid, [Required][FromForm]int index, [Required]IFormFile file)
+        public bool UploadGroupFile([Required][FromForm]string fileId, [Required][FromForm]int index, [Required]IFormFile file)
         {
 
             try
@@ -270,7 +287,7 @@ namespace WebApi.Controllers
                 var fileExtension = string.Empty;
                 var fullFileName = string.Empty;
 
-                string basepath = "\\Files\\Group\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileid;
+                string basepath = "\\Files\\Group\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileId;
                 string filepath = WebApi.Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);
@@ -296,7 +313,7 @@ namespace WebApi.Controllers
 
                 using (webcoreContext db = new webcoreContext())
                 {
-                    var group = db.TFileGroup.Where(t => t.FileId == fileid).FirstOrDefault();
+                    var group = db.TFileGroup.Where(t => t.FileId == fileId).FirstOrDefault();
 
                     var groupfile = new TFileGroupFile();
                     groupfile.Id = Guid.NewGuid().ToString();
@@ -321,7 +338,7 @@ namespace WebApi.Controllers
                         {
                             byte[] buffer = new byte[1024 * 100];
 
-                            var fileinfo = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
+                            var fileinfo = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
 
                             var fullfilepath = WebApi.Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
 
@@ -364,8 +381,6 @@ namespace WebApi.Controllers
             }
         }
 
-
-
         /// <summary>
         /// 通过文件ID删除文件方法
         /// </summary>
@@ -401,6 +416,8 @@ namespace WebApi.Controllers
         /// </summary>
         /// <param name="text">数据内容</param>
         /// <returns></returns>
+        [AllowAnonymous]
+        [JwtTokenVerify(IsSkip = true)]
         [HttpGet("GetQrCode")]
         public FileResult GetQrCode(string text)
         {

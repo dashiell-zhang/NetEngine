@@ -86,7 +86,7 @@ namespace WebApi
 
 
             //注册HttpContext
-            WebApi.Libraries.Http.HttpContext.Add(services);
+            Libraries.Http.HttpContext.Add(services);
 
             //注册全局过滤器
             services.AddMvc(config => config.Filters.Add(new GlobalFilter()));
@@ -204,14 +204,14 @@ namespace WebApi
 
 
             //注册HttpContext
-            WebApi.Libraries.Http.HttpContext.Initialize(app, env);
+            Libraries.Http.HttpContext.Initialize(app, env);
 
 
             //注册跨域信息
             app.UseCors("cors");
 
             //强制重定向到Https
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
 
             app.UseRouting();

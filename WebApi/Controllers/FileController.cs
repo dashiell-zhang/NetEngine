@@ -232,7 +232,7 @@ namespace WebApi.Controllers
                 if (dbfileinfo == null)
                 {
 
-                    var fileid = Guid.NewGuid().ToString() + Path.GetExtension(filename).ToLowerInvariant(); ;
+                    var fileid = Guid.NewGuid().ToString() + Path.GetExtension(fileName).ToLowerInvariant(); ;
 
                     string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileid;
 

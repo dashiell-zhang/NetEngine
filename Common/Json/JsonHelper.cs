@@ -95,7 +95,7 @@ namespace Common.Json
                 jset.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                 jset.Converters.Add(new IsoDateTimeConverter { DateTimeFormat = "yyyy'/'MM'/'dd' 'HH':'mm':'ss" });
 
-                //设置属性名小写
+                //设置属性名为首字母小写得驼峰形式
                 jset.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
                 return JsonConvert.SerializeObject(obj, jset).ToString();

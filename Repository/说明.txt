@@ -26,4 +26,4 @@ MySql.Data.EntityFrameworkCore 需要执行
 
 
 Add-Migration init 生成命令
-Update-Database init  刷新数据库命令
+Update-Database 刷新数据库命令

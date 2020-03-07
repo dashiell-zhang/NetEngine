@@ -86,7 +86,7 @@ namespace Cms
                 //设置 Json 默认时间格式
                 options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
 
-                //设置返回的属性名全部小写
+                //设置返回的属性名为首字母小写得驼峰形式
                 options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
                 //忽略循环引用

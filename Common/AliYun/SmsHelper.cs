@@ -3,8 +3,6 @@ using Aliyun.Acs.Core.Exceptions;
 using Aliyun.Acs.Core.Http;
 using Aliyun.Acs.Core.Profile;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Common.AliYun
 {
@@ -12,6 +10,12 @@ namespace Common.AliYun
     {
         string accessKeyId = "";
         string accessKeySecret = "";
+
+
+        public SmsHelper()
+        {
+
+        }
 
         public SmsHelper(string in_accessKeyId, string in_accessKeySecret)
         {

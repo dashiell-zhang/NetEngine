@@ -64,6 +64,27 @@ namespace Common.NoSql
 
 
         /// <summary>
+        /// 通过key判断是否存在指定Str
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public static bool IsContainStr(string key)
+        {
+            var info = StrGet(key);
+
+            if (string.IsNullOrEmpty(info))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
+
+        /// <summary>
         /// 给value追加值
         /// </summary>
         /// <param name="key"></param>

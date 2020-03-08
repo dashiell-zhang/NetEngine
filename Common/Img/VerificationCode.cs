@@ -1,5 +1,5 @@
 ﻿using System;
-using System.DrawingCore;
+using System.Drawing;
 
 namespace Common.Img
 {

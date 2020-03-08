@@ -423,7 +423,7 @@ namespace WebApi.Controllers
         {
             var image = QRCodeHelper.GetQrCode(text);
             MemoryStream ms = new MemoryStream();
-            image.Save(ms, System.DrawingCore.Imaging.ImageFormat.Png);
+            image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
             return File(ms.ToArray(), "image/png");
         }
 

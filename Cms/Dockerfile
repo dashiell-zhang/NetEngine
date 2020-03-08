@@ -4,12 +4,12 @@
 FROM registry.cn-shanghai.aliyuncs.com/onekib/dotnet_core_aspnet:3.1-buster-slim AS base
 WORKDIR /app
 
-#ĞŞ¸Ä¾µÏñÄÚ²¿Èí¼şÔ´²ÉÓÃ°¢Àï¾µÏñ
+#ä¿®æ”¹é•œåƒå†…éƒ¨è½¯ä»¶æºé‡‡ç”¨é˜¿é‡Œé•œåƒ
 RUN echo "deb https://mirrors.aliyun.com/debian buster main" > /etc/apt/sources.list
 RUN echo "deb https://mirrors.aliyun.com/debian-security buster/updates main" >> /etc/apt/sources.list
 RUN echo "deb https://mirrors.aliyun.com/debian buster-updates main" >> /etc/apt/sources.list
 
-#°²×° libgdiplus ÒÔ½â¾ö System.Drawing ÔÚ linux ÏÂÎŞ·¨ÔËĞĞµÄÎÊÌâ
+#å®‰è£… libgdiplus ä»¥è§£å†³ System.Drawing åœ¨ linux ä¸‹æ— æ³•è¿è¡Œçš„é—®é¢˜
 RUN apt-get update && apt-get -y install libgdiplus	
 
 

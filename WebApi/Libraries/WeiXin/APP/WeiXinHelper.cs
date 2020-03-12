@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Common.Http;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Xml;
@@ -10,15 +11,18 @@ namespace WebApi.Libraries.WeiXin.APP
     {
         private string appid;
 
+        private string appsecret;
+
         private string mchid;
 
         private string mchkey;
 
         private string notifyurl;
 
-        public WeiXinHelper(string in_appid, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
+        public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
         {
             appid = in_appid;
+            appsecret = in_secret;
             mchid = in_mchid;
             mchkey = in_mchkey;
             notifyurl = in_notifyurl;
@@ -74,7 +78,7 @@ namespace WebApi.Libraries.WeiXin.APP
 
 
 
-            var getdata = Common.Http.HttpHelper.Post(url, zhi, "form");
+            var getdata = HttpHelper.Post(url, zhi, "form");
 
             //获取xml数据
             XmlDocument doc = new XmlDocument();
@@ -110,5 +114,54 @@ namespace WebApi.Libraries.WeiXin.APP
             }
         }
 
+
+
+        /// <summary>
+        /// 获取 AccessToken
+        /// </summary>
+        /// <returns></returns>
+        public (string accessToken, string openId) GetAccessToken(string code)
+        {
+            string token = Common.NoSql.Redis.StrGet("wxappaccesstoken" + code);
+            string openid = Common.NoSql.Redis.StrGet("wxappopenid" + code);
+
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(openid))
+            {
+
+                string url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + appid + "&secret=" + appsecret + "&code=" + code + "&grant_type=authorization_code";
+
+                var returnJson = HttpHelper.Post(url, "", "form");
+
+                token = Common.Json.JsonHelper.GetValueByKey(returnJson, "access_token");
+                openid = Common.Json.JsonHelper.GetValueByKey(returnJson, "openid");
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    Common.NoSql.Redis.StrSet("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
+                    Common.NoSql.Redis.StrSet("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
+                }
+            }
+
+            return (token, openid);
+        }
+
+
+
+        /// <summary>
+        /// 获取用户信息
+        /// </summary>
+        /// <param name="accessToken"></param>
+        /// <param name="openId"></param>
+        /// <returns></returns>
+        public GetUserInfo GetUserInfo(string accessToken, string openId)
+        {
+            string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
+
+            var returnJson = HttpHelper.Post(url, "", "form");
+
+            var userInfo = Common.Json.JsonHelper.JSONToObject<GetUserInfo>(returnJson);
+
+            return userInfo;
+        }
     }
 }

@@ -20,7 +20,7 @@ namespace Common.UseDB
         {
             try
             {
-                using (webcoreContext db = new webcoreContext())
+                using (var db = new webcoreContext())
                 {
                     var log = new TLog();
 

@@ -39,7 +39,7 @@ namespace WebApi.Filters
                 {
                     var tokenid = WebApi.Libraries.Verify.JwtToken.GetClaims("tokenid");
 
-                    using (webcoreContext db = new webcoreContext())
+                    using (var db = new webcoreContext())
                     {
 
                         var endtime = DateTime.Now.AddMinutes(-3);
@@ -78,7 +78,7 @@ namespace WebApi.Filters
                     var tokenid = WebApi.Libraries.Verify.JwtToken.GetClaims("tokenid");
                     var userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
 
-                    using (webcoreContext db = new webcoreContext())
+                    using (var db = new webcoreContext())
                     {
 
                         var endtime = DateTime.Now.AddMinutes(-3);

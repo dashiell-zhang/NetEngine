@@ -29,7 +29,7 @@ namespace WebApi.Controllers
         {
 
 
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 var user = db.TUser.Where(t => t.Name == login.name & t.PassWord == login.password).FirstOrDefault();
 

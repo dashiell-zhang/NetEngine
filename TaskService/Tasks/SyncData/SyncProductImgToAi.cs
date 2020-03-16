@@ -22,7 +22,7 @@ namespace TaskService.Tasks.SyncData
 
         private static void Add()
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
 
                 var imglist = db.TProductImg.Where(t => t.ProductImgBaiduAis.Count() == 0).Select(t => new
@@ -78,7 +78,7 @@ namespace TaskService.Tasks.SyncData
 
         private static void Update()
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 var start = DateTime.Now.AddDays(-3);
 
@@ -120,7 +120,7 @@ namespace TaskService.Tasks.SyncData
 
         private static void Screenshot()
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 var imgList = db.TProductImgBaiduAi.Where(t => t.Result.Contains("\"error_code\": 216203")).Select(t => new { imgid = t.ProductImgId, imgname = t.ProductImg.File.Name, fileid = t.ProductImg.FileId }).ToList();
 

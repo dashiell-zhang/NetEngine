@@ -62,11 +62,11 @@ namespace Repository.WebCore
         {
             if (!optionsBuilder.IsConfigured)
             {
-                //optionsBuilder.UseSqlServer("Data Source=cloud.blackbaby.net;Initial Catalog=webcore;User ID=webcore;Password=webcore@321");
+                optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong");
 
                 //optionsBuilder.UseMySql("server=127.0.0.1;userid=webcore;pwd=webcore@321;database=webcore;");
 
-                optionsBuilder.UseSqlite("Data Source=..\\Repository\\database.db");
+                //optionsBuilder.UseSqlite("Data Source=..\\Repository\\database.db");
 
                 //开启全局懒加载
                 //optionsBuilder.UseLazyLoadingProxies();

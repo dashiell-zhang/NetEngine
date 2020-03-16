@@ -36,26 +36,21 @@ namespace WebApi.Controllers
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [HttpPost("UploadFile")]
-        public string UploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign, [FromBody][Required]IFormFile file)
+        public string UploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign, [Required]IFormFile file)
         {
-
-            string userid = Libraries.Verify.JwtToken.GetClaims("userid");
-
-            var url = string.Empty;
-            var fileName = string.Empty;
-            var fileExtension = string.Empty;
-            var fullFileName = string.Empty;
 
             string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
 
-            fileName = Guid.NewGuid().ToString();
-            fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            fullFileName = string.Format("{0}{1}", fileName, fileExtension);
+            var fileName = Guid.NewGuid().ToString();
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var fullFileName = string.Format("{0}{1}", fileName, fileExtension);
 
             string path = "";
+
+            var isSuccess = false;
 
             if (file != null && file.Length > 0)
             {
@@ -67,25 +62,57 @@ namespace WebApi.Controllers
                     fs.Flush();
                 }
 
-                path = basepath + "\\" + fullFileName;
+                var upOss = false;
+
+                if (upOss)
+                {
+
+                    var oss = new Common.AliYun.OssHelper();
+
+                    var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyyMMdd"));
+
+                    if (upload)
+                    {
+                        Common.IO.File.Delete(path);
+
+                        path = "/Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fullFileName;
+                        isSuccess = true;
+                    }
+                }
+                else
+                {
+                    path = basepath + "\\" + fullFileName;
+                    isSuccess = true;
+                }
+
             }
 
-            using (webcoreContext db = new webcoreContext())
+            if (isSuccess)
             {
-                var f = new TFile();
-                f.Id = fileName;
-                f.Name = file.FileName;
-                f.Path = path;
-                f.Table = table;
-                f.TableId = tableId;
-                f.Sign = sign;
-                f.CreateTime = DateTime.Now;
-                db.TFile.Add(f);
-                db.SaveChanges();
+                using (var db = new webcoreContext())
+                {
+                    var f = new TFile();
+                    f.Id = fileName;
+                    f.Name = file.FileName;
+                    f.Path = path;
+                    f.Table = table;
+                    f.TableId = tableId;
+                    f.Sign = sign;
+                    f.CreateTime = DateTime.Now;
+                    db.TFile.Add(f);
+                    db.SaveChanges();
+
+                    return fileName;
+                }
             }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
 
-            return fileName;
+                HttpContext.Items.Add("errMsg", "文件上传失败！");
 
+                return null;
+            }
         }
 
 
@@ -105,7 +132,6 @@ namespace WebApi.Controllers
 
             var ReqFiles = Request.Form.Files;
 
-            string userid = Libraries.Verify.JwtToken.GetClaims("userid");
 
             List<IFormFile> Attachments = new List<IFormFile>();
             for (int i = 0; i < ReqFiles.Count; i++)
@@ -144,7 +170,7 @@ namespace WebApi.Controllers
                     path = basepath + "\\" + fullFileName;
                 }
 
-                using (webcoreContext db = new webcoreContext())
+                using (var db = new webcoreContext())
                 {
                     var f = new TFile();
                     f.Id = fileName;
@@ -183,7 +209,7 @@ namespace WebApi.Controllers
         [HttpGet("GetFile")]
         public FileResult GetFile([Required]string fileid)
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
                 string path = Libraries.IO.Path.ContentRootPath() + file.Path;
@@ -211,6 +237,42 @@ namespace WebApi.Controllers
 
 
         /// <summary>
+        /// 通过文件ID获取文件静态访问路径
+        /// </summary>
+        /// <param name="fileid">文件ID</param>
+        /// <returns></returns>
+        [HttpGet("GetFilePath")]
+        public string GetFilePath([Required]string fileid)
+        {
+            using (var db = new webcoreContext())
+            {
+                var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
+
+                if (file != null)
+                {
+
+                    string domain = "https://file.xxxx.com";
+
+                    string fileUrl = domain + file.Path.Replace("\\", "/");
+
+                    return fileUrl;
+                }
+                else
+                {
+                    HttpContext.Response.StatusCode = 400;
+
+                    HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件！");
+
+                    return null;
+                }
+
+            }
+
+        }
+
+
+
+        /// <summary>
         /// 多文件切片上传，获取初始化文件ID
         /// </summary>
         /// <param name="table">表名</param>
@@ -223,8 +285,7 @@ namespace WebApi.Controllers
         [HttpGet("CreateGroupFileId")]
         public string CreateGroupFileId([Required]string table, [Required]string tableId, [Required]string sign, [Required]string fileName, [Required] int slicing, [Required]string unique)
         {
-            var userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
 
                 var dbfileinfo = db.TFileGroup.Where(t => t.Unique.ToLower() == unique.ToLower()).FirstOrDefault();
@@ -269,6 +330,7 @@ namespace WebApi.Controllers
         }
 
 
+
         /// <summary>
         /// 文件切片上传接口
         /// </summary>
@@ -288,7 +350,7 @@ namespace WebApi.Controllers
                 var fullFileName = string.Empty;
 
                 string basepath = "\\Files\\Group\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileId;
-                string filepath = WebApi.Libraries.IO.Path.ContentRootPath() + basepath;
+                string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);
 
@@ -311,7 +373,7 @@ namespace WebApi.Controllers
                     path = basepath + "\\" + fullFileName;
                 }
 
-                using (webcoreContext db = new webcoreContext())
+                using (var db = new webcoreContext())
                 {
                     var group = db.TFileGroup.Where(t => t.FileId == fileId).FirstOrDefault();
 
@@ -340,7 +402,7 @@ namespace WebApi.Controllers
 
                             var fileinfo = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
 
-                            var fullfilepath = WebApi.Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
+                            var fullfilepath = Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
 
                             using (FileStream outStream = new FileStream(fullfilepath, FileMode.Create))
                             {
@@ -351,7 +413,7 @@ namespace WebApi.Controllers
 
                                 foreach (var item in filelist)
                                 {
-                                    string p = WebApi.Libraries.IO.Path.ContentRootPath() + item.Path;
+                                    string p = Libraries.IO.Path.ContentRootPath() + item.Path;
                                     srcStream = new FileStream(p, FileMode.Open);
                                     while ((readedLen = srcStream.Read(buffer, 0, buffer.Length)) > 0)
                                     {
@@ -381,6 +443,8 @@ namespace WebApi.Controllers
             }
         }
 
+
+
         /// <summary>
         /// 通过文件ID删除文件方法
         /// </summary>
@@ -391,7 +455,6 @@ namespace WebApi.Controllers
         {
             try
             {
-
                 using (var db = new webcoreContext())
                 {
                     var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
@@ -401,6 +464,7 @@ namespace WebApi.Controllers
 
                     db.SaveChanges();
                 }
+
                 return true;
             }
             catch

@@ -30,7 +30,7 @@ namespace WebApi.Controllers
         [HttpGet("GetWeiXinOpenId")]
         public (string openid, string userid) GetWeiXinOpenId(string weixinkeyid, string code)
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
 
                 var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
@@ -69,7 +69,7 @@ namespace WebApi.Controllers
         public string GetWeiXinPhone(string iv, string encryptedData, string code, string weixinkeyid)
         {
 
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
@@ -109,7 +109,7 @@ namespace WebApi.Controllers
         [CacheData(TTL = 60, UseToken = true)]
         public dtoUser GetUser(string userid)
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 if (string.IsNullOrEmpty(userid))
                 {

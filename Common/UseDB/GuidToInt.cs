@@ -15,7 +15,7 @@ namespace Common.UseDB
         /// <returns></returns>
         public static int GetInt(string guid)
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 var info = db.TGuidToInt.Where(t => t.Guid == guid.ToLower()).FirstOrDefault() ?? new TGuidToInt();
 
@@ -46,7 +46,7 @@ namespace Common.UseDB
         /// <returns></returns>
         public static string GetGuid(int id)
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 return db.TGuidToInt.Where(t => t.Id == id).Select(t => t.Guid).FirstOrDefault();
             }

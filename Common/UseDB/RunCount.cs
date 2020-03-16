@@ -20,7 +20,7 @@ namespace Common.UseDB
         /// <returns></returns>
         public static int Add(string tag)
         {
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
 
                 var info = db.TCount.Where(t => t.Tag == tag).FirstOrDefault() ?? new TCount();
@@ -65,7 +65,7 @@ namespace Common.UseDB
         public static int Get(string tag, DateTime starttime = default(DateTime), DateTime endtime = default(DateTime))
         {
 
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new webcoreContext())
             {
                 var query = db.TCount.Where(t => t.Tag.Contains(tag));
 

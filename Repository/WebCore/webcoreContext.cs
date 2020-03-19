@@ -49,11 +49,15 @@ namespace Repository.WebCore
 
         public DbSet<TRegionProvince> TRegionProvince { get; set; }
 
+        public DbSet<TRole> TRole { get; set; }
+
         public DbSet<TUser> TUser { get; set; }
 
         public DbSet<TUserBindAlipay> TUserBindAlipay { get; set; }
 
         public DbSet<TUserBindWeixin> TUserBindWeixin { get; set; }
+
+        public DbSet<TUserInfo> TUserInfo { get; set; }
 
         public DbSet<TUserToken> TUserToken { get; set; }
 

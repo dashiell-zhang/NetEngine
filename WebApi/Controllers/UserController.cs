@@ -122,7 +122,7 @@ namespace WebApi.Controllers
                     NickName = t.NickName,
                     Phone = t.Phone,
                     Email = t.Email,
-                    Role = t.Role,
+                    Role = t.Role.Name,
                     CreateTime = t.CreateTime
                 }).FirstOrDefault();
 

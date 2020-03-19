@@ -42,9 +42,10 @@ namespace Repository.WebCore
 
 
         /// <summary>
-        /// 角色
+        /// 角色ID
         /// </summary>
-        public string Role { get; set; }
+        public string RoleId { get; set; }
+        public TRole Role { get; set; }
 
 
 

@@ -75,7 +75,7 @@ namespace Cms.Controllers
         {
             using (var db = new webcoreContext())
             {
-                IList<TUser> list = db.TUser.Where(t => t.IsDelete == false && t.Role == "admin").ToList();
+                IList<TUser> list = db.TUser.Where(t => t.IsDelete == false && t.RoleId == "").ToList();
 
                 return Json(new { data = list });
             }
@@ -113,7 +113,7 @@ namespace Cms.Controllers
                     //执行添加
                     user.Id = Guid.NewGuid().ToString();
                     user.CreateTime = DateTime.Now;
-                    user.Role = "admin";
+                    user.RoleId = "";
 
                     db.TUser.Add(user);
                 }

@@ -43,6 +43,12 @@ namespace Repository.WebCore
 
         public DbSet<TProductImgBaiduAi> TProductImgBaiduAi { get; set; }
 
+        public DbSet<TRegionArea> TRegionArea { get; set; }
+
+        public DbSet<TRegionCity> TRegionCity { get; set; }
+
+        public DbSet<TRegionProvince> TRegionProvince { get; set; }
+
         public DbSet<TUser> TUser { get; set; }
 
         public DbSet<TUserBindAlipay> TUserBindAlipay { get; set; }

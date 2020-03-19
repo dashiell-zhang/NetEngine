@@ -34,10 +34,17 @@ namespace Repository.WebCore
         /// </summary>
         public string MchKey { get; set; }
 
+
         /// <summary>
         /// 排序
         /// </summary>
         public int Sort { get; set; }
+
+
+        /// <summary>
+        /// AppId 类型，['App','MiniApp','H5','Native']
+        /// </summary>
+        public string Type { get; set; }
 
 
         /// <summary>

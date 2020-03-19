@@ -499,22 +499,5 @@ namespace WebApi.Controllers
         }
 
 
-
-        /// <summary>
-        /// 自定义二维码生成方法
-        /// </summary>
-        /// <param name="text">数据内容</param>
-        /// <returns></returns>
-        [AllowAnonymous]
-        [JwtTokenVerify(IsSkip = true)]
-        [HttpGet("GetQrCode")]
-        public FileResult GetQrCode(string text)
-        {
-            var image = QRCodeHelper.GetQrCode(text);
-            MemoryStream ms = new MemoryStream();
-            image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-            return File(ms.ToArray(), "image/png");
-        }
-
     }
 }

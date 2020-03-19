@@ -51,6 +51,8 @@ namespace Repository.WebCore
 
         public DbSet<TRole> TRole { get; set; }
 
+        public DbSet<TSign> TSign { get; set; }
+
         public DbSet<TUser> TUser { get; set; }
 
         public DbSet<TUserBindAlipay> TUserBindAlipay { get; set; }

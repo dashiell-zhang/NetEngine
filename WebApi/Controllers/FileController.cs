@@ -39,6 +39,8 @@ namespace WebApi.Controllers
         public string UploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign, [Required]IFormFile file)
         {
 
+            string userId = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
+
             string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
@@ -93,11 +95,13 @@ namespace WebApi.Controllers
                 {
                     var f = new TFile();
                     f.Id = fileName;
+                    f.IsDelete = false;
                     f.Name = file.FileName;
                     f.Path = path;
                     f.Table = table;
                     f.TableId = tableId;
                     f.Sign = sign;
+                    f.CreateUserId = userId;
                     f.CreateTime = DateTime.Now;
                     db.TFile.Add(f);
                     db.SaveChanges();
@@ -127,6 +131,7 @@ namespace WebApi.Controllers
         [HttpPost("BatchUploadFile")]
         public List<dtoFileInfo> BatchUploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign)
         {
+            string userId = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
 
             var fileInfos = new List<dtoFileInfo>();
 
@@ -141,19 +146,16 @@ namespace WebApi.Controllers
 
             foreach (var file in Attachments)
             {
-                var url = string.Empty;
-                var fileName = string.Empty;
-                var fileExtension = string.Empty;
-                var fullFileName = string.Empty;
+
 
                 string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
                 string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);
 
-                fileName = Guid.NewGuid().ToString();
-                fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                fullFileName = string.Format("{0}{1}", fileName, fileExtension);
+                var fileName = Guid.NewGuid().ToString();
+                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                var fullFileName = string.Format("{0}{1}", fileName, fileExtension);
 
                 string path = "";
 
@@ -167,18 +169,41 @@ namespace WebApi.Controllers
                         fs.Flush();
                     }
 
-                    path = basepath + "\\" + fullFileName;
+
+                    var upOss = false;
+
+                    if (upOss)
+                    {
+
+                        var oss = new Common.AliYun.OssHelper();
+
+                        var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyyMMdd"));
+
+                        if (upload)
+                        {
+                            Common.IO.File.Delete(path);
+
+                            path = "/Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fullFileName;
+                        }
+                    }
+                    else
+                    {
+                        path = basepath + "\\" + fullFileName;
+                    }
+
                 }
 
                 using (var db = new webcoreContext())
                 {
                     var f = new TFile();
                     f.Id = fileName;
+                    f.IsDelete = false;
                     f.Name = file.FileName;
                     f.Path = path;
                     f.Table = table;
                     f.TableId = tableId;
                     f.Sign = sign;
+                    f.CreateUserId = userId;
                     f.CreateTime = DateTime.Now;
 
                     db.TFile.Add(f);

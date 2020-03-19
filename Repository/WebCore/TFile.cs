@@ -1,4 +1,4 @@
-﻿using Repository.Bases;
+﻿using Repository.WebCore.Bases;
 
 namespace Repository.WebCore
 {
@@ -7,7 +7,7 @@ namespace Repository.WebCore
     /// <summary>
     /// 文件表
     /// </summary>
-    public class TFile : CD
+    public class TFile : CD_User
     {
 
 

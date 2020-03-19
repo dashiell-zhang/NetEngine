@@ -14,6 +14,8 @@ namespace Common.IO
         {
             try
             {
+                path = path.Replace("/", "\\");
+
                 FileInfo file = new FileInfo(path);
                 if (file.Exists)//判断文件是否存在
                 {
@@ -21,7 +23,7 @@ namespace Common.IO
                     file.Delete();//删除文件
                 }
                 ////判断文件夹是否为空,为空则删除
-                int s = path.LastIndexOf("/");
+                int s = path.LastIndexOf("\\");
                 path = path.Substring(0, s);
                 if (Directory.GetFileSystemEntries(path).Length == 0) //判断文件夹为空,空则删除
                 {

@@ -113,7 +113,7 @@ namespace WebApi.Controllers
             {
                 if (string.IsNullOrEmpty(userid))
                 {
-                    userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
+                    userid = Libraries.Verify.JwtToken.GetClaims("userid");
                 }
 
                 var user = db.TUser.Where(t => t.Id == userid && t.IsDelete == false).Select(t => new dtoUser

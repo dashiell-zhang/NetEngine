@@ -31,13 +31,13 @@ namespace WebApi.Filters
             if (!filter.IsSkip)
             {
 
-                var exp = Convert.ToInt64(WebApi.Libraries.Verify.JwtToken.GetClaims("exp"));
+                var exp = Convert.ToInt64(Libraries.Verify.JwtToken.GetClaims("exp"));
 
                 var exptime = Common.DataTime.DateTimeHelper.UnixToTime(exp);
 
                 if (exptime < DateTime.Now)
                 {
-                    var tokenid = WebApi.Libraries.Verify.JwtToken.GetClaims("tokenid");
+                    var tokenid = Libraries.Verify.JwtToken.GetClaims("tokenid");
 
                     using (var db = new webcoreContext())
                     {
@@ -68,15 +68,15 @@ namespace WebApi.Filters
             {
 
 
-                var exp = Convert.ToInt64(WebApi.Libraries.Verify.JwtToken.GetClaims("exp"));
+                var exp = Convert.ToInt64(Libraries.Verify.JwtToken.GetClaims("exp"));
 
                 var exptime = Common.DataTime.DateTimeHelper.UnixToTime(exp);
 
                 if (exptime < DateTime.Now)
                 {
 
-                    var tokenid = WebApi.Libraries.Verify.JwtToken.GetClaims("tokenid");
-                    var userid = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
+                    var tokenid = Libraries.Verify.JwtToken.GetClaims("tokenid");
+                    var userid = Libraries.Verify.JwtToken.GetClaims("userid");
 
                     using (var db = new webcoreContext())
                     {
@@ -105,7 +105,7 @@ namespace WebApi.Filters
                                     new Claim("userid",userid)
                                 };
 
-                                var token = WebApi.Libraries.Verify.JwtToken.GetToken(claim);
+                                var token = Libraries.Verify.JwtToken.GetToken(claim);
                                 context.HttpContext.Response.Headers.Add("NewToken", token);
 
                                 //解决 Ionic 取不到 Header中的信息问题

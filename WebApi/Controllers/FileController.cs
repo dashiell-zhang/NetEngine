@@ -39,7 +39,7 @@ namespace WebApi.Controllers
         public string UploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign, [Required]IFormFile file)
         {
 
-            string userId = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
+            string userId = Libraries.Verify.JwtToken.GetClaims("userid");
 
             string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
@@ -132,8 +132,6 @@ namespace WebApi.Controllers
         [HttpPost("BatchUploadFile")]
         public List<string> BatchUploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign)
         {
-            string userId = WebApi.Libraries.Verify.JwtToken.GetClaims("userid");
-
             var fileIds = new List<string>();
 
             var ReqFiles = Request.Form.Files;

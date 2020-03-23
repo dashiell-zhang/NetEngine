@@ -49,7 +49,7 @@ namespace WebApi.Controllers
                         };
 
 
-                    var ret = WebApi.Libraries.Verify.JwtToken.GetToken(claim);
+                    var ret = Libraries.Verify.JwtToken.GetToken(claim);
 
                     return ret;
                 }
@@ -112,7 +112,7 @@ namespace WebApi.Controllers
                         };
 
 
-                    var ret = WebApi.Libraries.Verify.JwtToken.GetToken(claim);
+                    var ret = Libraries.Verify.JwtToken.GetToken(claim);
 
                     return ret;
                 }

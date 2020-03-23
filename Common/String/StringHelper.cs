@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -32,6 +33,19 @@ namespace Common.String
             return orderno;
         }
 
+
+
+        /// <summary>
+        /// 移除字符串中的全部标点符号
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string RemovePunctuation(string text)
+        {
+            text = new string(text.Where(c => !char.IsPunctuation(c)).ToArray());
+
+            return text;
+        }
 
 
 

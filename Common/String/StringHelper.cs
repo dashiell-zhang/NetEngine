@@ -50,6 +50,27 @@ namespace Common.String
 
 
         /// <summary>
+        /// 判断字符串中是否包含中文
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static bool IsContainsCN(string text)
+        {
+            Regex reg = new Regex(@"[\u4e00-\u9fa5]");//正则表达式
+
+            if (reg.IsMatch(text))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
+
+        /// <summary>
         /// 从传入的HTML代码中提取文本内容
         /// </summary>
         /// <param name="Htmlstring"></param>

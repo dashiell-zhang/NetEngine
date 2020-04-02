@@ -10,13 +10,9 @@ namespace Cms.Controllers
     public class UeditorController : Controller
     {
 
-        public IActionResult Index()
-        {
 
-            return View();
-        }
-
-
+        //[RequestSizeLimit(100_000_000)]
+        [DisableRequestSizeLimit]
         public string ProcessRequest([FromServices]IWebHostEnvironment environment)
         {
 

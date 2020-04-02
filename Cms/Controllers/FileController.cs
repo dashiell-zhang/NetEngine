@@ -36,6 +36,8 @@ namespace Cms.Controllers
 
 
         [HttpPost]
+        //[RequestSizeLimit(100_000_000)]
+        [DisableRequestSizeLimit]
         public bool UploadFile(string Table, string TableId, string Sign)
         {
             try
@@ -77,6 +79,30 @@ namespace Cms.Controllers
                                 fs.Flush();
                             }
 
+
+                            var upOss = false;
+
+                            if (upOss)
+                            {
+
+                                var oss = new Common.AliYun.OssHelper();
+
+                                var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyyMMdd"));
+
+                                if (upload)
+                                {
+                                    Common.IO.File.Delete(path);
+
+                                    path = "/Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fullFileName;
+                                }
+                            }
+                            else
+                            {
+                                path = path.Replace(Libraries.IO.Path.WebRootPath(), "");
+                            }
+
+
+
                             using (var db = new webcoreContext())
                             {
                                 TFile fi = new TFile();
@@ -85,7 +111,7 @@ namespace Cms.Controllers
                                 fi.Table = Table;
                                 fi.TableId = TableId;
                                 fi.Sign = Sign;
-                                fi.Path = path.Replace(Libraries.IO.Path.WebRootPath(), "");
+                                fi.Path = path;
                                 fi.CreateTime = DateTime.Now;
 
                                 db.TFile.Add(fi);

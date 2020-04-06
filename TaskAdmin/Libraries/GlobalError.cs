@@ -17,7 +17,7 @@ namespace TaskAdmin.Libraries
 
             var ret = new
             {
-                errMsg = error.Message
+                errMsg = "Global internal exception of the system"
             };
 
 

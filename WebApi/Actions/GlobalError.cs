@@ -17,7 +17,7 @@ namespace WebApi.Actions
 
             var ret = new
             {
-                errMsg = error.Message
+                errMsg = "Global internal exception of the system"
             };
 
 

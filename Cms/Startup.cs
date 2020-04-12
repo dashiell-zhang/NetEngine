@@ -8,8 +8,6 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Linq;
 using System.Text.Encodings.Web;
@@ -80,17 +78,11 @@ namespace Cms
             });
 
 
-            //调整Json操作类库为 NewtonsoftJson ，需要安装 Microsoft.AspNetCore.Mvc.NewtonsoftJson
-            services.AddControllers().AddNewtonsoftJson(options =>
+
+            services.AddControllers().AddJsonOptions(option =>
             {
-                //设置 Json 默认时间格式
-                options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
-
-                //设置返回的属性名为首字母小写得驼峰形式
-                options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-
-                //忽略循环引用
-                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
+                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
             });
 
 

@@ -81,8 +81,8 @@ namespace Cms
 
             services.AddControllers().AddJsonOptions(option =>
             {
-                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
-                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
+                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
+                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
             });
 
 

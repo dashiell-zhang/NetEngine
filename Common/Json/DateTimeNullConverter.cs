@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -10,11 +8,16 @@ namespace Common.Json
     {
 
 
-        /// <summary>
-        /// 获取或设置DateTime格式
-        /// </summary>
-        /// <remarks>默认为: yyyy-MM-dd HH:mm:ss</remarks>
-        public string DateTimeFormat { get; set; } = "yyyy-MM-dd HH:mm:ss";
+        private readonly string _dateFormatString;
+        public DateTimeNullConverter()
+        {
+            _dateFormatString = "yyyy-MM-dd HH:mm:ss";
+        }
+
+        public DateTimeNullConverter(string dateFormatString)
+        {
+            _dateFormatString = dateFormatString;
+        }
 
 
         public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -25,7 +28,7 @@ namespace Common.Json
 
         public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
         {
-            writer.WriteStringValue(value?.ToString(this.DateTimeFormat));
+            writer.WriteStringValue(value?.ToString(_dateFormatString));
         }
     }
 

@@ -25,7 +25,7 @@
         {
             string url = "https://spapi.baidu.com/oauth/jscode2sessionkey?code="+code+"&client_id="+AppKey+"&sk="+AppSecret+"";
 
-            string httpret = Http.HttpHelper.Get(url);
+            string httpret = HttpHelper.Get(url);
 
             string openid = Json.JsonHelper.GetValueByKey(httpret, "openid");
 

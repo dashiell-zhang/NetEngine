@@ -40,7 +40,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         {
             string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appid + "&secret=" + secret + "&js_code=" + code + "&grant_type=authorization_code";
 
-            string httpret = Common.Http.HttpHelper.Get(url);
+            string httpret = Common.HttpHelper.Get(url);
 
             string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid");
 
@@ -74,7 +74,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 , openid, orderno, price, "JSAPI", mchkey);
 
 
-            var unifiedorderSign = Common.Crypto.Md5.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
 
             //构造统一下单的请求参数
             var zhi = string.Format(@"<xml>
@@ -93,7 +93,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                               , orderno, price, "JSAPI", unifiedorderSign);
 
 
-            var getdata = Common.Http.HttpHelper.Post(url, zhi, "form");
+            var getdata = Common.HttpHelper.Post(url, zhi, "form");
 
             //获取xml数据
             XmlDocument doc = new XmlDocument();
@@ -116,7 +116,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 //再次签名返回数据至小程序
                 string strB = "appId=" + appid + "&nonceStr=" + nonceStr + "&package=prepay_id=" + prepay_id + "&signType=MD5&timeStamp=" + info.timeStamp + "&key=" + mchkey;
 
-                info.paySign = Common.Crypto.Md5.GetMd5(strB).ToUpper();
+                info.paySign = Common.CryptoHelper.GetMd5(strB).ToUpper();
 
                 return info;
             }

@@ -1,4 +1,4 @@
-﻿using Common.Img;
+﻿using Common;
 using Microsoft.AspNetCore.Mvc;
 using Models.Dtos;
 using Repository.WebCore;
@@ -61,7 +61,7 @@ namespace WebApi.Controllers
         [HttpGet("GetQrCode")]
         public FileResult GetQrCode(string text)
         {
-            var image = QRCodeHelper.GetQrCode(text);
+            var image = ImgHelper.GetQrCode(text);
             MemoryStream ms = new MemoryStream();
             image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
             return File(ms.ToArray(), "image/png");

@@ -22,9 +22,9 @@ namespace Common.BaiduAi
 
             string type = "ProductAdd_" + DateTime.Now.ToLongDateString();
 
-            if (UseDB.RunCount.Get(type) <= 10000)
+            if (DBHelper.RunCountGet(type) <= 10000)
             {
-                UseDB.RunCount.Add(type);
+                DBHelper.RunCountSet(type);
 
                 var result = new Newtonsoft.Json.Linq.JObject();
 
@@ -65,9 +65,9 @@ namespace Common.BaiduAi
         {
             string type = "ProductUpdate" + DateTime.Now.ToLongDateString();
 
-            if (UseDB.RunCount.Get(type) <= 10000)
+            if (DBHelper.RunCountGet(type) <= 10000)
             {
-                UseDB.RunCount.Add(type);
+                DBHelper.RunCountSet(type);
 
                 var result = new Newtonsoft.Json.Linq.JObject();
 
@@ -110,9 +110,9 @@ namespace Common.BaiduAi
 
             string type = "ProductSearch_" + DateTime.Now.ToLongDateString();
 
-            if (UseDB.RunCount.Get(type) <= 500)
+            if (DBHelper.RunCountGet(type) <= 500)
             {
-                UseDB.RunCount.Add(type);
+                DBHelper.RunCountSet(type);
                 try
                 {
                     var image = File.ReadAllBytes(imgpath);

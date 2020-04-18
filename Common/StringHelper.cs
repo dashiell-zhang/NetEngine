@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
-namespace Common.String
+namespace Common
 {
 
     /// <summary>

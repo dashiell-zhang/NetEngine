@@ -34,7 +34,7 @@ namespace TaskAdmin.Libraries
 
             string strContent = JsonHelper.ObjectToJSON(content);
 
-            Common.UseDB.Log.Set("Cms", "errorlog", strContent);
+            Common.DBHelper.LogSet("Cms", "errorlog", strContent);
 
             context.Response.StatusCode = 400;
 

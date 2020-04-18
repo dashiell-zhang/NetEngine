@@ -8,12 +8,14 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-namespace Common.Datas
+namespace Common
 {
-    public class DataTableHelper
+   public static class DataHelper
     {
+
+
         /// <summary>
-        /// 将datatable 转换成实体类
+        /// 将datatable 转换成 实体List
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="table"></param>
@@ -50,7 +52,7 @@ namespace Common.Datas
 
 
         /// <summary>
-        /// 实体类转 datatable
+        /// 实体List 转 datatable
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
@@ -237,7 +239,7 @@ namespace Common.Datas
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        public IO.NpoiMemoryStream ListToExcel<T>(List<T> list) where T : new()
+        public static IO.NpoiMemoryStream ListToExcel<T>(List<T> list) where T : new()
         {
 
             //创建Excel文件的对象
@@ -249,7 +251,7 @@ namespace Common.Datas
             NPOI.SS.UserModel.IRow row1 = sheet1.CreateRow(0);
 
             T model = new T();
-            var dict = Property.PropertyHelper.GetProperties(model);
+            var dict = PropertyHelper.GetProperties(model);
 
             int x = 0;
             foreach (var item in dict)
@@ -266,7 +268,7 @@ namespace Common.Datas
                 int i = list.IndexOf(item);
                 NPOI.SS.UserModel.IRow rowtemp = sheet1.CreateRow(i + 1);
 
-                dict = Property.PropertyHelper.GetProperties(item);
+                dict = PropertyHelper.GetProperties(item);
                 int d = 0;
                 foreach (var it in dict)
                 {

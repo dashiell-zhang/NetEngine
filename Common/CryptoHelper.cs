@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Common.Crypto
+namespace Common
 {
-    public class Aes
+    public static class CryptoHelper
     {
+
         private static byte[] hexStringToByte(string hex)
         {
             int target_length = hex.Length >> 1;
@@ -73,7 +74,7 @@ namespace Common.Crypto
         /// <param name="param">字符串</param>
         /// <param name="skey">密钥</param>
         /// <returns></returns>
-        public static string Encode(string param, string skey)
+        public static string AESEncode(string param, string skey)
         {
             byte[] key = hexStringToByte(skey.ToLower());
             AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
@@ -96,7 +97,7 @@ namespace Common.Crypto
         /// <param name="param">字符串</param>
         /// <param name="skey">密钥</param>
         /// <returns></returns>
-        public static string Decode(string param, string skey)
+        public static string AESDecode(string param, string skey)
         {
             try
             {
@@ -115,6 +116,61 @@ namespace Common.Crypto
             {
                 return param;
             }
+        }
+
+
+
+        /// <summary>
+        /// 获取字符串的 MD5 签名
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static string GetMd5(string data)
+        {
+            MD5CryptoServiceProvider MD5 = new MD5CryptoServiceProvider();
+            return BitConverter.ToString(MD5.ComputeHash(Encoding.GetEncoding("utf-8").GetBytes(data))).Replace("-", "").ToLower();
+        }
+
+
+
+        /// <summary>
+        /// 获取字符串加 Token 后的 MD5 签名
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static string GetMd5(string data, string token)
+        {
+            string dataMD5 = data + token;
+            MD5CryptoServiceProvider MD5 = new MD5CryptoServiceProvider();
+            return BitConverter.ToString(MD5.ComputeHash(Encoding.GetEncoding("utf-8").GetBytes(dataMD5))).Replace("-", "").ToLower();
+        }
+
+
+
+        /// <summary>
+        /// 通过Base64加密字符串
+        /// </summary>
+        /// <param name="text">要加密的字符串</param>
+        /// <returns></returns>
+        public static string Base64Encode(string text)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(text);
+            return Convert.ToBase64String(bytes);
+        }
+
+
+
+
+        /// <summary>
+        /// 通过Base64解密字符串
+        /// </summary>
+        /// <param name="text">被加密的字符串</param>
+        /// <returns></returns>
+        public static string Base64Decode(string text)
+        {
+            byte[] bytes = Convert.FromBase64String(text);
+            return Encoding.UTF8.GetString(bytes);
         }
     }
 }

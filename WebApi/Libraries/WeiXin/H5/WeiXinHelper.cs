@@ -42,7 +42,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
             string url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + appsecret;
 
-            var returnJson = Common.Http.HttpHelper.Post(url, "", "form");
+            var returnJson = Common.HttpHelper.Post(url, "", "form");
 
             var token = JsonHelper.GetValueByKey(returnJson, "access_token");
 
@@ -60,7 +60,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
             string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken() + "&type=jsapi";
 
-            string returnJson = Common.Http.HttpHelper.Post(getUrl, "", "form");
+            string returnJson = Common.HttpHelper.Post(getUrl, "", "form");
 
             var ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
 

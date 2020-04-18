@@ -4,7 +4,7 @@ using System.Text;
 using System.Linq;
 using Repository.WebCore;
 using Common.BaiduAi;
-using Common.UseDB;
+using Common;
 using Models.BaiduAi.ImageClassify;
 
 namespace TaskService.Tasks.SyncData
@@ -137,7 +137,7 @@ namespace TaskService.Tasks.SyncData
 
                         var newpath = "D:\\Products\\screenshot_" + img.imgname;
 
-                        var screen = Common.Img.Screenshot.Run(path, rtinfo.left, rtinfo.top, newpath, rtinfo.width, rtinfo.height);
+                        var screen = Common.ImgHelper.Screenshot(path, rtinfo.left, rtinfo.top, newpath, rtinfo.width, rtinfo.height);
 
                         if (screen)
                         {

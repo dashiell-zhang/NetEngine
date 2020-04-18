@@ -1,4 +1,4 @@
-﻿using Common.Http;
+﻿using Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -57,7 +57,7 @@ namespace WebApi.Libraries.WeiXin.APP
                 , orderno, ip, price, "APP", mchkey);
 
 
-            var unifiedorderSign = Common.Crypto.Md5.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
 
             //构造统一下单的请求参数
             var zhi = string.Format(@"<xml>
@@ -104,7 +104,7 @@ namespace WebApi.Libraries.WeiXin.APP
                 //再次签名返回数据至APP
                 string strB = "appid=" + appid + "&noncestr=" + nonceStr + "&package=Sign=WXPay&partnerid=" + info.partnerid + "&prepayid=" + prepay_id + "&timestamp=" + info.timestamp + "&key=" + mchkey;
 
-                info.sign = Common.Crypto.Md5.GetMd5(strB).ToUpper();
+                info.sign = Common.CryptoHelper.GetMd5(strB).ToUpper();
 
                 return info;
             }

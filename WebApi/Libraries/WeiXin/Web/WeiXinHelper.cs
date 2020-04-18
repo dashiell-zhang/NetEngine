@@ -57,7 +57,7 @@ namespace WebApi.Libraries.WeiXin.Web
                 , orderno, productid, ip, price, "NATIVE", mchkey);
 
 
-            var unifiedorderSign = Common.Crypto.Md5.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
 
             //构造统一下单的请求参数
             var zhi = string.Format(@"<xml>
@@ -79,7 +79,7 @@ namespace WebApi.Libraries.WeiXin.Web
 
 
 
-            var getdata = Common.Http.HttpHelper.Post(url, zhi, "form");
+            var getdata = Common.HttpHelper.Post(url, zhi, "form");
 
             //获取xml数据
             XmlDocument doc = new XmlDocument();

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Common.Property
+namespace Common
 {
-    public class PropertyHelper
+    public static class PropertyHelper
     {
 
         /// <summary>  

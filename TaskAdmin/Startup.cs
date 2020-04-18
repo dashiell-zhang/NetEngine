@@ -30,12 +30,15 @@ namespace TaskAdmin
         {
 
 
-            //注册 HangFire
+            //注册 HangFire(SqlServer)
             services.AddHangfire(configuration => configuration
                 .UseSqlServerStorage(Configuration.GetConnectionString("HangfireConnection"), new SqlServerStorageOptions
                 {
                     SchemaName = "dbo"
                 }));
+
+            //注册 HangFire(Redis)
+            //services.AddHangfire(configuration => configuration.UseRedisStorage("127.0.0.1,Password=123456,DefaultDatabase=13"));
 
             // 注册 HangFire 服务
             services.AddHangfireServer(config => config.SchedulePollingInterval = TimeSpan.FromSeconds(3));

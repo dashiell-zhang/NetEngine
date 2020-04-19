@@ -40,11 +40,20 @@ namespace WebApi.Libraries.WeiXin.H5
         public string GetAccessToken()
         {
 
-            string url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + appsecret;
+            string key = appid + appsecret + "accesstoken";
 
-            var returnJson = Common.HttpHelper.Post(url, "", "form");
+            var token = Common.NoSql.Redis.StrGet(key);
 
-            var token = JsonHelper.GetValueByKey(returnJson, "access_token");
+            if (string.IsNullOrEmpty(token))
+            {
+                string url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + appsecret;
+
+                var returnJson = Common.HttpHelper.Post(url, "", "form");
+
+                token = JsonHelper.GetValueByKey(returnJson, "access_token");
+
+                Common.NoSql.Redis.StrSet(key, token, TimeSpan.FromSeconds(6000));
+            }
 
             return token;
         }
@@ -58,11 +67,21 @@ namespace WebApi.Libraries.WeiXin.H5
         private string GetTicketID()
         {
 
-            string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken() + "&type=jsapi";
+            string key = appid + appsecret + "ticketid";
 
-            string returnJson = Common.HttpHelper.Post(getUrl, "", "form");
+            var ticketid = Common.NoSql.Redis.StrGet(key);
 
-            var ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
+            if (string.IsNullOrEmpty(ticketid))
+            {
+
+                string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken() + "&type=jsapi";
+
+                string returnJson = Common.HttpHelper.Post(getUrl, "", "form");
+
+                ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
+
+                Common.NoSql.Redis.StrSet(key, ticketid, TimeSpan.FromSeconds(6000));
+            }
 
             return ticketid;
         }

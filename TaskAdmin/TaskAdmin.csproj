@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Hangfire.Redis.StackExchange" Version="1.8.1" />
+    <PackageReference Include="Hangfire.Redis.StackExchange" Version="1.8.2" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
     <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.2.0" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.7.11" />

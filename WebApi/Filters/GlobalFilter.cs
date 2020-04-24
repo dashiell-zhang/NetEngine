@@ -61,7 +61,7 @@ namespace WebApi.Filters
             }
             else
             {
-                if (result.Value.GetType().Namespace != "System")
+                if (result.Value.GetType().Namespace.Contains("System") == false)
                 {
                     {
 

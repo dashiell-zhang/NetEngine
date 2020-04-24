@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="AlipaySDKNet.Standard" Version="4.2.109" />
     <PackageReference Include="aliyun-net-sdk-alidns" Version="2.0.18" />
-    <PackageReference Include="aliyun-net-sdk-core" Version="1.5.5" />
+    <PackageReference Include="aliyun-net-sdk-core" Version="1.5.6" />
     <PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.10.0" />
     <PackageReference Include="Baidu.AI" Version="3.6.14" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.3" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -45,5 +46,52 @@ namespace Common
 
             return ipv6;
         }
+
+
+
+        /// <summary>
+        /// 运行 shell 脚本
+        /// </summary>
+        /// <param name="shell"></param>
+        /// <returns></returns>
+        public static string LinuxShell(string shell)
+        {
+
+            string output = "";
+
+            //创建一个ProcessStartInfo对象 使用系统shell 指定命令和参数 设置标准输出
+            var psi = new ProcessStartInfo("/bin/bash", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
+
+
+            //启动
+            var proc = Process.Start(psi);
+
+            if (proc == null)
+            {
+                Console.WriteLine("Can not exec.");
+            }
+            else
+            {
+                Console.WriteLine("---------------Shell执行开始--------------");
+                //开始读取
+                using (var sr = proc.StandardOutput)
+                {
+                    while (!sr.EndOfStream)
+                    {
+                        output = output + sr.ReadLine();
+                        Console.WriteLine(sr.ReadLine());
+                    }
+
+                    if (!proc.HasExited)
+                    {
+                        proc.Kill();
+                    }
+                }
+                Console.WriteLine("---------------Shell执行结束------------------");
+            }
+
+            return output;
+        }
+
     }
 }

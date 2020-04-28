@@ -1,7 +1,7 @@
 ﻿using Cms.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repository.WebCore;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,7 +31,7 @@ namespace Cms.Controllers
             var Data = new { status = true };
 
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var userlist = db.TUser.ToList();
                 var user = db.TUser.Where(t => t.Name == name & t.PassWord == pwd & t.IsDelete == false).FirstOrDefault();
@@ -73,7 +73,7 @@ namespace Cms.Controllers
         [HttpGet]
         public JsonResult GetUserList()
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 IList<TUser> list = db.TUser.Where(t => t.IsDelete == false && t.RoleId == "").ToList();
 
@@ -92,7 +92,7 @@ namespace Cms.Controllers
             }
             else
             {
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var UserSys = db.TUser.Where(t => t.Id == id).FirstOrDefault();
                     return View(UserSys);
@@ -104,7 +104,7 @@ namespace Cms.Controllers
 
         public void UserSave(TUser user)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
 
@@ -138,7 +138,7 @@ namespace Cms.Controllers
 
         public JsonResult UserDelete(string id)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var UserSys = db.TUser.Where(t => t.Id == id).FirstOrDefault();
                 db.TUser.Remove(UserSys);

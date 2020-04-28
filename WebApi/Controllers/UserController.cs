@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Repository.WebCore;
+using Repository.Database;
 using System.Linq;
 using WebApi.Filters;
 using WebApi.Libraries.WeiXin.MiniApp;
@@ -30,7 +30,7 @@ namespace WebApi.Controllers
         [HttpGet("GetWeiXinOpenId")]
         public (string openid, string userid) GetWeiXinOpenId(string weixinkeyid, string code)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
@@ -69,7 +69,7 @@ namespace WebApi.Controllers
         public string GetWeiXinPhone(string iv, string encryptedData, string code, string weixinkeyid)
         {
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
@@ -109,7 +109,7 @@ namespace WebApi.Controllers
         [CacheData(TTL = 60, UseToken = true)]
         public dtoUser GetUser(string userid)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 if (string.IsNullOrEmpty(userid))
                 {

@@ -1,7 +1,7 @@
 ﻿using Cms.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repository.WebCore;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +22,7 @@ namespace Web.Areas.Admin.Controllers
 
         public JsonResult GetLinkList()
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var list = db.TLink.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
@@ -48,7 +48,7 @@ namespace Web.Areas.Admin.Controllers
             }
             else
             {
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var Link = db.TLink.Where(t => t.Id == id).FirstOrDefault();
 
@@ -68,7 +68,7 @@ namespace Web.Areas.Admin.Controllers
         {
             try
             {
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var nid = db.TLink.Where(t => t.Id == Link.Id).Select(t => t.Id).FirstOrDefault();
 
@@ -109,7 +109,7 @@ namespace Web.Areas.Admin.Controllers
 
         public JsonResult LinkDelete(string id)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var Link = db.TLink.Where(t => t.Id == id).FirstOrDefault();
                 Link.IsDelete = true;

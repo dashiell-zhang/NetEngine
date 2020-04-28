@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Repository.WebCore;
+using Repository.Database;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -39,7 +39,7 @@ namespace WebApi.Filters
                 {
                     var tokenid = Libraries.Verify.JwtToken.GetClaims("tokenid");
 
-                    using (var db = new webcoreContext())
+                    using (var db = new dbContext())
                     {
 
                         var endtime = DateTime.Now.AddMinutes(-3);
@@ -78,7 +78,7 @@ namespace WebApi.Filters
                     var tokenid = Libraries.Verify.JwtToken.GetClaims("tokenid");
                     var userid = Libraries.Verify.JwtToken.GetClaims("userid");
 
-                    using (var db = new webcoreContext())
+                    using (var db = new dbContext())
                     {
 
                         var endtime = DateTime.Now.AddMinutes(-3);

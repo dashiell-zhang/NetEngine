@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repository.WebCore;
+using Repository.Database;
 using Models.Dtos;
 using System;
 using System.Linq;
@@ -29,9 +29,9 @@ namespace WebApi.Controllers
         {
 
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
-                var user = db.TUser.Where(t => t.Name == login.name & t.PassWord == login.password).FirstOrDefault();
+                var user = db.TUser.Where(t => (t.Name == login.name || t.Phone == login.name || t.Email == login.name) && t.PassWord == login.password).FirstOrDefault();
 
                 if (user != null)
                 {
@@ -78,7 +78,7 @@ namespace WebApi.Controllers
         {
 
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 string weixinkeyid = keyValue.Key.ToString();
                 string code = keyValue.Value.ToString();

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Models.Dtos;
-using Repository.WebCore;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -91,7 +91,7 @@ namespace WebApi.Controllers
 
             if (isSuccess)
             {
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var f = new TFile();
                     f.Id = fileName;
@@ -165,7 +165,7 @@ namespace WebApi.Controllers
         [HttpGet("GetFile")]
         public FileResult GetFile([Required]string fileid)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
                 string path = Libraries.IO.Path.ContentRootPath() + file.Path;
@@ -200,7 +200,7 @@ namespace WebApi.Controllers
         [HttpGet("GetFilePath")]
         public string GetFilePath([Required]string fileid)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
 
@@ -241,7 +241,7 @@ namespace WebApi.Controllers
         [HttpGet("CreateGroupFileId")]
         public string CreateGroupFileId([Required]string table, [Required]string tableId, [Required]string sign, [Required]string fileName, [Required] int slicing, [Required]string unique)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var dbfileinfo = db.TFileGroup.Where(t => t.Unique.ToLower() == unique.ToLower()).FirstOrDefault();
@@ -329,7 +329,7 @@ namespace WebApi.Controllers
                     path = basepath + "\\" + fullFileName;
                 }
 
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var group = db.TFileGroup.Where(t => t.FileId == fileId).FirstOrDefault();
 
@@ -411,7 +411,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 

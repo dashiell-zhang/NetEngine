@@ -8,7 +8,7 @@ using Cms.Filters;
 using Microsoft.AspNetCore.Http;
 using Cms.Libraries;
 using Microsoft.Extensions.Configuration;
-using Repository.WebCore;
+using Repository.Database;
 using Cms.Models;
 
 namespace Cms.Controllers
@@ -24,7 +24,7 @@ namespace Cms.Controllers
             ViewBag.UserId = HttpContext.Session.GetString("userid");
 
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 IDictionary<string, object> list = new Dictionary<string, object>();
                 var TChannel = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
@@ -46,7 +46,7 @@ namespace Cms.Controllers
 
         public IActionResult WebInfo()
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var webInfo = db.TWebInfo.FirstOrDefault();
                 return View(webInfo);
@@ -58,7 +58,7 @@ namespace Cms.Controllers
         public bool WebInfoSave(TWebInfo webInfo)
         {
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var dbInfo = db.TWebInfo.FirstOrDefault();
 

@@ -1,7 +1,7 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Mvc;
 using Models.Dtos;
-using Repository.WebCore;
+using Repository.Database;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -28,7 +28,7 @@ namespace WebApi.Controllers
         {
             var list = new List<dtoKeyValue>();
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 if (provinceId == 0 && cityId == 0)

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Repository.WebCore;
+using Repository.Database;
 using System;
 using System.Linq;
 using WebApi.Filters;
@@ -29,7 +29,7 @@ namespace WebApi.Controllers
         [HttpGet("GetSignCount")]
         public int GetSignCount(string table, string tableId, string sign)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var count = db.TSign.Where(t => t.IsDelete == false && t.Table == table && t.TableId == tableId && t.Sign == sign).Count();
 
@@ -48,7 +48,7 @@ namespace WebApi.Controllers
         {
             string userid = Libraries.Verify.JwtToken.GetClaims("userid");
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var like = new TSign();
                 like.Id = Guid.NewGuid().ToString();
@@ -79,7 +79,7 @@ namespace WebApi.Controllers
         {
             string userid = Libraries.Verify.JwtToken.GetClaims("userid");
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var like = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userid && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
 

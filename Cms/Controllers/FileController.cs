@@ -1,7 +1,7 @@
 ﻿using Cms.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repository.WebCore;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +16,7 @@ namespace Cms.Controllers
 
         public JsonResult SetFileSort(string id, int sort)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
@@ -103,7 +103,7 @@ namespace Cms.Controllers
 
 
 
-                            using (var db = new webcoreContext())
+                            using (var db = new dbContext())
                             {
                                 TFile fi = new TFile();
                                 fi.Id = Guid.NewGuid().ToString();
@@ -137,7 +137,7 @@ namespace Cms.Controllers
 
         public bool DeleteFile(string id)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var userid = HttpContext.Session.GetString("userid");
 

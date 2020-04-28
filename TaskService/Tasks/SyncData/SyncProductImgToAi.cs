@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using Repository.WebCore;
+using Repository.Database;
 using Common.BaiduAi;
 using Common;
 using Models.BaiduAi.ImageClassify;
@@ -22,7 +22,7 @@ namespace TaskService.Tasks.SyncData
 
         private static void Add()
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var imglist = db.TProductImg.Where(t => t.ProductImgBaiduAis.Count() == 0).Select(t => new
@@ -78,7 +78,7 @@ namespace TaskService.Tasks.SyncData
 
         private static void Update()
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var start = DateTime.Now.AddDays(-3);
 
@@ -120,7 +120,7 @@ namespace TaskService.Tasks.SyncData
 
         private static void Screenshot()
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var imgList = db.TProductImgBaiduAi.Where(t => t.Result.Contains("\"error_code\": 216203")).Select(t => new { imgid = t.ProductImgId, imgname = t.ProductImg.File.Name, fileid = t.ProductImg.FileId }).ToList();
 

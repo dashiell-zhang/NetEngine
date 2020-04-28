@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Repository.WebCore;
+using Repository.Database;
 
 namespace Cms.Controllers
 {
@@ -20,7 +20,7 @@ namespace Cms.Controllers
 
         public JsonResult GetChannelList()
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var list = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
@@ -39,7 +39,7 @@ namespace Cms.Controllers
             }
             else
             {
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var Channel = db.TChannel.Where(t => t.Id == id).FirstOrDefault();
                     return View(Channel);
@@ -51,7 +51,7 @@ namespace Cms.Controllers
 
         public void ChannelSave(TChannel Channel)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 if (string.IsNullOrEmpty(Channel.Id))
@@ -88,7 +88,7 @@ namespace Cms.Controllers
 
         public JsonResult ChannelDelete(string id)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var Channel = db.TChannel.Where(t => t.Id == id).FirstOrDefault();
                 Channel.IsDelete = true;
@@ -114,7 +114,7 @@ namespace Cms.Controllers
         public JsonResult GetCategoryList(string ChannelId)
         {
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var list = db.TCategory.Where(t => t.ChannelId == ChannelId && t.IsDelete == false).Select(t => new { t.Id, t.Name, t.Remark, ParentName = t.Parent.Name, t.Sort, t.CreateTime }).ToList();
 
@@ -126,7 +126,7 @@ namespace Cms.Controllers
         public IActionResult CategoryEdit(string channelid, string id = null)
         {
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 IDictionary<string, object> list = new Dictionary<string, object>();
@@ -164,7 +164,7 @@ namespace Cms.Controllers
 
             var userid = HttpContext.Session.GetString("userid");
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 if (string.IsNullOrEmpty(Category.Id))
@@ -200,7 +200,7 @@ namespace Cms.Controllers
 
         public JsonResult CategoryDelete(string id)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var subCategoryCount = db.TCategory.Where(t => t.ParentId == id && t.IsDelete == false).Count();
@@ -250,7 +250,7 @@ namespace Cms.Controllers
         public JsonResult GetArticleList(string ChannelId)
         {
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var list = db.TArticle.Where(t => t.Category.ChannelId == ChannelId && t.IsDelete == false).Select(t => new { t.Id, t.Title, CategoryName = t.Category.Name, t.Category.ChannelId, t.IsDisplay, t.IsRecommend, t.ClickCount, t.CreateTime }).ToList();
 
@@ -263,7 +263,7 @@ namespace Cms.Controllers
         {
 
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 ViewData["Tenantid"] = HttpContext.Session.GetString("tenantid");
 
@@ -309,7 +309,7 @@ namespace Cms.Controllers
 
                 var userid = HttpContext.Session.GetString("userid");
 
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
 
                     if (db.TArticle.Where(t => t.Id == article.Id).FirstOrDefault() == null)
@@ -358,7 +358,7 @@ namespace Cms.Controllers
 
         public JsonResult ArticleDelete(string id)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var userid = HttpContext.Session.GetString("userid");
 

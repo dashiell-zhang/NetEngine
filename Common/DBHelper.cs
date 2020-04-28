@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
-using Repository.WebCore;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -55,7 +55,7 @@ namespace Common
         /// <returns></returns>
         public static IList<T> SelectFromSql<T>(string sql) where T : class
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var connection = db.Database.GetDbConnection();
@@ -91,7 +91,7 @@ namespace Common
         /// <returns></returns>
         public static int GuidToInt(string guid)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var info = db.TGuidToInt.Where(t => t.Guid == guid.ToLower()).FirstOrDefault() ?? new TGuidToInt();
 
@@ -122,7 +122,7 @@ namespace Common
         /// <returns></returns>
         public static string IntToGuid(int id)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 return db.TGuidToInt.Where(t => t.Id == id).Select(t => t.Guid).FirstOrDefault();
             }
@@ -141,7 +141,7 @@ namespace Common
         {
             try
             {
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var log = new TLog();
 
@@ -175,7 +175,7 @@ namespace Common
         {
             try
             {
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
 
                     var connection = db.Database.GetDbConnection();
@@ -219,7 +219,7 @@ namespace Common
         /// <returns></returns>
         public static int RunCountSet(string tag)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
 
                 var info = db.TCount.Where(t => t.Tag == tag).FirstOrDefault() ?? new TCount();
@@ -263,7 +263,7 @@ namespace Common
         public static int RunCountGet(string tag, DateTime starttime = default(DateTime), DateTime endtime = default(DateTime))
         {
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var query = db.TCount.Where(t => t.Tag.Contains(tag));
 

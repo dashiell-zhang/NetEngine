@@ -1,9 +1,7 @@
-﻿using Common;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -35,6 +33,7 @@ namespace WebApi.Controllers
         /// <param name="sign">自定义标记</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
+        [DisableRequestSizeLimit]
         [HttpPost("UploadFile")]
         public string UploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign, [Required]IFormFile file)
         {
@@ -129,6 +128,7 @@ namespace WebApi.Controllers
         /// <param name="sign">标记</param>
         /// <returns></returns>
         /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
+        [DisableRequestSizeLimit]
         [HttpPost("BatchUploadFile")]
         public List<string> BatchUploadFile([FromQuery][Required]string table, [FromQuery][Required]string tableId, [FromQuery][Required]string sign)
         {

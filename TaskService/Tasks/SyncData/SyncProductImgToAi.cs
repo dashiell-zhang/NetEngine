@@ -35,7 +35,7 @@ namespace TaskService.Tasks.SyncData
 
                 foreach (var img in imglist)
                 {
-                    var path = "D:\\Products\\" + img.imgname;
+                    var path = "D:/Products/" + img.imgname;
 
                     var info = new { imgid = img.imgid, productid = img.productid };
 
@@ -92,7 +92,7 @@ namespace TaskService.Tasks.SyncData
 
                 foreach (var img in imglist)
                 {
-                    var path = "D:\\Products\\" + img.imgname;
+                    var path = "D:/Products/" + img.imgname;
 
                     var info = new { imgid = img.imgid, productid = img.productid };
 
@@ -126,7 +126,7 @@ namespace TaskService.Tasks.SyncData
 
                 foreach (var img in imgList)
                 {
-                    var path = "D:\\Products\\" + img.imgname;
+                    var path = "D:/Products/" + img.imgname;
 
                     var rt = ImageClassify.ObjectDetect(path);
 
@@ -135,7 +135,7 @@ namespace TaskService.Tasks.SyncData
 
                         var rtinfo = rt.GetValue("result").ToObject<ObjectDetect>();
 
-                        var newpath = "D:\\Products\\screenshot_" + img.imgname;
+                        var newpath = "D:/Products/screenshot_" + img.imgname;
 
                         var screen = Common.ImgHelper.Screenshot(path, rtinfo.left, rtinfo.top, newpath, rtinfo.width, rtinfo.height);
 

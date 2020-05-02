@@ -41,7 +41,7 @@ namespace WebApi.Controllers
 
             string userId = Libraries.Verify.JwtToken.GetClaims("userid");
 
-            string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd");
+            string basepath = "/Files/" + DateTime.Now.ToString("yyyyMMdd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
@@ -56,7 +56,7 @@ namespace WebApi.Controllers
 
             if (file != null && file.Length > 0)
             {
-                path = filepath + "\\" + fullFileName;
+                path = filepath + "/" + fullFileName;
 
                 using (FileStream fs = System.IO.File.Create(path))
                 {
@@ -83,7 +83,7 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    path = basepath + "\\" + fullFileName;
+                    path = basepath + "/" + fullFileName;
                     isSuccess = true;
                 }
 
@@ -206,7 +206,6 @@ namespace WebApi.Controllers
 
                 if (file != null)
                 {
-
                     string domain = "https://file.xxxx.com";
 
                     string fileUrl = domain + file.Path.Replace("\\", "/");
@@ -251,7 +250,7 @@ namespace WebApi.Controllers
 
                     var fileid = Guid.NewGuid().ToString() + Path.GetExtension(fileName).ToLowerInvariant(); ;
 
-                    string basepath = "\\Files\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileid;
+                    string basepath = "/Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fileid;
 
 
                     var f = new TFile();
@@ -305,7 +304,7 @@ namespace WebApi.Controllers
                 var fileExtension = string.Empty;
                 var fullFileName = string.Empty;
 
-                string basepath = "\\Files\\Group\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + fileId;
+                string basepath = "/Files/Group/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fileId;
                 string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);
@@ -318,7 +317,7 @@ namespace WebApi.Controllers
 
                 if (file != null && file.Length > 0)
                 {
-                    path = filepath + "\\" + fullFileName;
+                    path = filepath + "/" + fullFileName;
 
                     using (FileStream fs = System.IO.File.Create(path))
                     {
@@ -326,7 +325,7 @@ namespace WebApi.Controllers
                         fs.Flush();
                     }
 
-                    path = basepath + "\\" + fullFileName;
+                    path = basepath + "/" + fullFileName;
                 }
 
                 using (var db = new dbContext())

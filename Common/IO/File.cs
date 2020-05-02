@@ -14,7 +14,6 @@ namespace Common.IO
         {
             try
             {
-                path = path.Replace("/", "\\");
 
                 FileInfo file = new FileInfo(path);
                 if (file.Exists)//判断文件是否存在
@@ -23,7 +22,7 @@ namespace Common.IO
                     file.Delete();//删除文件
                 }
                 ////判断文件夹是否为空,为空则删除
-                int s = path.LastIndexOf("\\");
+                int s = path.LastIndexOf("/");
                 path = path.Substring(0, s);
                 if (Directory.GetFileSystemEntries(path).Length == 0) //判断文件夹为空,空则删除
                 {
@@ -42,7 +41,7 @@ namespace Common.IO
         /// 下载远程文件保存到本地
         /// </summary>
         /// <param name="url">文件URL</param>
-        /// <param name="filepath">保存路径，以 \ 结束，否则将取最后一个 \ 之前的路径,\之后的当作自定义文件名前缀</param>
+        /// <param name="filepath">保存路径，以 / 结束，否则将取最后一个 / 之前的路径, / 之后的当作自定义文件名前缀</param>
         /// <param name="filename">保存文件名称,不传则自动通过 url 获取名称</param>
         /// <returns></returns>
         public static string DownloadFile(string url, string filepath, string filename = null)
@@ -57,9 +56,9 @@ namespace Common.IO
                 //检查目标路径文件夹是否存在不存在则创建
                 if (!Directory.Exists(filepath))
                 {
-                    //如果路径结尾不是 \ 则说明尾端可能是自定义的文件名前缀
+                    //如果路径结尾不是 / 则说明尾端可能是自定义的文件名前缀
 
-                    var lastindex = filepath.Length - filepath.LastIndexOf("\\");
+                    var lastindex = filepath.Length - filepath.LastIndexOf("/");
 
                     if (lastindex == 1)
                     {
@@ -67,7 +66,7 @@ namespace Common.IO
                     }
                     else
                     {
-                        string temp = filepath.Substring(0, filepath.LastIndexOf("\\"));
+                        string temp = filepath.Substring(0, filepath.LastIndexOf("/"));
                         Directory.CreateDirectory(temp);
 
                     }

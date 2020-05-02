@@ -78,7 +78,7 @@ namespace Repository.Database
 
                 //optionsBuilder.UseMySql("server=127.0.0.1;userid=webcore;pwd=webcore@321;database=webcore;");
 
-                //optionsBuilder.UseSqlite("Data Source=..\\Repository\\database.db");
+                //optionsBuilder.UseSqlite("Data Source=../Repository/database.db");
 
                 //开启全局懒加载
                 //optionsBuilder.UseLazyLoadingProxies();

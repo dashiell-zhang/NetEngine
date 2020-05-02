@@ -57,7 +57,7 @@ namespace Cms.Controllers
                 var fileExtension = string.Empty;
                 var fullFileName = string.Empty;
 
-                string filepath = Libraries.IO.Path.WebRootPath() + "\\Upload\\" + DateTime.Now.ToString("yyyy-MM-dd");
+                string filepath = Libraries.IO.Path.WebRootPath() + "/Upload/" + DateTime.Now.ToString("yyyy-MM-dd");
 
 
                 foreach (var file in Attachments)
@@ -71,7 +71,7 @@ namespace Cms.Controllers
                         fullFileName = string.Format("{0}{1}", fileName, fileExtension);
                         if (file != null && file.Length > 0)
                         {
-                            string path = filepath + "\\" + fullFileName;
+                            string path = filepath + "/" + fullFileName;
 
                             using (FileStream fs = System.IO.File.Create(path))
                             {

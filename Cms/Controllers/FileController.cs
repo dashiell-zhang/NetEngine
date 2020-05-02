@@ -80,9 +80,9 @@ namespace Cms.Controllers
                             }
 
 
-                            var upOss = false;
+                            var upRemote = false;
 
-                            if (upOss)
+                            if (upRemote)
                             {
 
                                 var oss = new Common.AliYun.OssHelper();

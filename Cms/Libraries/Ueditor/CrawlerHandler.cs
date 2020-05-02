@@ -100,9 +100,9 @@ namespace Cms.Libraries.Ueditor
                     File.WriteAllBytes(savePath, bytes);
 
 
-                    bool upOss = false;
+                    bool upRemote = false;
 
-                    if (upOss)
+                    if (upRemote)
                     {
                         //将文件转存至 oss 并清理本地文件
                         var oss = new Common.AliYun.OssHelper();

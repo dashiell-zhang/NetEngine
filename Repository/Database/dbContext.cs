@@ -76,9 +76,9 @@ namespace Repository.Database
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong");
+                //optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong");
 
-                //optionsBuilder.UseMySql("server=127.0.0.1;userid=webcore;pwd=webcore@321;database=webcore;");
+                optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;");
 
                 //optionsBuilder.UseSqlite("Data Source=../Repository/database.db");
 

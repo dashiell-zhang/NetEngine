@@ -1,4 +1,5 @@
 ﻿using Repository.Bases;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
@@ -38,6 +39,7 @@ namespace Repository.Database
         /// <summary>
         /// 性别
         /// </summary>
+        [Column(TypeName = "bit")]
         public bool? Sex { get; set; }
 
 

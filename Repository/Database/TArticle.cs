@@ -1,4 +1,5 @@
 ﻿using Repository.Database.Bases;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
@@ -31,12 +32,14 @@ namespace Repository.Database
         /// <summary>
         /// 是否推荐
         /// </summary>
+        [Column(TypeName = "bit")]
         public bool IsRecommend { get; set; }
 
 
         /// <summary>
         /// 是否显示
         /// </summary>
+        [Column(TypeName = "bit")]
         public bool IsDisplay { get; set; }
 
 

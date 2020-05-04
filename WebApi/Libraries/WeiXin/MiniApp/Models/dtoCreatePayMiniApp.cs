@@ -8,10 +8,10 @@ namespace WebApi.Libraries.WeiXin.MiniApp.Models
     /// <summary>
     /// 小程序微信支付统一下单接口返回类型
     /// </summary>
-    public class CreatePay_MiniApp
+    public class dtoCreatePayMiniApp
     {
 
-        public CreatePay_MiniApp()
+        public dtoCreatePayMiniApp()
         {
             TimeSpan cha = (DateTime.Now - TimeZone.CurrentTimeZone.ToLocalTime(new System.DateTime(1970, 1, 1)));
             long t = (long)cha.TotalSeconds;

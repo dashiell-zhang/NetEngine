@@ -23,6 +23,8 @@ namespace Repository.Database
 
         public DbSet<TCount> TCount { get; set; }
 
+        public DbSet<TDictionary> TDictionary { get; set; }
+
         public DbSet<TFile> TFile { get; set; }
 
         public DbSet<TFileGroup> TFileGroup { get; set; }

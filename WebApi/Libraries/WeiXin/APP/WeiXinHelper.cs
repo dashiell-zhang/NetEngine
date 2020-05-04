@@ -3,9 +3,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Xml;
-using WebApi.Libraries.WeiXin.APP.Models;
+using WebApi.Libraries.WeiXin.App.Models;
 
-namespace WebApi.Libraries.WeiXin.APP
+namespace WebApi.Libraries.WeiXin.App
 {
     public class WeiXinHelper
     {
@@ -40,7 +40,7 @@ namespace WebApi.Libraries.WeiXin.APP
         /// <param name="price">价格，单位为分</param>
         /// <param name="ip">服务器IP</param>
         /// <returns></returns>
-        public CreatePay_APP CreatePay(string orderno, string title, string body, int price, string ip)
+        public dtoCreatePayApp CreatePay(string orderno, string title, string body, int price, string ip)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -94,7 +94,7 @@ namespace WebApi.Libraries.WeiXin.APP
             {
                 string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
 
-                CreatePay_APP info = new CreatePay_APP();
+                var info = new dtoCreatePayApp();
                 info.appid = appid;
                 info.partnerid = mchid;
                 info.prepayid = prepay_id;

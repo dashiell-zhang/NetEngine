@@ -58,7 +58,7 @@ namespace WebApi.Controllers
 
                     HttpContext.Response.StatusCode = 400;
 
-                    HttpContext.Items.Add("errMsg", "用户名或密码错误！");
+                    HttpContext.Items.Add("errMsg", "Authorize.GetToken.'Wrong user name or password'");
 
                     return "";
                 }
@@ -69,12 +69,12 @@ namespace WebApi.Controllers
 
 
         /// <summary>
-        /// 通过微信OpenId获取Token认证信息
+        /// 通过微信小程序Code获取Token认证信息
         /// </summary>
         /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
         /// <returns></returns>
-        [HttpPost("GetTokenByWeiXinOpenId")]
-        public string GetTokenByWeiXinOpenId([FromBody] dtoKeyValue keyValue)
+        [HttpPost("GetTokenByWeiXinMiniAppCode")]
+        public string GetTokenByWeiXinMiniAppCode([FromBody] dtoKeyValue keyValue)
         {
 
 
@@ -96,41 +96,210 @@ namespace WebApi.Controllers
                 var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid).Select(t => t.User).FirstOrDefault();
 
 
-                if (user != null)
+                if (user == null)
                 {
-                    TUserToken userToken = new TUserToken();
-                    userToken.Id = Guid.NewGuid().ToString();
-                    userToken.UserId = user.Id;
-                    userToken.CreateTime = DateTime.Now;
 
-                    db.TUserToken.Add(userToken);
+                    //注册一个只有基本信息的账户出来
+
+                    user = new TUser();
+
+                    user.Id = Guid.NewGuid().ToString();
+                    user.IsDelete = false;
+                    user.CreateTime = DateTime.Now;
+                    user.Name = DateTime.Now.ToString() + "微信小程序新用户";
+                    user.NickName = user.Name;
+                    user.PassWord = Guid.NewGuid().ToString();
+
+                    db.TUser.Add(user);
+
                     db.SaveChanges();
 
-                    var claim = new Claim[]{
-                        new Claim("tokenid",userToken.Id),
-                             new Claim("userid",user.Id)
-                        };
+                    TUserBindWeixin userBind = new TUserBindWeixin();
+                    userBind.Id = Guid.NewGuid().ToString();
+                    userBind.IsDelete = false;
+                    userBind.CreateTime = DateTime.Now;
+                    userBind.UserId = user.Id;
+                    userBind.WeiXinKeyId = weixinkeyid;
+                    userBind.WeiXinOpenId = openid;
+
+                    db.TUserBindWeixin.Add(userBind);
+
+                    db.SaveChanges();
 
 
-                    var ret = Libraries.Verify.JwtToken.GetToken(claim);
-
-                    return ret;
                 }
-                else
-                {
 
-                    HttpContext.Response.StatusCode = 400;
-
-                    HttpContext.Items.Add("errMsg", "获取授权失败！");
-
-                    return "";
-                }
+                return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
 
             }
 
+        }
 
 
+
+
+        /// <summary>
+        /// 利用手机号和短信验证码获取Token认证信息
+        /// </summary>
+        /// <param name="keyValue">key 为手机号，value 为验证码</param>
+        /// <returns></returns>
+        [HttpPost("GetTokenBySms")]
+        public string GetTokenBySms(dtoKeyValue keyValue)
+        {
+            if (Actions.AuthorizeAction.SmsVerifyPhone(keyValue))
+            {
+                string phone = keyValue.Key.ToString();
+
+                using (var db = new dbContext())
+                {
+                    var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone) && t.RoleId == "普通用户").FirstOrDefault();
+
+                    if (user == null)
+                    {
+                        //注册一个只有基本信息的账户出来
+
+                        user = new TUser();
+
+                        user.Id = Guid.NewGuid().ToString();
+                        user.IsDelete = false;
+                        user.CreateTime = DateTime.Now;
+                        user.Name = DateTime.Now.ToString() + "手机短信新用户";
+                        user.NickName = user.Name;
+                        user.PassWord = Guid.NewGuid().ToString();
+                        user.Phone = phone;
+
+                        db.TUser.Add(user);
+
+                        db.SaveChanges();
+                    }
+
+                    return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
+                }
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
+
+                HttpContext.Items.Add("errMsg", "Authorize.GetTokenBySms.'New password is not allowed to be empty'");
+
+                return "";
+            }
 
         }
+
+
+
+
+        /// <summary>
+        /// 发送短信验证手机号码所有权
+        /// </summary>
+        /// <param name="keyValue">key 为手机号，value 可为空</param>
+        /// <returns></returns>
+        [HttpPost("SendSmsVerifyPhone")]
+        public bool SendSmsVerifyPhone(dtoKeyValue keyValue)
+        {
+
+            string phone = keyValue.Key.ToString();
+
+            string key = "VerifyPhone_" + phone;
+
+            if (Common.NoSql.Redis.IsContainStr(key) == false)
+            {
+
+                Random ran = new Random();
+                string code = ran.Next(100000, 999999).ToString();
+
+                var jsonCode = new
+                {
+                    code = code
+                };
+
+                Common.AliYun.SmsHelper sms = new Common.AliYun.SmsHelper();
+                var smsStatus = sms.SendSms(phone, "短信模板编号", "短信签名", Common.Json.JsonHelper.ObjectToJSON(jsonCode));
+
+                if (smsStatus)
+                {
+                    Common.NoSql.Redis.StrSet(key, code, new TimeSpan(0, 0, 5, 0));
+
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+
+
+        /// <summary>
+        /// 通过微信APP Code获取Token认证信息
+        /// </summary>
+        /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
+        /// <returns></returns>
+        [HttpPost("GetTokenByWeiXinAppCode")]
+        public string GetTokenByWeiXinAppCode(dtoKeyValue keyValue)
+        {
+
+            using (var db = new dbContext())
+            {
+
+                string weixinkeyid = keyValue.Key.ToString();
+                string code = keyValue.Value.ToString();
+
+
+                var wxInfo = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+
+                var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(wxInfo.WxAppId, wxInfo.WxAppSecret);
+
+                var accseetoken = weiXinHelper.GetAccessToken(code).accessToken;
+
+                var openid = weiXinHelper.GetAccessToken(code).openId;
+
+                var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
+
+                var user = db.TUserBindWeixin.Where(t => t.IsDelete == false && t.WeiXinKeyId == weixinkeyid && t.WeiXinOpenId == userInfo.openid).Select(t => t.User).FirstOrDefault();
+
+                if (user == null)
+                {
+                    user = new TUser();
+                    user.Id = Guid.NewGuid().ToString();
+                    user.IsDelete = false;
+                    user.CreateTime = DateTime.Now;
+
+                    user.Name = userInfo.nickname;
+                    user.NickName = user.Name;
+                    user.PassWord = Guid.NewGuid().ToString();
+
+                    db.TUser.Add(user);
+                    db.SaveChanges();
+
+                    var bind = new TUserBindWeixin();
+                    bind.Id = Guid.NewGuid().ToString();
+                    bind.IsDelete = false;
+                    bind.CreateTime = DateTime.Now;
+
+                    bind.WeiXinKeyId = weixinkeyid;
+                    bind.UserId = user.Id;
+                    bind.WeiXinOpenId = openid;
+
+                    db.TUserBindWeixin.Add(bind);
+
+                    db.SaveChanges();
+                }
+
+                return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
+            }
+
+        }
+
+
+
     }
 }

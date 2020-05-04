@@ -52,6 +52,36 @@ namespace WebApi.Controllers
 
 
 
+        /// <summary>
+        /// 获取全部省市级联地址数据
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetRegionAll")]
+        public List<dtoKeyValueChild> GetRegionAll()
+        {
+            using (var db = new dbContext())
+            {
+                var list = db.TRegionProvince.Select(t => new dtoKeyValueChild
+                {
+                    Key = t.Id,
+                    Value = t.Province,
+                    ChildList = t.TRegionCity.Select(c => new dtoKeyValueChild
+                    {
+                        Key = c.Id,
+                        Value = c.City,
+                        ChildList = c.TRegionArea.Select(a => new dtoKeyValueChild
+                        {
+                            Key = a.Id,
+                            Value = a.Area
+                        }).ToList()
+                    }).ToList()
+                }).ToList();
+
+                return list;
+            }
+        }
+
+
 
         /// <summary>
         /// 自定义二维码生成方法
@@ -65,6 +95,28 @@ namespace WebApi.Controllers
             MemoryStream ms = new MemoryStream();
             image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
             return File(ms.ToArray(), "image/png");
+        }
+
+
+
+        /// <summary>
+        /// 获取指定Key的可选值
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        [HttpGet("GetSelectValue")]
+        public List<dtoKeyValue> GetSelectValue(string key)
+        {
+            using (var db = new dbContext())
+            {
+                var list = db.TDictionary.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).Select(t => new dtoKeyValue
+                {
+                    Key = t.Value,
+                    Value = t.Id
+                }).ToList();
+
+                return list;
+            }
         }
 
     }

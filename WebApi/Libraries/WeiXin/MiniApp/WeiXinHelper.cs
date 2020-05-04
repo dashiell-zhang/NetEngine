@@ -59,7 +59,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <returns></returns>
-        public CreatePay_MiniApp CreatePay(string openid, string orderno, string title, string body, int price)
+        public dtoCreatePayMiniApp CreatePay(string openid, string orderno, string title, string body, int price)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -109,7 +109,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             {
                 string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
 
-                CreatePay_MiniApp info = new CreatePay_MiniApp();
+                var info = new dtoCreatePayMiniApp();
                 info.nonceStr = nonceStr;
                 info.package = "prepay_id=" + prepay_id;
 

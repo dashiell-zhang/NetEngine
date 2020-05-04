@@ -2,16 +2,15 @@
 using Common.AliPay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repository.WebCore;
+using Repository.Database;
 using Models.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
 using WebApi.Libraries.WeiXin.Public;
-using Common.Img;
 using System.IO;
-using WebApi.Libraries.WeiXin.APP.Models;
+using WebApi.Libraries.WeiXin.App.Models;
 
 namespace WebApi.Controllers
 {
@@ -30,10 +29,10 @@ namespace WebApi.Controllers
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinPay")]
-        public CreatePay_MiniApp CreateWeiXinPay(string orderno, string weixinkeyid)
+        public dtoCreatePayMiniApp CreateWeiXinPay(string orderno, string weixinkeyid)
         {
 
-            using (webcoreContext db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
                 {
@@ -65,16 +64,16 @@ namespace WebApi.Controllers
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinAppPay")]
-        public CreatePay_APP CreateWeiXinAppPay(string orderno, string weixinkeyid)
+        public dtoCreatePayApp CreateWeiXinAppPay(string orderno, string weixinkeyid)
         {
 
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
 
                 var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
-                var weiXinHelper = new Libraries.WeiXin.APP.WeiXinHelper(weixinkey.WxAppId, weixinkey.MchId, weixinkey.MchKey, "http://xxxx.com/api/Pay/WeiXinPayNotify");
+                var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(weixinkey.WxAppId, weixinkey.MchId, weixinkey.MchKey, "http://xxxx.com/api/Pay/WeiXinPayNotify");
 
                 int price = Convert.ToInt32(order.Price * 100);
 
@@ -103,7 +102,7 @@ namespace WebApi.Controllers
             if (string.IsNullOrEmpty(codeUrl))
             {
 
-                using (var db = new webcoreContext())
+                using (var db = new dbContext())
                 {
                     var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price, t.ProductId, ProductName = t.Product.Name }).FirstOrDefault();
 
@@ -119,9 +118,9 @@ namespace WebApi.Controllers
                 }
             }
 
-            var image = QRCodeHelper.GetQrCode(codeUrl);
+            var image = Common.ImgHelper.GetQrCode(codeUrl);
             MemoryStream ms = new MemoryStream();
-            image.Save(ms, System.DrawingCore.Imaging.ImageFormat.Png);
+            image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
             return File(ms.ToArray(), "image/png");
         }
 
@@ -161,7 +160,7 @@ namespace WebApi.Controllers
             req.SetValue("transaction_id", transaction_id);
 
 
-            using (webcoreContext db = new webcoreContext())
+            using (dbContext db = new dbContext())
             {
 
                 var weixinkey = db.TWeiXinKey.Where(t => t.WxAppId == appid).FirstOrDefault();
@@ -241,7 +240,7 @@ namespace WebApi.Controllers
         public dtoKeyValue CreateAliPayMiniApp(string orderno, string alipaykeyid)
         {
 
-            using (webcoreContext db = new webcoreContext())
+            using (dbContext db = new dbContext())
             {
                 var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
                 {
@@ -287,7 +286,7 @@ namespace WebApi.Controllers
         [HttpGet("GetAlipayWebUrl")]
         public string GetAlipayWebUrl(string orderNo)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
@@ -327,7 +326,7 @@ namespace WebApi.Controllers
         [HttpGet("GetAlipayH5Url")]
         public string GetAlipayH5Url(string orderNo)
         {
-            using (var db = new webcoreContext())
+            using (var db = new dbContext())
             {
                 var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
@@ -379,7 +378,7 @@ namespace WebApi.Controllers
             {
                 var appid = Request.Form["auth_app_id"].ToString();
 
-                using (webcoreContext db = new webcoreContext())
+                using (dbContext db = new dbContext())
                 {
                     var Alipaypublickey = db.TAlipayKey.Where(t => t.AppId == appid).Select(t => t.AlipayPublicKey).FirstOrDefault();
 

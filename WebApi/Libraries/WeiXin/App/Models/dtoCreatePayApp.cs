@@ -1,15 +1,15 @@
 ﻿using System;
 
-namespace WebApi.Libraries.WeiXin.APP.Models
+namespace WebApi.Libraries.WeiXin.App.Models
 {
 
     /// <summary>
     /// APP微信支付统一下单接口返回类型
     /// </summary>
-    public class CreatePay_APP
+    public class dtoCreatePayApp
     {
 
-        public CreatePay_APP()
+        public dtoCreatePayApp()
         {
             TimeSpan cha = (DateTime.Now - TimeZone.CurrentTimeZone.ToLocalTime(new System.DateTime(1970, 1, 1)));
             long t = (long)cha.TotalSeconds;

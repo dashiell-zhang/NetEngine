@@ -28,8 +28,8 @@ namespace WebApi.Controllers
         /// </summary>
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
-        [HttpGet("CreateWeiXinPay")]
-        public dtoCreatePayMiniApp CreateWeiXinPay(string orderno, string weixinkeyid)
+        [HttpGet("CreateWeiXinMiniAppPay")]
+        public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, string weixinkeyid)
         {
 
             using (var db = new dbContext())
@@ -91,8 +91,8 @@ namespace WebApi.Controllers
         /// </summary>
         /// <param name="orderNo"></param>
         /// <returns></returns>
-        [HttpGet("GetWxPayPCUrl")]
-        public FileResult GetWxPayPCUrl(string orderNo)
+        [HttpGet("GetWeiXinPayPCUrl")]
+        public FileResult GetWeiXinPayPCUrl(string orderNo)
         {
 
             string key = "wxpayPCUrl" + orderNo;
@@ -283,8 +283,8 @@ namespace WebApi.Controllers
         /// </summary>
         /// <param name="orderNo"></param>
         /// <returns></returns>
-        [HttpGet("GetAlipayWebUrl")]
-        public string GetAlipayWebUrl(string orderNo)
+        [HttpGet("GetAliPayWebUrl")]
+        public string GetAliPayWebUrl(string orderNo)
         {
             using (var db = new dbContext())
             {
@@ -323,8 +323,8 @@ namespace WebApi.Controllers
         /// </summary>
         /// <param name="orderNo"></param>
         /// <returns></returns>
-        [HttpGet("GetAlipayH5Url")]
-        public string GetAlipayH5Url(string orderNo)
+        [HttpGet("GetAliPayH5Url")]
+        public string GetAliPayH5Url(string orderNo)
         {
             using (var db = new dbContext())
             {

@@ -12,7 +12,7 @@ namespace Common.AliYun
     {
         string accessKeyId = "";
         string accessKeySecret = "";
-        
+
 
         public DnsHelper()
         {
@@ -34,8 +34,9 @@ namespace Common.AliYun
         /// <param name="type">解析类型，["A","AAAA"]</param>
         /// <param name="value">值</param>
         /// <param name="domain">域名</param>
+        /// <param name="ttl">生存时间</param>
         /// <returns></returns>
-        public bool AddDomainRecord(string host,string type,string value,string domain)
+        public bool AddDomainRecord(string host, string type, string value, string domain, long? ttl)
         {
 
             try
@@ -47,6 +48,7 @@ namespace Common.AliYun
                 request._Value = value;
                 request.Type = type;
                 request.RR = host;
+                request.TTL = ttl;
                 request.DomainName = domain;
 
                 var response = client.GetAcsResponse(request);

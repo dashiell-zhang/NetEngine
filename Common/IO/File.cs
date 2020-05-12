@@ -80,7 +80,7 @@ namespace Common.IO
                 string fullpath = filepath + filename;
 
                 //下载文件
-                webClient.DownloadFile(url, filepath);
+                webClient.DownloadFile(url, fullpath);
 
                 return fullpath;
             }

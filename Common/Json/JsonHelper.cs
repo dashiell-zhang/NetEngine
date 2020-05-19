@@ -50,8 +50,11 @@ namespace Common.Json
             return ObjectToJSON(dataList);
         }
 
+
+
+
         /// <summary>
-        /// DataRow转对象，泛型方法
+        /// DataRow转对象
         /// </summary>
         /// <typeparam name="T">类型</typeparam>
         /// <param name="row">DataRow</param>
@@ -61,18 +64,25 @@ namespace Common.Json
             return JSONToObject<T>(DataRowToJSON(row).ToString());
         }
 
+
+
+
         /// <summary>
-        /// DataRow转对象，泛型方法
+        /// DataTable转List
         /// </summary>
         /// <typeparam name="T">类型</typeparam>
         /// <param name="table">DataTable</param>
         /// <returns>JSON格式对象</returns>
         public static List<T> DataTableToList<T>(DataTable table)
         {
-            return JSONToList<T>(DataTableToJSON(table).ToString());
+            return JSONToList<T>(ObjectToJSON(table));
         }
+
+
+
+
         /// <summary>
-        /// DataRow转对象，泛型方法
+        /// Json转List
         /// </summary>
         /// <typeparam name="T">类型</typeparam>
         /// <param name="jsonText">JSON文本</param> 
@@ -81,6 +91,9 @@ namespace Common.Json
         {
             return JSONToObject<List<T>>(jsonText);
         }
+
+
+
 
         /// <summary> 
         /// 对象转JSON 
@@ -105,18 +118,12 @@ namespace Common.Json
                 throw new Exception("JSONHelper.ObjectToJSON(): " + ex.Message);
             }
         }
-        /// <summary> 
-        /// 数据表转JSON 
-        /// </summary> 
-        /// <param name="dataTable">数据表</param> 
-        /// <returns>JSON字符串</returns> 
-        public static object DataTableToJSON(DataTable dataTable)
-        {
-            return ObjectToJSON(dataTable);
-        }
+
+
+
 
         /// <summary> 
-        /// JSON文本转对象,泛型方法 
+        /// JSON文本转对象
         /// </summary> 
         /// <typeparam name="T">类型</typeparam> 
         /// <param name="jsonText">JSON文本</param> 
@@ -133,34 +140,6 @@ namespace Common.Json
             }
         }
 
-        /// <summary> 
-        /// JSON文本转对象 
-        /// </summary> 
-        /// <param name="jsonText">JSON文本</param> 
-        /// <param name="type">类型</param>
-        /// <returns>指定类型的对象</returns> 
-        public static object JSONToObject(string jsonText, Type type)
-        {
-            try
-            {
-                return JsonConvert.DeserializeObject(jsonText.Replace("undefined", "null"), type);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("JSONHelper.JSONToObject(): " + ex.Message);
-            }
-        }
-
-
-        /// <summary>
-        /// [{column1:1,column2:2,column3:3},{column1:1,column2:2,column3:3}]
-        /// </summary> 
-        /// <param name="strJson">Json字符串</param> 
-        /// <returns>DataTable</returns>
-        public static DataTable JSONToDataTable(string strJson)
-        {
-            return JsonConvert.DeserializeObject(strJson, typeof(DataTable)) as DataTable;
-        }
 
 
         /// <summary>

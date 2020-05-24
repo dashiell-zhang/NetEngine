@@ -25,35 +25,42 @@
 
         layui.use('form', function () {
             var form = layui.form;
+
+            //监听提交
+            form.on('submit(form1)', function (data) {
+
+                $("#IsSubmit").val("1");
+
+                $.ajax({
+                    //几个参数需要注意一下
+                    type: "POST",//方法类型
+                    url: "/Article/CategorySave/",
+                    data: $('#form1').serialize(),
+                    success: function (result) {
+                        if (result == true) {
+
+                        };
+                    }
+                });
+
+                return false;
+            });
         });
     </script>
 
 </head>
 
-<body style="width: 99%;padding-left: 1em;">
-    <form method="post" id="form1" action="/Article/CategorySave/" class="layui-form">
+<body style="padding-right:1.2em;padding-left: 1.2em;">
+    <form method="post" id="form1" class="layui-form">
 
         <input type="hidden" value="@info.Id" name="Id" />
         <input type="hidden" value="@info.ChannelId" name="Channelid" />
+        <input id="IsSubmit" type="hidden" value="0" />
 
-
-        <div style="margin-top:20px">
-            <span class="layui-breadcrumb" lay-separator=">">
-
-                <a href="javascript:history.back(-1);">返回上一页</a>
-                <a href="/Home/Center/">首页</a>
-                <a href="">栏目管理</a>
-                <a><cite>栏目信息</cite></a>
-            </span>
-        </div>
-        <hr class="layui-bg-cyan" style="margin-top:8px">
 
         <div class="layui-tab" style="margin-top:24px">
-            <ul class="layui-tab-title">
-                <li class="layui-this">栏目信息</li>
 
-            </ul>
-            <div class="layui-tab-content" style="border-left:1px solid #e6e6e6;border-bottom:1px solid #e6e6e6;padding-top:25px">
+            <div class="layui-tab-content" style="border:1px solid #e6e6e6;padding-top:25px">
                 <div class="layui-tab-item layui-show">
 
                     <div class="layui-form-item">
@@ -108,8 +115,8 @@
             </div>
         </div>
 
-        <div style="position: fixed;bottom:10px">
-            <button type="submit" id="loginOk" lay-submit class="layui-btn layui-btn-normal">提交保存</button>
+        <div style="position: fixed;bottom:10px;display:none">
+            <button type="submit" id="submit" lay-filter="form1" lay-submit class="layui-btn layui-btn-normal">提交保存</button>
             <button type="button" class="layui-btn layui-btn-primary" onclick="javascript: history.back(-1);">返回上一页</button>
         </div>
 

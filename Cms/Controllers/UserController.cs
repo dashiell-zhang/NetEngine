@@ -75,7 +75,7 @@ namespace Cms.Controllers
         {
             using (var db = new dbContext())
             {
-                IList<TUser> list = db.TUser.Where(t => t.IsDelete == false && t.RoleId == "").ToList();
+                IList<TUser> list = db.TUser.Where(t => t.IsDelete == false).ToList();
 
                 return Json(new { data = list });
             }
@@ -107,13 +107,14 @@ namespace Cms.Controllers
             using (var db = new dbContext())
             {
 
-
                 if (string.IsNullOrEmpty(user.Id))
                 {
                     //执行添加
                     user.Id = Guid.NewGuid().ToString();
+                    user.IsDelete = false;
                     user.CreateTime = DateTime.Now;
-                    user.RoleId = "";
+
+                    //user.RoleId = "";
 
                     db.TUser.Add(user);
                 }

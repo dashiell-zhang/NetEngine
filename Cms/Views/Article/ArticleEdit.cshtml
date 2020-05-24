@@ -34,6 +34,8 @@
 
                 $("#btn_Upload").click();
 
+                $("#IsSubmit").val("1");
+
                 $.ajax({
                     //几个参数需要注意一下
                     type: "POST",//方法类型
@@ -42,7 +44,7 @@
                     success: function (result) {
                         console.log(result);//打印服务端返回的数据(调试用)
                         if (result == true) {
-                            location.replace("/Article/ArticleIndex?channelid=@(ViewData["channelid"])");
+                           
                         };
                     }
                 });
@@ -56,22 +58,12 @@
     <script src="~/lib/ueditor/ueditor.all.js"></script>
 </head>
 
-<body style="width: 99%;padding-left: 1em;">
+<body style="padding-right:1.2em;padding-left: 1.2em;">
     <form method="post" id="form1" class="layui-form">
 
         <input type="hidden" value="@info.Id" name="Id" id="Id" />
-        <input type="hidden" value="@ViewData["Tenantid"]" name="Tenantid" id="Tenantid" />
+        <input id="IsSubmit" type="hidden" value="0" />
 
-        <div style="margin-top:20px">
-            <span class="layui-breadcrumb" lay-separator=">">
-
-                <a href="javascript:history.back(-1);">返回上一页</a>
-                <a href="/Home/Center/">首页</a>
-                <a href="">文章管理</a>
-                <a><cite>文章信息</cite></a>
-            </span>
-        </div>
-        <hr class="layui-bg-cyan" style="margin-top:8px">
 
         <div class="layui-tab" style="margin-top:24px">
             <ul class="layui-tab-title">
@@ -199,7 +191,7 @@
                     <div class="layui-form-item layui-form-text">
                         <label class="layui-form-label">内容</label>
                         <div class="layui-input-block">
-                            <textarea id="Content" rows="2" cols="20" name="Content" required lay-verify="required" lay-reqText="请输入文章内容">@info.Content</textarea>
+                            <textarea id="Content" name="Content" required lay-verify="required" lay-reqText="请输入文章内容">@info.Content</textarea>
                         </div>
                     </div>
 
@@ -209,8 +201,8 @@
 
 
 
-        <div style="position: fixed;bottom:10px">
-            <button type="submit" lay-filter="form1" lay-submit class="layui-btn layui-btn-normal">提交保存</button>
+        <div style="position: fixed;bottom:10px;display:none">
+            <button type="submit" id="submit" lay-filter="form1" lay-submit class="layui-btn layui-btn-normal">提交保存</button>
             <button type="button" class="layui-btn layui-btn-primary" onclick="javascript: history.back(-1);">返回上一页</button>
         </div>
 
@@ -224,7 +216,7 @@
             enableAutoSave: false,
             pasteplain: false,
             autoHeightEnabled: false,
-            initialFrameHeight: 380
+            initialFrameHeight: 250
         });
 
         UEditor.render("Content");

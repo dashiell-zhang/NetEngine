@@ -19,7 +19,7 @@
 
     <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
 
-
+    <script src="~/private/time.js"></script>
     <script src="~/lib/datatables/datatables.min.js"></script>
     <link href="~/lib/datatables/datatables.min.css" rel="stylesheet" />
 
@@ -49,7 +49,7 @@
                                 }).then(function (data) {
                                     if (data) {
                                         //刷新表格数据并保留分页信息
-                                        $('#dtList').DataTable().ajax.reload(null, false);
+                                        $('#dtLinkList').DataTable().ajax.reload(null, false);
                                     }
                                 });
 
@@ -70,10 +70,10 @@
         function GetLinkList() {
 
 
-            $('#dtList').DataTable().destroy();
+            $('#dtLinkList').DataTable().destroy();
 
 
-            $("#dtList").DataTable({
+            $("#dtLinkList").DataTable({
                 "ajax": {
                     url: "/Link/GetLinkList",
                     type: "get",
@@ -90,7 +90,7 @@
                         "orderable": false,
                         "targets": [4],
                         "render": function (data, type, row) {
-                            return "<a href='/Link/LinkEdit/" + data.id + "'>编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"javascript:DeleteLink('" + data.id + "');\"'>删除</a>";
+                            return "<a href=\"javascript:showLinkEdit('" + data.id + "')\">编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"javascript:DeleteLink('" + data.id + "');\"'>删除</a>";
                         }
                     }
                 ],
@@ -112,10 +112,38 @@
         layui.use('element', function () {
             var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
         });
+
+        layui.use('layer', function () {
+            var layer = layui.layer;
+        });
+
+        function showLinkEdit(linkId) {
+
+            layer.open({
+                type: 2,
+                area: ['630px', '505px'],
+                title: "友链编辑",
+                content: "/Link/LinkEdit?id=" + linkId,
+                btn: ['保存', '取消'],
+                yes: function (index, layero) {
+                    var id = 'layui-layer-iframe' + index;
+                    document.getElementById(id).contentWindow.$("#submit").click();
+
+                    var IsSubmit = document.getElementById(id).contentWindow.$("#IsSubmit").val();
+
+                    if (IsSubmit == 1) {
+                        sleep(1000);
+                        //刷新表格数据并保留分页信息
+                        $('#dtLinkList').DataTable().ajax.reload(null, false);
+                        layer.close(index);
+                    }
+                }
+            });
+        }
     </script>
 </head>
 
-<body style="width: 99%;padding-left: 1em;">
+<body style="padding-right:1.2em;padding-left: 1.2em;">
     <form name="form1" method="post" id="form1">
 
         <div style="margin-top:20px">
@@ -130,17 +158,17 @@
         <hr class="layui-bg-cyan" style="margin-top:8px">
 
         <div style="margin-top:10px">
-            <a href="/Link/LinkEdit">
+            <a href="javascript:showLinkEdit('')">
                 <button type="button" class="layui-btn">
                     <i class="layui-icon">&#xe608;</i> 新增
                 </button>
             </a>
         </div>
 
-       
+
         <div style="margin-top:-2.3em">
 
-            <table class="table table-striped table-bordered" data-toggle="table" id="dtList" style="width:100%">
+            <table class="table table-striped table-bordered" data-toggle="table" id="dtLinkList" style="width:100%">
                 <thead>
                     <tr>
                         <th width="15%">名称</th>
@@ -153,7 +181,7 @@
 
             </table>
         </div>
-       
+
     </form>
 </body>
 </html>

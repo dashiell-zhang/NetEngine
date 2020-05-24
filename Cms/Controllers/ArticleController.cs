@@ -116,7 +116,7 @@ namespace Cms.Controllers
 
             using (var db = new dbContext())
             {
-                var list = db.TCategory.Where(t => t.ChannelId == ChannelId && t.IsDelete == false).Select(t => new { t.Id, t.Name, t.Remark, ParentName = t.Parent.Name, t.Sort, t.CreateTime }).ToList();
+                var list = db.TCategory.Where(t => t.ChannelId == ChannelId && t.IsDelete == false).Select(t => new { t.Id,t.ChannelId, t.Name, t.Remark, ParentName = t.Parent.Name, t.Sort, t.CreateTime }).ToList();
 
                 return Json(new { data = list });
             }
@@ -344,7 +344,7 @@ namespace Cms.Controllers
 
                     db.SaveChanges();
 
-                    
+
                 }
 
                 return true;

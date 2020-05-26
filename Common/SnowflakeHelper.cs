@@ -171,10 +171,6 @@ namespace Common
 
             var idStr2 = Convert.ToString(id, 2);
 
-            var xxxccc = 3600L * 24L * 365L * 1000L;
-
-            var cxc = (Convert.ToInt64("1111111111111111111111111111111111111111111", 2)) / xxxccc;
-
             if (idStr2.Length < 63)
             {
                 do
@@ -183,7 +179,7 @@ namespace Common
                 } while (idStr2.Length != 63);
             }
 
-            var timeStr2 = idStr2.Substring(0, 43);
+            var timeStr2 = idStr2.Substring(0, 41);
 
             var timeJsStamp = Convert.ToInt64(timeStr2, 2);
 

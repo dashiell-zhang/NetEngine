@@ -6,6 +6,7 @@ using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using WebApi.Filters;
@@ -188,6 +189,84 @@ namespace WebApi.Controllers
 
             }
 
+        }
+
+
+
+
+        /// <summary>
+        /// 通过图片文件ID获取图片
+        /// </summary>
+        /// <param name="fileId">图片ID</param>
+        /// <param name="width">宽度</param>
+        /// <param name="height">高度</param>
+        /// <returns></returns>
+        /// <remarks>不指定宽高参数,返回原图</remarks>
+        [AllowAnonymous]
+        [JwtTokenVerify(IsSkip = true)]
+        [HttpGet("GetImage")]
+        public FileResult GetImage([Required]string fileId, int width, int height)
+        {
+            using (var db = new dbContext())
+            {
+                var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
+                var path = Libraries.IO.Path.ContentRootPath() + file.Path;
+
+                var stream = System.IO.File.OpenRead(path);
+
+                string fileExt = Path.GetExtension(path);
+
+                var provider = new FileExtensionContentTypeProvider();
+
+                var memi = provider.Mappings[fileExt];
+
+                if (width == 0 && height == 0)
+                {
+                    return File(stream, memi, file.Name);
+                }
+                else
+                {
+                    Image img = Image.FromStream(stream);
+
+                    if (img.Width < width || img.Height < height)
+                    {
+                        img.Dispose();
+
+                        return File(stream, memi, file.Name);
+                    }
+                    else
+                    {
+                        MemoryStream ms = new MemoryStream();
+
+
+                        if (width != 0 && height == 0)
+                        {
+                            var percent = ((float)width / (float)img.Width);
+
+                            width = (int)(img.Width * percent);
+                            height = (int)(img.Height * percent);
+                        }
+
+                        if (width == 0 && height != 0)
+                        {
+                            var percent = ((float)height / (float)img.Height);
+
+                            width = (int)(img.Width * percent);
+                            height = (int)(img.Height * percent);
+                        }
+
+
+
+                        img.GetThumbnailImage(width, height, null, IntPtr.Zero).Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+
+                        img.Dispose();
+                        ms.Dispose();
+
+                        return File(ms.ToArray(), "image/png");
+                    }
+
+                }
+            }
         }
 
 

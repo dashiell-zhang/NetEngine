@@ -12,7 +12,7 @@ namespace Common
         private static long datacenterId = 0L;//数据ID
         private static long sequence = 0L;//计数从零开始
 
-        private static long twepoch = 2736000000L; //唯一时间随机量，这是一个避免重复的随机量，自行设定不要大于当前时间戳
+        private static long twepoch = 1577836800000L; //唯一时间随机量，这是一个避免重复的随机量，自行设定不要大于当前时间戳
 
         private static long machineIdBits = 5L; //机器码字节数
         private static long datacenterIdBits = 5L;//数据字节数
@@ -96,7 +96,8 @@ namespace Common
         /// <returns>毫秒</returns>
         private static long GetTimestamp()
         {
-            return (long)(DateTime.UtcNow - new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+
+            return (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
         }
 
 
@@ -154,6 +155,41 @@ namespace Common
                     | sequence;
                 return Id;
             }
+        }
+
+
+
+        /// <summary>
+        /// 通过ID获取其中的时间戳
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public DateTime GetTimeById(long id)
+        {
+            var sn = new Common.SnowflakeHelper(15, 15);
+
+
+            var idStr2 = Convert.ToString(id, 2);
+
+            var xxxccc = 3600L * 24L * 365L * 1000L;
+
+            var cxc = (Convert.ToInt64("1111111111111111111111111111111111111111111", 2)) / xxxccc;
+
+            if (idStr2.Length < 63)
+            {
+                do
+                {
+                    idStr2 = "0" + idStr2;
+                } while (idStr2.Length != 63);
+            }
+
+            var timeStr2 = idStr2.Substring(0, 43);
+
+            var timeJsStamp = Convert.ToInt64(timeStr2, 2);
+
+            var time = Common.DataTime.DateTimeHelper.JsToTime(timeJsStamp, 2020);
+
+            return time;
         }
 
 

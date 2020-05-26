@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Common.DataTime
 {
@@ -11,11 +9,12 @@ namespace Common.DataTime
         /// <summary>
         /// unix时间戳转DateTime
         /// </summary>
-        /// <param name="unix"></param>
+        /// <param name="unix">unix时间戳</param>
+        /// <param name="startYear">startYear，默认为 1970</param>
         /// <returns></returns>
-        public static DateTime UnixToTime(long unix)
+        public static DateTime UnixToTime(long unix, int startYear = 1970)
         {
-            System.DateTime startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
+            var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
             return startTime.AddSeconds(unix);
         }
 
@@ -25,11 +24,12 @@ namespace Common.DataTime
         /// <summary>
         /// DateTime转unix时间戳
         /// </summary>
-        /// <param name="time"></param>
+        /// <param name="time">待转换的时间</param>
+        /// <param name="startYear">startYear，默认为 1970</param>
         /// <returns></returns>
-        public static long TimeToUnix(DateTime time)
+        public static long TimeToUnix(DateTime time, int startYear = 1970)
         {
-            System.DateTime startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
+            var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
             return (long)(time - startTime).TotalSeconds; // 相差秒数
         }
 
@@ -38,12 +38,13 @@ namespace Common.DataTime
         /// <summary>
         /// JavaScript时间戳转DateTime
         /// </summary>
-        /// <param name="unix"></param>
+        /// <param name="js">js时间戳</param>
+        /// <param name="startYear">startYear，默认为 1970</param>
         /// <returns></returns>
-        public static DateTime JsToTime(long js)
+        public static DateTime JsToTime(long js, int startYear = 1970)
         {
-           
-            System.DateTime startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
+
+            var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
             return startTime.AddMilliseconds(js);
         }
 
@@ -53,11 +54,12 @@ namespace Common.DataTime
         /// <summary>
         /// DateTime转Js时间戳
         /// </summary>
-        /// <param name="time"></param>
+        /// <param name="time">待转换的时间</param>
+        /// <param name="startYear">startYear，默认为 1970</param>
         /// <returns></returns>
-        public static long TimeToJs(DateTime time)
+        public static long TimeToJs(DateTime time, int startYear = 1970)
         {
-            System.DateTime startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
+            var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
             return (long)(time - startTime).TotalMilliseconds;
         }
 

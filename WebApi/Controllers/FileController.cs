@@ -232,6 +232,8 @@ namespace WebApi.Controllers
                     {
                         img.Dispose();
 
+                        stream = System.IO.File.OpenRead(path);
+
                         return File(stream, memi, file.Name);
                     }
                     else

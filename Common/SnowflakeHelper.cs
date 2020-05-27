@@ -166,9 +166,6 @@ namespace Common
         /// <returns></returns>
         public DateTime GetTimeById(long id)
         {
-            var sn = new Common.SnowflakeHelper(15, 15);
-
-
             var idStr2 = Convert.ToString(id, 2);
 
             if (idStr2.Length < 63)
@@ -187,8 +184,6 @@ namespace Common
 
             return time;
         }
-
-
 
 
     }

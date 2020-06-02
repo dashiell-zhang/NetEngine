@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Repository.Interceptors;
 
 namespace Repository.Database
 {
@@ -76,9 +77,11 @@ namespace Repository.Database
         {
             if (!optionsBuilder.IsConfigured)
             {
-                //optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong");
+                optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong");
 
-                optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;");
+                optionsBuilder.AddInterceptors(new SubTableInterceptor());
+
+                //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;");
 
                 //optionsBuilder.UseSqlite("Data Source=../Repository/database.db");
 

@@ -28,8 +28,6 @@ namespace Repository.Interceptors
                 if (sql.Contains("FROM [" + table + "]") && !sql.Contains("DELETE"))
                 {
 
-                    string newSql = "";
-
                     command.CommandText = "SELECT name FROM sys.objects WHERE name LIKE '" + table + "_2%'";
 
                     var reader = command.ExecuteReader();
@@ -40,30 +38,103 @@ namespace Repository.Interceptors
 
                     reader.Close();
 
-                    if (dataTable.Rows.Count != 0)
-                    {
-                        for (int i = 0; i < dataTable.Rows.Count; i++)
-                        {
-                            var newTable = dataTable.Rows[i][0];
 
-                            if (i != dataTable.Rows.Count - 1)
+                    var startItem = sql.Split("OUTER APPLY (").ToList();
+
+                    for (int i = startItem.Count - 1; i >= 0; i--)
+                    {
+                        int asIndexOf = startItem[i].IndexOf(") AS ");
+
+                        string tempSql = "";
+
+                        if (asIndexOf < 0)
+                        {
+                            if (sql.IndexOf(startItem[i]) != 0)
                             {
-                                newSql = newSql + sql.Replace("[" + table + "]", "[" + newTable + "]") + " UNION ALL ";
+                                var startSql = sql.Substring(sql.IndexOf(startItem[i]));
+                                var asSql = startSql.Split(") AS ")[1];
+
+                                int endSqlIndexOf = startSql.IndexOf(asSql) + asSql.Length;
+
+                                tempSql = startSql.Substring(0, endSqlIndexOf);
                             }
                             else
                             {
-                                newSql = newSql + sql.Replace("[" + table + "]", "[" + newTable + "]");
+                                tempSql = sql;
                             }
                         }
+                        else
+                        {
+                            tempSql = startItem[i].Substring(0, asIndexOf);
+                        }
 
-                        command.CommandText = newSql;
-                    }
-                    else
-                    {
-                        command.CommandText = sql;
+                        if (tempSql.Contains("FROM [" + table + "]"))
+                        {
+                            string newTempSql = "";
+
+                            if (tempSql.Contains(".[id] = N'"))
+                            {
+                                var idInfoList = tempSql.Split(".[id] = ").Where(t => t.StartsWith("N'")).ToList();
+
+                                foreach (var idInfo in idInfoList)
+                                {
+
+                                    var idSql = idInfo.Substring(idInfo.IndexOf("N'") + 2);
+
+                                    var idStr = idSql.Substring(0, idSql.IndexOf("'"));
+
+                                    long id = Convert.ToInt64(idStr);
+
+                                    var time = GetTimeById(id);
+
+                                    var createtime = time.ToString(subtype);
+
+                                    string newTable = table + "_" + createtime;
+
+                                    if (idInfoList.IndexOf(idInfo) != idInfoList.Count - 1)
+                                    {
+                                        newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]") + "\nUNION ALL\n";
+                                    }
+                                    else
+                                    {
+                                        newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]");
+                                    }
+                                }
+
+
+
+                            }
+                            else
+                            {
+                                if (dataTable.Rows.Count != 0)
+                                {
+
+                                    for (int d = 0; d < dataTable.Rows.Count; d++)
+                                    {
+                                        var newTable = dataTable.Rows[d][0];
+
+                                        if (d != dataTable.Rows.Count - 1)
+                                        {
+                                            newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]") + "\nUNION ALL\n";
+                                        }
+                                        else
+                                        {
+                                            newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]");
+                                        }
+                                    }
+
+                                }
+                            }
+
+                            sql = sql.Replace(tempSql, newTempSql);
+
+                        }
                     }
 
+                    command.CommandText = sql;
                 }
+
+
 
                 if (sql.Contains("INSERT INTO [" + table + "]"))
                 {
@@ -86,7 +157,7 @@ namespace Repository.Interceptors
 
                     var headSql = childSql.Substring(0, childSql.IndexOf("VALUES") + 6);
 
-                    var dataSql = childSql.Replace(headSql, "").Split("\r\n").Where(t => t != "" && t!="\n").ToList();
+                    var dataSql = childSql.Replace(headSql, "").Split("\r\n").Where(t => t != "" && t != "\n").ToList();
 
                     sql = sql.Replace(headSql, "");
 
@@ -100,7 +171,7 @@ namespace Repository.Interceptors
 
                         var idIndex = pList.IndexOf("[id]");
 
-                        var idPIndex = data.Replace("(", "").Replace(")", "").Replace(",", "").Replace(" ","").Split("@p").Where(t=>t!="").ToList();
+                        var idPIndex = data.Replace("(", "").Replace(")", "").Replace(",", "").Replace(" ", "").Split("@p").Where(t => t != "").ToList();
 
                         var intIdPIndex = int.Parse(idPIndex[idIndex]);
 

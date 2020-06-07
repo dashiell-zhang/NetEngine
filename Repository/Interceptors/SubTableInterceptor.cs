@@ -1,7 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Repository.Database;
+﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -38,6 +37,13 @@ namespace Repository.Interceptors
 
                     reader.Close();
 
+                    var tableNameList = new List<string>();
+
+                    for (int d = 0; d < dataTable.Rows.Count; d++)
+                    {
+                        tableNameList.Add(dataTable.Rows[d][0].ToString());
+                    }
+
 
                     var startItem = sql.Split("OUTER APPLY (").ToList();
 
@@ -72,7 +78,9 @@ namespace Repository.Interceptors
                         {
                             string newTempSql = "";
 
-                            if (tempSql.Contains(".[id] = N'"))
+                            string asTable = tempSql.Substring(0, tempSql.IndexOf("]") + 1).Replace("SELECT ", "");
+
+                            if (tempSql.Contains(asTable + ".[id] = N'"))
                             {
                                 var idInfoList = tempSql.Split(".[id] = ").Where(t => t.StartsWith("N'")).ToList();
 
@@ -91,29 +99,33 @@ namespace Repository.Interceptors
 
                                     string newTable = table + "_" + createtime;
 
-                                    if (idInfoList.IndexOf(idInfo) != idInfoList.Count - 1)
+                                    if (tableNameList.Contains(newTable))
                                     {
-                                        newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]") + "\nUNION ALL\n";
-                                    }
-                                    else
-                                    {
-                                        newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]");
+                                        if (idInfoList.IndexOf(idInfo) != idInfoList.Count - 1)
+                                        {
+                                            newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]") + "\nUNION ALL\n";
+                                        }
+                                        else
+                                        {
+                                            newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]");
+                                        }
                                     }
                                 }
 
-
+                                if (newTempSql == "")
+                                {
+                                    newTempSql = tempSql;
+                                }
 
                             }
                             else
                             {
-                                if (dataTable.Rows.Count != 0)
+                                if (tableNameList.Count != 0)
                                 {
 
-                                    for (int d = 0; d < dataTable.Rows.Count; d++)
+                                    foreach (var newTable in tableNameList)
                                     {
-                                        var newTable = dataTable.Rows[d][0];
-
-                                        if (d != dataTable.Rows.Count - 1)
+                                        if (tableNameList.IndexOf(newTable) != tableNameList.Count - 1)
                                         {
                                             newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]") + "\nUNION ALL\n";
                                         }
@@ -123,6 +135,10 @@ namespace Repository.Interceptors
                                         }
                                     }
 
+                                }
+                                else
+                                {
+                                    newTempSql = tempSql;
                                 }
                             }
 

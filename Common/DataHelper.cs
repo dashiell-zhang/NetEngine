@@ -389,5 +389,70 @@ namespace Common
 
 
         }
+
+
+
+        /// <summary>
+        /// 将 List 数据转换为 Excel 文件流(使用DisplayName)
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        public static IO.NpoiMemoryStream ListToExcelDispalyName<T>(List<T> list) where T : new()
+        {
+
+            //创建Excel文件的对象
+            NPOI.XSSF.UserModel.XSSFWorkbook book = new NPOI.XSSF.UserModel.XSSFWorkbook();
+            //添加一个sheet
+            NPOI.SS.UserModel.ISheet sheet1 = book.CreateSheet("Sheet1");
+
+            //给sheet1添加第一行的头部标题
+            NPOI.SS.UserModel.IRow row1 = sheet1.CreateRow(0);
+
+            T model = new T();
+            var dict = PropertyHelper.GetPropertiesDisplayName(model);
+
+            int x = 0;
+            foreach (var item in dict)
+            {
+                row1.CreateCell(x).SetCellValue(item.Key.ToString());
+                x++;
+            }
+
+
+            //将数据逐步写入sheet1各个行
+
+            foreach (var item in list)
+            {
+                int i = list.IndexOf(item);
+                NPOI.SS.UserModel.IRow rowtemp = sheet1.CreateRow(i + 1);
+
+                dict = PropertyHelper.GetProperties(item);
+                int d = 0;
+                foreach (var it in dict)
+                {
+
+                    rowtemp.CreateCell(d).SetCellValue(it.Value != null ? it.Value.ToString() : "");
+                    d++;
+                }
+            }
+
+
+            //写入到客户端 
+            var ms = new IO.NpoiMemoryStream();
+            ms.AllowClose = false;
+            book.Write(ms);
+            ms.Flush();
+            ms.Seek(0, SeekOrigin.Begin);
+            ms.AllowClose = true;
+
+
+            //string filename = DateTime.Now.ToString("yyyyMMddHHmmssfff") + "运算结果.xlsx";
+            //return File(ms, "application/vnd.ms-excel", filename);
+
+            return ms;
+
+
+        }
     }
 }

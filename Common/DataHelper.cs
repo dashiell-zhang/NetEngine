@@ -1,16 +1,18 @@
-﻿using NPOI.HSSF.UserModel;
+﻿using Microsoft.EntityFrameworkCore;
+using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
 namespace Common
 {
-   public static class DataHelper
+    public static class DataHelper
     {
 
 
@@ -20,34 +22,126 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="table"></param>
         /// <returns></returns>
-        public static IList<T> DataTableToList<T>(DataTable table)
-           where T : class
+        public static IList<T> DataTableToList<T>(DataTable table) where T : class
         {
             if (table.Rows.Count == 0)
-                return new List<T>();
-
-            IList<T> list = new List<T>();
-            T model = default(T);
-            foreach (DataRow dr in table.Rows)
             {
-                model = Activator.CreateInstance<T>();
-
-                foreach (DataColumn dc in dr.Table.Columns)
-                {
-                    object drValue = dr[dc.ColumnName];
-                    PropertyInfo pi = model.GetType().GetProperty(dc.ColumnName);
-
-                    if (pi != null && pi.CanWrite && (drValue != null && !Convert.IsDBNull(drValue)))
-                    {
-                        pi.SetValue(model, drValue, null);
-                    }
-                }
-
-                list.Add(model);
+                return new List<T>();
             }
-            return list;
+            else
+            {
+
+                IList<T> list = new List<T>();
+                T model = default(T);
+                foreach (DataRow dr in table.Rows)
+                {
+                    model = Activator.CreateInstance<T>();
+
+                    foreach (DataColumn dc in dr.Table.Columns)
+                    {
+                        object drValue = dr[dc.ColumnName];
+
+                        PropertyInfo pi = model.GetType().GetProperty(dc.ColumnName);
+
+                        if (pi != null && pi.CanWrite && (drValue != null && !Convert.IsDBNull(drValue)))
+                        {
+                            string piFullName = pi.PropertyType.FullName;
+
+                            if (piFullName.Contains("System.DateTime"))
+                            {
+                                if (pi.PropertyType.FullName.StartsWith("System.Nullable`1[[System.DateTime"))
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else
+                                {
+                                    pi.SetValue(model, Convert.ToDateTime(drValue), null);
+                                }
+                            }
+                            else if (piFullName.Contains("System.Boolean"))
+                            {
+                                pi.SetValue(model, Convert.ToBoolean(drValue), null);
+                            }
+                            else
+                            {
+                                pi.SetValue(model, drValue, null);
+                            }
+
+                        }
+                    }
+
+                    list.Add(model);
+                }
+                return list;
+            }
+
         }
 
+
+        /// <summary>
+        /// 将datatable 转换成 实体List(加入实体DisplayName表头匹配 )
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="table"></param>
+        /// <returns></returns>
+        public static IList<T> DataTableToListDisplayName<T>(DataTable table) where T : class
+        {
+            if (table.Rows.Count == 0)
+            {
+                return new List<T>();
+            }
+            else
+            {
+
+                IList<T> list = new List<T>();
+                T model = default(T);
+                foreach (DataRow dr in table.Rows)
+                {
+                    model = Activator.CreateInstance<T>();
+
+                    foreach (DataColumn dc in dr.Table.Columns)
+                    {
+                        object drValue = dr[dc.ColumnName];
+
+                        var properties = model.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).ToList();
+
+                        var displayNamePI = properties.Where(p => p.CustomAttributes.Where(t => t.AttributeType.Name == "DisplayNameAttribute").Select(t => t.ConstructorArguments.Select(v => v.Value.ToString()).FirstOrDefault()).FirstOrDefault() == "用户名").FirstOrDefault();
+
+                        PropertyInfo pi = model.GetType().GetProperty(dc.ColumnName) ?? displayNamePI;
+
+                        if (pi != null && pi.CanWrite && (drValue != null && !Convert.IsDBNull(drValue)))
+                        {
+                            string piFullName = pi.PropertyType.FullName;
+
+                            if (piFullName.Contains("System.DateTime"))
+                            {
+                                if (pi.PropertyType.FullName.StartsWith("System.Nullable`1[[System.DateTime"))
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else
+                                {
+                                    pi.SetValue(model, Convert.ToDateTime(drValue), null);
+                                }
+                            }
+                            else if (piFullName.Contains("System.Boolean"))
+                            {
+                                pi.SetValue(model, Convert.ToBoolean(drValue), null);
+                            }
+                            else
+                            {
+                                pi.SetValue(model, drValue, null);
+                            }
+
+                        }
+                    }
+
+                    list.Add(model);
+                }
+                return list;
+            }
+
+        }
 
 
 
@@ -251,7 +345,7 @@ namespace Common
             NPOI.SS.UserModel.IRow row1 = sheet1.CreateRow(0);
 
             T model = new T();
-            var dict = PropertyHelper.GetProperties(model);
+            var dict = PropertyHelper.GetPropertiesDisplayName(model);
 
             int x = 0;
             foreach (var item in dict)

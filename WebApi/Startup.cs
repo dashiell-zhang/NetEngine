@@ -181,6 +181,8 @@ namespace WebApi
             });
 
 
+            //注册雪花ID算法示例
+            services.AddSingleton(new Common.SnowflakeHelper(0, 0));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

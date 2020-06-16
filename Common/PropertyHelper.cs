@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -23,7 +24,41 @@ namespace Common
             if (properties.Length <= 0) { return null; }
             foreach (PropertyInfo item in properties)
             {
+
                 string name = item.Name;
+                object value = item.GetValue(t, null);
+
+                if (item.PropertyType == typeof(DateTime))
+                {
+                    ret.Add(name, Convert.ToDateTime(value).ToString("yyyy/MM/dd HH:mm:ss.fff"));
+                }
+                else if (item.PropertyType.IsValueType || item.PropertyType.Name.StartsWith("String"))
+                {
+                    ret.Add(name, value);
+                }
+            }
+            return ret;
+        }
+
+
+
+        /// <summary>  
+        /// 反射得到实体类的字段显示名称和值  
+        /// </summary>  
+        /// <typeparam name="T">实体类</typeparam>  
+        /// <param name="t">实例化</param>  
+        /// <returns></returns>  
+        public static Dictionary<object, object> GetPropertiesDisplayName<T>(T t)
+        {
+            var ret = new Dictionary<object, object>();
+            if (t == null) { return null; }
+            PropertyInfo[] properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            if (properties.Length <= 0) { return null; }
+            foreach (PropertyInfo item in properties)
+            {
+                var displayName = item.CustomAttributes.Where(t => t.AttributeType.Name == "DisplayNameAttribute").Select(t => t.ConstructorArguments.Select(v => v.Value).FirstOrDefault()).FirstOrDefault();
+
+                string name = displayName != null ? displayName.ToString() : item.Name;
                 object value = item.GetValue(t, null);
 
                 if (item.PropertyType == typeof(DateTime))

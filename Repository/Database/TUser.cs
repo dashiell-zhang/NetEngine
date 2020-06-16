@@ -1,5 +1,6 @@
 ﻿using Repository.Bases;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
@@ -14,6 +15,7 @@ namespace Repository.Database
         /// <summary>
         /// 用户名
         /// </summary>
+        [DisplayName("用户名")]
         public string Name { get; set; }
 
 

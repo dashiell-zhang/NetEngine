@@ -16,7 +16,7 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
             //格式化返回值
-            resultFormatting(context.Result as ObjectResult);
+            //resultFormatting(context.Result as ObjectResult);
 
             if (context.HttpContext.Response.StatusCode == 400)
             {

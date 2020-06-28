@@ -25,10 +25,17 @@ namespace Cms.Libraries
 
             var parameter = Libraries.Http.HttpContext.GetParameter();
 
+            var parameterStr = JsonHelper.ObjectToJSON(parameter);
+
+            if (parameterStr.Length > 102400)
+            {
+                parameterStr = parameterStr.Substring(0, 102400);
+            }
+
             var content = new
             {
                 path = path,
-                parameter = parameter,
+                parameter = parameterStr,
                 error = error
             };
 

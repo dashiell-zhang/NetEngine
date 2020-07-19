@@ -1,8 +1,7 @@
-﻿using System;
+﻿using Common.BaiduAi.Models.ImageSearch;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using Models.BaiduAi.ImageSearch;
 
 namespace Common.BaiduAi
 {

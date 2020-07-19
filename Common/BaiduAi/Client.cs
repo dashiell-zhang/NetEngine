@@ -4,9 +4,9 @@
     {
         public static Baidu.Aip.ImageSearch.ImageSearch ImageSearch()
         {
-            var API_KEY = "tmXSUIg7prvaLswMwvynXGMw";
+            var API_KEY = "";
 
-            var SECRET_KEY = "ZXKtkPihFxt6UxAZhev1KTw74Gf4Koih ";
+            var SECRET_KEY = " ";
 
             var client = new Baidu.Aip.ImageSearch.ImageSearch(API_KEY, SECRET_KEY);
             client.Timeout = 60000;  // 修改超时时间
@@ -20,9 +20,9 @@
 
         public static Baidu.Aip.ImageClassify.ImageClassify ImageClassify()
         {
-            var API_KEY = "tmXSUIg7prvaLswMwvynXGMw";
+            var API_KEY = "";
 
-            var SECRET_KEY = "ZXKtkPihFxt6UxAZhev1KTw74Gf4Koih ";
+            var SECRET_KEY = " ";
 
             var client = new Baidu.Aip.ImageClassify.ImageClassify(API_KEY, SECRET_KEY);
             client.Timeout = 60000;  // 修改超时时间

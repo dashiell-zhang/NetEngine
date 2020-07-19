@@ -2,14 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
 using Repository.Database;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace WebApi.Actions
 {
-    public static class UserActions
+    public static class UserAction
     {
 
 

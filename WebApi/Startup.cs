@@ -113,6 +113,7 @@ namespace WebApi
             {
                 option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
                 option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
+                option.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
             });
 
 

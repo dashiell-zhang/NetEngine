@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,6 +10,13 @@ namespace Common
     public static class CryptoHelper
     {
 
+
+
+        /// <summary>
+        /// Hex 转 Byte
+        /// </summary>
+        /// <param name="hex"></param>
+        /// <returns></returns>
         private static byte[] hexStringToByte(string hex)
         {
             int target_length = hex.Length >> 1;
@@ -54,7 +63,14 @@ namespace Common
             return result;
         }
 
-        private static string byte2HexString(byte[] b)
+
+
+        /// <summary>
+        /// Byte 转 Hex
+        /// </summary>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        private static string byteToHexString(byte[] b)
         {
             char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7',
                       '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -66,6 +82,7 @@ namespace Common
             }
             return new string(newChar);
         }
+
 
 
         /// <summary>
@@ -85,8 +102,7 @@ namespace Common
             ICryptoTransform cryptoTransform = aesProvider.CreateEncryptor();
             byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
             aesProvider.Clear();
-            return byte2HexString(results);
-
+            return byteToHexString(results);
         }
 
 
@@ -172,5 +188,85 @@ namespace Common
             byte[] bytes = Convert.FromBase64String(text);
             return Encoding.UTF8.GetString(bytes);
         }
+
+
+
+        /// <summary>
+        /// SHA256 签名计算
+        /// </summary>
+        /// <param name="srcString">The string to be encrypted</param>
+        /// <returns></returns>
+        public static string Sha256(string srcString)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes_sha256_in = Encoding.UTF8.GetBytes(srcString);
+                byte[] bytes_sha256_out = sha256.ComputeHash(bytes_sha256_in);
+                string str_sha256_out = BitConverter.ToString(bytes_sha256_out);
+                str_sha256_out = str_sha256_out.Replace("-", "");
+                return str_sha256_out;
+            }
+        }
+
+
+
+        /// <summary>
+        /// Java RSA 私钥转换为 DotNet 格式
+        /// </summary>
+        /// <param name="privateKey">私钥内容（不要前后缀）</param>
+        /// <returns></returns>
+        public static string RSAPrivateKeyJava2DotNet(string privateKey)
+        {
+            RsaPrivateCrtKeyParameters privateKeyParam = (RsaPrivateCrtKeyParameters)PrivateKeyFactory.CreateKey(Convert.FromBase64String(privateKey));
+
+            return string.Format("<RSAKeyValue><Modulus>{0}</Modulus><Exponent>{1}</Exponent><P>{2}</P><Q>{3}</Q><DP>{4}</DP><DQ>{5}</DQ><InverseQ>{6}</InverseQ><D>{7}</D></RSAKeyValue>",
+                Convert.ToBase64String(privateKeyParam.Modulus.ToByteArrayUnsigned()),
+                Convert.ToBase64String(privateKeyParam.PublicExponent.ToByteArrayUnsigned()),
+                Convert.ToBase64String(privateKeyParam.P.ToByteArrayUnsigned()),
+                Convert.ToBase64String(privateKeyParam.Q.ToByteArrayUnsigned()),
+                Convert.ToBase64String(privateKeyParam.DP.ToByteArrayUnsigned()),
+                Convert.ToBase64String(privateKeyParam.DQ.ToByteArrayUnsigned()),
+                Convert.ToBase64String(privateKeyParam.QInv.ToByteArrayUnsigned()),
+                Convert.ToBase64String(privateKeyParam.Exponent.ToByteArrayUnsigned()));
+        }
+
+
+
+        /// <summary>
+        /// 获取数据经过sha256，经过 rsa 加密之后的 hex 值
+        /// </summary>
+        /// <param name="contentForSign"></param>
+        /// <param name="privateKey"></param>
+        /// <remarks>Hex.encode(RSAWithSHA256(message)）</remarks>
+        /// <returns></returns>
+        public static string HexRSASha256Sign(string contentForSign, string privateKey)
+        {
+            //转换成适用于.Net的秘钥
+            var netKey = RSAPrivateKeyJava2DotNet(privateKey);
+            var rsa = new RSACryptoServiceProvider();
+            rsa.FromXmlString(netKey);
+            //创建一个空对象
+            var rsaClear = new RSACryptoServiceProvider();
+            var paras = rsa.ExportParameters(true);
+            rsaClear.ImportParameters(paras);
+            //签名返回
+            using (var sha256 = new SHA256CryptoServiceProvider())
+            {
+                var signData = rsa.SignData(Encoding.UTF8.GetBytes(contentForSign), sha256);
+                return BytesToHex(signData);
+            }
+        }
+
+
+        public static string BytesToHex(byte[] data)
+        {
+            StringBuilder sbRet = new StringBuilder(data.Length * 2);
+            for (int i = 0; i < data.Length; i++)
+            {
+                sbRet.Append(Convert.ToString(data[i], 16).PadLeft(2, '0'));
+            }
+            return sbRet.ToString();
+        }
+
     }
 }

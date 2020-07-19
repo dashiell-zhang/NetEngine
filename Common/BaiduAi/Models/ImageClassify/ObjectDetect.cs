@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Models.BaiduAi.ImageClassify
+﻿namespace Common.BaiduAi.Models.ImageClassify
 {
     public class ObjectDetect
     {

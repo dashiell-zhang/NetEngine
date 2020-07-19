@@ -5,6 +5,7 @@ using Repository.Database;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WebApi.Controllers
 {
@@ -117,6 +118,18 @@ namespace WebApi.Controllers
 
                 return list;
             }
+        }
+
+
+
+        /// <summary>
+        /// 获取一个雪花ID
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetSnowflakeId")]
+        public long GetSnowflakeId()
+        {
+            return HttpContext.RequestServices.GetService<Common.SnowflakeHelper>().GetId();
         }
 
     }

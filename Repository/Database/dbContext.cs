@@ -72,18 +72,21 @@ namespace Repository.Database
 
 
 
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong");
 
-                optionsBuilder.AddInterceptors(new SubTableInterceptor());
+                optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
-                //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;");
+                optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;" ,o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
-                //optionsBuilder.UseSqlite("Data Source=../Repository/database.db");
+                optionsBuilder.UseSqlite("Data Source=../Repository/database.db",o => o.MigrationsHistoryTable("__efmigrationshistory"));
+
+
+                //开启数据分表拦截器
+                //optionsBuilder.AddInterceptors(new SubTableInterceptor());
+
 
                 //开启全局懒加载
                 //optionsBuilder.UseLazyLoadingProxies();

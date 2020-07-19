@@ -89,6 +89,7 @@ namespace Cms
             {
                 option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
                 option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
+                option.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
             });
 
 
@@ -116,6 +117,10 @@ namespace Cms
                     return new BadRequestObjectResult(result);
                 };
             });
+
+
+            //注册雪花ID算法示例
+            services.AddSingleton(new Common.SnowflakeHelper(0, 0));
 
         }
 

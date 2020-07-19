@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
+﻿using Common.BaiduAi;
+using Common.BaiduAi.Models.ImageClassify;
 using Repository.Database;
-using Common.BaiduAi;
-using Common;
-using Models.BaiduAi.ImageClassify;
+using System;
+using System.Linq;
 
 namespace TaskService.Tasks.SyncData
 {

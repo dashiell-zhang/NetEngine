@@ -38,7 +38,7 @@ namespace Cms.Controllers
 
                 if (user != null)
                 {
-                    HttpContext.Session.SetString("userid", user.Id);
+                    HttpContext.Session.SetString("userid", user.Id.ToString());
                     HttpContext.Session.SetString("nickname", user.NickName);
                 }
                 else

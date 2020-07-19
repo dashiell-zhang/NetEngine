@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Models.BaiduAi.ImageSearch
+﻿namespace Common.BaiduAi.Models.ImageSearch
 {
     public class ProductSearch
     {

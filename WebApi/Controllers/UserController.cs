@@ -157,7 +157,7 @@ namespace WebApi.Controllers
                         if (phoneUserId != null)
                         {
                             //将手机号对应的用户移除，合并数据到新的账号
-                            Actions.UserActions.MergeUser(phoneUserId, user.Id);
+                            Actions.UserAction.MergeUser(phoneUserId, user.Id);
                         }
 
                         return true;

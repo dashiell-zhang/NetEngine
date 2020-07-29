@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repository.Database;
 using Models.Dtos;
+using Repository.Database;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -14,6 +14,7 @@ namespace WebApi.Controllers
     /// <summary>
     /// 系统访问授权模块
     /// </summary>
+    [ApiVersionNeutral]
     [Route("api/[controller]")]
     [ApiController]
     public class AuthorizeController : ControllerBase

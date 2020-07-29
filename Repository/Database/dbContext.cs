@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repository.Interceptors;
+using System.Linq;
 
 namespace Repository.Database
 {
@@ -74,11 +75,12 @@ namespace Repository.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+
             if (!optionsBuilder.IsConfigured)
             {
 
                 optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-
+                
                 optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;" ,o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
                 optionsBuilder.UseSqlite("Data Source=../Repository/database.db",o => o.MigrationsHistoryTable("__efmigrationshistory"));
@@ -96,6 +98,14 @@ namespace Repository.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
+            //循环关闭所有表的级联删除功能
+            foreach (var foreignKey in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+            {
+                foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
+            }
+
+
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
                 modelBuilder.Entity(entity.Name, builder =>

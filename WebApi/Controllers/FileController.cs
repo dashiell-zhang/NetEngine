@@ -17,6 +17,7 @@ namespace WebApi.Controllers
     /// <summary>
     /// 文件上传控制器
     /// </summary>
+    [ApiVersionNeutral]
     [Authorize]
     [JwtTokenVerify]
     [Route("api/[controller]")]

@@ -12,11 +12,12 @@ using WebApi.Libraries.WeiXin.Public;
 using System.IO;
 using WebApi.Libraries.WeiXin.App.Models;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.v1
 {
     /// <summary>
     /// 第三方支付发起集合，依赖于订单号
     /// </summary>
+    [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
     public class PayController : ControllerBase

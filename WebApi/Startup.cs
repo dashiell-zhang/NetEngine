@@ -4,19 +4,26 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Models.JwtBearer;
+using Repository.Database;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text;
 using WebApi.Actions;
 using WebApi.Filters;
+using WebApi.Libraries.Swagger;
 
 namespace WebApi
 {
@@ -27,7 +34,10 @@ namespace WebApi
             Configuration = configuration;
         }
 
+
         public IConfiguration Configuration { get; }
+
+
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -122,15 +132,43 @@ namespace WebApi
             Libraries.Start.StartConfiguration.Add(Configuration);
 
 
+            services.AddApiVersioning(options =>
+            {
+                //通过Header向客户端通报支持的版本
+                options.ReportApiVersions = true;
+
+                //允许不加版本标记直接调用接口
+                options.AssumeDefaultVersionWhenUnspecified = true;
+
+                //接口默认版本
+                //options.DefaultApiVersion = new ApiVersion(1, 0);
+
+                //如果未加版本标记默认以当前最高版本进行处理
+                options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);
+
+                options.ApiVersionReader = new HeaderApiVersionReader("api-version");
+                //options.ApiVersionReader = new QueryStringApiVersionReader("api-version");
+            });
+
+
+            services.AddVersionedApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
+
+            services.AddTransient<IConfigureOptions<SwaggerGenOptions>, SwaggerConfigureOptions>();
+
+
             //注册Swagger生成器，定义一个和多个Swagger 文档
             services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApi", Version = "v1" });
-                var basePath = AppContext.BaseDirectory;
-                var xmlPath = Path.Combine(basePath, "WebApi.xml");
-                options.IncludeXmlComments(xmlPath, true);
-                xmlPath = Path.Combine(basePath, "Models.xml");
-                options.IncludeXmlComments(xmlPath, true);
+                options.OperationFilter<SwaggerOperationFilter>();
+
+
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Startup).Assembly.GetName().Name}.xml"), true);
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"Models.xml"), true);
 
 
                 //开启 Swagger JWT 鉴权模块
@@ -160,6 +198,7 @@ namespace WebApi
             });
 
 
+
             //注册统一模型验证
             services.Configure<ApiBehaviorOptions>(options =>
             {
@@ -184,10 +223,14 @@ namespace WebApi
 
             //注册雪花ID算法示例
             services.AddSingleton(new Common.SnowflakeHelper(0, 0));
+
+
         }
 
+
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IApiVersionDescriptionProvider provider)
         {
 
             //开启倒带模式运行多次读取HttpContext.Body中的内容
@@ -236,8 +279,14 @@ namespace WebApi
             //启用中间件服务对swagger-ui，指定Swagger JSON端点
             app.UseSwaggerUI(options =>
             {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApi V1");
+                foreach (var description in provider.ApiVersionDescriptions)
+                {
+                    options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+                }
+
+                options.RoutePrefix = "swagger";
             });
+
         }
     }
 }

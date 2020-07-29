@@ -6,15 +6,16 @@ using System.Linq;
 using WebApi.Filters;
 using WebApi.Models.Sign;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.v1
 {
 
     /// <summary>
     /// 标记相关控制器
     /// </summary>
+    [ApiVersion("1")]
+    [Route("api/[controller]")]
     [Authorize]
     [JwtTokenVerify]
-    [Route("api/[controller]")]
     public class SignController : ControllerBase
     {
 

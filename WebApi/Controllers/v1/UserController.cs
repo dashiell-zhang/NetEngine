@@ -1,20 +1,22 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
 using Repository.Database;
 using System.Linq;
 using WebApi.Filters;
 using WebApi.Models.User;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.v1
 {
+
+
     /// <summary>
     /// 用户数据操作控制器
     /// </summary>
+    [ApiVersion("1")]
+    [Route("api/[controller]")]
     [Authorize]
     [JwtTokenVerify]
-    [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {

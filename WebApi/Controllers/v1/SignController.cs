@@ -4,7 +4,7 @@ using Repository.Database;
 using System;
 using System.Linq;
 using WebApi.Filters;
-using WebApi.Models.Sign;
+using WebApi.Models.v1.Sign;
 
 namespace WebApi.Controllers.v1
 {

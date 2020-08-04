@@ -166,6 +166,8 @@ namespace WebApi
             {
                 options.OperationFilter<SwaggerOperationFilter>();
 
+                options.MapType<long>(() => new OpenApiSchema { Type = "string", Format = "long" });
+
 
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Startup).Assembly.GetName().Name}.xml"), true);
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"Models.xml"), true);

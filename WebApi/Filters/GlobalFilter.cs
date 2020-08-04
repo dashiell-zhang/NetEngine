@@ -16,7 +16,7 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
             //格式化返回值
-            //resultFormatting(context.Result as ObjectResult);
+            resultFormatting(context.Result as ObjectResult);
 
             if (context.HttpContext.Response.StatusCode == 400)
             {
@@ -32,6 +32,7 @@ namespace WebApi.Filters
         /// 返回对象格式化方法
         /// </summary>
         /// <param name="result"></param>
+        /// <remarks>处理 string null 为 "" ，List null 为 []</remarks>
         void resultFormatting(ObjectResult result)
         {
 

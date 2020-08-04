@@ -1,4 +1,4 @@
-﻿namespace WebApi.Models.Sign
+﻿namespace WebApi.Models.v1.Sign
 {
 
     /// <summary>

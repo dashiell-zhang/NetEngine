@@ -4,7 +4,7 @@ using Models.Dtos;
 using Repository.Database;
 using System.Linq;
 using WebApi.Filters;
-using WebApi.Models.User;
+using WebApi.Models.v1.User;
 
 namespace WebApi.Controllers.v1
 {

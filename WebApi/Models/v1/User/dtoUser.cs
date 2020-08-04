@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WebApi.Models.User
+namespace WebApi.Models.v1.User
 {
     public class dtoUser
     {

@@ -272,14 +272,6 @@ namespace Repository.Interceptors
         public override DbDataReader ReaderExecuted(DbCommand command, CommandExecutedEventData eventData, DbDataReader result)
         {
 
-            var runtime = eventData.Duration.TotalSeconds;
-
-            //如果执行时间超过 5秒 则记录日志
-            if (runtime > 5)
-            {
-
-            }
-
             return result;
         }
 

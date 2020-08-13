@@ -80,10 +80,14 @@ namespace Repository.Database
             {
 
                 optionsBuilder.UseSqlServer("Data Source=localhost;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                
-                optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;" ,o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
-                optionsBuilder.UseSqlite("Data Source=../Repository/database.db",o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+
+                optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+
+
+                //开启调试拦截器
+                optionsBuilder.AddInterceptors(new DeBugInterceptor());
 
 
                 //开启数据分表拦截器

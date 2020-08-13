@@ -1,4 +1,5 @@
 ﻿using Repository.Bases;
+using System;
 
 namespace Repository.Database
 {
@@ -13,14 +14,14 @@ namespace Repository.Database
         /// <summary>
         /// 用户ID
         /// </summary>
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
         public TUser User { get; set; }
 
 
         /// <summary>
         /// 关联支付宝账户
         /// </summary>
-        public string AlipayKeyId { get; set; }
+        public Guid AlipayKeyId { get; set; }
         public TAlipayKey AlipayKey { get; set; }
 
 

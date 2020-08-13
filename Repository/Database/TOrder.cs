@@ -22,7 +22,7 @@ namespace Repository.Database
         /// <summary>
         /// 产品ID
         /// </summary>
-        public string ProductId { get; set; }
+        public Guid ProductId { get; set; }
         public TProduct Product { get; set; }
 
 

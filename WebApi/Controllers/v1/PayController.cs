@@ -30,7 +30,7 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinMiniAppPay")]
-        public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, string weixinkeyid)
+        public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, Guid weixinkeyid)
         {
 
             using (var db = new dbContext())
@@ -238,7 +238,7 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在支付宝商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateAliPayMiniApp")]
-        public dtoKeyValue CreateAliPayMiniApp(string orderno, string alipaykeyid)
+        public dtoKeyValue CreateAliPayMiniApp(string orderno, Guid alipaykeyid)
         {
 
             using (dbContext db = new dbContext())

@@ -1,4 +1,5 @@
 ﻿using Repository.Database.Bases;
+using System;
 using System.Collections.Generic;
 
 namespace Repository.Database
@@ -14,7 +15,7 @@ namespace Repository.Database
         /// <summary>
         /// 频道ID
         /// </summary>
-        public string ChannelId { get; set; }
+        public Guid ChannelId { get; set; }
         public TChannel Channel { get; set; }
 
 
@@ -33,7 +34,7 @@ namespace Repository.Database
         /// <summary>
         /// 父级栏目ID
         /// </summary>
-        public string ParentId { get; set; }
+        public Guid? ParentId { get; set; }
         public virtual TCategory Parent { get; set; }
 
 

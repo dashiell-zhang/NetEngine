@@ -89,15 +89,15 @@ namespace Common
         /// </summary>
         /// <param name="guid"></param>
         /// <returns></returns>
-        public static int GuidToInt(string guid)
+        public static int GuidToInt(Guid guid)
         {
             using (var db = new dbContext())
             {
-                var info = db.TGuidToInt.Where(t => t.Guid == guid.ToLower()).FirstOrDefault() ?? new TGuidToInt();
+                var info = db.TGuidToInt.Where(t => t.Guid == guid).FirstOrDefault() ?? new TGuidToInt();
 
                 if (info.Id == 0)
                 {
-                    info.Guid = guid.ToLower();
+                    info.Guid = guid;
 
                     var dbinfo = db.TGuidToInt.Add(info);
 
@@ -120,7 +120,7 @@ namespace Common
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public static string IntToGuid(int id)
+        public static Guid IntToGuid(int id)
         {
             using (var db = new dbContext())
             {
@@ -145,7 +145,7 @@ namespace Common
                 {
                     var log = new TLog();
 
-                    log.Id = Guid.NewGuid().ToString();
+                    log.Id = Guid.NewGuid();
                     log.Sign = Sign;
                     log.Type = Type;
                     log.Content = Content;
@@ -224,7 +224,7 @@ namespace Common
 
                 var info = db.TCount.Where(t => t.Tag == tag).FirstOrDefault() ?? new TCount();
 
-                if (!string.IsNullOrEmpty(info.Id))
+                if (info.Id != default)
                 {
                     info.Count = info.Count + 1;
                     info.UpdateTime = DateTime.Now;
@@ -235,7 +235,7 @@ namespace Common
                 }
                 else
                 {
-                    info.Id = Guid.NewGuid().ToString();
+                    info.Id = Guid.NewGuid();
                     info.Tag = tag;
                     info.Count = 1;
                     info.CreateTime = DateTime.Now;

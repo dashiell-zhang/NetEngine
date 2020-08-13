@@ -1,4 +1,5 @@
 ﻿using Repository.Bases;
+using System;
 
 namespace Repository.Database
 {
@@ -13,7 +14,7 @@ namespace Repository.Database
         /// <summary>
         /// 产品图片ID
         /// </summary>
-        public string ProductImgId { get; set; }
+        public Guid ProductImgId { get; set; }
         public TProductImg ProductImg { get; set; }
 
 

@@ -37,7 +37,7 @@ namespace WebApi.Controllers
                 if (user != null)
                 {
                     TUserToken userToken = new TUserToken();
-                    userToken.Id = Guid.NewGuid().ToString();
+                    userToken.Id = Guid.NewGuid();
                     userToken.UserId = user.Id;
                     userToken.CreateTime = DateTime.Now;
 
@@ -45,8 +45,8 @@ namespace WebApi.Controllers
                     db.SaveChanges();
 
                     var claim = new Claim[]{
-                        new Claim("tokenid",userToken.Id),
-                             new Claim("userid",user.Id)
+                        new Claim("tokenid",userToken.Id.ToString()),
+                             new Claim("userid",user.Id.ToString())
                         };
 
 
@@ -81,7 +81,7 @@ namespace WebApi.Controllers
 
             using (var db = new dbContext())
             {
-                string weixinkeyid = keyValue.Key.ToString();
+                var weixinkeyid = Guid.Parse(keyValue.Key.ToString());
                 string code = keyValue.Value.ToString();
 
                 var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
@@ -104,7 +104,7 @@ namespace WebApi.Controllers
 
                     user = new TUser();
 
-                    user.Id = Guid.NewGuid().ToString();
+                    user.Id = Guid.NewGuid();
                     user.IsDelete = false;
                     user.CreateTime = DateTime.Now;
                     user.Name = DateTime.Now.ToString() + "微信小程序新用户";
@@ -116,7 +116,7 @@ namespace WebApi.Controllers
                     db.SaveChanges();
 
                     TUserBindWeixin userBind = new TUserBindWeixin();
-                    userBind.Id = Guid.NewGuid().ToString();
+                    userBind.Id = Guid.NewGuid();
                     userBind.IsDelete = false;
                     userBind.CreateTime = DateTime.Now;
                     userBind.UserId = user.Id;
@@ -153,7 +153,7 @@ namespace WebApi.Controllers
 
                 using (var db = new dbContext())
                 {
-                    var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone) && t.RoleId == "普通用户").FirstOrDefault();
+                    var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone) && t.RoleId == default).FirstOrDefault();
 
                     if (user == null)
                     {
@@ -161,7 +161,7 @@ namespace WebApi.Controllers
 
                         user = new TUser();
 
-                        user.Id = Guid.NewGuid().ToString();
+                        user.Id = Guid.NewGuid();
                         user.IsDelete = false;
                         user.CreateTime = DateTime.Now;
                         user.Name = DateTime.Now.ToString() + "手机短信新用户";
@@ -251,7 +251,7 @@ namespace WebApi.Controllers
             using (var db = new dbContext())
             {
 
-                string weixinkeyid = keyValue.Key.ToString();
+                var weixinkeyid = Guid.Parse(keyValue.Key.ToString());
                 string code = keyValue.Value.ToString();
 
 
@@ -270,7 +270,7 @@ namespace WebApi.Controllers
                 if (user == null)
                 {
                     user = new TUser();
-                    user.Id = Guid.NewGuid().ToString();
+                    user.Id = Guid.NewGuid();
                     user.IsDelete = false;
                     user.CreateTime = DateTime.Now;
 
@@ -282,7 +282,7 @@ namespace WebApi.Controllers
                     db.SaveChanges();
 
                     var bind = new TUserBindWeixin();
-                    bind.Id = Guid.NewGuid().ToString();
+                    bind.Id = Guid.NewGuid();
                     bind.IsDelete = false;
                     bind.CreateTime = DateTime.Now;
 

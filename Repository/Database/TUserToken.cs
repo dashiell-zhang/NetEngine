@@ -1,4 +1,5 @@
 ﻿using Repository.Bases;
+using System;
 
 namespace Repository.Database
 {
@@ -12,7 +13,7 @@ namespace Repository.Database
         /// <summary>
         /// 用户ID
         /// </summary>
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
         public TUser User { get; set; }
 
 
@@ -26,7 +27,7 @@ namespace Repository.Database
         /// <summary>
         /// 上一次有效的 tokenid
         /// </summary>
-        public string LastId { get; set; }
+        public Guid LastId { get; set; }
 
     }
 }

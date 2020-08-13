@@ -28,7 +28,7 @@ namespace WebApi.Controllers.v1
         /// <param name="sign"></param>
         /// <returns></returns>
         [HttpGet("GetSignCount")]
-        public int GetSignCount(string table, string tableId, string sign)
+        public int GetSignCount(string table, Guid tableId, string sign)
         {
             using (var db = new dbContext())
             {
@@ -47,15 +47,15 @@ namespace WebApi.Controllers.v1
         [HttpPost("AddSign")]
         public bool AddSign([FromBody]dtoSign addSign)
         {
-            string userid = Libraries.Verify.JwtToken.GetClaims("userid");
+            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
             using (var db = new dbContext())
             {
                 var like = new TSign();
-                like.Id = Guid.NewGuid().ToString();
+                like.Id = Guid.NewGuid();
                 like.IsDelete = false;
                 like.CreateTime = DateTime.Now;
-                like.CreateUserId = userid;
+                like.CreateUserId = userId;
 
                 like.Table = addSign.Table;
                 like.TableId = addSign.TableId;
@@ -78,11 +78,11 @@ namespace WebApi.Controllers.v1
         [HttpDelete("DeleteSign")]
         public bool DeleteSign(dtoSign deleteSign)
         {
-            string userid = Libraries.Verify.JwtToken.GetClaims("userid");
+            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
             using (var db = new dbContext())
             {
-                var like = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userid && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
+                var like = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
 
                 if (like != null)
                 {

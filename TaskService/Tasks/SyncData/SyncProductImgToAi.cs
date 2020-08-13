@@ -50,13 +50,13 @@ namespace TaskService.Tasks.SyncData
                         imgai.Unique = unique;
                         imgai.Result = result.ToString();
 
-                        if (!string.IsNullOrEmpty(imgai.Id))
+                        if (imgai.Id != default)
                         {
                             imgai.UpdateTime = DateTime.Now;
                         }
                         else
                         {
-                            imgai.Id = Guid.NewGuid().ToString();
+                            imgai.Id = Guid.NewGuid();
                             imgai.ProductImgId = img.imgid;
                             imgai.CreateTime = DateTime.Now;
 

@@ -1,4 +1,5 @@
 ﻿using Repository.Database.Bases;
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
@@ -13,7 +14,7 @@ namespace Repository.Database
         /// <summary>
         /// 类别ID
         /// </summary>
-        public string CategoryId { get; set; }
+        public Guid CategoryId { get; set; }
         public TCategory Category { get; set; }
 
 

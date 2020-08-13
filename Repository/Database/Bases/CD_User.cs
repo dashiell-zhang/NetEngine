@@ -1,8 +1,5 @@
 ﻿using Repository.Bases;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace Repository.Database.Bases
 {
@@ -10,15 +7,13 @@ namespace Repository.Database.Bases
     /// <summary>
     /// 创建，编辑，删除，并关联了用户
     /// </summary>
-    public class CD_User:CD
+    public class CD_User : CD
     {
 
         /// <summary>
         /// 创建人ID
         /// </summary>
-
-        [MaxLength(36)]
-        public string CreateUserId { get; set; }
+        public Guid CreateUserId { get; set; }
         public TUser CreateUser { get; set; }
 
 
@@ -26,8 +21,7 @@ namespace Repository.Database.Bases
         /// <summary>
         /// 删除人ID
         /// </summary>
-        [MaxLength(36)]
-        public string DeleteUserId { get; set; }
+        public Guid? DeleteUserId { get; set; }
         public TUser DeleteUser { get; set; }
     }
 }

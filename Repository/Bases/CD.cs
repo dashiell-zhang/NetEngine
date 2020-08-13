@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace Repository.Bases
 {
@@ -16,8 +13,7 @@ namespace Repository.Bases
         /// <summary>
         /// 主键标识ID
         /// </summary>
-        [MaxLength(36)]
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
 
         /// <summary>

@@ -1,4 +1,6 @@
-﻿namespace WebApi.Models.v1.Sign
+﻿using System;
+
+namespace WebApi.Models.v1.Sign
 {
 
     /// <summary>
@@ -16,7 +18,7 @@
         /// <summary>
         /// 记录ID
         /// </summary>
-        public string TableId { get; set; }
+        public Guid TableId { get; set; }
 
 
         /// <summary>

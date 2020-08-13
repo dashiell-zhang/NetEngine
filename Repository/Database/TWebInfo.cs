@@ -1,4 +1,6 @@
-﻿namespace Repository.Database
+﻿using System;
+
+namespace Repository.Database
 {
 
     /// <summary>
@@ -10,7 +12,7 @@
         /// <summary>
         /// 标识ID
         /// </summary>
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
 
 

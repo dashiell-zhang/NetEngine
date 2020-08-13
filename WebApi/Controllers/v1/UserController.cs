@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Models.Dtos;
 using Repository.Database;
+using System;
 using System.Linq;
 using WebApi.Filters;
 using WebApi.Models.v1.User;
@@ -31,7 +32,7 @@ namespace WebApi.Controllers.v1
         /// <returns>openid,userid</returns>
         /// <remarks>传入租户ID和微信临时 code 获取 openid，如果 openid 在系统有中对应用户，则一并返回用户的ID值，否则用户ID值为空</remarks>
         [HttpGet("GetWeiXinMiniAppOpenId")]
-        public string GetWeiXinMiniAppOpenId(string weixinkeyid, string code)
+        public string GetWeiXinMiniAppOpenId(Guid weixinkeyid, string code)
         {
             using (var db = new dbContext())
             {
@@ -60,7 +61,7 @@ namespace WebApi.Controllers.v1
         /// <param name="code">微信临时code</param>
         /// <param name="weixinkeyid">微信配置密钥ID</param>
         [HttpGet("GetWeiXinMiniAppPhone")]
-        public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, string weixinkeyid)
+        public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, Guid weixinkeyid)
         {
 
             using (var db = new dbContext())
@@ -97,13 +98,13 @@ namespace WebApi.Controllers.v1
         /// <returns></returns>
         [HttpGet("GetUser")]
         [CacheData(TTL = 60, UseToken = true)]
-        public dtoUser GetUser(string userid)
+        public dtoUser GetUser(Guid userid)
         {
             using (var db = new dbContext())
             {
-                if (string.IsNullOrEmpty(userid))
+                if (userid == default)
                 {
-                    userid = Libraries.Verify.JwtToken.GetClaims("userid");
+                    userid = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
                 }
 
                 var user = db.TUser.Where(t => t.Id == userid && t.IsDelete == false).Select(t => new dtoUser
@@ -128,12 +129,12 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
         /// <returns></returns>
         [HttpPost("EditUserPhoneBySms")]
-        public bool EditUserPhoneBySms([FromBody]dtoKeyValue keyValue)
+        public bool EditUserPhoneBySms([FromBody] dtoKeyValue keyValue)
         {
 
             if (Actions.AuthorizeAction.SmsVerifyPhone(keyValue))
             {
-                string userId = Libraries.Verify.JwtToken.GetClaims("userid");
+                var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
                 string phone = keyValue.Key.ToString();
 
@@ -156,10 +157,10 @@ namespace WebApi.Controllers.v1
                         db.SaveChanges();
 
                         //如果目标手机号绑定用户，则进行数据合并动作
-                        if (phoneUserId != null)
+                        if (phoneUserId != default)
                         {
                             //将手机号对应的用户移除，合并数据到新的账号
-                            Actions.UserAction.MergeUser(phoneUserId, user.Id);
+                            Actions.v1.UserAction.MergeUser(phoneUserId, user.Id);
                         }
 
                         return true;
@@ -205,13 +206,13 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key为新密码，value为短信验证码</param>
         /// <returns></returns>
         [HttpPost("EditUserPassWordBySms")]
-        public bool EditUserPassWordBySms([FromBody]dtoKeyValue keyValue)
+        public bool EditUserPassWordBySms([FromBody] dtoKeyValue keyValue)
         {
             using (var db = new dbContext())
             {
-                string userid = Libraries.Verify.JwtToken.GetClaims("userid");
+                var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
-                string phone = db.TUser.Where(t => t.Id == userid).Select(t => t.Phone).FirstOrDefault();
+                string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
 
                 string smsCode = keyValue.Value.ToString();
 
@@ -223,14 +224,14 @@ namespace WebApi.Controllers.v1
 
                     if (!string.IsNullOrEmpty(password))
                     {
-                        var user = db.TUser.Where(t => t.Id == userid).FirstOrDefault();
+                        var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
                         user.PassWord = password;
 
                         db.SaveChanges();
 
 
-                        var tokenList = db.TUserToken.Where(t => t.UserId == userid).ToList();
+                        var tokenList = db.TUserToken.Where(t => t.UserId == userId).ToList();
 
                         db.TUserToken.RemoveRange(tokenList);
 

@@ -2,8 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
 using Repository.Database;
+using System;
 
-namespace WebApi.Actions
+namespace WebApi.Actions.v1
 {
     public static class UserAction
     {
@@ -15,7 +16,7 @@ namespace WebApi.Actions
         /// <param name="oldUserId">原始账户ID</param>
         /// <param name="newUserId">新账户ID</param>
         /// <returns></returns>
-        public static bool MergeUser(string oldUserId, string newUserId)
+        public static bool MergeUser(Guid oldUserId, Guid newUserId)
         {
             try
             {

@@ -30,10 +30,10 @@ namespace Cms.Controllers
         }
 
 
-        public IActionResult ChannelEdit(string id = null)
+        public IActionResult ChannelEdit(Guid id)
         {
 
-            if (id == null)
+            if (id == default)
             {
                 return View(new TChannel());
             }
@@ -54,12 +54,12 @@ namespace Cms.Controllers
             using (var db = new dbContext())
             {
 
-                if (string.IsNullOrEmpty(Channel.Id))
+                if (Channel.Id == default)
                 {
                     //执行添加
-                    Channel.Id = Guid.NewGuid().ToString();
+                    Channel.Id = Guid.NewGuid();
 
-                    var userid = HttpContext.Session.GetString("userid");
+                    var userid = Guid.Parse(HttpContext.Session.GetString("userid"));
 
                     Channel.CreateTime = DateTime.Now;
                     Channel.CreateUserId = userid;
@@ -86,14 +86,14 @@ namespace Cms.Controllers
         }
 
 
-        public JsonResult ChannelDelete(string id)
+        public JsonResult ChannelDelete(Guid id)
         {
             using (var db = new dbContext())
             {
                 var Channel = db.TChannel.Where(t => t.Id == id).FirstOrDefault();
                 Channel.IsDelete = true;
                 Channel.DeleteTime = DateTime.Now;
-                Channel.DeleteUserId = HttpContext.Session.GetString("userid");
+                Channel.DeleteUserId = Guid.Parse(HttpContext.Session.GetString("userid"));
 
                 db.SaveChanges();
 
@@ -111,19 +111,19 @@ namespace Cms.Controllers
         }
 
 
-        public JsonResult GetCategoryList(string ChannelId)
+        public JsonResult GetCategoryList(Guid ChannelId)
         {
 
             using (var db = new dbContext())
             {
-                var list = db.TCategory.Where(t => t.ChannelId == ChannelId && t.IsDelete == false).Select(t => new { t.Id,t.ChannelId, t.Name, t.Remark, ParentName = t.Parent.Name, t.Sort, t.CreateTime }).ToList();
+                var list = db.TCategory.Where(t => t.ChannelId == ChannelId && t.IsDelete == false).Select(t => new { t.Id, t.ChannelId, t.Name, t.Remark, ParentName = t.Parent.Name, t.Sort, t.CreateTime }).ToList();
 
                 return Json(new { data = list });
             }
         }
 
 
-        public IActionResult CategoryEdit(string channelid, string id = null)
+        public IActionResult CategoryEdit(Guid channelid, Guid id)
         {
 
             using (var db = new dbContext())
@@ -136,7 +136,7 @@ namespace Cms.Controllers
                 list.Add("categoryList", categoryList);
 
 
-                if (string.IsNullOrEmpty(id))
+                if (id == default)
                 {
                     var category = new TCategory();
                     category.ChannelId = channelid;
@@ -157,24 +157,24 @@ namespace Cms.Controllers
         public void CategorySave(TCategory Category)
         {
 
-            if (Category.ParentId == "")
+            if (Category.ParentId == default)
             {
                 Category.ParentId = null;
             }
 
-            var userid = HttpContext.Session.GetString("userid");
+            var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
 
             using (var db = new dbContext())
             {
 
-                if (string.IsNullOrEmpty(Category.Id))
+                if (Category.Id == default)
                 {
                     //执行添加
 
-                    Category.Id = Guid.NewGuid().ToString();
+                    Category.Id = Guid.NewGuid();
 
                     Category.CreateTime = DateTime.Now;
-                    Category.CreateUserId = userid;
+                    Category.CreateUserId = userId;
                     Category.IsDelete = false;
 
                     db.TCategory.Add(Category);
@@ -198,7 +198,7 @@ namespace Cms.Controllers
         }
 
 
-        public JsonResult CategoryDelete(string id)
+        public JsonResult CategoryDelete(Guid id)
         {
             using (var db = new dbContext())
             {
@@ -207,12 +207,12 @@ namespace Cms.Controllers
 
                 if (subCategoryCount == 0)
                 {
-                    var userid = HttpContext.Session.GetString("userid");
+                    var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
 
                     var Category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
 
                     Category.IsDelete = true;
-                    Category.DeleteUserId = userid;
+                    Category.DeleteUserId = userId;
                     Category.DeleteTime = DateTime.Now;
 
                     var articleList = db.TArticle.Where(t => t.CategoryId == id).ToList();
@@ -220,7 +220,7 @@ namespace Cms.Controllers
                     foreach (var article in articleList)
                     {
                         article.IsDelete = true;
-                        article.DeleteUserId = userid;
+                        article.DeleteUserId = userId;
                         article.DeleteTime = DateTime.Now;
                     }
 
@@ -240,14 +240,14 @@ namespace Cms.Controllers
         }
 
 
-        public IActionResult ArticleIndex(string ChannelId)
+        public IActionResult ArticleIndex(Guid ChannelId)
         {
             ViewBag.ChannelId = ChannelId;
             return View();
         }
 
 
-        public JsonResult GetArticleList(string ChannelId)
+        public JsonResult GetArticleList(Guid ChannelId)
         {
 
             using (var db = new dbContext())
@@ -259,7 +259,7 @@ namespace Cms.Controllers
         }
 
 
-        public IActionResult ArticleEdit(string channelid, string id = null)
+        public IActionResult ArticleEdit(Guid channelid, Guid id)
         {
 
 
@@ -273,11 +273,11 @@ namespace Cms.Controllers
                 ViewData["categoryList"] = categoryList;
 
 
-                if (string.IsNullOrEmpty(id))
+                if (id == default)
                 {
                     var article = new TArticle();
 
-                    article.Id = Guid.NewGuid().ToString();
+                    article.Id = Guid.NewGuid();
                     article.IsDisplay = true;
 
                     ViewData["article"] = article;
@@ -305,9 +305,7 @@ namespace Cms.Controllers
         {
             try
             {
-                string id = "";
-
-                var userid = HttpContext.Session.GetString("userid");
+                var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
 
                 using (var db = new dbContext())
                 {
@@ -317,12 +315,11 @@ namespace Cms.Controllers
                         //执行添加
 
                         article.CreateTime = DateTime.Now;
-                        article.CreateUserId = userid;
+                        article.CreateUserId = userId;
                         article.IsDelete = false;
 
                         db.TArticle.Add(article);
 
-                        id = article.Id;
 
                     }
                     else
@@ -338,7 +335,6 @@ namespace Cms.Controllers
                         dbArticle.IsRecommend = article.IsRecommend;
                         dbArticle.ClickCount = article.ClickCount;
 
-                        id = dbArticle.Id;
 
                     }
 
@@ -356,16 +352,16 @@ namespace Cms.Controllers
         }
 
 
-        public JsonResult ArticleDelete(string id)
+        public JsonResult ArticleDelete(Guid id)
         {
             using (var db = new dbContext())
             {
-                var userid = HttpContext.Session.GetString("userid");
+                var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
 
                 var article = db.TArticle.Where(t => t.Id == id).FirstOrDefault();
 
                 article.IsDelete = true;
-                article.DeleteUserId = userid;
+                article.DeleteUserId = userId;
                 article.DeleteTime = DateTime.Now;
 
 

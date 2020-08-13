@@ -1,4 +1,5 @@
 ﻿using Repository.Bases;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -46,7 +47,7 @@ namespace Repository.Database
         /// <summary>
         /// 角色ID
         /// </summary>
-        public string RoleId { get; set; }
+        public Guid RoleId { get; set; }
         public TRole Role { get; set; }
 
 

@@ -33,13 +33,13 @@ namespace Web.Areas.Admin.Controllers
 
 
 
-        public IActionResult LinkEdit(string id = null)
+        public IActionResult LinkEdit(Guid id)
         {
 
-            if (id == null)
+            if (id == default)
             {
                 var link = new TLink();
-                link.Id = Guid.NewGuid().ToString();
+                link.Id = Guid.NewGuid();
 
                 ViewData["LinkInfo"] = link;
 
@@ -72,14 +72,14 @@ namespace Web.Areas.Admin.Controllers
                 {
                     var nid = db.TLink.Where(t => t.Id == Link.Id).Select(t => t.Id).FirstOrDefault();
 
-                    if (string.IsNullOrEmpty(nid))
+                    if (nid == default)
                     {
                         //执行添加
 
-                        var userid = HttpContext.Session.GetString("userid");
+                        var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
 
                         Link.CreateTime = DateTime.Now;
-                        Link.CreateUserId = userid;
+                        Link.CreateUserId = userId;
                         Link.IsDelete = false;
 
                         db.TLink.Add(Link);
@@ -107,14 +107,17 @@ namespace Web.Areas.Admin.Controllers
         }
 
 
-        public JsonResult LinkDelete(string id)
+        public JsonResult LinkDelete(Guid id)
         {
             using (var db = new dbContext())
             {
+
+                var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
+
                 var Link = db.TLink.Where(t => t.Id == id).FirstOrDefault();
                 Link.IsDelete = true;
                 Link.DeleteTime = DateTime.Now;
-                Link.DeleteUserId = HttpContext.Session.GetString("userid");
+                Link.DeleteUserId = userId;
 
                 db.SaveChanges();
 

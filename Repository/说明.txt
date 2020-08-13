@@ -22,7 +22,7 @@ Scaffold-DbContext "server=cloud.blackbaby.net;userid=webcore;pwd=webcore@321;po
 
 
 MySql.Data.EntityFrameworkCore 需要执行
-在MySql中执行  CREATE TABLE `__EFMigrationsHistory` ( `MigrationId` nvarchar(150) NOT NULL, `ProductVersion` nvarchar(32) NOT NULL, PRIMARY KEY (`MigrationId`) );
+在MySql中执行  CREATE TABLE `__efmigrationshistory` ( `MigrationId` nvarchar(150) NOT NULL, `ProductVersion` nvarchar(32) NOT NULL, PRIMARY KEY (`MigrationId`) );
 
 
 Add-Migration init 生成命令

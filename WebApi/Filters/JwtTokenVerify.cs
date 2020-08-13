@@ -37,14 +37,14 @@ namespace WebApi.Filters
 
                 if (exptime < DateTime.Now)
                 {
-                    var tokenid = Libraries.Verify.JwtToken.GetClaims("tokenid");
+                    var tokenId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("tokenid"));
 
                     using (var db = new dbContext())
                     {
 
                         var endtime = DateTime.Now.AddMinutes(-3);
 
-                        var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid || (t.LastId == tokenid & t.CreateTime > endtime)).FirstOrDefault();
+                        var tokeninfo = db.TUserToken.Where(t => t.Id == tokenId || (t.LastId == tokenId & t.CreateTime > endtime)).FirstOrDefault();
 
                         if (tokeninfo == null)
                         {
@@ -75,34 +75,34 @@ namespace WebApi.Filters
                 if (exptime < DateTime.Now)
                 {
 
-                    var tokenid = Libraries.Verify.JwtToken.GetClaims("tokenid");
-                    var userid = Libraries.Verify.JwtToken.GetClaims("userid");
+                    var tokenId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("tokenid"));
+                    var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
                     using (var db = new dbContext())
                     {
 
                         var endtime = DateTime.Now.AddMinutes(-3);
 
-                        var newtoken = db.TUserToken.Where(t => t.LastId == tokenid & t.CreateTime > endtime).FirstOrDefault();
+                        var newtoken = db.TUserToken.Where(t => t.LastId == tokenId & t.CreateTime > endtime).FirstOrDefault();
 
                         if (newtoken == null)
                         {
 
-                            var tokeninfo = db.TUserToken.Where(t => t.Id == tokenid).FirstOrDefault();
+                            var tokeninfo = db.TUserToken.Where(t => t.Id == tokenId).FirstOrDefault();
 
                             if (tokeninfo != null)
                             {
 
                                 TUserToken userToken = new TUserToken();
-                                userToken.Id = Guid.NewGuid().ToString();
-                                userToken.UserId = userid;
-                                userToken.LastId = tokenid;
+                                userToken.Id = Guid.NewGuid();
+                                userToken.UserId = userId;
+                                userToken.LastId = tokenId;
                                 userToken.CreateTime = DateTime.Now;
 
 
                                 var claim = new Claim[]{
-                                    new Claim("tokenid",userToken.Id),
-                                    new Claim("userid",userid)
+                                    new Claim("tokenid",userToken.Id.ToString()),
+                                    new Claim("userid",userId.ToString())
                                 };
 
                                 var token = Libraries.Verify.JwtToken.GetToken(claim);

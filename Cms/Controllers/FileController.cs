@@ -14,7 +14,7 @@ namespace Cms.Controllers
     public class FileController : Controller
     {
 
-        public JsonResult SetFileSort(string id, int sort)
+        public JsonResult SetFileSort(Guid id, int sort)
         {
             using (var db = new dbContext())
             {
@@ -38,7 +38,7 @@ namespace Cms.Controllers
         [HttpPost]
         //[RequestSizeLimit(100_000_000)]
         [DisableRequestSizeLimit]
-        public bool UploadFile(string Table, string TableId, string Sign)
+        public bool UploadFile(string Table, Guid TableId, string Sign)
         {
             try
             {
@@ -106,7 +106,7 @@ namespace Cms.Controllers
                             using (var db = new dbContext())
                             {
                                 TFile fi = new TFile();
-                                fi.Id = Guid.NewGuid().ToString();
+                                fi.Id = Guid.NewGuid();
                                 fi.Name = file.FileName;
                                 fi.Table = Table;
                                 fi.TableId = TableId;
@@ -135,7 +135,7 @@ namespace Cms.Controllers
 
 
 
-        public bool DeleteFile(string id)
+        public bool DeleteFile(Guid id)
         {
             using (var db = new dbContext())
             {

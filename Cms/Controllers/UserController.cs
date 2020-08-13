@@ -83,10 +83,10 @@ namespace Cms.Controllers
 
 
 
-        public IActionResult UserEdit(string id)
+        public IActionResult UserEdit(Guid id)
         {
 
-            if (string.IsNullOrEmpty(id))
+            if (id == default)
             {
                 return View(new TUser());
             }
@@ -107,10 +107,10 @@ namespace Cms.Controllers
             using (var db = new dbContext())
             {
 
-                if (string.IsNullOrEmpty(user.Id))
+                if (user.Id == default)
                 {
                     //执行添加
-                    user.Id = Guid.NewGuid().ToString();
+                    user.Id = Guid.NewGuid();
                     user.IsDelete = false;
                     user.CreateTime = DateTime.Now;
 
@@ -137,7 +137,7 @@ namespace Cms.Controllers
         }
 
 
-        public JsonResult UserDelete(string id)
+        public JsonResult UserDelete(Guid id)
         {
             using (var db = new dbContext())
             {

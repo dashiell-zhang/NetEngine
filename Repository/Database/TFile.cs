@@ -1,4 +1,5 @@
 ﻿using Repository.Database.Bases;
+using System;
 
 namespace Repository.Database
 {
@@ -32,7 +33,7 @@ namespace Repository.Database
         /// <summary>
         /// 外链表ID
         /// </summary>
-        public string TableId { get; set; }
+        public Guid TableId { get; set; }
 
 
         /// <summary>

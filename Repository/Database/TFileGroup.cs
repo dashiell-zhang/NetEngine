@@ -1,4 +1,5 @@
 ﻿using Repository.Bases;
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
@@ -15,7 +16,7 @@ namespace Repository.Database
         /// <summary>
         /// 文件ID
         /// </summary>
-        public string FileId { get; set; }
+        public Guid FileId { get; set; }
         public TFile File { get; set; }
 
 

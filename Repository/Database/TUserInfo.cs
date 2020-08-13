@@ -1,4 +1,5 @@
 ﻿using Repository.Bases;
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
@@ -12,7 +13,7 @@ namespace Repository.Database
         /// <summary>
         /// 用户ID
         /// </summary>
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
         public TUser User { get; set; }
 
 

@@ -37,17 +37,17 @@ namespace WebApi.Controllers
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost("UploadFile")]
-        public string UploadFile([FromQuery][Required] string table, [FromQuery][Required] string tableId, [FromQuery][Required] string sign, [Required] IFormFile file)
+        public Guid UploadFile([FromQuery][Required] string table, [FromQuery][Required] Guid tableId, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
-            string userId = Libraries.Verify.JwtToken.GetClaims("userid");
+            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
             string basepath = "/Files/" + DateTime.Now.ToString("yyyyMMdd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
 
-            var fileName = Guid.NewGuid().ToString();
+            var fileName = Guid.NewGuid();
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
             var fullFileName = string.Format("{0}{1}", fileName, fileExtension);
 
@@ -116,7 +116,7 @@ namespace WebApi.Controllers
 
                 HttpContext.Items.Add("errMsg", "文件上传失败！");
 
-                return null;
+                return default;
             }
         }
 
@@ -132,9 +132,9 @@ namespace WebApi.Controllers
         /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
         [DisableRequestSizeLimit]
         [HttpPost("BatchUploadFile")]
-        public List<string> BatchUploadFile([FromQuery][Required] string table, [FromQuery][Required] string tableId, [FromQuery][Required] string sign)
+        public List<Guid> BatchUploadFile([FromQuery][Required] string table, [FromQuery][Required] Guid tableId, [FromQuery][Required] string sign)
         {
-            var fileIds = new List<string>();
+            var fileIds = new List<Guid>();
 
             var ReqFiles = Request.Form.Files;
 
@@ -165,7 +165,7 @@ namespace WebApi.Controllers
         [AllowAnonymous]
         [JwtTokenVerify(IsSkip = true)]
         [HttpGet("GetFile")]
-        public FileResult GetFile([Required] string fileid)
+        public FileResult GetFile([Required] Guid fileid)
         {
             using (var db = new dbContext())
             {
@@ -206,7 +206,7 @@ namespace WebApi.Controllers
         [AllowAnonymous]
         [JwtTokenVerify(IsSkip = true)]
         [HttpGet("GetImage")]
-        public FileResult GetImage([Required] string fileId, int width, int height)
+        public FileResult GetImage([Required] Guid fileId, int width, int height)
         {
             using (var db = new dbContext())
             {
@@ -327,7 +327,7 @@ namespace WebApi.Controllers
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
         [HttpGet("GetFilePath")]
-        public string GetFilePath([Required] string fileid)
+        public string GetFilePath([Required] Guid fileid)
         {
             using (var db = new dbContext())
             {
@@ -367,7 +367,7 @@ namespace WebApi.Controllers
         /// <param name="unique">文件校验值</param>
         /// <returns></returns>
         [HttpGet("CreateGroupFileId")]
-        public string CreateGroupFileId([Required] string table, [Required] string tableId, [Required] string sign, [Required] string fileName, [Required] int slicing, [Required] string unique)
+        public Guid CreateGroupFileId([Required] string table, [Required] Guid tableId, [Required] string sign, [Required] string fileName, [Required] int slicing, [Required] string unique)
         {
             using (var db = new dbContext())
             {
@@ -383,7 +383,7 @@ namespace WebApi.Controllers
 
 
                     var f = new TFile();
-                    f.Id = Guid.NewGuid().ToString();
+                    f.Id = Guid.NewGuid();
                     f.Name = fileName;
                     f.Path = basepath;
                     f.Table = table;
@@ -395,7 +395,7 @@ namespace WebApi.Controllers
                     db.SaveChanges();
 
                     var group = new TFileGroup();
-                    group.Id = Guid.NewGuid().ToString();
+                    group.Id = Guid.NewGuid();
                     group.FileId = f.Id;
                     group.Unique = unique;
                     group.Slicing = slicing;
@@ -408,7 +408,7 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    return "The file already exists, and the file ID is:" + dbfileinfo.FileId;
+                    return dbfileinfo.FileId;
                 }
             }
         }
@@ -423,7 +423,7 @@ namespace WebApi.Controllers
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [HttpPost("UploadGroupFile")]
-        public bool UploadGroupFile([Required][FromForm] string fileId, [Required][FromForm] int index, [Required] IFormFile file)
+        public bool UploadGroupFile([Required][FromForm] Guid fileId, [Required][FromForm] int index, [Required] IFormFile file)
         {
 
             try
@@ -462,7 +462,7 @@ namespace WebApi.Controllers
                     var group = db.TFileGroup.Where(t => t.FileId == fileId).FirstOrDefault();
 
                     var groupfile = new TFileGroupFile();
-                    groupfile.Id = Guid.NewGuid().ToString();
+                    groupfile.Id = Guid.NewGuid();
                     groupfile.FileId = group.FileId;
                     groupfile.Path = path;
                     groupfile.Index = index;
@@ -535,7 +535,7 @@ namespace WebApi.Controllers
         /// <param name="id">文件ID</param>
         /// <returns></returns>
         [HttpDelete("DeleteFile")]
-        public bool DeleteFile(string id)
+        public bool DeleteFile(Guid id)
         {
             try
             {

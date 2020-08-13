@@ -1,4 +1,5 @@
 ﻿using Repository.Bases;
+using System;
 using System.Collections.Generic;
 
 namespace Repository.Database
@@ -13,14 +14,14 @@ namespace Repository.Database
         /// <summary>
         /// 产品ID
         /// </summary>
-        public string ProductId { get; set; }
+        public Guid ProductId { get; set; }
         public TProduct Product { get; set; }
 
 
         /// <summary>
         /// 图片文件ID
         /// </summary>
-        public string FileId { get; set; }
+        public Guid FileId { get; set; }
         public TFile File { get; set; }
 
 

@@ -76,7 +76,7 @@ namespace WebApi.Controllers
 
                     if (upload)
                     {
-                        Common.IO.File.Delete(path);
+                        Common.IO.IOHelper.Delete(path);
 
                         path = "/Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fullFileName;
                         isSuccess = true;

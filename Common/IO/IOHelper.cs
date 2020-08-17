@@ -1,9 +1,13 @@
-﻿using System.IO;
+﻿using Common.IO.Tar;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
+using System.Text;
 
 namespace Common.IO
 {
-    public class File
+    public class IOHelper
     {
 
         /// <summary>
@@ -125,5 +129,117 @@ namespace Common.IO
 
             return m_strSize;
         }
+
+
+
+        /// <summary>
+        /// 获取文件夹下所有文件
+        /// </summary>
+        /// <param name="directory">文件夹路径</param>
+        /// <param name="pattern">文件类型</param>
+        /// <param name="list">集合</param>
+        public static List<string> GetFolderAllFiles(string FolderPath)
+        {
+            var list = new List<string>();
+
+            DirectoryInfo directoryInfo = new DirectoryInfo(FolderPath);
+            foreach (FileInfo info in directoryInfo.GetFiles())
+            {
+                list.Add(info.FullName);
+            }
+            foreach (DirectoryInfo info in directoryInfo.GetDirectories())
+            {
+                list.AddRange(GetFolderAllFiles(info.FullName));
+            }
+
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                list[i] = list[i].Replace(@"\", "/");
+            }
+
+            return list;
+        }
+
+
+
+        /// <summary>
+        /// 将制定目录下的文件压缩为tar文件
+        /// </summary>
+        /// <param name="FolderPath">文件夹地址 D:/1/ </param>
+        /// <param name="FilePath">文件地址 D:/1.tar </param>
+        public static void CompressTarFile(string FolderPath, string FilePath)
+        {
+            var outStream = new FileStream(FilePath, FileMode.OpenOrCreate);
+            var archive = TarArchive.CreateOutputTarArchive(outStream);
+            archive.AsciiTranslate = true;
+            var files = GetFolderAllFiles(FolderPath);
+
+            foreach (var file in files)
+            {
+
+                TarEntry entry = TarEntry.CreateEntryFromFile(file);
+                entry.Name = file.Replace(FolderPath, "");
+
+                archive.WriteEntry(entry, true);
+            }
+            if (archive != null)
+            {
+                archive.Close();
+            }
+        }
+
+
+
+        /// <summary>
+        /// 解压Tar文件到指定目录
+        /// </summary>
+        /// <param name="FilePath">文件地址</param>
+        /// <param name="FolderPath"></param>
+        public static void DecompressTarFile(string FilePath, string FolderPath)
+        {
+
+            using (var s = new TarInputStream(File.OpenRead(FilePath), Encoding.Default))
+            {
+
+                TarEntry theEntry;
+                while ((theEntry = s.GetNextEntry()) != null)
+                {
+
+                    theEntry.Name = FolderPath + theEntry.Name;
+
+                    string directoryName = Path.GetDirectoryName(theEntry.Name);
+                    string fileName = Path.GetFileName(theEntry.Name);
+
+                    if (directoryName.Length > 0)
+                    {
+                        Directory.CreateDirectory(directoryName);
+                    }
+
+                    if (fileName != string.Empty)
+                    {
+                        using (FileStream streamWriter = System.IO.File.Create(theEntry.Name))
+                        {
+
+                            int size = 2048;
+                            byte[] data = new byte[2048];
+                            while (true)
+                            {
+                                size = s.Read(data, 0, data.Length);
+                                if (size > 0)
+                                {
+                                    streamWriter.Write(data, 0, size);
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }

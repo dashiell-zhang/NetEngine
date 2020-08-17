@@ -120,7 +120,7 @@ namespace Cms.Libraries.Ueditor
 
                             if (upload)
                             {
-                                Common.IO.File.Delete(localPath);
+                                Common.IO.IOHelper.Delete(localPath);
 
                                 Result.Url = "Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + Path.GetFileName(localPath);
                                 Result.State = UploadState.Success;

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -122,11 +123,19 @@ namespace Cms
             //注册雪花ID算法示例
             services.AddSingleton(new Common.SnowflakeHelper(0, 0));
 
+
+            //调整路由 生成规则为小写模式
+            services.AddRouting(options => options.LowercaseUrls = true);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
+
+            app.UseRewriter(new RewriteOptions().Add(new Libraries.RedirectLowerCaseUrlsRule()));
+
 
             //开启倒带模式运行多次读取HttpContext.Body中的内容
             app.Use(next => context =>

@@ -64,31 +64,31 @@ namespace Common
 
 
             //启动
-            var proc = Process.Start(psi);
+            using (var proc = Process.Start(psi))
+            {
 
-            if (proc == null)
-            {
-                Console.WriteLine("Can not exec.");
-            }
-            else
-            {
-                Console.WriteLine("---------------Shell执行开始--------------");
-                //开始读取
-                using (var sr = proc.StandardOutput)
+                if (proc == null)
                 {
-                    while (!sr.EndOfStream)
-                    {
-                        output = output + sr.ReadLine();
-                        Console.WriteLine(sr.ReadLine());
-                    }
+                    Console.WriteLine("Can not exec.");
+                }
+                else
+                {
+                    Console.WriteLine("Shell执行：\n" + shell);
+
+                    output = proc.StandardOutput.ReadToEnd();
 
                     if (!proc.HasExited)
                     {
                         proc.Kill();
+
+                        Console.WriteLine("Shell已结束,进程已关闭");
                     }
                 }
-                Console.WriteLine("---------------Shell执行结束------------------");
+
             }
+
+
+            Console.WriteLine("Shell结果：\n" + output);
 
             return output;
         }

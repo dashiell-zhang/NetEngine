@@ -35,6 +35,7 @@ namespace Repository.Database
         /// <summary>
         /// 价格
         /// </summary>
+        [Column(TypeName = "decimal(38,2)")]
         public decimal Price { get; set; }
 
 

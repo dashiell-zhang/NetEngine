@@ -54,7 +54,7 @@ namespace Common.IO
             {
                 if (filename == null)
                 {
-                    filename = System.IO.Path.GetFileName(url);
+                    filename = System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
                 }
 
                 //检查目标路径文件夹是否存在不存在则创建

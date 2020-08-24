@@ -1,4 +1,5 @@
 ﻿using Repository.Database.Bases;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {

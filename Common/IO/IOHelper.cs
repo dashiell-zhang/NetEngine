@@ -172,7 +172,6 @@ namespace Common.IO
         {
             var outStream = new FileStream(FilePath, FileMode.OpenOrCreate);
             var archive = TarArchive.CreateOutputTarArchive(outStream);
-            archive.AsciiTranslate = true;
             var files = GetFolderAllFiles(FolderPath);
 
             foreach (var file in files)
@@ -180,7 +179,7 @@ namespace Common.IO
 
                 TarEntry entry = TarEntry.CreateEntryFromFile(file);
                 entry.Name = file.Replace(FolderPath, "");
-
+                entry.TarHeader.Mode = 511;
                 archive.WriteEntry(entry, true);
             }
             if (archive != null)

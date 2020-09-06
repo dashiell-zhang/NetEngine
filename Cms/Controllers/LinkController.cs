@@ -91,7 +91,7 @@ namespace Web.Areas.Admin.Controllers
 
                         dbLink.Name = Link.Name;
                         dbLink.Url = Link.Url;
-                        dbLink.Remark = Link.Remark;
+                        dbLink.Remarks = Link.Remarks;
                         dbLink.Sort = Link.Sort;
                     }
 

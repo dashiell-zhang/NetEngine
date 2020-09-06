@@ -5,7 +5,7 @@ namespace Repository.Database
     /// <summary>
     /// 区域信息表
     /// </summary>
-    public partial class TRegionArea
+    public  class TRegionArea
     {
 
         [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None)]

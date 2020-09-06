@@ -7,7 +7,7 @@ namespace Repository.Database
     /// <summary>
     /// 城市信息表
     /// </summary>
-    public partial class TRegionCity
+    public  class TRegionCity
     {
 
         [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None)]

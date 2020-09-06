@@ -39,7 +39,7 @@ namespace WebApi.Controllers.v1
                 {
                     t.OrderNo,
                     t.Price,
-                    ProductName = t.Product.Name,
+                    ProductName = DateTime.Now.ToString("yyyyMMddHHmm") + "交易",
                     t.CreateUserId,
                     UserOpenId = t.CreateUser.TUserBindWeixin.Where(w => w.WeiXinKeyId == weixinkeyid).Select(w => w.WeiXinOpenId).FirstOrDefault()
                 }).FirstOrDefault();
@@ -105,7 +105,7 @@ namespace WebApi.Controllers.v1
 
                 using (var db = new dbContext())
                 {
-                    var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price, t.ProductId, ProductName = t.Product.Name }).FirstOrDefault();
+                    var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
                     var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
@@ -113,7 +113,7 @@ namespace WebApi.Controllers.v1
 
                     int price = Convert.ToInt32(order.Price * 100);
 
-                    codeUrl = weiXinHelper.CreatePay(order.ProductId, order.OrderNo, order.ProductName, price, "119.29.29.29");
+                    codeUrl = weiXinHelper.CreatePay(order.Id, order.OrderNo, DateTime.Now.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
 
                     Common.NoSql.Redis.StrSet(key, codeUrl, TimeSpan.FromMinutes(115));
                 }
@@ -247,8 +247,8 @@ namespace WebApi.Controllers.v1
                 {
                     t.OrderNo,
                     t.Price,
-                    ProductName = t.Product.Name,
-                    AliPayUserId = t.CreateUser.TUserBindAlipay.Where(a => a.AlipayKeyId == alipaykeyid).Select(a => a.AlipayUserId).FirstOrDefault()
+                    AliPayUserId = t.CreateUser.TUserBindAlipay.Where(a => a.AlipayKeyId == alipaykeyid).Select(a => a.AlipayUserId).FirstOrDefault(),
+                    t.CreateTime
                 }).FirstOrDefault();
 
                 var alipaykey = db.TAlipayKey.Where(t => t.Id == alipaykeyid).FirstOrDefault();
@@ -257,7 +257,7 @@ namespace WebApi.Controllers.v1
 
                 string price = Convert.ToString(order.Price);
 
-                var TradeNo = aliPayHelper.AlipayTradeCreate(order.OrderNo, order.ProductName, price, order.AliPayUserId);
+                var TradeNo = aliPayHelper.AlipayTradeCreate(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, order.AliPayUserId);
 
                 if (string.IsNullOrEmpty(TradeNo))
                 {
@@ -296,7 +296,7 @@ namespace WebApi.Controllers.v1
                     t.OrderNo,
                     t.Price,
                     t.State,
-                    ProductName = t.Product.Name
+                    t.CreateTime
                 }).FirstOrDefault();
 
                 if (order != null && order.State == "待支付")
@@ -306,7 +306,7 @@ namespace WebApi.Controllers.v1
 
                     string price = order.Price.ToString();
 
-                    string url = helper.CreatePayPC(order.OrderNo, price, order.ProductName, "");
+                    string url = helper.CreatePayPC(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, order.OrderNo);
 
                     return url;
                 }
@@ -331,7 +331,7 @@ namespace WebApi.Controllers.v1
             {
                 var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
-                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, ProductName = t.Product.Name }).FirstOrDefault();
+                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, t.CreateTime }).FirstOrDefault();
 
                 if (order != null && order.State == "待支付")
                 {
@@ -340,7 +340,7 @@ namespace WebApi.Controllers.v1
 
                     string price = order.Price.ToString();
 
-                    string html = helper.CreatePayH5(order.OrderNo, order.ProductName, price, "");
+                    string html = helper.CreatePayH5(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, "");
 
                     return html;
                 }

@@ -8,7 +8,7 @@ namespace TaskService.Tasks.SyncData
     {
         public static void Run()
         {
-            SyncProductImgToAi.Run();
+            SyncImgToAi.Run();
         }
     }
 }

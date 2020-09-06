@@ -12,9 +12,9 @@ namespace Repository.Database
     {
 
         /// <summary>
-        /// 编号
+        /// SKU
         /// </summary>
-        public string Number { get; set; }
+        public string SKU { get; set; }
 
 
         /// <summary>

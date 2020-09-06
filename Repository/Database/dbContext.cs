@@ -4,76 +4,109 @@ using System.Linq;
 
 namespace Repository.Database
 {
-    public partial class dbContext : DbContext
+    public class dbContext : DbContext
     {
 
+
         public static string ConnectionString { get; set; }
+
 
 
         public dbContext()
         {
         }
 
+
         public dbContext(DbContextOptions<dbContext> options)
             : base(options)
         {
         }
 
+
+
         public DbSet<TAlipayKey> TAlipayKey { get; set; }
+
 
         public DbSet<TArticle> TArticle { get; set; }
 
+
         public DbSet<TCategory> TCategory { get; set; }
+
 
         public DbSet<TChannel> TChannel { get; set; }
 
+
         public DbSet<TCount> TCount { get; set; }
+
 
         public DbSet<TDictionary> TDictionary { get; set; }
 
+
         public DbSet<TFile> TFile { get; set; }
+
 
         public DbSet<TFileGroup> TFileGroup { get; set; }
 
+
         public DbSet<TFileGroupFile> TFileGroupFile { get; set; }
+
 
         public DbSet<TGuidToInt> TGuidToInt { get; set; }
 
+
+        public DbSet<TImgBaiduAI> TImgBaiduAI { get; set; }
+
+
         public DbSet<TLink> TLink { get; set; }
+
 
         public DbSet<TLog> TLog { get; set; }
 
+
         public DbSet<TOrder> TOrder { get; set; }
+
+
+        public DbSet<TOrderDetail> TOrderDetail { get; set; }
+
 
         public DbSet<TProduct> TProduct { get; set; }
 
-        public DbSet<TProductImg> TProductImg { get; set; }
-
-        public DbSet<TProductImgBaiduAi> TProductImgBaiduAi { get; set; }
 
         public DbSet<TRegionArea> TRegionArea { get; set; }
 
+
         public DbSet<TRegionCity> TRegionCity { get; set; }
+
 
         public DbSet<TRegionProvince> TRegionProvince { get; set; }
 
+
         public DbSet<TRole> TRole { get; set; }
+
 
         public DbSet<TSign> TSign { get; set; }
 
+
         public DbSet<TUser> TUser { get; set; }
+
 
         public DbSet<TUserBindAlipay> TUserBindAlipay { get; set; }
 
+
         public DbSet<TUserBindWeixin> TUserBindWeixin { get; set; }
+
 
         public DbSet<TUserInfo> TUserInfo { get; set; }
 
+
         public DbSet<TUserToken> TUserToken { get; set; }
+
 
         public DbSet<TWebInfo> TWebInfo { get; set; }
 
+
         public DbSet<TWeiXinKey> TWeiXinKey { get; set; }
+
 
 
 
@@ -88,9 +121,9 @@ namespace Repository.Database
                 //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
-                optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
                 //开启调试拦截器
@@ -131,6 +164,13 @@ namespace Repository.Database
                     foreach (var property in entity.GetProperties())
                     {
                         builder.Property(property.Name).HasColumnName(property.Name.ToLower());
+
+
+                        //为所有 tableid 列添加索引
+                        if (property.Name.ToLower() == "tableid")
+                        {
+                            builder.HasIndex(property.Name);
+                        }
                     }
                 });
             }

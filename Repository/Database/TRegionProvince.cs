@@ -7,7 +7,7 @@ namespace Repository.Database
     /// <summary>
     /// 省份信息表
     /// </summary>
-    public partial class TRegionProvince
+    public  class TRegionProvince
     {
 
         [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None)]

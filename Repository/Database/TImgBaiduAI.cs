@@ -7,15 +7,15 @@ namespace Repository.Database
     /// <summary>
     /// 产品图片对应百度AI信息表
     /// </summary>
-    public class TProductImgBaiduAi : CUD
+    public class TImgBaiduAI : CUD
     {
 
 
         /// <summary>
-        /// 产品图片ID
+        /// 图片文件ID
         /// </summary>
-        public Guid ProductImgId { get; set; }
-        public TProductImg ProductImg { get; set; }
+        public Guid FileId { get; set; }
+        public TFile File { get; set; }
 
 
         /// <summary>

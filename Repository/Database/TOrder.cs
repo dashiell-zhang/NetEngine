@@ -1,5 +1,6 @@
 ﻿using Repository.Database.Bases;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
@@ -18,12 +19,6 @@ namespace Repository.Database
         /// </summary>
         public string OrderNo { get; set; }
 
-
-        /// <summary>
-        /// 产品ID
-        /// </summary>
-        public Guid ProductId { get; set; }
-        public TProduct Product { get; set; }
 
 
         /// <summary>
@@ -77,5 +72,10 @@ namespace Repository.Database
         public decimal? Payprice { get; set; }
 
 
+
+        /// <summary>
+        /// 订单详情
+        /// </summary>
+        public List<TOrderDetail> OrderDetails { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace TaskService.Tasks.SyncData
 {
-    public class SyncProductImgToAi
+    public class SyncImgToAi
     {
 
         public static void Run()
@@ -22,10 +22,10 @@ namespace TaskService.Tasks.SyncData
             using (var db = new dbContext())
             {
 
-                var imglist = db.TProductImg.Where(t => t.ProductImgBaiduAis.Count() == 0).Select(t => new
+                var imglist = db.TFile.Where(t => t.IsDelete == false & t.Table == "" & t.Sign == "" & db.TImgBaiduAI.Where(a => a.FileId == t.Id).Count() == 0).Select(t => new
                 {
-                    productid = t.ProductId,
-                    imgname = t.File.Name,
+                    productid = t.TableId,
+                    imgname = t.Name,
                     imgid = t.Id,
                 }).Take(100).ToList();
 
@@ -45,7 +45,7 @@ namespace TaskService.Tasks.SyncData
 
                         var unique = result.Value<string>("cont_sign");
 
-                        var imgai = db.TProductImgBaiduAi.Where(t => t.ProductImgId == img.imgid).FirstOrDefault() ?? new TProductImgBaiduAi();
+                        var imgai = db.TImgBaiduAI.Where(t => t.FileId == img.imgid).FirstOrDefault() ?? new TImgBaiduAI();
 
                         imgai.Unique = unique;
                         imgai.Result = result.ToString();
@@ -57,10 +57,10 @@ namespace TaskService.Tasks.SyncData
                         else
                         {
                             imgai.Id = Guid.NewGuid();
-                            imgai.ProductImgId = img.imgid;
+                            imgai.FileId = img.imgid;
                             imgai.CreateTime = DateTime.Now;
 
-                            db.TProductImgBaiduAi.Add(imgai);
+                            db.TImgBaiduAI.Add(imgai);
                         }
 
                         db.SaveChanges();
@@ -79,10 +79,10 @@ namespace TaskService.Tasks.SyncData
             {
                 var start = DateTime.Now.AddDays(-3);
 
-                var imglist = db.TProductImgBaiduAi.Where(t => t.Unique != null & (t.UpdateTime ?? t.CreateTime) < start).Select(t => t.ProductImg).Select(t => new
+                var imglist = db.TImgBaiduAI.Where(t => t.Unique != null & (t.UpdateTime ?? t.CreateTime) < start).Select(t => t.File).Select(t => new
                 {
-                    productid = t.ProductId,
-                    imgname = t.File.Name,
+                    productid = t.TableId,
+                    imgname = t.Name,
                     imgid = t.Id,
                 }).Take(1000).ToList();
 
@@ -100,7 +100,7 @@ namespace TaskService.Tasks.SyncData
 
                         var unique = result.Value<string>("cont_sign");
 
-                        var imgai = db.TProductImgBaiduAi.Where(t => t.ProductImgId == img.imgid).FirstOrDefault();
+                        var imgai = db.TImgBaiduAI.Where(t => t.FileId == img.imgid).FirstOrDefault();
 
                         imgai.Result = result.ToString();
 
@@ -119,11 +119,11 @@ namespace TaskService.Tasks.SyncData
         {
             using (var db = new dbContext())
             {
-                var imgList = db.TProductImgBaiduAi.Where(t => t.Result.Contains("\"error_code\": 216203")).Select(t => new { imgid = t.ProductImgId, imgname = t.ProductImg.File.Name, fileid = t.ProductImg.FileId }).ToList();
+                var imgList = db.TImgBaiduAI.Where(t => t.Result.Contains("\"error_code\": 216203")).Select(t => new { ImgName = t.File.Name, ImgId = t.FileId }).ToList();
 
                 foreach (var img in imgList)
                 {
-                    var path = "D:/Products/" + img.imgname;
+                    var path = "D:/Products/" + img.ImgName;
 
                     var rt = ImageClassify.ObjectDetect(path);
 
@@ -132,21 +132,21 @@ namespace TaskService.Tasks.SyncData
 
                         var rtinfo = rt.GetValue("result").ToObject<ObjectDetect>();
 
-                        var newpath = "D:/Products/screenshot_" + img.imgname;
+                        var newpath = "D:/Products/screenshot_" + img.ImgName;
 
                         var screen = Common.ImgHelper.Screenshot(path, rtinfo.left, rtinfo.top, newpath, rtinfo.width, rtinfo.height);
 
                         if (screen)
                         {
 
-                            var fileinfo = db.TFile.Where(t => t.Id == img.fileid).FirstOrDefault();
+                            var fileinfo = db.TFile.Where(t => t.Id == img.ImgId).FirstOrDefault();
 
                             fileinfo.Path = "screenshot_" + fileinfo.Path;
 
 
-                            var imgai = db.TProductImgBaiduAi.Where(t => t.ProductImgId == img.imgid).FirstOrDefault();
+                            var imgai = db.TImgBaiduAI.Where(t => t.FileId == img.ImgId).FirstOrDefault();
 
-                            db.TProductImgBaiduAi.Remove(imgai);
+                            db.TImgBaiduAI.Remove(imgai);
 
                             db.SaveChanges();
 

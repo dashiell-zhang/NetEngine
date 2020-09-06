@@ -81,6 +81,7 @@ namespace WebApi.Libraries.WeiXin.Public
             catch (System.Threading.ThreadAbortException e)
             {
                 System.Threading.Thread.ResetAbort();
+                Console.WriteLine(e.Message);
             }
             catch (WebException e)
             {
@@ -153,6 +154,7 @@ namespace WebApi.Libraries.WeiXin.Public
             catch (System.Threading.ThreadAbortException e)
             {
                 System.Threading.Thread.ResetAbort();
+                Console.WriteLine(e.Message);
             }
             catch (WebException e)
             {

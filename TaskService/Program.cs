@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 
 namespace TaskService
 {
@@ -9,6 +10,13 @@ namespace TaskService
 
         static void Main(string[] args)
         {
+
+            var dbc = Common.IO.Config.Get().GetConnectionString("dbContext");
+
+            //为各数据库注入连接字符串
+            Repository.Database.dbContext.ConnectionString = Common.IO.Config.Get().GetConnectionString("dbContext");
+
+
             tim.Elapsed += Tim_Elapsed;
             tim.Start();
 

@@ -29,6 +29,9 @@ namespace TaskAdmin
         public void ConfigureServices(IServiceCollection services)
         {
 
+            //为各数据库注入连接字符串
+            Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbContext");
+
 
             //注册 HangFire(SqlServer)
             services.AddHangfire(configuration => configuration

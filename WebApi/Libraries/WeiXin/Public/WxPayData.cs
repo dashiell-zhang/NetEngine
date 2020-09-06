@@ -163,7 +163,7 @@ namespace WebApi.Libraries.WeiXin.Public
             try
             {
                 //2015-06-29 错误是没有签名
-                if (m_values["return_code"] != "SUCCESS")
+                if (m_values["return_code"].ToString() != "SUCCESS")
                 {
                     return m_values;
                 }
@@ -202,7 +202,7 @@ namespace WebApi.Libraries.WeiXin.Public
             try
             {
                 //2015-06-29 错误是没有签名
-                if (m_values["return_code"] != "SUCCESS")
+                if (m_values["return_code"].ToString() != "SUCCESS")
                 {
                     return m_values;
                 }

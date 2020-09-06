@@ -30,6 +30,9 @@ namespace Cms
         public void ConfigureServices(IServiceCollection services)
         {
 
+            //为各数据库注入连接字符串
+            Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbContext");
+
             services.Configure<FormOptions>(options =>
             {
                 options.MultipartBodyLengthLimit = long.MaxValue;

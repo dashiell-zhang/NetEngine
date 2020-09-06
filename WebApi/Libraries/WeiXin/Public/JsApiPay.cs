@@ -31,7 +31,7 @@ namespace WebApi.Libraries.WeiXin.Public
 	    * @param int timeCost 接口耗时
 	    * @param WxPayData inputObj参数数组
 	    */
-        public void ReportCostTime( string interface_url, int timeCost, WxPayData inputObj)
+        public void ReportCostTime(string interface_url, int timeCost, WxPayData inputObj)
         {
             //如果仅失败上报
             if (inputObj.IsSet("return_code") && inputObj.GetValue("return_code").ToString() == "SUCCESS" &&
@@ -82,11 +82,11 @@ namespace WebApi.Libraries.WeiXin.Public
 
             try
             {
-                Report( data);
+                Report(data);
             }
             catch (WxPayException ex)
             {
-                //不做任何处理
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -98,7 +98,7 @@ namespace WebApi.Libraries.WeiXin.Public
 	    * @throws WxPayException
 	    * @return 成功时返回测速上报接口返回的结果，其他抛异常
 	    */
-        public WxPayData Report( WxPayData inputObj, int timeOut = 1)
+        public WxPayData Report(WxPayData inputObj, int timeOut = 1)
         {
             string url = "https://api.mch.weixin.qq.com/payitil/report";
             //检测必填参数
@@ -201,7 +201,7 @@ namespace WebApi.Libraries.WeiXin.Public
         * @throws WxPayException
         * @return 成功时返回订单查询结果，其他抛异常
         */
-        public WxPayData OrderQuery( WxPayData inputObj, int timeOut = 6)
+        public WxPayData OrderQuery(WxPayData inputObj, int timeOut = 6)
         {
             string sendUrl = "https://api.mch.weixin.qq.com/pay/orderquery";
             //检测必填参数
@@ -221,7 +221,7 @@ namespace WebApi.Libraries.WeiXin.Public
             //将xml格式的数据转化为对象以返回
             WxPayData result = new WxPayData();
             result.FromXml(response, mchkey);
-            ReportCostTime( sendUrl, timeCost, result);//测速上报
+            ReportCostTime(sendUrl, timeCost, result);//测速上报
             return result;
         }
 

@@ -4,7 +4,7 @@ namespace WebApi.Libraries.IO
 {
     public class Path
     {
-       
+
 
         /// <summary>
         /// 获取 wwwroot 路径
@@ -12,7 +12,7 @@ namespace WebApi.Libraries.IO
         /// <returns></returns>
         public static string WebRootPath()
         {
-            return StartHostingEnvironment.webHostEnvironment.WebRootPath;
+            return StartHostingEnvironment.webHostEnvironment.WebRootPath.Replace("\\", "/");
         }
 
 
@@ -23,8 +23,8 @@ namespace WebApi.Libraries.IO
         /// <returns></returns>
         public static string ContentRootPath()
         {
-            return StartHostingEnvironment.webHostEnvironment.ContentRootPath;
+            return StartHostingEnvironment.webHostEnvironment.ContentRootPath.Replace("\\", "/");
         }
-            
+
     }
 }

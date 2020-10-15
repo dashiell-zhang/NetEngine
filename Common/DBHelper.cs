@@ -14,11 +14,12 @@ namespace Common
     {
 
         /// <summary>
-        /// 针对数据库执行自定义的sql查询，返回泛型List
+        /// 针对数据库执行自定义的sql查询，返回泛型List，可自定义数据库
         /// </summary>
         /// <typeparam name="T">返回类型</typeparam>
         /// <param name="connection">数据库连接</param>
         /// <param name="sql">自定义查询Sql</param>
+        /// <remarks>connection = db.Database.GetDbConnection()</remarks>
         /// <returns></returns>
         public static IList<T> SelectFromSql<T>(DbConnection connection, string sql) where T : class
         {
@@ -35,7 +36,7 @@ namespace Common
             dataTable.Load(reader);
 
             reader.Close();
-
+            command.Dispose();
             connection.Close();
 
             var list = DataHelper.DataTableToList<T>(dataTable);
@@ -49,9 +50,7 @@ namespace Common
         /// 针对数据库执行自定义的sql查询，返回泛型List
         /// </summary>
         /// <typeparam name="T">返回类型</typeparam>
-        /// <param name="connection">数据库连接</param>
         /// <param name="sql">自定义查询Sql</param>
-        /// <remarks>connection = db.Database.GetDbConnection()</remarks>
         /// <returns></returns>
         public static IList<T> SelectFromSql<T>(string sql) where T : class
         {
@@ -73,12 +72,67 @@ namespace Common
                 dataTable.Load(reader);
 
                 reader.Close();
-
+                command.Dispose();
                 connection.Close();
 
                 var list = DataHelper.DataTableToList<T>(dataTable);
 
                 return list;
+            }
+        }
+
+
+
+        /// <summary>
+        /// 针对数据库执行自定义的sql，可自定义数据库
+        /// </summary>
+        /// <param name="connection">数据库连接</param>
+        /// <param name="sql">自定义查询Sql</param>
+        /// <remarks>connection = db.Database.GetDbConnection()</remarks>
+        /// <returns></returns>
+        public static void ExecuteSql(DbConnection connection, string sql)
+        {
+
+            connection.Open();
+
+            var command = connection.CreateCommand();
+
+            command.CommandTimeout = 600;
+
+            command.CommandText = sql;
+
+            command.ExecuteNonQuery();
+
+            command.Dispose();
+            connection.Close();
+        }
+
+
+
+        /// <summary>
+        /// 针对数据库执行自定义的sql
+        /// </summary>
+        /// <param name="sql">自定义查询Sql</param>
+        /// <returns></returns>
+        public static void ExecuteSql(string sql)
+        {
+            using (var db = new dbContext())
+            {
+
+                var connection = db.Database.GetDbConnection();
+
+                connection.Open();
+
+                var command = connection.CreateCommand();
+
+                command.CommandTimeout = 600;
+
+                command.CommandText = sql;
+
+                command.ExecuteNonQuery();
+
+                command.Dispose();
+                connection.Close();
             }
         }
 
@@ -166,7 +220,7 @@ namespace Common
 
 
         /// <summary>
-        /// 账户合并方法
+        /// 账户合并方法，仅限SqlServer
         /// </summary>
         /// <param name="oldUserId">原始账户ID</param>
         /// <param name="newUserId">新账户ID</param>

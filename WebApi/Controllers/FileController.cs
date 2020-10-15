@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using WebApi.Filters;
 
 namespace WebApi.Controllers
@@ -24,6 +26,92 @@ namespace WebApi.Controllers
     [ApiController]
     public class FileController : ControllerBase
     {
+
+        /// <summary>
+        /// 远程单文件上传接口
+        /// </summary>
+        /// <param name="table">表名</param>
+        /// <param name="tableId">记录ID</param>
+        /// <param name="sign">自定义标记</param>
+        /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
+        /// <returns>文件ID</returns>
+        [AllowAnonymous]
+        [JwtTokenVerify(IsSkip = true)]
+        [HttpPost("RemoteUploadFile")]
+        public Guid RemoteUploadFile([FromQuery][Required] string table, [FromQuery][Required] Guid tableId, [FromQuery][Required] string sign, [Required][FromBody] dtoKeyValue fileInfo)
+        {
+            string remoteFileUrl = fileInfo.Key.ToString();
+
+            //var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
+            var userId = Guid.NewGuid();
+
+            var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
+            var fileName = Guid.NewGuid().ToString() + fileExtension;
+
+
+
+            string basepath = "Files/" + DateTime.Now.ToString("yyyyMMdd");
+
+
+            var filePath = Libraries.IO.Path.ContentRootPath() + "/" + basepath + "/";
+
+            //下载文件
+            var dlPath = Common.IO.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
+
+            filePath = dlPath.Replace(Libraries.IO.Path.ContentRootPath(), "");
+
+
+            if (dlPath != null)
+            {
+                var isSuccess = true;
+
+                var upRemote = true;
+
+                if (upRemote == true)
+                {
+                    var oss = new Common.AliYun.OssHelper();
+
+                    var upload = oss.FileUpload(dlPath, basepath);
+
+                    if (upload)
+                    {
+                        Common.IO.IOHelper.Delete(dlPath);
+                    }
+                    else
+                    {
+                        isSuccess = false;
+                    }
+                }
+
+                if (isSuccess)
+                {
+                    using (var db = new dbContext())
+                    {
+                        var f = new TFile();
+                        f.Id = Guid.NewGuid();
+                        f.IsDelete = false;
+                        f.Name = fileInfo.Value.ToString();
+                        f.Path = filePath;
+                        f.Table = table;
+                        f.TableId = tableId;
+                        f.Sign = sign;
+                        f.CreateUserId = userId;
+                        f.CreateTime = DateTime.Now;
+                        db.TFile.Add(f);
+                        db.SaveChanges();
+
+                        return f.Id;
+                    }
+                }
+
+            }
+
+            HttpContext.Response.StatusCode = 400;
+
+            HttpContext.Items.Add("errMsg", "文件上传失败！");
+
+            return default;
+        }
 
 
 

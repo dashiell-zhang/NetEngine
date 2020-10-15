@@ -1,8 +1,6 @@
 ﻿using Aliyun.OSS;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace Common.AliYun
 {
@@ -62,7 +60,13 @@ namespace Common.AliYun
 
 
 
-        public void FileDownload(string remotepath, string localpath)
+        /// <summary>
+        /// 下载OSS的文件
+        /// </summary>
+        /// <param name="remotepath"></param>
+        /// <param name="localpath"></param>
+        /// <returns></returns>
+        public bool FileDownload(string remotepath, string localpath)
         {
             var objectName = remotepath;
 
@@ -86,10 +90,13 @@ namespace Common.AliYun
                     fs.Close();
                 }
                 Console.WriteLine("Get object succeeded");
+
+                return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Get object failed. {0}", ex.Message);
+                return false;
             }
         }
     }

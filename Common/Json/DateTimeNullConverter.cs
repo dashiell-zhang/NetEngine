@@ -11,7 +11,7 @@ namespace Common.Json
         private readonly string _dateFormatString;
         public DateTimeNullConverter()
         {
-            _dateFormatString = "yyyy-MM-dd HH:mm:ss";
+            _dateFormatString = "yyyy/MM/dd HH:mm:ss";
         }
 
         public DateTimeNullConverter(string dateFormatString)

@@ -43,6 +43,7 @@ namespace WebApi
 
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbContext");
+            Common.RedisHelper.ConnectionString = Configuration.GetConnectionString("redisContext");
 
 
             services.Configure<FormOptions>(options =>

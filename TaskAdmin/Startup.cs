@@ -31,6 +31,7 @@ namespace TaskAdmin
 
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbContext");
+            Common.RedisHelper.ConnectionString = Configuration.GetConnectionString("redisContext");
 
 
             //注册 HangFire(SqlServer)

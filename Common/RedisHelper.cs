@@ -2,15 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-namespace Common.NoSql
+namespace Common
 {
-    public class Redis
+    public class RedisHelper
     {
 
-        static string host = "127.0.0.1,Password=123456,DefaultDatabase=0 ";
-        static ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(host);
+        public static string ConnectionString { get; set; }
+        static ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(ConnectionString);
         static IDatabase db = redis.GetDatabase();
 
 
@@ -88,11 +87,11 @@ namespace Common.NoSql
         /// 给value追加值
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="zhi"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public static long StrAppend(string key, string zhi)
+        public static long StrAppend(string key, string value)
         {
-            return db.StringAppend(key, zhi);
+            return db.StringAppend(key, value);
         }
 
 
@@ -102,11 +101,11 @@ namespace Common.NoSql
         /// 给value加上指定值,适用于value是long类型的
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="zhi"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public static long Jia(string key, long zhi)
+        public static long LongIncrement(string key, long value)
         {
-            return db.StringIncrement(key, zhi);
+            return db.StringIncrement(key, value);
         }
 
 
@@ -114,11 +113,11 @@ namespace Common.NoSql
         /// 给value减去指定值,适用于value是long类型的
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="zhi"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public static long Jian(string key, long zhi)
+        public static long LongDecrement(string key, long value)
         {
-            return db.StringDecrement(key, zhi);
+            return db.StringDecrement(key, value);
         }
 
 

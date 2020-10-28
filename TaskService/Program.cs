@@ -15,6 +15,7 @@ namespace TaskService
 
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Common.IO.Config.Get().GetConnectionString("dbContext");
+            Common.RedisHelper.ConnectionString = Common.IO.Config.Get().GetConnectionString("redisContext");
 
 
             tim.Elapsed += Tim_Elapsed;

@@ -204,7 +204,7 @@ namespace WebApi.Controllers
 
             string key = "VerifyPhone_" + phone;
 
-            if (Common.NoSql.Redis.IsContainStr(key) == false)
+            if (Common.RedisHelper.IsContainStr(key) == false)
             {
 
                 Random ran = new Random();
@@ -220,7 +220,7 @@ namespace WebApi.Controllers
 
                 if (smsStatus)
                 {
-                    Common.NoSql.Redis.StrSet(key, code, new TimeSpan(0, 0, 5, 0));
+                    Common.RedisHelper.StrSet(key, code, new TimeSpan(0, 0, 5, 0));
 
                     return true;
                 }

@@ -44,7 +44,7 @@ namespace WebApi.Filters
             try
             {
 
-                var cacheInfo = Common.NoSql.Redis.StrGet(key);
+                var cacheInfo = Common.RedisHelper.StrGet(key);
 
                 if (!string.IsNullOrEmpty(cacheInfo))
                 {
@@ -83,7 +83,7 @@ namespace WebApi.Filters
 
 
 
-                Common.NoSql.Redis.StrSet(key, value,TimeSpan.FromSeconds(TTL));
+                Common.RedisHelper.StrSet(key, value,TimeSpan.FromSeconds(TTL));
 
             }
             catch

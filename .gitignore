@@ -263,3 +263,4 @@ __pycache__/
 /WebApi/Models.xml
 /WebApi/Files
 
+/Cms/wwwroot/Upload

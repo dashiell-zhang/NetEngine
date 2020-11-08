@@ -42,9 +42,9 @@ namespace Cms.Controllers
         {
             try
             {
+                var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
 
                 var ReqFiles = Request.Form.Files;
-
 
                 List<IFormFile> Attachments = new List<IFormFile>();
                 for (int i = 0; i < ReqFiles.Count; i++)
@@ -107,12 +107,14 @@ namespace Cms.Controllers
                             {
                                 TFile fi = new TFile();
                                 fi.Id = Guid.NewGuid();
+                                fi.CreateUserId = userId;
+                                fi.CreateTime = DateTime.Now;
+                                fi.IsDelete = false;
                                 fi.Name = file.FileName;
                                 fi.Table = Table;
                                 fi.TableId = TableId;
                                 fi.Sign = Sign;
                                 fi.Path = path;
-                                fi.CreateTime = DateTime.Now;
 
                                 db.TFile.Add(fi);
 

@@ -29,4 +29,9 @@
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <Folder Include="wwwroot\Upload\" />
+  </ItemGroup>
+
 </Project>

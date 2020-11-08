@@ -7,8 +7,7 @@
 
 (function () {
 
-    var uploadFile,
-        onlineFile;
+    var uploadFile;
 
     window.onload = function () {
         initTabs();

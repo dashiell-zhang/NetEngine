@@ -48,7 +48,15 @@ namespace Cms.Controllers
         {
             using (var db = new dbContext())
             {
-                var webInfo = db.TWebInfo.FirstOrDefault();
+                var webInfo = db.TWebInfo.FirstOrDefault() ?? new TWebInfo();
+
+                if (webInfo.Id == default)
+                {
+                    webInfo.Id = Guid.NewGuid();
+                    db.TWebInfo.Add(webInfo);
+                    db.SaveChanges();
+                }
+
                 return View(webInfo);
             }
         }

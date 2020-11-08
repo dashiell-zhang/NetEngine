@@ -8,9 +8,7 @@
 (function () {
 
     var remoteImage,
-        uploadImage,
-        onlineImage,
-        searchImage;
+        uploadImage;
 
     window.onload = function () {
         initTabs();

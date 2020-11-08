@@ -75,8 +75,6 @@ namespace Cms.Controllers
                     dbChannel.Name = Channel.Name;
                     dbChannel.Remarks = Channel.Remarks;
                     dbChannel.Sort = Channel.Sort;
-
-                    var userid = HttpContext.Session.GetString("userid");
                 }
 
                 db.SaveChanges();
@@ -319,8 +317,6 @@ namespace Cms.Controllers
                         article.IsDelete = false;
 
                         db.TArticle.Add(article);
-
-
                     }
                     else
                     {
@@ -334,7 +330,7 @@ namespace Cms.Controllers
                         dbArticle.IsDisplay = article.IsDisplay;
                         dbArticle.IsRecommend = article.IsRecommend;
                         dbArticle.ClickCount = article.ClickCount;
-
+                        dbArticle.Sort = article.Sort;
 
                     }
 

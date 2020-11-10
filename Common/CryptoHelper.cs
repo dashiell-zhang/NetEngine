@@ -258,6 +258,12 @@ namespace Common
         }
 
 
+
+        /// <summary>
+        /// Byte 转 Hex
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static string BytesToHex(byte[] data)
         {
             StringBuilder sbRet = new StringBuilder(data.Length * 2);

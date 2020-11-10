@@ -6,7 +6,7 @@ namespace Common.AliYun
 {
     public class OssHelper
     {
-        string endpoint = "";
+        string endpoint = IO.Config.Get()["OSSEndpoint"];
         string accessKeyId = "";
         string accessKeySecret = "";
         string bucketName = "";

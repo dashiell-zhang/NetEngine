@@ -17,16 +17,16 @@ namespace Common.IO
         public static IConfigurationRoot Get()
         {
             var ev = Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT");
-
+            if (string.IsNullOrEmpty(ev))
+            {
+                ev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            }
             IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
-
             if (!string.IsNullOrEmpty(ev))
             {
                 builder = new ConfigurationBuilder().AddJsonFile("appsettings." + ev + ".json");
             }
-
             IConfigurationRoot configuration = builder.Build();
-
             return configuration;
         }
 

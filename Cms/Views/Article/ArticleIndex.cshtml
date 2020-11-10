@@ -13,7 +13,6 @@
     <script src="~/lib/sweetalert.min.js"></script>
     <link href="~/lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
     <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
-    <script src="~/private/time.js"></script>
     <script src="~/lib/datatables/datatables.min.js"></script>
     <link href="~/lib/datatables/datatables.min.css" rel="stylesheet" />
 
@@ -59,7 +58,6 @@
                 }
             });
         }
-
 
         function GetList() {
 
@@ -116,20 +114,17 @@
             })
         }
 
-
         $(function () {// 初始化内容
+
+            layui.use('element', function () {
+                var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+            });
+
+            layui.use('layer', function () {
+                var layer = layui.layer;
+            });
+
             GetList();
-        });
-
-    </script>
-
-    <script>
-        layui.use('element', function () {
-            var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
-        });
-
-        layui.use('layer', function () {
-            var layer = layui.layer;
         });
 
         function showArticleEdit(channelId, id) {
@@ -142,19 +137,20 @@
                 yes: function (index, layero) {
                     var id = 'layui-layer-iframe' + index;
                     document.getElementById(id).contentWindow.$("#submit").click();
-
-                    var IsSubmit = document.getElementById(id).contentWindow.$("#IsSubmit").val();
-
-                    if (IsSubmit == 1) {
-                        sleep(1000);
-                        //刷新表格数据并保留分页信息
-                        $('#dtList').DataTable().ajax.reload(null, false);
-                        layer.close(index);
-                    }
                 }
             });
         }
+
+        function onloadDataTable() {
+            $('#dtList').DataTable().ajax.reload(null, false);
+        }
+
+        function closeLoading() {
+            layer.close(loading);
+        }
+
     </script>
+
 </head>
 
 <body style="padding-right:1.2em;padding-left: 1.2em;">

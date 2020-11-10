@@ -11,47 +11,44 @@
     <title>编辑友情链接</title>
 
     <script src="~/lib/jquery.js"></script>
-
     <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
-
     <script src="~/lib/layui/layui.js"></script>
-
     <link href="~/lib/weui/weui.css" rel="stylesheet" />
-
     <script src="~/lib/sweetalert.min.js"></script>
 
     <script>
-        layui.use('element', function () {
-            var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
-        });
+        $(function () {// 初始化内容
+            layui.use('element', function () {
+                var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+            });
 
-        layui.use('form', function () {
-            var form = layui.form;
+            layui.use('form', function () {
+                var form = layui.form;
 
-            //监听提交
-            form.on('submit(form1)', function (data) {
+                //监听提交
+                form.on('submit(form1)', function (data) {
 
-                $("#btn_Upload").click();
+                    $("#btn_Upload").click();
 
-                $("#IsSubmit").val("1");
+                    $.ajax({
+                        //几个参数需要注意一下
+                        type: "POST",//方法类型
+                        url: "/Link/LinkSave/",//url
+                        data: $('#form1').serialize(),
+                        success: function (result) {
+                            console.log(result);//打印服务端返回的数据(调试用)
+                            if (result == true) {
+                                var index = parent.layer.getFrameIndex(window.name);
+                                parent.onloadDataTable();
+                                parent.layer.close(index);
+                            };
+                        }
+                    });
 
-                $.ajax({
-                    //几个参数需要注意一下
-                    type: "POST",//方法类型
-                    url: "/Link/LinkSave/",//url
-                    data: $('#form1').serialize(),
-                    success: function (result) {
-                        console.log(result);//打印服务端返回的数据(调试用)
-                        if (result == true) {
-                          
-                        };
-                    }
+                    return false;
                 });
-
-                return false;
             });
         });
-
     </script>
 </head>
 
@@ -59,9 +56,6 @@
     <form method="post" id="form1" class="layui-form">
 
         <input type="hidden" value="@info.Id" name="Id" />
-        <input id="IsSubmit" type="hidden" value="0" />
-
-
 
         <div class="layui-tab" style="margin-top:24px">
 

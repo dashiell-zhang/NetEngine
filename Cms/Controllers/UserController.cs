@@ -102,7 +102,7 @@ namespace Cms.Controllers
         }
 
 
-        public void UserSave(TUser user)
+        public bool UserSave(TUser user)
         {
             using (var db = new dbContext())
             {
@@ -114,7 +114,7 @@ namespace Cms.Controllers
                     user.IsDelete = false;
                     user.CreateTime = DateTime.Now;
 
-                    //user.RoleId = "";
+                    user.RoleId = Guid.Parse("136A214E-7523-42F2-9760-8EED42B31BA1");
 
                     db.TUser.Add(user);
                 }
@@ -132,8 +132,9 @@ namespace Cms.Controllers
 
                 db.SaveChanges();
 
-                Response.Redirect("/User/UserIndex");
             }
+
+            return true;
         }
 
 
@@ -141,8 +142,11 @@ namespace Cms.Controllers
         {
             using (var db = new dbContext())
             {
-                var UserSys = db.TUser.Where(t => t.Id == id).FirstOrDefault();
-                db.TUser.Remove(UserSys);
+                var user = db.TUser.Where(t => t.Id == id).FirstOrDefault();
+
+                user.IsDelete = true;
+                user.DeleteTime = DateTime.Now;
+
                 db.SaveChanges();
 
                 var data = new { status = true, msg = "删除成功！" };

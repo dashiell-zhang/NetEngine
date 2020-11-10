@@ -49,7 +49,7 @@ namespace Cms.Controllers
         }
 
 
-        public void ChannelSave(TChannel Channel)
+        public bool ChannelSave(TChannel Channel)
         {
             using (var db = new dbContext())
             {
@@ -79,7 +79,7 @@ namespace Cms.Controllers
 
                 db.SaveChanges();
 
-                Response.Redirect("/Article/ChannelIndex");
+                return true;
             }
         }
 
@@ -152,7 +152,7 @@ namespace Cms.Controllers
         }
 
 
-        public void CategorySave(TCategory Category)
+        public bool CategorySave(TCategory Category)
         {
 
             if (Category.ParentId == default)
@@ -191,7 +191,7 @@ namespace Cms.Controllers
 
                 db.SaveChanges();
 
-                Response.Redirect("/Article/CategoryIndex?channelid=" + Category.ChannelId);
+                return true;
             }
         }
 

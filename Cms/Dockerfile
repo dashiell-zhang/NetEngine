@@ -1,7 +1,7 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 #FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
-FROM registry.cn-shanghai.aliyuncs.com/onekib/dotnet_core_aspnet:3.1-buster-slim AS base
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /app
 
 #修改镜像内部软件源采用阿里镜像
@@ -17,7 +17,7 @@ EXPOSE 80
 EXPOSE 443
 
 #FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
-FROM registry.cn-shanghai.aliyuncs.com/onekib/dotnet_core_sdk:3.1-buster AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
 
 WORKDIR /src
 COPY ["Cms/Cms.csproj", "Cms/"]

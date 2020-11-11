@@ -149,8 +149,16 @@ namespace Cms
             });
 
 
-            //注册全局异常处理机制
-            app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                //注册全局异常处理机制
+                app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
+            }
+
 
             app.UseHsts();
 

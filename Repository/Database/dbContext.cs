@@ -116,13 +116,13 @@ namespace Repository.Database
             if (!optionsBuilder.IsConfigured)
             {
 
-                optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySql("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
                 //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 

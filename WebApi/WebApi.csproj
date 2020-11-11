@@ -22,16 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="subtablesettings.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="subtablesettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="4.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="4.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.0">

@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using TaskAdmin.Filters;
-using TaskAdmin.Models;
 
 namespace TaskAdmin.Controllers
 {

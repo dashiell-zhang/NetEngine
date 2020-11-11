@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Cms.Filters;
+﻿using Cms.Filters;
 using Microsoft.AspNetCore.Http;
-using Cms.Libraries;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
-using Cms.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Cms.Controllers
 {
@@ -87,11 +82,5 @@ namespace Cms.Controllers
             }
         }
 
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
     }
 }

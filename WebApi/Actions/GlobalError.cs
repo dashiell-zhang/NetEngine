@@ -32,10 +32,13 @@ namespace WebApi.Actions
                 parameterStr = parameterStr.Substring(0, 102400);
             }
 
+            var authorization = Libraries.Http.HttpContext.Current().Request.Headers["Authorization"].ToString();
+
             var content = new
             {
                 path = path,
-                parameter = parameterStr,
+                parameter = parameter,
+                authorization = authorization,
                 error = error
             };
 

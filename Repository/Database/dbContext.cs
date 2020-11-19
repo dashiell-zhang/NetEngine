@@ -80,6 +80,9 @@ namespace Repository.Database
 
         public DbSet<TRegionProvince> TRegionProvince { get; set; }
 
+        public DbSet<TRegionTown> TRegionTown { get; set; }
+
+
 
         public DbSet<TRole> TRole { get; set; }
 
@@ -121,7 +124,7 @@ namespace Repository.Database
                 //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
-                //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseMySql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
 

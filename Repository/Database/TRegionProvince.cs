@@ -15,7 +15,7 @@ namespace Repository.Database
 
 
         /// <summary>
-        /// 身份
+        /// 省份
         /// </summary>
         public string Province { get; set; }
 

@@ -1,11 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
     /// <summary>
     /// 区域信息表
     /// </summary>
-    public  class TRegionArea
+    public class TRegionArea
     {
 
         [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None)]
@@ -22,6 +23,12 @@ namespace Repository.Database
         /// </summary>
         public int CityId { get; set; }
         public virtual TRegionCity City { get; set; }
+
+
+        /// <summary>
+        /// 城市下所有乡镇信息
+        /// </summary>
+        public virtual ICollection<TRegionTown> TRegionTown { get; set; }
 
 
     }

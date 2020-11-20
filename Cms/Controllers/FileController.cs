@@ -38,7 +38,7 @@ namespace Cms.Controllers
         [HttpPost]
         //[RequestSizeLimit(100_000_000)]
         [DisableRequestSizeLimit]
-        public bool UploadFile(string Table, Guid TableId, string Sign)
+        public bool UploadFile(string business, Guid key, string sign)
         {
             try
             {
@@ -111,9 +111,9 @@ namespace Cms.Controllers
                                 fi.CreateTime = DateTime.Now;
                                 fi.IsDelete = false;
                                 fi.Name = file.FileName;
-                                fi.Table = Table;
-                                fi.TableId = TableId;
-                                fi.Sign = Sign;
+                                fi.Table = business;
+                                fi.TableId = key;
+                                fi.Sign = sign;
                                 fi.Path = path;
 
                                 db.TFile.Add(fi);

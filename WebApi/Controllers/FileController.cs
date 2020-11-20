@@ -30,20 +30,17 @@ namespace WebApi.Controllers
         /// <summary>
         /// 远程单文件上传接口
         /// </summary>
-        /// <param name="table">表名</param>
-        /// <param name="tableId">记录ID</param>
+        /// <param name="business">业务领域</param>
+        /// <param name="key">记录值</param>
         /// <param name="sign">自定义标记</param>
         /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
         /// <returns>文件ID</returns>
-        [AllowAnonymous]
-        [JwtTokenVerify(IsSkip = true)]
         [HttpPost("RemoteUploadFile")]
-        public Guid RemoteUploadFile([FromQuery][Required] string table, [FromQuery][Required] Guid tableId, [FromQuery][Required] string sign, [Required][FromBody] dtoKeyValue fileInfo)
+        public Guid RemoteUploadFile([FromQuery][Required] string business, [FromQuery][Required] Guid key, [FromQuery][Required] string sign, [Required][FromBody] dtoKeyValue fileInfo)
         {
             string remoteFileUrl = fileInfo.Key.ToString();
 
-            //var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
-            var userId = Guid.NewGuid();
+            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
             var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
@@ -92,8 +89,8 @@ namespace WebApi.Controllers
                         f.IsDelete = false;
                         f.Name = fileInfo.Value.ToString();
                         f.Path = filePath;
-                        f.Table = table;
-                        f.TableId = tableId;
+                        f.Table = business;
+                        f.TableId = key;
                         f.Sign = sign;
                         f.CreateUserId = userId;
                         f.CreateTime = DateTime.Now;
@@ -118,14 +115,14 @@ namespace WebApi.Controllers
         /// <summary>
         /// 单文件上传接口
         /// </summary>
-        /// <param name="table">表名</param>
-        /// <param name="tableId">记录ID</param>
+        /// <param name="business">业务领域</param>
+        /// <param name="key">记录值</param>
         /// <param name="sign">自定义标记</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost("UploadFile")]
-        public Guid UploadFile([FromQuery][Required] string table, [FromQuery][Required] Guid tableId, [FromQuery][Required] string sign, [Required] IFormFile file)
+        public Guid UploadFile([FromQuery][Required] string business, [FromQuery][Required] Guid key, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
             var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
@@ -187,8 +184,8 @@ namespace WebApi.Controllers
                     f.IsDelete = false;
                     f.Name = file.FileName;
                     f.Path = path;
-                    f.Table = table;
-                    f.TableId = tableId;
+                    f.Table = business;
+                    f.TableId = key;
                     f.Sign = sign;
                     f.CreateUserId = userId;
                     f.CreateTime = DateTime.Now;
@@ -213,14 +210,14 @@ namespace WebApi.Controllers
         /// <summary>
         /// 多文件上传接口
         /// </summary>
-        /// <param name="table">表名</param>
-        /// <param name="tableId">记录ID</param>
+        /// <param name="business">业务领域</param>
+        /// <param name="key">记录值</param>
         /// <param name="sign">标记</param>
         /// <returns></returns>
         /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
         [DisableRequestSizeLimit]
         [HttpPost("BatchUploadFile")]
-        public List<Guid> BatchUploadFile([FromQuery][Required] string table, [FromQuery][Required] Guid tableId, [FromQuery][Required] string sign)
+        public List<Guid> BatchUploadFile([FromQuery][Required] string business, [FromQuery][Required] Guid key, [FromQuery][Required] string sign)
         {
             var fileIds = new List<Guid>();
 
@@ -235,7 +232,7 @@ namespace WebApi.Controllers
 
             foreach (var file in Attachments)
             {
-                var fileId = UploadFile(table, tableId, sign, file);
+                var fileId = UploadFile(business, key, sign, file);
 
                 fileIds.Add(fileId);
             }
@@ -447,15 +444,15 @@ namespace WebApi.Controllers
         /// <summary>
         /// 多文件切片上传，获取初始化文件ID
         /// </summary>
-        /// <param name="table">表名</param>
-        /// <param name="tableId">记录ID</param>
+        /// <param name="business">业务领域</param>
+        /// <param name="key">记录值</param>
         /// <param name="sign">自定义标记</param>
         /// <param name="fileName">文件名称</param>
         /// <param name="slicing">总切片数</param>
         /// <param name="unique">文件校验值</param>
         /// <returns></returns>
         [HttpGet("CreateGroupFileId")]
-        public Guid CreateGroupFileId([Required] string table, [Required] Guid tableId, [Required] string sign, [Required] string fileName, [Required] int slicing, [Required] string unique)
+        public Guid CreateGroupFileId([Required] string business, [Required] Guid key, [Required] string sign, [Required] string fileName, [Required] int slicing, [Required] string unique)
         {
             using (var db = new dbContext())
             {
@@ -474,8 +471,8 @@ namespace WebApi.Controllers
                     f.Id = Guid.NewGuid();
                     f.Name = fileName;
                     f.Path = basepath;
-                    f.Table = table;
-                    f.TableId = tableId;
+                    f.Table = business;
+                    f.TableId = key;
                     f.Sign = sign;
                     f.CreateTime = DateTime.Now;
 

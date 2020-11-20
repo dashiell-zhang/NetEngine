@@ -277,9 +277,9 @@
             $("#btn_Upload").on('click', function () {
 
                 var oFormData = new FormData();
-                oFormData.append("TableId", $("#Id").val());
-                oFormData.append("Sign", "cover");
-                oFormData.append("Table", "TLink");
+                oFormData.append("key", $("#Id").val());
+                oFormData.append("sign", "cover");
+                oFormData.append("business", "TLink");
 
                 var filesList = document.getElementsByName("attachments");
 

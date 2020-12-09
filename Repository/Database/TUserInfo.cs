@@ -40,7 +40,6 @@ namespace Repository.Database
         /// <summary>
         /// 性别
         /// </summary>
-        [Column(TypeName = "bit")]
         public bool? Sex { get; set; }
 
 

@@ -55,7 +55,6 @@ namespace Repository.Database
         /// <summary>
         /// 支付状态
         /// </summary>
-        [Column(TypeName = "bit")]
         public bool Paystate { get; set; }
 
 

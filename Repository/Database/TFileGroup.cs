@@ -37,7 +37,6 @@ namespace Repository.Database
         /// <summary>
         /// 合成状态
         /// </summary>
-        [Column(TypeName = "bit")]
         public bool Issynthesis { get; set; }
 
 
@@ -45,7 +44,6 @@ namespace Repository.Database
         /// <summary>
         /// 是否已完整传输
         /// </summary>
-        [Column(TypeName = "bit")]
         public bool Isfull { get; set; }
     }
 }

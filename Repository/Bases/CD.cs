@@ -26,7 +26,6 @@ namespace Repository.Bases
         /// <summary>
         /// 是否删除
         /// </summary>
-        [Column(TypeName = "bit")]
         public bool IsDelete { get; set; }
 
 

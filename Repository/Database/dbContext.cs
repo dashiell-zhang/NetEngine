@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repository.Interceptors;
+using System;
 using System.Linq;
 
 namespace Repository.Database
@@ -120,12 +121,12 @@ namespace Repository.Database
             {
 
                 //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySql("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
                 optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
@@ -167,6 +168,19 @@ namespace Repository.Database
                     foreach (var property in entity.GetProperties())
                     {
                         builder.Property(property.Name).HasColumnName(property.Name.ToLower());
+
+
+                        //bool to bit
+                        if (property.ClrType.Name == typeof(bool).Name)
+                        {
+                            builder.Property(property.Name).HasColumnType("bit");
+                        }
+
+                        //guid to char(36)
+                        //if (property.ClrType.Name == typeof(Guid).Name)
+                        //{
+                        //    builder.Property(property.Name).HasColumnType("char(36)");
+                        //}
 
 
                         //为所有 tableid 列添加索引

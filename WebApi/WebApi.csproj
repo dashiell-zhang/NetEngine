@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <UserSecretsId>8f91631d-8e01-4467-bf74-81530d24ee0a</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
@@ -48,10 +47,5 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="..\.dockerignore">
-      <DependentUpon>dockerfile</DependentUpon>
-    </None>
-  </ItemGroup>
 
 </Project>

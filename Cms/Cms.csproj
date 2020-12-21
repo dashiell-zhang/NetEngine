@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <UserSecretsId>be9e1859-2b13-4a28-8232-5c1217752f07</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
@@ -34,11 +33,5 @@
     <Folder Include="wwwroot\Upload\" />
   </ItemGroup>
 
-
-  <ItemGroup>
-    <None Update="..\.dockerignore">
-      <DependentUpon>dockerfile</DependentUpon>
-    </None>
-  </ItemGroup>
 
 </Project>

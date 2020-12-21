@@ -2,7 +2,6 @@
 
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
-		<AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
 		<UserSecretsId>c8231277-7709-4207-a3a4-1d9751d7994f</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>
@@ -28,10 +27,5 @@
 		<ProjectReference Include="..\Common\Common.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <None Update="..\.dockerignore">
-	    <DependentUpon>dockerfile</DependentUpon>
-	  </None>
-	</ItemGroup>
 
 </Project>

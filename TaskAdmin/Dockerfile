@@ -1,6 +1,7 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
+FROM registry.cn-shanghai.aliyuncs.com/onekib/dotnet-aspnet:5.0-buster-slim AS base
+#FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /app
 
 #修改镜像内部软件源采用阿里镜像
@@ -15,7 +16,8 @@ RUN apt-get update && apt-get -y install libgdiplus
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
+FROM registry.cn-shanghai.aliyuncs.com/onekib/dotnet-sdk:5.0-buster-slim AS build
+#FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
 
 WORKDIR /src
 COPY ["TaskAdmin/TaskAdmin.csproj", "TaskAdmin/"]

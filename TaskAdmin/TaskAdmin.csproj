@@ -28,4 +28,10 @@
 		<ProjectReference Include="..\Common\Common.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="..\.dockerignore">
+	    <DependentUpon>dockerfile</DependentUpon>
+	  </None>
+	</ItemGroup>
+
 </Project>

@@ -120,14 +120,17 @@ namespace Repository.Database
             if (!optionsBuilder.IsConfigured)
             {
 
-                //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=zhangxiaodong", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=zhangxiaodong;database=ceshi;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=123456;database=webcore;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySql("server=127.0.0.1;userid=root;pwd=123456;database=webcore;", new MySqlServerVersion(new Version(8, 0, 22)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
-
-                optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 22)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
                 //开启调试拦截器
@@ -171,10 +174,10 @@ namespace Repository.Database
 
 
                         //bool to bit
-                        if (property.ClrType.Name == typeof(bool).Name)
-                        {
-                            builder.Property(property.Name).HasColumnType("bit");
-                        }
+                        //if (property.ClrType.Name == typeof(bool).Name)
+                        //{
+                        //    builder.Property(property.Name).HasColumnType("bit");
+                        //}
 
                         //guid to char(36)
                         //if (property.ClrType.Name == typeof(Guid).Name)

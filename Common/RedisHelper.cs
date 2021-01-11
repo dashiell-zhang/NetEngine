@@ -320,5 +320,40 @@ namespace Common
             return db.HashLength(key);
         }
 
+
+
+
+        /// <summary>
+        /// 获取锁
+        /// </summary>
+        /// <param name="key">锁的名称，不可重复</param>
+        /// <param name="value">解锁密钥</param>
+        /// <param name="timeOut">失效时长</param>
+        /// <returns></returns>
+        public static bool Lock(string key, string value, TimeSpan timeOut)
+        {
+            var redis = ConnectionMultiplexer.Connect(ConnectionString);
+            var db = redis.GetDatabase();
+
+            return db.LockTake(key, value, timeOut);
+        }
+
+
+
+
+        /// <summary>
+        /// 释放锁
+        /// </summary>
+        /// <param name="key">锁的名称</param>
+        /// <param name="value">解锁密钥</param>
+        /// <returns></returns>
+        public static bool UnLock(string key, string value)
+        {
+            var redis = ConnectionMultiplexer.Connect(ConnectionString);
+            var db = redis.GetDatabase();
+
+            return db.LockRelease(key, value);
+        }
+
     }
 }

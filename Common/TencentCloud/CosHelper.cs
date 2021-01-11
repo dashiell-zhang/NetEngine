@@ -67,7 +67,7 @@ namespace Common.TencentCloud
                     PutObjectRequest request = new PutObjectRequest(bucket, remotepath, localpath);
 
                     //设置签名有效时长
-                    request.SetSign(TimeUtils.GetCurrentTime(TimeUnit.SECONDS), durationSecond);
+                    request.SetSign(TimeUtils.GetCurrentTime(TimeUnit.Seconds), durationSecond);
 
 
                     //设置进度回调

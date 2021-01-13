@@ -45,7 +45,7 @@ namespace WebApi.Libraries.Http
         /// <returns></returns>
         public static string GetUrl()
         {
-            return $"{HttpContext.Current().Request.Scheme}://{HttpContext.Current().Request.Host.Host}{HttpContext.Current().Request.Path}{HttpContext.Current().Request.QueryString}";
+            return GetBaseUrl() + $"{HttpContext.Current().Request.Path}{HttpContext.Current().Request.QueryString}";
         }
 
 
@@ -55,7 +55,15 @@ namespace WebApi.Libraries.Http
         /// <returns></returns>
         public static string GetBaseUrl()
         {
-            return $"{HttpContext.Current().Request.Scheme}://{HttpContext.Current().Request.Host.Host}:{HttpContext.Current().Request.Host.Port}";
+
+            var url = $"{HttpContext.Current().Request.Scheme}://{HttpContext.Current().Request.Host.Host}";
+
+            if (HttpContext.Current().Request.Host.Port != null)
+            {
+                url = url + $":{HttpContext.Current().Request.Host.Port}";
+            }
+
+            return url;
         }
 
 

@@ -9,6 +9,8 @@ namespace TaskAdmin
     {
         public static void Main(string[] args)
         {
+            Common.EnvironmentHelper.InitTestServer();
+
             CreateHostBuilder(args).Build().Run();
         }
 

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 
 namespace Common.IO
 {
@@ -27,25 +26,6 @@ namespace Common.IO
             {
                 builder = new ConfigurationBuilder().AddJsonFile("appsettings." + ev + ".json");
             }
-
-
-            var testIpList = new List<string>();
-
-            if (testIpList.Count != 0)
-            {
-                var localIpList = SystemHelper.GetAllIpAddress();
-
-                foreach (var item in localIpList)
-                {
-                    if (testIpList.Contains(item))
-                    {
-                        builder = new ConfigurationBuilder().AddJsonFile("appsettings.Test.json");
-                        break;
-                    }
-                }
-            }
-
-
             IConfigurationRoot configuration = builder.Build();
             return configuration;
         }

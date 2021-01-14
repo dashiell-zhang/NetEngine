@@ -1,14 +1,15 @@
-﻿using StackExchange.Redis;
+﻿using Microsoft.Extensions.Configuration;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Common
 {
-    public class RedisHelper
+    public static class RedisHelper
     {
 
-        public static string ConnectionString { get; set; }
+        private static string ConnectionString = IO.Config.Get().GetConnectionString("redisContext");
 
 
 

@@ -32,7 +32,6 @@ namespace Cms
 
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbContext");
-            Common.RedisHelper.ConnectionString = Configuration.GetConnectionString("redisContext");
 
             services.Configure<FormOptions>(options =>
             {
@@ -77,7 +76,7 @@ namespace Cms
             //托管Session到Redis中
             services.AddDistributedRedisCache(options =>
             {
-                options.Configuration = "localhost,Password=123456,DefaultDatabase=0";
+                options.Configuration = Configuration.GetConnectionString("redisContext");
             });
 
 

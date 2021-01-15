@@ -12,6 +12,8 @@ RUN echo "deb https://mirrors.aliyun.com/debian buster-updates main" >> /etc/apt
 #安装 libgdiplus 以解决 System.Drawing 在 linux 下无法运行的问题
 RUN apt-get update && apt-get -y install libgdiplus	
 
+#设置时区为中国上海
+ENV TZ=Asia/Shanghai
 
 EXPOSE 80
 EXPOSE 443

@@ -23,12 +23,8 @@ Scaffold-DbContext "Host=127.0.0.1;Database=webcore;Username=postgres;Password=1
 
 
 MySql
-MySql.Data.EntityFrameworkCore  或   Pomelo.EntityFrameworkCore.MySql
-Scaffold-DbContext "server=127.0.0.1;userid=webcore;pwd=123456;port=3306;database=webcore;sslmode=none;" MySql.Data.EntityFrameworkCore -OutputDir webcore -Force
-
-
-MySql.Data.EntityFrameworkCore 需要执行
-在MySql中执行  CREATE TABLE `__efmigrationshistory` ( `MigrationId` nvarchar(150) NOT NULL, `ProductVersion` nvarchar(32) NOT NULL, PRIMARY KEY (`MigrationId`) );
+MySql.EntityFrameworkCore  或   Pomelo.EntityFrameworkCore.MySql
+Scaffold-DbContext "server=127.0.0.1;userid=webcore;pwd=123456;port=3306;database=webcore;sslmode=none;" MySql.EntityFrameworkCore -OutputDir webcore -Force
 
 
 Add-Migration init 生成命令

@@ -3,11 +3,13 @@ using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
@@ -114,6 +116,23 @@ namespace TaskAdmin
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
+
+            //设置本地化信息，可实现 固定 Hangfire 管理面板为中文显示
+            app.UseRequestLocalization(new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("zh-CN"),
+                SupportedCultures = new[]
+                {
+                    new CultureInfo("zh-CN")
+                },
+                SupportedUICultures = new[]
+                {
+                    new CultureInfo("zh-CN")
+                }
+            });
+
+
 
             //开启倒带模式运行多次读取HttpContext.Body中的内容
             app.Use(next => context =>

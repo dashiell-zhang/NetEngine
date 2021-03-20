@@ -52,7 +52,7 @@ namespace Common.AliYun.AntAllianceChain
                 var sendData = new dtoGetToken();
 
                 sendData.accessId = accessId;
-                sendData.time = DataTime.DateTimeHelper.TimeToJs(DateTime.Now).ToString();
+                sendData.time = DateTimeHelper.TimeToJs(DateTime.Now).ToString();
 
                 string msg = sendData.accessId + sendData.time;
 

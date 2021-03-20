@@ -33,7 +33,7 @@ namespace WebApi.Filters
 
                 var exp = Convert.ToInt64(Libraries.Verify.JwtToken.GetClaims("exp"));
 
-                var exptime = Common.DataTime.DateTimeHelper.UnixToTime(exp);
+                var exptime = Common.DateTimeHelper.UnixToTime(exp);
 
                 if (exptime < DateTime.Now)
                 {
@@ -70,7 +70,7 @@ namespace WebApi.Filters
 
                 var exp = Convert.ToInt64(Libraries.Verify.JwtToken.GetClaims("exp"));
 
-                var exptime = Common.DataTime.DateTimeHelper.UnixToTime(exp);
+                var exptime = Common.DateTimeHelper.UnixToTime(exp);
 
                 if (exptime < DateTime.Now)
                 {

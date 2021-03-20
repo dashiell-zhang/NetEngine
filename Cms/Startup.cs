@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +30,7 @@ namespace Cms
         {
 
             //为各数据库注入连接字符串
-            Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbContext");
+            Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
 
             services.Configure<FormOptions>(options =>
             {
@@ -76,7 +75,7 @@ namespace Cms
             //托管Session到Redis中
             services.AddDistributedRedisCache(options =>
             {
-                options.Configuration = Configuration.GetConnectionString("redisContext");
+                options.Configuration = Configuration.GetConnectionString("redisConnection");
             });
 
 
@@ -127,17 +126,11 @@ namespace Cms
             services.AddSingleton(new Common.SnowflakeHelper(0, 0));
 
 
-            //调整路由 生成规则为小写模式
-            services.AddRouting(options => options.LowercaseUrls = true);
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-
-
-            app.UseRewriter(new RewriteOptions().Add(new Libraries.RedirectLowerCaseUrlsRule()));
 
 
             //开启倒带模式运行多次读取HttpContext.Body中的内容

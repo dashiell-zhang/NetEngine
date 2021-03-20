@@ -98,7 +98,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
             sdkSign.appid = appid;
             string url = HttpContext.GetUrl();
-            sdkSign.timestamp = Common.DataTime.DateTimeHelper.TimeToUnix(DateTime.Now);
+            sdkSign.timestamp = Common.DateTimeHelper.TimeToUnix(DateTime.Now);
             sdkSign.noncestr = Guid.NewGuid().ToString().Replace("-", "");
             string jsapi_ticket = GetTicketID();
 

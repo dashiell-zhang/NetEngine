@@ -180,7 +180,7 @@ namespace Common
 
             var timeJsStamp = Convert.ToInt64(timeStr2, 2);
 
-            var time = Common.DataTime.DateTimeHelper.JsToTime(timeJsStamp, 2020);
+            var time = DateTimeHelper.JsToTime(timeJsStamp, 2020);
 
             return time;
         }

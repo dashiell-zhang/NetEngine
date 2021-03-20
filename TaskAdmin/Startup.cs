@@ -32,18 +32,18 @@ namespace TaskAdmin
         {
 
             //为各数据库注入连接字符串
-            Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbContext");
+            Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
 
 
             //注册 HangFire(SqlServer)
             services.AddHangfire(configuration => configuration
-                .UseSqlServerStorage(Configuration.GetConnectionString("HangfireConnection"), new SqlServerStorageOptions
+                .UseSqlServerStorage(Configuration.GetConnectionString("hangfireConnection"), new SqlServerStorageOptions
                 {
-                    SchemaName = "dbo"
+                    SchemaName = "hangfire"
                 }));
 
             //注册 HangFire(Redis)
-            //services.AddHangfire(configuration => configuration.UseRedisStorage("127.0.0.1,Password=123456,DefaultDatabase=13"));
+            //services.AddHangfire(configuration => configuration.UseRedisStorage(Configuration.GetConnectionString("hangfireConnection")));
 
             // 注册 HangFire 服务
             services.AddHangfireServer(config => config.SchedulePollingInterval = TimeSpan.FromSeconds(3));
@@ -69,7 +69,7 @@ namespace TaskAdmin
             //托管Session到Redis中
             services.AddDistributedRedisCache(options =>
             {
-                options.Configuration = Configuration.GetConnectionString("redisContext");
+                options.Configuration = Configuration.GetConnectionString("redisConnection");
             });
 
 

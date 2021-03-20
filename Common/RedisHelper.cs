@@ -9,7 +9,7 @@ namespace Common
     public static class RedisHelper
     {
 
-        private static string ConnectionString = IO.Config.Get().GetConnectionString("redisContext");
+        private static string ConnectionString = IO.Config.Get().GetConnectionString("redisConnection");
 
 
 

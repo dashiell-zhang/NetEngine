@@ -32,7 +32,7 @@ namespace Cms.Controllers
         public IActionResult Center()
         {
 
-            ViewBag.LocalIpAddress = HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+            ViewBag.LocalIpAddress = HttpContext.Connection.LocalIpAddress.ToString();
             ViewBag.LocalPort = HttpContext.Connection.LocalPort;
 
             return View();

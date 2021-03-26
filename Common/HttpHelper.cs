@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Text;
+using System.Web;
 
 namespace Common
 {
@@ -18,17 +20,25 @@ namespace Common
         /// <summary>
         /// Get方式获取远程资源
         /// </summary>
-        /// <param name="Url"></param>
+        /// <param name="url">请求地址</param>
+        /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static string Get(string Url)
+        public static string Get(string url, Dictionary<string, string> headers = default)
         {
 
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "GET";
             request.Accept = "*/*";
             request.UserAgent = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)";
             request.Headers.Add("Accept-Language", "zh-CN,zh;q=0.9");
 
+            if (headers != default)
+            {
+                foreach (var header in headers)
+                {
+                    request.Headers.Add(header.Key, header.Value);
+                }
+            }
 
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             Stream myResponseStream = response.GetResponseStream();
@@ -43,6 +53,38 @@ namespace Common
             };
             return retString;
         }
+
+
+
+
+        /// <summary>
+        /// Model对象转换为uri网址参数形式
+        /// </summary>
+        /// <param name="obj">Model对象</param>
+        /// <param name="url">前部分网址</param>
+        /// <returns></returns>
+        public static string ModelToUriParam(object obj, string url = "")
+        {
+            PropertyInfo[] propertis = obj.GetType().GetProperties();
+            StringBuilder sb = new StringBuilder();
+            sb.Append(url);
+            sb.Append("?");
+            foreach (var p in propertis)
+            {
+                var v = p.GetValue(obj, null);
+                if (v == null)
+                    continue;
+
+                sb.Append(p.Name);
+                sb.Append("=");
+                sb.Append(HttpUtility.UrlEncode(v.ToString()));
+                sb.Append("&");
+            }
+            sb.Remove(sb.Length - 1, 1);
+
+            return sb.ToString();
+        }
+
 
 
 

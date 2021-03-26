@@ -2,9 +2,12 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using System.Net;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Xml;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
+using WebApi.Libraries.WeiXin.Public;
 
 namespace WebApi.Libraries.WeiXin.MiniApp
 {
@@ -170,6 +173,130 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             }
             return result;
         }
+
+
+
+        /// <summary>
+        /// 证书双向校验POST
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        private string UseCretPost(string url, string data)
+        {
+
+            var sslPath = IO.Path.ContentRootPath() + "/ssl/apiclient_cert.p12";
+
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+
+            X509Certificate2 cert = new X509Certificate2(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
+
+            req.ClientCertificates.Add(cert);
+
+
+            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(data);
+            req.Method = "POST";
+            req.ContentType = "application/x-www-form-urlencoded";
+
+            req.ContentLength = requestBytes.Length;
+            Stream requestStream = req.GetRequestStream();
+            requestStream.Write(requestBytes, 0, requestBytes.Length);
+            requestStream.Close();
+
+            HttpWebResponse res = (HttpWebResponse)req.GetResponse();
+            StreamReader sr = new StreamReader(res.GetResponseStream(), System.Text.Encoding.UTF8);
+            string PostJie = sr.ReadToEnd();
+            sr.Close();
+            res.Close();
+
+            return PostJie;
+        }
+
+
+
+
+
+        /// <summary>
+        /// 微信小程序支付创建退款申请方法
+        /// </summary>
+        /// <param name="out_refund_no">商户退款单号</param>
+        /// <param name="refund_fee">退款金额</param>
+        /// <param name="total_fee">支付单总金额</param>
+        /// <param name="transaction_id">微信支付订单号</param>
+        /// <returns></returns>
+        public dtoCreatePayRefundMiniApp CreateRefund(string out_refund_no, int refund_fee, int total_fee, string transaction_id)
+        {
+
+            string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
+
+
+            //微信退款接口地址
+            var url = "https://api.mch.weixin.qq.com/secapi/pay/refund";
+
+
+            //参与退款接口的参数，除最后的key外，已经按参数名ASCII码从小到大排序
+            var unifiedorderSignParam = string.Format("appid={0}&mch_id={1}&nonce_str={2}&notify_url={3}&out_refund_no={4}&refund_fee={5}&total_fee={6}&transaction_id={7}&key={8}"
+                , appid, mchid, nonceStr, notifyurl
+                , out_refund_no, refund_fee, total_fee, transaction_id, mchkey);
+
+
+            var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
+
+            //构造退款的请求参数
+            var zhi = string.Format(@"<xml>
+                                <appid>{0}</appid>                                              
+                                <mch_id>{1}</mch_id>   
+                                <nonce_str>{2}</nonce_str>
+                                <sign>{3}</sign>
+                                <transaction_id>{4}</transaction_id>
+                                <out_refund_no>{5}</out_refund_no>
+                                <total_fee>{6}</total_fee>
+                                <refund_fee>{7}</refund_fee>
+                                <notify_url>{8}</notify_url>
+                               </xml>
+                    ", appid, mchid, nonceStr, unifiedorderSign, transaction_id, out_refund_no, total_fee, refund_fee, notifyurl);
+
+
+            var getdata = UseCretPost(url, zhi);
+
+            var wxPayData = new WxPayData();
+
+            wxPayData.FromXml(getdata, mchkey);
+
+
+            var retInfo = new dtoCreatePayRefundMiniApp();
+
+            retInfo.return_code = wxPayData.GetValue("return_code").ToString();
+            retInfo.return_msg = wxPayData.GetValue("return_msg").ToString();
+
+            retInfo.appid = wxPayData.GetValue("appid").ToString();
+            retInfo.mch_id = wxPayData.GetValue("mch_id").ToString();
+            retInfo.nonce_str = wxPayData.GetValue("nonce_str").ToString();
+            retInfo.sign = wxPayData.GetValue("sign").ToString();
+
+            retInfo.result_code = wxPayData.GetValue("result_code").ToString();
+
+
+            if (retInfo.result_code == "SUCCESS")
+            {
+                retInfo.transaction_id = wxPayData.GetValue("transaction_id").ToString();
+                retInfo.out_trade_no = wxPayData.GetValue("out_trade_no").ToString();
+                retInfo.out_refund_no = wxPayData.GetValue("out_refund_no").ToString();
+                retInfo.refund_id = wxPayData.GetValue("refund_id").ToString();
+                retInfo.refund_fee = Convert.ToInt32(wxPayData.GetValue("refund_fee"));
+                retInfo.total_fee = Convert.ToInt32(wxPayData.GetValue("total_fee"));
+                retInfo.cash_fee = Convert.ToInt32(wxPayData.GetValue("cash_fee"));
+                retInfo.cash_refund_fee = Convert.ToInt32(wxPayData.GetValue("cash_refund_fee"));
+            }
+            else
+            {
+                retInfo.err_code = wxPayData.GetValue("err_code").ToString();
+                retInfo.err_code_des = wxPayData.GetValue("err_code_des").ToString();
+            }
+
+            return retInfo;
+        }
+
 
     }
 }

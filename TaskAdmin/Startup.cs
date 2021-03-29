@@ -1,5 +1,8 @@
 ﻿using Hangfire;
+using Hangfire.MemoryStorage;
+using Hangfire.PostgreSql;
 using Hangfire.SqlServer;
+using Hangfire.MySql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -35,15 +38,39 @@ namespace TaskAdmin
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
 
 
-            //注册 HangFire(SqlServer)
-            services.AddHangfire(configuration => configuration
-                .UseSqlServerStorage(Configuration.GetConnectionString("hangfireConnection"), new SqlServerStorageOptions
-                {
-                    SchemaName = "hangfire"
-                }));
+
+            //注册 HangFire(Memory)
+            services.AddHangfire(configuration => configuration.UseMemoryStorage());
+
 
             //注册 HangFire(Redis)
             //services.AddHangfire(configuration => configuration.UseRedisStorage(Configuration.GetConnectionString("hangfireConnection")));
+
+
+            //注册 HangFire(SqlServer)
+            //services.AddHangfire(configuration => configuration
+            //    .UseSqlServerStorage(Configuration.GetConnectionString("hangfireConnection"), new SqlServerStorageOptions
+            //    {
+            //        SchemaName = "hangfire"
+            //    }));
+
+
+            //注册 HangFire(PostgreSQL)
+            //services.AddHangfire(configuration => configuration
+            //    .UsePostgreSqlStorage(Configuration.GetConnectionString("hangfireConnection"), new PostgreSqlStorageOptions
+            //    {
+            //        SchemaName = "hangfire"
+            //    }));
+
+
+            //注册 HangFire(MySql)
+            //services.AddHangfire(configuration => configuration
+            //    .UseStorage(new MySqlStorage(Configuration.GetConnectionString("hangfireConnection") + "Allow User Variables=True", new MySqlStorageOptions
+            //    {
+            //        TablesPrefix = "hangfire_"
+            //    })));
+
+
 
             // 注册 HangFire 服务
             services.AddHangfireServer(config => config.SchedulePollingInterval = TimeSpan.FromSeconds(3));
@@ -180,7 +207,8 @@ namespace TaskAdmin
 
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
-                Authorization = new[] { new DashboardAuthorizationFilter() }
+                Authorization = new[] { new DashboardAuthorizationFilter() },
+                DisplayStorageConnectionString = false
             });
 
 

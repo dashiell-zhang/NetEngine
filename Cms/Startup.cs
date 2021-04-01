@@ -73,10 +73,10 @@ namespace Cms
 
 
             //托管Session到Redis中
-            services.AddDistributedRedisCache(options =>
-            {
-                options.Configuration = Configuration.GetConnectionString("redisConnection");
-            });
+            //services.AddDistributedRedisCache(options =>
+            //{
+            //    options.Configuration = Configuration.GetConnectionString("redisConnection");
+            //});
 
 
             //注册Session

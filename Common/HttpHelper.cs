@@ -58,7 +58,7 @@ namespace Common
 
 
         /// <summary>
-        /// Model对象转换为uri网址参数形式
+        /// Model对象转换为Uri网址参数形式
         /// </summary>
         /// <param name="obj">Model对象</param>
         /// <param name="url">前部分网址</param>
@@ -91,15 +91,25 @@ namespace Common
         /// <summary>
         /// Post数据到指定url
         /// </summary>
-        /// <param name="Url">Url</param>
-        /// <param name="Data">数据</param>
+        /// <param name="url">Url</param>
+        /// <param name="data">数据</param>
         /// <param name="type">form,data,json,xml</param>
+        /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static string Post(string Url, string Data, string type)
+        public static string Post(string url, string data, string type, Dictionary<string, string> headers = default)
         {
 
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(Url);
-            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(Data);
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+
+            if (headers != default)
+            {
+                foreach (var header in headers)
+                {
+                    req.Headers.Add(header.Key, header.Value);
+                }
+            }
+
+            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(data);
             req.Method = "POST";
             if (type == "form")
             {
@@ -133,18 +143,31 @@ namespace Common
         }
 
 
+
+
         /// <summary>
         /// Post数据到指定url,异步执行
         /// </summary>
-        /// <param name="Url">Url</param>
-        /// <param name="Data">数据</param>
+        /// <param name="url">Url</param>
+        /// <param name="data">数据</param>
         /// <param name="type">form,data,json,xml</param>
+        /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public async static void PostAsync(string Url, string Data, string type)
+        public async static void PostAsync(string url, string data, string type, Dictionary<string, string> headers = default)
         {
 
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(Url);
-            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(Data);
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+
+            if (headers != default)
+            {
+                foreach (var header in headers)
+                {
+                    req.Headers.Add(header.Key, header.Value);
+                }
+            }
+
+            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(data);
+
             req.Method = "POST";
             if (type == "form")
             {
@@ -178,35 +201,35 @@ namespace Common
 
 
 
+
         /// <summary>
         /// Post文件和数据到指定url
         /// </summary>
         /// <param name="url"></param>
         /// <param name="formItems">Post表单内容</param>
-        /// <param name="cookieContainer"></param>
-        /// <param name="timeOut">默认20秒</param>
-        /// <param name="encoding">响应内容的编码类型（默认utf-8）</param>
+        /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static string PostForm(string url, List<dtoFormItem> formItems, CookieContainer cookieContainer = null, string refererUrl = null, Encoding encoding = null, int timeOut = 20000)
+        public static string PostForm(string url, List<dtoFormItem> formItems, Dictionary<string, string> headers = default)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            #region 初始化请求对象
+
+            if (headers != default)
+            {
+                foreach (var header in headers)
+                {
+                    request.Headers.Add(header.Key, header.Value);
+                }
+            }
+
             request.Method = "POST";
-            request.Timeout = timeOut;
-            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
-            request.KeepAlive = true;
-            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
-            if (!string.IsNullOrEmpty(refererUrl))
-                request.Referer = refererUrl;
-            if (cookieContainer != null)
-                request.CookieContainer = cookieContainer;
-            #endregion
+
 
             string boundary = "----" + DateTime.Now.Ticks.ToString("x");//分隔符
             request.ContentType = string.Format("multipart/form-data; boundary={0}", boundary);
+
             //请求流
             var postStream = new MemoryStream();
-            #region 处理Form表单请求内容
+
             //是否用Form上传文件
             var formUploadFile = formItems != null && formItems.Count > 0;
             if (formUploadFile)
@@ -274,11 +297,9 @@ namespace Common
             {
                 request.ContentType = "application/x-www-form-urlencoded";
             }
-            #endregion
 
             request.ContentLength = postStream.Length;
 
-            #region 输入二进制流
             if (postStream != null)
             {
                 postStream.Position = 0;
@@ -298,23 +319,19 @@ namespace Common
                 //var postStr = sr.ReadToEnd();
                 postStream.Close();//关闭文件访问
             }
-            #endregion
 
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            if (cookieContainer != null)
-            {
-                response.Cookies = cookieContainer.GetCookies(response.ResponseUri);
-            }
 
             using (Stream responseStream = response.GetResponseStream())
             {
-                using (StreamReader myStreamReader = new StreamReader(responseStream, encoding ?? Encoding.UTF8))
+                using (StreamReader myStreamReader = new StreamReader(responseStream, Encoding.UTF8))
                 {
                     string retString = myStreamReader.ReadToEnd();
                     return retString;
                 }
             }
         }
+
 
     }
 }

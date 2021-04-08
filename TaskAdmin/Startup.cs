@@ -1,5 +1,4 @@
 ﻿using Hangfire;
-using Hangfire.MemoryStorage;
 using Hangfire.PostgreSql;
 using Hangfire.SqlServer;
 using Hangfire.MySql;
@@ -40,7 +39,7 @@ namespace TaskAdmin
 
 
             //注册 HangFire(Memory)
-            services.AddHangfire(configuration => configuration.UseMemoryStorage());
+            services.AddHangfire(configuration => configuration.UseInMemoryStorage());
 
 
             //注册 HangFire(Redis)

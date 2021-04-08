@@ -10,13 +10,55 @@
 
 
     <script src="~/lib/jquery.js"></script>
-    <script src="~/lib/layui/layui.js"></script>
     <script src="~/lib/sweetalert.min.js"></script>
     <link href="~/lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
     <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
     <script src="~/lib/datatables/datatables.min.js"></script>
     <link href="~/lib/datatables/datatables.min.css" rel="stylesheet" />
 
+
+</head>
+
+<body style="padding-right:1.2em;padding-left: 1.2em;">
+    <form name="form1" method="post" id="form1">
+
+        <div style="margin-top:20px">
+            <span class="layui-breadcrumb" lay-separator=">">
+
+                <a href="javascript:history.back(-1);">返回上一页</a>
+                <a href="/Home/Center/">首页</a>
+                <a href="">友链管理</a>
+                <a><cite>所有友链</cite></a>
+            </span>
+        </div>
+        <hr class="layui-bg-cyan" style="margin-top:8px">
+
+        <div style="margin-top:10px">
+            <button type="button" class="layui-btn" onclick="showLinkEdit('')">
+                <i class="layui-icon">&#xe608;</i> 新增
+            </button>
+        </div>
+
+
+        <div style="margin-top:-2.3em">
+
+            <table class="table table-striped table-bordered" data-toggle="table" id="dtList" style="width:100%">
+                <thead>
+                    <tr>
+                        <th width="15%">名称</th>
+                        <th width="35%">Url</th>
+                        <th width="10%">排序</th>
+                        <th width="10%">创建时间</th>
+                        <th width="10%">操作</th>
+                    </tr>
+                </thead>
+
+            </table>
+        </div>
+
+    </form>
+
+    <script src="~/lib/layui/layui.js"></script>
     <script>
         function DeleteLink(id) {
 
@@ -132,45 +174,6 @@
             });
         }
     </script>
-</head>
 
-<body style="padding-right:1.2em;padding-left: 1.2em;">
-    <form name="form1" method="post" id="form1">
-
-        <div style="margin-top:20px">
-            <span class="layui-breadcrumb" lay-separator=">">
-
-                <a href="javascript:history.back(-1);">返回上一页</a>
-                <a href="/Home/Center/">首页</a>
-                <a href="">友链管理</a>
-                <a><cite>所有友链</cite></a>
-            </span>
-        </div>
-        <hr class="layui-bg-cyan" style="margin-top:8px">
-
-        <div style="margin-top:10px">
-            <button type="button" class="layui-btn" onclick="showLinkEdit('')">
-                <i class="layui-icon">&#xe608;</i> 新增
-            </button>
-        </div>
-
-
-        <div style="margin-top:-2.3em">
-
-            <table class="table table-striped table-bordered" data-toggle="table" id="dtList" style="width:100%">
-                <thead>
-                    <tr>
-                        <th width="15%">名称</th>
-                        <th width="35%">Url</th>
-                        <th width="10%">排序</th>
-                        <th width="10%">创建时间</th>
-                        <th width="10%">操作</th>
-                    </tr>
-                </thead>
-
-            </table>
-        </div>
-
-    </form>
 </body>
 </html>

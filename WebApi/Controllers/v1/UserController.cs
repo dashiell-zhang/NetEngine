@@ -160,7 +160,7 @@ namespace WebApi.Controllers.v1
                         if (phoneUserId != default)
                         {
                             //将手机号对应的用户移除，合并数据到新的账号
-                            Actions.v1.UserAction.MergeUser(phoneUserId, user.Id);
+                            Common.DBHelper.MergeUser(phoneUserId, user.Id);
                         }
 
                         return true;

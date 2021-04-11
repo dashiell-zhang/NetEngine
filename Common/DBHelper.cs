@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
-using System.Text;
 
 namespace Common
 {
@@ -17,17 +16,41 @@ namespace Common
         /// 针对数据库执行自定义的sql查询，返回泛型List，可自定义数据库
         /// </summary>
         /// <typeparam name="T">返回类型</typeparam>
-        /// <param name="connection">数据库连接</param>
         /// <param name="sql">自定义查询Sql</param>
+        /// <param name="parameters">sql参数</param>
+        /// <param name="connection">数据库连接</param>
         /// <remarks>connection = db.Database.GetDbConnection()</remarks>
         /// <returns></returns>
-        public static IList<T> SelectFromSql<T>(DbConnection connection, string sql) where T : class
+        public static IList<T> SelectFromSql<T>(string sql, Dictionary<string, object> parameters = default, DbConnection connection = default) where T : class
         {
+
+            if (connection == default)
+            {
+                using (var db = new dbContext())
+                {
+                    connection = db.Database.GetDbConnection();
+                }
+            }
+
             connection.Open();
 
             var command = connection.CreateCommand();
 
+            command.CommandTimeout = 600;
+
             command.CommandText = sql;
+
+            if (parameters != default)
+            {
+                foreach (var item in parameters)
+                {
+                    var parameter = command.CreateParameter();
+                    parameter.ParameterName = item.Key;
+                    parameter.Value = item.Value;
+
+                    command.Parameters.Add(parameter);
+                }
+            }
 
             var reader = command.ExecuteReader();
 
@@ -46,52 +69,26 @@ namespace Common
 
 
 
-        /// <summary>
-        /// 针对数据库执行自定义的sql查询，返回泛型List
-        /// </summary>
-        /// <typeparam name="T">返回类型</typeparam>
-        /// <param name="sql">自定义查询Sql</param>
-        /// <returns></returns>
-        public static IList<T> SelectFromSql<T>(string sql) where T : class
-        {
-            using (var db = new dbContext())
-            {
-
-                var connection = db.Database.GetDbConnection();
-
-                connection.Open();
-
-                var command = connection.CreateCommand();
-
-                command.CommandText = sql;
-
-                var reader = command.ExecuteReader();
-
-                var dataTable = new DataTable();
-
-                dataTable.Load(reader);
-
-                reader.Close();
-                command.Dispose();
-                connection.Close();
-
-                var list = DataHelper.DataTableToList<T>(dataTable);
-
-                return list;
-            }
-        }
-
 
 
         /// <summary>
-        /// 针对数据库执行自定义的sql，可自定义数据库
+        /// 针对数据库执行自定义的sql
         /// </summary>
-        /// <param name="connection">数据库连接</param>
         /// <param name="sql">自定义查询Sql</param>
+        /// <param name="parameters">sql参数</param>
+        /// <param name="connection">自定义数据库连接</param>
         /// <remarks>connection = db.Database.GetDbConnection()</remarks>
         /// <returns></returns>
-        public static void ExecuteSql(DbConnection connection, string sql)
+        public static void ExecuteSql(string sql, Dictionary<string, object> parameters = default, DbConnection connection = default)
         {
+
+            if (connection == default)
+            {
+                using (var db = new dbContext())
+                {
+                    connection = db.Database.GetDbConnection();
+                }
+            }
 
             connection.Open();
 
@@ -101,6 +98,18 @@ namespace Common
 
             command.CommandText = sql;
 
+            if (parameters != default)
+            {
+                foreach (var item in parameters)
+                {
+                    var parameter = command.CreateParameter();
+                    parameter.ParameterName = item.Key;
+                    parameter.Value = item.Value;
+
+                    command.Parameters.Add(parameter);
+                }
+            }
+
             command.ExecuteNonQuery();
 
             command.Dispose();
@@ -108,33 +117,6 @@ namespace Common
         }
 
 
-
-        /// <summary>
-        /// 针对数据库执行自定义的sql
-        /// </summary>
-        /// <param name="sql">自定义查询Sql</param>
-        /// <returns></returns>
-        public static void ExecuteSql(string sql)
-        {
-            using (var db = new dbContext())
-            {
-
-                var connection = db.Database.GetDbConnection();
-
-                connection.Open();
-
-                var command = connection.CreateCommand();
-
-                command.CommandTimeout = 600;
-
-                command.CommandText = sql;
-
-                command.ExecuteNonQuery();
-
-                command.Dispose();
-                connection.Close();
-            }
-        }
 
 
 
@@ -225,33 +207,40 @@ namespace Common
         /// <param name="oldUserId">原始账户ID</param>
         /// <param name="newUserId">新账户ID</param>
         /// <returns></returns>
-        public static bool MergeUser(string oldUserId, string newUserId)
+        public static bool MergeUser(Guid oldUserId, Guid newUserId)
         {
             try
             {
                 using (var db = new dbContext())
                 {
 
-                    var connection = db.Database.GetDbConnection();
 
                     string sql = "SELECT t.name AS [Key],c.name AS Value FROM sys.tables AS t INNER JOIN sys.columns c ON t.OBJECT_ID = c.OBJECT_ID WHERE c.system_type_id = 231 and c.name LIKE '%userid%'";
 
-                    var list = SelectFromSql<dtoKeyValue>(connection, sql);
+                    var list = SelectFromSql<dtoKeyValue>(sql);
 
+                    var parameters = new Dictionary<string, object>();
 
                     foreach (var item in list)
                     {
-                        string table_name = item.Key.ToString();
-                        string column_name = item.Value.ToString();
 
-                        string upSql = "UPDATE [dbo].[" + table_name + "] SET [" + column_name + "] = N'" + newUserId + "' WHERE [" + column_name + "] = N'" + oldUserId + "'";
+                        string upSql = "UPDATE [dbo].[@tableName] SET [@columnName] = @newUserId WHERE [@columnName] = @oldUserId";
 
-                        db.Database.ExecuteSqlRaw(upSql);
+                        parameters = new Dictionary<string, object>();
+                        parameters.Add("tableName", item.Key.ToString());
+                        parameters.Add("columnName", item.Value.ToString());
+                        parameters.Add("newUserId", newUserId);
+                        parameters.Add("oldUserId", oldUserId);
+
+                        db.Database.ExecuteSqlRaw(upSql, parameters);
                     }
 
-                    string delSql = "DELETE FROM [dbo].[t_user] WHERE [id] = N'" + oldUserId + "'";
+                    string delSql = "DELETE FROM [dbo].[t_user] WHERE [id] = @oldUserId";
 
-                    db.Database.ExecuteSqlRaw(delSql);
+                    parameters = new Dictionary<string, object>();
+                    parameters.Add("oldUserId", oldUserId);
+
+                    db.Database.ExecuteSqlRaw(delSql, parameters);
 
                     return true;
                 }

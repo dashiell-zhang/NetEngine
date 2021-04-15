@@ -72,8 +72,9 @@ namespace Cms
             Libraries.Start.StartConfiguration.Add(Configuration);
 
 
+
             //托管Session到Redis中
-            if (Convert.ToBoolean(Configuration.GetConnectionString("SessionToRedis")))
+            if (Convert.ToBoolean(Configuration["SessionToRedis"]))
             {
                 services.AddDistributedRedisCache(options =>
                 {

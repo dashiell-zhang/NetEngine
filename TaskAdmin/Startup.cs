@@ -217,6 +217,9 @@ namespace TaskAdmin
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            Tasks.Main.Run();
+
         }
     }
 }

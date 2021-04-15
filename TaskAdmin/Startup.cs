@@ -93,10 +93,13 @@ namespace TaskAdmin
 
 
             //托管Session到Redis中
-            //services.AddDistributedRedisCache(options =>
-            //{
-            //    options.Configuration = Configuration.GetConnectionString("redisConnection");
-            //});
+            if (Convert.ToBoolean(Configuration.GetConnectionString("SessionToRedis")))
+            {
+                services.AddDistributedRedisCache(options =>
+                {
+                    options.Configuration = Configuration.GetConnectionString("redisConnection");
+                });
+            }
 
 
             //注册Session

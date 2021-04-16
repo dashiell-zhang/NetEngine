@@ -12,7 +12,7 @@ namespace TaskAdmin.Libraries.IO
         /// <returns></returns>
         public static string WebRootPath()
         {
-            return StartHostingEnvironment.webHostEnvironment.WebRootPath;
+            return StartHostingEnvironment.webHostEnvironment.WebRootPath.Replace("\\", "/");
         }
 
 
@@ -23,7 +23,7 @@ namespace TaskAdmin.Libraries.IO
         /// <returns></returns>
         public static string ContentRootPath()
         {
-            return StartHostingEnvironment.webHostEnvironment.ContentRootPath;
+            return StartHostingEnvironment.webHostEnvironment.ContentRootPath.Replace("\\", "/");
         }
             
     }

@@ -96,7 +96,7 @@ namespace Cms.Libraries.Http
 
             if (context.Request.Method == "POST")
             {
-                string body = Cms.Libraries.Http.HttpContext.GetRequestBody();
+                string body = HttpContext.GetRequestBody();
 
                 if (!string.IsNullOrEmpty(body))
                 {

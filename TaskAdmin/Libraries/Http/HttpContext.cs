@@ -96,7 +96,7 @@ namespace TaskAdmin.Libraries.Http
 
             if (context.Request.Method == "POST")
             {
-                string body = TaskAdmin.Libraries.Http.HttpContext.GetRequestBody();
+                string body = HttpContext.GetRequestBody();
 
                 if (!string.IsNullOrEmpty(body))
                 {

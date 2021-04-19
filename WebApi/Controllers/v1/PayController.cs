@@ -46,7 +46,9 @@ namespace WebApi.Controllers.v1
 
                 var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
-                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, "http://xxxx.com/api/Pay/WeiXinPayNotify");
+                var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+
+                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, url);
 
                 int price = Convert.ToInt32(order.Price * 100);
 
@@ -74,7 +76,9 @@ namespace WebApi.Controllers.v1
 
                 var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
-                var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(weixinkey.WxAppId, weixinkey.MchId, weixinkey.MchKey, "http://xxxx.com/api/Pay/WeiXinPayNotify");
+                var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+
+                var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(weixinkey.WxAppId, weixinkey.MchId, weixinkey.MchKey, url);
 
                 int price = Convert.ToInt32(order.Price * 100);
 
@@ -109,7 +113,9 @@ namespace WebApi.Controllers.v1
 
                     var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
-                    var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, "http://xxxx.com/api/Pay/WeiXinPayNotify");
+                    var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+
+                    var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, url);
 
                     int price = Convert.ToInt32(order.Price * 100);
 
@@ -253,7 +259,9 @@ namespace WebApi.Controllers.v1
 
                 var alipaykey = db.TAlipayKey.Where(t => t.Id == alipaykeyid).FirstOrDefault();
 
-                AliPayHelper aliPayHelper = new AliPayHelper(alipaykey.AppId, alipaykey.AppPrivateKey, alipaykey.AlipayPublicKey, "http://xxx.com/api/Pay/AliPayNotify");
+                var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+
+                AliPayHelper aliPayHelper = new AliPayHelper(alipaykey.AppId, alipaykey.AppPrivateKey, alipaykey.AlipayPublicKey, url);
 
                 string price = Convert.ToString(order.Price);
 
@@ -302,7 +310,10 @@ namespace WebApi.Controllers.v1
                 if (order != null && order.State == "待支付")
                 {
 
-                    AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, "https://xxx.com/api/Pay/AliPayNotify", "https://xxx.com/");
+                    var returnUrl = Libraries.Http.HttpContext.GetBaseUrl() ;
+                    var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+
+                    AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, notifyUrl, returnUrl);
 
                     string price = order.Price.ToString();
 
@@ -336,7 +347,10 @@ namespace WebApi.Controllers.v1
                 if (order != null && order.State == "待支付")
                 {
 
-                    AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, "https://xxxx.com/api/Pay/AliPayNotify", "https://xxxxx.com/mypage", "");
+                    var returnUrl = Libraries.Http.HttpContext.GetBaseUrl();
+                    var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+
+                    AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, notifyUrl, returnUrl, "");
 
                     string price = order.Price.ToString();
 

@@ -22,11 +22,18 @@ namespace Common
         /// </summary>
         /// <param name="url">请求地址</param>
         /// <param name="headers">自定义Header集合</param>
+        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string Get(string url, Dictionary<string, string> headers = default)
+        public static string Get(string url, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
         {
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+
+            if (isSkipSslVerification)
+            {
+                request.ServerCertificateValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+            }
+
             request.Method = "GET";
             request.Accept = "*/*";
             request.UserAgent = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)";
@@ -95,8 +102,9 @@ namespace Common
         /// <param name="data">数据</param>
         /// <param name="type">form,data,json,xml</param>
         /// <param name="headers">自定义Header集合</param>
+        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string Post(string url, string data, string type, Dictionary<string, string> headers = default)
+        public static string Post(string url, string data, string type, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
         {
 
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
@@ -107,6 +115,11 @@ namespace Common
                 {
                     req.Headers.Add(header.Key, header.Value);
                 }
+            }
+
+            if (isSkipSslVerification)
+            {
+                req.ServerCertificateValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
             }
 
             byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(data);
@@ -152,8 +165,9 @@ namespace Common
         /// <param name="data">数据</param>
         /// <param name="type">form,data,json,xml</param>
         /// <param name="headers">自定义Header集合</param>
+        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public async static void PostAsync(string url, string data, string type, Dictionary<string, string> headers = default)
+        public async static void PostAsync(string url, string data, string type, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
         {
 
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
@@ -164,6 +178,11 @@ namespace Common
                 {
                     req.Headers.Add(header.Key, header.Value);
                 }
+            }
+
+            if (isSkipSslVerification)
+            {
+                req.ServerCertificateValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
             }
 
             byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(data);
@@ -208,8 +227,9 @@ namespace Common
         /// <param name="url"></param>
         /// <param name="formItems">Post表单内容</param>
         /// <param name="headers">自定义Header集合</param>
+        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string PostForm(string url, List<dtoFormItem> formItems, Dictionary<string, string> headers = default)
+        public static string PostForm(string url, List<dtoFormItem> formItems, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
 
@@ -219,6 +239,11 @@ namespace Common
                 {
                     request.Headers.Add(header.Key, header.Value);
                 }
+            }
+
+            if (isSkipSslVerification)
+            {
+                request.ServerCertificateValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
             }
 
             request.Method = "POST";
@@ -317,6 +342,7 @@ namespace Common
                 //postStream.Seek(0, SeekOrigin.Begin);
                 //StreamReader sr = new StreamReader(postStream);
                 //var postStr = sr.ReadToEnd();
+
                 postStream.Close();//关闭文件访问
             }
 

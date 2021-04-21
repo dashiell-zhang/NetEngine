@@ -163,10 +163,11 @@ namespace Common.IO
 
 
         /// <summary>
-        /// 将制定目录下的文件压缩为tar文件
+        /// 将指定目录下的文件压缩为tar文件
         /// </summary>
         /// <param name="FolderPath">文件夹地址 D:/1/ </param>
         /// <param name="FilePath">文件地址 D:/1.tar </param>
+        /// <remarks>依赖于SharpZipLib，如果缺失请独立安装</remarks>
         public static void CompressTarFile(string FolderPath, string FilePath)
         {
             var outStream = new FileStream(FilePath, FileMode.OpenOrCreate);
@@ -194,6 +195,7 @@ namespace Common.IO
         /// </summary>
         /// <param name="FilePath">文件地址</param>
         /// <param name="FolderPath"></param>
+        /// <remarks>依赖于SharpZipLib，如果缺失请独立安装</remarks>
         public static void DecompressTarFile(string FilePath, string FolderPath)
         {
 

@@ -106,13 +106,13 @@ namespace Cms.Libraries.Ueditor
                     {
                         //将文件转存至 oss 并清理本地文件
                         var oss = new Common.AliYun.OssHelper();
-                        var upload = oss.FileUpload(savePath, "Files/" + DateTime.Now.ToString("yyyyMMdd"));
+                        var upload = oss.FileUpload(savePath, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), Path.GetFileName(this.SourceUrl));
 
                         if (upload)
                         {
                             Common.IO.IOHelper.Delete(savePath);
 
-                            ServerUrl = "Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + Path.GetFileName(savePath);
+                            ServerUrl = "Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
                             State = "SUCCESS";
                         }
                         else

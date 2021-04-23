@@ -36,7 +36,6 @@ namespace Cms.Controllers
 
 
         [HttpPost]
-        //[RequestSizeLimit(100_000_000)]
         [DisableRequestSizeLimit]
         public bool UploadFile(string business, Guid key, string sign)
         {
@@ -57,7 +56,7 @@ namespace Cms.Controllers
                 var fileExtension = string.Empty;
                 var fullFileName = string.Empty;
 
-                string filepath = Libraries.IO.Path.WebRootPath() + "/Upload/" + DateTime.Now.ToString("yyyy-MM-dd");
+                string filepath = Libraries.IO.Path.WebRootPath() + "/Upload/" + DateTime.Now.ToString("yyyy/MM/dd");
 
 
                 foreach (var file in Attachments)
@@ -87,13 +86,13 @@ namespace Cms.Controllers
 
                                 var oss = new Common.AliYun.OssHelper();
 
-                                var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyyMMdd"));
+                                var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), file.FileName);
 
                                 if (upload)
                                 {
                                     Common.IO.IOHelper.Delete(path);
 
-                                    path = "/Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fullFileName;
+                                    path = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fullFileName;
                                 }
                             }
                             else

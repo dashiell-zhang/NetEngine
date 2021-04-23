@@ -1,4 +1,5 @@
 ﻿using Aliyun.OSS;
+using Aliyun.OSS.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,26 +36,41 @@ namespace Common.AliYun
         /// <summary>
         /// 上传本地文件到 OSS
         /// </summary>
-        /// <param name="localpath">本地文件路径</param>
-        /// <param name="remotepath">远端文件路径 以 / 分割多级文件夹，不传默认为更目录</param>
-        public bool FileUpload(string localpath, string remotepath = null)
+        /// <param name="localPath">本地文件路径</param>
+        /// <param name="remotePath">远端文件路径 以 / 分割多级文件夹，不传默认为更目录</param>
+        /// <param name="mode">访问方式,["attachment","inline"]，默认为 attachment</param>
+        public bool FileUpload(string localPath, string remotePath, string fileName = null, string mode = "attachment")
         {
             try
             {
-                var objectName = System.IO.Path.GetFileName(localpath);
+                var objectName = Path.GetFileName(localPath);
 
-                if (remotepath != null)
+                if (remotePath != null)
                 {
-                    objectName = remotepath + "/" + objectName;
+                    objectName = remotePath + "/" + objectName;
                 }
 
-                var localFilename = localpath;
+                var localFilename = localPath;
+
 
                 // 创建OssClient实例。
                 var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
 
-                // 上传文件。
-                client.PutObject(bucketName, objectName, localFilename);
+                if (fileName != null)
+                {
+                    var metaData = new ObjectMetadata()
+                    {
+                        ContentDisposition = string.Format(mode + ";filename*=utf-8''{0}", HttpUtils.EncodeUri(fileName, "utf-8"))
+                    };
+
+                    // 上传文件。
+                    client.PutObject(bucketName, objectName, localFilename, metaData);
+                }
+                else
+                {
+                    // 上传文件。
+                    client.PutObject(bucketName, objectName, localFilename);
+                }
 
                 return true;
             }
@@ -69,14 +85,14 @@ namespace Common.AliYun
         /// <summary>
         /// 下载OSS的文件
         /// </summary>
-        /// <param name="remotepath"></param>
-        /// <param name="localpath"></param>
+        /// <param name="remotePath"></param>
+        /// <param name="localPath"></param>
         /// <returns></returns>
-        public bool FileDownload(string remotepath, string localpath)
+        public bool FileDownload(string remotePath, string localPath)
         {
-            var objectName = remotepath;
+            var objectName = remotePath;
 
-            var downloadFilename = localpath;
+            var downloadFilename = localPath;
             // 创建OssClient实例。
             var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
             try
@@ -258,6 +274,42 @@ namespace Common.AliYun
 
                 return false;
             }
+        }
+
+
+
+
+        /// <summary>
+        /// 获取文件临时访问URL
+        /// </summary>
+        /// <param name="remotePath">文件地址</param>
+        /// <param name="fileName">文件名称，不传则默认为文件物理名称</param>
+        /// <param name="ExpirationTime">过期时间,默认为7天</param>
+        /// <param name="mode">访问方式,["attachment","inline"]，默认为 attachment</param>
+        /// <returns></returns>
+        public string GetTempUrl(string remotePath, string fileName = null, DateTime ExpirationTime = default, string mode = "attachment")
+        {
+
+            var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
+
+            // 生成签名URL。
+            var req = new GeneratePresignedUriRequest(bucketName, remotePath);
+
+            if (fileName != null)
+            {
+                req.ResponseHeaders.ContentDisposition = string.Format(mode + ";filename*=utf-8''{0}", HttpUtils.EncodeUri(fileName, "utf-8"));
+            }
+
+            if (ExpirationTime == default)
+            {
+                ExpirationTime = DateTime.Now.AddDays(7);
+            }
+
+            req.Expiration = ExpirationTime;
+
+            var url = client.GeneratePresignedUri(req);
+
+            return url.ToString();
         }
 
 

@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AlipaySDKNet.Standard" Version="4.3.175" />
+    <PackageReference Include="AlipaySDKNet.Standard" Version="4.4.37" />
     <PackageReference Include="aliyun-net-sdk-alidns" Version="2.6.29" />
     <PackageReference Include="aliyun-net-sdk-core" Version="1.5.10" />
     <PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />

@@ -47,7 +47,7 @@ namespace WebApi.Controllers
 
 
 
-            string basepath = "Files/" + DateTime.Now.ToString("yyyyMMdd");
+            string basepath = "Files/" + DateTime.Now.ToString("yyyy/MM/dd");
 
 
             var filePath = Libraries.IO.Path.ContentRootPath() + "/" + basepath + "/";
@@ -68,7 +68,7 @@ namespace WebApi.Controllers
                 {
                     var oss = new Common.AliYun.OssHelper();
 
-                    var upload = oss.FileUpload(dlPath, basepath);
+                    var upload = oss.FileUpload(dlPath, basepath, fileInfo.Value.ToString());
 
                     if (upload)
                     {
@@ -127,7 +127,7 @@ namespace WebApi.Controllers
 
             var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
-            string basepath = "/Files/" + DateTime.Now.ToString("yyyyMMdd");
+            string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
@@ -157,13 +157,13 @@ namespace WebApi.Controllers
 
                     var oss = new Common.AliYun.OssHelper();
 
-                    var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyyMMdd"));
+                    var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), file.FileName);
 
                     if (upload)
                     {
                         Common.IO.IOHelper.Delete(path);
 
-                        path = "/Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fullFileName;
+                        path = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
                     }
                 }
@@ -464,7 +464,7 @@ namespace WebApi.Controllers
 
                     var fileid = Guid.NewGuid().ToString() + Path.GetExtension(fileName).ToLowerInvariant(); ;
 
-                    string basepath = "/Files/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fileid;
+                    string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fileid;
 
 
                     var f = new TFile();
@@ -518,7 +518,7 @@ namespace WebApi.Controllers
                 var fileExtension = string.Empty;
                 var fullFileName = string.Empty;
 
-                string basepath = "/Files/Group/" + DateTime.Now.ToString("yyyyMMdd") + "/" + fileId;
+                string basepath = "/Files/Group/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fileId;
                 string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);

@@ -62,7 +62,7 @@ namespace WebApi.Controllers
             {
                 var isSuccess = true;
 
-                var upRemote = true;
+                var upRemote = false;
 
                 if (upRemote == true)
                 {

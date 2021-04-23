@@ -78,6 +78,7 @@ namespace Web.Areas.Admin.Controllers
 
                         var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
 
+                        Link.Id = Guid.NewGuid();
                         Link.CreateTime = DateTime.Now;
                         Link.CreateUserId = userId;
                         Link.IsDelete = false;

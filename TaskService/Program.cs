@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace TaskService
@@ -6,6 +8,32 @@ namespace TaskService
     class Program
     {
         public static System.Timers.Timer tim = new System.Timers.Timer(1000 * 10);
+
+
+
+
+
+
+
+        static void ConfigureServices(IServiceCollection services)
+        {
+            services.AddDbContextPool<Repository.Database.dbContext>(options => options.UseSqlServer(Common.IO.Config.Get().GetConnectionString("dbConnection")), 128);
+
+            services.AddSingleton<Tasks.Test>();
+        }
+
+        static void Main()
+        {
+            IServiceCollection services = new ServiceCollection();
+            ConfigureServices(services);
+
+            IServiceProvider isp = services.BuildServiceProvider();
+
+            isp.GetService<Tasks.Test>().Run();
+
+            Console.ReadLine();
+        }
+
 
 
         static void Main(string[] args)

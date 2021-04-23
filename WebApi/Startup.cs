@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,6 +45,8 @@ namespace WebApi
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
 
+
+            services.AddDbContextPool<Repository.Database.dbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("dbConnection")),128);
 
             services.Configure<FormOptions>(options =>
             {

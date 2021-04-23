@@ -20,6 +20,15 @@ namespace WebApi.Controllers
     public class AuthorizeController : ControllerBase
     {
 
+
+        private readonly dbContext _context;
+
+        public AuthorizeController(dbContext context)
+        {
+            _context = context;
+        }
+
+
         /// <summary>
         /// 获取Token认证信息
         /// </summary>

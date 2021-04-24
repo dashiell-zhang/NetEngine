@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Repository.Database;
 using TaskAdmin.Filters;
 
 namespace TaskAdmin.Controllers
@@ -6,6 +7,14 @@ namespace TaskAdmin.Controllers
 
     public class HomeController : Controller
     {
+
+        private readonly dbContext db;
+
+        public HomeController(dbContext context)
+        {
+            db = context;
+        }
+
 
         [IsLogin]
         public void Index()

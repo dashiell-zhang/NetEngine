@@ -14,23 +14,31 @@ namespace Cms.Controllers
     public class FileController : Controller
     {
 
+
+        private readonly dbContext db;
+
+        public FileController(dbContext context)
+        {
+            db = context;
+        }
+
+
+
         public JsonResult SetFileSort(Guid id, int sort)
         {
-            using (var db = new dbContext())
+
+
+            var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
+
+            if (file != null)
             {
+                file.Sort = sort;
 
-                var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
-
-                if (file != null)
-                {
-                    file.Sort = sort;
-
-                    db.SaveChanges();
-                }
-
-                var data = new { status = true, msg = "调整成功！" };
-                return Json(data);
+                db.SaveChanges();
             }
+
+            var data = new { status = true, msg = "调整成功！" };
+            return Json(data);
         }
 
 
@@ -102,23 +110,21 @@ namespace Cms.Controllers
 
 
 
-                            using (var db = new dbContext())
-                            {
-                                TFile fi = new TFile();
-                                fi.Id = Guid.NewGuid();
-                                fi.CreateUserId = userId;
-                                fi.CreateTime = DateTime.Now;
-                                fi.IsDelete = false;
-                                fi.Name = file.FileName;
-                                fi.Table = business;
-                                fi.TableId = key;
-                                fi.Sign = sign;
-                                fi.Path = path;
 
-                                db.TFile.Add(fi);
+                            TFile fi = new TFile();
+                            fi.Id = Guid.NewGuid();
+                            fi.CreateUserId = userId;
+                            fi.CreateTime = DateTime.Now;
+                            fi.IsDelete = false;
+                            fi.Name = file.FileName;
+                            fi.Table = business;
+                            fi.TableId = key;
+                            fi.Sign = sign;
+                            fi.Path = path;
 
-                                db.SaveChanges();
-                            }
+                            db.TFile.Add(fi);
+
+                            db.SaveChanges();
                         }
 
                     }
@@ -138,21 +144,19 @@ namespace Cms.Controllers
 
         public bool DeleteFile(Guid id)
         {
-            using (var db = new dbContext())
+
+            var userid = HttpContext.Session.GetString("userid");
+
+            var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
+
+            if (file != null)
             {
-                var userid = HttpContext.Session.GetString("userid");
+                file.IsDelete = true;
 
-                var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
-
-                if (file != null)
-                {
-                    file.IsDelete = true;
-
-                    db.SaveChanges();
-                }
-
-                return true;
+                db.SaveChanges();
             }
+
+            return true;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Repository.Database;
 
 namespace TaskAdmin.Controllers
 {
@@ -7,6 +8,14 @@ namespace TaskAdmin.Controllers
 
     public class UserController : Controller
     {
+
+
+        private readonly dbContext db;
+
+        public UserController(dbContext context)
+        {
+            db = context;
+        }
 
 
         public IActionResult Index()

@@ -18,8 +18,7 @@ namespace Repository.Database
         }
 
 
-        public dbContext(DbContextOptions<dbContext> options)
-            : base(options)
+        public dbContext(DbContextOptions<dbContext> options = default) : base(options = GetDbContextOptions())
         {
         }
 
@@ -114,34 +113,35 @@ namespace Repository.Database
 
 
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        private static DbContextOptions<dbContext> GetDbContextOptions()
         {
 
-            if (!optionsBuilder.IsConfigured)
-            {
+            var optionsBuilder = new DbContextOptionsBuilder<dbContext>();
 
-                //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=123456;database=webcore;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=123456;database=webcore;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
-                //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-
-
-                //开启调试拦截器
-                optionsBuilder.AddInterceptors(new DeBugInterceptor());
+            //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
-                //开启数据分表拦截器
-                //optionsBuilder.AddInterceptors(new SubTableInterceptor());
+            //开启调试拦截器
+            optionsBuilder.AddInterceptors(new DeBugInterceptor());
 
 
-                //开启全局懒加载
-                //optionsBuilder.UseLazyLoadingProxies();
-            }
+            //开启数据分表拦截器
+            //optionsBuilder.AddInterceptors(new SubTableInterceptor());
+
+
+            //开启全局懒加载
+            //optionsBuilder.UseLazyLoadingProxies();
+
+
+            return optionsBuilder.Options;
         }
 
 

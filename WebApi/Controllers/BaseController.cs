@@ -18,6 +18,14 @@ namespace WebApi.Controllers
     public class BaseController : ControllerBase
     {
 
+        private readonly dbContext db;
+
+        public BaseController(dbContext context)
+        {
+            db = context;
+        }
+
+
         /// <summary>
         /// 获取省市级联地址数据
         /// </summary>
@@ -30,23 +38,21 @@ namespace WebApi.Controllers
         {
             var list = new List<dtoKeyValue>();
 
-            using (var db = new dbContext())
+
+
+            if (provinceId == 0 && cityId == 0)
             {
+                list = db.TRegionProvince.Select(t => new dtoKeyValue { Key = t.Id, Value = t.Province }).ToList();
+            }
 
-                if (provinceId == 0 && cityId == 0)
-                {
-                    list = db.TRegionProvince.Select(t => new dtoKeyValue { Key = t.Id, Value = t.Province }).ToList();
-                }
+            if (provinceId != 0)
+            {
+                list = db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new dtoKeyValue { Key = t.Id, Value = t.City }).ToList();
+            }
 
-                if (provinceId != 0)
-                {
-                    list = db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new dtoKeyValue { Key = t.Id, Value = t.City }).ToList();
-                }
-
-                if (cityId != 0)
-                {
-                    list = db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new dtoKeyValue { Key = t.Id, Value = t.Area }).ToList();
-                }
+            if (cityId != 0)
+            {
+                list = db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new dtoKeyValue { Key = t.Id, Value = t.Area }).ToList();
             }
 
             return list;
@@ -61,26 +67,24 @@ namespace WebApi.Controllers
         [HttpGet("GetRegionAll")]
         public List<dtoKeyValueChild> GetRegionAll()
         {
-            using (var db = new dbContext())
-            {
-                var list = db.TRegionProvince.Select(t => new dtoKeyValueChild
-                {
-                    Key = t.Id,
-                    Value = t.Province,
-                    ChildList = t.TRegionCity.Select(c => new dtoKeyValueChild
-                    {
-                        Key = c.Id,
-                        Value = c.City,
-                        ChildList = c.TRegionArea.Select(a => new dtoKeyValueChild
-                        {
-                            Key = a.Id,
-                            Value = a.Area
-                        }).ToList()
-                    }).ToList()
-                }).ToList();
 
-                return list;
-            }
+            var list = db.TRegionProvince.Select(t => new dtoKeyValueChild
+            {
+                Key = t.Id,
+                Value = t.Province,
+                ChildList = t.TRegionCity.Select(c => new dtoKeyValueChild
+                {
+                    Key = c.Id,
+                    Value = c.City,
+                    ChildList = c.TRegionArea.Select(a => new dtoKeyValueChild
+                    {
+                        Key = a.Id,
+                        Value = a.Area
+                    }).ToList()
+                }).ToList()
+            }).ToList();
+
+            return list;
         }
 
 
@@ -109,16 +113,14 @@ namespace WebApi.Controllers
         [HttpGet("GetSelectValue")]
         public List<dtoKeyValue> GetSelectValue(string key)
         {
-            using (var db = new dbContext())
-            {
-                var list = db.TDictionary.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).Select(t => new dtoKeyValue
-                {
-                    Key = t.Value,
-                    Value = t.Id
-                }).ToList();
 
-                return list;
-            }
+            var list = db.TDictionary.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).Select(t => new dtoKeyValue
+            {
+                Key = t.Value,
+                Value = t.Id
+            }).ToList();
+
+            return list;
         }
 
 

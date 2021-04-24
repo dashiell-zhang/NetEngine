@@ -55,20 +55,21 @@ namespace Repository.Database
         /// <summary>
         /// 支付状态
         /// </summary>
-        public bool Paystate { get; set; }
+        public bool PayState { get; set; }
 
 
         /// <summary>
         /// 支付时间
         /// </summary>
-        public DateTime? Paytime { get; set; }
+        public DateTime? PayTime { get; set; }
 
 
 
         /// <summary>
         /// 实际支付金额
         /// </summary>
-        public decimal? Payprice { get; set; }
+        [Column(TypeName = "decimal(38,2)")]
+        public decimal PayPrice { get; set; }
 
 
 

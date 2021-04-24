@@ -24,6 +24,14 @@ namespace WebApi.Controllers.v1
     {
 
 
+        private readonly dbContext db;
+
+        public PayController(dbContext context)
+        {
+            db = context;
+        }
+
+
         /// <summary>
         /// 微信小程序商户平台下单接口
         /// </summary>
@@ -33,29 +41,26 @@ namespace WebApi.Controllers.v1
         public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, Guid weixinkeyid)
         {
 
-            using (var db = new dbContext())
+            var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
             {
-                var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
-                {
-                    t.OrderNo,
-                    t.Price,
-                    ProductName = DateTime.Now.ToString("yyyyMMddHHmm") + "交易",
-                    t.CreateUserId,
-                    UserOpenId = t.CreateUser.TUserBindWeixin.Where(w => w.WeiXinKeyId == weixinkeyid).Select(w => w.WeiXinOpenId).FirstOrDefault()
-                }).FirstOrDefault();
+                t.OrderNo,
+                t.Price,
+                ProductName = DateTime.Now.ToString("yyyyMMddHHmm") + "交易",
+                t.CreateUserId,
+                UserOpenId = db.TUserBindWeixin.Where(w => w.UserId == t.CreateUserId & w.WeiXinKeyId == weixinkeyid).Select(w => w.WeiXinOpenId).FirstOrDefault()
+            }).FirstOrDefault();
 
-                var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+            var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
-                var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+            var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
 
-                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, url);
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, url);
 
-                int price = Convert.ToInt32(order.Price * 100);
+            int price = Convert.ToInt32(order.Price * 100);
 
-                var pay = weiXinHelper.CreatePay(order.UserOpenId, order.OrderNo, order.ProductName, order.ProductName, price);
+            var pay = weiXinHelper.CreatePay(order.UserOpenId, order.OrderNo, order.ProductName, order.ProductName, price);
 
-                return pay;
-            }
+            return pay;
 
         }
 
@@ -70,22 +75,20 @@ namespace WebApi.Controllers.v1
         public dtoCreatePayApp CreateWeiXinAppPay(string orderno, string weixinkeyid)
         {
 
-            using (var db = new dbContext())
-            {
-                var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
 
-                var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
+            var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
 
-                var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+            var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
-                var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(weixinkey.WxAppId, weixinkey.MchId, weixinkey.MchKey, url);
+            var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
 
-                int price = Convert.ToInt32(order.Price * 100);
+            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(weixinkey.WxAppId, weixinkey.MchId, weixinkey.MchKey, url);
 
-                var pay = weiXinHelper.CreatePay(order.OrderNo, "订单号：" + orderno, "订单号：" + orderno, price, "119.29.29.29");
+            int price = Convert.ToInt32(order.Price * 100);
 
-                return pay;
-            }
+            var pay = weiXinHelper.CreatePay(order.OrderNo, "订单号：" + orderno, "订单号：" + orderno, price, "119.29.29.29");
+
+            return pay;
 
         }
 
@@ -107,22 +110,21 @@ namespace WebApi.Controllers.v1
             if (string.IsNullOrEmpty(codeUrl))
             {
 
-                using (var db = new dbContext())
-                {
-                    var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
-                    var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
+                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
-                    var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+                var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
-                    var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, url);
+                var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
 
-                    int price = Convert.ToInt32(order.Price * 100);
+                var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, url);
 
-                    codeUrl = weiXinHelper.CreatePay(order.Id, order.OrderNo, DateTime.Now.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
+                int price = Convert.ToInt32(order.Price * 100);
 
-                    Common.RedisHelper.StrSet(key, codeUrl, TimeSpan.FromMinutes(115));
-                }
+                codeUrl = weiXinHelper.CreatePay(order.Id, order.OrderNo, DateTime.Now.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
+
+                Common.RedisHelper.StrSet(key, codeUrl, TimeSpan.FromMinutes(115));
+
             }
 
             var image = Common.ImgHelper.GetQrCode(codeUrl);
@@ -167,70 +169,68 @@ namespace WebApi.Controllers.v1
             req.SetValue("transaction_id", transaction_id);
 
 
-            using (dbContext db = new dbContext())
+
+
+            var weixinkey = db.TWeiXinKey.Where(t => t.WxAppId == appid).FirstOrDefault();
+
+            JsApiPay jsApiPay = new JsApiPay(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey);
+
+            WxPayData send = jsApiPay.OrderQuery(req);
+            if (!(send.GetValue("return_code").ToString() == "SUCCESS" && send.GetValue("result_code").ToString() == "SUCCESS"))
+            {
+                //如果订单信息在微信后台不存在,立即返回失败
+                res.SetValue("return_code", "FAIL");
+                res.SetValue("return_msg", "订单查询失败");
+                return res.ToXml();
+            }
+            else
             {
 
-                var weixinkey = db.TWeiXinKey.Where(t => t.WxAppId == appid).FirstOrDefault();
+                var order = db.TOrder.Where(t => t.OrderNo == order_no).FirstOrDefault();
 
-                JsApiPay jsApiPay = new JsApiPay(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey);
-
-                WxPayData send = jsApiPay.OrderQuery(req);
-                if (!(send.GetValue("return_code").ToString() == "SUCCESS" && send.GetValue("result_code").ToString() == "SUCCESS"))
+                if (order == null)
                 {
-                    //如果订单信息在微信后台不存在,立即返回失败
                     res.SetValue("return_code", "FAIL");
-                    res.SetValue("return_msg", "订单查询失败");
+                    res.SetValue("return_msg", "订单不存在或已删除");
                     return res.ToXml();
                 }
-                else
+
+                if (!string.IsNullOrEmpty(order.SerialNo)) //已付款
                 {
-
-                    var order = db.TOrder.Where(t => t.OrderNo == order_no).FirstOrDefault();
-
-                    if (order == null)
-                    {
-                        res.SetValue("return_code", "FAIL");
-                        res.SetValue("return_msg", "订单不存在或已删除");
-                        return res.ToXml();
-                    }
-
-                    if (!string.IsNullOrEmpty(order.SerialNo)) //已付款
-                    {
-                        res.SetValue("return_code", "SUCCESS");
-                        res.SetValue("return_msg", "OK");
-                        return res.ToXml();
-                    }
-
-                    try
-                    {
-                        order.Payprice = decimal.Parse(total_fee) / 100;
-                        order.SerialNo = transaction_id;
-                        order.Paystate = true;
-                        order.Paytime = payTime;
-                        order.PayType = "微信支付";
-                        order.State = "已支付";
-
-                        db.SaveChanges();
-
-                        if (order.Type == "")
-                        {
-                            //执行业务处理逻辑
-                        }
-
-
-                        //返回成功通知
-                        res.SetValue("return_code", "SUCCESS");
-                        res.SetValue("return_msg", "OK");
-                        return res.ToXml();
-                    }
-                    catch
-                    {
-                        res.SetValue("return_code", "FAIL");
-                        res.SetValue("return_msg", "修改订单状态失败");
-                        return res.ToXml();
-                    }
-
+                    res.SetValue("return_code", "SUCCESS");
+                    res.SetValue("return_msg", "OK");
+                    return res.ToXml();
                 }
+
+                try
+                {
+                    order.PayPrice = decimal.Parse(total_fee) / 100;
+                    order.SerialNo = transaction_id;
+                    order.PayState = true;
+                    order.PayTime = payTime;
+                    order.PayType = "微信支付";
+                    order.State = "已支付";
+
+                    db.SaveChanges();
+
+                    if (order.Type == "")
+                    {
+                        //执行业务处理逻辑
+                    }
+
+
+                    //返回成功通知
+                    res.SetValue("return_code", "SUCCESS");
+                    res.SetValue("return_msg", "OK");
+                    return res.ToXml();
+                }
+                catch
+                {
+                    res.SetValue("return_code", "FAIL");
+                    res.SetValue("return_msg", "修改订单状态失败");
+                    return res.ToXml();
+                }
+
             }
 
         }
@@ -247,41 +247,39 @@ namespace WebApi.Controllers.v1
         public dtoKeyValue CreateAliPayMiniApp(string orderno, Guid alipaykeyid)
         {
 
-            using (dbContext db = new dbContext())
+
+            var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
             {
-                var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
-                {
-                    t.OrderNo,
-                    t.Price,
-                    AliPayUserId = t.CreateUser.TUserBindAlipay.Where(a => a.AlipayKeyId == alipaykeyid).Select(a => a.AlipayUserId).FirstOrDefault(),
-                    t.CreateTime
-                }).FirstOrDefault();
+                t.OrderNo,
+                t.Price,
+                AliPayUserId = db.TUserBindAlipay.Where(a => a.UserId == t.CreateUserId & a.AlipayKeyId == alipaykeyid).Select(a => a.AlipayUserId).FirstOrDefault(),
+                t.CreateTime
+            }).FirstOrDefault();
 
-                var alipaykey = db.TAlipayKey.Where(t => t.Id == alipaykeyid).FirstOrDefault();
+            var alipaykey = db.TAlipayKey.Where(t => t.Id == alipaykeyid).FirstOrDefault();
 
-                var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+            var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                AliPayHelper aliPayHelper = new AliPayHelper(alipaykey.AppId, alipaykey.AppPrivateKey, alipaykey.AlipayPublicKey, url);
+            AliPayHelper aliPayHelper = new AliPayHelper(alipaykey.AppId, alipaykey.AppPrivateKey, alipaykey.AlipayPublicKey, url);
 
-                string price = Convert.ToString(order.Price);
+            string price = Convert.ToString(order.Price);
 
-                var TradeNo = aliPayHelper.AlipayTradeCreate(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, order.AliPayUserId);
+            var TradeNo = aliPayHelper.AlipayTradeCreate(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, order.AliPayUserId);
 
-                if (string.IsNullOrEmpty(TradeNo))
-                {
-                    HttpContext.Response.StatusCode = 400;
+            if (string.IsNullOrEmpty(TradeNo))
+            {
+                HttpContext.Response.StatusCode = 400;
 
-                    HttpContext.Items.Add("errMsg", "支付宝交易订单创建失败！");
-                }
-
-                var keyValue = new dtoKeyValue
-                {
-                    Key = "TradeNo",
-                    Value = TradeNo
-                };
-
-                return keyValue;
+                HttpContext.Items.Add("errMsg", "支付宝交易订单创建失败！");
             }
+
+            var keyValue = new dtoKeyValue
+            {
+                Key = "TradeNo",
+                Value = TradeNo
+            };
+
+            return keyValue;
 
         }
 
@@ -295,36 +293,34 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetAliPayWebUrl")]
         public string GetAliPayWebUrl(string orderNo)
         {
-            using (var db = new dbContext())
+
+            var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
+
+            var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
             {
-                var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
+                t.OrderNo,
+                t.Price,
+                t.State,
+                t.CreateTime
+            }).FirstOrDefault();
 
-                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
-                {
-                    t.OrderNo,
-                    t.Price,
-                    t.State,
-                    t.CreateTime
-                }).FirstOrDefault();
+            if (order != null && order.State == "待支付")
+            {
 
-                if (order != null && order.State == "待支付")
-                {
+                var returnUrl = Libraries.Http.HttpContext.GetBaseUrl();
+                var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                    var returnUrl = Libraries.Http.HttpContext.GetBaseUrl() ;
-                    var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+                AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, notifyUrl, returnUrl);
 
-                    AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, notifyUrl, returnUrl);
+                string price = order.Price.ToString();
 
-                    string price = order.Price.ToString();
+                string url = helper.CreatePayPC(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, order.OrderNo);
 
-                    string url = helper.CreatePayPC(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, order.OrderNo);
-
-                    return url;
-                }
-                else
-                {
-                    return "";
-                }
+                return url;
+            }
+            else
+            {
+                return "";
             }
         }
 
@@ -338,30 +334,28 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetAliPayH5Url")]
         public string GetAliPayH5Url(string orderNo)
         {
-            using (var db = new dbContext())
+
+            var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
+
+            var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, t.CreateTime }).FirstOrDefault();
+
+            if (order != null && order.State == "待支付")
             {
-                var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
 
-                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, t.CreateTime }).FirstOrDefault();
+                var returnUrl = Libraries.Http.HttpContext.GetBaseUrl();
+                var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                if (order != null && order.State == "待支付")
-                {
+                AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, notifyUrl, returnUrl, "");
 
-                    var returnUrl = Libraries.Http.HttpContext.GetBaseUrl();
-                    var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+                string price = order.Price.ToString();
 
-                    AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, notifyUrl, returnUrl, "");
+                string html = helper.CreatePayH5(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, "");
 
-                    string price = order.Price.ToString();
-
-                    string html = helper.CreatePayH5(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, "");
-
-                    return html;
-                }
-                else
-                {
-                    return "";
-                }
+                return html;
+            }
+            else
+            {
+                return "";
             }
         }
 
@@ -393,39 +387,37 @@ namespace WebApi.Controllers.v1
             {
                 var appid = Request.Form["auth_app_id"].ToString();
 
-                using (dbContext db = new dbContext())
+
+                var Alipaypublickey = db.TAlipayKey.Where(t => t.AppId == appid).Select(t => t.AlipayPublicKey).FirstOrDefault();
+
+
+                bool flag = AlipaySignature.RSACheckV1(dict, Alipaypublickey, "utf-8", "RSA2", false);
+
+                if (flag)
                 {
-                    var Alipaypublickey = db.TAlipayKey.Where(t => t.AppId == appid).Select(t => t.AlipayPublicKey).FirstOrDefault();
+                    var orderno = Request.Form["out_trade_no"].ToString();
 
+                    var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
 
-                    bool flag = AlipaySignature.RSACheckV1(dict, Alipaypublickey, "utf-8", "RSA2", false);
+                    order.PayPrice = decimal.Parse(Request.Form["total_amount"].ToString());
+                    order.SerialNo = Request.Form["trade_no"].ToString();
+                    order.PayState = true;
+                    order.PayTime = Convert.ToDateTime(Request.Form["gmt_payment"].ToString());
+                    order.PayType = "支付宝";
+                    order.State = "已支付";
 
-                    if (flag)
+                    db.SaveChanges();
+
+                    switch (order.Type)
                     {
-                        var orderno = Request.Form["out_trade_no"].ToString();
+                        case "业务逻辑":
+                            {
 
-                        var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
+                                retValue = "success";
 
-                        order.Payprice = decimal.Parse(Request.Form["total_amount"].ToString());
-                        order.SerialNo = Request.Form["trade_no"].ToString();
-                        order.Paystate = true;
-                        order.Paytime = Convert.ToDateTime(Request.Form["gmt_payment"].ToString());
-                        order.PayType = "支付宝";
-                        order.State = "已支付";
+                                break;
+                            }
 
-                        db.SaveChanges();
-
-                        switch (order.Type)
-                        {
-                            case "业务逻辑":
-                                {
-
-                                    retValue = "success";
-
-                                    break;
-                                }
-
-                        }
                     }
 
                 }

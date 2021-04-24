@@ -44,9 +44,8 @@ namespace WebApi
 
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
+            services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
 
-
-            services.AddDbContextPool<Repository.Database.dbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("dbConnection")),128);
 
             services.Configure<FormOptions>(options =>
             {
@@ -64,6 +63,8 @@ namespace WebApi
             });
 
             services.AddControllers();
+
+
 
             //注册JWT认证机制
             services.Configure<JwtSettings>(Configuration.GetSection("JwtSettings"));

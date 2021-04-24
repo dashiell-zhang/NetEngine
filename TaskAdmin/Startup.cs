@@ -35,7 +35,7 @@ namespace TaskAdmin
 
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
-
+            services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
 
 
             //注册 HangFire(Memory)

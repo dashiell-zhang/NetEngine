@@ -2,6 +2,7 @@
 using Cms.Libraries.Ueditor;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Repository.Database;
 using System;
 
 namespace Cms.Controllers
@@ -10,8 +11,15 @@ namespace Cms.Controllers
     public class UeditorController : Controller
     {
 
+        private readonly dbContext db;
 
-        //[RequestSizeLimit(100_000_000)]
+        public UeditorController(dbContext context)
+        {
+            db = context;
+        }
+
+
+
         [DisableRequestSizeLimit]
         public string ProcessRequest([FromServices]IWebHostEnvironment environment)
         {

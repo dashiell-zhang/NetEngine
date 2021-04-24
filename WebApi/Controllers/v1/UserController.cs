@@ -23,6 +23,13 @@ namespace WebApi.Controllers.v1
     {
 
 
+        private readonly dbContext db;
+
+        public UserController(dbContext context)
+        {
+            db = context;
+        }
+
 
         /// <summary>
         /// 获取微信小程序OpenId
@@ -34,20 +41,18 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetWeiXinMiniAppOpenId")]
         public string GetWeiXinMiniAppOpenId(Guid weixinkeyid, string code)
         {
-            using (var db = new dbContext())
-            {
 
-                var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
-                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
+            var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
 
-                string openid = wxinfo.openid;
+            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
 
-                return openid;
+            string openid = wxinfo.openid;
 
-            }
+            return openid;
+
 
         }
 
@@ -64,29 +69,27 @@ namespace WebApi.Controllers.v1
         public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, Guid weixinkeyid)
         {
 
-            using (var db = new dbContext())
-            {
-                var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
-                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
+            var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
-
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
-
-                string openid = wxinfo.openid;
-                string sessionkey = wxinfo.sessionkey;
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
 
 
-                var strJson = Libraries.WeiXin.MiniApp.WeiXinHelper.DecryptionData(encryptedData, sessionkey, iv);
+            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
 
-                var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid & t.WeiXinKeyId == weixinkeyid).Select(t => t.User).FirstOrDefault();
+            string openid = wxinfo.openid;
+            string sessionkey = wxinfo.sessionkey;
 
-                user.Phone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
 
-                db.SaveChanges();
+            var strJson = Libraries.WeiXin.MiniApp.WeiXinHelper.DecryptionData(encryptedData, sessionkey, iv);
 
-                return user.Phone;
-            }
+            var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid & t.WeiXinKeyId == weixinkeyid).Select(t => t.User).FirstOrDefault();
+
+            user.Phone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
+
+            db.SaveChanges();
+
+            return user.Phone;
         }
 
 
@@ -100,25 +103,23 @@ namespace WebApi.Controllers.v1
         [CacheData(TTL = 60, UseToken = true)]
         public dtoUser GetUser(Guid userid)
         {
-            using (var db = new dbContext())
+
+            if (userid == default)
             {
-                if (userid == default)
-                {
-                    userid = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
-                }
-
-                var user = db.TUser.Where(t => t.Id == userid && t.IsDelete == false).Select(t => new dtoUser
-                {
-                    Name = t.Name,
-                    NickName = t.NickName,
-                    Phone = t.Phone,
-                    Email = t.Email,
-                    Role = t.Role.Name,
-                    CreateTime = t.CreateTime
-                }).FirstOrDefault();
-
-                return user;
+                userid = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
             }
+
+            var user = db.TUser.Where(t => t.Id == userid && t.IsDelete == false).Select(t => new dtoUser
+            {
+                Name = t.Name,
+                NickName = t.NickName,
+                Phone = t.Phone,
+                Email = t.Email,
+                Role = t.Role.Name,
+                CreateTime = t.CreateTime
+            }).FirstOrDefault();
+
+            return user;
         }
 
 
@@ -138,54 +139,52 @@ namespace WebApi.Controllers.v1
 
                 string phone = keyValue.Key.ToString();
 
-                using (var db = new dbContext())
+
+                var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == phone).Count();
+
+                var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
+
+
+                var isMergeUser = false;
+
+                if (isMergeUser)
                 {
-                    var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == phone).Count();
+                    //获取目标手机号绑定的账户ID
+                    var phoneUserId = db.TUser.Where(t => t.Phone == phone).Select(t => t.Id).FirstOrDefault();
 
-                    var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
+                    user.Phone = phone;
 
+                    db.SaveChanges();
 
-                    var isMergeUser = false;
-
-                    if (isMergeUser)
+                    //如果目标手机号绑定用户，则进行数据合并动作
+                    if (phoneUserId != default)
                     {
-                        //获取目标手机号绑定的账户ID
-                        var phoneUserId = db.TUser.Where(t => t.Phone == phone).Select(t => t.Id).FirstOrDefault();
+                        //将手机号对应的用户移除，合并数据到新的账号
+                        Common.DBHelper.MergeUser(phoneUserId, user.Id);
+                    }
 
+                    return true;
+                }
+                else
+                {
+                    if (checkPhone == 0)
+                    {
                         user.Phone = phone;
 
                         db.SaveChanges();
-
-                        //如果目标手机号绑定用户，则进行数据合并动作
-                        if (phoneUserId != default)
-                        {
-                            //将手机号对应的用户移除，合并数据到新的账号
-                            Common.DBHelper.MergeUser(phoneUserId, user.Id);
-                        }
 
                         return true;
                     }
                     else
                     {
-                        if (checkPhone == 0)
-                        {
-                            user.Phone = phone;
+                        HttpContext.Response.StatusCode = 400;
 
-                            db.SaveChanges();
+                        HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'The target mobile number has been bound by another account'");
 
-                            return true;
-                        }
-                        else
-                        {
-                            HttpContext.Response.StatusCode = 400;
-
-                            HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'The target mobile number has been bound by another account'");
-
-                            return false;
-                        }
+                        return false;
                     }
-
                 }
+
 
             }
             else
@@ -208,56 +207,52 @@ namespace WebApi.Controllers.v1
         [HttpPost("EditUserPassWordBySms")]
         public bool EditUserPassWordBySms([FromBody] dtoKeyValue keyValue)
         {
-            using (var db = new dbContext())
+
+            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
+
+            string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
+
+            string smsCode = keyValue.Value.ToString();
+
+            var checkSms = Actions.AuthorizeAction.SmsVerifyPhone(new dtoKeyValue { Key = phone, Value = smsCode });
+
+            if (checkSms)
             {
-                var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
+                string password = keyValue.Key.ToString();
 
-                string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
-
-                string smsCode = keyValue.Value.ToString();
-
-                var checkSms = Actions.AuthorizeAction.SmsVerifyPhone(new dtoKeyValue { Key = phone, Value = smsCode });
-
-                if (checkSms)
+                if (!string.IsNullOrEmpty(password))
                 {
-                    string password = keyValue.Key.ToString();
+                    var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
-                    if (!string.IsNullOrEmpty(password))
-                    {
-                        var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
+                    user.PassWord = password;
 
-                        user.PassWord = password;
-
-                        db.SaveChanges();
+                    db.SaveChanges();
 
 
-                        var tokenList = db.TUserToken.Where(t => t.UserId == userId).ToList();
+                    var tokenList = db.TUserToken.Where(t => t.UserId == userId).ToList();
 
-                        db.TUserToken.RemoveRange(tokenList);
+                    db.TUserToken.RemoveRange(tokenList);
 
-                        db.SaveChanges();
+                    db.SaveChanges();
 
-                        return true;
-                    }
-                    else
-                    {
-                        HttpContext.Response.StatusCode = 400;
-
-                        HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'New password is not allowed to be empty'");
-
-                        return false;
-                    }
+                    return true;
                 }
                 else
                 {
                     HttpContext.Response.StatusCode = 400;
 
-                    HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'Error in SMS verification code'");
+                    HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'New password is not allowed to be empty'");
 
                     return false;
                 }
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
 
+                HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'Error in SMS verification code'");
 
+                return false;
             }
 
         }

@@ -1,8 +1,6 @@
 ﻿using Repository.Bases;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
@@ -51,20 +49,6 @@ namespace Repository.Database
         public TRole Role { get; set; }
 
 
-
-        /// <summary>
-        /// 该用户所有得订单信息
-        /// </summary>
-        [InverseProperty("CreateUser")]
-        public ICollection<TOrder> TOrder { get; set; }
-
-
-        //用户绑定的微信信息
-        public ICollection<TUserBindWeixin> TUserBindWeixin { get; set; }
-
-
-        //用户绑定的支付宝信息
-        public ICollection<TUserBindAlipay> TUserBindAlipay { get; set; }
 
 
     }

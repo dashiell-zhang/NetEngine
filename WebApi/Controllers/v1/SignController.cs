@@ -19,6 +19,13 @@ namespace WebApi.Controllers.v1
     public class SignController : ControllerBase
     {
 
+        private readonly dbContext db;
+
+        public SignController(dbContext context)
+        {
+            db = context;
+        }
+
 
         /// <summary>
         /// 获取标记总数
@@ -30,12 +37,10 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetSignCount")]
         public int GetSignCount(string table, Guid tableId, string sign)
         {
-            using (var db = new dbContext())
-            {
-                var count = db.TSign.Where(t => t.IsDelete == false && t.Table == table && t.TableId == tableId && t.Sign == sign).Count();
 
-                return count;
-            }
+            var count = db.TSign.Where(t => t.IsDelete == false && t.Table == table && t.TableId == tableId && t.Sign == sign).Count();
+
+            return count;
         }
 
 
@@ -45,25 +50,23 @@ namespace WebApi.Controllers.v1
         /// <param name="addSign"></param>
         /// <returns></returns>
         [HttpPost("AddSign")]
-        public bool AddSign([FromBody]dtoSign addSign)
+        public bool AddSign([FromBody] dtoSign addSign)
         {
             var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
-            using (var db = new dbContext())
-            {
-                var like = new TSign();
-                like.Id = Guid.NewGuid();
-                like.IsDelete = false;
-                like.CreateTime = DateTime.Now;
-                like.CreateUserId = userId;
 
-                like.Table = addSign.Table;
-                like.TableId = addSign.TableId;
-                like.Sign = addSign.Sign;
+            var like = new TSign();
+            like.Id = Guid.NewGuid();
+            like.IsDelete = false;
+            like.CreateTime = DateTime.Now;
+            like.CreateUserId = userId;
 
-                db.TSign.Add(like);
-                db.SaveChanges();
-            }
+            like.Table = addSign.Table;
+            like.TableId = addSign.TableId;
+            like.Sign = addSign.Sign;
+
+            db.TSign.Add(like);
+            db.SaveChanges();
 
             return true;
         }
@@ -80,16 +83,14 @@ namespace WebApi.Controllers.v1
         {
             var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
 
-            using (var db = new dbContext())
-            {
-                var like = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
 
-                if (like != null)
-                {
-                    like.IsDelete = true;
-                    like.DeleteTime = DateTime.Now;
-                    db.SaveChanges();
-                }
+            var like = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
+
+            if (like != null)
+            {
+                like.IsDelete = true;
+                like.DeleteTime = DateTime.Now;
+                db.SaveChanges();
             }
             return true;
         }

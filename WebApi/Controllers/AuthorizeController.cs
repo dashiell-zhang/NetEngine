@@ -21,11 +21,11 @@ namespace WebApi.Controllers
     {
 
 
-        private readonly dbContext _context;
+        private readonly dbContext db;
 
         public AuthorizeController(dbContext context)
         {
-            _context = context;
+            db = context;
         }
 
 
@@ -39,39 +39,37 @@ namespace WebApi.Controllers
         {
 
 
-            using (var db = new dbContext())
+
+            var user = db.TUser.Where(t => (t.Name == login.name || t.Phone == login.name || t.Email == login.name) && t.PassWord == login.password).FirstOrDefault();
+
+            if (user != null)
             {
-                var user = db.TUser.Where(t => (t.Name == login.name || t.Phone == login.name || t.Email == login.name) && t.PassWord == login.password).FirstOrDefault();
+                TUserToken userToken = new TUserToken();
+                userToken.Id = Guid.NewGuid();
+                userToken.UserId = user.Id;
+                userToken.CreateTime = DateTime.Now;
 
-                if (user != null)
-                {
-                    TUserToken userToken = new TUserToken();
-                    userToken.Id = Guid.NewGuid();
-                    userToken.UserId = user.Id;
-                    userToken.CreateTime = DateTime.Now;
+                db.TUserToken.Add(userToken);
+                db.SaveChanges();
 
-                    db.TUserToken.Add(userToken);
-                    db.SaveChanges();
-
-                    var claim = new Claim[]{
+                var claim = new Claim[]{
                         new Claim("tokenid",userToken.Id.ToString()),
                              new Claim("userid",user.Id.ToString())
                         };
 
 
-                    var ret = Libraries.Verify.JwtToken.GetToken(claim);
+                var ret = Libraries.Verify.JwtToken.GetToken(claim);
 
-                    return ret;
-                }
-                else
-                {
+                return ret;
+            }
+            else
+            {
 
-                    HttpContext.Response.StatusCode = 400;
+                HttpContext.Response.StatusCode = 400;
 
-                    HttpContext.Items.Add("errMsg", "Authorize.GetToken.'Wrong user name or password'");
+                HttpContext.Items.Add("errMsg", "Authorize.GetToken.'Wrong user name or password'");
 
-                    return "";
-                }
+                return "";
             }
 
         }
@@ -88,60 +86,58 @@ namespace WebApi.Controllers
         {
 
 
-            using (var db = new dbContext())
+
+            var weixinkeyid = Guid.Parse(keyValue.Key.ToString());
+            string code = keyValue.Value.ToString();
+
+            var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
+
+
+            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
+
+            string openid = wxinfo.openid;
+            string sessionkey = wxinfo.sessionkey;
+
+            var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid).Select(t => t.User).FirstOrDefault();
+
+
+            if (user == null)
             {
-                var weixinkeyid = Guid.Parse(keyValue.Key.ToString());
-                string code = keyValue.Value.ToString();
 
-                var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+                //注册一个只有基本信息的账户出来
 
-                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
+                user = new TUser();
 
+                user.Id = Guid.NewGuid();
+                user.IsDelete = false;
+                user.CreateTime = DateTime.Now;
+                user.Name = DateTime.Now.ToString() + "微信小程序新用户";
+                user.NickName = user.Name;
+                user.PassWord = Guid.NewGuid().ToString();
 
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
+                db.TUser.Add(user);
 
-                string openid = wxinfo.openid;
-                string sessionkey = wxinfo.sessionkey;
+                db.SaveChanges();
 
-                var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid).Select(t => t.User).FirstOrDefault();
+                TUserBindWeixin userBind = new TUserBindWeixin();
+                userBind.Id = Guid.NewGuid();
+                userBind.IsDelete = false;
+                userBind.CreateTime = DateTime.Now;
+                userBind.UserId = user.Id;
+                userBind.WeiXinKeyId = weixinkeyid;
+                userBind.WeiXinOpenId = openid;
 
+                db.TUserBindWeixin.Add(userBind);
 
-                if (user == null)
-                {
+                db.SaveChanges();
 
-                    //注册一个只有基本信息的账户出来
-
-                    user = new TUser();
-
-                    user.Id = Guid.NewGuid();
-                    user.IsDelete = false;
-                    user.CreateTime = DateTime.Now;
-                    user.Name = DateTime.Now.ToString() + "微信小程序新用户";
-                    user.NickName = user.Name;
-                    user.PassWord = Guid.NewGuid().ToString();
-
-                    db.TUser.Add(user);
-
-                    db.SaveChanges();
-
-                    TUserBindWeixin userBind = new TUserBindWeixin();
-                    userBind.Id = Guid.NewGuid();
-                    userBind.IsDelete = false;
-                    userBind.CreateTime = DateTime.Now;
-                    userBind.UserId = user.Id;
-                    userBind.WeiXinKeyId = weixinkeyid;
-                    userBind.WeiXinOpenId = openid;
-
-                    db.TUserBindWeixin.Add(userBind);
-
-                    db.SaveChanges();
-
-
-                }
-
-                return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
 
             }
+
+            return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
+
 
         }
 
@@ -160,31 +156,29 @@ namespace WebApi.Controllers
             {
                 string phone = keyValue.Key.ToString();
 
-                using (var db = new dbContext())
+
+                var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone) && t.RoleId == default).FirstOrDefault();
+
+                if (user == null)
                 {
-                    var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone) && t.RoleId == default).FirstOrDefault();
+                    //注册一个只有基本信息的账户出来
 
-                    if (user == null)
-                    {
-                        //注册一个只有基本信息的账户出来
+                    user = new TUser();
 
-                        user = new TUser();
+                    user.Id = Guid.NewGuid();
+                    user.IsDelete = false;
+                    user.CreateTime = DateTime.Now;
+                    user.Name = DateTime.Now.ToString() + "手机短信新用户";
+                    user.NickName = user.Name;
+                    user.PassWord = Guid.NewGuid().ToString();
+                    user.Phone = phone;
 
-                        user.Id = Guid.NewGuid();
-                        user.IsDelete = false;
-                        user.CreateTime = DateTime.Now;
-                        user.Name = DateTime.Now.ToString() + "手机短信新用户";
-                        user.NickName = user.Name;
-                        user.PassWord = Guid.NewGuid().ToString();
-                        user.Phone = phone;
+                    db.TUser.Add(user);
 
-                        db.TUser.Add(user);
-
-                        db.SaveChanges();
-                    }
-
-                    return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
+                    db.SaveChanges();
                 }
+
+                return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
             }
             else
             {
@@ -257,55 +251,53 @@ namespace WebApi.Controllers
         public string GetTokenByWeiXinAppCode(dtoKeyValue keyValue)
         {
 
-            using (var db = new dbContext())
+
+
+            var weixinkeyid = Guid.Parse(keyValue.Key.ToString());
+            string code = keyValue.Value.ToString();
+
+
+            var wxInfo = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+
+            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(wxInfo.WxAppId, wxInfo.WxAppSecret);
+
+            var accseetoken = weiXinHelper.GetAccessToken(code).accessToken;
+
+            var openid = weiXinHelper.GetAccessToken(code).openId;
+
+            var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
+
+            var user = db.TUserBindWeixin.Where(t => t.IsDelete == false && t.WeiXinKeyId == weixinkeyid && t.WeiXinOpenId == userInfo.openid).Select(t => t.User).FirstOrDefault();
+
+            if (user == null)
             {
+                user = new TUser();
+                user.Id = Guid.NewGuid();
+                user.IsDelete = false;
+                user.CreateTime = DateTime.Now;
 
-                var weixinkeyid = Guid.Parse(keyValue.Key.ToString());
-                string code = keyValue.Value.ToString();
+                user.Name = userInfo.nickname;
+                user.NickName = user.Name;
+                user.PassWord = Guid.NewGuid().ToString();
 
+                db.TUser.Add(user);
+                db.SaveChanges();
 
-                var wxInfo = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+                var bind = new TUserBindWeixin();
+                bind.Id = Guid.NewGuid();
+                bind.IsDelete = false;
+                bind.CreateTime = DateTime.Now;
 
-                var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(wxInfo.WxAppId, wxInfo.WxAppSecret);
+                bind.WeiXinKeyId = weixinkeyid;
+                bind.UserId = user.Id;
+                bind.WeiXinOpenId = openid;
 
-                var accseetoken = weiXinHelper.GetAccessToken(code).accessToken;
+                db.TUserBindWeixin.Add(bind);
 
-                var openid = weiXinHelper.GetAccessToken(code).openId;
-
-                var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
-
-                var user = db.TUserBindWeixin.Where(t => t.IsDelete == false && t.WeiXinKeyId == weixinkeyid && t.WeiXinOpenId == userInfo.openid).Select(t => t.User).FirstOrDefault();
-
-                if (user == null)
-                {
-                    user = new TUser();
-                    user.Id = Guid.NewGuid();
-                    user.IsDelete = false;
-                    user.CreateTime = DateTime.Now;
-
-                    user.Name = userInfo.nickname;
-                    user.NickName = user.Name;
-                    user.PassWord = Guid.NewGuid().ToString();
-
-                    db.TUser.Add(user);
-                    db.SaveChanges();
-
-                    var bind = new TUserBindWeixin();
-                    bind.Id = Guid.NewGuid();
-                    bind.IsDelete = false;
-                    bind.CreateTime = DateTime.Now;
-
-                    bind.WeiXinKeyId = weixinkeyid;
-                    bind.UserId = user.Id;
-                    bind.WeiXinOpenId = openid;
-
-                    db.TUserBindWeixin.Add(bind);
-
-                    db.SaveChanges();
-                }
-
-                return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
+                db.SaveChanges();
             }
+
+            return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
 
         }
 

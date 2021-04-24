@@ -27,6 +27,14 @@ namespace WebApi.Controllers
     public class FileController : ControllerBase
     {
 
+        private readonly dbContext db;
+
+        public FileController(dbContext context)
+        {
+            db = context;
+        }
+
+
         /// <summary>
         /// 远程单文件上传接口
         /// </summary>
@@ -82,23 +90,21 @@ namespace WebApi.Controllers
 
                 if (isSuccess)
                 {
-                    using (var db = new dbContext())
-                    {
-                        var f = new TFile();
-                        f.Id = Guid.NewGuid();
-                        f.IsDelete = false;
-                        f.Name = fileInfo.Value.ToString();
-                        f.Path = filePath;
-                        f.Table = business;
-                        f.TableId = key;
-                        f.Sign = sign;
-                        f.CreateUserId = userId;
-                        f.CreateTime = DateTime.Now;
-                        db.TFile.Add(f);
-                        db.SaveChanges();
 
-                        return f.Id;
-                    }
+                    var f = new TFile();
+                    f.Id = Guid.NewGuid();
+                    f.IsDelete = false;
+                    f.Name = fileInfo.Value.ToString();
+                    f.Path = filePath;
+                    f.Table = business;
+                    f.TableId = key;
+                    f.Sign = sign;
+                    f.CreateUserId = userId;
+                    f.CreateTime = DateTime.Now;
+                    db.TFile.Add(f);
+                    db.SaveChanges();
+
+                    return f.Id;
                 }
 
             }
@@ -177,23 +183,21 @@ namespace WebApi.Controllers
 
             if (isSuccess)
             {
-                using (var db = new dbContext())
-                {
-                    var f = new TFile();
-                    f.Id = fileName;
-                    f.IsDelete = false;
-                    f.Name = file.FileName;
-                    f.Path = path;
-                    f.Table = business;
-                    f.TableId = key;
-                    f.Sign = sign;
-                    f.CreateUserId = userId;
-                    f.CreateTime = DateTime.Now;
-                    db.TFile.Add(f);
-                    db.SaveChanges();
 
-                    return fileName;
-                }
+                var f = new TFile();
+                f.Id = fileName;
+                f.IsDelete = false;
+                f.Name = file.FileName;
+                f.Path = path;
+                f.Table = business;
+                f.TableId = key;
+                f.Sign = sign;
+                f.CreateUserId = userId;
+                f.CreateTime = DateTime.Now;
+                db.TFile.Add(f);
+                db.SaveChanges();
+
+                return fileName;
             }
             else
             {
@@ -252,28 +256,26 @@ namespace WebApi.Controllers
         [HttpGet("GetFile")]
         public FileResult GetFile([Required] Guid fileid)
         {
-            using (var db = new dbContext())
-            {
-                var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
-                string path = Libraries.IO.Path.ContentRootPath() + file.Path;
+
+            var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
+            string path = Libraries.IO.Path.ContentRootPath() + file.Path;
 
 
-                //读取文件入流
-                var stream = System.IO.File.OpenRead(path);
+            //读取文件入流
+            var stream = System.IO.File.OpenRead(path);
 
-                //获取文件后缀
-                string fileExt = Path.GetExtension(path);
+            //获取文件后缀
+            string fileExt = Path.GetExtension(path);
 
-                //获取系统常规全部mime类型
-                var provider = new FileExtensionContentTypeProvider();
+            //获取系统常规全部mime类型
+            var provider = new FileExtensionContentTypeProvider();
 
-                //通过文件后缀寻找对呀的mime类型
-                var memi = provider.Mappings.ContainsKey(fileExt) ? provider.Mappings[fileExt] : provider.Mappings[".zip"];
+            //通过文件后缀寻找对呀的mime类型
+            var memi = provider.Mappings.ContainsKey(fileExt) ? provider.Mappings[fileExt] : provider.Mappings[".zip"];
 
 
-                return File(stream, memi, file.Name);
+            return File(stream, memi, file.Name);
 
-            }
 
         }
 
@@ -293,114 +295,112 @@ namespace WebApi.Controllers
         [HttpGet("GetImage")]
         public FileResult GetImage([Required] Guid fileId, int width, int height)
         {
-            using (var db = new dbContext())
+
+            var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
+            var path = Libraries.IO.Path.ContentRootPath() + file.Path;
+
+            var stream = System.IO.File.OpenRead(path);
+
+            string fileExt = Path.GetExtension(path);
+
+            var provider = new FileExtensionContentTypeProvider();
+
+            var memi = provider.Mappings[fileExt];
+
+            if (width == 0 && height == 0)
             {
-                var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
-                var path = Libraries.IO.Path.ContentRootPath() + file.Path;
+                return File(stream, memi, file.Name);
+            }
+            else
+            {
+                Image img = Image.FromStream(stream);
 
-                var stream = System.IO.File.OpenRead(path);
-
-                string fileExt = Path.GetExtension(path);
-
-                var provider = new FileExtensionContentTypeProvider();
-
-                var memi = provider.Mappings[fileExt];
-
-                if (width == 0 && height == 0)
+                if (Array.IndexOf(img.PropertyIdList, 274) > -1)
                 {
+                    var orientation = 0;
+
+                    var platform = Environment.OSVersion.Platform;
+
+                    if (platform == PlatformID.Win32NT)
+                    {
+                        orientation = (int)img.GetPropertyItem(274).Value[0];
+                    }
+
+                    if (platform == PlatformID.Unix)
+                    {
+                        orientation = (int)img.GetPropertyItem(274).Value[1];
+                    }
+
+
+                    switch (orientation)
+                    {
+                        case 1:
+                            // No rotation required.
+                            break;
+                        case 2:
+                            img.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                            break;
+                        case 3:
+                            img.RotateFlip(RotateFlipType.Rotate180FlipNone);
+                            break;
+                        case 4:
+                            img.RotateFlip(RotateFlipType.Rotate180FlipX);
+                            break;
+                        case 5:
+                            img.RotateFlip(RotateFlipType.Rotate90FlipX);
+                            break;
+                        case 6:
+                            img.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                            break;
+                        case 7:
+                            img.RotateFlip(RotateFlipType.Rotate270FlipX);
+                            break;
+                        case 8:
+                            img.RotateFlip(RotateFlipType.Rotate270FlipNone);
+                            break;
+                    }
+                    img.RemovePropertyItem(274);
+                }
+
+                if (img.Width < width || img.Height < height)
+                {
+                    img.Dispose();
+
+                    stream = System.IO.File.OpenRead(path);
+
                     return File(stream, memi, file.Name);
                 }
                 else
                 {
-                    Image img = Image.FromStream(stream);
+                    MemoryStream ms = new MemoryStream();
 
-                    if (Array.IndexOf(img.PropertyIdList, 274) > -1)
+
+                    if (width != 0 && height == 0)
                     {
-                        var orientation = 0;
+                        var percent = ((float)width / (float)img.Width);
 
-                        var platform = Environment.OSVersion.Platform;
-
-                        if (platform == PlatformID.Win32NT)
-                        {
-                            orientation = (int)img.GetPropertyItem(274).Value[0];
-                        }
-
-                        if (platform == PlatformID.Unix)
-                        {
-                            orientation = (int)img.GetPropertyItem(274).Value[1];
-                        }
-
-
-                        switch (orientation)
-                        {
-                            case 1:
-                                // No rotation required.
-                                break;
-                            case 2:
-                                img.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                                break;
-                            case 3:
-                                img.RotateFlip(RotateFlipType.Rotate180FlipNone);
-                                break;
-                            case 4:
-                                img.RotateFlip(RotateFlipType.Rotate180FlipX);
-                                break;
-                            case 5:
-                                img.RotateFlip(RotateFlipType.Rotate90FlipX);
-                                break;
-                            case 6:
-                                img.RotateFlip(RotateFlipType.Rotate90FlipNone);
-                                break;
-                            case 7:
-                                img.RotateFlip(RotateFlipType.Rotate270FlipX);
-                                break;
-                            case 8:
-                                img.RotateFlip(RotateFlipType.Rotate270FlipNone);
-                                break;
-                        }
-                        img.RemovePropertyItem(274);
+                        width = (int)(img.Width * percent);
+                        height = (int)(img.Height * percent);
                     }
 
-                    if (img.Width < width || img.Height < height)
+                    if (width == 0 && height != 0)
                     {
-                        img.Dispose();
+                        var percent = ((float)height / (float)img.Height);
 
-                        stream = System.IO.File.OpenRead(path);
-
-                        return File(stream, memi, file.Name);
-                    }
-                    else
-                    {
-                        MemoryStream ms = new MemoryStream();
-
-
-                        if (width != 0 && height == 0)
-                        {
-                            var percent = ((float)width / (float)img.Width);
-
-                            width = (int)(img.Width * percent);
-                            height = (int)(img.Height * percent);
-                        }
-
-                        if (width == 0 && height != 0)
-                        {
-                            var percent = ((float)height / (float)img.Height);
-
-                            width = (int)(img.Width * percent);
-                            height = (int)(img.Height * percent);
-                        }
-
-
-
-                        img.GetThumbnailImage(width, height, null, IntPtr.Zero).Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-
-                        img.Dispose();
-                        ms.Dispose();
-
-                        return File(ms.ToArray(), "image/png");
+                        width = (int)(img.Width * percent);
+                        height = (int)(img.Height * percent);
                     }
 
+
+
+                    img.GetThumbnailImage(width, height, null, IntPtr.Zero).Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+
+                    img.Dispose();
+                    ms.Dispose();
+
+                    return File(ms.ToArray(), "image/png");
                 }
+
             }
         }
 
@@ -414,27 +414,24 @@ namespace WebApi.Controllers
         [HttpGet("GetFilePath")]
         public string GetFilePath([Required] Guid fileid)
         {
-            using (var db = new dbContext())
+
+            var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
+
+            if (file != null)
             {
-                var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
+                string domain = "https://file.xxxx.com";
 
-                if (file != null)
-                {
-                    string domain = "https://file.xxxx.com";
+                string fileUrl = domain + file.Path.Replace("\\", "/");
 
-                    string fileUrl = domain + file.Path.Replace("\\", "/");
+                return fileUrl;
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
 
-                    return fileUrl;
-                }
-                else
-                {
-                    HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件！");
 
-                    HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件！");
-
-                    return null;
-                }
-
+                return null;
             }
 
         }
@@ -454,47 +451,44 @@ namespace WebApi.Controllers
         [HttpGet("CreateGroupFileId")]
         public Guid CreateGroupFileId([Required] string business, [Required] Guid key, [Required] string sign, [Required] string fileName, [Required] int slicing, [Required] string unique)
         {
-            using (var db = new dbContext())
+
+            var dbfileinfo = db.TFileGroup.Where(t => t.Unique.ToLower() == unique.ToLower()).FirstOrDefault();
+
+            if (dbfileinfo == null)
             {
 
-                var dbfileinfo = db.TFileGroup.Where(t => t.Unique.ToLower() == unique.ToLower()).FirstOrDefault();
+                var fileid = Guid.NewGuid().ToString() + Path.GetExtension(fileName).ToLowerInvariant(); ;
 
-                if (dbfileinfo == null)
-                {
-
-                    var fileid = Guid.NewGuid().ToString() + Path.GetExtension(fileName).ToLowerInvariant(); ;
-
-                    string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fileid;
+                string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fileid;
 
 
-                    var f = new TFile();
-                    f.Id = Guid.NewGuid();
-                    f.Name = fileName;
-                    f.Path = basepath;
-                    f.Table = business;
-                    f.TableId = key;
-                    f.Sign = sign;
-                    f.CreateTime = DateTime.Now;
+                var f = new TFile();
+                f.Id = Guid.NewGuid();
+                f.Name = fileName;
+                f.Path = basepath;
+                f.Table = business;
+                f.TableId = key;
+                f.Sign = sign;
+                f.CreateTime = DateTime.Now;
 
-                    db.TFile.Add(f);
-                    db.SaveChanges();
+                db.TFile.Add(f);
+                db.SaveChanges();
 
-                    var group = new TFileGroup();
-                    group.Id = Guid.NewGuid();
-                    group.FileId = f.Id;
-                    group.Unique = unique;
-                    group.Slicing = slicing;
-                    group.Issynthesis = false;
-                    group.Isfull = false;
-                    db.TFileGroup.Add(group);
-                    db.SaveChanges();
+                var group = new TFileGroup();
+                group.Id = Guid.NewGuid();
+                group.FileId = f.Id;
+                group.Unique = unique;
+                group.Slicing = slicing;
+                group.Issynthesis = false;
+                group.Isfull = false;
+                db.TFileGroup.Add(group);
+                db.SaveChanges();
 
-                    return f.Id;
-                }
-                else
-                {
-                    return dbfileinfo.FileId;
-                }
+                return f.Id;
+            }
+            else
+            {
+                return dbfileinfo.FileId;
             }
         }
 
@@ -542,66 +536,64 @@ namespace WebApi.Controllers
                     path = basepath + "/" + fullFileName;
                 }
 
-                using (var db = new dbContext())
+
+                var group = db.TFileGroup.Where(t => t.FileId == fileId).FirstOrDefault();
+
+                var groupfile = new TFileGroupFile();
+                groupfile.Id = Guid.NewGuid();
+                groupfile.FileId = group.FileId;
+                groupfile.Path = path;
+                groupfile.Index = index;
+                groupfile.CreateTime = DateTime.Now;
+
+                db.TFileGroupFile.Add(groupfile);
+
+                if (index == group.Slicing)
                 {
-                    var group = db.TFileGroup.Where(t => t.FileId == fileId).FirstOrDefault();
+                    group.Isfull = true;
+                }
 
-                    var groupfile = new TFileGroupFile();
-                    groupfile.Id = Guid.NewGuid();
-                    groupfile.FileId = group.FileId;
-                    groupfile.Path = path;
-                    groupfile.Index = index;
-                    groupfile.CreateTime = DateTime.Now;
+                db.SaveChanges();
 
-                    db.TFileGroupFile.Add(groupfile);
+                if (group.Isfull == true)
+                {
 
-                    if (index == group.Slicing)
+                    try
                     {
-                        group.Isfull = true;
-                    }
+                        byte[] buffer = new byte[1024 * 100];
 
-                    db.SaveChanges();
+                        var fileinfo = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
 
-                    if (group.Isfull == true)
-                    {
+                        var fullfilepath = Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
 
-                        try
+                        using (FileStream outStream = new FileStream(fullfilepath, FileMode.Create))
                         {
-                            byte[] buffer = new byte[1024 * 100];
+                            int readedLen = 0;
+                            FileStream srcStream = null;
 
-                            var fileinfo = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
+                            var filelist = db.TFileGroupFile.Where(t => t.FileId == fileinfo.Id).OrderBy(t => t.Index).ToList();
 
-                            var fullfilepath = Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
-
-                            using (FileStream outStream = new FileStream(fullfilepath, FileMode.Create))
+                            foreach (var item in filelist)
                             {
-                                int readedLen = 0;
-                                FileStream srcStream = null;
-
-                                var filelist = db.TFileGroupFile.Where(t => t.FileId == fileinfo.Id).OrderBy(t => t.Index).ToList();
-
-                                foreach (var item in filelist)
+                                string p = Libraries.IO.Path.ContentRootPath() + item.Path;
+                                srcStream = new FileStream(p, FileMode.Open);
+                                while ((readedLen = srcStream.Read(buffer, 0, buffer.Length)) > 0)
                                 {
-                                    string p = Libraries.IO.Path.ContentRootPath() + item.Path;
-                                    srcStream = new FileStream(p, FileMode.Open);
-                                    while ((readedLen = srcStream.Read(buffer, 0, buffer.Length)) > 0)
-                                    {
-                                        outStream.Write(buffer, 0, readedLen);
-                                    }
-                                    srcStream.Close();
+                                    outStream.Write(buffer, 0, readedLen);
                                 }
+                                srcStream.Close();
                             }
-
-                            group.Issynthesis = true;
-
-                            db.SaveChanges();
                         }
-                        catch
-                        {
 
-                        }
+                        group.Issynthesis = true;
+
+                        db.SaveChanges();
+                    }
+                    catch
+                    {
 
                     }
+
                 }
 
                 return true;
@@ -624,15 +616,13 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (var db = new dbContext())
-                {
-                    var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 
-                    file.IsDelete = true;
-                    file.DeleteTime = DateTime.Now;
+                var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 
-                    db.SaveChanges();
-                }
+                file.IsDelete = true;
+                file.DeleteTime = DateTime.Now;
+
+                db.SaveChanges();
 
                 return true;
             }

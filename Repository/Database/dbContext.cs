@@ -1,4 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using MySql.Data.MySqlClient;
+using Npgsql;
 using Repository.Interceptors;
 using System;
 using System.Linq;
@@ -113,10 +117,11 @@ namespace Repository.Database
 
             var optionsBuilder = new DbContextOptionsBuilder<dbContext>();
 
-            //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseMySQL("server=127.0.0.1;userid=root;pwd=123456;database=webcore;", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+
+            //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseMySQL("server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100", o => o.MigrationsHistoryTable("__efmigrationshistory"));
             //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=100", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
             //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
             //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));

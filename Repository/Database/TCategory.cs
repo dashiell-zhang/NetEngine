@@ -16,7 +16,7 @@ namespace Repository.Database
         /// 频道ID
         /// </summary>
         public Guid ChannelId { get; set; }
-        public TChannel Channel { get; set; }
+        public virtual TChannel Channel { get; set; }
 
 
         /// <summary>
@@ -46,6 +46,6 @@ namespace Repository.Database
 
 
 
-        public virtual ICollection<TArticle> TArticle { get; set; }
+        public virtual List<TArticle> TArticle { get; set; }
     }
 }

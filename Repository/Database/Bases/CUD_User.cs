@@ -16,21 +16,21 @@ namespace Repository.Database.Bases
         /// 创建人ID
         /// </summary>
         public Guid CreateUserId { get; set; }
-        public TUser CreateUser { get; set; }
+        public virtual TUser CreateUser { get; set; }
 
 
         /// <summary>
         /// 编辑人ID
         /// </summary>
         public Guid? UpdateUserId { get; set; }
-        public TUser UpdateUser { get; set; }
+        public virtual TUser UpdateUser { get; set; }
 
 
         /// <summary>
         /// 删除人ID
         /// </summary>
         public Guid? DeleteUserId { get; set; }
-        public TUser DeleteUser { get; set; }
+        public virtual TUser DeleteUser { get; set; }
 
 
     }

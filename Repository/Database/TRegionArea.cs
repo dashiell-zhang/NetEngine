@@ -9,7 +9,7 @@ namespace Repository.Database
     public class TRegionArea
     {
 
-        [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None)]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace Repository.Database
         /// <summary>
         /// 城市下所有乡镇信息
         /// </summary>
-        public virtual ICollection<TRegionTown> TRegionTown { get; set; }
+        public virtual List<TRegionTown> TRegionTown { get; set; }
 
 
     }

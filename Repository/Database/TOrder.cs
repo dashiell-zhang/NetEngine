@@ -76,6 +76,6 @@ namespace Repository.Database
         /// <summary>
         /// 订单详情
         /// </summary>
-        public List<TOrderDetail> OrderDetails { get; set; }
+        public virtual List<TOrderDetail> OrderDetails { get; set; }
     }
 }

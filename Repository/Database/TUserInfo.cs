@@ -14,14 +14,14 @@ namespace Repository.Database
         /// 用户ID
         /// </summary>
         public Guid UserId { get; set; }
-        public TUser User { get; set; }
+        public virtual TUser User { get; set; }
 
 
         /// <summary>
         /// 地址区域ID
         /// </summary>
         public int RegionAreaId { get; set; }
-        public TRegionArea RegionArea { get; set; }
+        public virtual TRegionArea RegionArea { get; set; }
 
 
 

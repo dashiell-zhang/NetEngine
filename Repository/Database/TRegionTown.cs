@@ -5,7 +5,7 @@ namespace Repository.Database
     public class TRegionTown
     {
 
-        [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None)]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
 

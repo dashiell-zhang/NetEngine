@@ -10,7 +10,7 @@ namespace Repository.Database
     public  class TRegionCity
     {
 
-        [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None)]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
 
@@ -30,6 +30,6 @@ namespace Repository.Database
         /// <summary>
         /// 城市下所有区域信息
         /// </summary>
-        public virtual ICollection<TRegionArea> TRegionArea { get; set; }
+        public virtual List<TRegionArea> TRegionArea { get; set; }
     }
 }

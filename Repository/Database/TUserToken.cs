@@ -14,7 +14,7 @@ namespace Repository.Database
         /// 用户ID
         /// </summary>
         public Guid UserId { get; set; }
-        public TUser User { get; set; }
+        public virtual TUser User { get; set; }
 
 
 
@@ -27,7 +27,7 @@ namespace Repository.Database
         /// <summary>
         /// 上一次有效的 tokenid
         /// </summary>
-        public Guid LastId { get; set; }
+        public Guid? LastId { get; set; }
 
     }
 }

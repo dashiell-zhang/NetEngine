@@ -15,14 +15,14 @@ namespace Repository.Database
         /// 用户ID
         /// </summary>
         public Guid UserId { get; set; }
-        public TUser User { get; set; }
+        public virtual TUser User { get; set; }
 
 
         /// <summary>
         /// 关联支付宝账户
         /// </summary>
         public Guid AlipayKeyId { get; set; }
-        public TAlipayKey AlipayKey { get; set; }
+        public virtual TAlipayKey AlipayKey { get; set; }
 
 
 

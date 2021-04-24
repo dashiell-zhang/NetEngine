@@ -15,14 +15,14 @@ namespace Repository.Database
         /// 用户ID
         /// </summary>
         public Guid UserId { get; set; }
-        public TUser User { get; set; }
+        public virtual TUser User { get; set; }
 
 
         /// <summary>
         /// 关联微信账户
         /// </summary>
         public Guid WeiXinKeyId { get; set; }
-        public TWeiXinKey WeiXinKey { get; set; }
+        public virtual TWeiXinKey WeiXinKey { get; set; }
 
 
 

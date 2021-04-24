@@ -14,7 +14,7 @@ namespace Repository.Database
         /// 文件ID
         /// </summary>
         public Guid FileId { get; set; }
-        public TFile File { get; set; }
+        public virtual TFile File { get; set; }
 
 
         /// <summary>

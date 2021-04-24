@@ -10,7 +10,7 @@ namespace Repository.Database
     public  class TRegionProvince
     {
 
-        [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None)]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
 
@@ -23,6 +23,6 @@ namespace Repository.Database
         /// <summary>
         /// 省份下包含的所有城市信息
         /// </summary>
-        public virtual ICollection<TRegionCity> TRegionCity { get; set; }
+        public virtual List<TRegionCity> TRegionCity { get; set; }
     }
 }

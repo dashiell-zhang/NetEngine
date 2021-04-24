@@ -15,7 +15,7 @@ namespace Repository.Database
         /// 类别ID
         /// </summary>
         public Guid CategoryId { get; set; }
-        public TCategory Category { get; set; }
+        public virtual TCategory Category { get; set; }
 
 
         /// <summary>

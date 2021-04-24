@@ -314,5 +314,32 @@ namespace Common.AliYun
 
 
 
+
+        /// <summary>
+        /// 更新文件元信息
+        /// </summary>
+        /// <param name="remotePath">远程文件地址</param>
+        /// <param name="objectMetadata">文件元信息</param>
+        public bool ModifyObjectMeta(string remotePath, ObjectMetadata objectMetadata)
+        {
+            // 创建OssClient实例。
+            var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
+            try
+            {
+                // 通过ModifyObjectMeta方法修改文件元信息。
+                client.ModifyObjectMeta(bucketName, remotePath, objectMetadata);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Put object failed, {0}", ex.Message);
+
+                return false;
+            }
+        }
+
+
+
     }
 }

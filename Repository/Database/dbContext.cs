@@ -13,11 +13,6 @@ namespace Repository.Database
 
 
 
-        public dbContext()
-        {
-        }
-
-
         public dbContext(DbContextOptions<dbContext> options = default) : base(options = GetDbContextOptions())
         {
         }
@@ -143,6 +138,8 @@ namespace Repository.Database
 
             return optionsBuilder.Options;
         }
+
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

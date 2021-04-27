@@ -1,6 +1,7 @@
 ﻿using Common.IO.Tar;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Text;
 
@@ -12,8 +13,8 @@ namespace Common.IO
         /// <summary>
         /// 删除指定文件,删除后如果文件夹也为空同时删除文件夹
         /// </summary>
-        /// <param name="Path"></param>
-        public static void Delete(string path)
+        /// <param name="path"></param>
+        public static bool Delete(string path)
         {
             try
             {
@@ -31,10 +32,12 @@ namespace Common.IO
                 {
                     Directory.Delete(path);
                 }
+
+                return true;
             }
             catch
             {
-
+                return false;
             }
         }
 
@@ -44,32 +47,32 @@ namespace Common.IO
         /// 下载远程文件保存到本地
         /// </summary>
         /// <param name="url">文件URL</param>
-        /// <param name="filepath">保存路径，以 / 结束，否则将取最后一个 / 之前的路径, / 之后的当作自定义文件名前缀</param>
-        /// <param name="filename">保存文件名称,不传则自动通过 url 获取名称</param>
+        /// <param name="filePath">保存路径，以 / 结束，否则将取最后一个 / 之前的路径, / 之后的当作自定义文件名前缀</param>
+        /// <param name="fileName">保存文件名称,不传则自动通过 url 获取名称</param>
         /// <returns></returns>
-        public static string DownloadFile(string url, string filepath, string filename = null)
+        public static string DownloadFile(string url, string filePath, string fileName = null)
         {
             try
             {
-                if (filename == null)
+                if (fileName == null)
                 {
-                    filename = System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
+                    fileName = System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
                 }
 
                 //检查目标路径文件夹是否存在不存在则创建
-                if (!Directory.Exists(filepath))
+                if (!Directory.Exists(filePath))
                 {
                     //如果路径结尾不是 / 则说明尾端可能是自定义的文件名前缀
 
-                    var lastindex = filepath.Length - filepath.LastIndexOf("/");
+                    var lastindex = filePath.Length - filePath.LastIndexOf("/");
 
                     if (lastindex == 1)
                     {
-                        Directory.CreateDirectory(filepath);
+                        Directory.CreateDirectory(filePath);
                     }
                     else
                     {
-                        string temp = filepath.Substring(0, filepath.LastIndexOf("/"));
+                        string temp = filePath.Substring(0, filePath.LastIndexOf("/"));
                         Directory.CreateDirectory(temp);
 
                     }
@@ -80,7 +83,7 @@ namespace Common.IO
                 //添加来源属性，解决部分资源防盗链伪验证
                 webClient.Headers.Add(HttpRequestHeader.Referer, "");
 
-                string fullpath = filepath + filename;
+                string fullpath = filePath + fileName;
 
                 //下载文件
                 webClient.DownloadFile(url, fullpath);
@@ -102,8 +105,7 @@ namespace Common.IO
         /// <returns></returns>
         public static string GetFileSize(string path)
         {
-            FileInfo fileInfo = null;
-            fileInfo = new System.IO.FileInfo(path);
+            var fileInfo = new FileInfo(path);
 
             string m_strSize = "";
 
@@ -134,14 +136,12 @@ namespace Common.IO
         /// <summary>
         /// 获取文件夹下所有文件
         /// </summary>
-        /// <param name="directory">文件夹路径</param>
-        /// <param name="pattern">文件类型</param>
-        /// <param name="list">集合</param>
-        public static List<string> GetFolderAllFiles(string FolderPath)
+        /// <param name="folderPath">文件夹路径</param>
+        public static List<string> GetFolderAllFiles(string folderPath)
         {
             var list = new List<string>();
 
-            DirectoryInfo directoryInfo = new DirectoryInfo(FolderPath);
+            var directoryInfo = new DirectoryInfo(folderPath);
             foreach (FileInfo info in directoryInfo.GetFiles())
             {
                 list.Add(info.FullName);
@@ -165,20 +165,20 @@ namespace Common.IO
         /// <summary>
         /// 将指定目录下的文件压缩为tar文件
         /// </summary>
-        /// <param name="FolderPath">文件夹地址 D:/1/ </param>
-        /// <param name="FilePath">文件地址 D:/1.tar </param>
+        /// <param name="folderPath">文件夹地址 D:/1/ </param>
+        /// <param name="filePath">文件地址 D:/1.tar </param>
         /// <remarks>依赖于SharpZipLib，如果缺失请独立安装</remarks>
-        public static void CompressTarFile(string FolderPath, string FilePath)
+        public static void CompressTarFile(string folderPath, string filePath)
         {
-            var outStream = new FileStream(FilePath, FileMode.OpenOrCreate);
+            var outStream = new FileStream(filePath, FileMode.OpenOrCreate);
             var archive = TarArchive.CreateOutputTarArchive(outStream);
-            var files = GetFolderAllFiles(FolderPath);
+            var files = GetFolderAllFiles(folderPath);
 
             foreach (var file in files)
             {
 
                 TarEntry entry = TarEntry.CreateEntryFromFile(file);
-                entry.Name = file.Replace(FolderPath, "");
+                entry.Name = file.Replace(folderPath, "");
                 entry.TarHeader.Mode = 511;
                 archive.WriteEntry(entry, true);
             }
@@ -193,20 +193,20 @@ namespace Common.IO
         /// <summary>
         /// 解压Tar文件到指定目录
         /// </summary>
-        /// <param name="FilePath">文件地址</param>
-        /// <param name="FolderPath"></param>
+        /// <param name="filePath">文件地址 D:/1.tar</param>
+        /// <param name="folderPath">文件夹地址 D:/1/</param>
         /// <remarks>依赖于SharpZipLib，如果缺失请独立安装</remarks>
-        public static void DecompressTarFile(string FilePath, string FolderPath)
+        public static void DecompressTarFile(string filePath, string folderPath)
         {
 
-            using (var s = new TarInputStream(File.OpenRead(FilePath), Encoding.Default))
+            using (var s = new TarInputStream(File.OpenRead(filePath), Encoding.Default))
             {
 
                 TarEntry theEntry;
                 while ((theEntry = s.GetNextEntry()) != null)
                 {
 
-                    theEntry.Name = FolderPath + theEntry.Name;
+                    theEntry.Name = folderPath + theEntry.Name;
 
                     string directoryName = Path.GetDirectoryName(theEntry.Name);
                     string fileName = Path.GetFileName(theEntry.Name);
@@ -241,6 +241,31 @@ namespace Common.IO
             }
         }
 
+
+
+
+
+        /// <summary>
+        /// 将指定目录下的文件压缩为Zip文件
+        /// </summary>
+        /// <param name="folderPath">文件夹地址 D:/1/ </param>
+        /// <param name="filePath">文件地址 D:/1.zip </param>
+        public static void CompressZipFile(string folderPath, string filePath)
+        {
+            ZipFile.CreateFromDirectory(folderPath, filePath, CompressionLevel.Optimal, false);
+        }
+
+
+
+        /// <summary>
+        /// 解压Zip文件到指定目录
+        /// </summary>
+        /// <param name="filePath">文件地址 D:/1.zip</param>
+        /// <param name="folderPath">文件夹地址 D:/1/</param>
+        public static void DecompressZipFile(string filePath, string folderPath)
+        {
+            ZipFile.ExtractToDirectory(filePath, folderPath);
+        }
 
     }
 }

@@ -53,9 +53,33 @@ namespace Cms.Libraries.Ueditor
                     File.WriteAllBytes(localPath, uploadFileBytes);
 
 
+                    bool upRemote = false;
 
-                    Result.Url = savePath;
-                    Result.State = UploadState.Success;
+                    if (upRemote)
+                    {
+                        //将文件转存至 oss 并清理本地文件
+                        var oss = new Common.AliYun.OssHelper();
+                        var upload = oss.FileUpload(localPath, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), Path.GetFileName(localPath));
+
+                        if (upload)
+                        {
+                            Common.IO.IOHelper.Delete(localPath);
+
+                            Result.Url = "Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
+                            Result.State = UploadState.Success;
+                        }
+                        else
+                        {
+                            Result.State = UploadState.FileAccessError;
+                            Result.ErrorMessage = "阿里云OSS文件转存失败";
+                        }
+                    }
+                    else
+                    {
+                        Result.Url = savePath;
+                        Result.State = UploadState.Success;
+                    }
+
                 }
                 catch (Exception e)
                 {

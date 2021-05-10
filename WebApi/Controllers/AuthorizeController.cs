@@ -5,7 +5,7 @@ using Repository.Database;
 using System;
 using System.Linq;
 using System.Security.Claims;
-
+using System.Threading;
 
 namespace WebApi.Controllers
 {
@@ -106,39 +106,59 @@ namespace WebApi.Controllers
             if (user == null)
             {
 
-                //注册一个只有基本信息的账户出来
+                bool isAction = false;
 
-                user = new TUser();
+                while (isAction == false)
+                {
+                    if (Common.RedisHelper.Lock("GetTokenByWeiXinMiniAppCode" + openid, "123456", TimeSpan.FromSeconds(5)))
+                    {
+                        isAction = true;
 
-                user.Id = Guid.NewGuid();
-                user.IsDelete = false;
-                user.CreateTime = DateTime.Now;
-                user.Name = DateTime.Now.ToString() + "微信小程序新用户";
-                user.NickName = user.Name;
-                user.PassWord = Guid.NewGuid().ToString();
+                        user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid).Select(t => t.User).FirstOrDefault();
 
-                db.TUser.Add(user);
+                        if (user == null)
+                        {
+                            //注册一个只有基本信息的账户出来
+                            user = new TUser();
 
-                db.SaveChanges();
+                            user.Id = Guid.NewGuid();
+                            user.IsDelete = false;
+                            user.CreateTime = DateTime.Now;
+                            user.Name = DateTime.Now.ToString() + "微信小程序新用户";
+                            user.NickName = user.Name;
+                            user.PassWord = Guid.NewGuid().ToString();
 
-                TUserBindWeixin userBind = new TUserBindWeixin();
-                userBind.Id = Guid.NewGuid();
-                userBind.IsDelete = false;
-                userBind.CreateTime = DateTime.Now;
-                userBind.UserId = user.Id;
-                userBind.WeiXinKeyId = weixinkeyid;
-                userBind.WeiXinOpenId = openid;
+                            //开发时记得调整这个值
+                            user.RoleId = default;
 
-                db.TUserBindWeixin.Add(userBind);
+                            db.TUser.Add(user);
 
-                db.SaveChanges();
+                            db.SaveChanges();
 
+                            TUserBindWeixin userBind = new TUserBindWeixin();
+                            userBind.Id = Guid.NewGuid();
+                            userBind.IsDelete = false;
+                            userBind.CreateTime = DateTime.Now;
+                            userBind.UserId = user.Id;
+                            userBind.WeiXinKeyId = weixinkeyid;
+                            userBind.WeiXinOpenId = openid;
+
+                            db.TUserBindWeixin.Add(userBind);
+
+                            db.SaveChanges();
+                        }
+
+                        Common.RedisHelper.UnLock("GetTokenByWeiXinMiniAppCode" + openid, "123456");
+                    }
+                    else
+                    {
+                        Thread.Sleep(500);
+                    }
+                }
 
             }
 
             return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
-
-
         }
 
 

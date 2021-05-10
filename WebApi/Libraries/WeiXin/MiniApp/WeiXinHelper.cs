@@ -45,11 +45,34 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
             string httpret = Common.HttpHelper.Get(url);
 
-            string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid");
+            try
+            {
+                string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid");
+                string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key");
 
-            string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key");
+                Common.RedisHelper.StrSet(code, httpret, new TimeSpan(0, 0, 10));
 
-            return (openid, sessionkey);
+                return (openid, sessionkey);
+            }
+            catch
+            {
+                string errcode = Common.Json.JsonHelper.GetValueByKey(httpret, "errcode");
+
+                if (errcode == "40163")
+                {
+                    var cachHttpRet = Common.RedisHelper.StrGet(code);
+
+                    if (!string.IsNullOrEmpty(cachHttpRet))
+                    {
+                        httpret = cachHttpRet;
+                    }
+                }
+
+                string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid");
+                string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key");
+
+                return (openid, sessionkey);
+            }
         }
 
 

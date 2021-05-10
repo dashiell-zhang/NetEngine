@@ -61,7 +61,7 @@ namespace Cms.Controllers
                 //执行添加
                 Channel.Id = Guid.NewGuid();
 
-                var userid = Guid.Parse(HttpContext.Session.GetString("userid"));
+                var userid = Guid.Parse(HttpContext.Session.GetString("userId"));
 
                 Channel.CreateTime = DateTime.Now;
                 Channel.CreateUserId = userid;
@@ -91,7 +91,7 @@ namespace Cms.Controllers
             var Channel = db.TChannel.Where(t => t.Id == id).FirstOrDefault();
             Channel.IsDelete = true;
             Channel.DeleteTime = DateTime.Now;
-            Channel.DeleteUserId = Guid.Parse(HttpContext.Session.GetString("userid"));
+            Channel.DeleteUserId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
             db.SaveChanges();
 
@@ -154,7 +154,7 @@ namespace Cms.Controllers
                 Category.ParentId = null;
             }
 
-            var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
+            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
 
 
@@ -196,7 +196,7 @@ namespace Cms.Controllers
 
             if (subCategoryCount == 0)
             {
-                var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
+                var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
                 var Category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
 
@@ -289,7 +289,7 @@ namespace Cms.Controllers
         {
             try
             {
-                var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
+                var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
 
 
@@ -335,7 +335,7 @@ namespace Cms.Controllers
         public JsonResult ArticleDelete(Guid id)
         {
 
-            var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
+            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
             var article = db.TArticle.Where(t => t.Id == id).FirstOrDefault();
 

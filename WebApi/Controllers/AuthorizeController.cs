@@ -53,8 +53,8 @@ namespace WebApi.Controllers
                 db.SaveChanges();
 
                 var claim = new Claim[]{
-                        new Claim("tokenid",userToken.Id.ToString()),
-                             new Claim("userid",user.Id.ToString())
+                        new Claim("tokenId",userToken.Id.ToString()),
+                             new Claim("userId",user.Id.ToString())
                         };
 
 

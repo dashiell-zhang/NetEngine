@@ -31,7 +31,7 @@ namespace TaskAdmin.Filters
             {
 
 
-                if (!string.IsNullOrEmpty(context.HttpContext.Session.GetString("userid")))
+                if (!string.IsNullOrEmpty(context.HttpContext.Session.GetString("userId")))
                 {
                     //成功登录
 
@@ -41,14 +41,14 @@ namespace TaskAdmin.Filters
                     //阻断跳转原先的请求信息到登录页
                     var result = new ViewResult
                     {
-                        ViewName = "~/Views/User/Index.cshtml"
+                        ViewName = "~/Views/User/Login.cshtml"
                     };
 
                     context.Result = result;
 
 
                     //302跳转到登录页面 
-                    context.HttpContext.Response.Redirect("/User/");
+                    context.HttpContext.Response.Redirect("/User/Login");
                 }
             }
         }

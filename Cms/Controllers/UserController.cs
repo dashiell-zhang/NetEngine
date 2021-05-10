@@ -34,19 +34,17 @@ namespace Cms.Controllers
 
 
         [IsLogin(IsSkip = true)]
-        public JsonResult Login_Run(string name, string pwd)
+        public JsonResult LoginAction(string name, string pwd)
         {
             var Data = new { status = true };
-
-
 
             var userlist = db.TUser.ToList();
             var user = db.TUser.Where(t => t.Name == name & t.PassWord == pwd & t.IsDelete == false).FirstOrDefault();
 
             if (user != null)
             {
-                HttpContext.Session.SetString("userid", user.Id.ToString());
-                HttpContext.Session.SetString("nickname", user.NickName);
+                HttpContext.Session.SetString("userId", user.Id.ToString());
+                HttpContext.Session.SetString("nickName", user.NickName);
             }
             else
             {
@@ -61,8 +59,8 @@ namespace Cms.Controllers
         public void Login_Exit()
         {
 
-            HttpContext.Session.SetString("userid", "");
-            HttpContext.Session.SetString("nickname", "");
+            HttpContext.Session.SetString("userId", "");
+            HttpContext.Session.SetString("nickName", "");
 
             Response.Redirect("/User/Login/");
         }

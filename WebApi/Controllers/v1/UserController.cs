@@ -97,19 +97,19 @@ namespace WebApi.Controllers.v1
         /// <summary>
         /// 通过 UserId 获取用户信息 
         /// </summary>
-        /// <param name="userid">用户ID</param>
+        /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
         [CacheData(TTL = 60, UseToken = true)]
-        public dtoUser GetUser(Guid userid)
+        public dtoUser GetUser(Guid userId)
         {
 
-            if (userid == default)
+            if (userId == default)
             {
-                userid = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
+                userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
             }
 
-            var user = db.TUser.Where(t => t.Id == userid && t.IsDelete == false).Select(t => new dtoUser
+            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new dtoUser
             {
                 Name = t.Name,
                 NickName = t.NickName,
@@ -135,7 +135,7 @@ namespace WebApi.Controllers.v1
 
             if (Actions.AuthorizeAction.SmsVerifyPhone(keyValue))
             {
-                var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
+                var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
 
                 string phone = keyValue.Key.ToString();
 
@@ -208,7 +208,7 @@ namespace WebApi.Controllers.v1
         public bool EditUserPassWordBySms([FromBody] dtoKeyValue keyValue)
         {
 
-            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
+            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
 
             string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
 

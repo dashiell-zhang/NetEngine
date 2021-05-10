@@ -7,8 +7,18 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>管理中心</title>
-
+    <script src="~/lib/layui/layui.js"></script>
     <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
+
+    <script>
+
+        $(function () {// 初始化内容
+            layui.use('element', function () {
+                var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+            });
+        });
+
+    </script>
 
 </head>
 
@@ -88,12 +98,5 @@
         </div>
     </div>
 
-    <script src="~/lib/layui/layui.js"></script>
-
-    <script>
-        layui.use('element', function () {
-            var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
-        });
-    </script>
 </body>
 </html>

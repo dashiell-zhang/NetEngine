@@ -13,7 +13,7 @@ namespace TaskAdmin.Filters
         {
             var httpContext = context.GetHttpContext();
 
-            if (!string.IsNullOrEmpty(httpContext.Session.GetString("userid")))
+            if (!string.IsNullOrEmpty(httpContext.Session.GetString("userId")))
             {
                 //成功登录
                 return true;

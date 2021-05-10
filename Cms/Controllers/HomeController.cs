@@ -24,8 +24,8 @@ namespace Cms.Controllers
         public IActionResult Index()
         {
 
-            ViewBag.NickName = HttpContext.Session.GetString("nickname");
-            ViewBag.UserId = HttpContext.Session.GetString("userid");
+            ViewBag.NickName = HttpContext.Session.GetString("nickName");
+            ViewBag.UserId = HttpContext.Session.GetString("userId");
 
 
 

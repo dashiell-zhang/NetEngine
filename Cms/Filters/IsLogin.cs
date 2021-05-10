@@ -31,7 +31,7 @@ namespace Cms.Filters
             {
 
 
-                if (!string.IsNullOrEmpty(context.HttpContext.Session.GetString("userid")))
+                if (!string.IsNullOrEmpty(context.HttpContext.Session.GetString("userId")))
                 {
                     //成功登录
 

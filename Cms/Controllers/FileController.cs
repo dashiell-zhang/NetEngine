@@ -49,7 +49,7 @@ namespace Cms.Controllers
         {
             try
             {
-                var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
+                var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
                 var ReqFiles = Request.Form.Files;
 
@@ -145,7 +145,7 @@ namespace Cms.Controllers
         public bool DeleteFile(Guid id)
         {
 
-            var userid = HttpContext.Session.GetString("userid");
+            var userid = HttpContext.Session.GetString("userId");
 
             var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
 

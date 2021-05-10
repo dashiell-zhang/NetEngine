@@ -12,8 +12,42 @@
     <title>编辑栏目</title>
 
     <script src="~/lib/jquery.js"></script>
+    <script src="~/lib/layui/layui.js"></script>
     <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
-    
+
+    <script>
+
+        $(function () {// 初始化内容
+            layui.use('element', function () {
+                var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+            });
+
+            layui.use('form', function () {
+                var form = layui.form;
+
+                //监听提交
+                form.on('submit(form1)', function (data) {
+
+                    $.ajax({
+                        //几个参数需要注意一下
+                        type: "POST",//方法类型
+                        url: "/Article/CategorySave/",
+                        data: $('#form1').serialize(),
+                        success: function (result) {
+                            if (result == true) {
+                                var index = parent.layer.getFrameIndex(window.name);
+                                parent.onloadDataTable();
+                                parent.layer.close(index);
+                            };
+                        }
+                    });
+
+                    return false;
+                });
+            });
+        });
+
+    </script>
 
 </head>
 
@@ -88,40 +122,6 @@
 
     </form>
 
-    <script src="~/lib/layui/layui.js"></script>
 
-    <script>
-
-        $(function () {// 初始化内容
-            layui.use('element', function () {
-                var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
-            });
-
-            layui.use('form', function () {
-                var form = layui.form;
-
-                //监听提交
-                form.on('submit(form1)', function (data) {
-
-                    $.ajax({
-                        //几个参数需要注意一下
-                        type: "POST",//方法类型
-                        url: "/Article/CategorySave/",
-                        data: $('#form1').serialize(),
-                        success: function (result) {
-                            if (result == true) {
-                                var index = parent.layer.getFrameIndex(window.name);
-                                parent.onloadDataTable();
-                                parent.layer.close(index);
-                            };
-                        }
-                    });
-
-                    return false;
-                });
-            });
-        });
-
-    </script>
 </body>
 </html>

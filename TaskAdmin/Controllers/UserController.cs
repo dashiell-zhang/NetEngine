@@ -18,20 +18,20 @@ namespace TaskAdmin.Controllers
         }
 
 
-        public IActionResult Index()
+        public IActionResult Login()
         {
             return View();
         }
 
 
-        public JsonResult Login(string name, string pwd)
+        public JsonResult LoginAction(string name, string pwd)
         {
             var Data = new { status = true };
 
 
             if (name == "admin" && pwd == "123456")
             {
-                HttpContext.Session.SetString("userid", "admin");
+                HttpContext.Session.SetString("userId", "admin");
             }
             else
             {

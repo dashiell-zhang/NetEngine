@@ -37,7 +37,7 @@ namespace WebApi.Filters
 
                 if (exptime < DateTime.Now)
                 {
-                    var tokenId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("tokenid"));
+                    var tokenId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("tokenId"));
 
                     using (var db = new dbContext())
                     {
@@ -75,8 +75,8 @@ namespace WebApi.Filters
                 if (exptime < DateTime.Now)
                 {
 
-                    var tokenId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("tokenid"));
-                    var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userid"));
+                    var tokenId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("tokenId"));
+                    var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
 
                     using (var db = new dbContext())
                     {
@@ -101,8 +101,8 @@ namespace WebApi.Filters
 
 
                                 var claim = new Claim[]{
-                                    new Claim("tokenid",userToken.Id.ToString()),
-                                    new Claim("userid",userId.ToString())
+                                    new Claim("tokenId",userToken.Id.ToString()),
+                                    new Claim("userId",userId.ToString())
                                 };
 
                                 var token = Libraries.Verify.JwtToken.GetToken(claim);

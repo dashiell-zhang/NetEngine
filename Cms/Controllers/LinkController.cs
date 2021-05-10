@@ -81,7 +81,7 @@ namespace Web.Areas.Admin.Controllers
                 {
                     //执行添加
 
-                    var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
+                    var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
                     Link.Id = Guid.NewGuid();
                     Link.CreateTime = DateTime.Now;
@@ -114,7 +114,7 @@ namespace Web.Areas.Admin.Controllers
 
         public JsonResult LinkDelete(Guid id)
         {
-            var userId = Guid.Parse(HttpContext.Session.GetString("userid"));
+            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
             var Link = db.TLink.Where(t => t.Id == id).FirstOrDefault();
             Link.IsDelete = true;

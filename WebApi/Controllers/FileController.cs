@@ -11,6 +11,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using WebApi.Filters;
 
 namespace WebApi.Controllers
@@ -63,6 +64,12 @@ namespace WebApi.Controllers
             //下载文件
             var dlPath = Common.IO.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
 
+            if (dlPath == null)
+            {
+                Thread.Sleep(5000);
+                dlPath = Common.IO.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
+            }
+
             filePath = dlPath.Replace(Libraries.IO.Path.ContentRootPath(), "");
 
 
@@ -80,7 +87,7 @@ namespace WebApi.Controllers
 
                     if (upload)
                     {
-                        Common.IO.IOHelper.Delete(dlPath);
+                        Common.IO.IOHelper.DeleteFile(dlPath);
                     }
                     else
                     {
@@ -167,7 +174,7 @@ namespace WebApi.Controllers
 
                     if (upload)
                     {
-                        Common.IO.IOHelper.Delete(path);
+                        Common.IO.IOHelper.DeleteFile(path);
 
                         path = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;

@@ -98,7 +98,7 @@ namespace Cms.Controllers
 
                                 if (upload)
                                 {
-                                    Common.IO.IOHelper.Delete(path);
+                                    Common.IO.IOHelper.DeleteFile(path);
 
                                     path = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fullFileName;
                                 }

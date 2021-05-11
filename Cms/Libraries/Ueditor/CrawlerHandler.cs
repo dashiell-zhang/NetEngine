@@ -110,7 +110,7 @@ namespace Cms.Libraries.Ueditor
 
                         if (upload)
                         {
-                            Common.IO.IOHelper.Delete(savePath);
+                            Common.IO.IOHelper.DeleteFile(savePath);
 
                             ServerUrl = "Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
                             State = "SUCCESS";

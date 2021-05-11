@@ -11,26 +11,50 @@ namespace Common.IO
     {
 
         /// <summary>
-        /// 删除指定文件,删除后如果文件夹也为空同时删除文件夹
+        /// 删除指定文件
         /// </summary>
-        /// <param name="path"></param>
-        public static bool Delete(string path)
+        /// <param name="path">文件路径</param>
+        public static bool DeleteFile(string path)
         {
             try
             {
+                var file = new FileInfo(path);
+                if (file.Exists)
+                {
+                    //将文件属性设置为普通,如：只读文件设置为普通
+                    file.Attributes = FileAttributes.Normal;
 
-                FileInfo file = new FileInfo(path);
-                if (file.Exists)//判断文件是否存在
-                {
-                    file.Attributes = FileAttributes.Normal;//将文件属性设置为普通,比方说只读文件设置为普通
-                    file.Delete();//删除文件
+                    file.Delete();
                 }
-                ////判断文件夹是否为空,为空则删除
-                int s = path.LastIndexOf("/");
-                path = path.Substring(0, s);
-                if (Directory.GetFileSystemEntries(path).Length == 0) //判断文件夹为空,空则删除
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
+
+
+
+        /// <summary>
+        /// 删除指定文件夹
+        /// </summary>
+        /// <param name="path">文件夹路径</param>
+        /// <returns></returns>
+        public static bool DeleteDirectory(string path)
+        {
+            try
+            {
+                var directory = new DirectoryInfo(path);
+                if (directory.Exists)
                 {
-                    Directory.Delete(path);
+                    //将文件夹属性设置为普通,如：只读文件夹设置为普通
+                    directory.Attributes = FileAttributes.Normal;
+
+                    directory.Delete(true);
                 }
 
                 return true;
@@ -163,7 +187,7 @@ namespace Common.IO
 
 
         /// <summary>
-        /// 将指定目录下的文件压缩为tar文件
+        /// 将指定目录下的文件压缩为Tar文件
         /// </summary>
         /// <param name="folderPath">文件夹地址 D:/1/ </param>
         /// <param name="filePath">文件地址 D:/1.tar </param>

@@ -158,6 +158,38 @@ namespace Common.IO
 
 
         /// <summary>
+        /// 文件Length值转String
+        /// </summary>
+        /// <param name="fileLength"></param>
+        /// <returns></returns>
+        public static string FileLengthToString(long fileLength)
+        {
+
+            string m_strSize = "";
+
+            if (fileLength < 1024.00)
+            {
+                m_strSize = fileLength.ToString("F2") + " Byte";
+            }
+            else if (fileLength >= 1024.00 && fileLength < 1048576)
+            {
+                m_strSize = (fileLength / 1024.00).ToString("F2") + " K";
+            }
+            else if (fileLength >= 1048576 && fileLength < 1073741824)
+            {
+                m_strSize = (fileLength / 1024.00 / 1024.00).ToString("F2") + " M";
+            }
+            else if (fileLength >= 1073741824)
+            {
+                m_strSize = (fileLength / 1024.00 / 1024.00 / 1024.00).ToString("F2") + " G";
+            }
+
+            return m_strSize;
+        }
+
+
+
+        /// <summary>
         /// 获取文件夹下所有文件
         /// </summary>
         /// <param name="folderPath">文件夹路径</param>

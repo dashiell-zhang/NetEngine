@@ -40,7 +40,7 @@ namespace WebApi.Controllers
 
 
 
-            var user = db.TUser.Where(t => (t.Name == login.name || t.Phone == login.name || t.Email == login.name) && t.PassWord == login.password).FirstOrDefault();
+            var user = db.TUser.Where(t => (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
 
             if (user != null)
             {
@@ -158,7 +158,7 @@ namespace WebApi.Controllers
 
             }
 
-            return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
+            return GetToken(new dtoLogin { Name = user.Name, PassWord = user.PassWord });
         }
 
 
@@ -198,7 +198,7 @@ namespace WebApi.Controllers
                     db.SaveChanges();
                 }
 
-                return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
+                return GetToken(new dtoLogin { Name = user.Name, PassWord = user.PassWord });
             }
             else
             {
@@ -317,7 +317,7 @@ namespace WebApi.Controllers
                 db.SaveChanges();
             }
 
-            return GetToken(new dtoLogin { name = user.Name, password = user.PassWord });
+            return GetToken(new dtoLogin { Name = user.Name, PassWord = user.PassWord });
 
         }
 

@@ -49,9 +49,12 @@ namespace Models.Dtos
         public string FileName { set; get; }
 
 
+
         /// <summary>
         /// 上传的文件内容
         /// </summary>
         public Stream FileContent { set; get; }
+
+
     }
 }

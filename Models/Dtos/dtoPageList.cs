@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Models.Dtos
 {
@@ -18,7 +15,7 @@ namespace Models.Dtos
         /// <summary>
         /// 数据总量
         /// </summary>
-        public int total { get; set; }
+        public int Total { get; set; }
 
 
 
@@ -26,6 +23,8 @@ namespace Models.Dtos
         /// <summary>
         /// 具体数据内容
         /// </summary>
-        public List<T> list { get; set; }
+        public List<T> List { get; set; }
+
+
     }
 }

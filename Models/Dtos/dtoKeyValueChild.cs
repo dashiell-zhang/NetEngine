@@ -1,16 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Models.Dtos
 {
     public class dtoKeyValueChild
     {
 
+
+
         /// <summary>
         /// 键
         /// </summary>
         public object Key { get; set; }
+
+
 
 
         /// <summary>
@@ -20,9 +22,13 @@ namespace Models.Dtos
 
 
 
+
         /// <summary>
         /// 子级集合信息
         /// </summary>
         public List<dtoKeyValueChild> ChildList { get; set; }
+
+
+
     }
 }

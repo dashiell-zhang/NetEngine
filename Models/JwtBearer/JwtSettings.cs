@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Models.JwtBearer
+﻿namespace Models.JwtBearer
 {
 
     /// <summary>
@@ -10,10 +6,13 @@ namespace Models.JwtBearer
     /// </summary>
     public class JwtSettings
     {
+
+
         /// <summary>
         /// token是谁颁发的
         /// </summary>
         public string Issuer { get; set; }
+
 
 
         /// <summary>
@@ -22,10 +21,12 @@ namespace Models.JwtBearer
         public string Audience { get; set; }
 
 
+
         /// <summary>
         /// 加密的key
         /// </summary>
         public string SecretKey { get; set; }
+
 
     }
 }

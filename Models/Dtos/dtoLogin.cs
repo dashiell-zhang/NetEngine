@@ -9,11 +9,13 @@ namespace Models.Dtos
     public class dtoLogin
     {
 
+
         /// <summary>
         /// 用户名
         /// </summary>
         [Required(ErrorMessage = "用户名不可以空")]
-        public string name { get; set; }
+        public string Name { get; set; }
+
 
 
 
@@ -21,6 +23,8 @@ namespace Models.Dtos
         /// 密码
         /// </summary>
         [Required(ErrorMessage = "密码不可以为空")]
-        public string password { get; set; }
+        public string PassWord { get; set; }
+
+
     }
 }

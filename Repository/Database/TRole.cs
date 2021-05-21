@@ -1,4 +1,6 @@
 ﻿using Repository.Bases;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
@@ -19,5 +21,15 @@ namespace Repository.Database
         /// 备注信息
         /// </summary>
         public string Remarks { get; set; }
+
+
+
+        /// <summary>
+        /// 该角色所有用户
+        /// </summary>
+        [InverseProperty("Role")]
+        public virtual List<TUser> RoleUserList { get; set; }
+
+
     }
 }

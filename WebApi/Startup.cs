@@ -62,6 +62,12 @@ namespace WebApi
                 options.AllowSynchronousIO = true;
             });
 
+            services.AddHsts(options =>
+            {
+                options.IncludeSubDomains = true;
+                options.MaxAge = TimeSpan.FromDays(365);
+            });
+
             services.AddControllers();
 
 

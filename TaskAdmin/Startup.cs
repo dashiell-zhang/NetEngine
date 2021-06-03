@@ -38,6 +38,13 @@ namespace TaskAdmin
             services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
 
 
+            services.AddHsts(options =>
+            {
+                options.IncludeSubDomains = true;
+                options.MaxAge = TimeSpan.FromDays(365);
+            });
+
+
             //注册 HangFire(Memory)
             services.AddHangfire(configuration => configuration.UseInMemoryStorage());
 

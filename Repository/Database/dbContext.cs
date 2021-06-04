@@ -1,8 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using MySql.Data.MySqlClient;
-using Npgsql;
+﻿using Microsoft.EntityFrameworkCore;
 using Repository.Interceptors;
 using System;
 using System.Linq;
@@ -118,19 +114,20 @@ namespace Repository.Database
             var optionsBuilder = new DbContextOptionsBuilder<dbContext>();
 
 
-            //optionsBuilder.UseSqlServer("Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseMySQL("server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseSqlite("Data Source=../Repository/database.db", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=100", o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //SQLServer:"Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100"
+            //MySQL:"server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100"
+            //SQLite:"Data Source=../Repository/database.db"
+            //PostgreSQL:"Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=100"
 
             //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
             //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            //optionsBuilder.UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 25)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
             //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
             //开启调试拦截器
-            optionsBuilder.AddInterceptors(new DeBugInterceptor());
+            //optionsBuilder.AddInterceptors(new DeBugInterceptor());
 
 
             //开启数据分表拦截器
@@ -173,13 +170,13 @@ namespace Repository.Database
                         builder.Property(property.Name).HasColumnName(property.Name.ToLower());
 
 
-                        //bool to bit
+                        //bool to bit 使用 MySQL 时需要取消注释
                         //if (property.ClrType.Name == typeof(bool).Name)
                         //{
                         //    builder.Property(property.Name).HasColumnType("bit");
                         //}
 
-                        //guid to char(36)
+                        //guid to char(36) 使用 MySQL 并且采用 MySql.EntityFrameworkCore 时需要取消注释
                         //if (property.ClrType.Name == typeof(Guid).Name)
                         //{
                         //    builder.Property(property.Name).HasColumnType("char(36)");

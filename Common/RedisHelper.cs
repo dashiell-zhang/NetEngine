@@ -11,6 +11,10 @@ namespace Common
 
         private static string ConnectionString = IO.Config.Get().GetConnectionString("redisConnection");
 
+        private static ConnectionMultiplexer ConnectionMultiplexer = ConnectionMultiplexer.Connect(ConnectionString);
+
+        private static IDatabase Database = ConnectionMultiplexer.GetDatabase();
+
 
 
         /// <summary>
@@ -19,9 +23,7 @@ namespace Common
         /// <param name="key"></param>
         public static void RemoveKey(string key)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            db.KeyDelete(key);
+            Database.KeyDelete(key);
         }
 
 
@@ -33,9 +35,7 @@ namespace Common
         /// <param name="value"></param>
         public static void StrSet(string key, string value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            db.StringSet(key, value);
+            Database.StringSet(key, value);
         }
 
 
@@ -48,9 +48,7 @@ namespace Common
         /// <param name="timeout"></param>
         public static void StrSet(string key, string value, TimeSpan timeout)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            db.StringSet(key, value, timeout);
+            Database.StringSet(key, value, timeout);
         }
 
 
@@ -63,9 +61,7 @@ namespace Common
         /// <returns></returns>
         public static string StrGet(string key)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.StringGet(key);
+            return Database.StringGet(key);
         }
 
 
@@ -99,9 +95,7 @@ namespace Common
         /// <returns></returns>
         public static long StrAppend(string key, string value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.StringAppend(key, value);
+            return Database.StringAppend(key, value);
         }
 
 
@@ -115,9 +109,7 @@ namespace Common
         /// <returns></returns>
         public static long LongIncrement(string key, long value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.StringIncrement(key, value);
+            return Database.StringIncrement(key, value);
         }
 
 
@@ -129,9 +121,7 @@ namespace Common
         /// <returns></returns>
         public static long LongDecrement(string key, long value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.StringDecrement(key, value);
+            return Database.StringDecrement(key, value);
         }
 
 
@@ -145,9 +135,7 @@ namespace Common
         /// <returns></returns>
         public static long ListSet(string key, string value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.ListRightPush(key, value);
+            return Database.ListRightPush(key, value);
         }
 
 
@@ -160,9 +148,7 @@ namespace Common
         /// <param name="value"></param>
         public static void SetAdd(string key, string value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            db.SetAdd(key, value);
+            Database.SetAdd(key, value);
         }
 
 
@@ -175,9 +161,7 @@ namespace Common
         /// <returns></returns>
         public static string ListGetRV(string key, int row)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.ListGetByIndex(key, row);
+            return Database.ListGetByIndex(key, row);
         }
 
 
@@ -190,10 +174,7 @@ namespace Common
         /// <returns></returns>
         public static List<RedisValue> ListGetKV(string key)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            List<RedisValue> list = db.ListRange(key).ToList();
-            return list;
+            return Database.ListRange(key).ToList();
         }
 
 
@@ -206,9 +187,7 @@ namespace Common
         /// <param name="value"></param>
         public static void ListDelV(string key, string value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            db.ListRemove(key, value);
+            Database.ListRemove(key, value);
         }
 
 
@@ -221,9 +200,7 @@ namespace Common
         /// <returns></returns>
         public static long ListCount(string key)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.ListLength(key);
+            return Database.ListLength(key);
         }
 
 
@@ -237,9 +214,7 @@ namespace Common
         /// <param name="value"></param>
         public static void HashSet(string name, string key, string value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            db.HashSet(name, key, value);
+            Database.HashSet(name, key, value);
         }
 
 
@@ -253,9 +228,7 @@ namespace Common
         /// <returns></returns>
         public static string HashGet(string name, string key)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.HashGet(name, key);
+            return Database.HashGet(name, key);
         }
 
 
@@ -268,10 +241,7 @@ namespace Common
         /// <returns></returns>
         public static List<HashEntry> HashGet(string name)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            List<HashEntry> list = db.HashGetAll(name).ToList();
-            return list;
+            return Database.HashGetAll(name).ToList();
         }
 
 
@@ -284,9 +254,7 @@ namespace Common
         /// <param name="key"></param>
         public static void HashDelK(string name, string key)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            db.HashDelete(name, key);
+            Database.HashDelete(name, key);
         }
 
 
@@ -300,9 +268,7 @@ namespace Common
         /// <returns></returns>
         public static bool HashLike(string name, string key)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.HashExists(name, key);
+            return Database.HashExists(name, key);
         }
 
 
@@ -316,9 +282,7 @@ namespace Common
         /// <returns></returns>
         public static long HashCount(string key)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-            return db.HashLength(key);
+            return Database.HashLength(key);
         }
 
 
@@ -333,10 +297,7 @@ namespace Common
         /// <returns></returns>
         public static bool Lock(string key, string value, TimeSpan timeOut)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-
-            return db.LockTake(key, value, timeOut);
+            return Database.LockTake(key, value, timeOut);
         }
 
 
@@ -350,10 +311,7 @@ namespace Common
         /// <returns></returns>
         public static bool UnLock(string key, string value)
         {
-            var redis = ConnectionMultiplexer.Connect(ConnectionString);
-            var db = redis.GetDatabase();
-
-            return db.LockRelease(key, value);
+            return Database.LockRelease(key, value);
         }
 
     }

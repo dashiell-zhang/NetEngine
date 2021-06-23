@@ -22,7 +22,7 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
 
-            var filter = (TokenVerify)context.Filters.Where(t => t.ToString() == "WebApi.Filters.TokenVerify").ToList().LastOrDefault();
+            var filter = (TokenVerify)context.Filters.Where(t => t.ToString() == (typeof(TokenVerify).Assembly.GetName().Name + ".Filters.TokenVerify")).ToList().LastOrDefault();
 
 
             if (!filter.IsSkip)

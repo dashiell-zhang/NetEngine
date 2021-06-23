@@ -26,7 +26,7 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
 
-            var filter = (JwtTokenVerify)context.Filters.Where(t => t.ToString() == "WebApi.Filters.JwtTokenVerify").ToList().LastOrDefault();
+            var filter = (JwtTokenVerify)context.Filters.Where(t => t.ToString() == (typeof(JwtTokenVerify).Assembly.GetName().Name + ".Filters.JwtTokenVerify")).ToList().LastOrDefault();
 
             if (!filter.IsSkip)
             {

@@ -25,7 +25,7 @@ namespace Cms.Filters
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
-            var filter = (IsLogin)context.Filters.Where(t => t.ToString() == "Cms.Filters.IsLogin").ToList().LastOrDefault();
+            var filter = (IsLogin)context.Filters.Where(t => t.ToString() == (typeof(IsLogin).Assembly.GetName().Name + ".Filters.IsLogin")).ToList().LastOrDefault();
 
             if (!filter.IsSkip)
             {

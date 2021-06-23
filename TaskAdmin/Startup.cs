@@ -40,7 +40,6 @@ namespace TaskAdmin
 
             services.AddHsts(options =>
             {
-                options.IncludeSubDomains = true;
                 options.MaxAge = TimeSpan.FromDays(365);
             });
 

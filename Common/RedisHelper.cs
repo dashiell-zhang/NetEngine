@@ -11,9 +11,7 @@ namespace Common
 
         private static string ConnectionString = IO.Config.Get().GetConnectionString("redisConnection");
 
-        private static ConnectionMultiplexer ConnectionMultiplexer = ConnectionMultiplexer.Connect(ConnectionString);
-
-        private static IDatabase Database = ConnectionMultiplexer.GetDatabase();
+        private static readonly ConnectionMultiplexer ConnectionMultiplexer = ConnectionMultiplexer.Connect(ConnectionString);
 
 
 
@@ -21,9 +19,11 @@ namespace Common
         /// 删除指定key
         /// </summary>
         /// <param name="key"></param>
-        public static void RemoveKey(string key)
+        /// <returns></returns>
+        public static bool KeyDelete(string key)
         {
-            Database.KeyDelete(key);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.KeyDelete(key);
         }
 
 
@@ -33,9 +33,11 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        public static void StrSet(string key, string value)
+        /// <returns></returns>
+        public static bool StringSet(string key, string value)
         {
-            Database.StringSet(key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.StringSet(key, value);
         }
 
 
@@ -45,12 +47,13 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        /// <param name="timeout"></param>
-        public static void StrSet(string key, string value, TimeSpan timeout)
+        /// <param name="timeOut"></param>
+        /// <returns></returns>
+        public static bool StringSet(string key, string value, TimeSpan timeOut)
         {
-            Database.StringSet(key, value, timeout);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.StringSet(key, value, timeOut);
         }
-
 
 
 
@@ -59,9 +62,10 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static string StrGet(string key)
+        public static string StringGet(string key)
         {
-            return Database.StringGet(key);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.StringGet(key);
         }
 
 
@@ -71,11 +75,9 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static bool IsContainStr(string key)
+        public static bool IsContainString(string key)
         {
-            var info = StrGet(key);
-
-            if (string.IsNullOrEmpty(info))
+            if (string.IsNullOrEmpty(StringGet(key)))
             {
                 return false;
             }
@@ -93,11 +95,11 @@ namespace Common
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static long StrAppend(string key, string value)
+        public static long StringAppend(string key, string value)
         {
-            return Database.StringAppend(key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.StringAppend(key, value);
         }
-
 
 
 
@@ -109,8 +111,10 @@ namespace Common
         /// <returns></returns>
         public static long LongIncrement(string key, long value)
         {
-            return Database.StringIncrement(key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.StringIncrement(key, value);
         }
+
 
 
         /// <summary>
@@ -121,9 +125,9 @@ namespace Common
         /// <returns></returns>
         public static long LongDecrement(string key, long value)
         {
-            return Database.StringDecrement(key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.StringDecrement(key, value);
         }
-
 
 
 
@@ -133,11 +137,11 @@ namespace Common
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static long ListSet(string key, string value)
+        public static long ListRightPush(string key, string value)
         {
-            return Database.ListRightPush(key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.ListRightPush(key, value);
         }
-
 
 
 
@@ -146,9 +150,10 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        public static void SetAdd(string key, string value)
+        public static void ListAdd(string key, string value)
         {
-            Database.SetAdd(key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            database.SetAdd(key, value);
         }
 
 
@@ -159,11 +164,11 @@ namespace Common
         /// <param name="key"></param>
         /// <param name="row"></param>
         /// <returns></returns>
-        public static string ListGetRV(string key, int row)
+        public static string ListGetByIndex(string key, int row)
         {
-            return Database.ListGetByIndex(key, row);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.ListGetByIndex(key, row);
         }
-
 
 
 
@@ -172,11 +177,11 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static List<RedisValue> ListGetKV(string key)
+        public static List<RedisValue> ListGetAll(string key)
         {
-            return Database.ListRange(key).ToList();
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.ListRange(key).ToList();
         }
-
 
 
 
@@ -185,11 +190,11 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        public static void ListDelV(string key, string value)
+        public static void ListRemove(string key, string value)
         {
-            Database.ListRemove(key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            database.ListRemove(key, value);
         }
-
 
 
 
@@ -200,9 +205,9 @@ namespace Common
         /// <returns></returns>
         public static long ListCount(string key)
         {
-            return Database.ListLength(key);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.ListLength(key);
         }
-
 
 
 
@@ -214,9 +219,9 @@ namespace Common
         /// <param name="value"></param>
         public static void HashSet(string name, string key, string value)
         {
-            Database.HashSet(name, key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            database.HashSet(name, key, value);
         }
-
 
 
 
@@ -228,9 +233,9 @@ namespace Common
         /// <returns></returns>
         public static string HashGet(string name, string key)
         {
-            return Database.HashGet(name, key);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.HashGet(name, key);
         }
-
 
 
 
@@ -239,11 +244,11 @@ namespace Common
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static List<HashEntry> HashGet(string name)
+        public static List<HashEntry> HashGetAll(string name)
         {
-            return Database.HashGetAll(name).ToList();
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.HashGetAll(name).ToList();
         }
-
 
 
 
@@ -252,11 +257,11 @@ namespace Common
         /// </summary>
         /// <param name="name"></param>
         /// <param name="key"></param>
-        public static void HashDelK(string name, string key)
+        public static void HashDelete(string name, string key)
         {
-            Database.HashDelete(name, key);
+            var database = ConnectionMultiplexer.GetDatabase();
+            database.HashDelete(name, key);
         }
-
 
 
 
@@ -266,12 +271,11 @@ namespace Common
         /// <param name="name"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static bool HashLike(string name, string key)
+        public static bool HashExists(string name, string key)
         {
-            return Database.HashExists(name, key);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.HashExists(name, key);
         }
-
-
 
 
 
@@ -282,9 +286,9 @@ namespace Common
         /// <returns></returns>
         public static long HashCount(string key)
         {
-            return Database.HashLength(key);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.HashLength(key);
         }
-
 
 
 
@@ -297,9 +301,9 @@ namespace Common
         /// <returns></returns>
         public static bool Lock(string key, string value, TimeSpan timeOut)
         {
-            return Database.LockTake(key, value, timeOut);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.LockTake(key, value, timeOut);
         }
-
 
 
 
@@ -311,8 +315,11 @@ namespace Common
         /// <returns></returns>
         public static bool UnLock(string key, string value)
         {
-            return Database.LockRelease(key, value);
+            var database = ConnectionMultiplexer.GetDatabase();
+            return database.LockRelease(key, value);
         }
+
+
 
     }
 }

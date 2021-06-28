@@ -105,7 +105,7 @@ namespace WebApi.Controllers.v1
 
             string key = "wxpayPCUrl" + orderNo;
 
-            string codeUrl = Common.RedisHelper.StrGet(key);
+            string codeUrl = Common.RedisHelper.StringGet(key);
 
             if (string.IsNullOrEmpty(codeUrl))
             {
@@ -123,7 +123,7 @@ namespace WebApi.Controllers.v1
 
                 codeUrl = weiXinHelper.CreatePay(order.Id, order.OrderNo, DateTime.Now.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
 
-                Common.RedisHelper.StrSet(key, codeUrl, TimeSpan.FromMinutes(115));
+                Common.RedisHelper.StringSet(key, codeUrl, TimeSpan.FromMinutes(115));
 
             }
 

@@ -42,7 +42,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
             string key = appid + appsecret + "accesstoken";
 
-            var token = Common.RedisHelper.StrGet(key);
+            var token = Common.RedisHelper.StringGet(key);
 
             if (string.IsNullOrEmpty(token))
             {
@@ -52,7 +52,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
                 token = JsonHelper.GetValueByKey(returnJson, "access_token");
 
-                Common.RedisHelper.StrSet(key, token, TimeSpan.FromSeconds(6000));
+                Common.RedisHelper.StringSet(key, token, TimeSpan.FromSeconds(6000));
             }
 
             return token;
@@ -69,7 +69,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
             string key = appid + appsecret + "ticketid";
 
-            var ticketid = Common.RedisHelper.StrGet(key);
+            var ticketid = Common.RedisHelper.StringGet(key);
 
             if (string.IsNullOrEmpty(ticketid))
             {
@@ -80,7 +80,7 @@ namespace WebApi.Libraries.WeiXin.H5
 
                 ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
 
-                Common.RedisHelper.StrSet(key, ticketid, TimeSpan.FromSeconds(6000));
+                Common.RedisHelper.StringSet(key, ticketid, TimeSpan.FromSeconds(6000));
             }
 
             return ticketid;

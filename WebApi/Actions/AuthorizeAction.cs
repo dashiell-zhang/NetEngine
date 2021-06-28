@@ -25,7 +25,7 @@ namespace WebApi.Actions
 
             string key = "VerifyPhone_" + phone;
 
-            var code = Common.RedisHelper.StrGet(key);
+            var code = Common.RedisHelper.StringGet(key);
 
             if (string.IsNullOrEmpty(code) == false && code == keyValue.Value.ToString())
             {

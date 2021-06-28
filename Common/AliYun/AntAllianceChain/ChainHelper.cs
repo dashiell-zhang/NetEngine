@@ -45,7 +45,7 @@ namespace Common.AliYun.AntAllianceChain
 
             var key = accessId + "_token";
 
-            var token = Common.RedisHelper.StrGet(key);
+            var token = Common.RedisHelper.StringGet(key);
 
             if (string.IsNullOrEmpty(token))
             {
@@ -66,7 +66,7 @@ namespace Common.AliYun.AntAllianceChain
 
                 token = JsonHelper.GetValueByKey(ret, "data");
 
-                RedisHelper.StrSet(key, token, TimeSpan.FromMilliseconds(28));
+                RedisHelper.StringSet(key, token, TimeSpan.FromMilliseconds(28));
             }
 
             return token;

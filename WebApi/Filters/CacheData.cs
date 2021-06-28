@@ -42,7 +42,7 @@ namespace WebApi.Filters
             try
             {
 
-                var cacheInfo = Common.RedisHelper.StrGet(key);
+                var cacheInfo = Common.RedisHelper.StringGet(key);
 
                 if (!string.IsNullOrEmpty(cacheInfo))
                 {
@@ -81,7 +81,7 @@ namespace WebApi.Filters
 
 
 
-                Common.RedisHelper.StrSet(key, value,TimeSpan.FromSeconds(TTL));
+                Common.RedisHelper.StringSet(key, value,TimeSpan.FromSeconds(TTL));
 
             }
             catch

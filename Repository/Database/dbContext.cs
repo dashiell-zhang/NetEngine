@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repository.Interceptors;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Xml;
 
 namespace Repository.Database
 {
@@ -160,26 +163,42 @@ namespace Repository.Database
                 {
 
                     //设置生成数据库时的表名为小写格式并添加前缀 t_
-                    string tablename = "t_" + entity.ClrType.Name.ToLower().Substring(1);
-                    builder.ToTable(tablename);
+                    builder.ToTable("t_" + entity.ClrType.Name.ToLower().Substring(1));
 
 
-                    //循环转换数据库表字段名全部为小写
+                    //设置表的备注
+                    builder.HasComment(GetEntityComment(entity.Name));
+
+
                     foreach (var property in entity.GetProperties())
                     {
-                        builder.Property(property.Name).HasColumnName(property.Name.ToLower());
+                        //设置字段名为小写
+                        property.SetColumnName(property.Name.ToLower());
+
+                        var baseTypeNames = new List<string>();
+                        var baseType = entity.ClrType.BaseType;
+                        while (baseType != null)
+                        {
+                            baseTypeNames.Add(baseType.FullName);
+                            baseType = baseType.BaseType;
+                        }
+
+
+                        //设置字段的备注
+                        property.SetComment(GetEntityComment(entity.Name, property.Name, baseTypeNames));
 
 
                         //bool to bit 使用 MySQL 时需要取消注释
                         //if (property.ClrType.Name == typeof(bool).Name)
                         //{
-                        //    builder.Property(property.Name).HasColumnType("bit");
+                        //    property.SetColumnType("bit");
                         //}
+
 
                         //guid to char(36) 使用 MySQL 并且采用 MySql.EntityFrameworkCore 时需要取消注释
                         //if (property.ClrType.Name == typeof(Guid).Name)
                         //{
-                        //    builder.Property(property.Name).HasColumnType("char(36)");
+                        //    property.SetColumnType("char(36)");
                         //}
 
 
@@ -188,9 +207,85 @@ namespace Repository.Database
                         {
                             builder.HasIndex(property.Name);
                         }
+
                     }
                 });
             }
         }
+
+
+
+
+        private string GetEntityComment(string typeName, string fieldName = null, List<string> baseTypeNames = null)
+        {
+            var path = AppContext.BaseDirectory + "/Repository.xml";
+            var xml = new XmlDocument();
+            xml.Load(path);
+            var memebers = xml.SelectNodes("/doc/members/member");
+
+            var fieldList = new Dictionary<string, string>();
+
+
+            if (fieldName == null)
+            {
+                var matchKey = "T:" + typeName;
+
+                foreach (object m in memebers)
+                {
+                    if (m is XmlNode node)
+                    {
+                        var name = node.Attributes["name"].Value;
+
+                        var summary = node.InnerText.Trim();
+
+                        if (name == matchKey)
+                        {
+                            fieldList.Add(name, summary);
+                        }
+                    }
+                }
+
+                return fieldList.FirstOrDefault(t => t.Key.ToLower() == matchKey.ToLower()).Value;
+            }
+            else
+            {
+
+                foreach (object m in memebers)
+                {
+                    if (m is XmlNode node)
+                    {
+                        var name = node.Attributes["name"].Value;
+
+                        var summary = node.InnerText.Trim();
+
+                        var matchKey = "P:" + typeName + ".";
+                        if (name.StartsWith(matchKey))
+                        {
+                            name = name.Replace(matchKey, "");
+                            fieldList.Add(name, summary);
+                        }
+
+                        foreach (var baseTypeName in baseTypeNames)
+                        {
+                            if (baseTypeName != null)
+                            {
+                                matchKey = "P:" + baseTypeName + ".";
+                                if (name.StartsWith(matchKey))
+                                {
+                                    name = name.Replace(matchKey, "");
+                                    fieldList.Add(name, summary);
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+                return fieldList.FirstOrDefault(t => t.Key.ToLower() == fieldName.ToLower()).Value;
+            }
+
+
+        }
+
     }
 }

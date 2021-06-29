@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Xml;
 
 namespace Common
 {
@@ -319,5 +320,97 @@ namespace Common
             }
 
         }
+
+
+
+
+        /// <summary>
+        /// 获取一个表的注释信息
+        /// </summary>
+        /// <typeparam name="T">表的实体类型</typeparam>
+        /// <param name="fieldName">字段名称</param>
+        /// <remarks>字段名称为空时返回表的注释</remarks>
+        /// <returns></returns>
+        public static string GetEntityComment<T>(string fieldName = null) where T : new()
+        {
+            var path = AppContext.BaseDirectory + "/Repository.xml";
+            var xml = new XmlDocument();
+            xml.Load(path);
+
+            var fieldList = new Dictionary<string, string>();
+
+            var memebers = xml.SelectNodes("/doc/members/member");
+
+            var t = new T();
+
+
+            if (fieldName == null)
+            {
+                var matchKey = "T:" + t.ToString();
+
+                foreach (object m in memebers)
+                {
+                    if (m is XmlNode node)
+                    {
+                        var name = node.Attributes["name"].Value;
+
+                        var summary = node.InnerText.Trim();
+
+                        if (name == matchKey)
+                        {
+                            fieldList.Add(name, summary);
+                        }
+                    }
+                }
+
+                return fieldList.FirstOrDefault(t => t.Key.ToLower() == matchKey.ToLower()).Value;
+            }
+            else
+            {
+                var baseTypeNames = new List<string>();
+                var baseType = t.GetType().BaseType;
+                while (baseType != null)
+                {
+                    baseTypeNames.Add(baseType.FullName);
+                    baseType = baseType.BaseType;
+                }
+
+                foreach (object m in memebers)
+                {
+                    if (m is XmlNode node)
+                    {
+                        var name = node.Attributes["name"].Value;
+
+                        var summary = node.InnerText.Trim();
+
+                        var matchKey = "P:" + t.ToString() + ".";
+
+                        if (name.StartsWith(matchKey))
+                        {
+                            name = name.Replace("P:" + t.ToString() + ".", "");
+                            fieldList.Add(name, summary);
+                        }
+
+                        foreach (var baseTypeName in baseTypeNames)
+                        {
+                            if (baseTypeName != null)
+                            {
+                                matchKey = "P:" + baseTypeName + ".";
+                                if (name.StartsWith(matchKey))
+                                {
+                                    name = name.Replace(matchKey, "");
+                                    fieldList.Add(name, summary);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return fieldList.FirstOrDefault(t => t.Key.ToLower() == fieldName.ToLower()).Value;
+            }
+
+        }
+
+
     }
 }

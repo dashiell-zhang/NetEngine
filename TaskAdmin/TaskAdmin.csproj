@@ -15,7 +15,7 @@
 	<ItemGroup>
 		<PackageReference Include="Hangfire.InMemory" Version="0.3.4" />
 		<PackageReference Include="Hangfire.MySqlStorage" Version="2.0.3" />
-		<PackageReference Include="Hangfire.PostgreSql" Version="1.8.5" />
+		<PackageReference Include="Hangfire.PostgreSql" Version="1.8.5.1" />
 		<PackageReference Include="Hangfire.Redis.StackExchange" Version="1.8.4" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.7">
 			<PrivateAssets>all</PrivateAssets>
@@ -23,8 +23,8 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.2.0" />
-		<PackageReference Include="Hangfire.AspNetCore" Version="1.7.23" />
-		<PackageReference Include="Hangfire.SqlServer" Version="1.7.23" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.7.24" />
+		<PackageReference Include="Hangfire.SqlServer" Version="1.7.24" />
 	</ItemGroup>
 
 	<ItemGroup>

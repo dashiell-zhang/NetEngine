@@ -51,9 +51,9 @@ namespace Repository.Database
 
 
         /// <summary>
-        /// IP
+        /// Ip地址
         /// </summary>
-        public string IP { get; set; }
+        public string IpAddress { get; set; }
 
 
 

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Xml;
 
 namespace Repository.Database
@@ -381,7 +382,7 @@ namespace Repository.Database
 
 
 
-        public int SaveChangesWithSaveLog(Guid? actionUserId = null)
+        public int SaveChangesWithSaveLog(Guid? actionUserId = null, string ipAddress = null, string deviceMark = null)
         {
 
             dbContext db = this;
@@ -420,6 +421,31 @@ namespace Repository.Database
 
                 var result = new dbContext().GetType().GetMethod("ComparisonEntity").MakeGenericMethod(type).Invoke(new dbContext(), parameters);
 
+                if (ipAddress == null | deviceMark == null)
+                {
+                    var assembly = Assembly.GetEntryAssembly();
+                    var httpContextType = assembly.GetTypes().Where(t => t.FullName.Contains("Libraries.Http.HttpContext")).FirstOrDefault();
+
+                    if (httpContextType != null)
+                    {
+                        if (ipAddress == null)
+                        {
+                            ipAddress = httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static).Invoke(null, null).ToString();
+                        }
+
+                        if (deviceMark == null)
+                        {
+                            deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { "DeviceMark" }).ToString();
+
+                            if (deviceMark == "")
+                            {
+                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { "User-Agent" }).ToString();
+                            }
+                        }
+                    }
+                }
+
+
                 var osLog = new TOSLog();
                 osLog.Id = Guid.NewGuid();
                 osLog.CreateTime = DateTime.Now;
@@ -427,8 +453,8 @@ namespace Repository.Database
                 osLog.TableId = entityId;
                 osLog.Sign = "Modified";
                 osLog.Content = result.ToString();
-                osLog.IP = "";
-                osLog.DeviceMark = "";
+                osLog.IpAddress = ipAddress == "" ? null : ipAddress;
+                osLog.DeviceMark = deviceMark == "" ? null : deviceMark;
                 osLog.ActionUserId = actionUserId;
 
                 db.TOSLog.Add(osLog);

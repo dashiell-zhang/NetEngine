@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Bases
@@ -26,6 +27,7 @@ namespace Repository.Bases
         /// <summary>
         /// 是否删除
         /// </summary>
+        [ConcurrencyCheck]
         public bool IsDelete { get; set; }
 
 
@@ -33,6 +35,7 @@ namespace Repository.Bases
         /// <summary>
         /// 删除时间
         /// </summary>
+        [ConcurrencyCheck]
         public DateTime? DeleteTime { get; set; }
 
     }

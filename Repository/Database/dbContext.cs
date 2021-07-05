@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -166,17 +167,25 @@ namespace Repository.Database
                 {
 
                     //设置生成数据库时的表名为小写格式并添加前缀 t_
-                    builder.ToTable("t_" + entity.ClrType.Name.ToLower().Substring(1));
+                    var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value.ToString()).FirstOrDefault()).FirstOrDefault() ?? ("t_" + entity.ClrType.Name.Substring(1));
+                    builder.ToTable(tableName.ToLower());
 
 
                     //设置表的备注
                     builder.HasComment(GetEntityComment(entity.Name));
 
+                    //开启 PostgreSQL 全库行并发乐观锁
+                    //builder.UseXminAsConcurrencyToken();
+
 
                     foreach (var property in entity.GetProperties())
                     {
+
+                        string columnName = property.GetColumnName(StoreObjectIdentifier.Create(property.DeclaringEntityType, StoreObjectType.Table).Value);
+
+
                         //设置字段名为小写
-                        property.SetColumnName(property.Name.ToLower());
+                        property.SetColumnName(columnName.ToLower());
 
                         var baseTypeNames = new List<string>();
                         var baseType = entity.ClrType.BaseType;

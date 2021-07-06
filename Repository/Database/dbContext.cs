@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Repository.Interceptors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,8 +52,6 @@ namespace Repository.Database
 
         public DbSet<TFileGroupFile> TFileGroupFile { get; set; }
 
-
-        public DbSet<TGuidToInt> TGuidToInt { get; set; }
 
 
         public DbSet<TImgBaiduAI> TImgBaiduAI { get; set; }
@@ -388,6 +387,21 @@ namespace Repository.Database
             return retValue;
         }
 
+
+        public override int SaveChanges()
+        {
+
+            dbContext db = this;
+
+            var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
+
+            foreach (var item in list)
+            {
+                item.Entity.GetType().GetProperty("RowVersion")?.SetValue(item.Entity, Guid.NewGuid());
+            }
+
+            return base.SaveChanges();
+        }
 
 
 

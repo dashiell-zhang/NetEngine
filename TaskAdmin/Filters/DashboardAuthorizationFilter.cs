@@ -1,9 +1,6 @@
 ﻿using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace TaskAdmin.Filters
 {

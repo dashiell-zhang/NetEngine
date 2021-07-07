@@ -6,7 +6,12 @@ using System.Linq;
 
 namespace WebApi.Filters
 {
-    public class CacheData : Attribute, IActionFilter
+
+
+    /// <summary>
+    /// 缓存过滤器
+    /// </summary>
+    public class CacheDataFilter : Attribute, IActionFilter
     {
 
         /// <summary>

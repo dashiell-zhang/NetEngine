@@ -1,10 +1,10 @@
 ﻿using Common.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
-using System.Linq;
 
-namespace WebApi.Filters
+namespace Cms.Filters
 {
 
 
@@ -33,9 +33,9 @@ namespace WebApi.Filters
 
             if (UseToken)
             {
-                var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
+                var token = context.HttpContext.Session.GetString("userId");
 
-                key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString + "_" + token;
+                key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString+"_"+token;
             }
             else
             {
@@ -73,7 +73,7 @@ namespace WebApi.Filters
 
                 if (UseToken)
                 {
-                    var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
+                    var token = context.HttpContext.Session.GetString("userId");
 
                     key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString + "_" + token;
                 }
@@ -86,7 +86,7 @@ namespace WebApi.Filters
 
 
 
-                Common.RedisHelper.StringSet(key, value, TimeSpan.FromSeconds(TTL));
+                Common.RedisHelper.StringSet(key, value,TimeSpan.FromSeconds(TTL));
 
             }
             catch

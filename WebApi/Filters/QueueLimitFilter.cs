@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Linq;
 using System.Threading;
@@ -19,6 +20,13 @@ namespace WebApi.Filters
         /// 是否使用 Token
         /// </summary>
         public bool UseToken { get; set; }
+
+
+
+        /// <summary>
+        /// 是否阻断重复请求
+        /// </summary>
+        public bool IsBlock { get; set; }
 
 
 
@@ -48,7 +56,15 @@ namespace WebApi.Filters
                     }
                     else
                     {
-                        Thread.Sleep(500);
+                        if (IsBlock)
+                        {
+                            isAction = true;
+                            context.Result = new BadRequestObjectResult(new { errMsg = "Please do not request frequently" });
+                        }
+                        else
+                        {
+                            Thread.Sleep(500);
+                        }
                     }
                 }
             }

@@ -1,11 +1,14 @@
 ﻿using Common;
+using DotNetCore.CAP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Dtos;
 using Repository.Database;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace WebApi.Controllers
 {
@@ -19,10 +22,12 @@ namespace WebApi.Controllers
     {
 
         private readonly dbContext db;
+        private readonly ICapPublisher cap;
 
-        public BaseController(dbContext context)
+        public BaseController(dbContext context, ICapPublisher capPublisher)
         {
             db = context;
+            cap = capPublisher;
         }
 
 
@@ -134,6 +139,23 @@ namespace WebApi.Controllers
         {
             return HttpContext.RequestServices.GetService<Common.SnowflakeHelper>().GetId();
         }
+
+
+
+
+        /// <summary>
+        /// 发送一个CAP消息
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("ShowMessage")]
+        public bool ShowMessage(string msg)
+        {
+
+            cap.Publish("ShowMessage", msg);
+
+            return true;
+        }
+
 
     }
 }

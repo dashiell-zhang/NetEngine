@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using DotNetCore.CAP;
 using Repository.Database;
 
 namespace TaskService.Tasks
@@ -12,10 +13,12 @@ namespace TaskService.Tasks
     {
 
         private readonly dbContext db;
+        private readonly ICapPublisher cap;
 
-        public DemoTask(dbContext context)
+        public DemoTask(dbContext context, ICapPublisher capPublisher)
         {
             db = context;
+            cap = capPublisher;
         }
 
         public void Run()
@@ -31,8 +34,9 @@ namespace TaskService.Tasks
         private void TimElapsed(object sender, ElapsedEventArgs e)
         {
             //周期性执行的方法
-            var x = db.TUser.ToList();
             Console.WriteLine("HelloWord");
+
+            cap.Publish("ShowMessage", DateTime.Now.ToString());
         }
 
     }

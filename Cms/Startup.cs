@@ -70,7 +70,7 @@ namespace Cms
                 options.FailedRetryCount = 10;  //失败时重试的最大次数
                 options.FailedThresholdCallback = null; //重试阈值的失败回调
                 options.SucceedMessageExpiredAfter = 24 * 3600; //成功消息的过期时间（秒）
-            });
+            }).AddSubscribeFilter<CapSubscribeFilter>();
 
 
             services.Configure<FormOptions>(options =>

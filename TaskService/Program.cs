@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Savorboard.CAP.InMemoryMessageQueue;
 using System;
+using TaskService.Filters;
 using TaskService.Subscribes;
 
 namespace TaskService
@@ -57,7 +58,7 @@ namespace TaskService
         {
             services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
 
-            services.AddLogging(x => x.AddConsole());
+            services.AddLogging(options => options.AddConsole());
 
             services.AddSingleton<DemoSubscribe>();
             services.AddCap(options =>
@@ -92,7 +93,7 @@ namespace TaskService
                 options.FailedRetryCount = 10;  //失败时重试的最大次数
                 options.FailedThresholdCallback = null; //重试阈值的失败回调
                 options.SucceedMessageExpiredAfter = 24 * 3600; //成功消息的过期时间（秒）
-            });
+            }).AddSubscribeFilter<CapSubscribeFilter>();
 
 
             //注册要执行的Task

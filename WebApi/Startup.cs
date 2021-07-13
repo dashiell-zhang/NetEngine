@@ -55,16 +55,17 @@ namespace WebApi
                 //使用 InMemory 传输消息
                 options.UseInMemoryMessageQueue();
 
+
                 //使用 Redis 传输消息
                 //options.UseRedis(Configuration.GetConnectionString("dbConnection"));
 
                 //使用 RabbitMQ 传输消息
                 //options.UseRabbitMQ(opt =>
                 //{
-                //    opt.HostName = "amqp-cn-zvp29alz8001.mq-amqp.cn-shanghai-867405-a.aliyuncs.com";
-                //    opt.UserName = "MjphbXFwLWNuLXp2cDI5YWx6ODAwMTpMVEFJNXRQd1ZxcmEzZWZ1dXM3Z3N0TFQ=";
-                //    opt.Password = "MjQ0RjBERDZCRjkwQ0ZDRTMwNzA3ODc3MDUxOTIzODU3MTREMDgzQToxNjI2MDUzNzM2NTc4";
-                //    opt.VirtualHost = "c";
+                //    opt.HostName = "";
+                //    opt.UserName = "";
+                //    opt.Password = "";
+                //    opt.VirtualHost = "";
                 //});
 
                 //使用 InMemory 存储执行情况
@@ -83,7 +84,7 @@ namespace WebApi
                 options.FailedRetryCount = 10;  //失败时重试的最大次数
                 options.FailedThresholdCallback = null; //重试阈值的失败回调
                 options.SucceedMessageExpiredAfter = 24 * 3600; //成功消息的过期时间（秒）
-            });
+            }).AddSubscribeFilter<CapSubscribeFilter>();
 
 
             services.Configure<FormOptions>(options =>

@@ -46,12 +46,17 @@ namespace Cms
                 //options.UseRedis(Configuration.GetConnectionString("dbConnection"));
 
                 //使用 RabbitMQ 传输消息
-                //options.UseRabbitMQ(opt =>
+                //options.UseRabbitMQ(options =>
                 //{
-                //    opt.HostName = "";
-                //    opt.UserName = "";
-                //    opt.Password = "";
-                //    opt.VirtualHost = "";
+                //    options.HostName = "";
+                //    options.UserName = "";
+                //    options.Password = "";
+                //    options.VirtualHost = "";
+                //    //options.Port = 5671;
+                //    options.ConnectionFactoryOptions = options =>
+                //    {
+                //        options.Ssl = new RabbitMQ.Client.SslOption { Enabled = true, ServerName = "" };
+                //    };
                 //});
 
                 //使用 InMemory 存储执行情况

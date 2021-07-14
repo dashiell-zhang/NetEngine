@@ -21,6 +21,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using WebApi.Actions;
 using WebApi.Filters;
 using WebApi.Libraries.Swagger;
@@ -75,6 +77,8 @@ namespace WebApi
                 //options.UseEntityFramework<Repository.Database.dbContext>();
 
                 options.UseDashboard();
+                options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+
                 options.DefaultGroupName = "default";   //默认组名称
                 options.GroupNamePrefix = null; //全局组名称前缀
                 options.TopicNamePrefix = null; //Topic 统一前缀

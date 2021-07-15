@@ -15,7 +15,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Models.JwtBearer;
-using Savorboard.CAP.InMemoryMessageQueue;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.IO;
@@ -54,12 +53,9 @@ namespace WebApi
             services.AddSingleton<DemoSubscribe>();
             services.AddCap(options =>
             {
-                //使用 InMemory 传输消息
-                options.UseInMemoryMessageQueue();
-
 
                 //使用 Redis 传输消息
-                //options.UseRedis(Configuration.GetConnectionString("dbConnection"));
+                options.UseRedis(Configuration.GetConnectionString("redisConnection"));
 
                 //使用 RabbitMQ 传输消息
                 //options.UseRabbitMQ(options =>
@@ -75,11 +71,9 @@ namespace WebApi
                 //    };
                 //});
 
-                //使用 InMemory 存储执行情况
-                options.UseInMemoryStorage();
 
                 //使用 ef 搭配 db 存储执行情况
-                //options.UseEntityFramework<Repository.Database.dbContext>();
+                options.UseEntityFramework<Repository.Database.dbContext>();
 
                 options.UseDashboard();
                 options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);

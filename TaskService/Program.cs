@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Savorboard.CAP.InMemoryMessageQueue;
 using System;
 using TaskService.Filters;
 using TaskService.Subscribes;
@@ -63,11 +62,9 @@ namespace TaskService
             services.AddSingleton<DemoSubscribe>();
             services.AddCap(options =>
             {
-                //使用 InMemory 传输消息
-                options.UseInMemoryMessageQueue();
 
                 //使用 Redis 传输消息
-                //options.UseRedis(Configuration.GetConnectionString("dbConnection"));
+                options.UseRedis(Common.IO.Config.Get().GetConnectionString("redisConnection"));
 
                 //使用 RabbitMQ 传输消息
                 //options.UseRabbitMQ(options =>
@@ -83,11 +80,9 @@ namespace TaskService
                 //    };
                 //});
 
-                //使用 InMemory 存储执行情况
-                options.UseInMemoryStorage();
 
                 //使用 ef 搭配 db 存储执行情况
-                //options.UseEntityFramework<Repository.Database.dbContext>();
+                options.UseEntityFramework<Repository.Database.dbContext>();
 
                 options.DefaultGroupName = "default";   //默认组名称
                 options.GroupNamePrefix = null; //全局组名称前缀

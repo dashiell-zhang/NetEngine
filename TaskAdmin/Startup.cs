@@ -1,7 +1,4 @@
 ﻿using Hangfire;
-using Hangfire.PostgreSql;
-using Hangfire.SqlServer;
-using Hangfire.MySql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -17,7 +14,6 @@ using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using TaskAdmin.Filters;
 using TaskAdmin.Libraries;
-using Savorboard.CAP.InMemoryMessageQueue;
 using TaskAdmin.Subscribes;
 
 namespace TaskAdmin
@@ -42,11 +38,9 @@ namespace TaskAdmin
             services.AddSingleton<DemoSubscribe>();
             services.AddCap(options =>
             {
-                //使用 InMemory 传输消息
-                options.UseInMemoryMessageQueue();
 
                 //使用 Redis 传输消息
-                //options.UseRedis(Configuration.GetConnectionString("dbConnection"));
+                options.UseRedis(Configuration.GetConnectionString("redisConnection"));
 
                 //使用 RabbitMQ 传输消息
                 //options.UseRabbitMQ(options =>
@@ -62,11 +56,9 @@ namespace TaskAdmin
                 //    };
                 //});
 
-                //使用 InMemory 存储执行情况
-                options.UseInMemoryStorage();
 
                 //使用 ef 搭配 db 存储执行情况
-                //options.UseEntityFramework<Repository.Database.dbContext>();
+                options.UseEntityFramework<Repository.Database.dbContext>();
 
                 options.UseDashboard();
                 options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);

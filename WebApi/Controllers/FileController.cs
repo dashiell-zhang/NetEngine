@@ -619,12 +619,12 @@ namespace WebApi.Controllers
         /// <param name="id">文件ID</param>
         /// <returns></returns>
         [HttpDelete("DeleteFile")]
-        public bool DeleteFile(Guid id)
+        public bool DeleteFile(dtoId id)
         {
             try
             {
 
-                var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
+                var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
                 file.IsDelete = true;
                 file.DeleteTime = DateTime.Now;

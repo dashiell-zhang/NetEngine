@@ -15,7 +15,7 @@
     <PackageReference Include="aliyun-net-sdk-core" Version="1.5.10" />
     <PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />
     <PackageReference Include="Baidu.AI" Version="3.6.14" />
-    <PackageReference Include="Certes" Version="2.3.4" />
+    <PackageReference Include="Certes" Version="3.0.0" />
     <PackageReference Include="DotNetCore.CAP" Version="5.1.1" />
     <PackageReference Include="DotNetCore.CAP.Dashboard" Version="5.1.1" />
     <PackageReference Include="DotNetCore.CAP.PostgreSql" Version="5.1.1" />
@@ -27,7 +27,7 @@
     <PackageReference Include="StackExchange.Redis" Version="2.2.62" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.21" />
-    <PackageReference Include="TencentCloudSDK" Version="3.0.325" />
+    <PackageReference Include="TencentCloudSDK" Version="3.0.327" />
   </ItemGroup>
 
   <ItemGroup>

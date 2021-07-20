@@ -18,19 +18,17 @@ namespace Common.SSL
         /// 创建SSL证书
         /// </summary>
         /// <param name="domainName">域名</param>
-        /// <param name="sslPath"></param>
+        /// <param name="sslPath">证书保存路径 ,如 D:/SSL </param>
         /// <remarks>Common.SSL.LetsEncryptHelper.CreateSSL("*.domain.com").Wait();</remarks>
         public async static Task CreateSSL(string domainName, string sslPath)
         {
-            var basePath = "D:/SSL/";
-
-            if (!Directory.Exists(basePath + "IIS/"))
+            if (!Directory.Exists(sslPath + "/IIS/"))
             {
-                Directory.CreateDirectory(basePath + "IIS/");
+                Directory.CreateDirectory(sslPath + "/IIS/");
             }
-            if (!Directory.Exists(basePath + "Nginx/"))
+            if (!Directory.Exists(sslPath + "/Nginx/"))
             {
-                Directory.CreateDirectory(basePath + "Nginx/");
+                Directory.CreateDirectory(sslPath + "/Nginx/");
             }
 
             var acme = new AcmeContext(WellKnownServers.LetsEncryptV2);
@@ -63,15 +61,15 @@ namespace Common.SSL
             var keystorePass = GuidHelper.Reduce(Guid.NewGuid()).Replace("-", "");
             var pfxBuilder = cert.ToPfx(privateKey);
             var pfx = pfxBuilder.Build(domainName, keystorePass);
-            File.WriteAllBytes(basePath + "/IIS/" + fileName + ".pfx", pfx);
-            File.WriteAllText(basePath + "/IIS/keystorePass_" + fileName + ".txt", keystorePass);
+            File.WriteAllBytes(sslPath + "/IIS/" + fileName + ".pfx", pfx);
+            File.WriteAllText(sslPath + "/IIS/keystorePass_" + fileName + ".txt", keystorePass);
 
 
             //CreateNginx
             var certPem = cert.ToPem();
             var privateKeyPem = privateKey.ToPem();
-            File.WriteAllText(basePath + "/Nginx/" + fileName + ".crt", certPem);
-            File.WriteAllText(basePath + "/Nginx/" + fileName + ".key", privateKeyPem);
+            File.WriteAllText(sslPath + "/Nginx/" + fileName + ".crt", certPem);
+            File.WriteAllText(sslPath + "/Nginx/" + fileName + ".key", privateKeyPem);
 
         }
 
@@ -99,7 +97,7 @@ namespace Common.SSL
             }
 
 
-            var dnsHelper = new AliYun.DnsHelper("", "");
+            var dnsHelper = new AliYun.DnsHelper();
 
             dnsHelper.AddDomainRecord(host, "TXT", txtValue, onedomain, 600);
 

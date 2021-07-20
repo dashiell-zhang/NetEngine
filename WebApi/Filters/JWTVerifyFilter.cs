@@ -62,7 +62,7 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
 
-            var filter = (JWTVerifyFilter)context.Filters.Where(t => t.ToString() == "WebApi.Filters.JwtTokenVerify").ToList().LastOrDefault();
+            var filter = (JWTVerifyFilter)context.Filters.Where(t => t.ToString() == (typeof(JWTVerifyFilter).Assembly.GetName().Name + ".Filters.JWTVerifyFilter")).ToList().LastOrDefault();
 
             if (!filter.IsSkip)
             {

@@ -2,7 +2,6 @@
 using Microsoft.IdentityModel.Tokens;
 using Models.JwtBearer;
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -45,7 +44,7 @@ namespace WebApi.Libraries.Verify
         /// <returns></returns>
         public static string GetToken(Claim[] claims)
         {
-            var conf = Libraries.Start.StartConfiguration.configuration;
+            var conf = Start.StartConfiguration.configuration;
 
             var jwtSettings = new JwtSettings();
             conf.Bind("JwtSettings", jwtSettings);

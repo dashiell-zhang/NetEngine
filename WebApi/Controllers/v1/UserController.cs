@@ -17,7 +17,6 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [Authorize]
-    [JWTVerifyFilter]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -115,7 +114,7 @@ namespace WebApi.Controllers.v1
                 NickName = t.NickName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Role = t.Role.Name,
+                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
             }).FirstOrDefault();
 

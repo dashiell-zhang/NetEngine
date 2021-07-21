@@ -53,6 +53,15 @@ namespace Repository.Database
         public DbSet<TFileGroupFile> TFileGroupFile { get; set; }
 
 
+        public DbSet<TFunction> TFunction { get; set; }
+
+
+        public DbSet<TFunctionAction> TFunctionAction { get; set; }
+
+
+        public DbSet<TFunctionAuthorize> TFunctionAuthorize { get; set; }
+
+
 
         public DbSet<TImgBaiduAI> TImgBaiduAI { get; set; }
 
@@ -101,6 +110,10 @@ namespace Repository.Database
 
 
         public DbSet<TUserInfo> TUserInfo { get; set; }
+
+
+        public DbSet<TUserRole> TUserRole { get; set; }
+
 
 
         public DbSet<TUserToken> TUserToken { get; set; }

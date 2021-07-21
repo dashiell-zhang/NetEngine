@@ -128,8 +128,6 @@ namespace WebApi.Controllers
                             user.NickName = user.Name;
                             user.PassWord = Guid.NewGuid().ToString();
 
-                            //开发时记得调整这个值
-                            user.RoleId = default;
 
                             db.TUser.Add(user);
 
@@ -177,7 +175,7 @@ namespace WebApi.Controllers
                 string phone = keyValue.Key.ToString();
 
 
-                var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone) && t.RoleId == default).FirstOrDefault();
+                var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
 
                 if (user == null)
                 {

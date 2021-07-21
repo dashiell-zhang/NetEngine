@@ -42,14 +42,6 @@ namespace Repository.Database
         public string PassWord { get; set; }
 
 
-        /// <summary>
-        /// 角色信息
-        /// </summary>
-        public Guid RoleId { get; set; }
-        public virtual TRole Role { get; set; }
-
-
-
 
     }
 }

@@ -22,7 +22,6 @@ namespace WebApi.Controllers
     /// </summary>
     [ApiVersionNeutral]
     [Authorize]
-    [JWTVerifyFilter]
     [Route("api/[controller]")]
     [ApiController]
     public class FileController : ControllerBase
@@ -259,7 +258,6 @@ namespace WebApi.Controllers
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
         [AllowAnonymous]
-        [JWTVerifyFilter(IsSkip = true)]
         [HttpGet("GetFile")]
         public FileResult GetFile([Required] Guid fileid)
         {
@@ -298,7 +296,6 @@ namespace WebApi.Controllers
         /// <returns></returns>
         /// <remarks>不指定宽高参数,返回原图</remarks>
         [AllowAnonymous]
-        [JWTVerifyFilter(IsSkip = true)]
         [HttpGet("GetImage")]
         public FileResult GetImage([Required] Guid fileId, int width, int height)
         {

@@ -1,8 +1,12 @@
-﻿using Models.Dtos;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Models.Dtos;
+using Repository.Database;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Security.Claims;
+using WebApi.Libraries.Verify;
 
 namespace WebApi.Actions
 {
@@ -12,6 +16,175 @@ namespace WebApi.Actions
     /// </summary>
     public static class AuthorizeAction
     {
+
+
+        /// <summary>
+        /// 权限校验
+        /// </summary>
+        /// <param name="authorizationHandlerContext"></param>
+        /// <returns></returns>
+        public static bool Authorization(AuthorizationHandlerContext authorizationHandlerContext)
+        {
+
+            if (authorizationHandlerContext.User.Identity.IsAuthenticated)
+            {
+
+                if (authorizationHandlerContext.Resource is HttpContext httpContext)
+                {
+
+                    IssueNewToken(httpContext);
+
+                    var modular = "travelsysdm";
+
+                    var endpoint = httpContext.GetEndpoint();
+
+                    var actionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>();
+
+                    var controller = actionDescriptor.ControllerName.ToLower();
+                    var action = actionDescriptor.ActionName.ToLower();
+
+                    using (var db = new dbContext())
+                    {
+
+                        var userId = Guid.Parse(JwtToken.GetClaims("userId"));
+                        var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
+
+                        var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Modular.ToLower() == modular & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
+
+                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+
+                        if (functionAuthorizeId != default)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+
+                    }
+                }
+
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+
+        }
+
+
+
+        /// <summary>
+        /// 签发新Token
+        /// </summary>
+        /// <param name="httpContext"></param>
+        private static void IssueNewToken(HttpContext httpContext)
+        {
+
+
+            var nbf = Convert.ToInt64(JwtToken.GetClaims("nbf"));
+            var exp = Convert.ToInt64(JwtToken.GetClaims("exp"));
+
+            var nbfTime = Common.DateTimeHelper.UnixToTime(nbf);
+            var expTime = Common.DateTimeHelper.UnixToTime(exp);
+
+            //当前Token过期前15分钟开始签发新的Token
+            if (expTime < DateTime.Now.AddMinutes(29))
+            {
+
+                var tokenId = Guid.Parse(JwtToken.GetClaims("tokenId"));
+                var userId = Guid.Parse(JwtToken.GetClaims("userId"));
+
+                using (var db = new dbContext())
+                {
+
+                    string key = "IssueNewToken" + tokenId;
+
+                    if (Common.RedisHelper.Lock(key, "123456", TimeSpan.FromSeconds(60)))
+                    {
+
+                        var newToken = db.TUserToken.Where(t => t.IsDelete == false & t.LastId == tokenId & t.CreateTime > nbfTime).FirstOrDefault();
+
+                        if (newToken == null)
+                        {
+                            var tokenInfo = db.TUserToken.Where(t => t.Id == tokenId).FirstOrDefault();
+
+                            if (tokenInfo != null)
+                            {
+
+                                var userToken = new TUserToken();
+                                userToken.Id = Guid.NewGuid();
+                                userToken.UserId = userId;
+                                userToken.LastId = tokenId;
+                                userToken.CreateTime = DateTime.Now;
+
+                                var claims = new Claim[]{
+                                    new Claim("tokenId",userToken.Id.ToString()),
+                                    new Claim("userId",userId.ToString())
+                                };
+
+
+                                var token = JwtToken.GetToken(claims);
+
+                                userToken.Token = token;
+
+                                db.TUserToken.Add(userToken);
+
+                                db.SaveChanges();
+
+                                ClearExpireToken();
+
+                                httpContext.Response.Headers.Add("NewToken", token);
+                                httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
+                            }
+                        }
+                        else
+                        {
+                            httpContext.Response.Headers.Add("NewToken", newToken.Token);
+                            httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
+                        }
+
+                        Common.RedisHelper.UnLock(key, "123456");
+                    }
+                }
+            }
+
+        }
+
+
+
+
+        /// <summary>
+        /// 清理过期Token
+        /// </summary>
+        private static void ClearExpireToken()
+        {
+            try
+            {
+                if (Common.RedisHelper.Lock("ClearExpireToken", "123456", TimeSpan.FromSeconds(60)))
+                {
+
+                    using (var db = new dbContext())
+                    {
+                        var clearTime = DateTime.Now.AddDays(-7);
+                        var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
+                        db.TUserToken.RemoveRange(clearList);
+
+                        db.SaveChanges();
+                    }
+                }
+            }
+            catch
+            {
+                Common.RedisHelper.UnLock("ClearExpireToken", "123456");
+            }
+        }
+
+
 
 
         /// <summary>

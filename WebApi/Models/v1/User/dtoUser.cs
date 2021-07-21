@@ -31,7 +31,7 @@ namespace WebApi.Models.v1.User
         /// <summary>
         /// 角色
         /// </summary>
-        public string Role { get; set; }
+        public string Roles { get; set; }
 
 
         /// <summary>

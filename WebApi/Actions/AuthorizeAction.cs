@@ -51,15 +51,22 @@ namespace WebApi.Actions
 
                         var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Modular.ToLower() == modular & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
 
-                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
-
-                        if (functionAuthorizeId != default)
+                        if (functionId != default)
                         {
-                            return true;
+                            var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+
+                            if (functionAuthorizeId != default)
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
                         }
                         else
                         {
-                            return false;
+                            return true;
                         }
 
                     }
@@ -93,7 +100,7 @@ namespace WebApi.Actions
             var expTime = Common.DateTimeHelper.UnixToTime(exp);
 
             //当前Token过期前15分钟开始签发新的Token
-            if (expTime < DateTime.Now.AddMinutes(29))
+            if (expTime < DateTime.Now.AddMinutes(15))
             {
 
                 var tokenId = Guid.Parse(JwtToken.GetClaims("tokenId"));

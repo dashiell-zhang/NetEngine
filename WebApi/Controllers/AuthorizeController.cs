@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.Dtos;
 using Repository.Database;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
+using WebApi.Filters;
 
 namespace WebApi.Controllers
 {
@@ -207,6 +210,32 @@ namespace WebApi.Controllers
                 return "";
             }
 
+        }
+
+
+
+
+        /// <summary>
+        /// 获取授权功能列表
+        /// </summary>
+        /// <param name="sign">模块标记</param>
+        /// <returns></returns>
+        [Authorize]
+        [CacheDataFilter(TTL = 60, UseToken = true)]
+        [HttpGet("GetFunctionList")]
+        public List<dtoKeyValue> GetFunctionList(string sign)
+        {
+            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+
+            var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
+
+            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new dtoKeyValue
+            {
+                Key = t.Function.Sign,
+                Value = t.Function.Name
+            }).ToList();
+
+            return kvList;
         }
 
 

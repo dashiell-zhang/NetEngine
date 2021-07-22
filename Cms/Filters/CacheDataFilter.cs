@@ -51,9 +51,7 @@ namespace Cms.Filters
 
                 if (!string.IsNullOrEmpty(cacheInfo))
                 {
-                    var x = JsonHelper.GetValueByKey(cacheInfo, "value");
-
-                    context.Result = new ObjectResult(x);
+                    context.Result = new ObjectResult(cacheInfo);
                 }
             }
             catch
@@ -68,6 +66,7 @@ namespace Cms.Filters
             try
             {
                 var value = JsonHelper.ObjectToJSON(context.Result);
+                value = JsonHelper.GetValueByKey(value, "value");
 
                 string key = "";
 
@@ -83,8 +82,6 @@ namespace Cms.Filters
                 }
 
                 key = "CacheData_" + Common.CryptoHelper.GetMd5(key);
-
-
 
                 Common.RedisHelper.StringSet(key, value,TimeSpan.FromSeconds(TTL));
 

@@ -3,10 +3,14 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
-namespace WebApi.Actions
+namespace WebApi.Libraries
 {
+
+
     public class GlobalError
     {
+
+
         public static Task ErrorEvent(HttpContext context)
         {
             var feature = context.Features.Get<IExceptionHandlerFeature>();
@@ -47,5 +51,7 @@ namespace WebApi.Actions
 
             return context.Response.WriteAsync(JsonHelper.ObjectToJSON(ret));
         }
+
+
     }
 }

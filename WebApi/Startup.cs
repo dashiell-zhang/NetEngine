@@ -23,9 +23,10 @@ using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
-using WebApi.Actions;
 using WebApi.Filters;
+using WebApi.Libraries;
 using WebApi.Libraries.Swagger;
+using WebApi.Libraries.Verify;
 using WebApi.Subscribes;
 
 namespace WebApi
@@ -155,7 +156,7 @@ namespace WebApi
 
             services.AddAuthorization(options =>
             {
-                options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => AuthorizeAction.Authorization(context)).Build();
+                options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build();
             });
 
 

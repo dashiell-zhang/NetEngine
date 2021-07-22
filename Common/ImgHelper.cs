@@ -1,14 +1,12 @@
 ﻿using QRCoder;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Text;
 using Encoder = System.Drawing.Imaging.Encoder;
 
 namespace Common
 {
-    public static class ImgHelper
+    public class ImgHelper
     {
 
         /// <summary>

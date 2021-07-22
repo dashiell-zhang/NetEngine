@@ -1,13 +1,12 @@
 ﻿using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Common
 {
-    public static class CryptoHelper
+    public class CryptoHelper
     {
 
 

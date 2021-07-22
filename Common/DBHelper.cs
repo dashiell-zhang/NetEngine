@@ -10,7 +10,7 @@ using System.Xml;
 
 namespace Common
 {
-    public static class DBHelper
+    public class DBHelper
     {
 
         /// <summary>

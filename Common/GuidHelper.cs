@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Common
 {
@@ -8,7 +6,7 @@ namespace Common
     /// <summary>
     /// GUID自定义操作类
     /// </summary>
-    public static class GuidHelper
+    public class GuidHelper
     {
 
         /// <summary>

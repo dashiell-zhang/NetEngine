@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace Common
 {
-    public static class SystemHelper
+    public class SystemHelper
     {
 
 

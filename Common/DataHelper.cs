@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using NPOI.HSSF.UserModel;
+﻿using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
@@ -8,11 +7,10 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Common
 {
-    public static class DataHelper
+    public class DataHelper
     {
 
 

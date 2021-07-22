@@ -5,6 +5,7 @@ using Repository.Database;
 using System;
 using System.Linq;
 using WebApi.Filters;
+using WebApi.Libraries.Verify;
 using WebApi.Models.v1.User;
 
 namespace WebApi.Controllers.v1
@@ -132,9 +133,9 @@ namespace WebApi.Controllers.v1
         public bool EditUserPhoneBySms([FromBody] dtoKeyValue keyValue)
         {
 
-            if (Actions.AuthorizeAction.SmsVerifyPhone(keyValue))
+            if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
-                var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+                var userId = Guid.Parse(JwtToken.GetClaims("userId"));
 
                 string phone = keyValue.Key.ToString();
 
@@ -213,7 +214,7 @@ namespace WebApi.Controllers.v1
 
             string smsCode = keyValue.Value.ToString();
 
-            var checkSms = Actions.AuthorizeAction.SmsVerifyPhone(new dtoKeyValue { Key = phone, Value = smsCode });
+            var checkSms = IdentityVerification.SmsVerifyPhone(new dtoKeyValue { Key = phone, Value = smsCode });
 
             if (checkSms)
             {

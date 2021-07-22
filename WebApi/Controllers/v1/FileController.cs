@@ -10,17 +10,15 @@ using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
-using WebApi.Filters;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.v1
 {
 
     /// <summary>
     /// 文件上传控制器
     /// </summary>
-    [ApiVersionNeutral]
+    [ApiVersion("1")]
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]

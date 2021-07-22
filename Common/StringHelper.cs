@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -12,7 +11,7 @@ namespace Common
     /// <summary>
     /// 针对string字符串常用操作方法
     /// </summary>
-    public static class StringHelper
+    public class StringHelper
     {
 
 

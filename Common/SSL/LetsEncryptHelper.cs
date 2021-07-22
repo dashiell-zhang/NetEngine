@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Common.SSL
 {
-    public static class LetsEncryptHelper
+    public class LetsEncryptHelper
     {
 
 

@@ -6,15 +6,14 @@ using Repository.Database;
 using System;
 using System.Linq;
 using System.Security.Claims;
-using WebApi.Libraries.Verify;
 
-namespace WebApi.Actions
+namespace WebApi.Libraries.Verify
 {
 
     /// <summary>
     /// 认证模块静态方法
     /// </summary>
-    public static class AuthorizeAction
+    public class IdentityVerification
     {
 
 
@@ -174,7 +173,6 @@ namespace WebApi.Actions
             {
                 if (Common.RedisHelper.Lock("ClearExpireToken", "123456", TimeSpan.FromSeconds(60)))
                 {
-
                     using (var db = new dbContext())
                     {
                         var clearTime = DateTime.Now.AddDays(-7);
@@ -183,6 +181,7 @@ namespace WebApi.Actions
 
                         db.SaveChanges();
                     }
+                    Common.RedisHelper.UnLock("ClearExpireToken", "123456");
                 }
             }
             catch

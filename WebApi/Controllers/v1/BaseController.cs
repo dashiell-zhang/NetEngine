@@ -4,18 +4,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Dtos;
 using Repository.Database;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.v1
 {
     /// <summary>
     /// 系统基础方法控制器
     /// </summary>
-    [ApiVersionNeutral]
+    [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
     public class BaseController : ControllerBase

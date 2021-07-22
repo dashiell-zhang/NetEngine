@@ -9,15 +9,16 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using WebApi.Filters;
+using WebApi.Libraries.Verify;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.v1
 {
 
 
     /// <summary>
     /// 系统访问授权模块
     /// </summary>
-    [ApiVersionNeutral]
+    [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
     public class AuthorizeController : ControllerBase
@@ -173,7 +174,7 @@ namespace WebApi.Controllers
         [HttpPost("GetTokenBySms")]
         public string GetTokenBySms(dtoKeyValue keyValue)
         {
-            if (Actions.AuthorizeAction.SmsVerifyPhone(keyValue))
+            if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
                 string phone = keyValue.Key.ToString();
 

@@ -13,7 +13,7 @@ namespace Common
     /// <summary>
     /// 常用Http操作类集合
     /// </summary>
-    public static class HttpHelper
+    public class HttpHelper
     {
 
 

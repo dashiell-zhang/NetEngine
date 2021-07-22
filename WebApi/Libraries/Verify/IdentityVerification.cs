@@ -6,6 +6,7 @@ using Repository.Database;
 using System;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace WebApi.Libraries.Verify
 {
@@ -167,27 +168,30 @@ namespace WebApi.Libraries.Verify
         /// <summary>
         /// 清理过期Token
         /// </summary>
-        private static void ClearExpireToken()
+        private static async Task ClearExpireToken()
         {
-            try
+            await Task.Run(() =>
             {
-                if (Common.RedisHelper.Lock("ClearExpireToken", "123456", TimeSpan.FromSeconds(60)))
+                try
                 {
-                    using (var db = new dbContext())
+                    if (Common.RedisHelper.Lock("ClearExpireToken", "123456", TimeSpan.FromSeconds(60)))
                     {
-                        var clearTime = DateTime.Now.AddDays(-7);
-                        var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
-                        db.TUserToken.RemoveRange(clearList);
+                        using (var db = new dbContext())
+                        {
+                            var clearTime = DateTime.Now.AddDays(-7);
+                            var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
+                            db.TUserToken.RemoveRange(clearList);
 
-                        db.SaveChanges();
+                            db.SaveChanges();
+                        }
+                        Common.RedisHelper.UnLock("ClearExpireToken", "123456");
                     }
+                }
+                catch
+                {
                     Common.RedisHelper.UnLock("ClearExpireToken", "123456");
                 }
-            }
-            catch
-            {
-                Common.RedisHelper.UnLock("ClearExpireToken", "123456");
-            }
+            });
         }
 
 

@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -86,11 +87,11 @@ namespace TaskAdmin
 
 
             //注册 HangFire(Redis)
-            //services.AddHangfire(configuration => configuration.UseRedisStorage(Configuration.GetConnectionString("hangfireConnection")));
+            //services.AddHangfire(options => options.UseRedisStorage(Configuration.GetConnectionString("hangfireConnection")));
 
 
             //注册 HangFire(SqlServer)
-            //services.AddHangfire(configuration => configuration
+            //services.AddHangfire(options => options
             //    .UseSqlServerStorage(Configuration.GetConnectionString("hangfireConnection"), new SqlServerStorageOptions
             //    {
             //        SchemaName = "hangfire"
@@ -98,7 +99,7 @@ namespace TaskAdmin
 
 
             //注册 HangFire(PostgreSQL)
-            //services.AddHangfire(configuration => configuration
+            //services.AddHangfire(options => options
             //    .UsePostgreSqlStorage(Configuration.GetConnectionString("hangfireConnection"), new PostgreSqlStorageOptions
             //    {
             //        SchemaName = "hangfire"
@@ -106,7 +107,7 @@ namespace TaskAdmin
 
 
             //注册 HangFire(MySql)
-            //services.AddHangfire(configuration => configuration
+            //services.AddHangfire(options => options
             //    .UseStorage(new MySqlStorage(Configuration.GetConnectionString("hangfireConnection") + "Allow User Variables=True", new MySqlStorageOptions
             //    {
             //        TablesPrefix = "hangfire_"
@@ -115,11 +116,29 @@ namespace TaskAdmin
 
 
             // 注册 HangFire 服务
-            services.AddHangfireServer(config => config.SchedulePollingInterval = TimeSpan.FromSeconds(3));
+            services.AddHangfireServer(options => options.SchedulePollingInterval = TimeSpan.FromSeconds(3));
 
 
 
             services.AddControllersWithViews();
+
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            }).AddCookie(options =>
+            {
+                options.LoginPath = new PathString("/User/Login/");
+                options.AccessDeniedPath = new PathString("/User/Login/");
+                options.ExpireTimeSpan = TimeSpan.FromHours(20);
+            });
+
+
+            //services.AddAuthorization(options =>
+            //{
+            //    options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build();
+            //});
 
 
             //注册HttpContext
@@ -248,6 +267,10 @@ namespace TaskAdmin
 
 
             app.UseRouting();
+
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
 
             app.UseHangfireDashboard("/hangfire", new DashboardOptions

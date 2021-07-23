@@ -1,14 +1,17 @@
-﻿using Cms.Filters;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 
 namespace Cms.Controllers
 {
-    [AuthenticationFilter]
+    [Authorize]
     public class UserController : Controller
     {
 
@@ -26,41 +29,45 @@ namespace Cms.Controllers
         }
 
 
-        [AuthenticationFilter(IsSkip = true)]
-        public IActionResult Login()
+        [AllowAnonymous]
+        public IActionResult Login(string returnUrl)
         {
             return View();
         }
 
 
-        [AuthenticationFilter(IsSkip = true)]
+        [AllowAnonymous]
         public JsonResult LoginAction(string name, string pwd)
         {
-            var Data = new { status = true };
+            var retValue = new { status = true };
 
-            var userlist = db.TUser.ToList();
-            var user = db.TUser.Where(t => t.Name == name & t.PassWord == pwd & t.IsDelete == false).FirstOrDefault();
+            var user = db.TUser.Where(t => t.IsDelete == false & t.Name == name & t.PassWord == pwd).FirstOrDefault();
 
             if (user != null)
             {
+                var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
+                identity.AddClaim(new Claim("userId", user.Id.ToString()));
+                HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
                 HttpContext.Session.SetString("userId", user.Id.ToString());
                 HttpContext.Session.SetString("nickName", user.NickName);
             }
             else
             {
-                Data = new { status = false };
+                retValue = new { status = false };
             }
 
-            return Json(Data);
+            return Json(retValue);
         }
 
 
-        //退出系统
-        public void Login_Exit()
-        {
 
-            HttpContext.Session.SetString("userId", "");
-            HttpContext.Session.SetString("nickName", "");
+        public void Logout()
+        {
+            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            HttpContext.Session.Remove("userId");
+            HttpContext.Session.Remove("nickName");
 
             Response.Redirect("/User/Login/");
         }

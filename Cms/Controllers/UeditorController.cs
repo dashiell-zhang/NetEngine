@@ -1,5 +1,5 @@
-﻿using Cms.Filters;
-using Cms.Libraries.Ueditor;
+﻿using Cms.Libraries.Ueditor;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -7,7 +7,7 @@ using System;
 
 namespace Cms.Controllers
 {
-    [AuthenticationFilter]
+    [Authorize]
     public class UeditorController : Controller
     {
 

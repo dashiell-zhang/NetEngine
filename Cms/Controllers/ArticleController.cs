@@ -1,15 +1,15 @@
-﻿using Cms.Filters;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Repository.Database;
 
 namespace Cms.Controllers
 {
 
-    [AuthenticationFilter]
+    [Authorize]
     public class ArticleController : Controller
     {
 

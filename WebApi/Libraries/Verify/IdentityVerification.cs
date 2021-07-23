@@ -34,7 +34,7 @@ namespace WebApi.Libraries.Verify
 
                     IssueNewToken(httpContext);
 
-                    var modular = "travelsysdm";
+                    var modular = "webapi";
 
                     var endpoint = httpContext.GetEndpoint();
 

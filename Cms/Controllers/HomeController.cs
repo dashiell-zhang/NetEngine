@@ -1,4 +1,4 @@
-﻿using Cms.Filters;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -9,7 +9,7 @@ using System.Linq;
 namespace Cms.Controllers
 {
 
-    [AuthenticationFilter]
+    [Authorize]
     public class HomeController : Controller
     {
 

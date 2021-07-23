@@ -126,10 +126,10 @@ namespace WebApi
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(o =>
+            .AddJwtBearer(options =>
             {
                 //主要是jwt  token参数设置
-                o.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidIssuer = jwtSettings.Issuer,
                     ValidAudience = jwtSettings.Audience,
@@ -164,13 +164,13 @@ namespace WebApi
             Libraries.Http.HttpContext.Add(services);
 
             //注册全局过滤器
-            services.AddMvc(config => config.Filters.Add(new GlobalFilter()));
+            services.AddMvc(options => options.Filters.Add(new GlobalFilter()));
 
 
             //注册跨域信息
-            services.AddCors(option =>
+            services.AddCors(options =>
             {
-                option.AddPolicy("cors", policy =>
+                options.AddPolicy("cors", policy =>
                 {
                     policy.SetIsOriginAllowed(origin => true)
                        .AllowAnyHeader()
@@ -180,11 +180,11 @@ namespace WebApi
             });
 
 
-            services.AddControllers().AddJsonOptions(option =>
+            services.AddControllers().AddJsonOptions(options =>
             {
-                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
-                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
-                option.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
             });
 
 
@@ -335,9 +335,9 @@ namespace WebApi
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
+            app.UseEndpoints(options =>
             {
-                endpoints.MapControllers();
+                options.MapControllers();
             });
 
             //注册HostingEnvironment

@@ -1,6 +1,9 @@
 ﻿using Cms.Filters;
 using Cms.Libraries;
+using Cms.Libraries.Verify;
 using Cms.Subscribes;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -98,6 +101,23 @@ namespace Cms
             services.AddControllersWithViews();
 
 
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            }).AddCookie(options =>
+            {
+                options.LoginPath = new PathString("/User/Login/");
+                options.AccessDeniedPath = new PathString("/User/Login/");
+                options.ExpireTimeSpan = TimeSpan.FromHours(20);
+            });
+
+            services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build();
+            });
+
+
             //注册HttpContext
             Libraries.Http.HttpContext.Add(services);
 
@@ -105,9 +125,9 @@ namespace Cms
             services.AddMvc(config => config.Filters.Add(new GlobalFilter()));
 
             //注册跨域信息
-            services.AddCors(option =>
+            services.AddCors(options =>
             {
-                option.AddPolicy("cors", policy =>
+                options.AddPolicy("cors", policy =>
                 {
                     policy.SetIsOriginAllowed(origin => true)
                        .AllowAnyHeader()
@@ -140,11 +160,11 @@ namespace Cms
 
 
 
-            services.AddControllers().AddJsonOptions(option =>
+            services.AddControllers().AddJsonOptions(options =>
             {
-                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
-                option.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
-                option.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
             });
 
 
@@ -229,13 +249,17 @@ namespace Cms
 
             app.UseRouting();
 
-            app.UseEndpoints(endpoints =>
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+
+            app.UseEndpoints(options =>
             {
-                endpoints.MapControllerRoute(
+                options.MapControllerRoute(
                     name: "areas",
                     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-                endpoints.MapControllerRoute(
+                options.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });

@@ -1,4 +1,4 @@
-﻿using Cms.Filters;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -11,7 +11,7 @@ namespace Web.Areas.Admin.Controllers
 {
 
 
-    [AuthenticationFilter]
+    [Authorize]
     public class LinkController : Controller
     {
 

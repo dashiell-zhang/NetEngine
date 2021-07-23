@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
+using System;
+using System.Security.Claims;
 
 namespace TaskAdmin.Controllers
 {
@@ -18,7 +22,7 @@ namespace TaskAdmin.Controllers
         }
 
 
-        public IActionResult Login()
+        public IActionResult Login(string returnUrl)
         {
             return View();
         }
@@ -26,20 +30,25 @@ namespace TaskAdmin.Controllers
 
         public JsonResult LoginAction(string name, string pwd)
         {
-            var Data = new { status = true };
-
+            var retValue = new { status = true };
 
             if (name == "admin" && pwd == "123456")
             {
-                HttpContext.Session.SetString("userId", "admin");
+                var userId = Guid.NewGuid();
+
+                var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
+                identity.AddClaim(new Claim("userId", userId.ToString()));
+                HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
+                HttpContext.Session.SetString("userId", userId.ToString());
             }
             else
             {
-                Data = new { status = false };
+                retValue = new { status = false };
             }
 
 
-            return Json(Data);
+            return Json(retValue);
         }
 
     }

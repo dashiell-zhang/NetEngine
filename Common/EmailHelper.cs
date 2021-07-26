@@ -3,7 +3,7 @@
 namespace Common
 {
 
-    public  class EmailHelper
+    public class EmailHelper
     {
 
 

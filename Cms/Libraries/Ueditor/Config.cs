@@ -1,12 +1,7 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Dynamic;
 using System.IO;
 using System.Linq;
-using System.Web;
-using Common;
 
 
 namespace Cms.Libraries.Ueditor
@@ -19,7 +14,7 @@ namespace Cms.Libraries.Ueditor
         private static bool noCache = true;
         private static JObject BuildItems()
         {
-            var path = Libraries.IO.Path.WebRootPath()+  "/lib/ueditor/net/config.json";
+            var path = Libraries.IO.Path.WebRootPath() + "/lib/ueditor/net/config.json";
             var json = File.ReadAllText(path);
             return JObject.Parse(json);
         }

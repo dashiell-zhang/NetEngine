@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web;
 
 
 namespace Cms.Libraries.Ueditor
@@ -53,7 +52,7 @@ namespace Cms.Libraries.Ueditor
             {
                 State = ResultState.InvalidParam;
                 value = WriteResult();
-                
+
             }
             var buildingList = new List<String>();
             try
@@ -79,7 +78,7 @@ namespace Cms.Libraries.Ueditor
             }
             finally
             {
-               value = WriteResult();
+                value = WriteResult();
             }
 
 
@@ -88,7 +87,7 @@ namespace Cms.Libraries.Ueditor
 
         private string WriteResult()
         {
-           return WriteJson(new
+            return WriteJson(new
             {
                 state = GetStateString(),
                 list = FileList == null ? null : FileList.Select(x => new { url = x }),

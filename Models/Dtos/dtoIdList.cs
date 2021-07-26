@@ -10,6 +10,6 @@ namespace Models.Dtos
     public class dtoIdList
     {
 
-        public List<Guid> IdList { get; set; } 
+        public List<Guid> IdList { get; set; }
     }
 }

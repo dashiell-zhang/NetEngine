@@ -3,9 +3,6 @@ using COSXML.Auth;
 using COSXML.Model.Object;
 using COSXML.Utils;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace Common.TencentCloud
 {

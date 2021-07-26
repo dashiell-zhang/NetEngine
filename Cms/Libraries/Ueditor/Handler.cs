@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System;
 
 
 namespace Cms.Libraries.Ueditor
@@ -21,11 +17,11 @@ namespace Cms.Libraries.Ueditor
         protected string WriteJson(object response)
         {
 
-        
+
 
             string jsonpCallback = "";
             //string jsonpCallback = Request["callback"],
-               string json = JsonConvert.SerializeObject(response);
+            string json = JsonConvert.SerializeObject(response);
             if (String.IsNullOrWhiteSpace(jsonpCallback))
             {
                 return json;
@@ -34,7 +30,7 @@ namespace Cms.Libraries.Ueditor
             {
                 return String.Format("{0}({1});", jsonpCallback, json);
             }
-          
+
         }
     }
 

@@ -35,7 +35,7 @@ namespace Cms.Filters
             {
                 var token = context.HttpContext.Session.GetString("userId");
 
-                key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString+"_"+token;
+                key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString + "_" + token;
             }
             else
             {
@@ -83,7 +83,7 @@ namespace Cms.Filters
 
                 key = "CacheData_" + Common.CryptoHelper.GetMd5(key);
 
-                Common.RedisHelper.StringSet(key, value,TimeSpan.FromSeconds(TTL));
+                Common.RedisHelper.StringSet(key, value, TimeSpan.FromSeconds(TTL));
 
             }
             catch

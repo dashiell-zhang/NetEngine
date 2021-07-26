@@ -2,15 +2,15 @@
 using Common.AliPay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repository.Database;
 using Models.Dtos;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using WebApi.Libraries.WeiXin.App.Models;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
 using WebApi.Libraries.WeiXin.Public;
-using System.IO;
-using WebApi.Libraries.WeiXin.App.Models;
 
 namespace WebApi.Controllers.v1
 {

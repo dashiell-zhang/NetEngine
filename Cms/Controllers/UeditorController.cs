@@ -21,7 +21,7 @@ namespace Cms.Controllers
 
 
         [DisableRequestSizeLimit]
-        public string ProcessRequest([FromServices]IWebHostEnvironment environment)
+        public string ProcessRequest([FromServices] IWebHostEnvironment environment)
         {
 
             var context = HttpContext;

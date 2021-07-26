@@ -8,7 +8,7 @@
         string AppSecret = "";
 
 
-        public BaiduHelper(string in_AppKey,string in_AppSecret)
+        public BaiduHelper(string in_AppKey, string in_AppSecret)
         {
             AppKey = in_AppKey;
             AppSecret = in_AppSecret;
@@ -23,7 +23,7 @@
         /// <returns></returns>
         public (string openid, string sessionkey) GetOpenIdAndSessionKey(string code)
         {
-            string url = "https://spapi.baidu.com/oauth/jscode2sessionkey?code="+code+"&client_id="+AppKey+"&sk="+AppSecret+"";
+            string url = "https://spapi.baidu.com/oauth/jscode2sessionkey?code=" + code + "&client_id=" + AppKey + "&sk=" + AppSecret + "";
 
             string httpret = HttpHelper.Get(url);
 

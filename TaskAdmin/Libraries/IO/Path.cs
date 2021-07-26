@@ -4,7 +4,7 @@ namespace TaskAdmin.Libraries.IO
 {
     public class Path
     {
-       
+
 
         /// <summary>
         /// 获取 wwwroot 路径
@@ -25,6 +25,6 @@ namespace TaskAdmin.Libraries.IO
         {
             return StartHostingEnvironment.webHostEnvironment.ContentRootPath.Replace("\\", "/");
         }
-            
+
     }
 }

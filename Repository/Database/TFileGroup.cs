@@ -1,6 +1,5 @@
 ﻿using Repository.Bases;
 using System;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
@@ -9,7 +8,7 @@ namespace Repository.Database
     /// <summary>
     /// 文件分片上传状态记录表
     /// </summary>
-    public class TFileGroup :CUD
+    public class TFileGroup : CUD
     {
 
 

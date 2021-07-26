@@ -5,8 +5,6 @@ using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Cms.Libraries.Verify
 {

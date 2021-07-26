@@ -1,8 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
 
 namespace Cms.Libraries.Ueditor
@@ -20,7 +16,7 @@ namespace Cms.Libraries.Ueditor
 
         public override string Process()
         {
-          return  WriteJson(new
+            return WriteJson(new
             {
                 state = "action 参数为空或者 action 不被支持。"
             });

@@ -1,7 +1,5 @@
 ﻿using Repository.Attributes;
 using Repository.Bases;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {

@@ -21,7 +21,7 @@ namespace Repository.Database
         /// 产品ID
         /// </summary>
         public Guid ProductId { get; set; }
-        public virtual TProduct Product {get;set;}
+        public virtual TProduct Product { get; set; }
 
 
         /// <summary>

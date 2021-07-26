@@ -1,8 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
 
 namespace Cms.Libraries.Ueditor
@@ -17,7 +13,7 @@ namespace Cms.Libraries.Ueditor
 
         public override string Process()
         {
-          return  WriteJson(Config.Items);
+            return WriteJson(Config.Items);
         }
     }
 

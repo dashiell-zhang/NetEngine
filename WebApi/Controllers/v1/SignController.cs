@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
 using System;
 using System.Linq;
-using WebApi.Filters;
 using WebApi.Models.v1.Sign;
 
 namespace WebApi.Controllers.v1

@@ -8,7 +8,7 @@ namespace Repository.Database
     /// <summary>
     /// 用户和支付宝绑定关系表
     /// </summary>
-    public class TUserBindAlipay :CD
+    public class TUserBindAlipay : CD
     {
 
         /// <summary>

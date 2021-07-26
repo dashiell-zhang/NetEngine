@@ -6,7 +6,7 @@ namespace Repository.Database
     /// <summary>
     /// 计数表
     /// </summary>
-    public class TCount:CUD
+    public class TCount : CUD
     {
 
 

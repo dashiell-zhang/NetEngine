@@ -42,9 +42,7 @@ namespace WebApi.Controllers.v1
         public string GetToken([FromBody] dtoLogin login)
         {
 
-
-
-            var user = db.TUser.Where(t => (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
+            var user = db.TUser.Where(t => t.IsDelete == false & (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
 
             if (user != null)
             {
@@ -89,14 +87,15 @@ namespace WebApi.Controllers.v1
         public string GetTokenByWeiXinMiniAppCode([FromBody] dtoKeyValue keyValue)
         {
 
-
-
-            var weixinkeyid = Guid.Parse(keyValue.Key.ToString());
+            var weiXinKeyId = Guid.Parse(keyValue.Key.ToString());
             string code = keyValue.Value.ToString();
 
-            var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
-            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
+            var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
+
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid, appSecret);
 
 
             var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
@@ -104,8 +103,7 @@ namespace WebApi.Controllers.v1
             string openid = wxinfo.openid;
             string sessionkey = wxinfo.sessionkey;
 
-            var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid).Select(t => t.User).FirstOrDefault();
-
+            var user = db.TUserBindExternal.Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 
             if (user == null)
             {
@@ -118,7 +116,7 @@ namespace WebApi.Controllers.v1
                     {
                         isAction = true;
 
-                        user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid).Select(t => t.User).FirstOrDefault();
+                        user = db.TUserBindExternal.Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 
                         if (user == null)
                         {
@@ -137,15 +135,15 @@ namespace WebApi.Controllers.v1
 
                             db.SaveChanges();
 
-                            TUserBindWeixin userBind = new TUserBindWeixin();
+                            var userBind = new TUserBindExternal();
                             userBind.Id = Guid.NewGuid();
-                            userBind.IsDelete = false;
                             userBind.CreateTime = DateTime.Now;
                             userBind.UserId = user.Id;
-                            userBind.WeiXinKeyId = weixinkeyid;
-                            userBind.WeiXinOpenId = openid;
+                            userBind.AppName = "WeiXinMiniApp";
+                            userBind.AppId = appid;
+                            userBind.OpenId = openid;
 
-                            db.TUserBindWeixin.Add(userBind);
+                            db.TUserBindExternal.Add(userBind);
 
                             db.SaveChanges();
                         }
@@ -177,7 +175,6 @@ namespace WebApi.Controllers.v1
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
                 string phone = keyValue.Key.ToString();
-
 
                 var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
 
@@ -299,15 +296,15 @@ namespace WebApi.Controllers.v1
         public string GetTokenByWeiXinAppCode(dtoKeyValue keyValue)
         {
 
-
-
-            var weixinkeyid = Guid.Parse(keyValue.Key.ToString());
+            var weiXinKeyId = Guid.Parse(keyValue.Key.ToString());
             string code = keyValue.Value.ToString();
 
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinApp" & t.GroupId == weiXinKeyId).ToList();
 
-            var wxInfo = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+            var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(wxInfo.WxAppId, wxInfo.WxAppSecret);
+            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(appid, appSecret);
 
             var accseetoken = weiXinHelper.GetAccessToken(code).accessToken;
 
@@ -315,7 +312,7 @@ namespace WebApi.Controllers.v1
 
             var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
 
-            var user = db.TUserBindWeixin.Where(t => t.IsDelete == false && t.WeiXinKeyId == weixinkeyid && t.WeiXinOpenId == userInfo.openid).Select(t => t.User).FirstOrDefault();
+            var user = db.TUserBindExternal.Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" & t.AppId == appid & t.OpenId == userInfo.openid).Select(t => t.User).FirstOrDefault();
 
             if (user == null)
             {
@@ -331,16 +328,16 @@ namespace WebApi.Controllers.v1
                 db.TUser.Add(user);
                 db.SaveChanges();
 
-                var bind = new TUserBindWeixin();
+                var bind = new TUserBindExternal();
                 bind.Id = Guid.NewGuid();
-                bind.IsDelete = false;
                 bind.CreateTime = DateTime.Now;
 
-                bind.WeiXinKeyId = weixinkeyid;
+                bind.AppName = "WeiXinApp";
+                bind.AppId = appid;
                 bind.UserId = user.Id;
-                bind.WeiXinOpenId = openid;
+                bind.OpenId = openid;
 
-                db.TUserBindWeixin.Add(bind);
+                db.TUserBindExternal.Add(bind);
 
                 db.SaveChanges();
             }

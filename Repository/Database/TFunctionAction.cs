@@ -22,7 +22,7 @@ namespace Repository.Database
         /// <summary>
         /// 模块
         /// </summary>
-        public string Modular { get; set; }
+        public string Module { get; set; }
 
 
 

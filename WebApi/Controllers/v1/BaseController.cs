@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Dtos;
 using Repository.Database;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -109,18 +110,18 @@ namespace WebApi.Controllers.v1
 
 
         /// <summary>
-        /// 获取指定Key的可选值
+        /// 获取指定组ID的KV键值对
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="groupId"></param>
         /// <returns></returns>
-        [HttpGet("GetSelectValue")]
-        public List<dtoKeyValue> GetSelectValue(string key)
+        [HttpGet("GetValueList")]
+        public List<dtoKeyValue> GetValueList(Guid groupId)
         {
 
-            var list = db.TDictionary.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).Select(t => new dtoKeyValue
+            var list = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Dictionary" & t.GroupId == groupId).Select(t => new dtoKeyValue
             {
-                Key = t.Value,
-                Value = t.Id
+                Key = t.Key,
+                Value = t.Value
             }).ToList();
 
             return list;

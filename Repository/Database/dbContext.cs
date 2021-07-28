@@ -41,9 +41,6 @@ namespace Repository.Database
         public DbSet<TOSLog> TOSLog { get; set; }
 
 
-        public DbSet<TDictionary> TDictionary { get; set; }
-
-
         public DbSet<TFile> TFile { get; set; }
 
 

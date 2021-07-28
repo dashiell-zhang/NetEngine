@@ -38,8 +38,12 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinMiniAppPay")]
-        public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, Guid weixinkeyid)
+        public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, Guid weiXinKeyId)
         {
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
             var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
             {
@@ -47,14 +51,16 @@ namespace WebApi.Controllers.v1
                 t.Price,
                 ProductName = DateTime.Now.ToString("yyyyMMddHHmm") + "交易",
                 t.CreateUserId,
-                UserOpenId = db.TUserBindWeixin.Where(w => w.UserId == t.CreateUserId & w.WeiXinKeyId == weixinkeyid).Select(w => w.WeiXinOpenId).FirstOrDefault()
+                UserOpenId = db.TUserBindExternal.Where(w => w.IsDelete == false & w.UserId == t.CreateUserId & w.AppName == "WeiXinMiniApp" & w.AppId == appId).Select(w => w.OpenId).FirstOrDefault()
             }).FirstOrDefault();
 
-            var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
 
             var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
 
-            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, url);
+            var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
+            var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
+
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appId, appSecret, mchId, mchKey, url);
 
             int price = Convert.ToInt32(order.Price * 100);
 
@@ -69,20 +75,27 @@ namespace WebApi.Controllers.v1
         /// <summary>
         /// 微信APP商户平台下单接口
         /// </summary>
+        /// <param name="orderno"></param>
+        /// <param name="weiXinKeyId"></param>
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinAppPay")]
-        public dtoCreatePayApp CreateWeiXinAppPay(string orderno, string weixinkeyid)
+        public dtoCreatePayApp CreateWeiXinAppPay(string orderno, Guid weiXinKeyId)
         {
 
 
             var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
 
-            var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinApp" & t.GroupId == weiXinKeyId).ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+
+            var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
+            var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
 
             var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
 
-            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(weixinkey.WxAppId, weixinkey.MchId, weixinkey.MchKey, url);
+            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(appId, mchId, mchKey, url);
 
             int price = Convert.ToInt32(order.Price * 100);
 
@@ -109,15 +122,18 @@ namespace WebApi.Controllers.v1
 
             if (string.IsNullOrEmpty(codeUrl))
             {
-
-
                 var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
-                var weixinkey = db.TWeiXinKey.Where(t => t.IsDelete == false).FirstOrDefault();
+                var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinPC").ToList();
+
+                var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+                var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
+                var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
+                var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
 
                 var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
 
-                var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey, url);
+                var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(appId, appSecret, mchId, mchKey, url);
 
                 int price = Convert.ToInt32(order.Price * 100);
 
@@ -168,12 +184,17 @@ namespace WebApi.Controllers.v1
             WxPayData req = new WxPayData();
             req.SetValue("transaction_id", transaction_id);
 
+            var appIdSettingGroupId = db.TAppSetting.Where(t => t.IsDelete == false & t.Module.StartsWith("WeiXin") & t.Key == "AppId" & t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.GroupId == appIdSettingGroupId).ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
+            var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
+            var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
 
 
 
-            var weixinkey = db.TWeiXinKey.Where(t => t.WxAppId == appid).FirstOrDefault();
-
-            JsApiPay jsApiPay = new JsApiPay(weixinkey.WxAppId, weixinkey.WxAppSecret, weixinkey.MchId, weixinkey.MchKey);
+            JsApiPay jsApiPay = new JsApiPay(appId, appSecret, mchId, mchKey);
 
             WxPayData send = jsApiPay.OrderQuery(req);
             if (!(send.GetValue("return_code").ToString() == "SUCCESS" && send.GetValue("result_code").ToString() == "SUCCESS"))
@@ -241,26 +262,32 @@ namespace WebApi.Controllers.v1
         /// <summary>
         /// 支付宝小程序商户平台下单接口
         /// </summary>
+        /// <param name="orderno"></param>
+        /// <param name="aliPayKeyId"></param>
         /// <remarks>用于在支付宝商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateAliPayMiniApp")]
-        public dtoKeyValue CreateAliPayMiniApp(string orderno, Guid alipaykeyid)
+        public dtoKeyValue CreateAliPayMiniApp(string orderno, Guid aliPayKeyId)
         {
 
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "AliPayMiniApp" & t.GroupId == aliPayKeyId).ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
+            var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
 
             var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
             {
                 t.OrderNo,
                 t.Price,
-                AliPayUserId = db.TUserBindAlipay.Where(a => a.UserId == t.CreateUserId & a.AlipayKeyId == alipaykeyid).Select(a => a.AlipayUserId).FirstOrDefault(),
+                AliPayUserId = db.TUserBindExternal.Where(a => a.IsDelete == false & a.UserId == t.CreateUserId & a.AppName == "AliPayMiniApp" & a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
                 t.CreateTime
             }).FirstOrDefault();
 
-            var alipaykey = db.TAlipayKey.Where(t => t.Id == alipaykeyid).FirstOrDefault();
 
             var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-            AliPayHelper aliPayHelper = new AliPayHelper(alipaykey.AppId, alipaykey.AppPrivateKey, alipaykey.AlipayPublicKey, url);
+            AliPayHelper aliPayHelper = new AliPayHelper(appId, appPrivateKey, aliPayPublicKey, url);
 
             string price = Convert.ToString(order.Price);
 
@@ -294,7 +321,11 @@ namespace WebApi.Controllers.v1
         public string GetAliPayWebUrl(string orderNo)
         {
 
-            var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "AliPayPC").ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
+            var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
 
             var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
             {
@@ -310,7 +341,7 @@ namespace WebApi.Controllers.v1
                 var returnUrl = Libraries.Http.HttpContext.GetBaseUrl();
                 var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, notifyUrl, returnUrl);
+                AliPayHelper helper = new AliPayHelper(appId, appPrivateKey, aliPayPublicKey, notifyUrl, returnUrl);
 
                 string price = order.Price.ToString();
 
@@ -335,7 +366,12 @@ namespace WebApi.Controllers.v1
         public string GetAliPayH5Url(string orderNo)
         {
 
-            var info = db.TAlipayKey.Where(t => t.IsDelete == false).FirstOrDefault();
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "AliPayH5").ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
+            var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
+
 
             var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, t.CreateTime }).FirstOrDefault();
 
@@ -345,7 +381,7 @@ namespace WebApi.Controllers.v1
                 var returnUrl = Libraries.Http.HttpContext.GetBaseUrl();
                 var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                AliPayHelper helper = new AliPayHelper(info.AppId, info.AppPrivateKey, info.AlipayPublicKey, notifyUrl, returnUrl, "");
+                AliPayHelper helper = new AliPayHelper(appId, appPrivateKey, aliPayPublicKey, notifyUrl, returnUrl, "");
 
                 string price = order.Price.ToString();
 
@@ -387,11 +423,16 @@ namespace WebApi.Controllers.v1
             {
                 var appid = Request.Form["auth_app_id"].ToString();
 
+                var appIdSettingGroupId = db.TAppSetting.Where(t => t.IsDelete == false & t.Module.StartsWith("AliPay") & t.Key == "AppId" & t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
 
-                var Alipaypublickey = db.TAlipayKey.Where(t => t.AppId == appid).Select(t => t.AlipayPublicKey).FirstOrDefault();
+                var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.GroupId == appIdSettingGroupId).ToList();
+
+                var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+                var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
+                var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
 
 
-                bool flag = AlipaySignature.RSACheckV1(dict, Alipaypublickey, "utf-8", "RSA2", false);
+                bool flag = AlipaySignature.RSACheckV1(dict, aliPayPublicKey, "utf-8", "RSA2", false);
 
                 if (flag)
                 {

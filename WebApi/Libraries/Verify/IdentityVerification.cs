@@ -34,7 +34,7 @@ namespace WebApi.Libraries.Verify
 
                     IssueNewToken(httpContext);
 
-                    var modular = "webapi";
+                    var module = "webapi";
 
                     var endpoint = httpContext.GetEndpoint();
 
@@ -49,7 +49,7 @@ namespace WebApi.Libraries.Verify
                         var userId = Guid.Parse(JwtToken.GetClaims("userId"));
                         var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
-                        var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Modular.ToLower() == modular & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
+                        var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
 
                         if (functionId != default)
                         {

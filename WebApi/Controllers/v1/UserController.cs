@@ -34,18 +34,20 @@ namespace WebApi.Controllers.v1
         /// <summary>
         /// 获取微信小程序OpenId
         /// </summary>
-        /// <param name="weixinkeyid">微信配置密钥ID</param>
+        /// <param name="weiXinKeyId">微信配置密钥ID</param>
         /// <param name="code">微信临时code</param>
         /// <returns>openid,userid</returns>
         /// <remarks>传入租户ID和微信临时 code 获取 openid，如果 openid 在系统有中对应用户，则一并返回用户的ID值，否则用户ID值为空</remarks>
         [HttpGet("GetWeiXinMiniAppOpenId")]
-        public string GetWeiXinMiniAppOpenId(Guid weixinkeyid, string code)
+        public string GetWeiXinMiniAppOpenId(Guid weiXinKeyId, string code)
         {
 
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
-            var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+            var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid, appSecret);
 
             var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
 
@@ -64,15 +66,17 @@ namespace WebApi.Controllers.v1
         /// <param name="iv">加密算法的初始向量</param>
         /// <param name="encryptedData">包括敏感数据在内的完整用户信息的加密数据</param>
         /// <param name="code">微信临时code</param>
-        /// <param name="weixinkeyid">微信配置密钥ID</param>
+        /// <param name="weiXinKeyId">微信配置密钥ID</param>
         [HttpGet("GetWeiXinMiniAppPhone")]
-        public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, Guid weixinkeyid)
+        public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, Guid weiXinKeyId)
         {
 
+            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
-            var weixinkey = db.TWeiXinKey.Where(t => t.Id == weixinkeyid).FirstOrDefault();
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(weixinkey.WxAppId, weixinkey.WxAppSecret);
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appId, appSecret);
 
 
             var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
@@ -80,10 +84,9 @@ namespace WebApi.Controllers.v1
             string openid = wxinfo.openid;
             string sessionkey = wxinfo.sessionkey;
 
-
             var strJson = Libraries.WeiXin.MiniApp.WeiXinHelper.DecryptionData(encryptedData, sessionkey, iv);
 
-            var user = db.TUserBindWeixin.Where(t => t.WeiXinOpenId == openid & t.WeiXinKeyId == weixinkeyid).Select(t => t.User).FirstOrDefault();
+            var user = db.TUserBindExternal.Where(t => t.IsDelete == false & t.OpenId == openid & t.AppName == "WeiXinMiniApp" & t.AppId == appId).Select(t => t.User).FirstOrDefault();
 
             user.Phone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
 

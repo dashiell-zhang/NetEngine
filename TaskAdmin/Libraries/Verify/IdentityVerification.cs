@@ -31,7 +31,7 @@ namespace TaskAdmin.Libraries.Verify
 
                     if (!string.IsNullOrEmpty(httpContext.Session.GetString("userId")))
                     {
-                        var modular = "taskadmin";
+                        var module = "taskadmin";
 
                         var endpoint = httpContext.GetEndpoint();
 
@@ -48,7 +48,7 @@ namespace TaskAdmin.Libraries.Verify
                             var userId = Guid.Parse(userIdStr);
                             var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
-                            var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Modular.ToLower() == modular & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
+                            var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
 
                             if (functionId != default)
                             {

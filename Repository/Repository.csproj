@@ -13,14 +13,6 @@
 		<NoWarn>1701;1702;1591</NoWarn>
 		<DocumentationFile>Repository.xml</DocumentationFile>
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <None Remove="Database\TUserBindExternal" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Include="Database\TUserBindExternal" />
-	</ItemGroup>
 	
   
   <ItemGroup>

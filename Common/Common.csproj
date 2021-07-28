@@ -16,10 +16,10 @@
     <PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />
     <PackageReference Include="Baidu.AI" Version="3.6.14" />
     <PackageReference Include="Certes" Version="3.0.0" />
-    <PackageReference Include="DotNetCore.CAP" Version="5.1.1" />
-    <PackageReference Include="DotNetCore.CAP.Dashboard" Version="5.1.1" />
-    <PackageReference Include="DotNetCore.CAP.PostgreSql" Version="5.1.1" />
-    <PackageReference Include="DotNetCore.CAP.RedisStreams" Version="5.1.1" />
+    <PackageReference Include="DotNetCore.CAP" Version="5.1.2" />
+    <PackageReference Include="DotNetCore.CAP.Dashboard" Version="5.1.2" />
+    <PackageReference Include="DotNetCore.CAP.PostgreSql" Version="5.1.2" />
+    <PackageReference Include="DotNetCore.CAP.RedisStreams" Version="5.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NPOI" Version="2.5.3" />

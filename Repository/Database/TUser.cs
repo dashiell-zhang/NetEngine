@@ -1,5 +1,7 @@
-﻿using Repository.Bases;
+﻿using Repository.Database.Bases;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
@@ -7,7 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 用户表
     /// </summary>
-    public class TUser : CUD
+    public class TUser : CUD_User
     {
 
         /// <summary>
@@ -39,6 +41,27 @@ namespace Repository.Database
         /// 密码
         /// </summary>
         public string PassWord { get; set; }
+
+        
+
+        /// <summary>
+        /// 用户信息
+        /// </summary>
+        [InverseProperty("User")]
+        public virtual TUserInfo UserInfo { get; set; }
+
+
+
+        [InverseProperty("CreateUser")]
+        public virtual List<TUser> InverseCreateUserList { get; set; }
+
+
+        [InverseProperty("DeleteUser")]
+        public virtual List<TUser> InverseDeleteUserList { get; set; }
+
+
+        [InverseProperty("UpdateUser")]
+        public virtual List<TUser> InverseUpdateUserList { get; set; }
 
 
 

@@ -1,5 +1,6 @@
 ﻿using Repository.Bases;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database.Bases
 {
@@ -15,7 +16,9 @@ namespace Repository.Database.Bases
         /// <summary>
         /// 创建人ID
         /// </summary>
-        public Guid CreateUserId { get; set; }
+        public Guid? CreateUserId { get; set; }
+
+        [ForeignKey("CreateUserId")]
         public virtual TUser CreateUser { get; set; }
 
 
@@ -23,6 +26,8 @@ namespace Repository.Database.Bases
         /// 编辑人ID
         /// </summary>
         public Guid? UpdateUserId { get; set; }
+
+        [ForeignKey("UpdateUserId")]
         public virtual TUser UpdateUser { get; set; }
 
 
@@ -30,6 +35,8 @@ namespace Repository.Database.Bases
         /// 删除人ID
         /// </summary>
         public Guid? DeleteUserId { get; set; }
+
+        [ForeignKey("DeleteUserId")]
         public virtual TUser DeleteUser { get; set; }
 
 

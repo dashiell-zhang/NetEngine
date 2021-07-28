@@ -1,25 +1,28 @@
 ﻿using Repository.Bases;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
     /// <summary>
     /// 用户详细信息表
     /// </summary>
-    public class TUserInfo : CD
+    public class TUserInfo : CUD
     {
 
         /// <summary>
         /// 用户ID
         /// </summary>
         public Guid UserId { get; set; }
+
+        [ForeignKey("UserId")]
         public virtual TUser User { get; set; }
 
 
         /// <summary>
         /// 地址区域ID
         /// </summary>
-        public int RegionAreaId { get; set; }
+        public int? RegionAreaId { get; set; }
         public virtual TRegionArea RegionArea { get; set; }
 
 
@@ -30,11 +33,6 @@ namespace Repository.Database
         public string Address { get; set; }
 
 
-        /// <summary>
-        /// 个性签名
-        /// </summary>
-        public string Signature { get; set; }
-
 
         /// <summary>
         /// 性别
@@ -42,29 +40,15 @@ namespace Repository.Database
         public bool? Sex { get; set; }
 
 
-        /// <summary>
-        /// 公司名称
-        /// </summary>
-        public string Company { get; set; }
-
-
 
         /// <summary>
-        /// 职务
+        /// 编辑人ID
         /// </summary>
-        public string Position { get; set; }
+        public Guid? UpdateUserId { get; set; }
+
+        [ForeignKey("UpdateUserId")]
+        public virtual TUser UpdateUser { get; set; }
 
 
-
-        /// <summary>
-        /// 微信号
-        /// </summary>
-        public string WeChat { get; set; }
-
-
-        /// <summary>
-        /// QQ
-        /// </summary>
-        public string QQ { get; set; }
     }
 }

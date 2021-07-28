@@ -22,7 +22,8 @@ namespace Repository.Database
 
 
 
-        public DbSet<TAlipayKey> TAlipayKey { get; set; }
+
+        public DbSet<TAppSetting> TAppSetting { get; set; }
 
 
         public DbSet<TArticle> TArticle { get; set; }
@@ -102,10 +103,7 @@ namespace Repository.Database
         public DbSet<TUser> TUser { get; set; }
 
 
-        public DbSet<TUserBindAlipay> TUserBindAlipay { get; set; }
-
-
-        public DbSet<TUserBindWeixin> TUserBindWeixin { get; set; }
+        public DbSet<TUserBindExternal> TUserBindExternal { get; set; }
 
 
         public DbSet<TUserInfo> TUserInfo { get; set; }
@@ -120,8 +118,6 @@ namespace Repository.Database
 
         public DbSet<TWebInfo> TWebInfo { get; set; }
 
-
-        public DbSet<TWeiXinKey> TWeiXinKey { get; set; }
 
 
 

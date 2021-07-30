@@ -11,7 +11,7 @@ namespace WebApi.Libraries.WeiXin.App.Models
 
         public dtoCreatePayApp()
         {
-            TimeSpan cha = (DateTime.Now - TimeZone.CurrentTimeZone.ToLocalTime(new System.DateTime(1970, 1, 1)));
+            TimeSpan cha = (DateTime.Now - TimeZoneInfo.ConvertTimeFromUtc(new DateTime(1970, 1, 1), TimeZoneInfo.Local));
             long t = (long)cha.TotalSeconds;
             timestamp = t.ToString();
         }

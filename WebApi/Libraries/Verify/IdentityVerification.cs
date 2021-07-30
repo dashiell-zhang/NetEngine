@@ -143,7 +143,9 @@ namespace WebApi.Libraries.Verify
 
                                 db.SaveChanges();
 
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                                 ClearExpireToken();
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 
                                 httpContext.Response.Headers.Add("NewToken", token);
                                 httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题

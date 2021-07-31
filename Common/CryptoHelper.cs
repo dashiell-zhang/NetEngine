@@ -93,15 +93,17 @@ namespace Common
         public static string AESEncode(string param, string skey)
         {
             byte[] key = hexStringToByte(skey.ToLower());
-            AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
-            aesProvider.Key = key;
-            aesProvider.Mode = CipherMode.ECB;
-            aesProvider.Padding = PaddingMode.PKCS7;
-            byte[] inputBuffers = Encoding.UTF8.GetBytes(param);
-            ICryptoTransform cryptoTransform = aesProvider.CreateEncryptor();
-            byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
-            aesProvider.Clear();
-            return byteToHexString(results);
+
+            using (var aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.Mode = CipherMode.ECB;
+                aes.Padding = PaddingMode.PKCS7;
+                byte[] inputBuffers = Encoding.UTF8.GetBytes(param);
+                ICryptoTransform cryptoTransform = aes.CreateEncryptor();
+                byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
+                return byteToHexString(results);
+            }
         }
 
 
@@ -117,15 +119,17 @@ namespace Common
             try
             {
                 byte[] key = hexStringToByte(skey.ToLower());
-                AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
-                aesProvider.Key = key;
-                aesProvider.Mode = CipherMode.ECB;
-                aesProvider.Padding = PaddingMode.PKCS7;
-                byte[] inputBuffers = hexStringToByte(param);
-                ICryptoTransform cryptoTransform = aesProvider.CreateDecryptor();
-                byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
-                aesProvider.Clear();
-                return Encoding.UTF8.GetString(results);
+
+                using (var aes = Aes.Create())
+                {
+                    aes.Key = key;
+                    aes.Mode = CipherMode.ECB;
+                    aes.Padding = PaddingMode.PKCS7;
+                    byte[] inputBuffers = hexStringToByte(param);
+                    ICryptoTransform cryptoTransform = aes.CreateDecryptor();
+                    byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
+                    return Encoding.UTF8.GetString(results);
+                }
             }
             catch
             {
@@ -142,8 +146,10 @@ namespace Common
         /// <returns></returns>
         public static string GetMd5(string data)
         {
-            MD5CryptoServiceProvider MD5 = new MD5CryptoServiceProvider();
-            return BitConverter.ToString(MD5.ComputeHash(Encoding.GetEncoding("utf-8").GetBytes(data))).Replace("-", "").ToLower();
+            using (var md5 = MD5.Create())
+            {
+                return BitConverter.ToString(md5.ComputeHash(Encoding.GetEncoding("utf-8").GetBytes(data))).Replace("-", "").ToLower();
+            }
         }
 
 
@@ -157,8 +163,7 @@ namespace Common
         public static string GetMd5(string data, string token)
         {
             string dataMD5 = data + token;
-            MD5CryptoServiceProvider MD5 = new MD5CryptoServiceProvider();
-            return BitConverter.ToString(MD5.ComputeHash(Encoding.GetEncoding("utf-8").GetBytes(dataMD5))).Replace("-", "").ToLower();
+            return GetMd5(dataMD5);
         }
 
 
@@ -249,7 +254,7 @@ namespace Common
             var paras = rsa.ExportParameters(true);
             rsaClear.ImportParameters(paras);
             //签名返回
-            using (var sha256 = new SHA256CryptoServiceProvider())
+            using (var sha256 = SHA256.Create())
             {
                 var signData = rsa.SignData(Encoding.UTF8.GetBytes(contentForSign), sha256);
                 return BytesToHex(signData);

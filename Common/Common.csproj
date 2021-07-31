@@ -22,7 +22,7 @@
     <PackageReference Include="DotNetCore.CAP.RedisStreams" Version="5.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="NPOI" Version="2.5.3" />
+    <PackageReference Include="NPOI" Version="2.5.4" />
     <PackageReference Include="QRCoder" Version="1.4.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.2.62" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />

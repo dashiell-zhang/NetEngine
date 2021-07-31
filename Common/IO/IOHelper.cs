@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 
 namespace Common.IO
@@ -102,17 +103,18 @@ namespace Common.IO
                     }
                 }
 
-                WebClient webClient = new WebClient();
+                using (HttpClient client = new HttpClient())
+                {
 
-                //添加来源属性，解决部分资源防盗链伪验证
-                webClient.Headers.Add(HttpRequestHeader.Referer, "");
+                    using (var httpResponse = client.GetAsync(url).Result)
+                    {
+                        string fullpath = filePath + fileName;
 
-                string fullpath = filePath + fileName;
+                        File.WriteAllBytes(fullpath, httpResponse.Content.ReadAsByteArrayAsync().Result);
 
-                //下载文件
-                webClient.DownloadFile(url, fullpath);
-
-                return fullpath;
+                        return fullpath;
+                    }
+                }
             }
             catch
             {

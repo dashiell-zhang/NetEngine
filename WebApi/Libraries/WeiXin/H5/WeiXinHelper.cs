@@ -92,14 +92,15 @@ namespace WebApi.Libraries.WeiXin.H5
         /// <returns></returns>
         public WeiXinJsSdkSign GetJsSDKSign()
         {
-            WeiXinJsSdkSign sdkSign = new WeiXinJsSdkSign();
+            var sdkSign = new WeiXinJsSdkSign();
+
+            string url = HttpContext.GetUrl();
 
             sdkSign.appid = appid;
-            string url = HttpContext.GetUrl();
             sdkSign.timestamp = Common.DateTimeHelper.TimeToUnix(DateTime.Now);
             sdkSign.noncestr = Guid.NewGuid().ToString().Replace("-", "");
-            string jsapi_ticket = GetTicketID();
 
+            string jsapi_ticket = GetTicketID();
             string strYW = "jsapi_ticket=" + jsapi_ticket + "&noncestr=" + sdkSign.noncestr + "&timestamp=" + sdkSign.timestamp + "&url=" + url;
 
             using (var sha1 = SHA1.Create())

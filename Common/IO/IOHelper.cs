@@ -103,18 +103,14 @@ namespace Common.IO
                     }
                 }
 
-                using (HttpClient client = new HttpClient())
-                {
+                using var client = new HttpClient();
 
-                    using (var httpResponse = client.GetAsync(url).Result)
-                    {
-                        string fullpath = filePath + fileName;
+                using var httpResponse = client.GetAsync(url).Result;
+                string fullpath = filePath + fileName;
 
-                        File.WriteAllBytes(fullpath, httpResponse.Content.ReadAsByteArrayAsync().Result);
+                File.WriteAllBytes(fullpath, httpResponse.Content.ReadAsByteArrayAsync().Result);
 
-                        return fullpath;
-                    }
-                }
+                return fullpath;
             }
             catch
             {
@@ -257,42 +253,38 @@ namespace Common.IO
         public static void DecompressTarFile(string filePath, string folderPath)
         {
 
-            using (var s = new TarInputStream(File.OpenRead(filePath), Encoding.Default))
+            using var s = new TarInputStream(File.OpenRead(filePath), Encoding.Default);
+
+            TarEntry theEntry;
+            while ((theEntry = s.GetNextEntry()) != null)
             {
 
-                TarEntry theEntry;
-                while ((theEntry = s.GetNextEntry()) != null)
+                theEntry.Name = folderPath + theEntry.Name;
+
+                string directoryName = Path.GetDirectoryName(theEntry.Name);
+                string fileName = Path.GetFileName(theEntry.Name);
+
+                if (directoryName.Length > 0)
                 {
+                    Directory.CreateDirectory(directoryName);
+                }
 
-                    theEntry.Name = folderPath + theEntry.Name;
+                if (fileName != string.Empty)
+                {
+                    using FileStream streamWriter = System.IO.File.Create(theEntry.Name);
 
-                    string directoryName = Path.GetDirectoryName(theEntry.Name);
-                    string fileName = Path.GetFileName(theEntry.Name);
-
-                    if (directoryName.Length > 0)
+                    int size = 2048;
+                    byte[] data = new byte[2048];
+                    while (true)
                     {
-                        Directory.CreateDirectory(directoryName);
-                    }
-
-                    if (fileName != string.Empty)
-                    {
-                        using (FileStream streamWriter = System.IO.File.Create(theEntry.Name))
+                        size = s.Read(data, 0, data.Length);
+                        if (size > 0)
                         {
-
-                            int size = 2048;
-                            byte[] data = new byte[2048];
-                            while (true)
-                            {
-                                size = s.Read(data, 0, data.Length);
-                                if (size > 0)
-                                {
-                                    streamWriter.Write(data, 0, size);
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
+                            streamWriter.Write(data, 0, size);
+                        }
+                        else
+                        {
+                            break;
                         }
                     }
                 }

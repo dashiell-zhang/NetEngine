@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace Common
@@ -48,7 +49,10 @@ namespace Common
                         }
                     }
 
-                    return client.GetStringAsync(url).Result;
+                    using (var httpResponse = client.GetStringAsync(url))
+                    {
+                        return httpResponse.Result;
+                    }
                 }
             }
         }
@@ -142,9 +146,10 @@ namespace Common
                                 content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
                             }
 
-                            var responseMessage = client.PostAsync(url, content).Result;
-
-                            return responseMessage.Content.ReadAsStringAsync().Result;
+                            using (var httpResponse = client.PostAsync(url, content))
+                            {
+                                return httpResponse.Result.Content.ReadAsStringAsync().Result;
+                            }
                         }
                     }
                 }
@@ -163,61 +168,12 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static void PostAsync(string url, string data, string type, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
+        public async static void PostAsync(string url, string data, string type, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
         {
-            using (HttpClientHandler handler = new HttpClientHandler())
+            await Task.Run(() =>
             {
-                if (isSkipSslVerification)
-                {
-                    handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
-                }
-
-                using (HttpClient client = new HttpClient(handler))
-                {
-                    client.DefaultRequestHeaders.Add("Accept", "*/*");
-                    client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)");
-                    client.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
-
-                    if (headers != default)
-                    {
-                        foreach (var header in headers)
-                        {
-                            client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                        }
-                    }
-
-                    using (Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
-                    {
-                        using (HttpContent content = new StreamContent(dataStream))
-                        {
-
-                            if (type == "form")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-                            }
-                            else if (type == "data")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-                            }
-                            else if (type == "json")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                            }
-                            else if (type == "xml")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
-                            }
-
-
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                            client.PostAsync(url, content);
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-
-                        }
-                    }
-                }
-            }
-
+                Post(url, data, type, headers, isSkipSslVerification);
+            });
         }
 
 
@@ -273,9 +229,11 @@ namespace Common
                             }
                         }
 
-                        var responseMessage = client.PostAsync(url, formDataContent).Result;
+                        using (var httpResponse = client.PostAsync(url, formDataContent))
+                        {
+                            return httpResponse.Result.Content.ReadAsStringAsync().Result;
+                        }
 
-                        return responseMessage.Content.ReadAsStringAsync().Result;
                     }
 
                 }

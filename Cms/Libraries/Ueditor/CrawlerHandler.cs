@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 
 namespace Cms.Libraries.Ueditor
 {
@@ -61,75 +62,69 @@ namespace Cms.Libraries.Ueditor
                 State = "INVALID_URL";
                 return this;
             }
-            var request = HttpWebRequest.Create(this.SourceUrl) as HttpWebRequest;
-            using (var response = request.GetResponse() as HttpWebResponse)
+
+
+            using (HttpClient client = new HttpClient())
             {
-                if (response.StatusCode != HttpStatusCode.OK)
+                using (var httpResponse = client.GetAsync(this.SourceUrl).Result)
                 {
-                    State = "Url returns " + response.StatusCode + ", " + response.StatusDescription;
-                    return this;
-                }
-                if (response.ContentType.IndexOf("image") == -1)
-                {
-                    State = "Url is not an image";
-                    return this;
-                }
-                ServerUrl = PathFormatter.Format(Path.GetFileName(this.SourceUrl), Config.GetString("catcherPathFormat"));
-                var savePath = IO.Path.WebRootPath() + ServerUrl;
-                if (!Directory.Exists(Path.GetDirectoryName(savePath)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(savePath));
-                }
-                try
-                {
-                    var stream = response.GetResponseStream();
-                    var reader = new BinaryReader(stream);
-                    byte[] bytes;
-                    using (var ms = new MemoryStream())
+                    if (httpResponse.StatusCode != HttpStatusCode.OK)
                     {
-                        byte[] buffer = new byte[4096];
-                        int count;
-                        while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
-                        {
-                            ms.Write(buffer, 0, count);
-                        }
-                        bytes = ms.ToArray();
+                        State = "Url returns " + httpResponse.StatusCode;
+                        return this;
                     }
-                    File.WriteAllBytes(savePath, bytes);
 
 
-                    bool upRemote = false;
-
-                    if (upRemote)
+                    if (httpResponse.Content.Headers.ContentType.MediaType.IndexOf("image") == -1)
                     {
-                        //将文件转存至 oss 并清理本地文件
-                        var oss = new Common.AliYun.OssHelper();
-                        var upload = oss.FileUpload(savePath, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), Path.GetFileName(this.SourceUrl));
+                        State = "Url is not an image";
+                        return this;
+                    }
+                    ServerUrl = PathFormatter.Format(Path.GetFileName(this.SourceUrl), Config.GetString("catcherPathFormat"));
+                    var savePath = IO.Path.WebRootPath() + ServerUrl;
+                    if (!Directory.Exists(Path.GetDirectoryName(savePath)))
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(savePath));
+                    }
+                    try
+                    {
 
-                        if (upload)
+                        File.WriteAllBytes(savePath, httpResponse.Content.ReadAsByteArrayAsync().Result);
+
+                        bool upRemote = false;
+
+                        if (upRemote)
                         {
-                            Common.IO.IOHelper.DeleteFile(savePath);
+                            //将文件转存至 oss 并清理本地文件
+                            var oss = new Common.AliYun.OssHelper();
+                            var upload = oss.FileUpload(savePath, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), Path.GetFileName(this.SourceUrl));
 
-                            ServerUrl = "Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
-                            State = "SUCCESS";
+                            if (upload)
+                            {
+                                Common.IO.IOHelper.DeleteFile(savePath);
+
+                                ServerUrl = "Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
+                                State = "SUCCESS";
+                            }
+                            else
+                            {
+                                State = "抓取错误：阿里云OSS转存失败";
+                            }
                         }
                         else
                         {
-                            State = "抓取错误：阿里云OSS转存失败";
+                            State = "SUCCESS";
                         }
-                    }
-                    else
-                    {
-                        State = "SUCCESS";
-                    }
 
+                    }
+                    catch (Exception e)
+                    {
+                        State = "抓取错误：" + e.Message;
+                    }
+                    return this;
                 }
-                catch (Exception e)
-                {
-                    State = "抓取错误：" + e.Message;
-                }
-                return this;
             }
+
         }
 
         private bool IsExternalIPAddress(string url)

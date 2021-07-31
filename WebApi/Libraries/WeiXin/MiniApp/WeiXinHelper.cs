@@ -3,8 +3,11 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Xml;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
 using WebApi.Libraries.WeiXin.Public;
@@ -207,32 +210,33 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <returns></returns>
         private string UseCretPost(string url, string data)
         {
-
             var sslPath = IO.Path.ContentRootPath() + "/ssl/apiclient_cert.p12";
 
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+            using (HttpClientHandler handler = new HttpClientHandler())
+            {
+                X509Certificate2 cert = new X509Certificate2(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
 
-            X509Certificate2 cert = new X509Certificate2(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
+                handler.ClientCertificates.Add(cert);
 
-            req.ClientCertificates.Add(cert);
+                using (HttpClient client = new HttpClient(handler))
+                {
+                    using (Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
+                    {
+                        using (HttpContent content = new StreamContent(dataStream))
+                        {
 
+                            content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
-            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(data);
-            req.Method = "POST";
-            req.ContentType = "application/x-www-form-urlencoded";
+                            using (var httpResponse = client.PostAsync(url, content))
+                            {
+                                return httpResponse.Result.Content.ReadAsStringAsync().Result;
+                            }
+                        }
+                    }
 
-            req.ContentLength = requestBytes.Length;
-            Stream requestStream = req.GetRequestStream();
-            requestStream.Write(requestBytes, 0, requestBytes.Length);
-            requestStream.Close();
+                }
+            }
 
-            HttpWebResponse res = (HttpWebResponse)req.GetResponse();
-            StreamReader sr = new StreamReader(res.GetResponseStream(), System.Text.Encoding.UTF8);
-            string PostJie = sr.ReadToEnd();
-            sr.Close();
-            res.Close();
-
-            return PostJie;
         }
 
 

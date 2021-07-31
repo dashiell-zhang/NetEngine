@@ -16,7 +16,7 @@ namespace TaskAdmin.Tasks
 
 
             //按照指定的时间进行循环执行
-            RecurringJob.AddOrUpdate("jobId：可自定义",() => Run(), "*/5 * * * * *");
+            RecurringJob.AddOrUpdate("jobId：可自定义", () => Run(), "*/5 * * * * *");
 
 
             //延续执行，在其父项作业完成后执行

@@ -42,7 +42,7 @@ namespace Repository.Database
         /// </summary>
         public string PassWord { get; set; }
 
-        
+
 
         /// <summary>
         /// 用户信息

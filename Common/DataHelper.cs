@@ -103,7 +103,7 @@ namespace Common
 
                         var properties = model.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).ToList();
 
-                        var displayNamePI = properties.Where(p => p.CustomAttributes.Where(t => t.AttributeType.Name == "DisplayNameAttribute").Select(t => t.ConstructorArguments.Select(v => v.Value.ToString()).FirstOrDefault()).FirstOrDefault() == "用户名").FirstOrDefault();
+                        var displayNamePI = properties.Where(p => p.CustomAttributes.Where(t => t.AttributeType.Name == "DisplayNameAttribute").Select(t => t.ConstructorArguments.Select(v => v.Value.ToString()).FirstOrDefault()).FirstOrDefault() == dc.ColumnName).FirstOrDefault();
 
                         PropertyInfo pi = model.GetType().GetProperty(dc.ColumnName) ?? displayNamePI;
 

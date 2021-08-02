@@ -16,7 +16,7 @@ namespace Repository.Database
 
 
 
-        public dbContext(DbContextOptions<dbContext> options = default) : base(options = GetDbContextOptions())
+        public dbContext(DbContextOptions<dbContext> options = default) : base(options = GetDbContextOptions(options))
         {
         }
 
@@ -59,12 +59,9 @@ namespace Repository.Database
         public DbSet<TFunctionAuthorize> TFunctionAuthorize { get; set; }
 
 
-
         public DbSet<TImgBaiduAI> TImgBaiduAI { get; set; }
 
-
         public DbSet<TLink> TLink { get; set; }
-
 
         public DbSet<TLog> TLog { get; set; }
 
@@ -90,7 +87,6 @@ namespace Repository.Database
         public DbSet<TRegionTown> TRegionTown { get; set; }
 
 
-
         public DbSet<TRole> TRole { get; set; }
 
 
@@ -109,7 +105,6 @@ namespace Repository.Database
         public DbSet<TUserRole> TUserRole { get; set; }
 
 
-
         public DbSet<TUserToken> TUserToken { get; set; }
 
 
@@ -119,23 +114,29 @@ namespace Repository.Database
 
 
 
-        private static DbContextOptions<dbContext> GetDbContextOptions()
+        private static DbContextOptions<dbContext> GetDbContextOptions(DbContextOptions<dbContext> options = default)
         {
 
             var optionsBuilder = new DbContextOptionsBuilder<dbContext>();
 
+            if (options != default)
+            {
+                optionsBuilder = new DbContextOptionsBuilder<dbContext>(options);
+            }
 
-            //SQLServer:"Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100"
-            //MySQL:"server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100"
-            //SQLite:"Data Source=../Repository/database.db"
-            //PostgreSQL:"Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=100"
+            if (!optionsBuilder.IsConfigured)
+            {
+                //SQLServer:"Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100"
+                //MySQL:"server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100"
+                //SQLite:"Data Source=../Repository/database.db"
+                //PostgreSQL:"Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=100"
 
-            //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 25)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-
+                //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 25)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            }
 
             //开启调试拦截器
             //optionsBuilder.AddInterceptors(new DeBugInterceptor());
@@ -147,7 +148,6 @@ namespace Repository.Database
 
             //开启全局懒加载
             //optionsBuilder.UseLazyLoadingProxies();
-
 
             return optionsBuilder.Options;
         }

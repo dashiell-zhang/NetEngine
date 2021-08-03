@@ -161,7 +161,8 @@ namespace WebApi
 
 
             //注册HttpContext
-            Libraries.Http.HttpContext.Add(services);
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
 
             //注册全局过滤器
             services.AddMvc(options => options.Filters.Add(new GlobalFilter()));
@@ -298,6 +299,8 @@ namespace WebApi
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IApiVersionDescriptionProvider provider)
         {
 
+            Program.ServiceProvider = app.ApplicationServices;
+
             //开启倒带模式运行多次读取HttpContext.Body中的内容
             app.Use(next => context =>
             {
@@ -316,10 +319,6 @@ namespace WebApi
             }
 
             app.UseHsts();
-
-
-            //注册HttpContext
-            Libraries.Http.HttpContext.Initialize(app, env);
 
 
             //注册跨域信息

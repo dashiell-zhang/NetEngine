@@ -119,7 +119,8 @@ namespace Cms
 
 
             //注册HttpContext
-            Libraries.Http.HttpContext.Add(services);
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
 
             //注册全局过滤器
             services.AddMvc(config => config.Filters.Add(new GlobalFilter()));
@@ -204,6 +205,8 @@ namespace Cms
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
+            Program.ServiceProvider = app.ApplicationServices;
+
 
             //开启倒带模式运行多次读取HttpContext.Body中的内容
             app.Use(next => context =>
@@ -233,9 +236,6 @@ namespace Cms
 
             app.UseStaticFiles();
 
-
-            //注册HttpContext
-            Libraries.Http.HttpContext.Initialize(app, env);
 
             //注册跨域信息
             app.UseCors("cors");

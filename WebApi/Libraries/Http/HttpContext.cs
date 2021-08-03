@@ -1,41 +1,19 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Models.Dtos;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 namespace WebApi.Libraries.Http
 {
-    public static class HttpContext
+    public class HttpContext
     {
-        private static IServiceProvider ServiceProvider { get; set; }
-
-        private static IWebHostEnvironment HostingEnvironment { get; set; }
-
-
-        public static void Add(IServiceCollection services)
-        {
-            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        }
-
-
-        public static void Initialize(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            ServiceProvider = app.ApplicationServices;
-            HostingEnvironment = env;
-        }
-
 
         public static Microsoft.AspNetCore.Http.HttpContext Current()
         {
-            object factory = ServiceProvider.GetService(typeof(IHttpContextAccessor));
-            Microsoft.AspNetCore.Http.HttpContext context = ((IHttpContextAccessor)factory).HttpContext;
-            return context;
+            var httpContextAccessor = Program.ServiceProvider.GetService<IHttpContextAccessor>();
+            return httpContextAccessor.HttpContext;
         }
 
 

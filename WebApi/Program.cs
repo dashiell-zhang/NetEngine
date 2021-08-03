@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace WebApi
 {
@@ -30,5 +31,11 @@ namespace WebApi
 
                     webBuilder.UseStartup<Startup>();
                 });
+
+
+
+        public static IServiceProvider ServiceProvider { get; set; }
+
+
     }
 }

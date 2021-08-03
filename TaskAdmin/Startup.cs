@@ -142,7 +142,7 @@ namespace TaskAdmin
 
 
             //注册HttpContext
-            Libraries.Http.HttpContext.Add(services);
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 
             //注册全局过滤器
@@ -208,6 +208,8 @@ namespace TaskAdmin
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
+            Program.ServiceProvider = app.ApplicationServices;
+
 
             //设置本地化信息，可实现 固定 Hangfire 管理面板为中文显示
             app.UseRequestLocalization(new RequestLocalizationOptions
@@ -252,10 +254,6 @@ namespace TaskAdmin
 
 
             app.UseStaticFiles();
-
-
-            //注册HttpContext
-            Libraries.Http.HttpContext.Initialize(app, env);
 
 
             //注册Session

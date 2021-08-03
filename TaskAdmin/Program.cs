@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace TaskAdmin
 {
@@ -29,5 +30,9 @@ namespace TaskAdmin
 
                     webBuilder.UseStartup<Startup>();
                 });
+
+
+
+        public static IServiceProvider ServiceProvider { get; set; }
     }
 }

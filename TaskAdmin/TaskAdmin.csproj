@@ -27,5 +27,9 @@
 		<ProjectReference Include="..\Common\Common.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Views\Home\" />
+	</ItemGroup>
+
 
 </Project>

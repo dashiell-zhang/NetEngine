@@ -22,9 +22,9 @@ namespace TaskAdmin.Libraries
             };
 
 
-            string path = Libraries.Http.HttpContext.GetUrl();
+            string path = Http.HttpContext.GetUrl();
 
-            var parameter = Libraries.Http.HttpContext.GetParameter();
+            var parameter = Http.HttpContext.GetParameter();
 
             var parameterStr = JsonHelper.ObjectToJSON(parameter);
 
@@ -42,7 +42,7 @@ namespace TaskAdmin.Libraries
 
             string strContent = JsonHelper.ObjectToJSON(content);
 
-            Common.DBHelper.LogSet("Cms", "errorlog", strContent);
+            Common.DBHelper.LogSet("TaskAdmin", "errorlog", strContent);
 
             context.Response.StatusCode = 400;
 

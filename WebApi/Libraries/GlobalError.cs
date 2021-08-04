@@ -22,9 +22,9 @@ namespace WebApi.Libraries
             };
 
 
-            string path = Libraries.Http.HttpContext.GetUrl();
+            string path = Http.HttpContext.GetUrl();
 
-            var parameter = Libraries.Http.HttpContext.GetParameter();
+            var parameter = Http.HttpContext.GetParameter();
 
             var parameterStr = JsonHelper.ObjectToJSON(parameter);
 
@@ -33,7 +33,7 @@ namespace WebApi.Libraries
                 parameterStr = parameterStr.Substring(0, 102400);
             }
 
-            var authorization = Libraries.Http.HttpContext.Current().Request.Headers["Authorization"].ToString();
+            var authorization = Http.HttpContext.Current().Request.Headers["Authorization"].ToString();
 
             var content = new
             {

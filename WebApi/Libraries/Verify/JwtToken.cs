@@ -47,8 +47,7 @@ namespace WebApi.Libraries.Verify
         {
             var conf = Program.ServiceProvider.GetService<IConfiguration>();
 
-            var jwtSetting = new JWTSetting();
-            conf.Bind("JWTSetting", jwtSetting);
+            var jwtSetting = conf.GetSection("JWTSetting").Get<JWTSetting>();
 
             //对称秘钥
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey));

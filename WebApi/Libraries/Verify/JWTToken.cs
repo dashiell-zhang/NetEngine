@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace WebApi.Libraries.Verify
 {
-    public class JWTToken1
+    public class JWTToken
     {
 
         /// <summary>

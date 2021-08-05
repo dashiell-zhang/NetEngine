@@ -46,7 +46,7 @@ namespace WebApi.Libraries.Verify
                     using (var db = new dbContext())
                     {
 
-                        var userId = Guid.Parse(JwtToken.GetClaims("userId"));
+                        var userId = Guid.Parse(JWTToken.GetClaims("userId"));
                         var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
                         var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
@@ -93,8 +93,8 @@ namespace WebApi.Libraries.Verify
         {
 
 
-            var nbf = Convert.ToInt64(JwtToken.GetClaims("nbf"));
-            var exp = Convert.ToInt64(JwtToken.GetClaims("exp"));
+            var nbf = Convert.ToInt64(JWTToken.GetClaims("nbf"));
+            var exp = Convert.ToInt64(JWTToken.GetClaims("exp"));
 
             var nbfTime = Common.DateTimeHelper.UnixToTime(nbf);
             var expTime = Common.DateTimeHelper.UnixToTime(exp);
@@ -103,8 +103,8 @@ namespace WebApi.Libraries.Verify
             if (expTime < DateTime.Now.AddMinutes(15))
             {
 
-                var tokenId = Guid.Parse(JwtToken.GetClaims("tokenId"));
-                var userId = Guid.Parse(JwtToken.GetClaims("userId"));
+                var tokenId = Guid.Parse(JWTToken.GetClaims("tokenId"));
+                var userId = Guid.Parse(JWTToken.GetClaims("userId"));
 
                 using (var db = new dbContext())
                 {
@@ -135,7 +135,7 @@ namespace WebApi.Libraries.Verify
                                 };
 
 
-                                var token = JwtToken.GetToken(claims);
+                                var token = JWTToken.GetToken(claims);
 
                                 userToken.Token = token;
 

@@ -50,7 +50,7 @@ namespace WebApi.Controllers.v1
         [HttpPost("AddSign")]
         public bool AddSign([FromBody] dtoSign addSign)
         {
-            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
 
 
             var like = new TSign();
@@ -79,7 +79,7 @@ namespace WebApi.Controllers.v1
         [HttpDelete("DeleteSign")]
         public bool DeleteSign(dtoSign deleteSign)
         {
-            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
 
 
             var like = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();

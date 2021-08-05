@@ -60,7 +60,7 @@ namespace WebApi.Controllers.v1
                         };
 
 
-                var ret = Libraries.Verify.JwtToken.GetToken(claim);
+                var ret = Libraries.Verify.JWTToken.GetToken(claim);
 
                 return ret;
             }
@@ -223,7 +223,7 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetFunctionList")]
         public List<dtoKeyValue> GetFunctionList(string sign)
         {
-            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
 
             var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 

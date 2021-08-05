@@ -1,10 +1,11 @@
-﻿namespace Models.JwtBearer
+﻿namespace Models.AppSettings
 {
+
 
     /// <summary>
     /// JWT 配置信息
     /// </summary>
-    public class JwtSettings
+    public class JWTSetting
     {
 
 

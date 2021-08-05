@@ -15,7 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Models.JwtBearer;
+using Models.AppSettings;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.IO;
@@ -59,17 +59,19 @@ namespace WebApi
                 //使用 Redis 传输消息
                 options.UseRedis(Configuration.GetConnectionString("redisConnection"));
 
-                //使用 RabbitMQ 传输消息
+                //var rabbitMQSetting = Configuration.GetSection("RabbitMQSetting").Get<RabbitMQSetting>();
+
+                ////使用 RabbitMQ 传输消息
                 //options.UseRabbitMQ(options =>
                 //{
-                //    options.HostName = "";
-                //    options.UserName = "";
-                //    options.Password = "";
-                //    options.VirtualHost = "";
-                //    //options.Port = 5671;
+                //    options.HostName = rabbitMQSetting.HostName;
+                //    options.UserName = rabbitMQSetting.UserName;
+                //    options.Password = rabbitMQSetting.PassWord;
+                //    options.VirtualHost = rabbitMQSetting.VirtualHost;
+                //    options.Port = rabbitMQSetting.Port;
                 //    options.ConnectionFactoryOptions = options =>
                 //    {
-                //        options.Ssl = new RabbitMQ.Client.SslOption { Enabled = true, ServerName = "" };
+                //        options.Ssl = new RabbitMQ.Client.SslOption { Enabled = rabbitMQSetting.Ssl.Enabled, ServerName = rabbitMQSetting.Ssl.ServerName };
                 //    };
                 //});
 
@@ -117,9 +119,7 @@ namespace WebApi
 
 
             //注册JWT认证机制
-            services.Configure<JwtSettings>(Configuration.GetSection("JwtSettings"));
-            var jwtSettings = new JwtSettings();
-            Configuration.Bind("JwtSettings", jwtSettings);
+            var jwtSetting = Configuration.GetSection("JWTSetting").Get<JWTSetting>();
 
             services.AddAuthentication(options =>
             {
@@ -131,9 +131,9 @@ namespace WebApi
                 //主要是jwt  token参数设置
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+                    ValidIssuer = jwtSetting.Issuer,
+                    ValidAudience = jwtSetting.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey))
 
                     /***********************************TokenValidationParameters的参数默认值***********************************/
                     // RequireSignedTokens = true,
@@ -189,9 +189,6 @@ namespace WebApi
             });
 
 
-
-            //注册配置文件信息
-            Libraries.Start.StartConfiguration.Add(Configuration);
 
 
             services.AddApiVersioning(options =>
@@ -339,8 +336,6 @@ namespace WebApi
                 options.MapControllers();
             });
 
-            //注册HostingEnvironment
-            Libraries.Start.StartHostingEnvironment.Add(env);
 
 
             //启用中间件服务生成Swagger作为JSON端点

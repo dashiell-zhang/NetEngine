@@ -1,4 +1,5 @@
-﻿using Cms.Libraries.Start;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Cms.Libraries.IO
 {
@@ -12,7 +13,7 @@ namespace Cms.Libraries.IO
         /// <returns></returns>
         public static string WebRootPath()
         {
-            return StartHostingEnvironment.webHostEnvironment.WebRootPath.Replace("\\", "/");
+            return Program.ServiceProvider.GetService<IWebHostEnvironment>().WebRootPath.Replace("\\", "/"); ;
         }
 
 
@@ -23,7 +24,7 @@ namespace Cms.Libraries.IO
         /// <returns></returns>
         public static string ContentRootPath()
         {
-            return StartHostingEnvironment.webHostEnvironment.ContentRootPath.Replace("\\", "/");
+            return Program.ServiceProvider.GetService<IWebHostEnvironment>().ContentRootPath.Replace("\\", "/");
         }
 
     }

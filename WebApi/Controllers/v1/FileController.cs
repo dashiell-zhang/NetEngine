@@ -46,7 +46,7 @@ namespace WebApi.Controllers.v1
         {
             string remoteFileUrl = fileInfo.Key.ToString();
 
-            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
 
             var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
@@ -135,7 +135,7 @@ namespace WebApi.Controllers.v1
         public Guid UploadFile([FromQuery][Required] string business, [FromQuery][Required] Guid key, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
-            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
 
             string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;

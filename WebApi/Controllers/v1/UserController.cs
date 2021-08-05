@@ -109,7 +109,7 @@ namespace WebApi.Controllers.v1
 
             if (userId == default)
             {
-                userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+                userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
             }
 
             var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new dtoUser
@@ -138,7 +138,7 @@ namespace WebApi.Controllers.v1
 
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
-                var userId = Guid.Parse(JwtToken.GetClaims("userId"));
+                var userId = Guid.Parse(JWTToken.GetClaims("userId"));
 
                 string phone = keyValue.Key.ToString();
 
@@ -211,7 +211,7 @@ namespace WebApi.Controllers.v1
         public bool EditUserPassWordBySms([FromBody] dtoKeyValue keyValue)
         {
 
-            var userId = Guid.Parse(Libraries.Verify.JwtToken.GetClaims("userId"));
+            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
 
             string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
 

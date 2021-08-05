@@ -66,17 +66,19 @@ namespace TaskService
                 //使用 Redis 传输消息
                 options.UseRedis(Common.IO.Config.Get().GetConnectionString("redisConnection"));
 
-                //使用 RabbitMQ 传输消息
+                //var rabbitMQSetting = Configuration.GetSection("RabbitMQSetting").Get<RabbitMQSetting>();
+
+                ////使用 RabbitMQ 传输消息
                 //options.UseRabbitMQ(options =>
                 //{
-                //    options.HostName = "";
-                //    options.UserName = "";
-                //    options.Password = "";
-                //    options.VirtualHost = "";
-                //    //options.Port = 5671;
+                //    options.HostName = rabbitMQSetting.HostName;
+                //    options.UserName = rabbitMQSetting.UserName;
+                //    options.Password = rabbitMQSetting.PassWord;
+                //    options.VirtualHost = rabbitMQSetting.VirtualHost;
+                //    options.Port = rabbitMQSetting.Port;
                 //    options.ConnectionFactoryOptions = options =>
                 //    {
-                //        options.Ssl = new RabbitMQ.Client.SslOption { Enabled = true, ServerName = "" };
+                //        options.Ssl = new RabbitMQ.Client.SslOption { Enabled = rabbitMQSetting.Ssl.Enabled, ServerName = rabbitMQSetting.Ssl.ServerName };
                 //    };
                 //});
 

@@ -1,15 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Models.JwtBearer;
+using Models.AppSettings;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WebApi.Libraries.Verify
 {
-    public class JwtToken
+    public class JWTToken
     {
 
         /// <summary>
@@ -44,19 +45,19 @@ namespace WebApi.Libraries.Verify
         /// <returns></returns>
         public static string GetToken(Claim[] claims)
         {
-            var conf = Start.StartConfiguration.configuration;
+            var conf = Program.ServiceProvider.GetService<IConfiguration>();
 
-            var jwtSettings = new JwtSettings();
-            conf.Bind("JwtSettings", jwtSettings);
+            var jwtSetting = new JWTSetting();
+            conf.Bind("JWTSetting", jwtSetting);
 
             //对称秘钥
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey));
 
             //签名证书(秘钥，加密算法)
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             //生成token
-            var token = new JwtSecurityToken(jwtSettings.Issuer, jwtSettings.Audience, claims, DateTime.Now, DateTime.Now.AddMinutes(30), creds);
+            var token = new JwtSecurityToken(jwtSetting.Issuer, jwtSetting.Audience, claims, DateTime.Now, DateTime.Now.AddMinutes(30), creds);
 
             var ret = new JwtSecurityTokenHandler().WriteToken(token);
 

@@ -269,7 +269,7 @@ namespace Common
                                 for (int i = startRow; i <= rowCount; ++i)
                                 {
                                     row = sheet.GetRow(i);
-                                    if (row == null) continue;
+                                    if (row == null | row.Cells.Count == 0) continue;
 
                                     dataRow = dataTable.NewRow();
                                     for (int j = row.FirstCellNum; j < cellCount; ++j)

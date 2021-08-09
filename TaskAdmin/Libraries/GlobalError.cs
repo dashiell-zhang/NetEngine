@@ -46,7 +46,7 @@ namespace TaskAdmin.Libraries
 
             context.Response.StatusCode = 400;
 
-            return context.Response.WriteAsync(JsonHelper.ObjectToJSON(ret));
+            return context.Response.WriteAsJsonAsync(ret);
         }
 
 

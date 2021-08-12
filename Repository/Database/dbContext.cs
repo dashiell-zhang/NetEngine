@@ -438,13 +438,6 @@ namespace Repository.Database
                     }
                 }
 
-                var actionUserName = "";
-
-                if (actionUserId != null)
-                {
-                    actionUserName = db.TUser.Where(t => t.Id == actionUserId.Value).Select(t => t.Name).FirstOrDefault();
-                }
-
                 object[] parameters = { oldEntity, newEntity };
 
                 var result = new dbContext().GetType().GetMethod("ComparisonEntity").MakeGenericMethod(type).Invoke(new dbContext(), parameters);

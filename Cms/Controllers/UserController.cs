@@ -23,11 +23,6 @@ namespace Cms.Controllers
         }
 
 
-        public IActionResult Index()
-        {
-            return View();
-        }
-
 
         [AllowAnonymous]
         public IActionResult Login(string returnUrl)

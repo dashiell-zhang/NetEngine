@@ -14,11 +14,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="Hangfire.InMemory" Version="0.3.4" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.8">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.9">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.2.0" />
 		<PackageReference Include="Hangfire.AspNetCore" Version="1.7.24" />
 	</ItemGroup>

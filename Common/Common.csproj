@@ -27,7 +27,7 @@
     <PackageReference Include="StackExchange.Redis" Version="2.2.62" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.21" />
-    <PackageReference Include="TencentCloudSDK" Version="3.0.338" />
+    <PackageReference Include="TencentCloudSDK" Version="3.0.341" />
   </ItemGroup>
 
   <ItemGroup>

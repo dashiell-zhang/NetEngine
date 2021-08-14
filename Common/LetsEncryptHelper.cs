@@ -6,12 +6,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Common.SSL
+namespace Common
 {
     public class LetsEncryptHelper
     {
-
-
 
 
         /// <summary>

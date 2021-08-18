@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration.CommandLine;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Common
@@ -53,7 +54,7 @@ namespace Common
 
             if (cmdConf.TryGet("cd", out string cdStr) && bool.TryParse(cdStr, out bool cd) && cd)
             {
-                Environment.CurrentDirectory = AppContext.BaseDirectory;
+                Directory.SetCurrentDirectory(AppContext.BaseDirectory);
             }
         }
     }

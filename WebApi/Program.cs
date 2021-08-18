@@ -31,7 +31,7 @@ namespace WebApi
                     //});
                     //webBuilder.UseUrls("https://*");
 
-
+                    webBuilder.UseContentRoot(Directory.GetCurrentDirectory());
                     webBuilder.UseStartup<Startup>();
                 });
 

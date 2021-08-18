@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration.CommandLine;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.IO;
 
 namespace TaskAdmin
 {
@@ -8,6 +10,7 @@ namespace TaskAdmin
     {
         public static void Main(string[] args)
         {
+            Common.EnvironmentHelper.ChangeDirectory(args);
             Common.EnvironmentHelper.InitTestServer();
 
             CreateHostBuilder(args).Build().Run();

@@ -15,6 +15,7 @@ namespace TaskService
 
         static void Main(string[] args)
         {
+            Common.EnvironmentHelper.ChangeDirectory(args);
             Common.EnvironmentHelper.InitTestServer();
 
             //为各数据库注入连接字符串

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration.CommandLine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,7 +7,7 @@ namespace Common
 {
 
     /// <summary>
-    /// 环境变量操作Helper方法
+    /// 环境操作Helper方法
     /// </summary>
     public class EnvironmentHelper
     {
@@ -40,5 +41,20 @@ namespace Common
 
 
 
+
+        /// <summary>
+        /// 改变工作目录
+        /// </summary>
+        /// <param name="args"></param>
+        public static void ChangeDirectory(string[] args)
+        {
+            var cmdConf = new CommandLineConfigurationProvider(args);
+            cmdConf.Load();
+
+            if (cmdConf.TryGet("cd", out string cdStr) && bool.TryParse(cdStr, out bool cd) && cd)
+            {
+                Environment.CurrentDirectory = AppContext.BaseDirectory;
+            }
+        }
     }
 }

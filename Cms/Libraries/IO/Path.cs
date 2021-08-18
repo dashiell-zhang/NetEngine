@@ -13,7 +13,7 @@ namespace Cms.Libraries.IO
         /// <returns></returns>
         public static string WebRootPath()
         {
-            return Program.ServiceProvider.GetService<IWebHostEnvironment>().WebRootPath.Replace("\\", "/"); ;
+            return Program.ServiceProvider.GetService<IWebHostEnvironment>().WebRootPath ?? "".Replace("\\", "/"); ;
         }
 
 

@@ -43,6 +43,18 @@ namespace Repository.Database
 
 
         /// <summary>
+        /// 类型
+        /// </summary>
+        public enumType Type { get; set; }
+        public enum enumType
+        {
+            模块 = 1,
+            功能 = 2
+        }
+
+
+
+        /// <summary>
         /// 该功能动作集合
         /// </summary>
         public virtual List<TFunctionAction> TFunctionAction { get; set; }

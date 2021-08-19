@@ -52,7 +52,7 @@ namespace TaskAdmin.Libraries.Verify
 
                             if (functionId != default)
                             {
-                                var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+                                var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
 
                                 if (functionAuthorizeId != default)
                                 {

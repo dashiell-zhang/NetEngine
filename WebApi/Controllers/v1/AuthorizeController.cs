@@ -227,7 +227,7 @@ namespace WebApi.Controllers.v1
 
             var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new dtoKeyValue
+            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new dtoKeyValue
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name

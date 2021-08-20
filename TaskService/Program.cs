@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.IO;
 using TaskService.Filters;
 using TaskService.Subscribes;
 
@@ -56,6 +57,8 @@ namespace TaskService
 
         private static void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<IConfiguration>(Common.IO.Config.Get());
+
             services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
 
             services.AddLogging(options => options.AddConsole());

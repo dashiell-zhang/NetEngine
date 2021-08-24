@@ -32,7 +32,7 @@ namespace Common
                 {
                     if (testIpList.Contains(item))
                     {
-                        Environment.SetEnvironmentVariable("NETCORE_ENVIRONMENT", "Test");
+                        Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", "Test");
                         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Test");
                         break;
                     }

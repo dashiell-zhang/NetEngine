@@ -16,7 +16,7 @@ namespace Common.IO
         /// <returns></returns>
         public static IConfigurationRoot Get()
         {
-            var ev = Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT");
+            var ev = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
             if (string.IsNullOrEmpty(ev))
             {
                 ev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");

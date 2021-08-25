@@ -1,4 +1,6 @@
 ﻿using DotNetCore.CAP;
+using Microsoft.Extensions.DependencyInjection;
+using Repository.Database;
 using System;
 
 namespace WebApi.Subscribes
@@ -9,10 +11,16 @@ namespace WebApi.Subscribes
     {
 
         [CapSubscribe("ShowMessage")]
-        public void ShowMessage(string message)
+        public void ShowMessage(string msg)
         {
 
-            Console.WriteLine(message);
+            using (var scope = Program.ServiceProvider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<dbContext>();
+
+            }
+
+            Console.WriteLine(msg);
         }
     }
 }

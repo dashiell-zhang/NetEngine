@@ -1,5 +1,8 @@
 ﻿using DotNetCore.CAP;
+using Microsoft.Extensions.DependencyInjection;
+using Repository.Database;
 using System;
+using System.Linq;
 
 namespace TaskService.Subscribes
 {
@@ -11,6 +14,13 @@ namespace TaskService.Subscribes
         [CapSubscribe("ShowMessage")]
         public void ShowMessage(string msg)
         {
+
+            using (var scope = Program.ServiceProvider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<dbContext>();
+
+            }
+
             Console.WriteLine(msg);
         }
 

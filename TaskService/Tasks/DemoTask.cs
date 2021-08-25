@@ -1,7 +1,9 @@
 ﻿using DotNetCore.CAP;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Database;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -10,13 +12,11 @@ namespace TaskService.Tasks
     class DemoTask : BackgroundService
     {
 
-        //private readonly dbContext db;
         private readonly ICapPublisher cap;
 
 
-        public DemoTask(/*dbContext context,*/ ICapPublisher capPublisher)
+        public DemoTask(ICapPublisher capPublisher)
         {
-            //db = context;
             cap = capPublisher;
         }
 
@@ -27,18 +27,26 @@ namespace TaskService.Tasks
         {
             return Task.Run(() =>
             {
-                var tim = new Timer(1000 * 3);
+                var timer = new Timer(1000 * 3);
 
-                tim.Elapsed += TimElapsed;
-                tim.Start();
+                timer.Elapsed += TimerElapsed;
+                timer.Start();
             });
         }
 
 
 
 
-        private void TimElapsed(object sender, ElapsedEventArgs e)
+        private void TimerElapsed(object sender, ElapsedEventArgs e)
         {
+
+            using (var scope = Program.ServiceProvider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<dbContext>();
+
+            }
+
+
             //周期性执行的方法
             Console.WriteLine("HelloWord");
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 using TaskService.Filters;
 using TaskService.Subscribes;
 
@@ -15,14 +16,19 @@ namespace TaskService
             Common.EnvironmentHelper.ChangeDirectory(args);
             Common.EnvironmentHelper.InitTestServer();
 
-            CreateHostBuilder(args).Build().Run();
+            using IHost host = CreateHostBuilder(args).Build();
+
+            ServiceProvider = host.Services;
+
+            host.Run();
         }
 
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
+        private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
+                    var ss = services.BuildServiceProvider();
 
                     //为各数据库注入连接字符串
                     Repository.Database.dbContext.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
@@ -71,6 +77,9 @@ namespace TaskService
 
                     services.AddHostedService<Tasks.DemoTask>();
                 });
+
+
+        public static IServiceProvider ServiceProvider { get; set; }
 
     }
 

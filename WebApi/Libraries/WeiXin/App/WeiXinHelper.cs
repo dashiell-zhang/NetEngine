@@ -122,8 +122,8 @@ namespace WebApi.Libraries.WeiXin.App
         /// <returns></returns>
         public (string accessToken, string openId) GetAccessToken(string code)
         {
-            string token = Common.RedisHelper.StringGet("wxappaccesstoken" + code);
-            string openid = Common.RedisHelper.StringGet("wxappopenid" + code);
+            string token = CacheHelper.GetString("wxappaccesstoken" + code);
+            string openid = CacheHelper.GetString("wxappopenid" + code);
 
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(openid))
             {
@@ -137,8 +137,8 @@ namespace WebApi.Libraries.WeiXin.App
 
                 if (!string.IsNullOrEmpty(token))
                 {
-                    Common.RedisHelper.StringSet("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
-                    Common.RedisHelper.StringSet("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
+                    CacheHelper.SetString("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
+                    CacheHelper.SetString("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
                 }
             }
 

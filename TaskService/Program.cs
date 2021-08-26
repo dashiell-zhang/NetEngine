@@ -76,6 +76,9 @@ namespace TaskService
 
 
                     services.AddHostedService<Tasks.DemoTask>();
+
+                    //注册缓存服务
+                    services.AddDistributedMemoryCache();
                 });
 
 

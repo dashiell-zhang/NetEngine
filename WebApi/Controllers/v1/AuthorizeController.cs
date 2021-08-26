@@ -252,7 +252,7 @@ namespace WebApi.Controllers.v1
 
             string key = "VerifyPhone_" + phone;
 
-            if (Common.RedisHelper.IsContainString(key) == false)
+            if (Common.CacheHelper.IsContainKey(key) == false)
             {
 
                 Random ran = new Random();
@@ -268,7 +268,7 @@ namespace WebApi.Controllers.v1
 
                 if (smsStatus)
                 {
-                    Common.RedisHelper.StringSet(key, code, new TimeSpan(0, 0, 5, 0));
+                    Common.CacheHelper.SetString(key, code, new TimeSpan(0, 0, 5, 0));
 
                     return true;
                 }

@@ -100,7 +100,7 @@ namespace Cms.Libraries.Verify
 
             string key = "VerifyPhone_" + phone;
 
-            var code = Common.RedisHelper.StringGet(key);
+            var code = Common.CacheHelper.GetString(key);
 
             if (string.IsNullOrEmpty(code) == false && code == keyValue.Value.ToString())
             {

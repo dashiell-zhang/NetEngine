@@ -199,6 +199,9 @@ namespace TaskAdmin
             //注册雪花ID算法示例
             services.AddSingleton(new Common.SnowflakeHelper(0, 0));
 
+
+            //注册缓存服务
+            services.AddDistributedMemoryCache();
         }
 
 

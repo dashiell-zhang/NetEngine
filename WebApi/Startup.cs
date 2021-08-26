@@ -288,6 +288,9 @@ namespace WebApi
             services.AddSingleton(new Common.SnowflakeHelper(0, 0));
 
 
+            //注册缓存服务
+            services.AddDistributedMemoryCache();
+
         }
 
 
@@ -297,6 +300,7 @@ namespace WebApi
         {
 
             Program.ServiceProvider = app.ApplicationServices;
+
 
             //开启倒带模式运行多次读取HttpContext.Body中的内容
             app.Use(next => context =>

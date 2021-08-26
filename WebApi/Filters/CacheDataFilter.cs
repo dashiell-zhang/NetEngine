@@ -1,4 +1,5 @@
-﻿using Common.Json;
+﻿using Common;
+using Common.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
@@ -42,11 +43,11 @@ namespace WebApi.Filters
                 key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
             }
 
-            key = "CacheData_" + Common.CryptoHelper.GetMd5(key);
+            key = "CacheData_" + CryptoHelper.GetMd5(key);
 
             try
             {
-                var cacheInfo = Common.RedisHelper.StringGet(key);
+                var cacheInfo = CacheHelper.GetString(key);
 
                 if (!string.IsNullOrEmpty(cacheInfo))
                 {
@@ -82,9 +83,9 @@ namespace WebApi.Filters
                     key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
                 }
 
-                key = "CacheData_" + Common.CryptoHelper.GetMd5(key);
+                key = "CacheData_" + CryptoHelper.GetMd5(key);
 
-                Common.RedisHelper.StringSet(key, value, TimeSpan.FromSeconds(TTL));
+                CacheHelper.SetString(key, value, TimeSpan.FromSeconds(TTL));
 
             }
             catch

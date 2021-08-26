@@ -198,6 +198,8 @@ namespace Cms
             services.AddSingleton(new Common.SnowflakeHelper(0, 0));
 
 
+            //注册缓存服务
+            services.AddDistributedMemoryCache();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

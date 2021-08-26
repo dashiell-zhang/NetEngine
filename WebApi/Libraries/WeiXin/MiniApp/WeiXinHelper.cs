@@ -52,7 +52,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid");
                 string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key");
 
-                Common.RedisHelper.StringSet(code, httpret, new TimeSpan(0, 0, 10));
+                Common.CacheHelper.SetString(code, httpret, new TimeSpan(0, 0, 10));
 
                 return (openid, sessionkey);
             }
@@ -62,7 +62,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
                 if (errcode == "40163")
                 {
-                    var cachHttpRet = Common.RedisHelper.StringGet(code);
+                    var cachHttpRet = Common.CacheHelper.GetString(code);
 
                     if (!string.IsNullOrEmpty(cachHttpRet))
                     {

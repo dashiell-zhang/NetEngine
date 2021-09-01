@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Cms.Controllers
@@ -27,12 +27,11 @@ namespace Cms.Controllers
             ViewBag.NickName = HttpContext.Session.GetString("nickName");
             ViewBag.UserId = HttpContext.Session.GetString("userId");
 
+            var channelList = db.TChannel.AsNoTracking().Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
 
+            ViewData["channelList"] = channelList;
 
-            IDictionary<string, object> list = new Dictionary<string, object>();
-            var TChannel = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
-            list.Add("TChannel", TChannel);
-            return View(list);
+            return View();
         }
 
 
@@ -49,11 +48,12 @@ namespace Cms.Controllers
         public IActionResult WebInfo()
         {
 
-            var webInfo = db.TWebInfo.FirstOrDefault() ?? new TWebInfo();
+            var webInfo = db.TWebInfo.AsNoTracking().FirstOrDefault() ?? new TWebInfo();
 
             if (webInfo.Id == default)
             {
                 webInfo.Id = Guid.NewGuid();
+
                 db.TWebInfo.Add(webInfo);
                 db.SaveChanges();
             }

@@ -27,8 +27,7 @@ namespace Cms.Controllers
         public JsonResult SetFileSort(Guid id, int sort)
         {
 
-
-            var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
+            var file = db.TFile.Where(t => t.IsDelete == false & t.Id == id).FirstOrDefault();
 
             if (file != null)
             {
@@ -109,13 +108,10 @@ namespace Cms.Controllers
                             }
 
 
-
-
-                            TFile fi = new TFile();
+                            var fi = new TFile();
                             fi.Id = Guid.NewGuid();
                             fi.CreateUserId = userId;
                             fi.CreateTime = DateTime.Now;
-                            fi.IsDelete = false;
                             fi.Name = file.FileName;
                             fi.Table = business;
                             fi.TableId = key;
@@ -145,13 +141,15 @@ namespace Cms.Controllers
         public bool DeleteFile(Guid id)
         {
 
-            var userid = HttpContext.Session.GetString("userId");
+            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
-            var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
+            var file = db.TFile.Where(t => t.IsDelete == false & t.Id == id).FirstOrDefault();
 
             if (file != null)
             {
                 file.IsDelete = true;
+                file.DeleteTime = DateTime.Now;
+                file.DeleteUserId = userId;
 
                 db.SaveChanges();
             }

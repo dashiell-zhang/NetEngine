@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Database;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 

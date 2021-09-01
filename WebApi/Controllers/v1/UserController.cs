@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
 using Repository.Database;
 using System;
@@ -42,7 +43,7 @@ namespace WebApi.Controllers.v1
         public string GetWeiXinMiniAppOpenId(Guid weiXinKeyId, string code)
         {
 
-            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -71,7 +72,7 @@ namespace WebApi.Controllers.v1
         public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, Guid weiXinKeyId)
         {
 
-            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -181,7 +182,6 @@ namespace WebApi.Controllers.v1
                     else
                     {
                         HttpContext.Response.StatusCode = 400;
-
                         HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'The target mobile number has been bound by another account'");
 
                         return false;
@@ -193,7 +193,6 @@ namespace WebApi.Controllers.v1
             else
             {
                 HttpContext.Response.StatusCode = 400;
-
                 HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'Error in SMS verification code'");
 
                 return false;
@@ -211,7 +210,7 @@ namespace WebApi.Controllers.v1
         public bool EditUserPassWordBySms([FromBody] dtoKeyValue keyValue)
         {
 
-            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
+            var userId = Guid.Parse(JWTToken.GetClaims("userId"));
 
             string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
 
@@ -225,14 +224,14 @@ namespace WebApi.Controllers.v1
 
                 if (!string.IsNullOrEmpty(password))
                 {
-                    var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
+                    var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
 
                     user.PassWord = password;
 
                     db.SaveChanges();
 
 
-                    var tokenList = db.TUserToken.Where(t => t.UserId == userId).ToList();
+                    var tokenList = db.TUserToken.Where(t => t.IsDelete == false & t.UserId == userId).ToList();
 
                     db.TUserToken.RemoveRange(tokenList);
 
@@ -243,7 +242,6 @@ namespace WebApi.Controllers.v1
                 else
                 {
                     HttpContext.Response.StatusCode = 400;
-
                     HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'New password is not allowed to be empty'");
 
                     return false;
@@ -252,7 +250,6 @@ namespace WebApi.Controllers.v1
             else
             {
                 HttpContext.Response.StatusCode = 400;
-
                 HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'Error in SMS verification code'");
 
                 return false;

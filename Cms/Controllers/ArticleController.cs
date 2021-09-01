@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace Cms.Controllers
 
         public JsonResult GetChannelList()
         {
-            var list = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
+            var list = db.TChannel.AsNoTracking().Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
 
             return Json(new { data = list });
         }
@@ -45,7 +46,7 @@ namespace Cms.Controllers
             else
             {
 
-                var Channel = db.TChannel.Where(t => t.Id == id).FirstOrDefault();
+                var Channel = db.TChannel.AsNoTracking().Where(t => t.Id == id).FirstOrDefault();
                 return View(Channel);
             }
 
@@ -54,7 +55,6 @@ namespace Cms.Controllers
 
         public bool ChannelSave(TChannel Channel)
         {
-
 
             if (Channel.Id == default)
             {
@@ -121,13 +121,11 @@ namespace Cms.Controllers
         public IActionResult CategoryEdit(Guid channelid, Guid id)
         {
 
-
             IDictionary<string, object> list = new Dictionary<string, object>();
 
-            var categoryList = db.TCategory.Where(t => t.IsDelete == false && t.ChannelId == channelid).OrderBy(t => t.Sort).ToList();
+            var categoryList = db.TCategory.AsNoTracking().Where(t => t.IsDelete == false && t.ChannelId == channelid).OrderBy(t => t.Sort).ToList();
 
             list.Add("categoryList", categoryList);
-
 
             if (id == default)
             {
@@ -137,7 +135,7 @@ namespace Cms.Controllers
             }
             else
             {
-                var Category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
+                var Category = db.TCategory.AsNoTracking().Where(t => t.Id == id).FirstOrDefault();
                 list.Add("categoryInfo", Category);
             }
 
@@ -191,18 +189,17 @@ namespace Cms.Controllers
         public JsonResult CategoryDelete(Guid id)
         {
 
+            var isHaveSubCategory = db.TCategory.Where(t => t.ParentId == id && t.IsDelete == false).Any();
 
-            var subCategoryCount = db.TCategory.Where(t => t.ParentId == id && t.IsDelete == false).Count();
-
-            if (subCategoryCount == 0)
+            if (!isHaveSubCategory)
             {
                 var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
-                var Category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
+                var category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
 
-                Category.IsDelete = true;
-                Category.DeleteUserId = userId;
-                Category.DeleteTime = DateTime.Now;
+                category.IsDelete = true;
+                category.DeleteUserId = userId;
+                category.DeleteTime = DateTime.Now;
 
                 var articleList = db.TArticle.Where(t => t.CategoryId == id).ToList();
 
@@ -213,8 +210,8 @@ namespace Cms.Controllers
                     article.DeleteTime = DateTime.Now;
                 }
 
-
                 db.SaveChanges();
+
                 var data = new { status = true, msg = "删除成功！" };
                 return Json(data);
             }
@@ -223,7 +220,6 @@ namespace Cms.Controllers
                 var data = new { status = false, msg = "该类别下存在子级分类无法直接删除，请先删除子级分类！" };
                 return Json(data);
             }
-
 
         }
 
@@ -237,8 +233,6 @@ namespace Cms.Controllers
 
         public JsonResult GetArticleList(Guid ChannelId)
         {
-
-
             var list = db.TArticle.Where(t => t.Category.ChannelId == ChannelId && t.IsDelete == false).Select(t => new { t.Id, t.Title, CategoryName = t.Category.Name, t.Category.ChannelId, t.IsDisplay, t.IsRecommend, t.ClickCount, t.CreateTime }).ToList();
 
             return Json(new { data = list });
@@ -247,16 +241,11 @@ namespace Cms.Controllers
 
         public IActionResult ArticleEdit(Guid channelid, Guid id)
         {
-
-
-
             ViewData["Tenantid"] = HttpContext.Session.GetString("tenantid");
 
-
-            var categoryList = db.TCategory.Where(t => t.IsDelete == false && t.ChannelId == channelid).OrderBy(t => t.Sort).ToList();
+            var categoryList = db.TCategory.AsNoTracking().Where(t => t.IsDelete == false && t.ChannelId == channelid).OrderBy(t => t.Sort).ToList();
 
             ViewData["categoryList"] = categoryList;
-
 
             if (id == default)
             {
@@ -270,12 +259,11 @@ namespace Cms.Controllers
             }
             else
             {
-                var article = db.TArticle.Where(t => t.Id == id).FirstOrDefault();
+                var article = db.TArticle.AsNoTracking().Where(t => t.Id == id).FirstOrDefault();
                 ViewData["article"] = article;
 
-                var coverList = db.TFile.Where(t => t.IsDelete == false && t.Sign == "cover" & t.Table == "TArticle" & t.TableId == id).OrderBy(t => t.Sort).ToList();
+                var coverList = db.TFile.AsNoTracking().Where(t => t.IsDelete == false && t.Sign == "cover" & t.Table == "TArticle" & t.TableId == id).OrderBy(t => t.Sort).ToList();
                 ViewData["coverList"] = coverList;
-
             }
 
             ViewData["channelid"] = channelid;
@@ -287,49 +275,40 @@ namespace Cms.Controllers
 
         public bool ArticleSave(TArticle article)
         {
-            try
+
+            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
+
+            if (!db.TArticle.Where(t => t.IsDelete == false & t.Id == article.Id).Any())
             {
-                var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
+                //执行添加
 
+                article.CreateTime = DateTime.Now;
+                article.CreateUserId = userId;
+                article.IsDelete = false;
 
-
-                if (db.TArticle.Where(t => t.Id == article.Id).FirstOrDefault() == null)
-                {
-                    //执行添加
-
-                    article.CreateTime = DateTime.Now;
-                    article.CreateUserId = userId;
-                    article.IsDelete = false;
-
-                    db.TArticle.Add(article);
-                }
-                else
-                {
-                    //执行修改
-                    var dbArticle = db.TArticle.Where(t => t.Id == article.Id).FirstOrDefault();
-
-                    dbArticle.CategoryId = article.CategoryId;
-                    dbArticle.Title = article.Title;
-                    dbArticle.Abstract = article.Abstract;
-                    dbArticle.Content = article.Content;
-                    dbArticle.IsDisplay = article.IsDisplay;
-                    dbArticle.IsRecommend = article.IsRecommend;
-                    dbArticle.ClickCount = article.ClickCount;
-                    dbArticle.Sort = article.Sort;
-
-                }
-
-                db.SaveChanges();
-
-
-
-                return true;
+                db.TArticle.Add(article);
             }
-            catch
+            else
             {
-                return false;
+                //执行修改
+                var dbArticle = db.TArticle.Where(t => t.Id == article.Id).FirstOrDefault();
+
+                dbArticle.CategoryId = article.CategoryId;
+                dbArticle.Title = article.Title;
+                dbArticle.Abstract = article.Abstract;
+                dbArticle.Content = article.Content;
+                dbArticle.IsDisplay = article.IsDisplay;
+                dbArticle.IsRecommend = article.IsRecommend;
+                dbArticle.ClickCount = article.ClickCount;
+                dbArticle.Sort = article.Sort;
             }
+
+            db.SaveChanges();
+
+            return true;
+
         }
+
 
 
         public JsonResult ArticleDelete(Guid id)
@@ -337,12 +316,11 @@ namespace Cms.Controllers
 
             var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
-            var article = db.TArticle.Where(t => t.Id == id).FirstOrDefault();
+            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == id).FirstOrDefault();
 
             article.IsDelete = true;
             article.DeleteUserId = userId;
             article.DeleteTime = DateTime.Now;
-
 
             db.SaveChanges();
 

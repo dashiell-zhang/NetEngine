@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
 using Repository.Database;
 using System;
@@ -42,11 +43,11 @@ namespace WebApi.Controllers.v1
         public string GetToken([FromBody] dtoLogin login)
         {
 
-            var user = db.TUser.Where(t => t.IsDelete == false & (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
+            var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false & (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
 
             if (user != null)
             {
-                TUserToken userToken = new TUserToken();
+                var userToken = new TUserToken();
                 userToken.Id = Guid.NewGuid();
                 userToken.UserId = user.Id;
                 userToken.CreateTime = DateTime.Now;
@@ -54,13 +55,14 @@ namespace WebApi.Controllers.v1
                 db.TUserToken.Add(userToken);
                 db.SaveChanges();
 
-                var claim = new Claim[]{
-                        new Claim("tokenId",userToken.Id.ToString()),
-                             new Claim("userId",user.Id.ToString())
-                        };
+                var claim = new Claim[]
+                {
+                    new Claim("tokenId",userToken.Id.ToString()),
+                    new Claim("userId",user.Id.ToString())
+                };
 
 
-                var ret = Libraries.Verify.JWTToken.GetToken(claim);
+                var ret = JWTToken.GetToken(claim);
 
                 return ret;
             }
@@ -68,7 +70,6 @@ namespace WebApi.Controllers.v1
             {
 
                 HttpContext.Response.StatusCode = 400;
-
                 HttpContext.Items.Add("errMsg", "Authorize.GetToken.'Wrong user name or password'");
 
                 return "";
@@ -90,7 +91,7 @@ namespace WebApi.Controllers.v1
             var weiXinKeyId = Guid.Parse(keyValue.Key.ToString());
             string code = keyValue.Value.ToString();
 
-            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -103,7 +104,7 @@ namespace WebApi.Controllers.v1
             string openid = wxinfo.openid;
             string sessionkey = wxinfo.sessionkey;
 
-            var user = db.TUserBindExternal.Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
+            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 
             if (user == null)
             {
@@ -116,7 +117,7 @@ namespace WebApi.Controllers.v1
                     {
                         isAction = true;
 
-                        user = db.TUserBindExternal.Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
+                        user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 
                         if (user == null)
                         {
@@ -124,7 +125,6 @@ namespace WebApi.Controllers.v1
                             user = new TUser();
 
                             user.Id = Guid.NewGuid();
-                            user.IsDelete = false;
                             user.CreateTime = DateTime.Now;
                             user.Name = DateTime.Now.ToString() + "微信小程序新用户";
                             user.NickName = user.Name;
@@ -176,7 +176,7 @@ namespace WebApi.Controllers.v1
             {
                 string phone = keyValue.Key.ToString();
 
-                var user = db.TUser.Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
+                var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
 
                 if (user == null)
                 {
@@ -185,7 +185,6 @@ namespace WebApi.Controllers.v1
                     user = new TUser();
 
                     user.Id = Guid.NewGuid();
-                    user.IsDelete = false;
                     user.CreateTime = DateTime.Now;
                     user.Name = DateTime.Now.ToString() + "手机短信新用户";
                     user.NickName = user.Name;
@@ -202,7 +201,6 @@ namespace WebApi.Controllers.v1
             else
             {
                 HttpContext.Response.StatusCode = 400;
-
                 HttpContext.Items.Add("errMsg", "Authorize.GetTokenBySms.'New password is not allowed to be empty'");
 
                 return "";
@@ -223,9 +221,9 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetFunctionList")]
         public List<dtoKeyValue> GetFunctionList(string sign)
         {
-            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
+            var userId = Guid.Parse(JWTToken.GetClaims("userId"));
 
-            var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
+            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
             var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new dtoKeyValue
             {
@@ -255,7 +253,7 @@ namespace WebApi.Controllers.v1
             if (Common.CacheHelper.IsContainKey(key) == false)
             {
 
-                Random ran = new Random();
+                var ran = new Random();
                 string code = ran.Next(100000, 999999).ToString();
 
                 var jsonCode = new
@@ -299,7 +297,7 @@ namespace WebApi.Controllers.v1
             var weiXinKeyId = Guid.Parse(keyValue.Key.ToString());
             string code = keyValue.Value.ToString();
 
-            var settings = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "WeiXinApp" & t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinApp" & t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -312,7 +310,7 @@ namespace WebApi.Controllers.v1
 
             var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
 
-            var user = db.TUserBindExternal.Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" & t.AppId == appid & t.OpenId == userInfo.openid).Select(t => t.User).FirstOrDefault();
+            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" & t.AppId == appid & t.OpenId == userInfo.openid).Select(t => t.User).FirstOrDefault();
 
             if (user == null)
             {

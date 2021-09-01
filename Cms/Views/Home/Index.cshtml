@@ -70,7 +70,7 @@
                 <ul class="layui-nav layui-nav-tree" id="exp0" style="display: block;">
                     @{
                         int i = 0;
-                        foreach (var item in (List<TChannel>)Model["TChannel"])
+                        foreach (var item in (List<TChannel>)ViewData["channelList"])
                         {
                             i = i + 1;
 

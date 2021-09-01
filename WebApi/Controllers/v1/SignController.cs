@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System;
 using System.Linq;
@@ -36,7 +37,7 @@ namespace WebApi.Controllers.v1
         public int GetSignCount(string table, Guid tableId, string sign)
         {
 
-            var count = db.TSign.Where(t => t.IsDelete == false && t.Table == table && t.TableId == tableId && t.Sign == sign).Count();
+            var count = db.TSign.AsNoTracking().Where(t => t.IsDelete == false && t.Table == table && t.TableId == tableId && t.Sign == sign).Count();
 
             return count;
         }
@@ -52,18 +53,16 @@ namespace WebApi.Controllers.v1
         {
             var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
 
+            var sign = new TSign();
 
-            var like = new TSign();
-            like.Id = Guid.NewGuid();
-            like.IsDelete = false;
-            like.CreateTime = DateTime.Now;
-            like.CreateUserId = userId;
+            sign.Id = Guid.NewGuid();
+            sign.CreateTime = DateTime.Now;
+            sign.CreateUserId = userId;
+            sign.Table = addSign.Table;
+            sign.TableId = addSign.TableId;
+            sign.Sign = addSign.Sign;
 
-            like.Table = addSign.Table;
-            like.TableId = addSign.TableId;
-            like.Sign = addSign.Sign;
-
-            db.TSign.Add(like);
+            db.TSign.Add(sign);
             db.SaveChanges();
 
             return true;
@@ -81,13 +80,14 @@ namespace WebApi.Controllers.v1
         {
             var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
 
+            var sign = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
 
-            var like = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
-
-            if (like != null)
+            if (sign != null)
             {
-                like.IsDelete = true;
-                like.DeleteTime = DateTime.Now;
+                sign.IsDelete = true;
+                sign.DeleteTime = DateTime.Now;
+                sign.DeleteUserId = userId;
+
                 db.SaveChanges();
             }
             return true;

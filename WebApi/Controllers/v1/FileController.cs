@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
 using Repository.Database;
 using System;
@@ -97,7 +98,6 @@ namespace WebApi.Controllers.v1
 
                     var f = new TFile();
                     f.Id = Guid.NewGuid();
-                    f.IsDelete = false;
                     f.Name = fileInfo.Value.ToString();
                     f.Path = filePath;
                     f.Table = business;
@@ -114,7 +114,6 @@ namespace WebApi.Controllers.v1
             }
 
             HttpContext.Response.StatusCode = 400;
-
             HttpContext.Items.Add("errMsg", "文件上传失败！");
 
             return default;
@@ -278,8 +277,6 @@ namespace WebApi.Controllers.v1
 
 
             return File(stream, memi, file.Name);
-
-
         }
 
 
@@ -374,33 +371,31 @@ namespace WebApi.Controllers.v1
                 }
                 else
                 {
-                    MemoryStream ms = new MemoryStream();
-
-
-                    if (width != 0 && height == 0)
+                    using (var ms = new MemoryStream())
                     {
-                        var percent = ((float)width / (float)img.Width);
+                        if (width != 0 && height == 0)
+                        {
+                            var percent = ((float)width / (float)img.Width);
 
-                        width = (int)(img.Width * percent);
-                        height = (int)(img.Height * percent);
+                            width = (int)(img.Width * percent);
+                            height = (int)(img.Height * percent);
+                        }
+
+                        if (width == 0 && height != 0)
+                        {
+                            var percent = ((float)height / (float)img.Height);
+
+                            width = (int)(img.Width * percent);
+                            height = (int)(img.Height * percent);
+                        }
+
+                        img.GetThumbnailImage(width, height, null, IntPtr.Zero).Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+
+                        img.Dispose();
+                        ms.Dispose();
+
+                        return File(ms.ToArray(), "image/png");
                     }
-
-                    if (width == 0 && height != 0)
-                    {
-                        var percent = ((float)height / (float)img.Height);
-
-                        width = (int)(img.Width * percent);
-                        height = (int)(img.Height * percent);
-                    }
-
-
-
-                    img.GetThumbnailImage(width, height, null, IntPtr.Zero).Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-
-                    img.Dispose();
-                    ms.Dispose();
-
-                    return File(ms.ToArray(), "image/png");
                 }
 
             }
@@ -417,7 +412,7 @@ namespace WebApi.Controllers.v1
         public string GetFilePath([Required] Guid fileid)
         {
 
-            var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
+            var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false & t.Id == fileid).FirstOrDefault();
 
             if (file != null)
             {
@@ -430,7 +425,6 @@ namespace WebApi.Controllers.v1
             else
             {
                 HttpContext.Response.StatusCode = 400;
-
                 HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件！");
 
                 return null;
@@ -454,7 +448,7 @@ namespace WebApi.Controllers.v1
         public Guid CreateGroupFileId([Required] string business, [Required] Guid key, [Required] string sign, [Required] string fileName, [Required] int slicing, [Required] string unique)
         {
 
-            var dbfileinfo = db.TFileGroup.Where(t => t.Unique.ToLower() == unique.ToLower()).FirstOrDefault();
+            var dbfileinfo = db.TFileGroup.AsNoTracking().Where(t => t.IsDelete == false & t.Unique.ToLower() == unique.ToLower()).FirstOrDefault();
 
             if (dbfileinfo == null)
             {
@@ -539,7 +533,7 @@ namespace WebApi.Controllers.v1
                 }
 
 
-                var group = db.TFileGroup.Where(t => t.FileId == fileId).FirstOrDefault();
+                var group = db.TFileGroup.AsNoTracking().Where(t => t.IsDelete == false & t.FileId == fileId).FirstOrDefault();
 
                 var groupfile = new TFileGroupFile();
                 groupfile.Id = Guid.NewGuid();
@@ -560,41 +554,34 @@ namespace WebApi.Controllers.v1
                 if (group.Isfull == true)
                 {
 
-                    try
+                    byte[] buffer = new byte[1024 * 100];
+
+                    var fileinfo = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
+
+                    var fullfilepath = Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
+
+                    using (FileStream outStream = new FileStream(fullfilepath, FileMode.Create))
                     {
-                        byte[] buffer = new byte[1024 * 100];
+                        int readedLen = 0;
+                        FileStream srcStream = null;
 
-                        var fileinfo = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
+                        var filelist = db.TFileGroupFile.Where(t => t.FileId == fileinfo.Id).OrderBy(t => t.Index).ToList();
 
-                        var fullfilepath = Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
-
-                        using (FileStream outStream = new FileStream(fullfilepath, FileMode.Create))
+                        foreach (var item in filelist)
                         {
-                            int readedLen = 0;
-                            FileStream srcStream = null;
-
-                            var filelist = db.TFileGroupFile.Where(t => t.FileId == fileinfo.Id).OrderBy(t => t.Index).ToList();
-
-                            foreach (var item in filelist)
+                            string p = Libraries.IO.Path.ContentRootPath() + item.Path;
+                            srcStream = new FileStream(p, FileMode.Open);
+                            while ((readedLen = srcStream.Read(buffer, 0, buffer.Length)) > 0)
                             {
-                                string p = Libraries.IO.Path.ContentRootPath() + item.Path;
-                                srcStream = new FileStream(p, FileMode.Open);
-                                while ((readedLen = srcStream.Read(buffer, 0, buffer.Length)) > 0)
-                                {
-                                    outStream.Write(buffer, 0, readedLen);
-                                }
-                                srcStream.Close();
+                                outStream.Write(buffer, 0, readedLen);
                             }
+                            srcStream.Close();
                         }
-
-                        group.Issynthesis = true;
-
-                        db.SaveChanges();
                     }
-                    catch
-                    {
 
-                    }
+                    group.Issynthesis = true;
+
+                    db.SaveChanges();
 
                 }
 
@@ -616,22 +603,16 @@ namespace WebApi.Controllers.v1
         [HttpDelete("DeleteFile")]
         public bool DeleteFile(dtoId id)
         {
-            try
-            {
 
-                var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
+            var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
-                file.IsDelete = true;
-                file.DeleteTime = DateTime.Now;
+            file.IsDelete = true;
+            file.DeleteTime = DateTime.Now;
 
-                db.SaveChanges();
+            db.SaveChanges();
 
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            return true;
+
         }
 
 

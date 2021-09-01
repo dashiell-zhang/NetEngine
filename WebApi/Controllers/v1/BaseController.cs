@@ -42,8 +42,6 @@ namespace WebApi.Controllers.v1
         {
             var list = new List<dtoKeyValue>();
 
-
-
             if (provinceId == 0 && cityId == 0)
             {
                 list = db.TRegionProvince.Select(t => new dtoKeyValue { Key = t.Id, Value = t.Province }).ToList();
@@ -139,7 +137,7 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetSnowflakeId")]
         public long GetSnowflakeId()
         {
-            return HttpContext.RequestServices.GetService<Common.SnowflakeHelper>().GetId();
+            return HttpContext.RequestServices.GetService<SnowflakeHelper>().GetId();
         }
 
 

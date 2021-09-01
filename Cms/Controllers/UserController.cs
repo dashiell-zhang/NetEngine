@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 
@@ -36,7 +36,7 @@ namespace Cms.Controllers
         {
             var retValue = new { status = true };
 
-            var user = db.TUser.Where(t => t.IsDelete == false & t.Name == name & t.PassWord == pwd).FirstOrDefault();
+            var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false & t.Name == name & t.PassWord == pwd).FirstOrDefault();
 
             if (user != null)
             {
@@ -80,7 +80,7 @@ namespace Cms.Controllers
         public JsonResult GetUserList()
         {
 
-            IList<TUser> list = db.TUser.Where(t => t.IsDelete == false).ToList();
+            var list = db.TUser.AsNoTracking().Where(t => t.IsDelete == false).ToList();
 
             return Json(new { data = list });
         }
@@ -96,9 +96,8 @@ namespace Cms.Controllers
             }
             else
             {
-
-                var UserSys = db.TUser.Where(t => t.Id == id).FirstOrDefault();
-                return View(UserSys);
+                var userSys = db.TUser.AsNoTracking().Where(t => t.IsDelete == false & t.Id == id).FirstOrDefault();
+                return View(userSys);
             }
 
         }
@@ -107,12 +106,10 @@ namespace Cms.Controllers
         public bool UserSave(TUser user)
         {
 
-
             if (user.Id == default)
             {
                 //执行添加
                 user.Id = Guid.NewGuid();
-                user.IsDelete = false;
                 user.CreateTime = DateTime.Now;
 
                 db.TUser.Add(user);
@@ -120,17 +117,16 @@ namespace Cms.Controllers
             else
             {
                 //执行修改
-                var dbUserSys = db.TUser.Where(t => t.Id == user.Id).FirstOrDefault();
+                var dbUser = db.TUser.Where(t => t.Id == user.Id).FirstOrDefault();
 
-                dbUserSys.Name = user.Name;
-                dbUserSys.NickName = user.NickName;
-                dbUserSys.Phone = user.Phone;
-                dbUserSys.Email = user.Email;
-                dbUserSys.PassWord = user.PassWord;
+                dbUser.Name = user.Name;
+                dbUser.NickName = user.NickName;
+                dbUser.Phone = user.Phone;
+                dbUser.Email = user.Email;
+                dbUser.PassWord = user.PassWord;
             }
 
             db.SaveChanges();
-
 
             return true;
         }
@@ -138,17 +134,18 @@ namespace Cms.Controllers
 
         public JsonResult UserDelete(Guid id)
         {
+            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
             var user = db.TUser.Where(t => t.Id == id).FirstOrDefault();
 
             user.IsDelete = true;
             user.DeleteTime = DateTime.Now;
+            user.DeleteUserId = userId;
 
             db.SaveChanges();
 
             var data = new { status = true, msg = "删除成功！" };
             return Json(data);
-
         }
 
     }

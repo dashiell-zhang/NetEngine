@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System;
-using System.Linq;
 
 namespace TaskService.Subscribes
 {

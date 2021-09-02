@@ -36,6 +36,8 @@ namespace TaskAdmin
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
             services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
 
+            services.AddResponseCompression();
+
             services.AddSingleton<DemoSubscribe>();
             services.AddCap(options =>
             {
@@ -228,6 +230,7 @@ namespace TaskAdmin
 
             Program.ServiceProvider = app.ApplicationServices;
 
+            app.UseResponseCompression();
 
             //设置本地化信息，可实现 固定 Hangfire 管理面板为中文显示
             app.UseRequestLocalization(new RequestLocalizationOptions

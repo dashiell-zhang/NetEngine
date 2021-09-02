@@ -51,6 +51,7 @@ namespace WebApi
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
             services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
 
+            services.AddResponseCompression();
 
             services.AddSingleton<DemoSubscribe>();
             services.AddCap(options =>
@@ -318,6 +319,7 @@ namespace WebApi
 
             Program.ServiceProvider = app.ApplicationServices;
 
+            app.UseResponseCompression();
 
             //开启倒带模式运行多次读取HttpContext.Body中的内容
             app.Use(next => context =>

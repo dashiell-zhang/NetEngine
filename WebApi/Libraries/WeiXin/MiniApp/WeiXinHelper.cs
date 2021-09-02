@@ -219,6 +219,9 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
                 using (HttpClient client = new HttpClient(handler))
                 {
+
+                    client.DefaultRequestVersion = new Version("2.0");
+
                     using (Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
                     {
                         using (HttpContent content = new StreamContent(dataStream))

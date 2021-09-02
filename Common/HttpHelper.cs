@@ -37,6 +37,7 @@ namespace Common
 
                 using (HttpClient client = new HttpClient(handler))
                 {
+                    client.DefaultRequestVersion = new Version("2.0");
                     client.DefaultRequestHeaders.Add("Accept", "*/*");
                     client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)");
                     client.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
@@ -112,6 +113,7 @@ namespace Common
 
                 using (HttpClient client = new HttpClient(handler))
                 {
+                    client.DefaultRequestVersion = new Version("2.0");
                     client.DefaultRequestHeaders.Add("Accept", "*/*");
                     client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)");
                     client.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
@@ -198,6 +200,7 @@ namespace Common
 
                 using (HttpClient client = new HttpClient(handler))
                 {
+                    client.DefaultRequestVersion = new Version("2.0");
                     client.DefaultRequestHeaders.Add("Accept", "*/*");
                     client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)");
                     client.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");

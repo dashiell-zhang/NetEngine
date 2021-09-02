@@ -1,4 +1,5 @@
 ﻿using Common.IO.Tar;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -103,6 +104,7 @@ namespace Common.IO
                 }
 
                 using var client = new HttpClient();
+                client.DefaultRequestVersion = new Version("2.0");
 
                 using var httpResponse = client.GetAsync(url).Result;
                 string fullpath = filePath + fileName;

@@ -66,6 +66,7 @@ namespace Cms.Libraries.Ueditor
 
             using (HttpClient client = new HttpClient())
             {
+                client.DefaultRequestVersion = new Version("2.0");
                 using (var httpResponse = client.GetAsync(this.SourceUrl).Result)
                 {
                     if (httpResponse.StatusCode != HttpStatusCode.OK)

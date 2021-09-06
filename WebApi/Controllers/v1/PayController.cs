@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
-using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using WebApi.Libraries;
 using WebApi.Libraries.WeiXin.App.Models;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
 using WebApi.Libraries.WeiXin.Public;
@@ -21,16 +21,9 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
-    public class PayController : ControllerBase
+    public class PayController : ControllerCore
     {
 
-
-        private readonly dbContext db;
-
-        public PayController(dbContext context)
-        {
-            db = context;
-        }
 
 
         /// <summary>

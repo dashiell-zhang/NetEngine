@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Cms.Libraries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -11,16 +12,8 @@ namespace Cms.Controllers
 {
 
     [Authorize]
-    public class FileController : Controller
+    public class FileController : ControllerCore
     {
-
-
-        private readonly dbContext db;
-
-        public FileController(dbContext context)
-        {
-            db = context;
-        }
 
 
 
@@ -48,8 +41,6 @@ namespace Cms.Controllers
         {
             try
             {
-                var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
-
                 var ReqFiles = Request.Form.Files;
 
                 List<IFormFile> Attachments = new List<IFormFile>();
@@ -140,8 +131,6 @@ namespace Cms.Controllers
 
         public bool DeleteFile(Guid id)
         {
-
-            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
             var file = db.TFile.Where(t => t.IsDelete == false & t.Id == id).FirstOrDefault();
 

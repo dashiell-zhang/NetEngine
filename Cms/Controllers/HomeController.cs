@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Cms.Libraries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,22 +11,15 @@ namespace Cms.Controllers
 {
 
     [Authorize]
-    public class HomeController : Controller
+    public class HomeController : ControllerCore
     {
-
-        private readonly dbContext db;
-
-        public HomeController(dbContext context)
-        {
-            db = context;
-        }
 
 
         public IActionResult Index()
         {
 
             ViewBag.NickName = HttpContext.Session.GetString("nickName");
-            ViewBag.UserId = HttpContext.Session.GetString("userId");
+            ViewBag.UserId = userId;
 
             var channelList = db.TChannel.AsNoTracking().Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ToList();
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using Cms.Libraries;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,15 +13,8 @@ using System.Security.Claims;
 namespace Cms.Controllers
 {
     [Authorize]
-    public class UserController : Controller
+    public class UserController : ControllerCore
     {
-
-        private readonly dbContext db;
-
-        public UserController(dbContext context)
-        {
-            db = context;
-        }
 
 
 
@@ -134,8 +128,6 @@ namespace Cms.Controllers
 
         public JsonResult UserDelete(Guid id)
         {
-            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
-
             var user = db.TUser.Where(t => t.Id == id).FirstOrDefault();
 
             user.IsDelete = true;

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using WebApi.Filters;
+using WebApi.Libraries;
 using WebApi.Libraries.Verify;
 
 namespace WebApi.Controllers.v1
@@ -22,16 +23,9 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthorizeController : ControllerBase
+    public class AuthorizeController : ControllerCore
     {
 
-
-        private readonly dbContext db;
-
-        public AuthorizeController(dbContext context)
-        {
-            db = context;
-        }
 
 
         /// <summary>
@@ -221,7 +215,6 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetFunctionList")]
         public List<dtoKeyValue> GetFunctionList(string sign)
         {
-            var userId = Guid.Parse(JWTToken.GetClaims("userId"));
 
             var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 

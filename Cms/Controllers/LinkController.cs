@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Cms.Libraries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,16 +14,9 @@ namespace Web.Areas.Admin.Controllers
 
 
     [Authorize]
-    public class LinkController : Controller
+    public class LinkController : ControllerCore
     {
 
-
-        private readonly dbContext db;
-
-        public LinkController(dbContext context)
-        {
-            db = context;
-        }
 
 
         public IActionResult LinkIndex()
@@ -73,8 +67,6 @@ namespace Web.Areas.Admin.Controllers
         public bool LinkSave(TLink Link)
         {
 
-            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
-
             var dbLink = db.TLink.Where(t => t.IsDelete == false & t.Id == Link.Id).FirstOrDefault();
 
             dbLink.Name = Link.Name;
@@ -104,8 +96,6 @@ namespace Web.Areas.Admin.Controllers
 
         public JsonResult LinkDelete(Guid id)
         {
-            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
-
             var link = db.TLink.Where(t => t.IsDelete == false & t.Id == id).FirstOrDefault();
 
             link.IsDelete = true;

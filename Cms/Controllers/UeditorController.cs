@@ -1,4 +1,5 @@
-﻿using Cms.Libraries.Ueditor;
+﻿using Cms.Libraries;
+using Cms.Libraries.Ueditor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -8,15 +9,8 @@ using System;
 namespace Cms.Controllers
 {
     [Authorize]
-    public class UeditorController : Controller
+    public class UeditorController : ControllerCore
     {
-
-        private readonly dbContext db;
-
-        public UeditorController(dbContext context)
-        {
-            db = context;
-        }
 
 
 

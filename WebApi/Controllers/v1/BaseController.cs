@@ -1,13 +1,12 @@
 ﻿using Common;
-using DotNetCore.CAP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Dtos;
-using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using WebApi.Libraries;
 
 namespace WebApi.Controllers.v1
 {
@@ -17,17 +16,9 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
-    public class BaseController : ControllerBase
+    public class BaseController : ControllerCore
     {
 
-        private readonly dbContext db;
-        private readonly ICapPublisher cap;
-
-        public BaseController(dbContext context, ICapPublisher capPublisher)
-        {
-            db = context;
-            cap = capPublisher;
-        }
 
 
         /// <summary>

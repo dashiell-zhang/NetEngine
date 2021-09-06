@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Cms.Libraries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,15 +12,8 @@ namespace Cms.Controllers
 {
 
     [Authorize]
-    public class ArticleController : Controller
+    public class ArticleController : ControllerCore
     {
-
-        private readonly dbContext db;
-
-        public ArticleController(dbContext context)
-        {
-            db = context;
-        }
 
 
         public IActionResult ChannelIndex()
@@ -61,10 +55,8 @@ namespace Cms.Controllers
                 //执行添加
                 Channel.Id = Guid.NewGuid();
 
-                var userid = Guid.Parse(HttpContext.Session.GetString("userId"));
-
                 Channel.CreateTime = DateTime.Now;
-                Channel.CreateUserId = userid;
+                Channel.CreateUserId = userId;
                 Channel.IsDelete = false;
 
                 db.TChannel.Add(Channel);
@@ -91,7 +83,7 @@ namespace Cms.Controllers
             var Channel = db.TChannel.Where(t => t.Id == id).FirstOrDefault();
             Channel.IsDelete = true;
             Channel.DeleteTime = DateTime.Now;
-            Channel.DeleteUserId = Guid.Parse(HttpContext.Session.GetString("userId"));
+            Channel.DeleteUserId = userId;
 
             db.SaveChanges();
 
@@ -152,9 +144,6 @@ namespace Cms.Controllers
                 Category.ParentId = null;
             }
 
-            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
-
-
 
             if (Category.Id == default)
             {
@@ -193,8 +182,6 @@ namespace Cms.Controllers
 
             if (!isHaveSubCategory)
             {
-                var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
-
                 var category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
 
                 category.IsDelete = true;
@@ -276,8 +263,6 @@ namespace Cms.Controllers
         public bool ArticleSave(TArticle article)
         {
 
-            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
-
             if (!db.TArticle.Where(t => t.IsDelete == false & t.Id == article.Id).Any())
             {
                 //执行添加
@@ -313,8 +298,6 @@ namespace Cms.Controllers
 
         public JsonResult ArticleDelete(Guid id)
         {
-
-            var userId = Guid.Parse(HttpContext.Session.GetString("userId"));
 
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == id).FirstOrDefault();
 

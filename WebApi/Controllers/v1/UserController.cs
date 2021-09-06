@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Models.Dtos;
-using Repository.Database;
 using System;
 using System.Linq;
 using WebApi.Filters;
+using WebApi.Libraries;
 using WebApi.Libraries.Verify;
 using WebApi.Models.v1.User;
 
@@ -20,16 +20,9 @@ namespace WebApi.Controllers.v1
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController : ControllerCore
     {
 
-
-        private readonly dbContext db;
-
-        public UserController(dbContext context)
-        {
-            db = context;
-        }
 
 
         /// <summary>
@@ -110,7 +103,7 @@ namespace WebApi.Controllers.v1
 
             if (userId == default)
             {
-                userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
+                userId = base.userId;
             }
 
             var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new dtoUser
@@ -139,7 +132,6 @@ namespace WebApi.Controllers.v1
 
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
-                var userId = Guid.Parse(JWTToken.GetClaims("userId"));
 
                 string phone = keyValue.Key.ToString();
 
@@ -210,7 +202,6 @@ namespace WebApi.Controllers.v1
         public bool EditUserPassWordBySms([FromBody] dtoKeyValue keyValue)
         {
 
-            var userId = Guid.Parse(JWTToken.GetClaims("userId"));
 
             string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
 

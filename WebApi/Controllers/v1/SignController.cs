@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System;
 using System.Linq;
+using WebApi.Libraries;
 using WebApi.Models.v1.Sign;
 
 namespace WebApi.Controllers.v1
@@ -15,15 +16,9 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [Authorize]
-    public class SignController : ControllerBase
+    public class SignController : ControllerCore
     {
 
-        private readonly dbContext db;
-
-        public SignController(dbContext context)
-        {
-            db = context;
-        }
 
 
         /// <summary>
@@ -51,8 +46,6 @@ namespace WebApi.Controllers.v1
         [HttpPost("AddSign")]
         public bool AddSign([FromBody] dtoSign addSign)
         {
-            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
-
             var sign = new TSign();
 
             sign.Id = Guid.NewGuid();
@@ -78,8 +71,6 @@ namespace WebApi.Controllers.v1
         [HttpDelete("DeleteSign")]
         public bool DeleteSign(dtoSign deleteSign)
         {
-            var userId = Guid.Parse(Libraries.Verify.JWTToken.GetClaims("userId"));
-
             var sign = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
 
             if (sign != null)

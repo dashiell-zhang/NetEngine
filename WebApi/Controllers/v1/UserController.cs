@@ -98,10 +98,10 @@ namespace WebApi.Controllers.v1
         /// <returns></returns>
         [HttpGet("GetUser")]
         [CacheDataFilter(TTL = 60, UseToken = true)]
-        public dtoUser GetUser(Guid userId)
+        public dtoUser GetUser(Guid? userId)
         {
 
-            if (userId == default)
+            if (userId == null)
             {
                 userId = base.userId;
             }

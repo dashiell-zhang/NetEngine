@@ -364,6 +364,7 @@ FodyWeavers.xsd
 
 /WebApi/WebApi.xml
 /WebApi/Files
-/Cms/wwwroot/Upload
 /Models/Models.xml
 /Repository/Repository.xml
+/AdminApi/WebApi.xml
+/AdminApi/Files

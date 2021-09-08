@@ -1,0 +1,74 @@
+﻿@page "/login"
+@layout NullLayout
+
+
+@using Models.Home
+
+
+<body>
+    <div style="width: 100vw;height: 100vh;text-align: center;background-image: url('../../img/bg.svg');">
+        <div style="min-width: 360px;display: inline-block;padding-top: calc(50vh - 170px);">
+            <h1>管理系统登录</h1>
+
+            <Form Model="@loginData" OnFinish="OnFinish" OnFinishFailed="OnFinishFailed">
+
+                <FormItem>
+                    <Input @bind-Value="@context.Name" Placeholder="用户名" />
+                </FormItem>
+
+                <FormItem>
+                    <InputPassword @bind-Value="@context.PassWord" Placeholder="密码" />
+                </FormItem>
+
+                <FormItem>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit" Block>
+                        登录
+                    </Button>
+                </FormItem>
+            </Form>
+
+        </div>
+    </div>
+
+
+</body>
+
+
+@code
+{
+
+
+    override protected void OnInitialized()
+    {
+        Console.WriteLine("dengl");
+    }
+
+
+    private dtoLogin loginData = new();
+
+    private async void OnFinish(EditContext editContext)
+    {
+        LocalStorage.SetItem<string>("name", "zhangxiaodong");
+
+        var name = LocalStorage.GetItem<string>("name");
+
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoLogin>("Authorize/GetToken", loginData))
+        {
+            var token = await httpResponse.Content.ReadAsStringAsync();
+
+            LocalStorage.SetItem<string>("Authorization", token);
+
+            NavigationManager.NavigateTo("/");
+        }
+
+    }
+
+    private void OnFinishFailed(EditContext editContext)
+    {
+
+    }
+
+}
+
+
+

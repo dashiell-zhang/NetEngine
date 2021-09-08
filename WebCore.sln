@@ -15,6 +15,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Repository", "Repository\Re
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskAdmin", "TaskAdmin\TaskAdmin.csproj", "{B8C932A4-342B-4F22-9979-F20F4E74211A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminApi", "AdminApi\AdminApi.csproj", "{72265046-EC10-4FBA-B505-31CF24DD8141}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminApp", "AdminApp\AdminApp.csproj", "{410D1E1B-22C8-45B9-81B3-F8125CE43457}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{B8C932A4-342B-4F22-9979-F20F4E74211A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8C932A4-342B-4F22-9979-F20F4E74211A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B8C932A4-342B-4F22-9979-F20F4E74211A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72265046-EC10-4FBA-B505-31CF24DD8141}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72265046-EC10-4FBA-B505-31CF24DD8141}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72265046-EC10-4FBA-B505-31CF24DD8141}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72265046-EC10-4FBA-B505-31CF24DD8141}.Release|Any CPU.Build.0 = Release|Any CPU
+		{410D1E1B-22C8-45B9-81B3-F8125CE43457}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{410D1E1B-22C8-45B9-81B3-F8125CE43457}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{410D1E1B-22C8-45B9-81B3-F8125CE43457}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{410D1E1B-22C8-45B9-81B3-F8125CE43457}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

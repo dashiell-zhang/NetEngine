@@ -1,0 +1,151 @@
+﻿@page "/user"
+@using System.ComponentModel
+@using AntDesign.TableModels
+
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>返回上一页</BreadcrumbItem>
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>用户管理</BreadcrumbItem>
+        <BreadcrumbItem>所有用户</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background" Style=" padding: 24px; margin: 0; min-height: 280px;">
+
+        <div style="margin-bottom:10px">
+            <Button Icon="plus" Type="primary" @onclick="_=>open()">添加</Button>
+        </div>
+        <Table TItem="Data" DataSource="@data" OnRowClick="OnRowClick">
+            <Column @bind-Field="@context.Name">
+                <a>@context.Name</a>
+            </Column>
+            <Column @bind-Field="@context.Phone"></Column>
+            <Column @bind-Field="@context.CreateTime">
+            </Column>
+            <ActionColumn Title="操作">
+                <Space Size=@("middle")>
+                    <SpaceItem>
+                        <a>编辑</a>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <a style="color:red">删除</a>
+                    </SpaceItem>
+                </Space>
+            </ActionColumn>
+        </Table>
+
+    </Content>
+</Layout>
+
+
+<div>
+
+    <Drawer Closable="true" Width="420" Visible="visible" Title='("用户信息维护")' OnClose="_=>close()">
+        <Template style="height:90%">
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <Text>用户名</Text>
+                    <Input Placeholder="请输入用户名" TValue="string" />
+                </AntDesign.Col>
+            </Row>
+            <br />
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <Text>昵称</Text>
+                    <Input Placeholder="请输入昵称" TValue="string" />
+                </AntDesign.Col>
+            </Row>
+            <br />
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <Text>手机</Text>
+                    <Input Placeholder="请输入手机号" TValue="string" />
+                </AntDesign.Col>
+
+            </Row>
+
+            <br />
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <Text>邮箱</Text>
+                    <Input Placeholder="请输入邮箱" TValue="string" />
+                </AntDesign.Col>
+            </Row>
+
+            <br />
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <Text>密码</Text>
+                    <Input Placeholder="请输入密码" TValue="string" />
+                </AntDesign.Col>
+            </Row>
+
+            <br />
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="15">
+                </AntDesign.Col>
+                <AntDesign.Col Span="9">
+                    <Button Type="default">取消</Button>
+                    <Button Type="primary">保存</Button>
+                </AntDesign.Col>
+            </Row>
+        </Template>
+    </Drawer>
+</div>
+
+@code{
+
+    bool visible = false;
+
+    void open()
+    {
+        this.visible = true;
+    }
+
+    void close()
+    {
+        this.visible = false;
+    }
+
+
+    Data[] data = new Data[]
+{
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Name = "张晓栋",
+            Phone = "13761015101",
+            CreateTime = DateTime.Now
+        },
+       new()
+        {
+           Id = Guid.NewGuid(),
+            Name = "彭倩",
+            Phone = "18616732539",
+            CreateTime = DateTime.Now
+        }
+                                 };
+
+    public class Data
+    {
+        public Guid Id { get; set; }
+
+        [DisplayName("用户名")]
+        public string Name { get; set; }
+
+        [DisplayName("电话")]
+        public string Phone { get; set; }
+
+        [DisplayName("创建时间")]
+        public DateTime CreateTime { get; set; }
+    }
+
+    void OnRowClick(RowData<Data>
+    row)
+    {
+        Console.WriteLine($"row {row.Data.Id} was clicked.");
+    }
+}

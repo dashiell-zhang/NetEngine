@@ -100,7 +100,7 @@ namespace WebApi.Libraries.Verify
             var expTime = Common.DateTimeHelper.UnixToTime(exp);
 
             //当前Token过期前15分钟开始签发新的Token
-            if (1==1)
+            if (expTime < DateTime.Now.AddMinutes(15))
             {
 
                 var tokenId = Guid.Parse(JWTToken.GetClaims("tokenId"));

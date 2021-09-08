@@ -139,6 +139,7 @@
             {
 
                 user = await Http.GetFromJsonAsync<dtoUser>("User/GetUser");
+
                 StateHasChanged();
             }
         }

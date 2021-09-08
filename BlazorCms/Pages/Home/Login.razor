@@ -60,27 +60,11 @@
 
         using (var httpResponse = await Http.PostAsJsonAsync<dtoLogin>("Authorize/GetToken", loginData))
         {
+            var token = await httpResponse.Content.ReadAsStringAsync();
 
-            if (httpResponse.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                var token = await httpResponse.Content.ReadAsStringAsync();
+            LocalStorage.SetItem<string>("Authorization", token);
 
-                LocalStorage.SetItem<string>("Authorization", token);
-
-                NavigationManager.NavigateTo("/");
-            }
-            else
-            {
-
-                await Notice.Open(new NotificationConfig()
-                {
-                    Message = "登录失败",
-                    Description = "用户名或密码输入错误",
-                    NotificationType = NotificationType.Warning
-                });
-
-            }
-
+            NavigationManager.NavigateTo("/");
         }
 
     }

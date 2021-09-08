@@ -1,5 +1,7 @@
-﻿using Blazored.LocalStorage;
+﻿using AntDesign;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +18,13 @@ namespace BlazorCms.Libraries
 
         private readonly ISyncLocalStorageService LocalStorage;
         private readonly NavigationManager NavigationManager;
+        private readonly NotificationService Notice;
 
-        public HttpInterceptor(ISyncLocalStorageService _LocalStorage, NavigationManager _NavigationManager)
+        public HttpInterceptor(ISyncLocalStorageService _LocalStorage, NavigationManager _NavigationManager, NotificationService _Notice)
         {
             LocalStorage = _LocalStorage;
             NavigationManager = _NavigationManager;
+            Notice = _Notice;
             InnerHandler = new HttpClientHandler();
         }
 
@@ -41,7 +45,36 @@ namespace BlazorCms.Libraries
                 NavigationManager.NavigateTo("/login");
             }
 
-            return response;
+            if ((int)response.StatusCode == 400)
+            {
+                var ret = await response.Content.ReadAsStringAsync();
+                await Notice.Open(new NotificationConfig()
+                {
+                    Message = "异常",
+                    Description = Libraries.JsonHelper.GetValueByKey(ret, "errMsg"),
+                    NotificationType = NotificationType.Warning
+                });
+
+            }
+
+            if ((int)response.StatusCode == 200)
+            {
+                if (response.Headers.Contains("NewToken"))
+                {
+                    var newToken = response.Headers.GetValues("NewToken").ToList().FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(newToken))
+                    {
+                        LocalStorage.SetItem<string>("Authorization", newToken);
+                    }
+                }
+
+                return response;
+            }
+            else
+            {
+                return default;
+            }
         }
     }
 }

@@ -23,8 +23,8 @@ namespace BlazorCms.Libraries
             return client.GetFromJsonAsync<TValue>(requestUri, jsonSerializerOptions);
         }
 
-       
-        public static TValue ReadAsClassAsync<TValue>(this HttpContent httpContent)
+
+        public static TValue ReadAsEntityAsync<TValue>(this HttpContent httpContent)
         {
             var jsonSerializerOptions = new JsonSerializerOptions();
 
@@ -33,10 +33,9 @@ namespace BlazorCms.Libraries
             jsonSerializerOptions.Converters.Add(new JsonConverter.LongConverter());
             jsonSerializerOptions.PropertyNameCaseInsensitive = true;
 
-            var s = httpContent.ReadAsStringAsync().Result;
+            var result = httpContent.ReadAsStringAsync().Result;
 
-            return JsonSerializer.Deserialize<TValue>(s, jsonSerializerOptions);
-
+            return JsonSerializer.Deserialize<TValue>(result, jsonSerializerOptions);
         }
 
     }

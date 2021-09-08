@@ -17,9 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Repository", "Repository\Re
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskAdmin", "TaskAdmin\TaskAdmin.csproj", "{B8C932A4-342B-4F22-9979-F20F4E74211A}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Blazor", "Blazor", "{5BA00E58-DCFA-4666-A237-C35C4F446D76}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorCms", "BlazorCms\BlazorCms.csproj", "{CAF01439-3890-4586-B0B4-324B83621EF0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorCms", "BlazorCms\BlazorCms.csproj", "{2023791A-D991-4DC4-98E6-0BA8C5D9E934}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,16 +53,13 @@ Global
 		{B8C932A4-342B-4F22-9979-F20F4E74211A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8C932A4-342B-4F22-9979-F20F4E74211A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B8C932A4-342B-4F22-9979-F20F4E74211A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CAF01439-3890-4586-B0B4-324B83621EF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CAF01439-3890-4586-B0B4-324B83621EF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CAF01439-3890-4586-B0B4-324B83621EF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CAF01439-3890-4586-B0B4-324B83621EF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2023791A-D991-4DC4-98E6-0BA8C5D9E934}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2023791A-D991-4DC4-98E6-0BA8C5D9E934}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2023791A-D991-4DC4-98E6-0BA8C5D9E934}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2023791A-D991-4DC4-98E6-0BA8C5D9E934}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{CAF01439-3890-4586-B0B4-324B83621EF0} = {5BA00E58-DCFA-4666-A237-C35C4F446D76}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AFC5F893-16A3-441E-9DC6-2E23DD53C158}

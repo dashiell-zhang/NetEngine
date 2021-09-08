@@ -2,9 +2,6 @@
 @layout NullLayout
 
 
-@using System.ComponentModel.DataAnnotations;
-@using System.Text.Json;
-@using System.ComponentModel
 @using Models.Home
 
 
@@ -53,10 +50,7 @@
     {
         LocalStorage.SetItem<string>("name", "zhangxiaodong");
 
-        Console.WriteLine($"Success:{JsonSerializer.Serialize(loginData)}");
-
         var name = LocalStorage.GetItem<string>("name");
-
 
         using (var httpResponse = await Http.PostAsJsonAsync<dtoLogin>("Authorize/GetToken", loginData))
         {
@@ -71,11 +65,8 @@
 
     private void OnFinishFailed(EditContext editContext)
     {
-        Console.WriteLine($"Failed:{JsonSerializer.Serialize(loginData)}");
+
     }
-
-
-
 
 }
 

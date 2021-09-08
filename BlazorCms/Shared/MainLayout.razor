@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using System.IdentityModel.Tokens.Jwt;
+@using Models.User
+@using System.Text.Json;
 
 <Layout>
     <Header Class="header" style="display:flex;margin-left:-30px">
@@ -27,7 +30,7 @@
                 </Overlay>
                 <ChildContent>
                     <a class="ant-dropdown-link" @onclick:preventDefault style="color: rgba(255,255,255,.7)">
-                        您好，UserName  <Icon Type="down" Style="margin-left: 5px;font-size:1.1em;" />
+                        您好，@user.NickName  <Icon Type="down" Style="margin-left: 5px;font-size:1.1em;" />
                     </a>
                 </ChildContent>
             </Dropdown>
@@ -85,7 +88,6 @@
 
         @Body
 
-
     </Layout>
 </Layout>
 
@@ -102,6 +104,47 @@
         background: #fff;
     }
 </style>
+
+@code{
+
+    private dtoUser user = new();
+
+    override protected void OnInitialized()
+    {
+        Authentication();
+    }
+
+
+    private async void Authentication()
+    {
+        var authorization = LocalStorage.GetItem<string>("Authorization");
+
+        if (string.IsNullOrEmpty(authorization))
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+            var securityToken = new JwtSecurityToken(authorization);
+
+            var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault().Value);
+
+            var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
+
+            if (expTime < DateTime.Now)
+            {
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+
+                user = await Http.GetFromJsonAsync<dtoUser>("User/GetUser");
+                StateHasChanged();
+            }
+        }
+    }
+
+}
 
 
 

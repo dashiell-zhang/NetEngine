@@ -1,6 +1,7 @@
 ﻿@page "/user"
 @using System.ComponentModel
 @using AntDesign.TableModels
+@using Models.User
 
 <Layout Style=" padding: 0 24px 24px;">
     <Breadcrumb Style="margin: 16px 0;">
@@ -14,20 +15,26 @@
         <div style="margin-bottom:10px">
             <Button Icon="plus" Type="primary" @onclick="_=>open()">添加</Button>
         </div>
-        <Table TItem="Data" DataSource="@data" OnRowClick="OnRowClick">
-            <Column @bind-Field="@context.Name">
-                <a>@context.Name</a>
-            </Column>
-            <Column @bind-Field="@context.Phone"></Column>
-            <Column @bind-Field="@context.CreateTime">
+        <Table TItem="dtoUser" DataSource="@pageList.List">
+            <Column @bind-Field="@context.Name" Title="用户名"></Column>
+            <Column @bind-Field="@context.NickName" Title="昵称"></Column>
+            <Column @bind-Field="@context.Phone" Title="电话"></Column>
+            <Column @bind-Field="@context.Email" Title="邮箱"></Column>
+            <Column @bind-Field="@context.CreateTime" Title="创建时间">
             </Column>
             <ActionColumn Title="操作">
-                <Space Size=@("middle")>
+                <Space>
                     <SpaceItem>
                         <a>编辑</a>
                     </SpaceItem>
                     <SpaceItem>
-                        <a style="color:red">删除</a>
+                        <Popconfirm Title="确认要删除吗？"
+                                    OnConfirm="_=>DeleteUser(context.Id)"
+                                    OkText="Yes"
+                                    CancelText="No">
+                            <a style="color:red">删除</a>
+                        </Popconfirm>
+
                     </SpaceItem>
                 </Space>
             </ActionColumn>
@@ -98,6 +105,19 @@
 
 @code{
 
+    override protected void OnInitialized()
+    {
+        GetUserList();
+    }
+
+    private dtoPageList<dtoUser> pageList = new();
+
+    private async void GetUserList()
+    {
+        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoUser>>("User/GetUserList?pageNum=1&pageSize=100");
+        StateHasChanged();
+    }
+
     bool visible = false;
 
     void open()
@@ -111,41 +131,24 @@
     }
 
 
-    Data[] data = new Data[]
-{
-        new()
+    private async void DeleteUser(Guid userId)
+    {
+        using (var httpResponse = await Http.DeleteAsJsonAsync("User/DeleteUser", new { Id = userId }))
         {
-            Id = Guid.NewGuid(),
-            Name = "张晓栋",
-            Phone = "13761015101",
-            CreateTime = DateTime.Now
-        },
-       new()
-        {
-           Id = Guid.NewGuid(),
-            Name = "彭倩",
-            Phone = "18616732539",
-            CreateTime = DateTime.Now
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetUserList();
+                Message.Success("删除成功");
+            }
         }
-                                 };
-
-    public class Data
-    {
-        public Guid Id { get; set; }
-
-        [DisplayName("用户名")]
-        public string Name { get; set; }
-
-        [DisplayName("电话")]
-        public string Phone { get; set; }
-
-        [DisplayName("创建时间")]
-        public DateTime CreateTime { get; set; }
     }
 
-    void OnRowClick(RowData<Data>
-    row)
-    {
-        Console.WriteLine($"row {row.Data.Id} was clicked.");
-    }
+
+    //void OnRowClick(RowData<Data>
+    //row)
+    //{
+    //    Console.WriteLine($"row {row.Data.Id} was clicked.");
+    //}
 }

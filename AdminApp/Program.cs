@@ -20,7 +20,7 @@ namespace AdminApp
 
             builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<HttpInterceptor>())
             {
-                BaseAddress = new Uri("https://localhost:9801/api/")
+                BaseAddress = new Uri("https://localhost:9833/api/")
             });
 
 

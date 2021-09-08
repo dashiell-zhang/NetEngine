@@ -1,15 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace AdminApp.Models.User
+namespace AdminApi.Models.v1.User
 {
-    public class dtoUser
+
+
+    public class dtoCreateUser
     {
-
-
-        /// <summary>
-        /// 标识ID
-        /// </summary>
-        public Guid Id { get; set; }
 
 
         /// <summary>
@@ -37,15 +36,9 @@ namespace AdminApp.Models.User
 
 
         /// <summary>
-        /// 角色
+        /// 密码
         /// </summary>
-        public string Roles { get; set; }
-
-
-        /// <summary>
-        /// 创建时间
-        /// </summary>
-        public DateTime CreateTime { get; set; }
+        public string PassWord { get; set; }
 
     }
 }

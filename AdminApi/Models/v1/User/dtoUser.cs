@@ -4,6 +4,14 @@ namespace AdminApi.Models.v1.User
 {
     public class dtoUser
     {
+
+
+        /// <summary>
+        /// 标识ID
+        /// </summary>
+        public Guid Id { get; set; }
+
+
         /// <summary>
         /// 用户名
         /// </summary>

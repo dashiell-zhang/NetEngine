@@ -1,5 +1,6 @@
 ﻿@page "/login"
 @layout NullLayout
+@using System.IdentityModel.Tokens.Jwt;
 
 
 @using Models.Home
@@ -40,7 +41,21 @@
 
     override protected void OnInitialized()
     {
-        Console.WriteLine("dengl");
+        var authorization = LocalStorage.GetItem<string>("Authorization");
+
+        if (!string.IsNullOrEmpty(authorization))
+        {
+            var securityToken = new JwtSecurityToken(authorization);
+
+            var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault().Value);
+
+            var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
+
+            if (expTime > DateTime.Now)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+        }
     }
 
 
@@ -48,13 +63,10 @@
 
     private async void OnFinish(EditContext editContext)
     {
-        LocalStorage.SetItem<string>("name", "zhangxiaodong");
-
-        var name = LocalStorage.GetItem<string>("name");
 
         using (var httpResponse = await Http.PostAsJsonAsync<dtoLogin>("Authorize/GetToken", loginData))
         {
-            var token = await httpResponse.Content.ReadAsStringAsync();
+            var token = httpResponse.Content.ReadAsStringAsync().Result;
 
             LocalStorage.SetItem<string>("Authorization", token);
 

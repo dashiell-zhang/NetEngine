@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AdminApp.Models.User
 {
-    public class dtoUser
+    public class dtoUpdateUser
     {
 
 
@@ -37,15 +40,9 @@ namespace AdminApp.Models.User
 
 
         /// <summary>
-        /// 角色
+        /// 密码
         /// </summary>
-        public string Roles { get; set; }
-
-
-        /// <summary>
-        /// 创建时间
-        /// </summary>
-        public DateTime CreateTime { get; set; }
+        public string PassWord { get; set; }
 
     }
 }

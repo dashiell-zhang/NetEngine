@@ -203,6 +203,15 @@
             用户数据操作控制器
             </summary>
         </member>
+        <member name="M:AdminApi.Controllers.v1.UserController.GetUserList(System.Int32,System.Int32,System.String)">
+            <summary>
+            获取用户列表
+            </summary>
+            <param name="pageNum"></param>
+            <param name="pageSize"></param>
+            <param name="searchKey"></param>
+            <returns></returns>
+        </member>
         <member name="M:AdminApi.Controllers.v1.UserController.GetUser(System.Nullable{System.Guid})">
             <summary>
             通过 UserId 获取用户信息 
@@ -210,17 +219,25 @@
             <param name="userId">用户ID</param>
             <returns></returns>
         </member>
-        <member name="M:AdminApi.Controllers.v1.UserController.EditUserPhoneBySms(Models.Dtos.dtoKeyValue)">
+        <member name="M:AdminApi.Controllers.v1.UserController.CreateUser(AdminApi.Models.v1.User.dtoCreateUser)">
             <summary>
-            通过短信验证码修改账户手机号
+            创建用户
             </summary>
-            <param name="keyValue">key 为新手机号，value 为短信验证码</param>
+            <param name="createUser"></param>
             <returns></returns>
         </member>
-        <member name="M:AdminApi.Controllers.v1.UserController.EditUserPassWordBySms(Models.Dtos.dtoKeyValue)">
+        <member name="M:AdminApi.Controllers.v1.UserController.UpdateUser(AdminApi.Models.v1.User.dtoUpdateUser)">
             <summary>
-            通过短信验证码修改账户密码</summary>
-            <param name="keyValue">key为新密码，value为短信验证码</param>
+            更新用户信息
+            </summary>
+            <param name="updateUser"></param>
+            <returns></returns>
+        </member>
+        <member name="M:AdminApi.Controllers.v1.UserController.DeleteUser(Models.Dtos.dtoId)">
+            <summary>
+            删除用户
+            </summary>
+            <param name="id"></param>
             <returns></returns>
         </member>
         <member name="T:AdminApi.Filters.CacheDataFilter">
@@ -416,6 +433,66 @@
         <member name="P:AdminApi.Models.v1.Sign.dtoSign.Sign">
             <summary>
             标记
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoCreateUser.Name">
+            <summary>
+            用户名
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoCreateUser.NickName">
+            <summary>
+            昵称
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoCreateUser.Phone">
+            <summary>
+            手机号
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoCreateUser.Email">
+            <summary>
+            邮箱
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoCreateUser.PassWord">
+            <summary>
+            密码
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoUpdateUser.Id">
+            <summary>
+            标识ID
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoUpdateUser.Name">
+            <summary>
+            用户名
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoUpdateUser.NickName">
+            <summary>
+            昵称
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoUpdateUser.Phone">
+            <summary>
+            手机号
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoUpdateUser.Email">
+            <summary>
+            邮箱
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoUpdateUser.PassWord">
+            <summary>
+            密码
+            </summary>
+        </member>
+        <member name="P:AdminApi.Models.v1.User.dtoUser.Id">
+            <summary>
+            标识ID
             </summary>
         </member>
         <member name="P:AdminApi.Models.v1.User.dtoUser.Name">

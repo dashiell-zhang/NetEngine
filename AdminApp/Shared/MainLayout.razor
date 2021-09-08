@@ -18,12 +18,8 @@
             <Dropdown>
                 <Overlay>
                     <Menu>
-                        <MenuItem>
-                            <a href="/User/Logout/">修改密码</a>
-
-                        </MenuItem>
-                        <MenuItem>
-                            <a href="/User/Logout/">注销登录</a>
+                        <MenuItem OnClick="Logout">
+                            注销登录
                         </MenuItem>
                     </Menu>
                 </Overlay>
@@ -136,12 +132,28 @@
             }
             else
             {
+                try
+                {
+                    user = await Http.GetFromJsonAsync<dtoUser>("User/GetUser");
+                }
+                catch
+                {
+                    LocalStorage.RemoveItem("Authorization");
+                    NavigationManager.NavigateTo("/login");
+                }
 
-                user = await Http.GetFromJsonAsync<dtoUser>("User/GetUser");
 
                 StateHasChanged();
             }
         }
+    }
+
+
+    private void Logout()
+    {
+        LocalStorage.RemoveItem("Authorization");
+
+        NavigationManager.NavigateTo("/login");
     }
 
 }

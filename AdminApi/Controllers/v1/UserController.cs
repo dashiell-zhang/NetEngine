@@ -8,6 +8,7 @@ using AdminApi.Filters;
 using AdminApi.Libraries;
 using AdminApi.Libraries.Verify;
 using AdminApi.Models.v1.User;
+using Repository.Database;
 
 namespace AdminApi.Controllers.v1
 {
@@ -24,6 +25,46 @@ namespace AdminApi.Controllers.v1
     {
 
 
+        /// <summary>
+        /// 获取用户列表
+        /// </summary>
+        /// <param name="pageNum"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="searchKey"></param>
+        /// <returns></returns>
+        [HttpGet("GetUserList")]
+        public dtoPageList<dtoUser> GetUserList(int pageNum, int pageSize, string searchKey)
+        {
+            var data = new dtoPageList<dtoUser>();
+
+            int skip = (pageNum - 1) * pageSize;
+
+            var query = db.TUser.Where(t => t.IsDelete == false);
+
+            if (!string.IsNullOrEmpty(searchKey))
+            {
+                query = query.Where(t => t.Name.Contains(searchKey) | t.NickName.Contains(searchKey) | t.Phone.Contains(searchKey));
+            }
+
+
+            data.Total = query.Count();
+
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new dtoUser
+            {
+                Id = t.Id,
+                Name = t.Name,
+                NickName = t.NickName,
+                Phone = t.Phone,
+                Email = t.Email,
+                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                CreateTime = t.CreateTime
+            }).Skip(skip).Take(pageSize).ToList();
+
+            return data;
+        }
+
+
+
 
         /// <summary>
         /// 通过 UserId 获取用户信息 
@@ -31,7 +72,6 @@ namespace AdminApi.Controllers.v1
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
-        [CacheDataFilter(TTL = 60, UseToken = true)]
         public dtoUser GetUser(Guid? userId)
         {
 
@@ -42,6 +82,7 @@ namespace AdminApi.Controllers.v1
 
             var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new dtoUser
             {
+                Id = t.Id,
                 Name = t.Name,
                 NickName = t.NickName,
                 Phone = t.Phone,
@@ -55,132 +96,83 @@ namespace AdminApi.Controllers.v1
 
 
 
+
         /// <summary>
-        /// 通过短信验证码修改账户手机号
+        /// 创建用户
         /// </summary>
-        /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
+        /// <param name="createUser"></param>
         /// <returns></returns>
-        [HttpPost("EditUserPhoneBySms")]
-        public bool EditUserPhoneBySms([FromBody] dtoKeyValue keyValue)
+        [HttpPost("CreateUser")]
+        public Guid CreateUser(dtoCreateUser createUser)
         {
+            var user = new TUser();
+            user.Id = Guid.NewGuid();
+            user.CreateTime = DateTime.Now;
+            user.CreateUserId = userId;
 
-            if (IdentityVerification.SmsVerifyPhone(keyValue))
-            {
+            user.Name = createUser.Name;
+            user.NickName = createUser.NickName;
+            user.Phone = createUser.Phone;
+            user.Email = createUser.Email;
+            user.PassWord = createUser.PassWord;
 
-                string phone = keyValue.Key.ToString();
+            db.TUser.Add(user);
 
+            db.SaveChanges();
 
-                var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == phone).Count();
-
-                var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
-
-
-                var isMergeUser = false;
-
-                if (isMergeUser)
-                {
-                    //获取目标手机号绑定的账户ID
-                    var phoneUserId = db.TUser.Where(t => t.Phone == phone).Select(t => t.Id).FirstOrDefault();
-
-                    user.Phone = phone;
-
-                    db.SaveChanges();
-
-                    //如果目标手机号绑定用户，则进行数据合并动作
-                    if (phoneUserId != default)
-                    {
-                        //将手机号对应的用户移除，合并数据到新的账号
-                        Common.DBHelper.MergeUser(phoneUserId, user.Id);
-                    }
-
-                    return true;
-                }
-                else
-                {
-                    if (checkPhone == 0)
-                    {
-                        user.Phone = phone;
-
-                        db.SaveChanges();
-
-                        return true;
-                    }
-                    else
-                    {
-                        HttpContext.Response.StatusCode = 400;
-                        HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'The target mobile number has been bound by another account'");
-
-                        return false;
-                    }
-                }
-
-
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'Error in SMS verification code'");
-
-                return false;
-            }
+            return user.Id;
         }
 
 
 
 
         /// <summary>
-        /// 通过短信验证码修改账户密码</summary>
-        /// <param name="keyValue">key为新密码，value为短信验证码</param>
+        /// 更新用户信息
+        /// </summary>
+        /// <param name="updateUser"></param>
         /// <returns></returns>
-        [HttpPost("EditUserPassWordBySms")]
-        public bool EditUserPassWordBySms([FromBody] dtoKeyValue keyValue)
+        [HttpPost("UpdateUser")]
+        public bool UpdateUser(dtoUpdateUser updateUser)
         {
 
+            var user = db.TUser.Where(t => t.IsDelete == false & t.Id == updateUser.Id).FirstOrDefault();
 
-            string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
+            user.UpdateTime = DateTime.Now;
+            user.UpdateUserId = userId;
 
-            string smsCode = keyValue.Value.ToString();
+            user.Name = updateUser.Name;
+            user.NickName = updateUser.NickName;
+            user.Phone = updateUser.Phone;
+            user.Email = updateUser.Email;
+            user.PassWord = updateUser.PassWord;
 
-            var checkSms = IdentityVerification.SmsVerifyPhone(new dtoKeyValue { Key = phone, Value = smsCode });
+            db.SaveChanges();
 
-            if (checkSms)
-            {
-                string password = keyValue.Key.ToString();
-
-                if (!string.IsNullOrEmpty(password))
-                {
-                    var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
-
-                    user.PassWord = password;
-
-                    db.SaveChanges();
-
-
-                    var tokenList = db.TUserToken.Where(t => t.IsDelete == false & t.UserId == userId).ToList();
-
-                    db.TUserToken.RemoveRange(tokenList);
-
-                    db.SaveChanges();
-
-                    return true;
-                }
-                else
-                {
-                    HttpContext.Response.StatusCode = 400;
-                    HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'New password is not allowed to be empty'");
-
-                    return false;
-                }
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'Error in SMS verification code'");
-
-                return false;
-            }
-
+            return true;
         }
+
+
+
+        /// <summary>
+        /// 删除用户
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteUser")]
+        public bool DeleteUser(dtoId id)
+        {
+            var user = db.TUser.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
+
+            user.IsDelete = true;
+            user.DeleteTime = DateTime.Now;
+            user.DeleteUserId = userId;
+
+            db.SaveChanges();
+
+            return true;
+        }
+
+
 
     }
 }

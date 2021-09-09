@@ -11,7 +11,7 @@
         <div style="min-width: 360px;display: inline-block;padding-top: calc(50vh - 170px);">
             <h1>管理系统登录</h1>
 
-            <Form Model="@loginData" OnFinish="OnFinish" OnFinishFailed="OnFinishFailed">
+            <Form Model="@loginData" OnFinish="OnFinish">
 
                 <FormItem>
                     <Input @bind-Value="@context.Name" Placeholder="用户名" />
@@ -75,10 +75,6 @@
 
     }
 
-    private void OnFinishFailed(EditContext editContext)
-    {
-
-    }
 
 }
 

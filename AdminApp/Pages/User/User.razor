@@ -13,95 +13,139 @@
     <Content Class="site-layout-background" Style=" padding: 24px; margin: 0; min-height: 280px;">
 
         <div style="margin-bottom:10px">
-            <Button Icon="plus" Type="primary" @onclick="_=>open()">添加</Button>
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>isShowCreateUser=true">添加</Button>
         </div>
-        <Table TItem="dtoUser" DataSource="@pageList.List">
-            <Column @bind-Field="@context.Name" Title="用户名"></Column>
-            <Column @bind-Field="@context.NickName" Title="昵称"></Column>
-            <Column @bind-Field="@context.Phone" Title="电话"></Column>
-            <Column @bind-Field="@context.Email" Title="邮箱"></Column>
-            <Column @bind-Field="@context.CreateTime" Title="创建时间">
-            </Column>
-            <ActionColumn Title="操作">
-                <Space>
-                    <SpaceItem>
-                        <a>编辑</a>
-                    </SpaceItem>
-                    <SpaceItem>
-                        <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteUser(context.Id)"
-                                    OkText="Yes"
-                                    CancelText="No">
-                            <a style="color:red">删除</a>
-                        </Popconfirm>
+        <Table TItem="dtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="isTableLoading" RemoteDataSource>
 
-                    </SpaceItem>
-                </Space>
-            </ActionColumn>
+            <RowTemplate>
+                <Column @bind-Field="@context.Name" Title="用户名"></Column>
+                <Column @bind-Field="@context.NickName" Title="昵称"></Column>
+                <Column @bind-Field="@context.Phone" Title="电话"></Column>
+                <Column @bind-Field="@context.Email" Title="邮箱"></Column>
+                <Column @bind-Field="@context.CreateTime" Title="创建时间">
+                </Column>
+                <ActionColumn Title="操作">
+                    <Space>
+                        <SpaceItem>
+                            <a @onclick="()=>UpdateUser(context)">编辑</a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Popconfirm Title="确认要删除吗？"
+                                        OnConfirm="_=>DeleteUser(context.Id)"
+                                        OkText="Yes"
+                                        CancelText="No">
+                                <a style="color:red">删除</a>
+                            </Popconfirm>
+
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </RowTemplate>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
         </Table>
+
+
 
     </Content>
 </Layout>
 
 
-<div>
+<Drawer Closable="true" Width="380" Visible="isShowCreateUser" Title='("创建用户")' OnClose="()=>isShowCreateUser=false">
+    <Template style="height:90%">
 
-    <Drawer Closable="true" Width="420" Visible="visible" Title='("用户信息维护")' OnClose="_=>close()">
-        <Template style="height:90%">
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <Text>用户名</Text>
-                    <Input Placeholder="请输入用户名" TValue="string" />
-                </AntDesign.Col>
-            </Row>
-            <br />
+        <Form Model="@createUser" OnFinish="CreateUserSave">
 
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <Text>昵称</Text>
-                    <Input Placeholder="请输入昵称" TValue="string" />
-                </AntDesign.Col>
-            </Row>
-            <br />
+            <FormItem>
+                <Text>用户名</Text>
+                <Input Placeholder="请输入用户名" @bind-Value="@context.Name" />
+            </FormItem>
 
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <Text>手机</Text>
-                    <Input Placeholder="请输入手机号" TValue="string" />
-                </AntDesign.Col>
+            <FormItem>
+                <Text>昵称</Text>
+                <Input Placeholder="请输入昵称" @bind-Value="@context.NickName" />
+            </FormItem>
 
-            </Row>
 
-            <br />
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <Text>邮箱</Text>
-                    <Input Placeholder="请输入邮箱" TValue="string" />
-                </AntDesign.Col>
-            </Row>
+            <FormItem>
+                <Text>手机</Text>
+                <Input Placeholder="请输入手机号" Type="number" @bind-Value="@context.Phone" />
+            </FormItem>
 
-            <br />
+            <FormItem>
+                <Text>邮箱</Text>
+                <Input Placeholder="请输入邮箱" Type="email" @bind-Value="@context.Email" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>密码</Text>
+                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.PassWord" />
+            </FormItem>
+
 
             <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <Text>密码</Text>
-                    <Input Placeholder="请输入密码" TValue="string" />
+                <AntDesign.Col Span="14">
+                </AntDesign.Col>
+                <AntDesign.Col Span="10">
+                    <Button Type="@ButtonType.Default" @onclick="()=>isShowCreateUser=false">取消</Button>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
                 </AntDesign.Col>
             </Row>
+        </Form>
+    </Template>
+</Drawer>
 
-            <br />
+
+<Drawer Closable="true" Width="380" Visible="isShowUpdateUser" Title='("编辑用户")' OnClose="()=>isShowUpdateUser=false">
+    <Template style="height:90%">
+
+        <Form Model="@updateUser" OnFinish="UpdateUserSave">
+
+            <FormItem>
+                <Text>用户名</Text>
+                <Input Placeholder="请输入用户名" @bind-Value="@context.Name" />
+            </FormItem>
+
+            <FormItem>
+                <Text>昵称</Text>
+                <Input Placeholder="请输入昵称" @bind-Value="@context.NickName" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>手机</Text>
+                <Input Placeholder="请输入手机号" Type="number" @bind-Value="@context.Phone" />
+            </FormItem>
+
+            <FormItem>
+                <Text>邮箱</Text>
+                <Input Placeholder="请输入邮箱" Type="email" @bind-Value="@context.Email" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>密码</Text>
+                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.PassWord" />
+            </FormItem>
+
 
             <Row Gutter="24">
-                <AntDesign.Col Span="15">
+                <AntDesign.Col Span="14">
                 </AntDesign.Col>
-                <AntDesign.Col Span="9">
-                    <Button Type="default">取消</Button>
-                    <Button Type="primary">保存</Button>
+                <AntDesign.Col Span="10">
+                    <Button Type="@ButtonType.Default" @onclick="()=>isShowUpdateUser=false">取消</Button>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
                 </AntDesign.Col>
             </Row>
-        </Template>
-    </Drawer>
-</div>
+        </Form>
+    </Template>
+</Drawer>
 
 @code{
 
@@ -110,28 +154,83 @@
         GetUserList();
     }
 
-    private dtoPageList<dtoUser> pageList = new();
-
-    private async void GetUserList()
+    bool isTableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    dtoPageList<dtoUser> pageList = new();
+    async void GetUserList()
     {
-        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoUser>>("User/GetUserList?pageNum=1&pageSize=100");
+        isTableLoading = true;
+        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        isTableLoading = false;
         StateHasChanged();
     }
-
-    bool visible = false;
-
-    void open()
+    void PageChange(PaginationEventArgs args)
     {
-        this.visible = true;
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetUserList();
+    }
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowCreateUser = false;
+    dtoCreateUser createUser = new();
+    async void CreateUserSave(EditContext editContext)
+    {
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateUser>("User/CreateUser", createUser))
+        {
+            var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
+
+            Console.WriteLine(createUserId);
+
+            GetUserList();
+            Message.Success("添加成功");
+
+            isShowCreateUser = false;
+        }
     }
 
-    void close()
+
+    bool isShowUpdateUser = false;
+    dtoUpdateUser updateUser = new();
+    void UpdateUser(dtoUser user)
     {
-        this.visible = false;
+        updateUser.Id = user.Id;
+        updateUser.Name = user.Name;
+        updateUser.NickName = user.NickName;
+        updateUser.Phone = user.Phone;
+        updateUser.Email = user.Email;
+
+        isShowUpdateUser = true;
+
+        StateHasChanged();
+    }
+    async void UpdateUserSave(EditContext editContext)
+    {
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateUser>("User/UpdateUser", updateUser))
+        {
+            var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+            Console.WriteLine(updateUserRet);
+
+            GetUserList();
+            Message.Success("编辑成功");
+
+            isShowUpdateUser = false;
+        }
     }
 
 
-    private async void DeleteUser(Guid userId)
+    async void DeleteUser(Guid userId)
     {
         using (var httpResponse = await Http.DeleteAsJsonAsync("User/DeleteUser", new { Id = userId }))
         {
@@ -145,10 +244,4 @@
         }
     }
 
-
-    //void OnRowClick(RowData<Data>
-    //row)
-    //{
-    //    Console.WriteLine($"row {row.Data.Id} was clicked.");
-    //}
 }

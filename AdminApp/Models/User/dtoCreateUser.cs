@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+
 
 namespace AdminApp.Models.User
 {
@@ -14,18 +16,21 @@ namespace AdminApp.Models.User
         /// <summary>
         /// 用户名
         /// </summary>
+        [Required(ErrorMessage = "用户名不可以空")]
         public string Name { get; set; }
 
 
         /// <summary>
         /// 昵称
         /// </summary>
+        [Required(ErrorMessage = "昵称不可以空")]
         public string NickName { get; set; }
 
 
         /// <summary>
         /// 手机号
         /// </summary>
+        [Required(ErrorMessage = "手机号不可以空")]
         public string Phone { get; set; }
 
 
@@ -38,6 +43,7 @@ namespace AdminApp.Models.User
         /// <summary>
         /// 密码
         /// </summary>
+        [Required(ErrorMessage = "密码不可以为空")]
         public string PassWord { get; set; }
 
     }

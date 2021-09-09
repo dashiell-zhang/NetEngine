@@ -10,11 +10,11 @@ namespace AdminApp.Models.Home
     public class dtoLogin
     {
 
-        [Required]
+        [Required(ErrorMessage = "用户名不可以空")]
         public string Name { get; set; }
 
 
-        [Required]
+        [Required(ErrorMessage = "密码不可以空")]
         public string PassWord { get; set; }
 
     }

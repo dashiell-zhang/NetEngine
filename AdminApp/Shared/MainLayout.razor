@@ -37,7 +37,7 @@
         <Sider Width="200" Class="site-layout-background">
             <Menu Mode="MenuMode.Inline"
                   DefaultSelectedKeys=@(new[] {"1"})
-                  DefaultOpenKeys=@(new[] {"sub2","sub3"})
+                  DefaultOpenKeys=@(new[] {"sub2","sub3","sub4"})
                   Style="height: 100%; border-right: 0;">
                 @{
                     RenderFragment sub1Title =
@@ -72,7 +72,7 @@
                 </SubMenu>
 
                 <SubMenu Key="sub4" Title="友链管理">
-                    <MenuItem Key="10">所有友链</MenuItem>
+                    <MenuItem Key="10"><a href="/link">所有友链</a></MenuItem>
                 </SubMenu>
 
                 <SubMenu Key="sub5" Title="网站信息">

@@ -1,0 +1,227 @@
+﻿@page "/link"
+@using System.ComponentModel
+@using AntDesign.TableModels
+@using Models.Link
+
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>返回上一页</BreadcrumbItem>
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>友链管理</BreadcrumbItem>
+        <BreadcrumbItem>所有友链</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background" Style=" padding: 24px; margin: 0; min-height: 280px;">
+
+        <div style="margin-bottom:10px">
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="showCreateLink">添加</Button>
+        </div>
+        <Table TItem="dtoLink" DataSource="@pageList.List" Total="@pageList.Total" Loading="isTableLoading" RemoteDataSource>
+
+            <RowTemplate>
+                <Column @bind-Field="@context.Name" Title="名称"></Column>
+                <Column @bind-Field="@context.Url" Title="Url"></Column>
+                <Column @bind-Field="@context.Sort" Title="排序"></Column>
+                <Column @bind-Field="@context.CreateTime" Title="创建时间">
+                </Column>
+                <ActionColumn Title="操作">
+                    <Space>
+                        <SpaceItem>
+                            <a @onclick="()=>UpdateLink(context)">编辑</a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Popconfirm Title="确认要删除吗？"
+                                        OnConfirm="_=>DeleteLink(context.Id)"
+                                        OkText="Yes"
+                                        CancelText="No">
+                                <a style="color:red">删除</a>
+                            </Popconfirm>
+
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </RowTemplate>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
+        </Table>
+
+
+
+    </Content>
+</Layout>
+
+
+<Drawer Closable="true" Width="380" Visible="isShowCreateLink" Title='("添加频道")' OnClose="()=>isShowUpdateLink=false">
+    <Template style="height:90%">
+
+        <Form Model="@createLink" OnFinish="CreateLinkSave">
+
+            <FormItem>
+                <Text>名称</Text>
+                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+            </FormItem>
+
+            <FormItem>
+                <Text>Url</Text>
+                <Input Placeholder="请输入Url" @bind-Value="@context.Url" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>排序</Text>
+                <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" />
+            </FormItem>
+
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="14">
+                </AntDesign.Col>
+                <AntDesign.Col Span="10">
+                    <Button Type="@ButtonType.Default" @onclick="()=>isShowCreateLink=false">取消</Button>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
+                </AntDesign.Col>
+            </Row>
+        </Form>
+    </Template>
+</Drawer>
+
+
+<Drawer Closable="true" Width="380" Visible="isShowUpdateLink" Title='("编辑频道")' OnClose="()=>isShowUpdateLink=false">
+    <Template style="height:90%">
+
+        <Form Model="@updateLink" OnFinish="UpdateLinkSave">
+
+            <FormItem>
+                <Text>名称</Text>
+                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+            </FormItem>
+
+            <FormItem>
+                <Text>Url</Text>
+                <Input Placeholder="请输入Url" @bind-Value="@context.Url" />
+            </FormItem>
+
+            <FormItem>
+                <Text>排序</Text>
+                <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" />
+            </FormItem>
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="14">
+                </AntDesign.Col>
+                <AntDesign.Col Span="10">
+                    <Button Type="@ButtonType.Default" @onclick="()=>isShowUpdateLink=false">取消</Button>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
+                </AntDesign.Col>
+            </Row>
+        </Form>
+    </Template>
+</Drawer>
+
+@code{
+
+    override protected void OnInitialized()
+    {
+        GetLinkList();
+    }
+
+    bool isTableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    dtoPageList<dtoLink> pageList = new();
+    async void GetLinkList()
+    {
+        isTableLoading = true;
+        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        isTableLoading = false;
+        StateHasChanged();
+    }
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetLinkList();
+    }
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowCreateLink = false;
+    dtoCreateLink createLink = new();
+    void showCreateLink()
+    {
+        createLink = new dtoCreateLink();
+        isShowCreateLink = true;
+    }
+    async void CreateLinkSave(EditContext editContext)
+    {
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateLink>("Link/CreateLink", createLink))
+        {
+            var createLinkId = httpResponse.Content.ReadAsStringAsync().Result;
+
+            Console.WriteLine(createLinkId);
+
+            GetLinkList();
+            Message.Success("添加成功");
+
+            isShowCreateLink = false;
+        }
+    }
+
+
+    bool isShowUpdateLink = false;
+    dtoUpdateLink updateLink = new();
+    void UpdateLink(dtoLink channel)
+    {
+        updateLink.Id = channel.Id;
+        updateLink.Name = channel.Name;
+        updateLink.Url = channel.Url;
+        updateLink.Sort = channel.Sort;
+
+        isShowUpdateLink = true;
+
+        StateHasChanged();
+    }
+
+    async void UpdateLinkSave(EditContext editContext)
+    {
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateLink>("Link/UpdateLink", updateLink))
+        {
+            var updateLinkRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+            Console.WriteLine(updateLinkRet);
+
+            GetLinkList();
+            Message.Success("编辑成功");
+
+            isShowUpdateLink = false;
+        }
+    }
+
+
+    async void DeleteLink(Guid userId)
+    {
+        using (var httpResponse = await Http.DeleteAsJsonAsync("Link/DeleteLink", new { Id = userId }))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetLinkList();
+                Message.Success("删除成功");
+            }
+        }
+    }
+
+}

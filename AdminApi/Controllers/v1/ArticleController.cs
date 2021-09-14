@@ -61,7 +61,7 @@ namespace AdminApi.Controllers.v1
         /// <summary>
         /// 通过频道Id 获取频道信息 
         /// </summary>
-        /// <param name="channelId">用户ID</param>
+        /// <param name="channelId">频道ID</param>
         /// <returns></returns>
         [HttpGet("GetChannel")]
         public dtoChannel GetChannel(Guid channelId)
@@ -87,7 +87,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createChannel"></param>
         /// <returns></returns>
         [HttpPost("CreateChannel")]
-        public Guid CreateUser(dtoCreateChannel createChannel)
+        public Guid CreateChannel(dtoCreateChannel createChannel)
         {
             var channel = new TChannel();
             channel.Id = Guid.NewGuid();
@@ -116,7 +116,6 @@ namespace AdminApi.Controllers.v1
         [HttpPost("UpdateChannel")]
         public bool UpdateChannel(dtoUpdateChannel updateChannel)
         {
-
             var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == updateChannel.Id).FirstOrDefault();
 
             channel.Name = updateChannel.Name;
@@ -138,11 +137,146 @@ namespace AdminApi.Controllers.v1
         [HttpDelete("DeleteChannel")]
         public bool DeleteChannel(dtoId id)
         {
-            var user = db.TChannel.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
+            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
-            user.IsDelete = true;
-            user.DeleteTime = DateTime.Now;
-            user.DeleteUserId = userId;
+            channel.IsDelete = true;
+            channel.DeleteTime = DateTime.Now;
+            channel.DeleteUserId = userId;
+
+            db.SaveChanges();
+
+            return true;
+        }
+
+
+
+
+        /// <summary>
+        /// 获取栏目列表
+        /// </summary>
+        /// <param name="pageNum">页码</param>
+        /// <param name="pageSize">单页数量</param>
+        /// <param name="searchKey">搜索关键词</param>
+        /// <returns></returns>
+        [HttpGet("GetCategoryList")]
+        public dtoPageList<dtoCategory> GetCategoryList(int pageNum, int pageSize, string searchKey)
+        {
+            var data = new dtoPageList<dtoCategory>();
+
+            int skip = (pageNum - 1) * pageSize;
+
+            var query = db.TCategory.Where(t => t.IsDelete == false);
+
+            if (!string.IsNullOrEmpty(searchKey))
+            {
+                query = query.Where(t => t.Name.Contains(searchKey));
+            }
+
+            data.Total = query.Count();
+
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new dtoCategory
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Remarks = t.Remarks,
+                Sort = t.Sort,
+                ParentId = t.ParentId,
+                ParentName = t.Parent.Name,
+                CreateTime = t.CreateTime
+            }).Skip(skip).Take(pageSize).ToList();
+
+            return data;
+        }
+
+
+
+        /// <summary>
+        /// 通过栏目Id 获取栏目信息 
+        /// </summary>
+        /// <param name="categoryId">栏目ID</param>
+        /// <returns></returns>
+        [HttpGet("GetCategory")]
+        public dtoChannel GetCategory(Guid categoryId)
+        {
+            var channel = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new dtoChannel
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Remarks = t.Remarks,
+                Sort = t.Sort,
+                CreateTime = t.CreateTime
+            }).FirstOrDefault();
+
+            return channel;
+        }
+
+
+
+
+        /// <summary>
+        /// 创建栏目
+        /// </summary>
+        /// <param name="createCategory"></param>
+        /// <returns></returns>
+        [HttpPost("CreateCategory")]
+        public Guid CreateCategory(dtoCreateCategory createCategory)
+        {
+            var category = new TCategory();
+            category.Id = Guid.NewGuid();
+            category.CreateTime = DateTime.Now;
+            category.CreateUserId = userId;
+
+            category.ChannelId = createCategory.ChannelId;
+            category.Name = createCategory.Name;
+            category.ParentId = createCategory.ParentId;
+            category.Remarks = createCategory.Remarks;
+            category.Sort = createCategory.Sort;
+
+            db.TCategory.Add(category);
+
+            db.SaveChanges();
+
+            return category.Id;
+        }
+
+
+
+
+        /// <summary>
+        /// 更新栏目信息
+        /// </summary>
+        /// <param name="updateCategory"></param>
+        /// <returns></returns>
+        [HttpPost("UpdateCategory")]
+        public bool UpdateCategory(dtoUpdateCategory updateCategory)
+        {
+            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == updateCategory.Id).FirstOrDefault();
+
+            category.Name = updateCategory.Name;
+            category.ParentId = updateCategory.ParentId;
+            category.Remarks = updateCategory.Remarks;
+            category.Sort = updateCategory.Sort;
+
+            db.SaveChanges();
+
+            return true;
+        }
+
+
+
+        /// <summary>
+        /// 删除栏目
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteCategory")]
+        public bool DeleteCategory(dtoId id)
+        {
+            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
+
+            category.IsDelete = true;
+            category.DeleteTime = DateTime.Now;
+            category.DeleteUserId = userId;
 
             db.SaveChanges();
 

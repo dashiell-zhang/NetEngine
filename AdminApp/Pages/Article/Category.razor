@@ -66,7 +66,7 @@
 
             <FormItem>
                 <Text>父级栏目</Text>
-                <Select DataSource="@_list" DefaultValue="@(_list.Select(t => t.Value).FirstOrDefault())" ValueName="@nameof(Person.Value)" LabelName="@nameof(Person.Name)" DisabledName="@nameof(Person.IsDisabled)" @bind-Value="@context.ParentId" OnSelectedItemChanged="OnSelectedItemChangedHandler"></Select>
+                <Select DataSource="@selectCagetoryList" DefaultValue="@(Guid.Empty)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.ParentId"></Select>
             </FormItem>
 
 
@@ -106,6 +106,11 @@
             </FormItem>
 
             <FormItem>
+                <Text>父级栏目</Text>
+                <Select DataSource="@selectCagetoryList" DefaultValue="@(Guid.Empty)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.ParentId"></Select>
+            </FormItem>
+
+            <FormItem>
                 <Text>备注</Text>
                 <Input Placeholder="请输入昵称" @bind-Value="@context.Remarks" />
             </FormItem>
@@ -129,51 +134,42 @@
 
 @code{
 
+    [Parameter]
+    public string channelId { get; set; }
 
-
-    List<Person> _list;
-    class Person
-    {
-        public Guid? Value { get; set; }
-        public string Name { get; set; }
-        public bool IsDisabled { get; set; }
-    }
+    List<dtoSelect> selectCagetoryList;
 
     override protected void OnInitialized()
     {
-        GetParentKVList();
+        GetSelectCagetoryList();
     }
 
     override protected void OnParametersSet()
     {
         GetCategoryList();
-        GetParentKVList();
+        GetSelectCagetoryList();
     }
 
 
-    async void GetParentKVList()
+    async void GetSelectCagetoryList()
     {
         var parentKVList = new List<dtoKeyValue>();
 
 
-        parentKVList.Add(new dtoKeyValue { Key = Guid.Parse("38791b70-0d8f-4ef4-a81d-56de385c5179"), Value = "无父级栏目" });
+        parentKVList.Add(new dtoKeyValue { Key = Guid.Empty, Value = "无父级栏目" });
 
         var kvList = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
 
         parentKVList.AddRange(kvList);
 
-        _list = parentKVList.Select(t => new Person
+        selectCagetoryList = parentKVList.Select(t => new dtoSelect
         {
-            Value = Guid.Parse(t.Key.ToString()),
-            Name = t.Value.ToString()
+            Label = t.Value.ToString(),
+            Value = Guid.Parse(t.Key.ToString())
         }).ToList();
 
-        Console.WriteLine(_list.Select(t => t.Value).FirstOrDefault());
     }
 
-
-    [Parameter]
-    public string channelId { get; set; }
 
 
 
@@ -213,11 +209,16 @@
 
         isShowCreateCategory = true;
 
-        GetParentKVList();
+        GetSelectCagetoryList();
     }
     async void CreateCategorySave(EditContext editContext)
     {
         createCategory.ChannelId = Guid.Parse(channelId);
+
+        if (createCategory.ParentId == Guid.Empty)
+        {
+            createCategory.ParentId = null;
+        }
 
         using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateCategory>("Article/CreateCategory", createCategory))
         {
@@ -235,14 +236,23 @@
 
     bool isShowUpdateCategory = false;
     dtoUpdateCategory updateCategory = new();
-    void UpdateCategory(dtoCategory channel)
+    void UpdateCategory(dtoCategory category)
     {
-        updateCategory.Id = channel.Id;
-        updateCategory.Name = channel.Name;
-        updateCategory.Remarks = channel.Remarks;
-        updateCategory.Sort = channel.Sort;
+        updateCategory.Id = category.Id;
+        updateCategory.Name = category.Name;
+        updateCategory.Remarks = category.Remarks;
+        updateCategory.Sort = category.Sort;
 
-        GetParentKVList();
+        if (category.ParentId == null)
+        {
+            updateCategory.ParentId = Guid.Empty;
+        }
+        else
+        {
+            updateCategory.ParentId = category.ParentId;
+        }
+
+        GetSelectCagetoryList();
 
         isShowUpdateCategory = true;
 
@@ -250,6 +260,12 @@
     }
     async void UpdateCategorySave(EditContext editContext)
     {
+
+        if (updateCategory.ParentId == Guid.Empty)
+        {
+            updateCategory.ParentId = null;
+        }
+
         using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateCategory>("Article/UpdateCategory", updateCategory))
         {
             var updateCategoryRet = httpResponse.Content.ReadAsStringAsync().Result;
@@ -278,9 +294,5 @@
         }
     }
 
-    private void OnSelectedItemChangedHandler(Person value)
-    {
-        Console.WriteLine($"N: ${value?.Name}");
-        Console.WriteLine($"V: ${value?.Value}");
-    }
+
 }

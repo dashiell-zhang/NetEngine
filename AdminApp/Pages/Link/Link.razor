@@ -182,12 +182,12 @@
 
     bool isShowUpdateLink = false;
     dtoUpdateLink updateLink = new();
-    void UpdateLink(dtoLink channel)
+    void UpdateLink(dtoLink link)
     {
-        updateLink.Id = channel.Id;
-        updateLink.Name = channel.Name;
-        updateLink.Url = channel.Url;
-        updateLink.Sort = channel.Sort;
+        updateLink.Id = link.Id;
+        updateLink.Name = link.Name;
+        updateLink.Url = link.Url;
+        updateLink.Sort = link.Sort;
 
         isShowUpdateLink = true;
 

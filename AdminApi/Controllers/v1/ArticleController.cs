@@ -59,6 +59,24 @@ namespace AdminApi.Controllers.v1
 
 
         /// <summary>
+        /// 获取频道KV列表
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetChannelKVList")]
+        public List<dtoKeyValue> GetChannelKVList()
+        {
+            var list = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new dtoKeyValue
+            {
+                Key = t.Id,
+                Value = t.Name
+            }).ToList();
+
+            return list;
+        }
+
+
+
+        /// <summary>
         /// 通过频道Id 获取频道信息 
         /// </summary>
         /// <param name="channelId">频道ID</param>
@@ -192,23 +210,43 @@ namespace AdminApi.Controllers.v1
 
 
         /// <summary>
+        /// 获取栏目KV列表
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetCategoryKVList")]
+        public List<dtoKeyValue> GetCategoryKVList(Guid channelId)
+        {
+            var list = db.TCategory.Where(t => t.IsDelete == false & t.ChannelId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new dtoKeyValue
+            {
+                Key = t.Id,
+                Value = t.Name
+            }).ToList();
+
+            return list;
+        }
+
+
+
+        /// <summary>
         /// 通过栏目Id 获取栏目信息 
         /// </summary>
         /// <param name="categoryId">栏目ID</param>
         /// <returns></returns>
         [HttpGet("GetCategory")]
-        public dtoChannel GetCategory(Guid categoryId)
+        public dtoCategory GetCategory(Guid categoryId)
         {
-            var channel = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new dtoChannel
+            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new dtoCategory
             {
                 Id = t.Id,
                 Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
+                ParentId = t.ParentId,
+                ParentName = t.Parent.Name,
                 CreateTime = t.CreateTime
             }).FirstOrDefault();
 
-            return channel;
+            return category;
         }
 
 

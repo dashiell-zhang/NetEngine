@@ -43,11 +43,11 @@
                     {
                         <Menu Mode="MenuMode.Inline" Style="height: 100%; border-right: 0;">
 
-                            @foreach (var channel in channelList)
+                            @foreach (var channel in channelKVList)
                             {
-                                <SubMenu IsOpen Title="@channel.Name">
+                                <SubMenu IsOpen Title="@channel.Value.ToString()">
                                     <MenuItem>文章管理</MenuItem>
-                                    <MenuItem> <a href="/category/@channel.Id">栏目管理</a></MenuItem>
+                                    <MenuItem> <a href="/category/@channel.Key">栏目管理</a></MenuItem>
                                 </SubMenu>
                             }
 
@@ -119,12 +119,11 @@
     }
 
 
-    private List<dtoChannel> channelList = new();
+    private List<dtoKeyValue> channelKVList = new();
     async void GetChannelList()
     {
-        dtoPageList<dtoChannel> pageList = await Http.GetFromJsonAsync<dtoPageList<dtoChannel>>("Article/GetChannelList?pageNum=1&pageSize=9999");
+        channelKVList = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Article/GetChannelKVList");
 
-        channelList = pageList.List;
         StateHasChanged();
     }
 

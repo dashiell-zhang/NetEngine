@@ -22,8 +22,7 @@
                 <Column @bind-Field="@context.Remarks" Title="备注"></Column>
                 <Column @bind-Field="@context.ParentName" Title="父级栏目"></Column>
                 <Column @bind-Field="@context.Sort" Title="排序"></Column>
-                <Column @bind-Field="@context.CreateTime" Title="创建时间">
-                </Column>
+                <Column @bind-Field="@context.CreateTime" Title="创建时间"></Column>
                 <ActionColumn Title="操作">
                     <Space>
                         <SpaceItem>
@@ -50,13 +49,11 @@
 
         </Table>
 
-
-
     </Content>
 </Layout>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowCreateCategory" Title='("添加频道")' OnClose="()=>isShowUpdateCategory=false">
+<Drawer Closable="true" Width="380" Visible="isShowCreateCategory" Title='("添加栏目")' OnClose="()=>isShowUpdateCategory=false">
     <Template style="height:90%">
 
         <Form Model="@createCategory" OnFinish="CreateCategorySave">
@@ -66,9 +63,16 @@
                 <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
             </FormItem>
 
+
+            <FormItem>
+                <Text>父级栏目</Text>
+                <Select DataSource="@_list" DefaultValue="@(_list.Select(t => t.Value).FirstOrDefault())" ValueName="@nameof(Person.Value)" LabelName="@nameof(Person.Name)" DisabledName="@nameof(Person.IsDisabled)" @bind-Value="@context.ParentId" OnSelectedItemChanged="OnSelectedItemChangedHandler"></Select>
+            </FormItem>
+
+
             <FormItem>
                 <Text>备注</Text>
-                <Input Placeholder="请输入昵称" @bind-Value="@context.Remarks" />
+                <Input Placeholder=" 请输入昵称" @bind-Value="@context.Remarks" />
             </FormItem>
 
 
@@ -91,7 +95,7 @@
 </Drawer>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowUpdateCategory" Title='("编辑频道")' OnClose="()=>isShowUpdateCategory=false">
+<Drawer Closable="true" Width="380" Visible="isShowUpdateCategory" Title='("编辑栏目")' OnClose="()=>isShowUpdateCategory=false">
     <Template style="height:90%">
 
         <Form Model="@updateCategory" OnFinish="UpdateCategorySave">
@@ -125,14 +129,52 @@
 
 @code{
 
+
+
+    List<Person> _list;
+    class Person
+    {
+        public Guid? Value { get; set; }
+        public string Name { get; set; }
+        public bool IsDisabled { get; set; }
+    }
+
+    override protected void OnInitialized()
+    {
+        GetParentKVList();
+    }
+
     override protected void OnParametersSet()
     {
         GetCategoryList();
-        Console.WriteLine(channelId);
+        GetParentKVList();
     }
+
+
+    async void GetParentKVList()
+    {
+        var parentKVList = new List<dtoKeyValue>();
+
+
+        parentKVList.Add(new dtoKeyValue { Key = Guid.Parse("38791b70-0d8f-4ef4-a81d-56de385c5179"), Value = "无父级栏目" });
+
+        var kvList = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
+
+        parentKVList.AddRange(kvList);
+
+        _list = parentKVList.Select(t => new Person
+        {
+            Value = Guid.Parse(t.Key.ToString()),
+            Name = t.Value.ToString()
+        }).ToList();
+
+        Console.WriteLine(_list.Select(t => t.Value).FirstOrDefault());
+    }
+
 
     [Parameter]
     public string channelId { get; set; }
+
 
 
     bool isTableLoading = false;
@@ -168,11 +210,15 @@
     void showCreateCategory()
     {
         createCategory = new dtoCreateCategory();
+
         isShowCreateCategory = true;
+
+        GetParentKVList();
     }
     async void CreateCategorySave(EditContext editContext)
     {
         createCategory.ChannelId = Guid.Parse(channelId);
+
         using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateCategory>("Article/CreateCategory", createCategory))
         {
             var createCategoryId = httpResponse.Content.ReadAsStringAsync().Result;
@@ -195,6 +241,8 @@
         updateCategory.Name = channel.Name;
         updateCategory.Remarks = channel.Remarks;
         updateCategory.Sort = channel.Sort;
+
+        GetParentKVList();
 
         isShowUpdateCategory = true;
 
@@ -230,4 +278,9 @@
         }
     }
 
+    private void OnSelectedItemChangedHandler(Person value)
+    {
+        Console.WriteLine($"N: ${value?.Name}");
+        Console.WriteLine($"V: ${value?.Value}");
+    }
 }

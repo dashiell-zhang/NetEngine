@@ -1,10 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace AdminApp.Models.Article
 {
-    public class dtoCreateChannel
-    {
 
+    /// <summary>
+    /// 创建栏目
+    /// </summary>
+    public class dtoCreateCategory
+    {
 
 
         /// <summary>
@@ -12,6 +16,20 @@ namespace AdminApp.Models.Article
         /// </summary>
         [Required(ErrorMessage = "名称不可以空")]
         public string Name { get; set; }
+
+
+
+        /// <summary>
+        /// 频道ID
+        /// </summary>
+        public Guid ChannelId { get; set; }
+
+
+
+        /// <summary>
+        /// 父级ID
+        /// </summary>
+        public Guid? ParentId { get; set; }
 
 
 

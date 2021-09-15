@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace AdminApp.Models.Link
+namespace AdminApp.Models.Article
 {
 
     /// <summary>
-    /// 更新友情链接
+    /// 栏目信息
     /// </summary>
-    public class dtoUpdateLink
+    public class dtoCategory
     {
-
 
         /// <summary>
         /// 标识ID
@@ -20,19 +18,18 @@ namespace AdminApp.Models.Link
         public Guid Id { get; set; }
 
 
+
         /// <summary>
         /// 名称
         /// </summary>
-        [Required(ErrorMessage = "名称不可以空")]
         public string Name { get; set; }
 
 
 
         /// <summary>
-        /// 网址
+        /// 备注
         /// </summary>
-        [Required(ErrorMessage = "Url不可以空")]
-        public string Url { get; set; }
+        public string Remarks { get; set; }
 
 
 
@@ -42,5 +39,18 @@ namespace AdminApp.Models.Link
         public int Sort { get; set; }
 
 
+
+        /// <summary>
+        /// 父级信息
+        /// </summary>
+        public Guid? ParentId { get; set; }
+        public string ParentName { get; set; }
+
+
+
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public DateTime CreateTime { get; set; }
     }
 }

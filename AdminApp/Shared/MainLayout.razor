@@ -1,14 +1,15 @@
 ﻿@inherits LayoutComponentBase
 @using System.IdentityModel.Tokens.Jwt;
 @using Models.User
+@using Models.Article
 
 <Layout>
     <Header Class="header" style="display:flex;margin-left:-30px">
 
         <div class="logo"><img src="/img/logo.png" style="width:180px;height:31px" /></div>
         <Menu Theme="MenuTheme.Dark" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new []{"1"})>
-            <MenuItem Key="1">内容管理</MenuItem>
-            <MenuItem Key="2">系统设置</MenuItem>
+            <MenuItem Key="1" OnClick="()=>changeShow(0)">内容管理</MenuItem>
+            <MenuItem Key="2" OnClick="()=>changeShow(1)">系统设置</MenuItem>
         </Menu>
 
 
@@ -35,50 +36,54 @@
     </Header>
     <Layout>
         <Sider Width="200" Class="site-layout-background">
-            <Menu Mode="MenuMode.Inline"
-                  DefaultSelectedKeys=@(new[] {"1"})
-                  DefaultOpenKeys=@(new[] {"sub2","sub3","sub4"})
-                  Style="height: 100%; border-right: 0;">
-                @{
-                    RenderFragment sub1Title =
-                    @<span>
-                        <Icon Type="user" Theme="outline" />
-                        subnav 1
-                    </span>;
-                }
-                <SubMenu Key="sub1" Title="资讯中心">
-                    <MenuItem Key="1">文章管理</MenuItem>
-                    <MenuItem Key="2">栏目管理</MenuItem>
-                </SubMenu>
-                @{
-                    RenderFragment sub2Title =
-                    @<span>
-                        <Icon Type="laptop" Theme="outline" />
-                        subnav 2
-                    </span>;
-                }
-                <SubMenu Key="sub2" Title="系统用户">
-                    <MenuItem Key="5"><a href="/user">所有用户</a></MenuItem>
-                </SubMenu>
-                @{
-                    RenderFragment sub3Title =
-                    @<span>
-                        <Icon Type="notification" Theme="outline" />
-                        subnav 3
-                    </span>;
-                }
-                <SubMenu Key="sub3" Title="频道管理">
-                    <MenuItem Key="9"><a href="/channel">所有频道</a></MenuItem>
-                </SubMenu>
 
-                <SubMenu Key="sub4" Title="友链管理">
-                    <MenuItem Key="10"><a href="/link">所有友链</a></MenuItem>
-                </SubMenu>
+            @switch (showIndex)
+            {
+                case 0:
+                    {
+                        <Menu Mode="MenuMode.Inline" Style="height: 100%; border-right: 0;">
 
-                <SubMenu Key="sub5" Title="网站信息">
-                    <MenuItem Key="11">信息维护</MenuItem>
-                </SubMenu>
-            </Menu>
+                            @foreach (var channel in channelList)
+                            {
+                                <SubMenu IsOpen Title="@channel.Name">
+                                    <MenuItem>文章管理</MenuItem>
+                                    <MenuItem> <a href="/category/@channel.Id">栏目管理</a></MenuItem>
+                                </SubMenu>
+                            }
+
+                        </Menu>
+                        break;
+                    }
+
+                case 1:
+                    {
+                        <Menu Mode="MenuMode.Inline" DefaultSelectedKeys=@(new[] {"1"}) DefaultOpenKeys=@(new[] {"sub2","sub3","sub4"}) Style="height: 100%; border-right: 0;">
+
+
+                            <SubMenu Key="sub2" Title="系统用户">
+                                <MenuItem><a href="/user">所有用户</a></MenuItem>
+                            </SubMenu>
+
+                            <SubMenu Key="sub3" Title="频道管理">
+                                <MenuItem><a href="/channel">所有频道</a></MenuItem>
+                            </SubMenu>
+
+                            <SubMenu Key="sub4" Title="友链管理">
+                                <MenuItem><a href="/link">所有友链</a></MenuItem>
+                            </SubMenu>
+
+                            <SubMenu Key="sub5" Title="网站信息">
+                                <MenuItem>信息维护</MenuItem>
+                            </SubMenu>
+
+                        </Menu>
+                        break;
+                    }
+            }
+
+
+
+
         </Sider>
 
         @Body
@@ -104,10 +109,25 @@
 
     private dtoUser user = new();
 
+    int showIndex = 0;
+
+
     override protected void OnInitialized()
     {
         Authentication();
+        GetChannelList();
     }
+
+
+    private List<dtoChannel> channelList = new();
+    async void GetChannelList()
+    {
+        dtoPageList<dtoChannel> pageList = await Http.GetFromJsonAsync<dtoPageList<dtoChannel>>("Article/GetChannelList?pageNum=1&pageSize=9999");
+
+        channelList = pageList.List;
+        StateHasChanged();
+    }
+
 
 
     private async void Authentication()
@@ -154,6 +174,12 @@
         LocalStorage.RemoveItem("Authorization");
 
         NavigationManager.NavigateTo("/login");
+    }
+
+    void changeShow(int _showIndex)
+    {
+        showIndex = _showIndex;
+        StateHasChanged();
     }
 
 }

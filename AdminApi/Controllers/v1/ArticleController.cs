@@ -154,18 +154,19 @@ namespace AdminApi.Controllers.v1
         /// <summary>
         /// 获取栏目列表
         /// </summary>
+        /// <param name="channelId">频道ID</param>
         /// <param name="pageNum">页码</param>
         /// <param name="pageSize">单页数量</param>
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetCategoryList")]
-        public dtoPageList<dtoCategory> GetCategoryList(int pageNum, int pageSize, string searchKey)
+        public dtoPageList<dtoCategory> GetCategoryList(Guid channelId, int pageNum, int pageSize, string searchKey)
         {
             var data = new dtoPageList<dtoCategory>();
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TCategory.Where(t => t.IsDelete == false);
+            var query = db.TCategory.Where(t => t.IsDelete == false & t.ChannelId == channelId);
 
             if (!string.IsNullOrEmpty(searchKey))
             {

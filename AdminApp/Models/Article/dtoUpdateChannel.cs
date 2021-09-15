@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace AdminApp.Models.Article
 {
@@ -14,6 +15,7 @@ namespace AdminApp.Models.Article
         /// <summary>
         /// 名称
         /// </summary>
+        [Required(ErrorMessage = "名称不可以空")]
         public string Name { get; set; }
 
 

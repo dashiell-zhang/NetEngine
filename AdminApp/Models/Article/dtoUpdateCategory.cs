@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace AdminApp.Models.Link
+namespace AdminApp.Models.Article
 {
 
     /// <summary>
-    /// 更新友情链接
+    /// 更新栏目
     /// </summary>
-    public class dtoUpdateLink
+    public class dtoUpdateCategory
     {
 
 
@@ -18,6 +15,7 @@ namespace AdminApp.Models.Link
         /// 标识ID
         /// </summary>
         public Guid Id { get; set; }
+
 
 
         /// <summary>
@@ -29,10 +27,16 @@ namespace AdminApp.Models.Link
 
 
         /// <summary>
-        /// 网址
+        /// 父级ID
         /// </summary>
-        [Required(ErrorMessage = "Url不可以空")]
-        public string Url { get; set; }
+        public Guid? ParentId { get; set; }
+
+
+
+        /// <summary>
+        /// 备注
+        /// </summary>
+        public string Remarks { get; set; }
 
 
 

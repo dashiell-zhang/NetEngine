@@ -1,0 +1,233 @@
+﻿@page "/category/{channelId}"
+@using System.ComponentModel
+@using AntDesign.TableModels
+@using Models.Article
+
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>返回上一页</BreadcrumbItem>
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>栏目管理</BreadcrumbItem>
+        <BreadcrumbItem>所有栏目</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background" Style=" padding: 24px; margin: 0; min-height: 280px;">
+
+        <div style="margin-bottom:10px">
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="showCreateCategory">添加</Button>
+        </div>
+        <Table TItem="dtoCategory" DataSource="@pageList.List" Total="@pageList.Total" Loading="isTableLoading" RemoteDataSource>
+
+            <RowTemplate>
+                <Column @bind-Field="@context.Name" Title="名称"></Column>
+                <Column @bind-Field="@context.Remarks" Title="备注"></Column>
+                <Column @bind-Field="@context.ParentName" Title="父级栏目"></Column>
+                <Column @bind-Field="@context.Sort" Title="排序"></Column>
+                <Column @bind-Field="@context.CreateTime" Title="创建时间">
+                </Column>
+                <ActionColumn Title="操作">
+                    <Space>
+                        <SpaceItem>
+                            <a @onclick="()=>UpdateCategory(context)">编辑</a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Popconfirm Title="确认要删除吗？"
+                                        OnConfirm="_=>DeleteCategory(context.Id)"
+                                        OkText="Yes"
+                                        CancelText="No">
+                                <a style="color:red">删除</a>
+                            </Popconfirm>
+
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </RowTemplate>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
+        </Table>
+
+
+
+    </Content>
+</Layout>
+
+
+<Drawer Closable="true" Width="380" Visible="isShowCreateCategory" Title='("添加频道")' OnClose="()=>isShowUpdateCategory=false">
+    <Template style="height:90%">
+
+        <Form Model="@createCategory" OnFinish="CreateCategorySave">
+
+            <FormItem>
+                <Text>名称</Text>
+                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+            </FormItem>
+
+            <FormItem>
+                <Text>备注</Text>
+                <Input Placeholder="请输入昵称" @bind-Value="@context.Remarks" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>排序</Text>
+                <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" />
+            </FormItem>
+
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="14">
+                </AntDesign.Col>
+                <AntDesign.Col Span="10">
+                    <Button Type="@ButtonType.Default" @onclick="()=>isShowCreateCategory=false">取消</Button>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
+                </AntDesign.Col>
+            </Row>
+        </Form>
+    </Template>
+</Drawer>
+
+
+<Drawer Closable="true" Width="380" Visible="isShowUpdateCategory" Title='("编辑频道")' OnClose="()=>isShowUpdateCategory=false">
+    <Template style="height:90%">
+
+        <Form Model="@updateCategory" OnFinish="UpdateCategorySave">
+
+            <FormItem>
+                <Text>名称</Text>
+                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+            </FormItem>
+
+            <FormItem>
+                <Text>备注</Text>
+                <Input Placeholder="请输入昵称" @bind-Value="@context.Remarks" />
+            </FormItem>
+
+            <FormItem>
+                <Text>排序</Text>
+                <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" />
+            </FormItem>
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="14">
+                </AntDesign.Col>
+                <AntDesign.Col Span="10">
+                    <Button Type="@ButtonType.Default" @onclick="()=>isShowUpdateCategory=false">取消</Button>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
+                </AntDesign.Col>
+            </Row>
+        </Form>
+    </Template>
+</Drawer>
+
+@code{
+
+    override protected void OnParametersSet()
+    {
+        GetCategoryList();
+        Console.WriteLine(channelId);
+    }
+
+    [Parameter]
+    public string channelId { get; set; }
+
+
+    bool isTableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    dtoPageList<dtoCategory> pageList = new();
+    async void GetCategoryList()
+    {
+        isTableLoading = true;
+        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoCategory>>("Article/GetCategoryList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        isTableLoading = false;
+        StateHasChanged();
+    }
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetCategoryList();
+    }
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowCreateCategory = false;
+    dtoCreateCategory createCategory = new();
+    void showCreateCategory()
+    {
+        createCategory = new dtoCreateCategory();
+        isShowCreateCategory = true;
+    }
+    async void CreateCategorySave(EditContext editContext)
+    {
+        createCategory.ChannelId = Guid.Parse(channelId);
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateCategory>("Article/CreateCategory", createCategory))
+        {
+            var createCategoryId = httpResponse.Content.ReadAsStringAsync().Result;
+
+            Console.WriteLine(createCategoryId);
+
+            GetCategoryList();
+            Message.Success("添加成功");
+
+            isShowCreateCategory = false;
+        }
+    }
+
+
+    bool isShowUpdateCategory = false;
+    dtoUpdateCategory updateCategory = new();
+    void UpdateCategory(dtoCategory channel)
+    {
+        updateCategory.Id = channel.Id;
+        updateCategory.Name = channel.Name;
+        updateCategory.Remarks = channel.Remarks;
+        updateCategory.Sort = channel.Sort;
+
+        isShowUpdateCategory = true;
+
+        StateHasChanged();
+    }
+    async void UpdateCategorySave(EditContext editContext)
+    {
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateCategory>("Article/UpdateCategory", updateCategory))
+        {
+            var updateCategoryRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+            Console.WriteLine(updateCategoryRet);
+
+            GetCategoryList();
+            Message.Success("编辑成功");
+
+            isShowUpdateCategory = false;
+        }
+    }
+
+
+    async void DeleteCategory(Guid userId)
+    {
+        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteCategory", new { Id = userId }))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetCategoryList();
+                Message.Success("删除成功");
+            }
+        }
+    }
+
+}

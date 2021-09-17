@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Net.Http;
 using TaskService.Filters;
 using TaskService.Subscribes;
 
@@ -96,6 +97,27 @@ namespace TaskService
                     //    options.Configuration = Configuration.GetConnectionString("redisConnection");
                     //    options.InstanceName = "cache";
                     //});
+
+                    services.AddHttpClient("", options =>
+                    {
+                        options.DefaultRequestVersion = new Version("2.0");
+                        options.DefaultRequestHeaders.Add("Accept", "*/*");
+                        options.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36");
+                        options.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
+                    });
+
+
+                    services.AddHttpClient("SkipSsl", options =>
+                    {
+                        options.DefaultRequestVersion = new Version("2.0");
+                        options.DefaultRequestHeaders.Add("Accept", "*/*");
+                        options.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36");
+                        options.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
+                    }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+                    });
+
                 });
 
 

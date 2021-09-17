@@ -1,7 +1,9 @@
-﻿using Models.Dtos;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Models.Dtos;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -19,6 +21,28 @@ namespace Common
     {
 
 
+        private static bool IsInit;
+        private static IHttpClientFactory InitHttpClientFactory;
+
+
+
+        private static IHttpClientFactory HttpClientFactory
+        {
+            get
+            {
+                if (!IsInit)
+                {
+                    var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
+                    var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
+                    InitHttpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
+                    IsInit = true;
+                }
+
+                return InitHttpClientFactory;
+            }
+        }
+
+
         /// <summary>
         /// Get方式获取远程资源
         /// </summary>
@@ -28,33 +52,21 @@ namespace Common
         /// <returns></returns>
         public static string Get(string url, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
         {
-            using (HttpClientHandler handler = new HttpClientHandler())
+            string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
+
+            var client = HttpClientFactory.CreateClient(httpClientName);
+
+            if (headers != default)
             {
-                if (isSkipSslVerification)
+                foreach (var header in headers)
                 {
-                    handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
+            }
 
-                using (HttpClient client = new HttpClient(handler))
-                {
-                    client.DefaultRequestVersion = new Version("2.0");
-                    client.DefaultRequestHeaders.Add("Accept", "*/*");
-                    client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)");
-                    client.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
-
-                    if (headers != default)
-                    {
-                        foreach (var header in headers)
-                        {
-                            client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                        }
-                    }
-
-                    using (var httpResponse = client.GetStringAsync(url))
-                    {
-                        return httpResponse.Result;
-                    }
-                }
+            using (var httpResponse = client.GetStringAsync(url))
+            {
+                return httpResponse.Result;
             }
         }
 
@@ -104,55 +116,42 @@ namespace Common
         public static string Post(string url, string data, string type, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
         {
 
-            using (HttpClientHandler handler = new HttpClientHandler())
+            string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
+
+            var client = HttpClientFactory.CreateClient(httpClientName);
+
+            if (headers != default)
             {
-                if (isSkipSslVerification)
+                foreach (var header in headers)
                 {
-                    handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
+            }
 
-                using (HttpClient client = new HttpClient(handler))
+            using (Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
+            {
+                using (HttpContent content = new StreamContent(dataStream))
                 {
-                    client.DefaultRequestVersion = new Version("2.0");
-                    client.DefaultRequestHeaders.Add("Accept", "*/*");
-                    client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)");
-                    client.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
-
-                    if (headers != default)
+                    if (type == "form")
                     {
-                        foreach (var header in headers)
-                        {
-                            client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                        }
+                        content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+                    }
+                    else if (type == "data")
+                    {
+                        content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
+                    }
+                    else if (type == "json")
+                    {
+                        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                    }
+                    else if (type == "xml")
+                    {
+                        content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
                     }
 
-                    using (Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
+                    using (var httpResponse = client.PostAsync(url, content))
                     {
-                        using (HttpContent content = new StreamContent(dataStream))
-                        {
-
-                            if (type == "form")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-                            }
-                            else if (type == "data")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-                            }
-                            else if (type == "json")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                            }
-                            else if (type == "xml")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
-                            }
-
-                            using (var httpResponse = client.PostAsync(url, content))
-                            {
-                                return httpResponse.Result.Content.ReadAsStringAsync().Result;
-                            }
-                        }
+                        return httpResponse.Result.Content.ReadAsStringAsync().Result;
                     }
                 }
             }
@@ -191,55 +190,41 @@ namespace Common
         /// <returns></returns>
         public static string PostForm(string url, List<dtoFormItem> formItems, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
         {
-            using (HttpClientHandler handler = new HttpClientHandler())
+            string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
+
+            var client = HttpClientFactory.CreateClient(httpClientName);
+
+            if (headers != default)
             {
-                if (isSkipSslVerification)
+                foreach (var header in headers)
                 {
-                    handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                }
+            }
+
+            string boundary = "----" + DateTime.Now.Ticks.ToString("x");
+
+            using (MultipartFormDataContent formDataContent = new MultipartFormDataContent(boundary))
+            {
+                foreach (var item in formItems)
+                {
+                    if (item.IsFile)
+                    {
+                        //上传文件
+                        formDataContent.Add(new StreamContent(item.FileContent), item.Key, item.FileName);
+                    }
+                    else
+                    {
+                        //上传文本
+                        formDataContent.Add(new StringContent(item.Value), item.Key);
+                    }
                 }
 
-                using (HttpClient client = new HttpClient(handler))
+                using (var httpResponse = client.PostAsync(url, formDataContent))
                 {
-                    client.DefaultRequestVersion = new Version("2.0");
-                    client.DefaultRequestHeaders.Add("Accept", "*/*");
-                    client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)");
-                    client.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
-
-                    if (headers != default)
-                    {
-                        foreach (var header in headers)
-                        {
-                            client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                        }
-                    }
-
-                    string boundary = "----" + DateTime.Now.Ticks.ToString("x");
-
-                    using (MultipartFormDataContent formDataContent = new MultipartFormDataContent(boundary))
-                    {
-
-                        foreach (var item in formItems)
-                        {
-                            if (item.IsFile)
-                            {
-                                //上传文件
-                                formDataContent.Add(new StreamContent(item.FileContent), item.Key, item.FileName);
-                            }
-                            else
-                            {
-                                //上传文本
-                                formDataContent.Add(new StringContent(item.Value), item.Key);
-                            }
-                        }
-
-                        using (var httpResponse = client.PostAsync(url, formDataContent))
-                        {
-                            return httpResponse.Result.Content.ReadAsStringAsync().Result;
-                        }
-
-                    }
-
+                    return httpResponse.Result.Content.ReadAsStringAsync().Result;
                 }
+
             }
         }
 

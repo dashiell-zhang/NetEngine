@@ -321,5 +321,162 @@ namespace AdminApi.Controllers.v1
 
             return true;
         }
+
+
+
+
+        /// <summary>
+        /// 获取文章列表
+        /// </summary>
+        /// <param name="channelId">频道ID</param>
+        /// <param name="pageNum">页码</param>
+        /// <param name="pageSize">单页数量</param>
+        /// <param name="searchKey">搜索关键词</param>
+        /// <returns></returns>
+        [HttpGet("GetArticleList")]
+        public dtoPageList<dtoArticle> GetArticleList(Guid channelId, int pageNum, int pageSize, string searchKey)
+        {
+            var data = new dtoPageList<dtoArticle>();
+
+            int skip = (pageNum - 1) * pageSize;
+
+            var query = db.TArticle.Where(t => t.IsDelete == false & t.Category.ChannelId == channelId);
+
+            if (!string.IsNullOrEmpty(searchKey))
+            {
+                query = query.Where(t => t.Title.Contains(searchKey));
+            }
+
+            data.Total = query.Count();
+
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new dtoArticle
+            {
+                Id = t.Id,
+                CategoryId = t.CategoryId,
+                CategoryName = t.Category.Name,
+                Title = t.Title,
+                Content = t.Content,
+                IsRecommend = t.IsRecommend,
+                IsDisplay = t.IsDisplay,
+                Sort = t.Sort,
+                ClickCount = t.ClickCount,
+                Abstract = t.Abstract,
+                CreateTime = t.CreateTime
+            }).Skip(skip).Take(pageSize).ToList();
+
+            return data;
+        }
+
+
+
+
+
+        /// <summary>
+        /// 通过文章ID 获取文章信息
+        /// </summary>
+        /// <param name="articleId">文章ID</param>
+        /// <returns></returns>
+        [HttpGet("GetArticle")]
+        public dtoArticle GetArticle(Guid articleId)
+        {
+            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new dtoArticle
+            {
+                Id = t.Id,
+                CategoryId = t.CategoryId,
+                CategoryName = t.Category.Name,
+                Title = t.Title,
+                Content = t.Content,
+                IsRecommend = t.IsRecommend,
+                IsDisplay = t.IsDisplay,
+                Sort = t.Sort,
+                ClickCount = t.ClickCount,
+                Abstract = t.Abstract,
+                CreateTime = t.CreateTime
+            }).FirstOrDefault();
+
+            return article;
+        }
+
+
+
+
+        /// <summary>
+        /// 创建文章
+        /// </summary>
+        /// <param name="createArticle"></param>
+        /// <returns></returns>
+        [HttpPost("CreateArticle")]
+        public Guid CreateArticle(dtoCreateArticle createArticle)
+        {
+            var article = new TArticle();
+            article.Id = Guid.NewGuid();
+            article.CreateTime = DateTime.Now;
+            article.CreateUserId = userId;
+
+            article.CategoryId = createArticle.CategoryId;
+            article.Title = createArticle.Title;
+            article.Content = createArticle.Content;
+            article.IsRecommend = createArticle.IsRecommend;
+            article.IsDisplay = createArticle.IsDisplay;
+            article.Sort = createArticle.Sort;
+            article.ClickCount = createArticle.ClickCount;
+            article.Abstract = createArticle.Abstract;
+
+            db.TArticle.Add(article);
+
+            db.SaveChanges();
+
+            return article.Id;
+        }
+
+
+
+
+        /// <summary>
+        /// 更新文章信息
+        /// </summary>
+        /// <param name="updateArticle"></param>
+        /// <returns></returns>
+        [HttpPost("UpdateArticle")]
+        public bool UpdateArticle(dtoUpdateArticle updateArticle)
+        {
+            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == updateArticle.Id).FirstOrDefault();
+
+            article.CategoryId = updateArticle.CategoryId;
+            article.Title = updateArticle.Title;
+            article.Content = updateArticle.Content;
+            article.IsRecommend = updateArticle.IsRecommend;
+            article.IsDisplay = updateArticle.IsDisplay;
+            article.Sort = updateArticle.Sort;
+            article.ClickCount = updateArticle.ClickCount;
+            article.Abstract = updateArticle.Abstract;
+
+            db.SaveChanges();
+
+            return true;
+        }
+
+
+
+        /// <summary>
+        /// 删除文章
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteArticle")]
+        public bool DeleteArticle(dtoId id)
+        {
+            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
+
+            article.IsDelete = true;
+            article.DeleteTime = DateTime.Now;
+            article.DeleteUserId = userId;
+
+            db.SaveChanges();
+
+            return true;
+        }
+
+
     }
 }

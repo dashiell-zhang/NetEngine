@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AdminApi.Models.v1.Article
+namespace AdminApp.Models.Article
 {
 
     /// <summary>

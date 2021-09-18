@@ -1,0 +1,345 @@
+﻿@page "/article/{channelId}"
+@using System.ComponentModel
+@using AntDesign.TableModels
+@using Models.Article
+
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>返回上一页</BreadcrumbItem>
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>文章管理</BreadcrumbItem>
+        <BreadcrumbItem>所有文章</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background" Style=" padding: 24px; margin: 0; min-height: 280px;">
+
+        <div style="margin-bottom:10px">
+            <Button Icon="plus" Type="@ButtonType.Primary" OnClick="showCreateArticle">添加</Button>
+        </div>
+        <Table TItem="dtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="isTableLoading" RemoteDataSource>
+
+            <RowTemplate>
+                <Column @bind-Field="@context.Title" Title="标题"></Column>
+                <Column @bind-Field="@context.CategoryName" Title="类别"></Column>
+                <Column @bind-Field="@context.IsRecommend" Title="是否推荐"></Column>
+                <Column @bind-Field="@context.IsDisplay" Title="显示状态"></Column>
+                <Column @bind-Field="@context.ClickCount" Title="点击量"></Column>
+                <Column @bind-Field="@context.CreateTime" Title="创建时间"></Column>
+                <ActionColumn Title="操作">
+                    <Space>
+                        <SpaceItem>
+                            <a>编辑</a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Popconfirm Title="确认要删除吗？"
+                                        OnConfirm="_=>DeleteArticle(context.Id)"
+                                        OkText="Yes"
+                                        CancelText="No">
+                                <a style="color:red">删除</a>
+                            </Popconfirm>
+
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </RowTemplate>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
+        </Table>
+
+    </Content>
+</Layout>
+
+
+@{
+    RenderFragment footer = @<Template>
+        <Button OnClick="CreateArticleSave" Type="@ButtonType.Primary" Loading="@_loading">保存</Button>
+        <Button OnClick="()=>isShowCreateArticle=false" @key="@("back")">取消</Button>
+    </Template>;
+}
+
+<Modal Title="添加文章" Style="width:50%;" Visible="@isShowCreateArticle" OnCancel="()=>isShowCreateArticle=false" Footer="@footer">
+    <Form Model="@createArticle" LabelColSpan="2" WrapperColSpan="22">
+
+        <Tabs Type="@TabType.Card" Style="height:550px">
+
+            <TabPane Key="1" Tab="基本信息">
+                <FormItem Label="所属栏目">
+                    <Select DataSource="@selectCategoryList" DefaultValue="@(Guid.Empty)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.CategoryId" style="width: 190px"></Select>
+                </FormItem>
+
+                <FormItem Label="标题">
+                    <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
+                </FormItem>
+
+                <FormItem Label="是否显示">
+                    <Switch @bind-Value="@context.IsDisplay" CheckedChildren="是" UnCheckedChildren="否" />
+                </FormItem>
+
+                <FormItem Label="是否推荐">
+                    <Switch @bind-Value="@context.IsRecommend" CheckedChildren="是" UnCheckedChildren="否" />
+                </FormItem>
+
+                <FormItem Label="排序">
+                    <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" style="width: 190px" />
+                </FormItem>
+
+                <FormItem Label="点击量">
+                    <Input Placeholder="请输入点击量" @bind-Value="@context.ClickCount" style="width: 190px" />
+                </FormItem>
+
+                <FormItem Label="封面图">
+                    <Upload Action="https://localhost:9833/api/File/UploadFile?business=1&key=f03dae69-226b-4c2a-a027-8bc58e57b2ff&sign=3"
+                            Name="file"
+                            Headers=headers
+                            @bind-FileList="fileList"
+                            ShowButton="fileList?.Count < 3"
+                            ListType="picture-card"
+                            OnPreview="(file)=> previewImg(file)"
+                            OnRemove=" (file)=> removeImg(file)"
+                            OnChange="UploadOnChange">
+                        <div>
+                            <Icon Type="plus"></Icon>
+                            <div className="ant-upload-text">上传</div>
+                        </div>
+
+                    </Upload>
+                    <Modal Visible="previewVisible"
+                           Title="预览"
+                           OnCancel="()=> previewVisible=false">
+                        <img style="width: 100%" src="@imgUrl" />
+                    </Modal>
+                </FormItem>
+
+
+
+
+            </TabPane>
+
+            <TabPane Key="2" Tab="详细内容">
+                <FormItem Label="摘要">
+                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
+                </FormItem>
+
+                <FormItem Label="内容">
+                    <TextArea Placeholder=" 请输入内容" @bind-Value="@context.Content" AutoSize="true" style="min-height:300px" />
+                </FormItem>
+            </TabPane>
+
+        </Tabs>
+
+    </Form>
+</Modal>
+
+@code{
+
+    Dictionary<string, string> headers = new Dictionary<string, string>();
+
+
+    bool previewVisible = false;
+    string previewTitle = string.Empty;
+    string imgUrl = string.Empty;
+
+
+    void previewImg(UploadFileItem file)
+    {
+        previewVisible = true;
+        previewTitle = file.FileName;
+        imgUrl = file.Url;
+    }
+
+    Task<bool> removeImg(UploadFileItem file)
+    {
+        Console.WriteLine(JsonHelper.ObjectToJSON(file));
+        Task<bool> task = new Task<bool>(() => { return true; });
+
+        return task;
+    }
+
+    List<UploadFileItem> fileList = new List<UploadFileItem>
+{
+        new UploadFileItem
+        {
+            Id = "1",
+            FileName = "image.png",
+            State = UploadState.Success,
+            Url = "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+        }
+    };
+
+    void UploadOnChange(UploadInfo fileinfo)
+    {
+        if (fileinfo.File.State == UploadState.Success)
+        {
+
+            fileinfo.File.Id = JsonHelper.JSONToObject<string>(fileinfo.File.Response);
+
+            Console.WriteLine(JsonHelper.ObjectToJSON(fileinfo));
+            fileinfo.File.Url = fileinfo.File.ObjectURL;
+        }
+    }
+
+
+
+
+    bool _loading = false;
+
+
+    [Parameter]
+    public string channelId { get; set; }
+
+    List<dtoSelect> selectCategoryList;
+
+    override protected void OnInitialized()
+    {
+        GetSelectCategoryList();
+
+        var authorization = LocalStorage.GetItem<string>("Authorization");
+
+        headers.Add("Authorization", "Bearer " + authorization);
+    }
+
+    override protected void OnParametersSet()
+    {
+        GetArticleList();
+        GetSelectCategoryList();
+    }
+
+
+    async void GetSelectCategoryList()
+    {
+        var parentKVList = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
+
+        selectCategoryList = parentKVList.Select(t => new dtoSelect
+        {
+            Label = t.Value.ToString(),
+            Value = Guid.Parse(t.Key.ToString())
+        }).ToList();
+    }
+
+
+
+
+    bool isTableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    dtoPageList<dtoArticle> pageList = new();
+    async void GetArticleList()
+    {
+        isTableLoading = true;
+        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        isTableLoading = false;
+        StateHasChanged();
+    }
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetArticleList();
+    }
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowCreateArticle = false;
+    dtoCreateArticle createArticle = new();
+    void showCreateArticle()
+    {
+        createArticle = new dtoCreateArticle();
+
+        isShowCreateArticle = true;
+
+        GetSelectCategoryList();
+    }
+    async void CreateArticleSave()
+    {
+        _loading = true;
+
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateArticle>("Article/CreateArticle", createArticle))
+        {
+            var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
+
+            Console.WriteLine(createArticleId);
+
+            GetArticleList();
+            Message.Success("添加成功");
+
+            isShowCreateArticle = false;
+        }
+
+        _loading = false;
+    }
+
+
+    //bool isShowUpdateArticle = false;
+    //dtoUpdateArticle updateArticle = new();
+    //void UpdateArticle(dtoArticle category)
+    //{
+    //    updateArticle.Id = category.Id;
+    //    updateArticle.Name = category.Name;
+    //    updateArticle.Remarks = category.Remarks;
+    //    updateArticle.Sort = category.Sort;
+
+    //    if (category.ParentId == null)
+    //    {
+    //        updateArticle.ParentId = Guid.Empty;
+    //    }
+    //    else
+    //    {
+    //        updateArticle.ParentId = category.ParentId;
+    //    }
+
+    //    GetSelectCategoryList();
+
+    //    isShowUpdateArticle = true;
+
+    //    StateHasChanged();
+    //}
+    //async void UpdateArticleSave(EditContext editContext)
+    //{
+
+    //    if (updateArticle.ParentId == Guid.Empty)
+    //    {
+    //        updateArticle.ParentId = null;
+    //    }
+
+    //    using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateArticle>("Article/UpdateArticle", updateArticle))
+    //    {
+    //        var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+    //        Console.WriteLine(updateArticleRet);
+
+    //        GetArticleList();
+    //        Message.Success("编辑成功");
+
+    //        isShowUpdateArticle = false;
+    //    }
+    //}
+
+
+    async void DeleteArticle(Guid userId)
+    {
+        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteArticle", new { Id = userId }))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetArticleList();
+                Message.Success("删除成功");
+            }
+        }
+    }
+
+
+}

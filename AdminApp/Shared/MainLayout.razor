@@ -1,7 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @using System.IdentityModel.Tokens.Jwt;
 @using Models.User
-@using Models.Article
 
 <Layout>
     <Header Class="header" style="display:flex;margin-left:-30px">
@@ -46,7 +45,7 @@
                             @foreach (var channel in channelKVList)
                             {
                                 <SubMenu IsOpen Title="@channel.Value.ToString()">
-                                    <MenuItem>文章管理</MenuItem>
+                                    <MenuItem><a href="/article/@channel.Key">文章管理</a></MenuItem>
                                     <MenuItem> <a href="/category/@channel.Key">栏目管理</a></MenuItem>
                                 </SubMenu>
                             }
@@ -57,22 +56,12 @@
 
                 case 1:
                     {
-                        <Menu Mode="MenuMode.Inline" DefaultSelectedKeys=@(new[] {"1"}) DefaultOpenKeys=@(new[] {"sub2","sub3","sub4"}) Style="height: 100%; border-right: 0;">
+                        <Menu Mode="MenuMode.Inline" DefaultSelectedKeys=@(new[] {"1"}) DefaultOpenKeys=@(new[] {"sub1"}) Style="height: 100%; border-right: 0;">
 
-
-                            <SubMenu Key="sub2" Title="系统用户">
-                                <MenuItem><a href="/user">所有用户</a></MenuItem>
-                            </SubMenu>
-
-                            <SubMenu Key="sub3" Title="频道管理">
-                                <MenuItem><a href="/channel">所有频道</a></MenuItem>
-                            </SubMenu>
-
-                            <SubMenu Key="sub4" Title="友链管理">
-                                <MenuItem><a href="/link">所有友链</a></MenuItem>
-                            </SubMenu>
-
-                            <SubMenu Key="sub5" Title="网站信息">
+                            <SubMenu Key="sub1" Title="系统设置">
+                                <MenuItem><a href="/user">用户管理</a></MenuItem>
+                                <MenuItem><a href="/channel">频道管理</a></MenuItem>
+                                <MenuItem><a href="/link">友链管理</a></MenuItem>
                                 <MenuItem>信息维护</MenuItem>
                             </SubMenu>
 
@@ -80,8 +69,6 @@
                         break;
                     }
             }
-
-
 
 
         </Sider>

@@ -1,4 +1,6 @@
 ﻿using Hangfire;
+using Medallion.Threading;
+using Medallion.Threading.SqlServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,6 +38,12 @@ namespace TaskAdmin
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
             services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
+
+
+            services.AddSingleton<IDistributedLockProvider>(new SqlDistributedSynchronizationProvider(Configuration.GetConnectionString("dbConnection")));
+            services.AddSingleton<IDistributedSemaphoreProvider>(new SqlDistributedSynchronizationProvider(Configuration.GetConnectionString("dbConnection")));
+            services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(Configuration.GetConnectionString("dbConnection")));
+
 
             services.AddResponseCompression();
 

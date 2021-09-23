@@ -1,4 +1,5 @@
 ﻿using Common;
+using Medallion.Threading;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Dtos;
@@ -143,6 +144,49 @@ namespace WebApi.Controllers.v1
         {
 
             cap.Publish("ShowMessage", msg);
+
+            return true;
+        }
+
+
+
+
+        /// <summary>
+        /// 分布式锁demo
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("DistLock")]
+        public bool DistLock()
+        {
+
+            //互斥锁
+            using (distLock.AcquireLock(""))
+            {
+            }
+
+            //互斥锁，可配置内部代码最多同时运行数
+            using (distSemaphoreLock.AcquireSemaphore("", 5))
+            {
+            }
+
+            //读锁，多人同读，与写锁互斥
+            using (distUpgradeableLock.AcquireReadLock(""))
+            {
+            }
+
+
+            //写锁，互斥
+            using (distUpgradeableLock.AcquireWriteLock(""))
+            {
+            }
+
+            //可升级读锁，初始状态为读锁，可手动升级为写锁
+            using (var handle = distUpgradeableLock.AcquireUpgradeableReadLock(""))
+            {
+
+                //升级写锁
+                handle.UpgradeToWriteLock();
+            }
 
             return true;
         }

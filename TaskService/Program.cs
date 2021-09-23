@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Medallion.Threading;
+using Medallion.Threading.SqlServer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,11 +31,14 @@ namespace TaskService
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    var ss = services.BuildServiceProvider();
 
                     //为各数据库注入连接字符串
                     Repository.Database.dbContext.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
                     services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
+
+                    services.AddSingleton<IDistributedLockProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
+                    services.AddSingleton<IDistributedSemaphoreProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
+                    services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
 
                     services.AddLogging(options => options.AddConsole());
 

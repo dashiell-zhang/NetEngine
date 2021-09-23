@@ -29,6 +29,8 @@ using AdminApi.Libraries.Swagger;
 using AdminApi.Libraries.Verify;
 using AdminApi.Subscribes;
 using System.Net.Http;
+using Medallion.Threading;
+using Medallion.Threading.SqlServer;
 
 namespace AdminApi
 {
@@ -51,6 +53,10 @@ namespace AdminApi
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = Configuration.GetConnectionString("dbConnection");
             services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
+
+            services.AddSingleton<IDistributedLockProvider>(new SqlDistributedSynchronizationProvider(Configuration.GetConnectionString("dbConnection")));
+            services.AddSingleton<IDistributedSemaphoreProvider>(new SqlDistributedSynchronizationProvider(Configuration.GetConnectionString("dbConnection")));
+            services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(Configuration.GetConnectionString("dbConnection")));
 
             services.AddResponseCompression();
 

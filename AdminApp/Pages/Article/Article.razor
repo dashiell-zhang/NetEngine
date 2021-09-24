@@ -114,9 +114,6 @@
                     </Modal>
                 </FormItem>
 
-
-
-
             </TabPane>
 
             <TabPane Key="2" Tab="详细内容">
@@ -125,7 +122,7 @@
                 </FormItem>
 
                 <FormItem Label="内容">
-                    <TextArea Placeholder=" 请输入内容" @bind-Value="@context.Content" AutoSize="true" style="min-height:300px" />
+                    <UEditor.Editor @ref="ueditor" Placeholder="请输入内容" @bind-Value="@context.Content" @bind-Html="@context.Content" Height="500px" Width="700px" />
                 </FormItem>
             </TabPane>
 
@@ -135,6 +132,8 @@
 </Modal>
 
 @code{
+
+    Editor ueditor;
 
     Dictionary<string, string> headers = new Dictionary<string, string>();
 
@@ -195,6 +194,7 @@
 
     override protected void OnInitialized()
     {
+
         GetSelectCategoryList();
 
         var authorization = LocalStorage.GetItem<string>("Authorization");

@@ -64,7 +64,7 @@
 <Modal Title="添加文章" Style="width:50%;" Visible="@isShowCreateArticle" OnCancel="()=>isShowCreateArticle=false" Footer="@footer">
     <Form Model="@createArticle" LabelColSpan="2" WrapperColSpan="22">
 
-        <Tabs Type="@TabType.Card" Style="height:550px">
+        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick="InitUeditor" >
 
             <TabPane Key="1" Tab="基本信息">
                 <FormItem Label="所属栏目">
@@ -116,13 +116,14 @@
 
             </TabPane>
 
-            <TabPane Key="2" Tab="详细内容">
+            <TabPane Key="2" Tab="详细内容" ForceRender="true">
                 <FormItem Label="摘要">
                     <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
                 </FormItem>
 
                 <FormItem Label="内容">
-                    <UEditor.Editor @ref="ueditor" Placeholder="请输入内容" @bind-Value="@context.Content" @bind-Html="@context.Content" Height="500px" Width="700px" />
+
+                    <textarea id="Content" @bind="@context.Abstract"></textarea>
                 </FormItem>
             </TabPane>
 
@@ -133,7 +134,6 @@
 
 @code{
 
-    Editor ueditor;
 
     Dictionary<string, string> headers = new Dictionary<string, string>();
 
@@ -194,12 +194,19 @@
 
     override protected void OnInitialized()
     {
-
         GetSelectCategoryList();
 
         var authorization = LocalStorage.GetItem<string>("Authorization");
 
         headers.Add("Authorization", "Bearer " + authorization);
+
+    }
+
+
+
+    private async Task InitUeditor()
+    {
+        await JS.InvokeVoidAsync("InitUeditor","Content");
     }
 
     override protected void OnParametersSet()
@@ -253,14 +260,18 @@
 
     bool isShowCreateArticle = false;
     dtoCreateArticle createArticle = new();
-    void showCreateArticle()
+    async void showCreateArticle()
     {
         createArticle = new dtoCreateArticle();
 
         isShowCreateArticle = true;
 
         GetSelectCategoryList();
+
     }
+
+
+
     async void CreateArticleSave()
     {
         _loading = true;

@@ -379,6 +379,7 @@ namespace AdminApi
             //强制重定向到Https
             app.UseHttpsRedirection();
 
+            app.UseStaticFiles();
 
             app.UseRouting();
 

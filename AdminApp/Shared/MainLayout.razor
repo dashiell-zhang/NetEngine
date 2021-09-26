@@ -5,36 +5,40 @@
 <Layout>
     <Header Class="header" style="display:flex;margin-left:-30px">
 
-        <div class="logo"><img src="/img/logo.png" style="width:180px;height:31px" /></div>
-        <Menu Theme="MenuTheme.Dark" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new []{"1"})>
-            <MenuItem Key="1" OnClick="()=>changeShow(0)">内容管理</MenuItem>
-            <MenuItem Key="2" OnClick="()=>changeShow(1)">系统设置</MenuItem>
-        </Menu>
+        <div style="width:210px" class="logo"><img src="/img/logo.png" style="width:180px;height:31px" /></div>
+        <div style="width:75%">
+
+            <Menu Theme="MenuTheme.Dark" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new []{"1"})>
+                <MenuItem Key="1" OnClick="()=>changeShow(0)">内容管理</MenuItem>
+                <MenuItem Key="2" OnClick="()=>changeShow(1)">系统设置</MenuItem>
+            </Menu>
+        </div>
 
 
-        <div style="margin-left:70%">
-            <Avatar Src="/img/touxiang.jpg" Size="large" />
-
-            <Dropdown>
-                <Overlay>
-                    <Menu>
-                        <MenuItem OnClick="Logout">
-                            注销登录
-                        </MenuItem>
-                    </Menu>
-                </Overlay>
-                <ChildContent>
-                    <a class="ant-dropdown-link" @onclick:preventDefault style="color: rgba(255,255,255,.7)">
-                        您好，@user.NickName  <Icon Type="down" Style="margin-left: 5px;font-size:1.1em;" />
-                    </a>
-                </ChildContent>
-            </Dropdown>
+        <div style="width:13.5%">
+            <div style="float: right;">
+                <Avatar Src="/img/touxiang.jpg" Size="large" />
+                <Dropdown>
+                    <Overlay>
+                        <Menu>
+                            <MenuItem OnClick="Logout">
+                                注销登录
+                            </MenuItem>
+                        </Menu>
+                    </Overlay>
+                    <ChildContent>
+                        <a class="ant-dropdown-link" @onclick:preventDefault style="color: rgba(255,255,255,.7)">
+                            您好，@user.NickName  <Icon Type="down" Style="margin-left: 5px;font-size:1.1em;" />
+                        </a>
+                    </ChildContent>
+                </Dropdown>
+            </div>
         </div>
 
 
     </Header>
     <Layout>
-        <Sider Width="200" Class="site-layout-background">
+        <Sider Width="200" Class="rule-action">
 
             @switch (showIndex)
             {
@@ -87,14 +91,18 @@
         float: left;
     }
 
-    .site-layout-background {
-        background: #fff;
+    .ant-layout-header {
+        height: 64px;
+        padding: 0 20px;
+        color: rgba(0,0,0,.85);
+        line-height: 64px;
+        background: #001529;
     }
 </style>
 
 @code{
 
-    private dtoUser user = new();
+    public static dtoUser user = new();
 
     int showIndex = 0;
 

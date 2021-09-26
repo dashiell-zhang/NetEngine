@@ -3,6 +3,7 @@
 @using AntDesign.TableModels
 @using Models.User
 
+
 <Layout Style=" padding: 0 24px 24px;">
     <Breadcrumb Style="margin: 16px 0;">
         <BreadcrumbItem>返回上一页</BreadcrumbItem>
@@ -10,7 +11,7 @@
         <BreadcrumbItem>用户管理</BreadcrumbItem>
         <BreadcrumbItem>所有用户</BreadcrumbItem>
     </Breadcrumb>
-    <Content Class="site-layout-background" Style=" padding: 24px; margin: 0; min-height: 280px;">
+    <Content Class="site-layout-background" >
 
         <div style="margin-bottom:10px">
             <Button Icon="plus" Type="@ButtonType.Primary" @onclick="showCreateUser">添加</Button>

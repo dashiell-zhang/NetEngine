@@ -10,7 +10,7 @@
         <BreadcrumbItem>文章管理</BreadcrumbItem>
         <BreadcrumbItem>所有文章</BreadcrumbItem>
     </Breadcrumb>
-    <Content Class="site-layout-background" Style=" padding: 24px; margin: 0; min-height: 280px;">
+    <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
             <Button Icon="plus" Type="@ButtonType.Primary" OnClick="showCreateArticle">添加</Button>
@@ -64,7 +64,7 @@
 <Modal Title="添加文章" Style="width:50%;" Visible="@isShowCreateArticle" OnCancel="()=>isShowCreateArticle=false" Footer="@footer">
     <Form Model="@createArticle" LabelColSpan="2" WrapperColSpan="22">
 
-        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick="InitUeditor" >
+        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick="InitUeditor">
 
             <TabPane Key="1" Tab="基本信息">
                 <FormItem Label="所属栏目">
@@ -122,8 +122,7 @@
                 </FormItem>
 
                 <FormItem Label="内容">
-
-                    <textarea id="Content" @bind="@context.Abstract"></textarea>
+                    <textarea id="Content" name="Content" @bind="@context.Content"></textarea>
                 </FormItem>
             </TabPane>
 
@@ -200,13 +199,15 @@
 
         headers.Add("Authorization", "Bearer " + authorization);
 
+
+
     }
 
 
 
     private async Task InitUeditor()
     {
-        await JS.InvokeVoidAsync("InitUeditor","Content");
+        await JS.InvokeVoidAsync("InitUeditor", "Content");
     }
 
     override protected void OnParametersSet()
@@ -260,14 +261,13 @@
 
     bool isShowCreateArticle = false;
     dtoCreateArticle createArticle = new();
-    async void showCreateArticle()
+    void showCreateArticle()
     {
         createArticle = new dtoCreateArticle();
 
         isShowCreateArticle = true;
 
         GetSelectCategoryList();
-
     }
 
 
@@ -275,6 +275,8 @@
     async void CreateArticleSave()
     {
         _loading = true;
+
+        Console.WriteLine(createArticle.Content);
 
         using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateArticle>("Article/CreateArticle", createArticle))
         {

@@ -16,28 +16,44 @@
     <script src="js/ueditor/ueditor.all.js"></script>
 
     <script>
-
         function InitUeditor(inputName) {
-            //if (document.getElementById(inputName).nodeName == "TEXTAREA") {
-            //    var UEditor = new baidu.editor.ui.Editor({
-            //        autoFloatEnabled: true,
-            //        pasteplain: false,
-            //        autoHeightEnabled: false,
-            //        initialFrameHeight: 250
-            //    });
+            if (document.getElementById(inputName).nodeName == "TEXTAREA") {
+                var UEditor = new baidu.editor.ui.Editor({
+                    autoFloatEnabled: true,
+                    pasteplain: false,
+                    autoHeightEnabled: false,
+                    initialFrameHeight: 250
+                });
 
-            //    UEditor.render(inputName);
-            //}
+                UEditor.render(inputName);
+
+                UE.getEditor(inputName).addListener('contentChange', function (editor) {
+                    document.getElementsByName(inputName)[0].value = UE.getEditor(inputName).getContent();
+                    document.getElementsByName(inputName)[0].dispatchEvent(new Event('change'));
+                });
+            }
         }
-
     </script>
 
+
+    <style>
+        .site-layout-background {
+            padding: 24px;
+            margin: 0;
+            min-height: 580px !important;
+            background-color: #FFF;
+        }
+
+        .rule-action {
+            margin: 0;
+            min-height: 580px !important;
+            background-color: #FFF;
+        }
+    </style>
 </head>
 
 <body>
     <div id="app"></div>
-
-
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

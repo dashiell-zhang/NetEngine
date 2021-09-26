@@ -368,3 +368,4 @@ FodyWeavers.xsd
 /Repository/Repository.xml
 /AdminApi/AdminApi.xml
 /AdminApi/Files
+/AdminApi/wwwroot/Upload

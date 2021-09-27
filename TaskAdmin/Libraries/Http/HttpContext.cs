@@ -49,14 +49,13 @@ namespace TaskAdmin.Libraries.Http
         /// </summary>
         public static string GetRequestBody()
         {
-
             Current().Request.Body.Position = 0;
 
-            var requestReader = new StreamReader(Current().Request.Body);
-
-
-            var requestContent = requestReader.ReadToEnd();
-            return requestContent;
+            using (var requestReader = new StreamReader(Current().Request.Body))
+            {
+                var requestContent = requestReader.ReadToEnd();
+                return requestContent;
+            }
         }
 
 

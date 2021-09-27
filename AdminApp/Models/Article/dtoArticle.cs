@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace AdminApp.Models.Article
 {
@@ -77,6 +78,13 @@ namespace AdminApp.Models.Article
         /// 创建时间
         /// </summary>
         public DateTime CreateTime { get; set; }
+
+
+
+        /// <summary>
+        /// 封面图
+        /// </summary>
+        public List<dtoKeyValue> CoverImageList { get; set; }
 
 
     }

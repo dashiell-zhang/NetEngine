@@ -27,7 +27,7 @@
                 <ActionColumn Title="操作">
                     <Space>
                         <SpaceItem>
-                            <a>编辑</a>
+                            <a @onclick="()=>UpdateArticle(context)">编辑</a>
                         </SpaceItem>
                         <SpaceItem>
                             <Popconfirm Title="确认要删除吗？"
@@ -55,16 +55,23 @@
 
 
 @{
-    RenderFragment footer = @<Template>
+    RenderFragment createFooter = @<Template>
         <Button OnClick="CreateArticleSave" Type="@ButtonType.Primary" Loading="@_loading">保存</Button>
         <Button OnClick="()=>isShowCreateArticle=false" @key="@("back")">取消</Button>
     </Template>;
 }
 
-<Modal Title="添加文章" Style="width:50%;" Visible="@isShowCreateArticle" OnCancel="()=>isShowCreateArticle=false" Footer="@footer">
+@{
+    RenderFragment updateFooter = @<Template>
+        <Button OnClick="UpdateArticleSave" Type="@ButtonType.Primary" Loading="@_loading">保存</Button>
+        <Button OnClick="()=>isShowUpdateArticle=false" @key="@("back")">取消</Button>
+    </Template>;
+}
+
+<Modal Title="添加文章" Style="width:50%;" Visible="@isShowCreateArticle" OnCancel="()=>isShowCreateArticle=false" Footer="@createFooter">
     <Form Model="@createArticle" LabelColSpan="2" WrapperColSpan="22">
 
-        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick="InitUeditor">
+        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick=@(()=>InitUeditor("CreateContent"))>
 
             <TabPane Key="1" Tab="基本信息">
                 <FormItem Label="所属栏目">
@@ -122,7 +129,78 @@
                 </FormItem>
 
                 <FormItem Label="内容">
-                    <textarea id="Content" name="Content" @bind="@context.Content"></textarea>
+                    <textarea id="CreateContent" name="CreateContent" @bind="@context.Content"></textarea>
+                </FormItem>
+            </TabPane>
+
+        </Tabs>
+
+    </Form>
+</Modal>
+
+
+<Modal Title="编辑文章" Style="width:50%;" Visible="@isShowUpdateArticle" OnCancel="()=>isShowUpdateArticle=false" Footer="@updateFooter">
+    <Form Model="@updateArticle" LabelColSpan="2" WrapperColSpan="22">
+
+        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick=@(()=>InitUeditor("UpdateContent"))>
+
+            <TabPane Key="1" Tab="基本信息">
+                <FormItem Label="所属栏目">
+                    <Select DataSource="@selectCategoryList" DefaultValue="@(Guid.Empty)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.CategoryId" style="width: 190px"></Select>
+                </FormItem>
+
+                <FormItem Label="标题">
+                    <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
+                </FormItem>
+
+                <FormItem Label="是否显示">
+                    <Switch @bind-Value="@context.IsDisplay" CheckedChildren="是" UnCheckedChildren="否" />
+                </FormItem>
+
+                <FormItem Label="是否推荐">
+                    <Switch @bind-Value="@context.IsRecommend" CheckedChildren="是" UnCheckedChildren="否" />
+                </FormItem>
+
+                <FormItem Label="排序">
+                    <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" style="width: 190px" />
+                </FormItem>
+
+                <FormItem Label="点击量">
+                    <Input Placeholder="请输入点击量" @bind-Value="@context.ClickCount" style="width: 190px" />
+                </FormItem>
+
+                <FormItem Label="封面图">
+                    <Upload Action=@("https://localhost:9833/api/File/UploadFile?business=TArticle&key="+context.Id+"&sign=cover")
+                            Name="file"
+                            Headers=headers
+                            @bind-FileList="fileList"
+                            ShowButton="fileList?.Count < 3"
+                            ListType="picture-card"
+                            OnPreview="(file)=> previewImg(file)"
+                            OnRemove=" (file)=> removeImg(file)"
+                            OnChange="UploadOnChange">
+                        <div>
+                            <Icon Type="plus"></Icon>
+                            <div className="ant-upload-text">上传</div>
+                        </div>
+
+                    </Upload>
+                    <Modal Visible="previewVisible"
+                           Title="预览"
+                           OnCancel="()=> previewVisible=false">
+                        <img style="width: 100%" src="@imgUrl" />
+                    </Modal>
+                </FormItem>
+
+            </TabPane>
+
+            <TabPane Key="2" Tab="详细内容" ForceRender="true">
+                <FormItem Label="摘要">
+                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
+                </FormItem>
+
+                <FormItem Label="内容">
+                    <textarea id="UpdateContent" name="UpdateContent" @bind="@context.Content"></textarea>
                 </FormItem>
             </TabPane>
 
@@ -149,24 +227,23 @@
         imgUrl = file.Url;
     }
 
-    Task<bool> removeImg(UploadFileItem file)
+   async Task<bool> removeImg(UploadFileItem file)
     {
         Console.WriteLine(JsonHelper.ObjectToJSON(file));
-        Task<bool> task = new Task<bool>(() => { return true; });
 
-        return task;
+        using (var httpResponse = await Http.DeleteAsJsonAsync("File/DeleteFile", new { Id = file.Id }))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                fileList.Remove(file);
+            }
+        }
+        return true;
     }
 
-    List<UploadFileItem> fileList = new List<UploadFileItem>
-{
-        new UploadFileItem
-        {
-            Id = "1",
-            FileName = "image.png",
-            State = UploadState.Success,
-            Url = "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
-        }
-    };
+    List<UploadFileItem> fileList = new();
 
     void UploadOnChange(UploadInfo fileinfo)
     {
@@ -179,7 +256,6 @@
             fileinfo.File.Url = fileinfo.File.ObjectURL;
         }
     }
-
 
 
 
@@ -198,16 +274,13 @@
         var authorization = LocalStorage.GetItem<string>("Authorization");
 
         headers.Add("Authorization", "Bearer " + authorization);
-
-
-
     }
 
 
 
-    private async Task InitUeditor()
+    private async Task InitUeditor(string inputName)
     {
-        await JS.InvokeVoidAsync("InitUeditor", "Content");
+        await JS.InvokeVoidAsync("InitUeditor", inputName);
     }
 
     override protected void OnParametersSet()
@@ -264,6 +337,7 @@
     void showCreateArticle()
     {
         createArticle = new dtoCreateArticle();
+        fileList = new();
 
         isShowCreateArticle = true;
 
@@ -294,50 +368,51 @@
     }
 
 
-    //bool isShowUpdateArticle = false;
-    //dtoUpdateArticle updateArticle = new();
-    //void UpdateArticle(dtoArticle category)
-    //{
-    //    updateArticle.Id = category.Id;
-    //    updateArticle.Name = category.Name;
-    //    updateArticle.Remarks = category.Remarks;
-    //    updateArticle.Sort = category.Sort;
+    bool isShowUpdateArticle = false;
+    dtoUpdateArticle updateArticle = new();
+    void UpdateArticle(dtoArticle article)
+    {
 
-    //    if (category.ParentId == null)
-    //    {
-    //        updateArticle.ParentId = Guid.Empty;
-    //    }
-    //    else
-    //    {
-    //        updateArticle.ParentId = category.ParentId;
-    //    }
+        updateArticle = new dtoUpdateArticle();
 
-    //    GetSelectCategoryList();
+        updateArticle.Id = article.Id;
+        updateArticle.CategoryId = article.CategoryId;
+        updateArticle.Title = article.Title;
+        updateArticle.Sort = article.Sort;
+        updateArticle.Abstract = article.Abstract;
+        updateArticle.Content = article.Content;
+        updateArticle.IsDisplay = article.IsDisplay;
+        updateArticle.IsRecommend = article.IsRecommend;
 
-    //    isShowUpdateArticle = true;
+        fileList = article.CoverImageList.Select(t => new UploadFileItem
+        {
+            Id = t.Key.ToString(),
+            FileName = "123.jpg",
+            Url = "https://localhost:9833/" + t.Value.ToString(),
+            State = UploadState.Success
+        }).ToList();
 
-    //    StateHasChanged();
-    //}
-    //async void UpdateArticleSave(EditContext editContext)
-    //{
+        GetSelectCategoryList();
 
-    //    if (updateArticle.ParentId == Guid.Empty)
-    //    {
-    //        updateArticle.ParentId = null;
-    //    }
+        isShowUpdateArticle = true;
 
-    //    using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateArticle>("Article/UpdateArticle", updateArticle))
-    //    {
-    //        var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
+        StateHasChanged();
+    }
+    async void UpdateArticleSave()
+    {
 
-    //        Console.WriteLine(updateArticleRet);
+        using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateArticle>("Article/UpdateArticle", updateArticle))
+        {
+            var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
 
-    //        GetArticleList();
-    //        Message.Success("编辑成功");
+            Console.WriteLine(updateArticleRet);
 
-    //        isShowUpdateArticle = false;
-    //    }
-    //}
+            GetArticleList();
+            Message.Success("编辑成功");
+
+            isShowUpdateArticle = false;
+        }
+    }
 
 
     async void DeleteArticle(Guid userId)

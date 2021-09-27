@@ -23278,7 +23278,7 @@
                     isJsonp = utils.isCrossDomainUrl(url),
                     opt = {
                         'method': 'POST',
-                        'dataType': isJsonp ? 'jsonp' : '',
+                        'dataType': '',
                         'timeout': 60000, //单位：毫秒，回调请求超时设置。目标用户如果网速不是很快的话此处建议设置一个较大的数值
                         'onsuccess': callbacks["success"],
                         'onerror': callbacks["error"]
@@ -23831,6 +23831,8 @@
             fd.append('type', 'ajax');
             xhr.open("post", url, true);
             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('Authorization').replaceAll('"', ''));
+
             xhr.addEventListener('load', function (e) {
                 try {
                     var json = (new Function("return " + utils.trim(e.target.response)))();

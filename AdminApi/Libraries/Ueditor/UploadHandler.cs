@@ -56,13 +56,13 @@ namespace AdminApi.Libraries.Ueditor
                     {
                         //将文件转存至 oss 并清理本地文件
                         var oss = new Common.AliYun.OssHelper();
-                        var upload = oss.FileUpload(localPath, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), Path.GetFileName(localPath));
+                        var upload = oss.FileUpload(localPath, "Upload/" + DateTime.Now.ToString("yyyy/MM/dd"), Path.GetFileName(localPath));
 
                         if (upload)
                         {
                             Common.IO.IOHelper.DeleteFile(localPath);
 
-                            Result.Url = "Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
+                            Result.Url = "Upload/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
                             Result.State = UploadState.Success;
                         }
                         else
@@ -137,13 +137,13 @@ namespace AdminApi.Libraries.Ueditor
                         {
                             //将文件转存至 oss 并清理本地文件
                             var oss = new Common.AliYun.OssHelper();
-                            var upload = oss.FileUpload(localPath, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), file.FileName);
+                            var upload = oss.FileUpload(localPath, "Upload/" + DateTime.Now.ToString("yyyy/MM/dd"), file.FileName);
 
                             if (upload)
                             {
                                 Common.IO.IOHelper.DeleteFile(localPath);
 
-                                Result.Url = "Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
+                                Result.Url = "Upload/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
                                 Result.State = UploadState.Success;
                             }
                             else

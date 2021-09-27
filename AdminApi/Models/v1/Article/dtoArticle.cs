@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Models.Dtos;
+using System;
+using System.Collections.Generic;
 
 namespace AdminApi.Models.v1.Article
 {
@@ -77,6 +79,14 @@ namespace AdminApi.Models.v1.Article
         /// 创建时间
         /// </summary>
         public DateTime CreateTime { get; set; }
+
+
+
+
+        /// <summary>
+        /// 封面图
+        /// </summary>
+        public List<dtoKeyValue> CoverImageList { get; set; }
 
 
     }

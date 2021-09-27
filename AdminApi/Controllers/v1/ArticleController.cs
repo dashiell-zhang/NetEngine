@@ -361,7 +361,12 @@ namespace AdminApi.Controllers.v1
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 Abstract = t.Abstract,
-                CreateTime = t.CreateTime
+                CreateTime = t.CreateTime,
+                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new dtoKeyValue
+                {
+                    Key = f.Id,
+                    Value = f.Path
+                }).ToList()
             }).Skip(skip).Take(pageSize).ToList();
 
             return data;
@@ -391,7 +396,12 @@ namespace AdminApi.Controllers.v1
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 Abstract = t.Abstract,
-                CreateTime = t.CreateTime
+                CreateTime = t.CreateTime,
+                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new dtoKeyValue
+                {
+                    Key = f.Id,
+                    Value = f.Path
+                }).ToList()
             }).FirstOrDefault();
 
             return article;

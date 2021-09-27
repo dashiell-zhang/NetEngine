@@ -15,18 +15,14 @@ namespace AdminApi.Controllers.v1
     {
 
 
-
         [DisableRequestSizeLimit]
         [HttpGet("ProcessRequest")]
         [HttpPost("ProcessRequest")]
         public string ProcessRequest([FromServices] IWebHostEnvironment environment)
         {
-
             var context = HttpContext;
 
             Handler action = null;
-
-            var x = AppContext.BaseDirectory;
 
             switch (Request.Query["action"].Count != 0 ? Request.Query["action"].ToString() : "")
             {
@@ -71,12 +67,6 @@ namespace AdminApi.Controllers.v1
                         UploadFieldName = Config.GetString("fileFieldName")
                     });
                     break;
-                case "listimage":
-                    action = new ListFileManager(context, Config.GetString("imageManagerListPath"), Config.GetStringList("imageManagerAllowFiles"));
-                    break;
-                case "listfile":
-                    action = new ListFileManager(context, Config.GetString("fileManagerListPath"), Config.GetStringList("fileManagerAllowFiles"));
-                    break;
                 case "catchimage":
                     action = new CrawlerHandler(context);
                     break;
@@ -87,12 +77,6 @@ namespace AdminApi.Controllers.v1
             return action.Process();
         }
 
-        public bool IsReusable
-        {
-            get
-            {
-                return false;
-            }
-        }
+      
     }
 }

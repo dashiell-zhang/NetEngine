@@ -14,7 +14,7 @@ namespace AdminApi.Libraries.Ueditor
         private static bool noCache = true;
         private static JObject BuildItems()
         {
-            var path = IO.Path.WebRootPath() + "/ueditor/net/config.json";
+            var path = IO.Path.WebRootPath() + "/ueditor/config.json";
             var json = File.ReadAllText(path);
             return JObject.Parse(json);
         }

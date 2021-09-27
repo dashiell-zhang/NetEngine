@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AdminApi.Libraries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -12,7 +13,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using AdminApi.Libraries;
 
 namespace AdminApi.Controllers.v1
 {
@@ -45,9 +45,9 @@ namespace AdminApi.Controllers.v1
             var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
 
-            string basepath = "Files/" + DateTime.Now.ToString("yyyy/MM/dd");
+            string basepath = "/Upload/" + DateTime.Now.ToString("yyyy/MM/dd");
 
-            var filePath = Libraries.IO.Path.ContentRootPath() + "/" + basepath + "/";
+            var filePath = Libraries.IO.Path.WebRootPath() + basepath + "/";
 
             //下载文件
             var dlPath = Common.IO.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
@@ -124,8 +124,8 @@ namespace AdminApi.Controllers.v1
         public Guid UploadFile([FromQuery][Required] string business, [FromQuery][Required] Guid key, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
-            string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd");
-            string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
+            string basepath = "/Upload/" + DateTime.Now.ToString("yyyy/MM/dd");
+            string filepath = Libraries.IO.Path.WebRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
 
@@ -154,13 +154,13 @@ namespace AdminApi.Controllers.v1
 
                     var oss = new Common.AliYun.OssHelper();
 
-                    var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), file.FileName);
+                    var upload = oss.FileUpload(path, "Upload/" + DateTime.Now.ToString("yyyy/MM/dd"), file.FileName);
 
                     if (upload)
                     {
                         Common.IO.IOHelper.DeleteFile(path);
 
-                        path = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fullFileName;
+                        path = "/Upload/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
                     }
                 }
@@ -248,7 +248,7 @@ namespace AdminApi.Controllers.v1
         {
 
             var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
-            string path = Libraries.IO.Path.ContentRootPath() + file.Path;
+            string path = Libraries.IO.Path.WebRootPath() + file.Path;
 
 
             //读取文件入流
@@ -284,7 +284,7 @@ namespace AdminApi.Controllers.v1
         {
 
             var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
-            var path = Libraries.IO.Path.ContentRootPath() + file.Path;
+            var path = Libraries.IO.Path.WebRootPath() + file.Path;
 
             var stream = System.IO.File.OpenRead(path);
 
@@ -420,166 +420,6 @@ namespace AdminApi.Controllers.v1
 
         }
 
-
-
-        /// <summary>
-        /// 多文件切片上传，获取初始化文件ID
-        /// </summary>
-        /// <param name="business">业务领域</param>
-        /// <param name="key">记录值</param>
-        /// <param name="sign">自定义标记</param>
-        /// <param name="fileName">文件名称</param>
-        /// <param name="slicing">总切片数</param>
-        /// <param name="unique">文件校验值</param>
-        /// <returns></returns>
-        [HttpGet("CreateGroupFileId")]
-        public Guid CreateGroupFileId([Required] string business, [Required] Guid key, [Required] string sign, [Required] string fileName, [Required] int slicing, [Required] string unique)
-        {
-
-            var dbfileinfo = db.TFileGroup.AsNoTracking().Where(t => t.IsDelete == false & t.Unique.ToLower() == unique.ToLower()).FirstOrDefault();
-
-            if (dbfileinfo == null)
-            {
-
-                var fileid = Guid.NewGuid().ToString() + Path.GetExtension(fileName).ToLowerInvariant(); ;
-
-                string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fileid;
-
-
-                var f = new TFile();
-                f.Id = Guid.NewGuid();
-                f.Name = fileName;
-                f.Path = basepath;
-                f.Table = business;
-                f.TableId = key;
-                f.Sign = sign;
-                f.CreateTime = DateTime.Now;
-
-                db.TFile.Add(f);
-                db.SaveChanges();
-
-                var group = new TFileGroup();
-                group.Id = Guid.NewGuid();
-                group.FileId = f.Id;
-                group.Unique = unique;
-                group.Slicing = slicing;
-                group.Issynthesis = false;
-                group.Isfull = false;
-                db.TFileGroup.Add(group);
-                db.SaveChanges();
-
-                return f.Id;
-            }
-            else
-            {
-                return dbfileinfo.FileId;
-            }
-        }
-
-
-
-        /// <summary>
-        /// 文件切片上传接口
-        /// </summary>
-        /// <param name="fileId">文件组ID</param>
-        /// <param name="index">切片索引</param>
-        /// <param name="file">file</param>
-        /// <returns>文件ID</returns>
-        [HttpPost("UploadGroupFile")]
-        public bool UploadGroupFile([Required][FromForm] Guid fileId, [Required][FromForm] int index, [Required] IFormFile file)
-        {
-
-            try
-            {
-                var url = string.Empty;
-                var fileName = string.Empty;
-                var fileExtension = string.Empty;
-                var fullFileName = string.Empty;
-
-                string basepath = "/Files/Group/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fileId;
-                string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
-
-                Directory.CreateDirectory(filepath);
-
-                fileName = Guid.NewGuid().ToString();
-                fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                fullFileName = string.Format("{0}{1}", fileName, fileExtension);
-
-                string path = "";
-
-                if (file != null && file.Length > 0)
-                {
-                    path = filepath + "/" + fullFileName;
-
-                    using (FileStream fs = System.IO.File.Create(path))
-                    {
-                        file.CopyTo(fs);
-                        fs.Flush();
-                    }
-
-                    path = basepath + "/" + fullFileName;
-                }
-
-
-                var group = db.TFileGroup.AsNoTracking().Where(t => t.IsDelete == false & t.FileId == fileId).FirstOrDefault();
-
-                var groupfile = new TFileGroupFile();
-                groupfile.Id = Guid.NewGuid();
-                groupfile.FileId = group.FileId;
-                groupfile.Path = path;
-                groupfile.Index = index;
-                groupfile.CreateTime = DateTime.Now;
-
-                db.TFileGroupFile.Add(groupfile);
-
-                if (index == group.Slicing)
-                {
-                    group.Isfull = true;
-                }
-
-                db.SaveChanges();
-
-                if (group.Isfull == true)
-                {
-
-                    byte[] buffer = new byte[1024 * 100];
-
-                    var fileinfo = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
-
-                    var fullfilepath = Libraries.IO.Path.ContentRootPath() + fileinfo.Path;
-
-                    using (FileStream outStream = new FileStream(fullfilepath, FileMode.Create))
-                    {
-                        int readedLen = 0;
-                        FileStream srcStream = null;
-
-                        var filelist = db.TFileGroupFile.Where(t => t.FileId == fileinfo.Id).OrderBy(t => t.Index).ToList();
-
-                        foreach (var item in filelist)
-                        {
-                            string p = Libraries.IO.Path.ContentRootPath() + item.Path;
-                            srcStream = new FileStream(p, FileMode.Open);
-                            while ((readedLen = srcStream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                outStream.Write(buffer, 0, readedLen);
-                            }
-                            srcStream.Close();
-                        }
-                    }
-
-                    group.Issynthesis = true;
-
-                    db.SaveChanges();
-
-                }
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
 
 
 

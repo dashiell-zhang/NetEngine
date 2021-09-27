@@ -7,7 +7,7 @@ using System;
 
 namespace AdminApi.Controllers.v1
 {
-    //[Authorize]
+    [Authorize]
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]

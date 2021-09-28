@@ -12,6 +12,9 @@ namespace TaskAdmin.Libraries.Http
         public static Microsoft.AspNetCore.Http.HttpContext Current()
         {
             var httpContextAccessor = Program.ServiceProvider.GetService<IHttpContextAccessor>();
+
+            httpContextAccessor.HttpContext.Request.Body.Position = 0;
+
             return httpContextAccessor.HttpContext;
         }
 
@@ -49,12 +52,15 @@ namespace TaskAdmin.Libraries.Http
         /// </summary>
         public static string GetRequestBody()
         {
-            Current().Request.Body.Position = 0;
-
-            using (var requestReader = new StreamReader(Current().Request.Body))
+            using (Stream requestBody = new MemoryStream())
             {
-                var requestContent = requestReader.ReadToEnd();
-                return requestContent;
+                Current().Request.Body.CopyTo(requestBody);
+                Current().Request.Body.Position = 0;
+                requestBody.Position = 0;
+                using (var requestReader = new StreamReader(requestBody))
+                {
+                    return requestReader.ReadToEnd();
+                }
             }
         }
 

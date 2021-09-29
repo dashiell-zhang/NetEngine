@@ -1,6 +1,8 @@
-﻿namespace AdminApi.Models.v1.Article
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AdminApp.Models.Article
 {
-    public class dtoCreateChannel
+    public class dtoEditChannel
     {
 
 
@@ -8,6 +10,7 @@
         /// <summary>
         /// 名称
         /// </summary>
+        [Required(ErrorMessage = "名称不可以空")]
         public string Name { get; set; }
 
 

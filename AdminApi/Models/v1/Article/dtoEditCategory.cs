@@ -1,28 +1,26 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 
-namespace AdminApp.Models.Article
+namespace AdminApi.Models.v1.Article
 {
 
     /// <summary>
-    /// 更新栏目
+    /// 创建栏目
     /// </summary>
-    public class dtoUpdateCategory
+    public class dtoEditCategory
     {
-
-
-        /// <summary>
-        /// 标识ID
-        /// </summary>
-        public Guid Id { get; set; }
-
 
 
         /// <summary>
         /// 名称
         /// </summary>
-        [Required(ErrorMessage = "名称不可以空")]
         public string Name { get; set; }
+
+
+
+        /// <summary>
+        /// 频道ID
+        /// </summary>
+        public Guid ChannelId { get; set; }
 
 
 

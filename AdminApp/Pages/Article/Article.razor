@@ -1,6 +1,4 @@
 ﻿@page "/article/{channelId}"
-@using System.ComponentModel
-@using AntDesign.TableModels
 @using Models.Article
 
 <Layout Style=" padding: 0 24px 24px;">
@@ -13,9 +11,9 @@
     <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
-            <Button Icon="plus" Type="@ButtonType.Primary" OnClick="showCreateArticle">添加</Button>
+            <Button Icon="plus" Type="@ButtonType.Primary" OnClick="()=>EditArticle()">添加</Button>
         </div>
-        <Table TItem="dtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="isTableLoading" RemoteDataSource>
+        <Table TItem="dtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <RowTemplate>
                 <Column @bind-Field="@context.Title" Title="标题"></Column>
@@ -27,7 +25,7 @@
                 <ActionColumn Title="操作">
                     <Space>
                         <SpaceItem>
-                            <a @onclick="()=>UpdateArticle(context)">编辑</a>
+                            <a @onclick="()=>EditArticle(context)">编辑</a>
                         </SpaceItem>
                         <SpaceItem>
                             <Popconfirm Title="确认要删除吗？"
@@ -55,23 +53,17 @@
 
 
 @{
-    RenderFragment createFooter = @<Template>
-        <Button OnClick="CreateArticleSave" Type="@ButtonType.Primary" Loading="@_loading">保存</Button>
-        <Button OnClick="()=>isShowCreateArticle=false" @key="@("back")">取消</Button>
+    RenderFragment editFooter = @<Template>
+        <Button OnClick="SaveArticle" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
+        <Button OnClick="()=>isShowEditArticle=false" @key="@("back")">取消</Button>
     </Template>;
 }
 
-@{
-    RenderFragment updateFooter = @<Template>
-        <Button OnClick="UpdateArticleSave" Type="@ButtonType.Primary" Loading="@_loading">保存</Button>
-        <Button OnClick="()=>isShowUpdateArticle=false" @key="@("back")">取消</Button>
-    </Template>;
-}
 
-<Modal Title="添加文章" Style="width:50%;" Visible="@isShowCreateArticle" OnCancel="()=>isShowCreateArticle=false" Footer="@createFooter">
-    <Form Model="@createArticle" LabelColSpan="2" WrapperColSpan="22">
+<Modal Title="文章信息" Style="width:50%;" Visible="@isShowEditArticle" OnCancel="()=>isShowEditArticle=false" Footer="@editFooter">
+    <Form Model="@editArticle" LabelColSpan="2" WrapperColSpan="22">
 
-        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick=@(()=>InitUeditor("CreateContent"))>
+        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick=@(()=>InitUeditor("Content"))>
 
             <TabPane Key="1" Tab="基本信息">
                 <FormItem Label="所属栏目">
@@ -99,7 +91,7 @@
                 </FormItem>
 
                 <FormItem Label="封面图">
-                    <Upload Action="https://localhost:9833/api/File/UploadFile?business=1&key=f03dae69-226b-4c2a-a027-8bc58e57b2ff&sign=3"
+                    <Upload Action="https://localhost:9833/api/File/UploadFile?business=TArticle&key=f03dae69-226b-4c2a-a027-8bc58e57b2ff&sign=cover"
                             Name="file"
                             Headers=headers
                             @bind-FileList="fileList"
@@ -129,7 +121,7 @@
                 </FormItem>
 
                 <FormItem Label="内容">
-                    <textarea id="CreateContent" name="CreateContent" @bind="@context.Content"></textarea>
+                    <textarea id="Content" name="Content" @bind="@context.Content"></textarea>
                 </FormItem>
             </TabPane>
 
@@ -138,86 +130,17 @@
     </Form>
 </Modal>
 
-
-<Modal Title="编辑文章" Style="width:50%;" Visible="@isShowUpdateArticle" OnCancel="()=>isShowUpdateArticle=false" Footer="@updateFooter">
-    <Form Model="@updateArticle" LabelColSpan="2" WrapperColSpan="22">
-
-        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick=@(()=>InitUeditor("UpdateContent"))>
-
-            <TabPane Key="1" Tab="基本信息">
-                <FormItem Label="所属栏目">
-                    <Select DataSource="@selectCategoryList" DefaultValue="@(Guid.Empty)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.CategoryId" style="width: 190px"></Select>
-                </FormItem>
-
-                <FormItem Label="标题">
-                    <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
-                </FormItem>
-
-                <FormItem Label="是否显示">
-                    <Switch @bind-Value="@context.IsDisplay" CheckedChildren="是" UnCheckedChildren="否" />
-                </FormItem>
-
-                <FormItem Label="是否推荐">
-                    <Switch @bind-Value="@context.IsRecommend" CheckedChildren="是" UnCheckedChildren="否" />
-                </FormItem>
-
-                <FormItem Label="排序">
-                    <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" style="width: 190px" />
-                </FormItem>
-
-                <FormItem Label="点击量">
-                    <Input Placeholder="请输入点击量" @bind-Value="@context.ClickCount" style="width: 190px" />
-                </FormItem>
-
-                <FormItem Label="封面图">
-                    <Upload Action=@("https://localhost:9833/api/File/UploadFile?business=TArticle&key="+context.Id+"&sign=cover")
-                            Name="file"
-                            Headers=headers
-                            @bind-FileList="fileList"
-                            ShowButton="fileList?.Count < 3"
-                            ListType="picture-card"
-                            OnPreview="(file)=> previewImg(file)"
-                            OnRemove=" (file)=> removeImg(file)"
-                            OnChange="UploadOnChange">
-                        <div>
-                            <Icon Type="plus"></Icon>
-                            <div className="ant-upload-text">上传</div>
-                        </div>
-
-                    </Upload>
-                    <Modal Visible="previewVisible"
-                           Title="预览"
-                           OnCancel="()=> previewVisible=false">
-                        <img style="width: 100%" src="@imgUrl" />
-                    </Modal>
-                </FormItem>
-
-            </TabPane>
-
-            <TabPane Key="2" Tab="详细内容" ForceRender="true">
-                <FormItem Label="摘要">
-                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
-                </FormItem>
-
-                <FormItem Label="内容">
-                    <textarea id="UpdateContent" name="UpdateContent" @bind="@context.Content"></textarea>
-                </FormItem>
-            </TabPane>
-
-        </Tabs>
-
-    </Form>
-</Modal>
 
 @code{
 
-
-    Dictionary<string, string> headers = new Dictionary<string, string>();
-
+    Dictionary<string, string> headers = new();
 
     bool previewVisible = false;
     string previewTitle = string.Empty;
     string imgUrl = string.Empty;
+
+    bool saveLoading = false;
+
 
 
     void previewImg(UploadFileItem file)
@@ -227,7 +150,7 @@
         imgUrl = file.Url;
     }
 
-   async Task<bool> removeImg(UploadFileItem file)
+    async Task<bool> removeImg(UploadFileItem file)
     {
         Console.WriteLine(JsonHelper.ObjectToJSON(file));
 
@@ -259,7 +182,6 @@
 
 
 
-    bool _loading = false;
 
 
     [Parameter]
@@ -303,16 +225,15 @@
 
 
 
-
-    bool isTableLoading = false;
+    bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
     dtoPageList<dtoArticle> pageList = new();
     async void GetArticleList()
     {
-        isTableLoading = true;
+        tableLoading = true;
         pageList = await Http.GetFromJsonAsync<dtoPageList<dtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
-        isTableLoading = false;
+        tableLoading = false;
         StateHasChanged();
     }
     void PageChange(PaginationEventArgs args)
@@ -332,86 +253,79 @@
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
 
-    bool isShowCreateArticle = false;
-    dtoCreateArticle createArticle = new();
-    void showCreateArticle()
+    bool isShowEditArticle = false;
+    dtoEditArticle editArticle = new();
+    Guid articleId;
+
+
+    void EditArticle(dtoArticle article = null)
     {
-        createArticle = new dtoCreateArticle();
+
+        editArticle = new dtoEditArticle();
         fileList = new();
+        articleId = default;
 
-        isShowCreateArticle = true;
-
-        GetSelectCategoryList();
-    }
-
-
-
-    async void CreateArticleSave()
-    {
-        _loading = true;
-
-        Console.WriteLine(createArticle.Content);
-
-        using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateArticle>("Article/CreateArticle", createArticle))
+        if (article != null)
         {
-            var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
 
-            Console.WriteLine(createArticleId);
+            articleId = article.Id;
+            editArticle.CategoryId = article.CategoryId;
+            editArticle.Title = article.Title;
+            editArticle.Sort = article.Sort;
+            editArticle.Abstract = article.Abstract;
+            editArticle.Content = article.Content;
+            editArticle.IsDisplay = article.IsDisplay;
+            editArticle.IsRecommend = article.IsRecommend;
 
-            GetArticleList();
-            Message.Success("添加成功");
-
-            isShowCreateArticle = false;
+            fileList = article.CoverImageList.Select(t => new UploadFileItem
+            {
+                Id = t.Key.ToString(),
+                FileName = "123.jpg",
+                Url = "https://localhost:9833/" + t.Value.ToString(),
+                State = UploadState.Success
+            }).ToList();
         }
 
-        _loading = false;
-    }
-
-
-    bool isShowUpdateArticle = false;
-    dtoUpdateArticle updateArticle = new();
-    void UpdateArticle(dtoArticle article)
-    {
-
-        updateArticle = new dtoUpdateArticle();
-
-        updateArticle.Id = article.Id;
-        updateArticle.CategoryId = article.CategoryId;
-        updateArticle.Title = article.Title;
-        updateArticle.Sort = article.Sort;
-        updateArticle.Abstract = article.Abstract;
-        updateArticle.Content = article.Content;
-        updateArticle.IsDisplay = article.IsDisplay;
-        updateArticle.IsRecommend = article.IsRecommend;
-
-        fileList = article.CoverImageList.Select(t => new UploadFileItem
-        {
-            Id = t.Key.ToString(),
-            FileName = "123.jpg",
-            Url = "https://localhost:9833/" + t.Value.ToString(),
-            State = UploadState.Success
-        }).ToList();
 
         GetSelectCategoryList();
 
-        isShowUpdateArticle = true;
+        isShowEditArticle = true;
 
         StateHasChanged();
     }
-    async void UpdateArticleSave()
+
+
+    async void SaveArticle()
     {
+        saveLoading = true;
 
-        using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateArticle>("Article/UpdateArticle", updateArticle))
+        if (articleId == default)
         {
-            var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
+            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditArticle>("Article/CreateArticle", editArticle))
+            {
+                var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
 
-            Console.WriteLine(updateArticleRet);
-
-            GetArticleList();
-            Message.Success("编辑成功");
-
-            isShowUpdateArticle = false;
+                Message.Success("添加成功");
+            }
         }
+        else
+        {
+            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle))
+            {
+                var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                if (bool.Parse(updateArticleRet))
+                {
+                    Message.Success("编辑成功");
+                }
+            }
+        }
+
+        saveLoading = false;
+
+        GetArticleList();
+
+        isShowEditArticle = false;
     }
 
 

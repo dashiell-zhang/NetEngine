@@ -84,7 +84,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createLink"></param>
         /// <returns></returns>
         [HttpPost("CreateLink")]
-        public Guid CreateLink(dtoCreateLink createLink)
+        public Guid CreateLink(dtoEditLink createLink)
         {
             var link = new TLink();
             link.Id = Guid.NewGuid();
@@ -108,12 +108,13 @@ namespace AdminApi.Controllers.v1
         /// <summary>
         /// 更新友情链接
         /// </summary>
+        /// <param name="linkId"></param>
         /// <param name="updateLink"></param>
         /// <returns></returns>
         [HttpPost("UpdateLink")]
-        public bool UpdateLink(dtoUpdateLink updateLink)
+        public bool UpdateLink(Guid linkId, dtoEditLink updateLink)
         {
-            var link = db.TLink.Where(t => t.IsDelete == false & t.Id == updateLink.Id).FirstOrDefault();
+            var link = db.TLink.Where(t => t.IsDelete == false & t.Id == linkId).FirstOrDefault();
 
             link.Name = updateLink.Name;
             link.Url = updateLink.Url;

@@ -22,7 +22,7 @@
                 </FormItem>
 
                 <FormItem>
-                    <Button Type="@ButtonType.Primary" HtmlType="submit" Block>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit" Block Loading="@loginLoading">
                         登录
                     </Button>
                 </FormItem>
@@ -37,6 +37,7 @@
 
 @code
 {
+    bool loginLoading = false;
 
 
     override protected void OnInitialized()
@@ -61,8 +62,10 @@
 
     private dtoLogin loginData = new();
 
-    private async void OnFinish(EditContext editContext)
+    private async void OnFinish()
     {
+
+        loginLoading = true;
 
         using (var httpResponse = await Http.PostAsJsonAsync<dtoLogin>("Authorize/GetToken", loginData))
         {
@@ -72,6 +75,9 @@
 
             NavigationManager.NavigateTo("/");
         }
+
+        loginLoading = false;
+
 
     }
 

@@ -1,6 +1,4 @@
 ﻿@page "/user"
-@using System.ComponentModel
-@using AntDesign.TableModels
 @using Models.User
 
 
@@ -11,12 +9,12 @@
         <BreadcrumbItem>用户管理</BreadcrumbItem>
         <BreadcrumbItem>所有用户</BreadcrumbItem>
     </Breadcrumb>
-    <Content Class="site-layout-background" >
+    <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
-            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="showCreateUser">添加</Button>
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditUser()">添加</Button>
         </div>
-        <Table TItem="dtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="isTableLoading" RemoteDataSource>
+        <Table TItem="dtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <RowTemplate>
                 <Column @bind-Field="@context.Name" Title="用户名"></Column>
@@ -28,7 +26,7 @@
                 <ActionColumn Title="操作">
                     <Space>
                         <SpaceItem>
-                            <a @onclick="()=>UpdateUser(context)">编辑</a>
+                            <a @onclick="()=>EditUser(context)">编辑</a>
                         </SpaceItem>
                         <SpaceItem>
                             <Popconfirm Title="确认要删除吗？"
@@ -57,10 +55,10 @@
 </Layout>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowCreateUser" Title='("添加用户")' OnClose="()=>isShowCreateUser=false">
+<Drawer Closable="true" Width="380" Visible="isShowEditUser" Title='("用户信息")' OnClose="()=>isShowEditUser=false">
     <Template style="height:90%">
 
-        <Form Model="@createUser" OnFinish="CreateUserSave">
+        <Form Model="@editUser" OnFinish="SaveUser">
 
             <FormItem>
                 <Text>用户名</Text>
@@ -86,16 +84,16 @@
 
             <FormItem>
                 <Text>密码</Text>
-                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.PassWord" />
+                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.PassWord" VisibilityToggle="false" />
             </FormItem>
 
 
             <Row Gutter="24">
-                <AntDesign.Col Span="14">
-                </AntDesign.Col>
-                <AntDesign.Col Span="10">
-                    <Button Type="@ButtonType.Default" @onclick="()=>isShowCreateUser=false">取消</Button>
-                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
+                <AntDesign.Col Span="24">
+                    <div style="float:right">
+                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditUser=false">取消</Button>
+                    </div>
                 </AntDesign.Col>
             </Row>
         </Form>
@@ -103,50 +101,6 @@
 </Drawer>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowUpdateUser" Title='("编辑用户")' OnClose="()=>isShowUpdateUser=false">
-    <Template style="height:90%">
-
-        <Form Model="@updateUser" OnFinish="UpdateUserSave">
-
-            <FormItem>
-                <Text>用户名</Text>
-                <Input Placeholder="请输入用户名" @bind-Value="@context.Name" />
-            </FormItem>
-
-            <FormItem>
-                <Text>昵称</Text>
-                <Input Placeholder="请输入昵称" @bind-Value="@context.NickName" />
-            </FormItem>
-
-
-            <FormItem>
-                <Text>手机</Text>
-                <Input Placeholder="请输入手机号" Type="number" @bind-Value="@context.Phone" />
-            </FormItem>
-
-            <FormItem>
-                <Text>邮箱</Text>
-                <Input Placeholder="请输入邮箱" Type="email" @bind-Value="@context.Email" />
-            </FormItem>
-
-
-            <FormItem>
-                <Text>密码</Text>
-                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.PassWord" />
-            </FormItem>
-
-
-            <Row Gutter="24">
-                <AntDesign.Col Span="14">
-                </AntDesign.Col>
-                <AntDesign.Col Span="10">
-                    <Button Type="@ButtonType.Default" @onclick="()=>isShowUpdateUser=false">取消</Button>
-                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
-                </AntDesign.Col>
-            </Row>
-        </Form>
-    </Template>
-</Drawer>
 
 @code{
 
@@ -155,17 +109,20 @@
         GetUserList();
     }
 
-    bool isTableLoading = false;
+    bool saveLoading = false;
+    bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
     dtoPageList<dtoUser> pageList = new();
+
     async void GetUserList()
     {
-        isTableLoading = true;
+        tableLoading = true;
         pageList = await Http.GetFromJsonAsync<dtoPageList<dtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize);
-        isTableLoading = false;
+        tableLoading = false;
         StateHasChanged();
     }
+
     void PageChange(PaginationEventArgs args)
     {
         if (pageNum != args.Page)
@@ -183,57 +140,68 @@
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
 
-    bool isShowCreateUser = false;
-    dtoCreateUser createUser = new();
-    void showCreateUser()
+    bool isShowEditUser = false;
+    dtoEditUser editUser = new();
+    Guid userId;
+
+    async void SaveUser()
     {
-        createUser = new dtoCreateUser();
-        isShowCreateUser = true;
-    }
-    async void CreateUserSave(EditContext editContext)
-    {
-        using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateUser>("User/CreateUser", createUser))
+        saveLoading = true;
+
+        if (userId == default)
         {
-            var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
+            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditUser>("User/CreateUser", editUser))
+            {
+                var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
 
-            Console.WriteLine(createUserId);
-
-            GetUserList();
-            Message.Success("添加成功");
-
-            isShowCreateUser = false;
+                Message.Success("添加成功");
+            }
         }
+        else
+        {
+            if (editUser.PassWord == "default")
+            {
+                editUser.PassWord = null;
+            }
+
+            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditUser>("User/UpdateUser?userId=" + userId, editUser))
+            {
+                var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                if (bool.Parse(updateUserRet))
+                {
+                    Message.Success("编辑成功");
+                }
+            }
+        }
+
+        saveLoading = false;
+
+        GetUserList();
+
+        isShowEditUser = false;
     }
 
 
-    bool isShowUpdateUser = false;
-    dtoUpdateUser updateUser = new();
-    void UpdateUser(dtoUser user)
+    void EditUser(dtoUser user = null)
     {
-        updateUser.Id = user.Id;
-        updateUser.Name = user.Name;
-        updateUser.NickName = user.NickName;
-        updateUser.Phone = user.Phone;
-        updateUser.Email = user.Email;
+        editUser = new dtoEditUser();
+        userId = default;
+        if (user != null)
+        {
+            userId = user.Id;
+            editUser.Name = user.Name;
+            editUser.NickName = user.NickName;
+            editUser.Phone = user.Phone;
+            editUser.Email = user.Email;
+            editUser.PassWord = "default";
+        }
 
-        isShowUpdateUser = true;
+        isShowEditUser = true;
 
         StateHasChanged();
     }
-    async void UpdateUserSave(EditContext editContext)
-    {
-        using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateUser>("User/UpdateUser", updateUser))
-        {
-            var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
 
-            Console.WriteLine(updateUserRet);
-
-            GetUserList();
-            Message.Success("编辑成功");
-
-            isShowUpdateUser = false;
-        }
-    }
 
 
     async void DeleteUser(Guid userId)

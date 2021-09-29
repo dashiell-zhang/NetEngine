@@ -17,10 +17,10 @@
     <PackageReference Include="Baidu.AI" Version="3.6.14" />
     <PackageReference Include="Certes" Version="3.0.0" />
     <PackageReference Include="DistributedLock.SqlServer" Version="1.0.1" />
-    <PackageReference Include="DotNetCore.CAP" Version="5.1.3" />
-    <PackageReference Include="DotNetCore.CAP.Dashboard" Version="5.1.3" />
-    <PackageReference Include="DotNetCore.CAP.RedisStreams" Version="5.1.3" />
-    <PackageReference Include="DotNetCore.CAP.SqlServer" Version="5.1.3" />
+    <PackageReference Include="DotNetCore.CAP" Version="5.1.4" />
+    <PackageReference Include="DotNetCore.CAP.Dashboard" Version="5.1.4" />
+    <PackageReference Include="DotNetCore.CAP.RedisStreams" Version="5.1.4" />
+    <PackageReference Include="DotNetCore.CAP.SqlServer" Version="5.1.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NPOI" Version="2.5.4" />
@@ -28,7 +28,7 @@
     <PackageReference Include="StackExchange.Redis" Version="2.2.62" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.23" />
-    <PackageReference Include="TencentCloudSDK" Version="3.0.374" />
+    <PackageReference Include="TencentCloudSDK" Version="3.0.375" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,14 +1,12 @@
 ﻿using AdminApi.Libraries;
 using AdminApi.Models.v1.Article;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace AdminApi.Controllers.v1
 {
@@ -105,7 +103,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createChannel"></param>
         /// <returns></returns>
         [HttpPost("CreateChannel")]
-        public Guid CreateChannel(dtoCreateChannel createChannel)
+        public Guid CreateChannel(dtoEditChannel createChannel)
         {
             var channel = new TChannel();
             channel.Id = Guid.NewGuid();
@@ -129,12 +127,13 @@ namespace AdminApi.Controllers.v1
         /// <summary>
         /// 更新频道信息
         /// </summary>
+        /// <param name="channelId"></param>
         /// <param name="updateChannel"></param>
         /// <returns></returns>
         [HttpPost("UpdateChannel")]
-        public bool UpdateChannel(dtoUpdateChannel updateChannel)
+        public bool UpdateChannel(Guid channelId, dtoEditChannel updateChannel)
         {
-            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == updateChannel.Id).FirstOrDefault();
+            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).FirstOrDefault();
 
             channel.Name = updateChannel.Name;
             channel.Remarks = updateChannel.Remarks;
@@ -258,7 +257,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createCategory"></param>
         /// <returns></returns>
         [HttpPost("CreateCategory")]
-        public Guid CreateCategory(dtoCreateCategory createCategory)
+        public Guid CreateCategory(dtoEditCategory createCategory)
         {
             var category = new TCategory();
             category.Id = Guid.NewGuid();
@@ -284,12 +283,13 @@ namespace AdminApi.Controllers.v1
         /// <summary>
         /// 更新栏目信息
         /// </summary>
+        /// <param name="categoryId"></param>
         /// <param name="updateCategory"></param>
         /// <returns></returns>
         [HttpPost("UpdateCategory")]
-        public bool UpdateCategory(dtoUpdateCategory updateCategory)
+        public bool UpdateCategory(Guid categoryId,dtoEditCategory updateCategory)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == updateCategory.Id).FirstOrDefault();
+            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).FirstOrDefault();
 
             category.Name = updateCategory.Name;
             category.ParentId = updateCategory.ParentId;
@@ -416,7 +416,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createArticle"></param>
         /// <returns></returns>
         [HttpPost("CreateArticle")]
-        public Guid CreateArticle(dtoCreateArticle createArticle)
+        public Guid CreateArticle(dtoEditArticle createArticle)
         {
             var article = new TArticle();
             article.Id = Guid.NewGuid();
@@ -445,12 +445,13 @@ namespace AdminApi.Controllers.v1
         /// <summary>
         /// 更新文章信息
         /// </summary>
+        /// <param name="articleId"></param>
         /// <param name="updateArticle"></param>
         /// <returns></returns>
         [HttpPost("UpdateArticle")]
-        public bool UpdateArticle(dtoUpdateArticle updateArticle)
+        public bool UpdateArticle(Guid articleId, dtoEditArticle updateArticle)
         {
-            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == updateArticle.Id).FirstOrDefault();
+            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).FirstOrDefault();
 
             article.CategoryId = updateArticle.CategoryId;
             article.Title = updateArticle.Title;

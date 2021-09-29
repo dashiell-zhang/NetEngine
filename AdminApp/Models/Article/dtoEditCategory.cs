@@ -1,18 +1,20 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
-namespace AdminApi.Models.v1.Article
+namespace AdminApp.Models.Article
 {
 
     /// <summary>
     /// 创建栏目
     /// </summary>
-    public class dtoCreateCategory
+    public class dtoEditCategory
     {
 
 
         /// <summary>
         /// 名称
         /// </summary>
+        [Required(ErrorMessage = "名称不可以空")]
         public string Name { get; set; }
 
 
@@ -28,6 +30,7 @@ namespace AdminApi.Models.v1.Article
         /// 父级ID
         /// </summary>
         public Guid? ParentId { get; set; }
+
 
 
 

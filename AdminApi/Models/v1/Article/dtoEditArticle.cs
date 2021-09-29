@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace AdminApp.Models.Article
+namespace AdminApi.Models.v1.Article
 {
 
     /// <summary>
     /// 创建文章
     /// </summary>
-    public class dtoCreateArticle
+    public class dtoEditArticle
     {
 
 

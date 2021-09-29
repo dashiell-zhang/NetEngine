@@ -9,7 +9,7 @@ namespace AdminApp.Models.User
 {
 
 
-    public class dtoCreateUser
+    public class dtoEditUser
     {
 
 

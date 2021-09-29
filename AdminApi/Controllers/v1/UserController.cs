@@ -103,7 +103,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createUser"></param>
         /// <returns></returns>
         [HttpPost("CreateUser")]
-        public Guid CreateUser(dtoCreateUser createUser)
+        public Guid CreateUser(dtoEditUser createUser)
         {
             var user = new TUser();
             user.Id = Guid.NewGuid();
@@ -129,22 +129,26 @@ namespace AdminApi.Controllers.v1
         /// <summary>
         /// 更新用户信息
         /// </summary>
+        /// <param name="userId"></param>
         /// <param name="updateUser"></param>
         /// <returns></returns>
         [HttpPost("UpdateUser")]
-        public bool UpdateUser(dtoUpdateUser updateUser)
+        public bool UpdateUser(Guid userId, dtoEditUser updateUser)
         {
-
-            var user = db.TUser.Where(t => t.IsDelete == false & t.Id == updateUser.Id).FirstOrDefault();
+            var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
 
             user.UpdateTime = DateTime.Now;
-            user.UpdateUserId = userId;
+            user.UpdateUserId = base.userId;
 
             user.Name = updateUser.Name;
             user.NickName = updateUser.NickName;
             user.Phone = updateUser.Phone;
             user.Email = updateUser.Email;
-            user.PassWord = updateUser.PassWord;
+
+            if (!string.IsNullOrEmpty(updateUser.PassWord))
+            {
+                user.PassWord = updateUser.PassWord;
+            }
 
             db.SaveChanges();
 

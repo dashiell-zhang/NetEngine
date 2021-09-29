@@ -1,6 +1,4 @@
 ﻿@page "/channel"
-@using System.ComponentModel
-@using AntDesign.TableModels
 @using Models.Article
 
 <Layout Style=" padding: 0 24px 24px;">
@@ -10,12 +8,12 @@
         <BreadcrumbItem>频道管理</BreadcrumbItem>
         <BreadcrumbItem>所有频道</BreadcrumbItem>
     </Breadcrumb>
-    <Content Class="site-layout-background" >
+    <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
-            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="showCreateChannel">添加</Button>
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditChannel()">添加</Button>
         </div>
-        <Table TItem="dtoChannel" DataSource="@pageList.List" Total="@pageList.Total" Loading="isTableLoading" RemoteDataSource>
+        <Table TItem="dtoChannel" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <RowTemplate>
                 <Column @bind-Field="@context.Name" Title="名称"></Column>
@@ -26,7 +24,7 @@
                 <ActionColumn Title="操作">
                     <Space>
                         <SpaceItem>
-                            <a @onclick="()=>UpdateChannel(context)">编辑</a>
+                            <a @onclick="()=>EditChannel(context)">编辑</a>
                         </SpaceItem>
                         <SpaceItem>
                             <Popconfirm Title="确认要删除吗？"
@@ -55,10 +53,10 @@
 </Layout>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowCreateChannel" Title='("添加频道")' OnClose="()=>isShowUpdateChannel=false">
+<Drawer Closable="true" Width="380" Visible="isShowEditChannel" Title='("频道信息")' OnClose="()=>isShowEditChannel=false">
     <Template style="height:90%">
 
-        <Form Model="@createChannel" OnFinish="CreateChannelSave">
+        <Form Model="@editChannel" OnFinish="SaveChannel">
 
             <FormItem>
                 <Text>名称</Text>
@@ -78,49 +76,17 @@
 
 
             <Row Gutter="24">
-                <AntDesign.Col Span="14">
-                </AntDesign.Col>
-                <AntDesign.Col Span="10">
-                    <Button Type="@ButtonType.Default" @onclick="()=>isShowCreateChannel=false">取消</Button>
-                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
-                </AntDesign.Col>
-            </Row>
-        </Form>
-    </Template>
-</Drawer>
-
-
-<Drawer Closable="true" Width="380" Visible="isShowUpdateChannel" Title='("编辑频道")' OnClose="()=>isShowUpdateChannel=false">
-    <Template style="height:90%">
-
-        <Form Model="@updateChannel" OnFinish="UpdateChannelSave">
-
-            <FormItem>
-                <Text>名称</Text>
-                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
-            </FormItem>
-
-            <FormItem>
-                <Text>备注</Text>
-                <Input Placeholder="请输入昵称" @bind-Value="@context.Remarks" />
-            </FormItem>
-
-            <FormItem>
-                <Text>排序</Text>
-                <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" />
-            </FormItem>
-
-            <Row Gutter="24">
-                <AntDesign.Col Span="14">
-                </AntDesign.Col>
-                <AntDesign.Col Span="10">
-                    <Button Type="@ButtonType.Default" @onclick="()=>isShowUpdateChannel=false">取消</Button>
-                    <Button Type="@ButtonType.Primary" HtmlType="submit">保存</Button>
+                <AntDesign.Col Span="24">
+                    <div style="float:right">
+                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditChannel=false">取消</Button>
+                    </div>
                 </AntDesign.Col>
             </Row>
         </Form>
     </Template>
 </Drawer>
+
 
 @code{
 
@@ -129,15 +95,16 @@
         GetChannelList();
     }
 
-    bool isTableLoading = false;
+    bool saveLoading = false;
+    bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
     dtoPageList<dtoChannel> pageList = new();
     async void GetChannelList()
     {
-        isTableLoading = true;
+        tableLoading = true;
         pageList = await Http.GetFromJsonAsync<dtoPageList<dtoChannel>>("Article/GetChannelList?pageNum=" + pageNum + "&pageSize=" + pageSize);
-        isTableLoading = false;
+        tableLoading = false;
         StateHasChanged();
     }
     void PageChange(PaginationEventArgs args)
@@ -157,55 +124,59 @@
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
 
-    bool isShowCreateChannel = false;
-    dtoCreateChannel createChannel = new();
-    void showCreateChannel()
+    bool isShowEditChannel = false;
+    dtoEditChannel editChannel = new();
+    Guid channelId;
+
+    void EditChannel(dtoChannel channel = null)
     {
-        createChannel = new dtoCreateChannel();
-        isShowCreateChannel = true;
-    }
-    async void CreateChannelSave(EditContext editContext)
-    {
-        using (var httpResponse = await Http.PostAsJsonAsync<dtoCreateChannel>("Article/CreateChannel", createChannel))
+        editChannel = new();
+        channelId = default;
+
+        if (channel != null)
         {
-            var createChannelId = httpResponse.Content.ReadAsStringAsync().Result;
-
-            Console.WriteLine(createChannelId);
-
-            GetChannelList();
-            Message.Success("添加成功");
-
-            isShowCreateChannel = false;
+            channelId = channel.Id;
+            editChannel.Name = channel.Name;
+            editChannel.Remarks = channel.Remarks;
+            editChannel.Sort = channel.Sort;
         }
-    }
 
-
-    bool isShowUpdateChannel = false;
-    dtoUpdateChannel updateChannel = new();
-    void UpdateChannel(dtoChannel channel)
-    {
-        updateChannel.Id = channel.Id;
-        updateChannel.Name = channel.Name;
-        updateChannel.Remarks = channel.Remarks;
-        updateChannel.Sort = channel.Sort;
-
-        isShowUpdateChannel = true;
+        isShowEditChannel = true;
 
         StateHasChanged();
     }
-    async void UpdateChannelSave(EditContext editContext)
+
+
+    async void SaveChannel()
     {
-        using (var httpResponse = await Http.PostAsJsonAsync<dtoUpdateChannel>("Article/UpdateChannel", updateChannel))
+        saveLoading = true;
+        if (channelId == default)
         {
-            var updateChannelRet = httpResponse.Content.ReadAsStringAsync().Result;
+            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditChannel>("Article/CreateChannel", editChannel))
+            {
+                var createChannelId = httpResponse.Content.ReadAsStringAsync().Result;
 
-            Console.WriteLine(updateChannelRet);
-
-            GetChannelList();
-            Message.Success("编辑成功");
-
-            isShowUpdateChannel = false;
+                Message.Success("添加成功");
+            }
         }
+        else
+        {
+            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditChannel>("Article/UpdateChannel?channelId=" + channelId, editChannel))
+            {
+                var updateChannelRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                if (bool.Parse(updateChannelRet))
+                {
+                    Message.Success("编辑成功");
+                }
+            }
+        }
+
+        saveLoading = false;
+
+        GetChannelList();
+
+        isShowEditChannel = false;
     }
 
 

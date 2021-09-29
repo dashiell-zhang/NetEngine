@@ -1,14 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace AdminApi.Models.v1.Article
+namespace AdminApi.Models.v1.Link
 {
-    public class dtoUpdateChannel
-    {
 
-        /// <summary>
-        /// 标识ID
-        /// </summary>
-        public Guid Id { get; set; }
+    /// <summary>
+    /// 编辑友情链接
+    /// </summary>
+    public class dtoEditLink
+    {
 
 
         /// <summary>
@@ -19,9 +21,9 @@ namespace AdminApi.Models.v1.Article
 
 
         /// <summary>
-        /// 备注
+        /// 网址
         /// </summary>
-        public string Remarks { get; set; }
+        public string Url { get; set; }
 
 
 

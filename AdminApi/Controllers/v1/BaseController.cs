@@ -122,29 +122,57 @@ namespace AdminApi.Controllers.v1
 
 
         /// <summary>
-        /// 获取一个雪花ID
+        /// 获取服务器信息
         /// </summary>
         /// <returns></returns>
-        [HttpGet("GetSnowflakeId")]
-        public long GetSnowflakeId()
+        [HttpGet("GetServerInfo")]
+        public List<dtoKeyValue> GetServerInfo()
         {
-            return HttpContext.RequestServices.GetService<SnowflakeHelper>().GetId();
-        }
+            var list = new List<dtoKeyValue>();
 
+            list.Add(new dtoKeyValue
+            {
+                Key = "服务器名称",
+                Value = Environment.MachineName
+            });
 
+            list.Add(new dtoKeyValue
+            {
+                Key = "服务器IP",
+                Value = HttpContext.Connection.LocalIpAddress.ToString()
+            });
 
+            list.Add(new dtoKeyValue
+            {
+                Key = "操作系统",
+                Value = Environment.OSVersion.ToString()
+            });
 
-        /// <summary>
-        /// 发送一个CAP消息
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("ShowMessage")]
-        public bool ShowMessage(string msg)
-        {
+            list.Add(new dtoKeyValue
+            {
+                Key = "外部端口",
+                Value = HttpContext.Connection.LocalPort.ToString()
+            });
 
-            cap.Publish("ShowMessage", msg);
+            list.Add(new dtoKeyValue
+            {
+                Key = "目录物理路径",
+                Value = Environment.CurrentDirectory
+            });
 
-            return true;
+            list.Add(new dtoKeyValue
+            {
+                Key = "服务器CPU",
+                Value = Environment.ProcessorCount.ToString() + "核"
+            });
+
+            list.Add(new dtoKeyValue
+            {
+                Key = "本网站占用内存",
+                Value = ((Double)GC.GetTotalMemory(false) / 1048576).ToString("N2") + "M"
+            });
+
+            return list;
         }
 
 

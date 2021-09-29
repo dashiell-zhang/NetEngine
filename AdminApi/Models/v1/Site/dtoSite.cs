@@ -1,19 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace Repository.Database
+namespace AdminApi.Models.v1.Site
 {
-
-    /// <summary>
-    /// 网站信息配置表
-    /// </summary>
-    public class TWebInfo
+    public class dtoSite
     {
-
-        /// <summary>
-        /// 标识ID
-        /// </summary>
-        public Guid Id { get; set; }
-
 
 
         /// <summary>

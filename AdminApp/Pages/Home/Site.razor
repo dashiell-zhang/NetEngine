@@ -1,0 +1,90 @@
+﻿@page "/site"
+
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>管理中心</BreadcrumbItem>
+        <BreadcrumbItem>站点信息</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background">
+
+        @*<Form Model="@editArticle" LabelColSpan="2" WrapperColSpan="22">
+
+            <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick=@(() =>
+                InitUeditor("Content"))>
+
+                <TabPane Key="1" Tab="站点信息">
+
+                    <FormItem Label="网站URL">
+                        <Input Placeholder="请输入网站URL" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+
+                    <FormItem Label="管理者名称">
+                        <Input Placeholder="管理者名称" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+
+                    <FormItem Label="管理者地址">
+                        <Input Placeholder="请输入管理者地址" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+
+                    <FormItem Label="联系电话">
+                        <Input Placeholder="请输入联系电话" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+                    <FormItem Label="邮箱">
+                        <Input Placeholder="请输入邮箱" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+                    <FormItem Label="备案号">
+                        <Input Placeholder="请输入备案号" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+
+                    <FormItem Label="自定义代码">
+                        <TextArea ShowCount Placeholder="请输入自定义代码，将放置在页面底部" @bind-Value="@context.Abstract" MinRows="4" MaxRows="10" style="width:50em;min-height:100px" />
+                    </FormItem>
+
+                    <FormItem Label="网站URL">
+                        <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+                    <FormItem Label="网站URL">
+                        <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+                    <FormItem Label="网站URL">
+                        <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
+                    </FormItem>
+
+
+
+                </TabPane>
+
+                <TabPane Key="2" Tab="SEO参数" ForceRender="true">
+                    <FormItem Label="SEO标题">
+                        <TextArea ShowCount Placeholder="请输入SEO标题" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
+                    </FormItem>
+
+                    <FormItem Label="SEO关键字">
+                        <TextArea ShowCount Placeholder="请输入SEO关键字" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
+                    </FormItem>
+
+                    <FormItem Label="SEO描述">
+                        <TextArea ShowCount Placeholder="请输入SEO描述" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
+                    </FormItem>
+
+                </TabPane>
+
+            </Tabs>
+
+        </Form>*@
+
+    </Content>
+</Layout>
+
+@code{
+
+
+    async override protected void OnInitialized()
+    {
+
+        StateHasChanged();
+    }
+
+
+}

@@ -1,21 +1,38 @@
 ﻿@page "/"
 
-    <Layout Style=" padding: 0 24px 24px;">
-        <Breadcrumb Style="margin: 16px 0;">
-            <BreadcrumbItem>首页</BreadcrumbItem>
-            <BreadcrumbItem>管理中心</BreadcrumbItem>
-            <BreadcrumbItem>站点信息</BreadcrumbItem>
-        </Breadcrumb>
-        <Content Class="site-layout-background" >
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>管理中心</BreadcrumbItem>
+        <BreadcrumbItem>服务器信息</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background">
 
 
-        </Content>
-    </Layout>
+        <Card Title="服务器信息">
+
+            @foreach (var info in serverInfos)
+            {
+                <CardGrid Style="width:25%;text-align:left" Hoverable="true">
+                    @(info.Key.ToString()+"："+info.Value.ToString())
+                </CardGrid>
+            }
+
+        </Card>
+
+    </Content>
+</Layout>
 
 @code{
 
-    override protected void OnInitialized()
+    List<dtoKeyValue> serverInfos = new();
+
+    async override protected void OnInitialized()
     {
+        serverInfos = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Site/GetServerInfo");
+
+        StateHasChanged();
     }
+
 
 }

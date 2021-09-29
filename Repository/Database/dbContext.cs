@@ -108,10 +108,6 @@ namespace Repository.Database
         public DbSet<TUserToken> TUserToken { get; set; }
 
 
-        public DbSet<TWebInfo> TWebInfo { get; set; }
-
-
-
 
 
         private static DbContextOptions<dbContext> GetDbContextOptions(DbContextOptions<dbContext> options = default)

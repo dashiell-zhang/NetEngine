@@ -8,13 +8,18 @@ using System.IO;
 using System.Linq;
 using AdminApi.Libraries;
 using AdminApi.Models.v1.Site;
+using Microsoft.AspNetCore.Authorization;
+using Repository.Database;
+using AdminApi.Actions.v1;
 
 namespace AdminApi.Controllers.v1
 {
+
     /// <summary>
-    /// 系统基础方法控制器
+    /// 站点控制器
     /// </summary>
     [ApiVersion("1")]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SiteController : ControllerCore
@@ -60,6 +65,20 @@ namespace AdminApi.Controllers.v1
         [HttpPost("EditSite")]
         public bool EditSite(dtoSite editSite)
         {
+            var query = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Site");
+
+            var appSetting = new TAppSetting();
+
+            SiteAction.SetSiteInfo("WebUrl", editSite.WebUrl);
+            SiteAction.SetSiteInfo("ManagerName", editSite.ManagerName);
+            SiteAction.SetSiteInfo("ManagerAddress", editSite.ManagerAddress);
+            SiteAction.SetSiteInfo("ManagerPhone", editSite.ManagerPhone);
+            SiteAction.SetSiteInfo("ManagerEmail", editSite.ManagerEmail);
+            SiteAction.SetSiteInfo("RecordNumber", editSite.RecordNumber);
+            SiteAction.SetSiteInfo("SeoTitle", editSite.SeoTitle);
+            SiteAction.SetSiteInfo("SeoKeyWords", editSite.SeoKeyWords);
+            SiteAction.SetSiteInfo("SeoDescription", editSite.SeoDescription);
+            SiteAction.SetSiteInfo("FootCode", editSite.FootCode);
 
             return true;
         }

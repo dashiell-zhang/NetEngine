@@ -91,14 +91,14 @@
                 </FormItem>
 
                 <FormItem Label="封面图">
-                    <Upload Action="https://localhost:9833/api/File/UploadFile?business=TArticle&key=f03dae69-226b-4c2a-a027-8bc58e57b2ff&sign=cover"
+                    <Upload Action="@("https://localhost:9833/api/File/UploadFile?business=TArticle&key="+fileKey+"&sign=cover")"
                             Name="file"
                             Headers=headers
                             @bind-FileList="fileList"
-                            ShowButton="fileList?.Count < 3"
+                            ShowButton="fileList?.Count < 5"
                             ListType="picture-card"
-                            OnPreview="(file)=> previewImg(file)"
-                            OnRemove=" (file)=> removeImg(file)"
+                            OnPreview="(file)=> PreviewImg(file)"
+                            OnRemove=" (file)=> DeleteImg(file)"
                             OnChange="UploadOnChange">
                         <div>
                             <Icon Type="plus"></Icon>
@@ -106,10 +106,9 @@
                         </div>
 
                     </Upload>
-                    <Modal Visible="previewVisible"
-                           Title="预览"
-                           OnCancel="()=> previewVisible=false">
-                        <img style="width: 100%" src="@imgUrl" />
+
+                    <Modal Visible="isPreviewImg" Title="预览" OnCancel="()=> isPreviewImg=false" Footer="null" Style="width:55%">
+                        <Image Src="@previewImgUrl" />
                     </Modal>
                 </FormItem>
 
@@ -135,54 +134,10 @@
 
     Dictionary<string, string> headers = new();
 
-    bool previewVisible = false;
-    string previewTitle = string.Empty;
-    string imgUrl = string.Empty;
-
+    bool isPreviewImg = false;
+    string previewImgUrl;
+    Guid fileKey = Guid.NewGuid();
     bool saveLoading = false;
-
-
-
-    void previewImg(UploadFileItem file)
-    {
-        previewVisible = true;
-        previewTitle = file.FileName;
-        imgUrl = file.Url;
-    }
-
-    async Task<bool> removeImg(UploadFileItem file)
-    {
-        Console.WriteLine(JsonHelper.ObjectToJSON(file));
-
-        using (var httpResponse = await Http.DeleteAsJsonAsync("File/DeleteFile", new { Id = file.Id }))
-        {
-            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (Convert.ToBoolean(retValue))
-            {
-                fileList.Remove(file);
-            }
-        }
-        return true;
-    }
-
-    List<UploadFileItem> fileList = new();
-
-    void UploadOnChange(UploadInfo fileinfo)
-    {
-        if (fileinfo.File.State == UploadState.Success)
-        {
-
-            fileinfo.File.Id = JsonHelper.JSONToObject<string>(fileinfo.File.Response);
-
-            Console.WriteLine(JsonHelper.ObjectToJSON(fileinfo));
-            fileinfo.File.Url = fileinfo.File.ObjectURL;
-        }
-    }
-
-
-
-
 
     [Parameter]
     public string channelId { get; set; }
@@ -198,17 +153,16 @@
         headers.Add("Authorization", "Bearer " + authorization);
     }
 
+    override protected void OnParametersSet()
+    {
+        GetArticleList();
+        GetSelectCategoryList();
+    }
 
 
     private async Task InitUeditor(string inputName)
     {
         await JS.InvokeVoidAsync("InitUeditor", inputName);
-    }
-
-    override protected void OnParametersSet()
-    {
-        GetArticleList();
-        GetSelectCategoryList();
     }
 
 
@@ -224,11 +178,11 @@
     }
 
 
-
     bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
     dtoPageList<dtoArticle> pageList = new();
+
     async void GetArticleList()
     {
         tableLoading = true;
@@ -236,6 +190,7 @@
         tableLoading = false;
         StateHasChanged();
     }
+
     void PageChange(PaginationEventArgs args)
     {
         if (pageNum != args.Page)
@@ -267,6 +222,8 @@
 
         if (article != null)
         {
+
+            fileKey = article.Id;
 
             articleId = article.Id;
             editArticle.CategoryId = article.CategoryId;
@@ -301,7 +258,7 @@
 
         if (articleId == default)
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditArticle>("Article/CreateArticle", editArticle))
+            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle))
             {
                 var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -343,5 +300,41 @@
         }
     }
 
+
+    void PreviewImg(UploadFileItem file)
+    {
+        isPreviewImg = true;
+        previewImgUrl = file.Url;
+    }
+
+    async Task<bool> DeleteImg(UploadFileItem file)
+    {
+        Console.WriteLine(JsonHelper.ObjectToJSON(file));
+
+        using (var httpResponse = await Http.DeleteAsJsonAsync("File/DeleteFile", new { Id = file.Id }))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                fileList.Remove(file);
+            }
+        }
+        return true;
+    }
+
+    List<UploadFileItem> fileList = new();
+
+    void UploadOnChange(UploadInfo fileinfo)
+    {
+        if (fileinfo.File.State == UploadState.Success)
+        {
+
+            fileinfo.File.Id = JsonHelper.JSONToObject<string>(fileinfo.File.Response);
+
+            Console.WriteLine(JsonHelper.ObjectToJSON(fileinfo));
+            fileinfo.File.Url = fileinfo.File.ObjectURL;
+        }
+    }
 
 }

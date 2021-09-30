@@ -287,7 +287,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateCategory"></param>
         /// <returns></returns>
         [HttpPost("UpdateCategory")]
-        public bool UpdateCategory(Guid categoryId,dtoEditCategory updateCategory)
+        public bool UpdateCategory(Guid categoryId, dtoEditCategory updateCategory)
         {
             var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).FirstOrDefault();
 
@@ -414,9 +414,10 @@ namespace AdminApi.Controllers.v1
         /// 创建文章
         /// </summary>
         /// <param name="createArticle"></param>
+        /// <param name="fileKey">文件key</param>
         /// <returns></returns>
         [HttpPost("CreateArticle")]
-        public Guid CreateArticle(dtoEditArticle createArticle)
+        public Guid CreateArticle(dtoEditArticle createArticle, Guid fileKey)
         {
             var article = new TArticle();
             article.Id = Guid.NewGuid();
@@ -433,6 +434,14 @@ namespace AdminApi.Controllers.v1
             article.Abstract = createArticle.Abstract;
 
             db.TArticle.Add(article);
+
+
+            var fileList = db.TFile.Where(t => t.IsDelete == false & t.Table == "TArticle" & t.TableId == fileKey).ToList();
+
+            foreach (var file in fileList)
+            {
+                file.TableId = article.Id;
+            }
 
             db.SaveChanges();
 

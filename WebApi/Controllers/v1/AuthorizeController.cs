@@ -12,6 +12,7 @@ using System.Threading;
 using WebApi.Filters;
 using WebApi.Libraries;
 using WebApi.Libraries.Verify;
+using WebApi.Models.v1.Authorize;
 
 namespace WebApi.Controllers.v1
 {

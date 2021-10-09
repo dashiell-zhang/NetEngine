@@ -238,9 +238,6 @@ namespace AdminApi
 
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Startup).Assembly.GetName().Name}.xml"), true);
 
-                //其他类库的注释文件
-                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"Models.xml"), true);
-
 
                 //开启 Swagger JWT 鉴权模块
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()

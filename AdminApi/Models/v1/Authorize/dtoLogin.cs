@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Models.Dtos
+namespace AdminApi.Models.v1.Authorize
 {
 
     /// <summary>

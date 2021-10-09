@@ -1,8 +1,10 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
+    [Index(nameof(Town))]
     public class TRegionTown : CD
     {
 

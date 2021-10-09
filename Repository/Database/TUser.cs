@@ -1,4 +1,5 @@
-﻿using Repository.Database.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Database.Bases;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,6 +10,9 @@ namespace Repository.Database
     /// <summary>
     /// 用户表
     /// </summary>
+    [Index(nameof(Name), nameof(PassWord))]
+    [Index(nameof(Phone), nameof(PassWord))]
+    [Index(nameof(Email), nameof(PassWord))]
     public class TUser : CUD_User
     {
 

@@ -1,4 +1,5 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -8,6 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 城市信息表
     /// </summary>
+    [Index(nameof(City))]
     public class TRegionCity : CD
     {
 

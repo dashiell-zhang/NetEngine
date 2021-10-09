@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace Repository.Bases
 {
@@ -6,6 +7,7 @@ namespace Repository.Bases
     /// <summary>
     /// 创建，编辑，删除
     /// </summary>
+    [Index(nameof(UpdateTime))]
     public class CUD : CD
     {
 

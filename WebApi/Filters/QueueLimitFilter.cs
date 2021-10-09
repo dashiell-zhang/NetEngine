@@ -15,6 +15,11 @@ namespace WebApi.Filters
     {
 
 
+        /// <summary>
+        /// 是否使用 参数
+        /// </summary>
+        public bool UseParameter { get; set; }
+
 
         /// <summary>
         /// 是否使用 Token
@@ -37,8 +42,13 @@ namespace WebApi.Filters
             if (UseToken)
             {
                 var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
-
                 key = key + "_" + token;
+            }
+
+            if (UseParameter)
+            {
+                var parameter = Common.Json.JsonHelper.ObjectToJSON(Libraries.Http.HttpContext.GetParameter());
+                key = key + "_" + parameter;
             }
 
             key = "QueueLimit_" + Common.CryptoHelper.GetMd5(key);

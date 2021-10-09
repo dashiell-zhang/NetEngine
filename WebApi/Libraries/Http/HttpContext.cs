@@ -77,31 +77,26 @@ namespace WebApi.Libraries.Http
 
             var parameters = new List<dtoKeyValue>();
 
-            if (context.Request.Method == "POST")
+
+            var queryList = context.Request.Query.ToList();
+            foreach (var query in queryList)
             {
-                string body = GetRequestBody();
-
-                if (!string.IsNullOrEmpty(body))
-                {
-                    parameters.Add(new dtoKeyValue { Key = "body", Value = body });
-                }
-                else if (context.Request.HasFormContentType)
-                {
-                    var fromlist = context.Request.Form.OrderBy(t => t.Key).ToList();
-
-                    foreach (var fm in fromlist)
-                    {
-                        parameters.Add(new dtoKeyValue { Key = fm.Key, Value = fm.Value.ToString() });
-                    }
-                }
+                parameters.Add(new dtoKeyValue { Key = query.Key, Value = query.Value });
             }
-            else if (context.Request.Method == "GET")
-            {
-                var queryList = context.Request.Query.ToList();
 
-                foreach (var query in queryList)
+            string body = GetRequestBody();
+
+            if (!string.IsNullOrEmpty(body))
+            {
+                parameters.Add(new dtoKeyValue { Key = "body", Value = body });
+            }
+            else if (context.Request.HasFormContentType)
+            {
+                var fromlist = context.Request.Form.OrderBy(t => t.Key).ToList();
+
+                foreach (var fm in fromlist)
                 {
-                    parameters.Add(new dtoKeyValue { Key = query.Key, Value = query.Value });
+                    parameters.Add(new dtoKeyValue { Key = fm.Key, Value = fm.Value.ToString() });
                 }
             }
 

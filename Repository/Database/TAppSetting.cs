@@ -1,4 +1,5 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System;
 
 namespace Repository.Database
@@ -8,6 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 系统配置信息表
     /// </summary>
+    [Index(nameof(Module))]
     public class TAppSetting : CD
     {
 

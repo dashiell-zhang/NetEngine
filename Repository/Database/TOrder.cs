@@ -1,4 +1,5 @@
-﻿using Repository.Database.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Database.Bases;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,6 +11,7 @@ namespace Repository.Database
     /// <summary>
     /// 订单表
     /// </summary>
+    [Index(nameof(OrderNo))]
     public class TOrder : CUD_User
     {
 

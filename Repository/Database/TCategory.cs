@@ -1,4 +1,5 @@
-﻿using Repository.Database.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Database.Bases;
 using System;
 using System.Collections.Generic;
 
@@ -8,6 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 栏目信息表
     /// </summary>
+    [Index(nameof(Name))]
     public class TCategory : CD_User
     {
 

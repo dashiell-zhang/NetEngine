@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
 using Repository.Database.Bases;
 
 namespace Repository.Database
@@ -8,6 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 友情链接表
     /// </summary>
+    [Index(nameof(Sort))]
     public class TLink : CD_User
     {
 

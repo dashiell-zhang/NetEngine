@@ -1,4 +1,5 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 
 namespace Repository.Database
 {
@@ -6,6 +7,7 @@ namespace Repository.Database
     /// <summary>
     /// 日志表
     /// </summary>
+    [Index(nameof(Sign))]
     public class TLog : CD
     {
 

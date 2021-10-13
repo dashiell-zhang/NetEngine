@@ -1,4 +1,5 @@
-﻿using Repository.Database.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Database.Bases;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
@@ -8,6 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 产品表
     /// </summary>
+    [Index(nameof(SKU)), Index(nameof(Name))]
     public class TProduct : CUD_User
     {
 

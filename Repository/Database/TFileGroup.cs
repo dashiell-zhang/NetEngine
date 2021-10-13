@@ -1,4 +1,5 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System;
 
 namespace Repository.Database
@@ -8,6 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 文件分片上传状态记录表
     /// </summary>
+    [Index(nameof(Unique))]
     public class TFileGroup : CUD
     {
 

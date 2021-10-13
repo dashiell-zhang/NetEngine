@@ -1,4 +1,5 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System;
 
 namespace Repository.Database
@@ -7,6 +8,7 @@ namespace Repository.Database
     /// <summary>
     /// 功能模块对应Action记录表
     /// </summary>
+    [Index(nameof(Module)), Index(nameof(Controller)), Index(nameof(Action))]
     public class TFunctionAction : CD
     {
 

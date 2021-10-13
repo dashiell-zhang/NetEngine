@@ -1,4 +1,5 @@
-﻿using Repository.Database.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Database.Bases;
 using System;
 
 namespace Repository.Database
@@ -8,6 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 文件表
     /// </summary>
+    [Index(nameof(Table)), Index(nameof(TableId)), Index(nameof(Sign))]
     public class TFile : CD_User
     {
 

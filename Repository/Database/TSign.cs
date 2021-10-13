@@ -1,4 +1,5 @@
-﻿using Repository.Database.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Database.Bases;
 using System;
 
 namespace Repository.Database
@@ -7,6 +8,7 @@ namespace Repository.Database
     /// <summary>
     /// 点赞或标记喜欢记录表
     /// </summary>
+    [Index(nameof(Table)), Index(nameof(TableId)), Index(nameof(Sign))]
     public class TSign : CD_User
     {
 

@@ -1,8 +1,10 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System;
 
 namespace Repository.Database
 {
+    [Index(nameof(Table)), Index(nameof(TableId)), Index(nameof(Sign))]
     public class TOSLog : CD
     {
 

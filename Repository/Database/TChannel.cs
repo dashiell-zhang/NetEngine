@@ -1,4 +1,5 @@
-﻿using Repository.Database.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Database.Bases;
 using System.Collections.Generic;
 
 namespace Repository.Database
@@ -8,6 +9,7 @@ namespace Repository.Database
     /// <summary>
     /// 频道信息表
     /// </summary>
+    [Index(nameof(Name))]
     public class TChannel : CD_User
     {
 

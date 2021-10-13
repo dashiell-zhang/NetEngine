@@ -1,4 +1,5 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 
 namespace Repository.Database
 {
@@ -6,6 +7,7 @@ namespace Repository.Database
     /// <summary>
     /// 计数表
     /// </summary>
+    [Index(nameof(Tag))]
     public class TCount : CUD
     {
 

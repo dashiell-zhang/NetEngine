@@ -1,4 +1,5 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System;
 
 namespace Repository.Database
@@ -7,6 +8,7 @@ namespace Repository.Database
     /// <summary>
     /// 产品图片对应百度AI信息表
     /// </summary>
+    [Index(nameof(Unique))]
     public class TImgBaiduAI : CUD
     {
 

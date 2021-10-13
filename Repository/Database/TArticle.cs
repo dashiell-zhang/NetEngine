@@ -1,4 +1,5 @@
-﻿using Repository.Database.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Database.Bases;
 using System;
 
 namespace Repository.Database
@@ -7,6 +8,7 @@ namespace Repository.Database
     /// <summary>
     /// 文章表
     /// </summary>
+    [Index(nameof(Title))]
     public class TArticle : CD_User
     {
 

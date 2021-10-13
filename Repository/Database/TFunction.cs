@@ -1,4 +1,5 @@
-﻿using Repository.Bases;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System;
 using System.Collections.Generic;
 
@@ -9,6 +10,7 @@ namespace Repository.Database
     /// <summary>
     /// 系统功能配置表
     /// </summary>
+    [Index(nameof(Sign))]
     public class TFunction : CD
     {
 

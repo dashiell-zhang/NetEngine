@@ -42,6 +42,16 @@ namespace WebApi
 
             var builder = WebApplication.CreateBuilder(args);
 
+            //启用 Kestrel Https 并绑定证书
+            //builder.WebHost.UseKestrel(options =>
+            //{
+            //    options.ConfigureHttpsDefaults(options =>
+            //    {
+            //        options.ServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(Path.Combine(AppContext.BaseDirectory, "xxxx.pfx"), "123456");
+            //    });
+            //});
+            //builder.WebHost.UseUrls("https://*");
+
             // Add services to the container.
 
             //为各数据库注入连接字符串

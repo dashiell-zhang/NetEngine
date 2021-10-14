@@ -2,15 +2,11 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
-		<UserSecretsId>c8231277-7709-4207-a3a4-1d9751d7994f</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 		<SatelliteResourceLanguages>zh</SatelliteResourceLanguages>
+		<DebugType>embedded</DebugType>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<DebugType>none</DebugType>
-		<DebugSymbols>false</DebugSymbols>
-	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Hangfire.InMemory" Version="0.3.4" />

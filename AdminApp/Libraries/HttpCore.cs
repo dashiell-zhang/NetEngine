@@ -26,7 +26,7 @@ namespace AdminApp.Libraries
 
 
 
-        public static Task<HttpResponseMessage> DeleteAsJsonAsync<TValue>(this HttpClient client, string? requestUri, TValue value)
+        public static Task<HttpResponseMessage> DeleteAsJsonAsync<TValue>(this HttpClient client, string requestUri, TValue value)
         {
             HttpRequestMessage request = new HttpRequestMessage
             {

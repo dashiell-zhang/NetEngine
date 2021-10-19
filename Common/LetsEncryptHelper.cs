@@ -4,7 +4,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Common
 {
@@ -18,7 +17,7 @@ namespace Common
         /// <param name="domainName">域名</param>
         /// <param name="sslPath">证书保存路径 ,如 D:/SSL </param>
         /// <remarks>Common.SSL.LetsEncryptHelper.CreateSSL("*.domain.com").Wait();</remarks>
-        public async static Task CreateSSL(string domainName, string sslPath)
+        public static void CreateSSL(string domainName, string sslPath)
         {
             if (!Directory.Exists(sslPath + "/IIS/"))
             {
@@ -30,27 +29,34 @@ namespace Common
             }
 
             var acme = new AcmeContext(WellKnownServers.LetsEncryptV2);
-            var account = await acme.NewAccount("xxx@qq.com", true);
+            _ = acme.NewAccount("xxx@qq.com", true).Result;
 
-            var pemKey = acme.AccountKey.ToPem();
+            //var accountKey = acme.AccountKey.ToPem();
 
-            var order = await acme.NewOrder(new[] { domainName });
+            var order = acme.NewOrder(new[] { domainName }).Result;
 
-            var authz = (await order.Authorizations()).First();
-            var dnsChallenge = await authz.Dns();
+            var authz = order.Authorizations().Result.First();
+            var dnsChallenge = authz.Dns().Result;
             var dnsTxt = acme.AccountKey.DnsTxt(dnsChallenge.Token);
 
-
             SetDomainTxt(domainName, dnsTxt);
-            Thread.Sleep(5000);
 
 
-            await dnsChallenge.Validate();
+            for (int i = 0; i < 15; i++)
+            {
+                if (dnsChallenge.Validate().Result.Status.Value == Certes.Acme.Resource.ChallengeStatus.Valid)
+                {
+                    break;
+                }
+                else
+                {
+                    Thread.Sleep(3000);
+                }
+            }
+
 
             var privateKey = KeyFactory.NewKey(KeyAlgorithm.RS256);
-            var cert = await order.Generate(new CsrInfo { }, privateKey);
-
-
+            var cert = order.Generate(new CsrInfo { }, privateKey).Result;
 
             var fileName = domainName.Replace("*", "_");
 
@@ -60,7 +66,7 @@ namespace Common
             var pfxBuilder = cert.ToPfx(privateKey);
             var pfx = pfxBuilder.Build(domainName, keystorePass);
             File.WriteAllBytes(sslPath + "/IIS/" + fileName + ".pfx", pfx);
-            File.WriteAllText(sslPath + "/IIS/keystorePass_" + fileName + ".txt", keystorePass);
+            File.WriteAllText(sslPath + "/IIS/" + fileName + "_keystorePass.txt", keystorePass);
 
 
             //CreateNginx

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Medallion.Threading;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -104,51 +105,39 @@ namespace WebApi.Controllers.v1
             if (user == null)
             {
 
-                bool isAction = false;
-
-                while (isAction == false)
+                using (distLock.AcquireLock("GetTokenByWeiXinMiniAppCode" + openid))
                 {
-                    if (Common.RedisHelper.Lock("GetTokenByWeiXinMiniAppCode" + openid, "123456", TimeSpan.FromSeconds(5)))
+                    user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
+
+                    if (user == null)
                     {
-                        isAction = true;
+                        //注册一个只有基本信息的账户出来
+                        user = new TUser();
 
-                        user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
-
-                        if (user == null)
-                        {
-                            //注册一个只有基本信息的账户出来
-                            user = new TUser();
-
-                            user.Id = Guid.NewGuid();
-                            user.CreateTime = DateTime.Now;
-                            user.Name = DateTime.Now.ToString() + "微信小程序新用户";
-                            user.NickName = user.Name;
-                            user.PassWord = Guid.NewGuid().ToString();
+                        user.Id = Guid.NewGuid();
+                        user.CreateTime = DateTime.Now;
+                        user.Name = DateTime.Now.ToString() + "微信小程序新用户";
+                        user.NickName = user.Name;
+                        user.PassWord = Guid.NewGuid().ToString();
 
 
-                            db.TUser.Add(user);
+                        db.TUser.Add(user);
 
-                            db.SaveChanges();
+                        db.SaveChanges();
 
-                            var userBind = new TUserBindExternal();
-                            userBind.Id = Guid.NewGuid();
-                            userBind.CreateTime = DateTime.Now;
-                            userBind.UserId = user.Id;
-                            userBind.AppName = "WeiXinMiniApp";
-                            userBind.AppId = appid;
-                            userBind.OpenId = openid;
+                        var userBind = new TUserBindExternal();
+                        userBind.Id = Guid.NewGuid();
+                        userBind.CreateTime = DateTime.Now;
+                        userBind.UserId = user.Id;
+                        userBind.AppName = "WeiXinMiniApp";
+                        userBind.AppId = appid;
+                        userBind.OpenId = openid;
 
-                            db.TUserBindExternal.Add(userBind);
+                        db.TUserBindExternal.Add(userBind);
 
-                            db.SaveChanges();
-                        }
-
-                        Common.RedisHelper.UnLock("GetTokenByWeiXinMiniAppCode" + openid, "123456");
+                        db.SaveChanges();
                     }
-                    else
-                    {
-                        Thread.Sleep(500);
-                    }
+
                 }
 
             }

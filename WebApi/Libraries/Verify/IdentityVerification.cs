@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Medallion.Threading;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.Extensions.DependencyInjection;
 using Models.Dtos;
 using Repository.Database;
 using System;
@@ -111,9 +113,9 @@ namespace WebApi.Libraries.Verify
 
                     string key = "IssueNewToken" + tokenId;
 
-                    if (Common.RedisHelper.Lock(key, "123456", TimeSpan.FromSeconds(60)))
+                    var distLock = httpContext.RequestServices.GetService<IDistributedLockProvider>();
+                    if (distLock.TryAcquireLock(key) != null)
                     {
-
                         var newToken = db.TUserToken.Where(t => t.IsDelete == false & t.LastId == tokenId & t.CreateTime > nbfTime).FirstOrDefault();
 
                         if (newToken == null)
@@ -156,9 +158,9 @@ namespace WebApi.Libraries.Verify
                             httpContext.Response.Headers.Add("NewToken", newToken.Token);
                             httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
                         }
-
-                        Common.RedisHelper.UnLock(key, "123456");
                     }
+
+
                 }
             }
 
@@ -174,24 +176,17 @@ namespace WebApi.Libraries.Verify
         {
             await Task.Run(() =>
             {
-                try
+                var distLock = Program.ServiceProvider.GetService<IDistributedLockProvider>();
+                if (distLock.TryAcquireLock("ClearExpireToken") != null)
                 {
-                    if (Common.RedisHelper.Lock("ClearExpireToken", "123456", TimeSpan.FromSeconds(60)))
+                    using (var db = new dbContext())
                     {
-                        using (var db = new dbContext())
-                        {
-                            var clearTime = DateTime.Now.AddDays(-7);
-                            var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
-                            db.TUserToken.RemoveRange(clearList);
+                        var clearTime = DateTime.Now.AddDays(-7);
+                        var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
+                        db.TUserToken.RemoveRange(clearList);
 
-                            db.SaveChanges();
-                        }
-                        Common.RedisHelper.UnLock("ClearExpireToken", "123456");
+                        db.SaveChanges();
                     }
-                }
-                catch
-                {
-                    Common.RedisHelper.UnLock("ClearExpireToken", "123456");
                 }
             });
         }

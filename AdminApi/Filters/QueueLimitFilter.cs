@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Medallion.Threading;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Threading;
@@ -15,6 +17,11 @@ namespace AdminApi.Filters
     {
 
 
+        /// <summary>
+        /// 是否使用 参数
+        /// </summary>
+        public bool UseParameter { get; set; }
+
 
         /// <summary>
         /// 是否使用 Token
@@ -22,11 +29,14 @@ namespace AdminApi.Filters
         public bool UseToken { get; set; }
 
 
-
         /// <summary>
         /// 是否阻断重复请求
         /// </summary>
         public bool IsBlock { get; set; }
+
+
+        private IDistributedSynchronizationHandle locakHandle { get; set; }
+
 
 
 
@@ -37,40 +47,46 @@ namespace AdminApi.Filters
             if (UseToken)
             {
                 var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
-
                 key = key + "_" + token;
+            }
+
+            if (UseParameter)
+            {
+                var parameter = Common.Json.JsonHelper.ObjectToJSON(Libraries.Http.HttpContext.GetParameter());
+                key = key + "_" + parameter;
             }
 
             key = "QueueLimit_" + Common.CryptoHelper.GetMd5(key);
 
             try
             {
+                var distLock = context.HttpContext.RequestServices.GetService<IDistributedLockProvider>();
 
-                bool isAction = false;
-
-                while (isAction == false)
+                while (true)
                 {
-                    if (Common.RedisHelper.Lock(key, "123456", TimeSpan.FromSeconds(60)))
+                    var handle = distLock.TryAcquireLock(key);
+                    if (handle != null)
                     {
-                        isAction = true;
+                        locakHandle = handle;
+                        break;
                     }
                     else
                     {
                         if (IsBlock)
                         {
-                            isAction = true;
                             context.Result = new BadRequestObjectResult(new { errMsg = "Please do not request frequently" });
+                            break;
                         }
                         else
                         {
-                            Thread.Sleep(500);
+                            Thread.Sleep(200);
                         }
                     }
                 }
             }
             catch
             {
-                Console.WriteLine("队列限制模块异常");
+                Console.WriteLine("队列限制模块异常-In");
             }
         }
 
@@ -80,27 +96,12 @@ namespace AdminApi.Filters
         {
             try
             {
-
-                string key = context.ActionDescriptor.DisplayName;
-
-                if (UseToken)
-                {
-                    var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
-
-                    key = key + "_" + token;
-                }
-
-
-                key = "QueueLimit_" + Common.CryptoHelper.GetMd5(key);
-
-                Common.RedisHelper.UnLock(key, "123456");
-
+                locakHandle.Dispose();
             }
             catch
             {
-                Console.WriteLine("队列限制模块异常");
+                Console.WriteLine("队列限制模块异常-Out");
             }
-
         }
 
 

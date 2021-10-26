@@ -374,6 +374,16 @@ namespace AdminApi
             //强制重定向到Https
             app.UseHttpsRedirection();
 
+            app.MapWhen(ctx => ctx.Request.Path.Value.ToLower().Contains("/admin"), adminapp =>
+            {
+                adminapp.UseBlazorFrameworkFiles("/admin");
+
+                adminapp.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapFallbackToFile("/admin/{*path:nonfile}","admin/index.html");
+                });
+            });
+
             app.UseStaticFiles();
 
             app.UseRouting();

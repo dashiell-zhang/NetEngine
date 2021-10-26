@@ -2,7 +2,10 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
+		<!--<StaticWebAssetBasePath>admin</StaticWebAssetBasePath>-->
+		<RunAOTCompilation>true</RunAOTCompilation>
 		<PublishIISAssets>true</PublishIISAssets>
+		<DebugType>embedded</DebugType>
 	</PropertyGroup>
 
 	<ItemGroup>

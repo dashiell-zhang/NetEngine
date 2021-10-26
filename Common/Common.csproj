@@ -18,12 +18,12 @@
 		<PackageReference Include="DotNetCore.CAP.SqlServer" Version="5.1.4" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0-rc.2.21480.5" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="NPOI" Version="2.5.4" />
+		<PackageReference Include="NPOI" Version="2.5.5" />
 		<PackageReference Include="QRCoder" Version="1.4.1" />
 		<PackageReference Include="StackExchange.Redis" Version="2.2.79" />
 		<PackageReference Include="System.Drawing.Common" Version="6.0.0-rc.2.21480.5" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.24" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.389" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.390" />
 	</ItemGroup>
 
 	<ItemGroup>

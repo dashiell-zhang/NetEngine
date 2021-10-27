@@ -374,16 +374,6 @@ namespace AdminApi
             //强制重定向到Https
             app.UseHttpsRedirection();
 
-            app.MapWhen(ctx => ctx.Request.Path.Value.ToLower().Contains("/admin"), adminapp =>
-            {
-                adminapp.UseBlazorFrameworkFiles("/admin");
-
-                adminapp.UseEndpoints(endpoints =>
-                {
-                    endpoints.MapFallbackToFile("/admin/{*path:nonfile}","admin/index.html");
-                });
-            });
-
             app.UseStaticFiles();
 
             app.UseRouting();
@@ -391,6 +381,17 @@ namespace AdminApi
             //注册用户认证机制,必须放在 UseCors UseRouting 之后
             app.UseAuthentication();
             app.UseAuthorization();
+
+            //注入 adminapp 项目
+            //app.MapWhen(ctx => ctx.Request.Path.Value.ToLower().Contains("/admin"), adminapp =>
+            //{
+            //    adminapp.UseBlazorFrameworkFiles("/admin");
+
+            //    adminapp.UseEndpoints(endpoints =>
+            //    {
+            //        endpoints.MapFallbackToFile("/admin/{*path:nonfile}", "admin/index.html");
+            //    });
+            //});
 
             app.MapControllers();
 

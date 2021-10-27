@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
+		<BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
 		<!--<StaticWebAssetBasePath>admin</StaticWebAssetBasePath>-->
 		<RunAOTCompilation>true</RunAOTCompilation>
 		<PublishIISAssets>true</PublishIISAssets>

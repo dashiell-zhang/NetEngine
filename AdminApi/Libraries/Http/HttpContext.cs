@@ -3,7 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Models.Dtos;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 
 namespace AdminApi.Libraries.Http
 {
@@ -54,16 +56,45 @@ namespace AdminApi.Libraries.Http
         /// </summary>
         public static string GetRequestBody()
         {
-            using (Stream requestBody = new MemoryStream())
+            var requestContent = "";
+
+            var contentEncoding = Current().Request.Headers.ContentEncoding.FirstOrDefault();
+
+            if (contentEncoding != null && contentEncoding.Equals("gzip", System.StringComparison.OrdinalIgnoreCase))
             {
-                Current().Request.Body.CopyTo(requestBody);
-                Current().Request.Body.Position = 0;
-                requestBody.Position = 0;
-                using (var requestReader = new StreamReader(requestBody))
+                using (Stream requestBody = new MemoryStream())
                 {
-                    return requestReader.ReadToEnd();
+                    Current().Request.Body.CopyTo(requestBody);
+                    Current().Request.Body.Position = 0;
+
+                    requestBody.Position = 0;
+
+                    using (GZipStream decompressedStream = new GZipStream(requestBody, CompressionMode.Decompress))
+                    {
+                        using (StreamReader sr = new StreamReader(decompressedStream, Encoding.UTF8))
+                        {
+                            requestContent = sr.ReadToEnd();
+                        }
+                    }
                 }
             }
+            else
+            {
+                using (Stream requestBody = new MemoryStream())
+                {
+                    Current().Request.Body.CopyTo(requestBody);
+                    Current().Request.Body.Position = 0;
+
+                    requestBody.Position = 0;
+
+                    using (var requestReader = new StreamReader(requestBody))
+                    {
+                        requestContent = requestReader.ReadToEnd();
+                    }
+                }
+            }
+
+            return requestContent;
         }
 
 

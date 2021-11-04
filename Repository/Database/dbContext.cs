@@ -204,8 +204,8 @@ namespace Repository.Database
                         property.SetComment(GetEntityComment(entity.Name, property.Name, baseTypeNames));
 
 
-                        //设置默认值 
-                        var defaultValueAttribute = property.PropertyInfo.GetCustomAttribute<DefaultValueAttribute>();
+                        //设置字段的默认值 
+                        var defaultValueAttribute = property.PropertyInfo?.GetCustomAttribute<DefaultValueAttribute>();
                         if (defaultValueAttribute != null)
                         {
                             property.SetDefaultValue(defaultValueAttribute.Value);

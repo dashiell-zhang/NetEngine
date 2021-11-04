@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
@@ -201,6 +202,14 @@ namespace Repository.Database
 
                         //设置字段的备注
                         property.SetComment(GetEntityComment(entity.Name, property.Name, baseTypeNames));
+
+
+                        //设置默认值 
+                        var defaultValueAttribute = property.PropertyInfo.GetCustomAttribute<DefaultValueAttribute>();
+                        if (defaultValueAttribute != null)
+                        {
+                            property.SetDefaultValue(defaultValueAttribute.Value);
+                        }
 
 
                         //bool to bit 使用 MySQL 时需要取消注释

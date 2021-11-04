@@ -16,7 +16,7 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.2.0" />
-		<PackageReference Include="Hangfire.AspNetCore" Version="1.7.26" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.7.27" />
 	</ItemGroup>
 
 	<ItemGroup>

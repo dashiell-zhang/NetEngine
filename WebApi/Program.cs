@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
@@ -21,6 +22,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -130,7 +132,11 @@ namespace WebApi
 
             builder.Services.AddControllers();
 
-
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                //options.KnownProxies.Add(IPAddress.Parse("10.0.0.100"));
+            });
 
             //注册JWT认证机制
             var jwtSetting = builder.Configuration.GetSection("JWTSetting").Get<JWTSetting>();
@@ -348,6 +354,8 @@ namespace WebApi
 
             ServiceProvider = app.Services;
 
+            app.UseForwardedHeaders();
+
             app.UseResponseCompression();
 
             //开启倒带模式运行多次读取HttpContext.Body中的内容
@@ -401,7 +409,7 @@ namespace WebApi
                 options.RoutePrefix = "swagger";
             });
 
-            
+
 
             app.Run();
 

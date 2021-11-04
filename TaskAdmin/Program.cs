@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -143,6 +144,12 @@ namespace TaskAdmin
 
             builder.Services.AddControllersWithViews();
 
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                //options.KnownProxies.Add(IPAddress.Parse("10.0.0.100"));
+            });
+
 
             builder.Services.AddAuthentication(options =>
             {
@@ -266,6 +273,8 @@ namespace TaskAdmin
             var app = builder.Build();
 
             ServiceProvider = app.Services;
+
+            app.UseForwardedHeaders();
 
             app.UseResponseCompression();
 

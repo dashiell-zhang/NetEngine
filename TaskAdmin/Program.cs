@@ -177,17 +177,6 @@ namespace TaskAdmin
             builder.Services.AddMvc(config => config.Filters.Add(new GlobalFilter()));
 
 
-
-            //ÍÐ¹ÜSessionµ½RedisÖÐ
-            if (Convert.ToBoolean(builder.Configuration["SessionToRedis"]))
-            {
-                builder.Services.AddDistributedRedisCache(options =>
-                {
-                    options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
-                });
-            }
-
-
             //×¢²áSession
             builder.Services.AddSession(options =>
             {

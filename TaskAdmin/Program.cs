@@ -250,7 +250,7 @@ namespace TaskAdmin
             {
                 options.DefaultRequestVersion = new Version("2.0");
                 options.DefaultRequestHeaders.Add("Accept", "*/*");
-                options.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36");
+                options.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36");
                 options.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
@@ -262,7 +262,7 @@ namespace TaskAdmin
             {
                 options.DefaultRequestVersion = new Version("2.0");
                 options.DefaultRequestHeaders.Add("Accept", "*/*");
-                options.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36");
+                options.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36");
                 options.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {

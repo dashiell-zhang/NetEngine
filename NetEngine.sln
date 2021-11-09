@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminApi", "AdminApi\AdminA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminApp", "AdminApp\AdminApp.csproj", "{410D1E1B-22C8-45B9-81B3-F8125CE43457}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdminShared", "AdminShared\AdminShared.csproj", "{C6BA2E2B-37EE-4F1F-A153-7C2BF76A5BA3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{410D1E1B-22C8-45B9-81B3-F8125CE43457}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{410D1E1B-22C8-45B9-81B3-F8125CE43457}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{410D1E1B-22C8-45B9-81B3-F8125CE43457}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6BA2E2B-37EE-4F1F-A153-7C2BF76A5BA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6BA2E2B-37EE-4F1F-A153-7C2BF76A5BA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6BA2E2B-37EE-4F1F-A153-7C2BF76A5BA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6BA2E2B-37EE-4F1F-A153-7C2BF76A5BA3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

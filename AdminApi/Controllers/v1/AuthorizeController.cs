@@ -1,7 +1,7 @@
 ﻿using AdminApi.Filters;
 using AdminApi.Libraries;
 using AdminApi.Libraries.Verify;
-using AdminApi.Models.v1.Authorize;
+using AdminShared.Models.v1.Authorize;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

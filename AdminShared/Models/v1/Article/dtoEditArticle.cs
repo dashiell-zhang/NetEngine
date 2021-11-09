@@ -1,28 +1,20 @@
-﻿using Models.Dtos;
-using System;
-using System.Collections.Generic;
+﻿using System;
 
-namespace AdminApi.Models.v1.Article
+namespace AdminShared.Models.v1.Article
 {
 
     /// <summary>
-    /// 文章数据结构
+    /// 创建文章
     /// </summary>
-    public class dtoArticle
+    public class dtoEditArticle
     {
 
-        /// <summary>
-        /// 标识ID
-        /// </summary>
-        public Guid Id { get; set; }
-
 
 
         /// <summary>
-        /// 类别信息
+        /// 类别ID
         /// </summary>
         public Guid CategoryId { get; set; }
-        public string CategoryName { get; set; }
 
 
 
@@ -72,21 +64,6 @@ namespace AdminApi.Models.v1.Article
         /// 摘要
         /// </summary>
         public string Abstract { get; set; }
-
-
-
-        /// <summary>
-        /// 创建时间
-        /// </summary>
-        public DateTime CreateTime { get; set; }
-
-
-
-
-        /// <summary>
-        /// 封面图
-        /// </summary>
-        public List<dtoKeyValue> CoverImageList { get; set; }
 
 
     }

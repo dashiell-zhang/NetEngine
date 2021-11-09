@@ -3,14 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace AdminApi.Models.v1.Link
+namespace AdminShared.Models.v1.Link
 {
 
     /// <summary>
-    /// 编辑友情链接
+    /// 友情链接
     /// </summary>
-    public class dtoEditLink
+    public class dtoLink
     {
+
+
+        /// <summary>
+        /// 标识ID
+        /// </summary>
+        public Guid Id { get; set; }
+
 
 
         /// <summary>
@@ -32,6 +39,11 @@ namespace AdminApi.Models.v1.Link
         /// </summary>
         public int Sort { get; set; }
 
+
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public DateTime CreateTime { get; set; }
 
     }
 }

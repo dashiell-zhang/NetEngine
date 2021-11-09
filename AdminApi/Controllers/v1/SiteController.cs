@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AdminApi.Libraries;
-using AdminApi.Models.v1.Site;
+using AdminShared.Models.v1.Site;
 using Microsoft.AspNetCore.Authorization;
 using Repository.Database;
 using AdminApi.Actions.v1;

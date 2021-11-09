@@ -1,23 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace AdminApp.Models.Link
+namespace AdminShared.Models.v1.Article
 {
-
-    /// <summary>
-    /// 友情链接
-    /// </summary>
-    public class dtoLink
+    public class dtoChannel
     {
-
 
         /// <summary>
         /// 标识ID
         /// </summary>
         public Guid Id { get; set; }
-
 
 
         /// <summary>
@@ -28,9 +19,9 @@ namespace AdminApp.Models.Link
 
 
         /// <summary>
-        /// 网址
+        /// 备注
         /// </summary>
-        public string Url { get; set; }
+        public string Remarks { get; set; }
 
 
 
@@ -38,6 +29,7 @@ namespace AdminApp.Models.Link
         /// 排序
         /// </summary>
         public int Sort { get; set; }
+
 
 
         /// <summary>

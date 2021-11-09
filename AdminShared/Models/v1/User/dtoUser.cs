@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace AdminApi.Models.v1.Article
+namespace AdminShared.Models.v1.User
 {
-
-    /// <summary>
-    /// 栏目信息
-    /// </summary>
-    public class dtoCategory
+    public class dtoUser
     {
+
 
         /// <summary>
         /// 标识ID
@@ -18,39 +12,40 @@ namespace AdminApi.Models.v1.Article
         public Guid Id { get; set; }
 
 
-
         /// <summary>
-        /// 名称
+        /// 用户名
         /// </summary>
         public string Name { get; set; }
 
 
-
         /// <summary>
-        /// 备注
+        /// 昵称
         /// </summary>
-        public string Remarks { get; set; }
-
+        public string NickName { get; set; }
 
 
         /// <summary>
-        /// 排序
+        /// 手机号
         /// </summary>
-        public int Sort { get; set; }
-
+        public string Phone { get; set; }
 
 
         /// <summary>
-        /// 父级信息
+        /// 邮箱
         /// </summary>
-        public Guid? ParentId { get; set; }
-        public string ParentName { get; set; }
+        public string Email { get; set; }
 
+
+        /// <summary>
+        /// 角色
+        /// </summary>
+        public string Roles { get; set; }
 
 
         /// <summary>
         /// 创建时间
         /// </summary>
         public DateTime CreateTime { get; set; }
+
     }
 }

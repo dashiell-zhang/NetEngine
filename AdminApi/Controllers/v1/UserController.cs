@@ -7,7 +7,7 @@ using System.Linq;
 using AdminApi.Filters;
 using AdminApi.Libraries;
 using AdminApi.Libraries.Verify;
-using AdminApi.Models.v1.User;
+using AdminShared.Models.v1.User;
 using Repository.Database;
 
 namespace AdminApi.Controllers.v1

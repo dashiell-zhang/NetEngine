@@ -1,5 +1,5 @@
 ﻿using AdminApi.Libraries;
-using AdminApi.Models.v1.Link;
+using AdminShared.Models.v1.Link;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models.Dtos;

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AdminApp.Models.Link
+namespace AdminShared.Models.v1.Link
 {
 
     /// <summary>

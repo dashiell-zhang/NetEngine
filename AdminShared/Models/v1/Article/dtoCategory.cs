@@ -1,14 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace AdminApp.Models.Article
+namespace AdminShared.Models.v1.Article
 {
-    public class dtoChannel
+
+    /// <summary>
+    /// 栏目信息
+    /// </summary>
+    public class dtoCategory
     {
 
         /// <summary>
         /// 标识ID
         /// </summary>
         public Guid Id { get; set; }
+
 
 
         /// <summary>
@@ -33,9 +41,16 @@ namespace AdminApp.Models.Article
 
 
         /// <summary>
+        /// 父级信息
+        /// </summary>
+        public Guid? ParentId { get; set; }
+        public string ParentName { get; set; }
+
+
+
+        /// <summary>
         /// 创建时间
         /// </summary>
         public DateTime CreateTime { get; set; }
-
     }
 }

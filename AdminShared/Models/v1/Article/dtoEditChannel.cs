@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AdminApp.Models.Article
+namespace AdminShared.Models.v1.Article
 {
     public class dtoEditChannel
     {

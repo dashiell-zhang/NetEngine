@@ -31,6 +31,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\AdminShared\AdminShared.csproj" />
 		<ProjectReference Include="..\Common\Common.csproj" />
 	</ItemGroup>
 

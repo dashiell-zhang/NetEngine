@@ -1,9 +1,9 @@
-﻿using Medallion.Threading;
+﻿using AdminShared.Models;
+using Medallion.Threading;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
-using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Linq;

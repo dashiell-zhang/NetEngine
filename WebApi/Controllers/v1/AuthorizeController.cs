@@ -3,16 +3,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading;
 using WebApi.Filters;
 using WebApi.Libraries;
 using WebApi.Libraries.Verify;
+using WebApi.Models.Shared;
 using WebApi.Models.v1.Authorize;
 
 namespace WebApi.Controllers.v1

@@ -1,10 +1,10 @@
 ﻿using AdminApi.Libraries;
+using AdminShared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
-using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Collections.Generic;

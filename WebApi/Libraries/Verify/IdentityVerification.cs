@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
-using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using WebApi.Models.Shared;
 
 namespace WebApi.Libraries.Verify
 {

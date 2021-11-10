@@ -2,12 +2,12 @@
 using Medallion.Threading;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Models.Dtos;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using WebApi.Libraries;
+using WebApi.Models.Shared;
 
 namespace WebApi.Controllers.v1
 {

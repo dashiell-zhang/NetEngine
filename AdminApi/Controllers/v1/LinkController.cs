@@ -1,8 +1,8 @@
 ﻿using AdminApi.Libraries;
+using AdminShared.Models;
 using AdminShared.Models.v1.Link;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Linq;

@@ -3,7 +3,6 @@ using Common.AliPay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Models.Dtos;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +11,7 @@ using WebApi.Libraries;
 using WebApi.Libraries.WeiXin.App.Models;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
 using WebApi.Libraries.WeiXin.Public;
+using WebApi.Models.Shared;
 
 namespace WebApi.Controllers.v1
 {

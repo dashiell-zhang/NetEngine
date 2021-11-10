@@ -23,11 +23,10 @@
 		<PackageReference Include="StackExchange.Redis" Version="2.2.79" />
 		<PackageReference Include="System.Drawing.Common" Version="6.0.0" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.24" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.401" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.402" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Models\Models.csproj" />
 		<ProjectReference Include="..\Repository\Repository.csproj" />
 	</ItemGroup>
 

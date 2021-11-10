@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Models.Dtos;
 using System;
 using System.Linq;
 using WebApi.Filters;
 using WebApi.Libraries;
 using WebApi.Libraries.Verify;
+using WebApi.Models.Shared;
 using WebApi.Models.v1.User;
 
 namespace WebApi.Controllers.v1
@@ -141,45 +141,21 @@ namespace WebApi.Controllers.v1
                 var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
 
-                var isMergeUser = false;
-
-                if (isMergeUser)
+                if (checkPhone == 0)
                 {
-                    //获取目标手机号绑定的账户ID
-                    var phoneUserId = db.TUser.Where(t => t.Phone == phone).Select(t => t.Id).FirstOrDefault();
-
                     user.Phone = phone;
 
                     db.SaveChanges();
-
-                    //如果目标手机号绑定用户，则进行数据合并动作
-                    if (phoneUserId != default)
-                    {
-                        //将手机号对应的用户移除，合并数据到新的账号
-                        Common.DBHelper.MergeUser(phoneUserId, user.Id);
-                    }
 
                     return true;
                 }
                 else
                 {
-                    if (checkPhone == 0)
-                    {
-                        user.Phone = phone;
+                    HttpContext.Response.StatusCode = 400;
+                    HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'The target mobile number has been bound by another account'");
 
-                        db.SaveChanges();
-
-                        return true;
-                    }
-                    else
-                    {
-                        HttpContext.Response.StatusCode = 400;
-                        HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'The target mobile number has been bound by another account'");
-
-                        return false;
-                    }
+                    return false;
                 }
-
 
             }
             else

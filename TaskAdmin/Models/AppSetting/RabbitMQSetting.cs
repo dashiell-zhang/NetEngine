@@ -1,4 +1,4 @@
-﻿namespace Models.AppSettings
+﻿namespace TaskAdmin.Models.AppSetting
 {
 
 

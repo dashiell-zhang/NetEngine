@@ -1,4 +1,4 @@
-﻿namespace Models.Dtos
+﻿namespace TaskService.Models.Shared
 {
     public class dtoKeyValue
     {

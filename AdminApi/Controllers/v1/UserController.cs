@@ -1,14 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AdminApi.Libraries;
+using AdminShared.Models;
+using AdminShared.Models.v1.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Models.Dtos;
+using Repository.Database;
 using System;
 using System.Linq;
-using AdminApi.Filters;
-using AdminApi.Libraries;
-using AdminApi.Libraries.Verify;
-using AdminShared.Models.v1.User;
-using Repository.Database;
 
 namespace AdminApi.Controllers.v1
 {

@@ -3,7 +3,6 @@ using AdminApi.Libraries.Ueditor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using System;
 
 namespace AdminApi.Controllers.v1
 {
@@ -77,6 +76,6 @@ namespace AdminApi.Controllers.v1
             return action.Process();
         }
 
-      
+
     }
 }

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
-using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -13,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using WebApi.Libraries;
+using WebApi.Models.Shared;
 
 namespace WebApi.Controllers.v1
 {

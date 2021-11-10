@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Models.Dtos;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -145,59 +144,6 @@ namespace Common
                     db.SaveChanges();
                 }
                 return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-
-
-        /// <summary>
-        /// 账户合并方法，仅限SqlServer
-        /// </summary>
-        /// <param name="oldUserId">原始账户ID</param>
-        /// <param name="newUserId">新账户ID</param>
-        /// <returns></returns>
-        public static bool MergeUser(Guid oldUserId, Guid newUserId)
-        {
-            try
-            {
-                using (var db = new dbContext())
-                {
-
-
-                    string sql = "SELECT t.name AS [Key],c.name AS Value FROM sys.tables AS t INNER JOIN sys.columns c ON t.OBJECT_ID = c.OBJECT_ID WHERE c.system_type_id = 231 and c.name LIKE '%userid%'";
-
-                    var list = SelectFromSql<dtoKeyValue>(sql);
-
-                    var parameters = new Dictionary<string, object>();
-
-                    foreach (var item in list)
-                    {
-
-                        string upSql = "UPDATE [dbo].[@tableName] SET [@columnName] = @newUserId WHERE [@columnName] = @oldUserId";
-
-                        parameters = new Dictionary<string, object>();
-                        parameters.Add("tableName", item.Key.ToString());
-                        parameters.Add("columnName", item.Value.ToString());
-                        parameters.Add("newUserId", newUserId);
-                        parameters.Add("oldUserId", oldUserId);
-
-                        db.Database.ExecuteSqlRaw(upSql, parameters);
-                    }
-
-                    string delSql = "DELETE FROM [dbo].[t_user] WHERE [id] = @oldUserId";
-
-                    parameters = new Dictionary<string, object>();
-                    parameters.Add("oldUserId", oldUserId);
-
-                    db.Database.ExecuteSqlRaw(delSql, parameters);
-
-                    return true;
-                }
-
             }
             catch
             {

@@ -17,12 +17,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Models.AppSettings;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -31,6 +29,7 @@ using WebApi.Filters;
 using WebApi.Libraries;
 using WebApi.Libraries.Swagger;
 using WebApi.Libraries.Verify;
+using WebApi.Models.AppSetting;
 using WebApi.Subscribes;
 
 namespace WebApi

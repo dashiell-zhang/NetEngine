@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Models.Dtos
+namespace TaskAdmin.Models.Shared
 {
 
     /// <summary>

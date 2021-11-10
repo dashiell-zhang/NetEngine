@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using AdminApi.Models.AppSetting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Models.AppSettings;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;

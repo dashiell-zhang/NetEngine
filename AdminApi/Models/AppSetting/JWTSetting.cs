@@ -1,4 +1,4 @@
-﻿namespace Models.AppSettings
+﻿namespace AdminApi.Models.AppSetting
 {
 
 

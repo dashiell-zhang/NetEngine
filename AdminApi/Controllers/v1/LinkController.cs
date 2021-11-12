@@ -61,7 +61,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="linkId">链接ID</param>
         /// <returns></returns>
         [HttpGet("GetLink")]
-        public dtoLink GetLink(Guid linkId)
+        public dtoLink GetLink(long linkId)
         {
             var link = db.TLink.Where(t => t.IsDelete == false & t.Id == linkId).Select(t => new dtoLink
             {
@@ -84,10 +84,10 @@ namespace AdminApi.Controllers.v1
         /// <param name="createLink"></param>
         /// <returns></returns>
         [HttpPost("CreateLink")]
-        public Guid CreateLink(dtoEditLink createLink)
+        public long CreateLink(dtoEditLink createLink)
         {
             var link = new TLink();
-            link.Id = Guid.NewGuid();
+            link.Id = snowflakeHelper.GetId();
             link.CreateTime = DateTime.Now;
             link.CreateUserId = userId;
 
@@ -112,7 +112,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateLink"></param>
         /// <returns></returns>
         [HttpPost("UpdateLink")]
-        public bool UpdateLink(Guid linkId, dtoEditLink updateLink)
+        public bool UpdateLink(long linkId, dtoEditLink updateLink)
         {
             var link = db.TLink.Where(t => t.IsDelete == false & t.Id == linkId).FirstOrDefault();
 

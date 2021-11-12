@@ -43,7 +43,7 @@ namespace WebApi.Controllers.v1
             if (user != null)
             {
                 var userToken = new TUserToken();
-                userToken.Id = Guid.NewGuid();
+                userToken.Id = snowflakeHelper.GetId();
                 userToken.UserId = user.Id;
                 userToken.CreateTime = DateTime.Now;
 
@@ -83,7 +83,7 @@ namespace WebApi.Controllers.v1
         public string GetTokenByWeiXinMiniAppCode([FromBody] dtoKeyValue keyValue)
         {
 
-            var weiXinKeyId = Guid.Parse(keyValue.Key.ToString());
+            var weiXinKeyId = long.Parse(keyValue.Key.ToString());
             string code = keyValue.Value.ToString();
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
@@ -113,7 +113,7 @@ namespace WebApi.Controllers.v1
                         //注册一个只有基本信息的账户出来
                         user = new TUser();
 
-                        user.Id = Guid.NewGuid();
+                        user.Id = snowflakeHelper.GetId();
                         user.CreateTime = DateTime.Now;
                         user.Name = DateTime.Now.ToString() + "微信小程序新用户";
                         user.NickName = user.Name;
@@ -125,7 +125,7 @@ namespace WebApi.Controllers.v1
                         db.SaveChanges();
 
                         var userBind = new TUserBindExternal();
-                        userBind.Id = Guid.NewGuid();
+                        userBind.Id = snowflakeHelper.GetId();
                         userBind.CreateTime = DateTime.Now;
                         userBind.UserId = user.Id;
                         userBind.AppName = "WeiXinMiniApp";
@@ -167,7 +167,7 @@ namespace WebApi.Controllers.v1
 
                     user = new TUser();
 
-                    user.Id = Guid.NewGuid();
+                    user.Id = snowflakeHelper.GetId();
                     user.CreateTime = DateTime.Now;
                     user.Name = DateTime.Now.ToString() + "手机短信新用户";
                     user.NickName = user.Name;
@@ -276,7 +276,7 @@ namespace WebApi.Controllers.v1
         public string GetTokenByWeiXinAppCode(dtoKeyValue keyValue)
         {
 
-            var weiXinKeyId = Guid.Parse(keyValue.Key.ToString());
+            var weiXinKeyId = long.Parse(keyValue.Key.ToString());
             string code = keyValue.Value.ToString();
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinApp" & t.GroupId == weiXinKeyId).ToList();
@@ -297,7 +297,7 @@ namespace WebApi.Controllers.v1
             if (user == null)
             {
                 user = new TUser();
-                user.Id = Guid.NewGuid();
+                user.Id = snowflakeHelper.GetId();
                 user.IsDelete = false;
                 user.CreateTime = DateTime.Now;
 
@@ -309,7 +309,7 @@ namespace WebApi.Controllers.v1
                 db.SaveChanges();
 
                 var bind = new TUserBindExternal();
-                bind.Id = Guid.NewGuid();
+                bind.Id = snowflakeHelper.GetId();
                 bind.CreateTime = DateTime.Now;
 
                 bind.AppName = "WeiXinApp";

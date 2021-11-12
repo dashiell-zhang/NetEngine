@@ -13,14 +13,14 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 标识ID
         /// </summary>
-        public Guid Id { get; set; }
+        public long Id { get; set; }
 
 
 
         /// <summary>
         /// 类别信息
         /// </summary>
-        public Guid CategoryId { get; set; }
+        public long CategoryId { get; set; }
         public string CategoryName { get; set; }
 
 

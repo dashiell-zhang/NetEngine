@@ -15,7 +15,7 @@ namespace Repository.Bases
         /// <summary>
         /// 主键标识ID
         /// </summary>
-        public Guid Id { get; set; }
+        public long Id { get; set; }
 
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace Repository.Bases
         /// </summary>
         /// <remarks>通用的RowVersion</remarks>
         [ConcurrencyCheck]
-        public Guid? RowVersion { get; set; }
+        public long? RowVersion { get; set; }
 
 
 

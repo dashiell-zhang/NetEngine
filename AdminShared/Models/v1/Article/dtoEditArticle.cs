@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AdminShared.Models.v1.Article
+﻿namespace AdminShared.Models.v1.Article
 {
 
     /// <summary>
@@ -14,7 +12,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 类别ID
         /// </summary>
-        public Guid CategoryId { get; set; }
+        public long CategoryId { get; set; }
 
 
 

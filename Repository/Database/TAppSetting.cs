@@ -24,7 +24,7 @@ namespace Repository.Database
         /// <summary>
         /// 组ID
         /// </summary>
-        public Guid? GroupId { get; set; }
+        public long? GroupId { get; set; }
 
 
 

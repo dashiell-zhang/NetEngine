@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace AdminShared.Models.v1.Article
 {
@@ -22,14 +21,14 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 频道ID
         /// </summary>
-        public Guid ChannelId { get; set; }
+        public long ChannelId { get; set; }
 
 
 
         /// <summary>
         /// 父级ID
         /// </summary>
-        public Guid? ParentId { get; set; }
+        public long? ParentId { get; set; }
 
 
 

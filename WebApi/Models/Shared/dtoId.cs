@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WebApi.Models.Shared
+﻿namespace WebApi.Models.Shared
 {
 
     /// <summary>
@@ -12,6 +10,6 @@ namespace WebApi.Models.Shared
         /// <summary>
         /// 标识Id
         /// </summary>
-        public Guid Id { get; set; }
+        public long Id { get; set; }
     }
 }

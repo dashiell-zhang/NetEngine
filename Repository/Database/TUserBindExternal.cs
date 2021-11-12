@@ -1,5 +1,4 @@
 ﻿using Repository.Bases;
-using System;
 
 namespace Repository.Database
 {
@@ -10,7 +9,7 @@ namespace Repository.Database
         /// <summary>
         /// 用户信息
         /// </summary>
-        public Guid UserId { get; set; }
+        public long UserId { get; set; }
         public TUser User { get; set; }
 
 

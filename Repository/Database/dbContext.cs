@@ -418,7 +418,7 @@ namespace Repository.Database
 
 
 
-        public int SaveChangesWithSaveLog(Guid? actionUserId = null, string ipAddress = null, string deviceMark = null)
+        public int SaveChangesWithSaveLog(long? actionUserId = null, string ipAddress = null, string deviceMark = null)
         {
 
             dbContext db = this;
@@ -434,7 +434,7 @@ namespace Repository.Database
 
                 var newEntity = item.CurrentValues.ToObject();
 
-                var entityId = item.CurrentValues.GetValue<Guid>("Id");
+                var entityId = item.CurrentValues.GetValue<long>("Id");
 
                 if (actionUserId == null)
                 {
@@ -442,7 +442,7 @@ namespace Repository.Database
 
                     if (isHaveUpdateUserId > 0)
                     {
-                        actionUserId = item.CurrentValues.GetValue<Guid?>("UpdateUserId");
+                        actionUserId = item.CurrentValues.GetValue<long?>("UpdateUserId");
                     }
                 }
 
@@ -473,6 +473,7 @@ namespace Repository.Database
                         }
                     }
                 }
+
 
 
                 var osLog = new TOSLog();

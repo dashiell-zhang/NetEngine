@@ -13,7 +13,7 @@ namespace AdminShared.Models.v1.Link
         /// <summary>
         /// 标识ID
         /// </summary>
-        public Guid Id { get; set; }
+        public long Id { get; set; }
 
 
 

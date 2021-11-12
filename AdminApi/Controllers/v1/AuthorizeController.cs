@@ -42,7 +42,7 @@ namespace AdminApi.Controllers.v1
             if (user != null)
             {
                 var userToken = new TUserToken();
-                userToken.Id = Guid.NewGuid();
+                userToken.Id = snowflakeHelper.GetId();
                 userToken.UserId = user.Id;
                 userToken.CreateTime = DateTime.Now;
 
@@ -94,7 +94,7 @@ namespace AdminApi.Controllers.v1
 
                     user = new TUser();
 
-                    user.Id = Guid.NewGuid();
+                    user.Id = snowflakeHelper.GetId();
                     user.CreateTime = DateTime.Now;
                     user.Name = DateTime.Now.ToString() + "手机短信新用户";
                     user.NickName = user.Name;

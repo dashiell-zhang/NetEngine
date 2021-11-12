@@ -17,7 +17,7 @@ namespace Repository.Database
         /// <summary>
         /// 频道ID
         /// </summary>
-        public Guid ChannelId { get; set; }
+        public long ChannelId { get; set; }
         public virtual TChannel Channel { get; set; }
 
 
@@ -36,7 +36,7 @@ namespace Repository.Database
         /// <summary>
         /// 父级栏目ID
         /// </summary>
-        public Guid? ParentId { get; set; }
+        public long? ParentId { get; set; }
         public virtual TCategory Parent { get; set; }
 
 

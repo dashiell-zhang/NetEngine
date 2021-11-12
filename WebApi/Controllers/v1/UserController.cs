@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Linq;
 using WebApi.Filters;
 using WebApi.Libraries;
@@ -33,7 +32,7 @@ namespace WebApi.Controllers.v1
         /// <returns>openid,userid</returns>
         /// <remarks>传入租户ID和微信临时 code 获取 openid，如果 openid 在系统有中对应用户，则一并返回用户的ID值，否则用户ID值为空</remarks>
         [HttpGet("GetWeiXinMiniAppOpenId")]
-        public string GetWeiXinMiniAppOpenId(Guid weiXinKeyId, string code)
+        public string GetWeiXinMiniAppOpenId(long weiXinKeyId, string code)
         {
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
@@ -62,7 +61,7 @@ namespace WebApi.Controllers.v1
         /// <param name="code">微信临时code</param>
         /// <param name="weiXinKeyId">微信配置密钥ID</param>
         [HttpGet("GetWeiXinMiniAppPhone")]
-        public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, Guid weiXinKeyId)
+        public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, long weiXinKeyId)
         {
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
@@ -98,7 +97,7 @@ namespace WebApi.Controllers.v1
         /// <returns></returns>
         [HttpGet("GetUser")]
         [CacheDataFilter(TTL = 60, UseToken = true)]
-        public dtoUser GetUser(Guid? userId)
+        public dtoUser GetUser(long? userId)
         {
 
             if (userId == null)

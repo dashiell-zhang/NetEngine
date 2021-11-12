@@ -80,7 +80,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="channelId">频道ID</param>
         /// <returns></returns>
         [HttpGet("GetChannel")]
-        public dtoChannel GetChannel(Guid channelId)
+        public dtoChannel GetChannel(long channelId)
         {
             var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).Select(t => new dtoChannel
             {
@@ -103,10 +103,10 @@ namespace AdminApi.Controllers.v1
         /// <param name="createChannel"></param>
         /// <returns></returns>
         [HttpPost("CreateChannel")]
-        public Guid CreateChannel(dtoEditChannel createChannel)
+        public long CreateChannel(dtoEditChannel createChannel)
         {
             var channel = new TChannel();
-            channel.Id = Guid.NewGuid();
+            channel.Id = snowflakeHelper.GetId();
             channel.CreateTime = DateTime.Now;
             channel.CreateUserId = userId;
 
@@ -131,7 +131,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateChannel"></param>
         /// <returns></returns>
         [HttpPost("UpdateChannel")]
-        public bool UpdateChannel(Guid channelId, dtoEditChannel updateChannel)
+        public bool UpdateChannel(long channelId, dtoEditChannel updateChannel)
         {
             var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).FirstOrDefault();
 
@@ -177,7 +177,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetCategoryList")]
-        public dtoPageList<dtoCategory> GetCategoryList(Guid channelId, int pageNum, int pageSize, string searchKey)
+        public dtoPageList<dtoCategory> GetCategoryList(long channelId, int pageNum, int pageSize, string searchKey)
         {
             var data = new dtoPageList<dtoCategory>();
 
@@ -213,7 +213,7 @@ namespace AdminApi.Controllers.v1
         /// </summary>
         /// <returns></returns>
         [HttpGet("GetCategoryKVList")]
-        public List<dtoKeyValue> GetCategoryKVList(Guid channelId)
+        public List<dtoKeyValue> GetCategoryKVList(long channelId)
         {
             var list = db.TCategory.Where(t => t.IsDelete == false & t.ChannelId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new dtoKeyValue
             {
@@ -232,7 +232,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="categoryId">栏目ID</param>
         /// <returns></returns>
         [HttpGet("GetCategory")]
-        public dtoCategory GetCategory(Guid categoryId)
+        public dtoCategory GetCategory(long categoryId)
         {
             var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new dtoCategory
             {
@@ -257,10 +257,10 @@ namespace AdminApi.Controllers.v1
         /// <param name="createCategory"></param>
         /// <returns></returns>
         [HttpPost("CreateCategory")]
-        public Guid CreateCategory(dtoEditCategory createCategory)
+        public long CreateCategory(dtoEditCategory createCategory)
         {
             var category = new TCategory();
-            category.Id = Guid.NewGuid();
+            category.Id = snowflakeHelper.GetId();
             category.CreateTime = DateTime.Now;
             category.CreateUserId = userId;
 
@@ -287,7 +287,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateCategory"></param>
         /// <returns></returns>
         [HttpPost("UpdateCategory")]
-        public bool UpdateCategory(Guid categoryId, dtoEditCategory updateCategory)
+        public bool UpdateCategory(long categoryId, dtoEditCategory updateCategory)
         {
             var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).FirstOrDefault();
 
@@ -334,7 +334,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetArticleList")]
-        public dtoPageList<dtoArticle> GetArticleList(Guid channelId, int pageNum, int pageSize, string searchKey)
+        public dtoPageList<dtoArticle> GetArticleList(long channelId, int pageNum, int pageSize, string searchKey)
         {
             var data = new dtoPageList<dtoArticle>();
 
@@ -382,7 +382,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="articleId">文章ID</param>
         /// <returns></returns>
         [HttpGet("GetArticle")]
-        public dtoArticle GetArticle(Guid articleId)
+        public dtoArticle GetArticle(long articleId)
         {
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new dtoArticle
             {
@@ -417,10 +417,10 @@ namespace AdminApi.Controllers.v1
         /// <param name="fileKey">文件key</param>
         /// <returns></returns>
         [HttpPost("CreateArticle")]
-        public Guid CreateArticle(dtoEditArticle createArticle, Guid fileKey)
+        public long CreateArticle(dtoEditArticle createArticle, long fileKey)
         {
             var article = new TArticle();
-            article.Id = Guid.NewGuid();
+            article.Id = snowflakeHelper.GetId();
             article.CreateTime = DateTime.Now;
             article.CreateUserId = userId;
 
@@ -458,7 +458,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateArticle"></param>
         /// <returns></returns>
         [HttpPost("UpdateArticle")]
-        public bool UpdateArticle(Guid articleId, dtoEditArticle updateArticle)
+        public bool UpdateArticle(long articleId, dtoEditArticle updateArticle)
         {
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).FirstOrDefault();
 

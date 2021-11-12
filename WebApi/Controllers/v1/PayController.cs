@@ -32,7 +32,7 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinMiniAppPay")]
-        public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, Guid weiXinKeyId)
+        public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, long weiXinKeyId)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
@@ -74,7 +74,7 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinAppPay")]
-        public dtoCreatePayApp CreateWeiXinAppPay(string orderno, Guid weiXinKeyId)
+        public dtoCreatePayApp CreateWeiXinAppPay(string orderno, long weiXinKeyId)
         {
 
 
@@ -262,7 +262,7 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在支付宝商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateAliPayMiniApp")]
-        public dtoKeyValue CreateAliPayMiniApp(string orderno, Guid aliPayKeyId)
+        public dtoKeyValue CreateAliPayMiniApp(string orderno, long aliPayKeyId)
         {
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "AliPayMiniApp" & t.GroupId == aliPayKeyId).ToList();

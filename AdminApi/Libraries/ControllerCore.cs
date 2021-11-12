@@ -1,9 +1,9 @@
-﻿using DotNetCore.CAP;
+﻿using Common;
+using DotNetCore.CAP;
 using Medallion.Threading;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using System;
 
 namespace AdminApi.Libraries
 {
@@ -13,10 +13,11 @@ namespace AdminApi.Libraries
 
         public readonly dbContext db;
         public readonly ICapPublisher cap;
-        public readonly Guid userId;
+        public readonly long userId;
         public readonly IDistributedLockProvider distLock;
         public readonly IDistributedSemaphoreProvider distSemaphoreLock;
         public readonly IDistributedUpgradeableReaderWriterLockProvider distUpgradeableLock;
+        public readonly SnowflakeHelper snowflakeHelper;
 
 
         protected ControllerCore()
@@ -26,12 +27,13 @@ namespace AdminApi.Libraries
             distLock = Http.HttpContext.Current().RequestServices.GetService<IDistributedLockProvider>();
             distSemaphoreLock = Http.HttpContext.Current().RequestServices.GetService<IDistributedSemaphoreProvider>();
             distUpgradeableLock = Http.HttpContext.Current().RequestServices.GetService<IDistributedUpgradeableReaderWriterLockProvider>();
+            snowflakeHelper = Http.HttpContext.Current().RequestServices.GetService<SnowflakeHelper>();
 
             var userIdStr = Verify.JWTToken.GetClaims("userId");
 
             if (userIdStr != null)
             {
-                userId = Guid.Parse(userIdStr);
+                userId = long.Parse(userIdStr);
             }
         }
 

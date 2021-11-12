@@ -16,7 +16,7 @@ namespace Repository.Database
         /// <summary>
         /// 功能信息
         /// </summary>
-        public Guid FunctionId { get; set; }
+        public long FunctionId { get; set; }
         public virtual TFunction Function { get; set; }
 
 

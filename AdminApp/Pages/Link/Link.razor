@@ -130,7 +130,7 @@
 
     bool isShowEditLink = false;
 
-    Guid linkId;
+    long linkId;
     dtoEditLink editLink = new();
 
     void EditLink(dtoLink link = null)
@@ -182,9 +182,9 @@
     }
 
 
-    async void DeleteLink(Guid userId)
+    async void DeleteLink(long linkId)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("Link/DeleteLink", new { Id = userId }))
+        using (var httpResponse = await Http.DeleteAsJsonAsync("Link/DeleteLink", new { Id = linkId }))
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

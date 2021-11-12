@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 using System.Xml;
 
 namespace Common
@@ -131,9 +133,14 @@ namespace Common
             {
                 using (var db = new dbContext())
                 {
+
+                    var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
+                    var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
+                    var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>();
+
                     var log = new TLog();
 
-                    log.Id = Guid.NewGuid();
+                    log.Id = snowflakeHelper.GetId();
                     log.Sign = Sign;
                     log.Type = Type;
                     log.Content = Content;
@@ -177,7 +184,12 @@ namespace Common
                 }
                 else
                 {
-                    info.Id = Guid.NewGuid();
+
+                    var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
+                    var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
+                    var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>();
+
+                    info.Id = snowflakeHelper.GetId();
                     info.Tag = tag;
                     info.Count = 1;
                     info.CreateTime = DateTime.Now;

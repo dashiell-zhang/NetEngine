@@ -64,7 +64,7 @@
 
             <FormItem>
                 <Text>父级栏目</Text>
-                <Select DataSource="@selectCategoryList" DefaultValue="@(Guid.Empty)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.ParentId"></Select>
+                <Select DataSource="@selectCategoryList" DefaultValue="@(0)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.ParentId"></Select>
             </FormItem>
 
 
@@ -117,7 +117,7 @@
         var parentKVList = new List<dtoKeyValue>();
 
 
-        parentKVList.Add(new dtoKeyValue { Key = Guid.Empty, Value = "无父级栏目" });
+        parentKVList.Add(new dtoKeyValue { Key = 0, Value = "无父级栏目" });
 
         var kvList = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
 
@@ -126,7 +126,7 @@
         selectCategoryList = parentKVList.Select(t => new dtoSelect
         {
             Label = t.Value.ToString(),
-            Value = Guid.Parse(t.Key.ToString())
+            Value = long.Parse(t.Key.ToString())
         }).ToList();
 
     }
@@ -167,7 +167,7 @@
 
     bool isShowEditCategory = false;
     dtoEditCategory editCategory = new();
-    Guid categoryId;
+    long categoryId;
 
 
     void EditCategory(dtoCategory category = null)
@@ -186,7 +186,7 @@
 
             if (category.ParentId == null)
             {
-                editCategory.ParentId = Guid.Empty;
+                editCategory.ParentId = 0;
             }
             else
             {
@@ -203,14 +203,14 @@
     {
         saveLoading = true;
 
-        if (editCategory.ParentId == Guid.Empty)
+        if (editCategory.ParentId == 0)
         {
             editCategory.ParentId = null;
         }
 
         if (categoryId == default)
         {
-            editCategory.ChannelId = Guid.Parse(channelId);
+            editCategory.ChannelId = long.Parse(channelId);
 
             using (var httpResponse = await Http.PostAsJsonAsync<dtoEditCategory>("Article/CreateCategory", editCategory))
             {
@@ -239,9 +239,9 @@
     }
 
 
-    async void DeleteCategory(Guid userId)
+    async void DeleteCategory(long categoryId)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteCategory", new { Id = userId }))
+        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteCategory", new { Id = categoryId }))
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

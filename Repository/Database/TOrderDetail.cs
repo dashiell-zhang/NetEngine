@@ -1,5 +1,4 @@
 ﻿using Repository.Bases;
-using System;
 
 namespace Repository.Database
 {
@@ -13,14 +12,14 @@ namespace Repository.Database
         /// <summary>
         /// 订单ID
         /// </summary>
-        public Guid OrderId { get; set; }
+        public long OrderId { get; set; }
         public virtual TOrder Order { get; set; }
 
 
         /// <summary>
         /// 产品ID
         /// </summary>
-        public Guid ProductId { get; set; }
+        public long ProductId { get; set; }
         public virtual TProduct Product { get; set; }
 
 

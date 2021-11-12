@@ -38,7 +38,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
         /// <returns>文件ID</returns>
         [HttpPost("RemoteUploadFile")]
-        public Guid RemoteUploadFile([FromQuery][Required] string business, [FromQuery][Required] Guid key, [FromQuery][Required] string sign, [Required][FromBody] dtoKeyValue fileInfo)
+        public long RemoteUploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required][FromBody] dtoKeyValue fileInfo)
         {
             string remoteFileUrl = fileInfo.Key.ToString();
 
@@ -87,7 +87,7 @@ namespace AdminApi.Controllers.v1
                 {
 
                     var f = new TFile();
-                    f.Id = Guid.NewGuid();
+                    f.Id = snowflakeHelper.GetId();
                     f.Name = fileInfo.Value.ToString();
                     f.Path = filePath;
                     f.Table = business;
@@ -121,7 +121,7 @@ namespace AdminApi.Controllers.v1
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost("UploadFile")]
-        public Guid UploadFile([FromQuery][Required] string business, [FromQuery][Required] Guid key, [FromQuery][Required] string sign, [Required] IFormFile file)
+        public long UploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
             string basepath = "/Upload/" + DateTime.Now.ToString("yyyy/MM/dd");
@@ -129,7 +129,7 @@ namespace AdminApi.Controllers.v1
 
             Directory.CreateDirectory(filepath);
 
-            var fileName = Guid.NewGuid();
+            var fileName = snowflakeHelper.GetId();
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
             var fullFileName = string.Format("{0}{1}", fileName, fileExtension);
 
@@ -212,9 +212,9 @@ namespace AdminApi.Controllers.v1
         /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
         [DisableRequestSizeLimit]
         [HttpPost("BatchUploadFile")]
-        public List<Guid> BatchUploadFile([FromQuery][Required] string business, [FromQuery][Required] Guid key, [FromQuery][Required] string sign)
+        public List<long> BatchUploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign)
         {
-            var fileIds = new List<Guid>();
+            var fileIds = new List<long>();
 
             var ReqFiles = Request.Form.Files;
 
@@ -244,7 +244,7 @@ namespace AdminApi.Controllers.v1
         /// <returns></returns>
         [AllowAnonymous]
         [HttpGet("GetFile")]
-        public FileResult GetFile([Required] Guid fileid)
+        public FileResult GetFile([Required] long fileid)
         {
 
             var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
@@ -280,7 +280,7 @@ namespace AdminApi.Controllers.v1
         /// <remarks>不指定宽高参数,返回原图</remarks>
         [AllowAnonymous]
         [HttpGet("GetImage")]
-        public FileResult GetImage([Required] Guid fileId, int width, int height)
+        public FileResult GetImage([Required] long fileId, int width, int height)
         {
 #pragma warning disable CA1416
             var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
@@ -398,7 +398,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
         [HttpGet("GetFilePath")]
-        public string GetFilePath([Required] Guid fileid)
+        public string GetFilePath([Required] long fileid)
         {
 
             var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false & t.Id == fileid).FirstOrDefault();

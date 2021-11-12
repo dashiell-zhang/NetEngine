@@ -35,7 +35,7 @@ namespace Repository.Database
         /// <summary>
         /// 外链表ID
         /// </summary>
-        public Guid TableId { get; set; }
+        public long TableId { get; set; }
 
 
         /// <summary>

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AdminApp.Models
+﻿namespace AdminApp.Models
 {
     public class dtoSelect
     {
@@ -9,7 +7,7 @@ namespace AdminApp.Models
         /// <summary>
         /// 值
         /// </summary>
-        public Guid Value { get; set; }
+        public long Value { get; set; }
 
 
         /// <summary>

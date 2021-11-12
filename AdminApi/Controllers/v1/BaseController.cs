@@ -2,7 +2,7 @@
 using AdminShared.Models;
 using Common;
 using Microsoft.AspNetCore.Mvc;
-using System;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -108,7 +108,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="groupId"></param>
         /// <returns></returns>
         [HttpGet("GetValueList")]
-        public List<dtoKeyValue> GetValueList(Guid groupId)
+        public List<dtoKeyValue> GetValueList(long groupId)
         {
 
             var list = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Dictionary" & t.GroupId == groupId).Select(t => new dtoKeyValue
@@ -121,6 +121,16 @@ namespace AdminApi.Controllers.v1
         }
 
 
+
+        /// <summary>
+        /// 获取一个雪花ID
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetSnowflakeId")]
+        public long GetSnowflakeId()
+        {
+            return HttpContext.RequestServices.GetService<SnowflakeHelper>().GetId();
+        }
 
     }
 }

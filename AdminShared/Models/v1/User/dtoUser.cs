@@ -9,7 +9,7 @@ namespace AdminShared.Models.v1.User
         /// <summary>
         /// 标识ID
         /// </summary>
-        public Guid Id { get; set; }
+        public long Id { get; set; }
 
 
         /// <summary>

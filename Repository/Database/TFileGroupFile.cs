@@ -1,5 +1,4 @@
 ﻿using Repository.Bases;
-using System;
 
 namespace Repository.Database
 {
@@ -13,7 +12,7 @@ namespace Repository.Database
         /// <summary>
         /// 文件ID
         /// </summary>
-        public Guid FileId { get; set; }
+        public long FileId { get; set; }
         public virtual TFile File { get; set; }
 
 

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Repository.Database;
-using System;
 using System.Linq;
 
 namespace TaskAdmin.Libraries.Verify
@@ -45,7 +44,7 @@ namespace TaskAdmin.Libraries.Verify
 
                             var userIdStr = httpContext.User.Claims.ToList().Where(t => t.Type == "userId").Select(t => t.Value).FirstOrDefault();
 
-                            var userId = Guid.Parse(userIdStr);
+                            var userId = long.Parse(userIdStr);
                             var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
                             var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();

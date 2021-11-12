@@ -69,7 +69,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
-        public dtoUser GetUser(Guid? userId)
+        public dtoUser GetUser(long? userId)
         {
 
             if (userId == null)
@@ -100,10 +100,10 @@ namespace AdminApi.Controllers.v1
         /// <param name="createUser"></param>
         /// <returns></returns>
         [HttpPost("CreateUser")]
-        public Guid CreateUser(dtoEditUser createUser)
+        public long CreateUser(dtoEditUser createUser)
         {
             var user = new TUser();
-            user.Id = Guid.NewGuid();
+            user.Id = snowflakeHelper.GetId();
             user.CreateTime = DateTime.Now;
             user.CreateUserId = userId;
 
@@ -130,7 +130,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateUser"></param>
         /// <returns></returns>
         [HttpPost("UpdateUser")]
-        public bool UpdateUser(Guid userId, dtoEditUser updateUser)
+        public bool UpdateUser(long userId, dtoEditUser updateUser)
         {
             var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
 

@@ -1,5 +1,4 @@
 ﻿using Repository.Bases;
-using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
@@ -13,7 +12,7 @@ namespace Repository.Database
         /// <summary>
         /// 用户ID
         /// </summary>
-        public Guid UserId { get; set; }
+        public long UserId { get; set; }
 
         [ForeignKey("UserId")]
         public virtual TUser User { get; set; }
@@ -44,7 +43,7 @@ namespace Repository.Database
         /// <summary>
         /// 编辑人ID
         /// </summary>
-        public Guid? UpdateUserId { get; set; }
+        public long? UpdateUserId { get; set; }
 
         [ForeignKey("UpdateUserId")]
         public virtual TUser UpdateUser { get; set; }

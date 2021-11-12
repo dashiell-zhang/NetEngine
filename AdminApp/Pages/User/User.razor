@@ -142,7 +142,7 @@
 
     bool isShowEditUser = false;
     dtoEditUser editUser = new();
-    Guid userId;
+    long userId;
 
     async void SaveUser()
     {
@@ -204,7 +204,7 @@
 
 
 
-    async void DeleteUser(Guid userId)
+    async void DeleteUser(long userId)
     {
         using (var httpResponse = await Http.DeleteAsJsonAsync("User/DeleteUser", new { Id = userId }))
         {

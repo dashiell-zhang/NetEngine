@@ -10,6 +10,13 @@ namespace Repository.Database
 
 
         /// <summary>
+        /// 标识ID
+        /// </summary>
+        public new Guid Id { get; set; }
+
+
+
+        /// <summary>
         /// 外链表名
         /// </summary>
         public string Table { get; set; }
@@ -19,7 +26,7 @@ namespace Repository.Database
         /// <summary>
         /// 外链表ID
         /// </summary>
-        public Guid TableId { get; set; }
+        public long TableId { get; set; }
 
 
 
@@ -40,7 +47,7 @@ namespace Repository.Database
         /// <summary>
         /// 操作人信息
         /// </summary>
-        public Guid? ActionUserId { get; set; }
+        public long? ActionUserId { get; set; }
         public virtual TUser ActionUser { get; set; }
 
 

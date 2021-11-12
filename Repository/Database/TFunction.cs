@@ -39,7 +39,7 @@ namespace Repository.Database
         /// <summary>
         /// 父级信息
         /// </summary>
-        public Guid? ParentId { get; set; }
+        public long? ParentId { get; set; }
         public virtual TFunction Parent { get; set; }
 
 

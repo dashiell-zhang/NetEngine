@@ -12,7 +12,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 标识ID
         /// </summary>
-        public Guid Id { get; set; }
+        public long Id { get; set; }
 
 
 
@@ -40,7 +40,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 父级信息
         /// </summary>
-        public Guid? ParentId { get; set; }
+        public long? ParentId { get; set; }
         public string ParentName { get; set; }
 
 

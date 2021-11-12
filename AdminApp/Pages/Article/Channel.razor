@@ -126,7 +126,7 @@
 
     bool isShowEditChannel = false;
     dtoEditChannel editChannel = new();
-    Guid channelId;
+    long channelId;
 
     void EditChannel(dtoChannel channel = null)
     {
@@ -180,9 +180,9 @@
     }
 
 
-    async void DeleteChannel(Guid userId)
+    async void DeleteChannel(long channelId)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteChannel", new { Id = userId }))
+        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteChannel", new { Id = channelId }))
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

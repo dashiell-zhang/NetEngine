@@ -29,7 +29,7 @@ namespace WebApi.Controllers.v1
         /// <param name="sign"></param>
         /// <returns></returns>
         [HttpGet("GetSignCount")]
-        public int GetSignCount(string table, Guid tableId, string sign)
+        public int GetSignCount(string table, long tableId, string sign)
         {
 
             var count = db.TSign.AsNoTracking().Where(t => t.IsDelete == false && t.Table == table && t.TableId == tableId && t.Sign == sign).Count();
@@ -48,7 +48,7 @@ namespace WebApi.Controllers.v1
         {
             var sign = new TSign();
 
-            sign.Id = Guid.NewGuid();
+            sign.Id = snowflakeHelper.GetId();
             sign.CreateTime = DateTime.Now;
             sign.CreateUserId = userId;
             sign.Table = addSign.Table;

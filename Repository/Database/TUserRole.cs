@@ -1,5 +1,4 @@
 ﻿using Repository.Database.Bases;
-using System;
 
 namespace Repository.Database
 {
@@ -10,7 +9,7 @@ namespace Repository.Database
         /// <summary>
         /// 角色信息
         /// </summary>
-        public Guid RoleId { get; set; }
+        public long RoleId { get; set; }
         public virtual TRole Role { get; set; }
 
 
@@ -18,7 +17,7 @@ namespace Repository.Database
         /// <summary>
         /// 用户信息
         /// </summary>
-        public Guid UserId { get; set; }
+        public long UserId { get; set; }
         public virtual TUser User { get; set; }
 
 

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AdminShared.Models
+﻿namespace AdminShared.Models
 {
 
     /// <summary>
@@ -12,6 +10,6 @@ namespace AdminShared.Models
         /// <summary>
         /// 标识Id
         /// </summary>
-        public Guid Id { get; set; }
+        public long Id { get; set; }
     }
 }

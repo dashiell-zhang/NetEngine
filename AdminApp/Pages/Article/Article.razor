@@ -213,7 +213,7 @@
     long articleId;
 
 
-    void EditArticle(dtoArticle article = null)
+    async void EditArticle(dtoArticle article = null)
     {
 
         editArticle = new dtoEditArticle();
@@ -244,7 +244,7 @@
         }
         else
         {
-            fileKey = Http.GetFromJsonAsync<long>("Base/GetSnowflakeId").Result;
+            fileKey =await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId");
         }
 
 

@@ -418,7 +418,7 @@ namespace Repository.Database
 
 
 
-        public int SaveChangesWithSaveLog(long? actionUserId = null, string ipAddress = null, string deviceMark = null)
+        public int SaveChangesWithSaveLog(long osLogId, long? actionUserId = null, string ipAddress = null, string deviceMark = null)
         {
 
             dbContext db = this;
@@ -477,7 +477,7 @@ namespace Repository.Database
 
 
                 var osLog = new TOSLog();
-                osLog.Id = Guid.NewGuid();
+                osLog.Id = osLogId;
                 osLog.CreateTime = DateTime.Now;
                 osLog.Table = type.Name;
                 osLog.TableId = entityId;

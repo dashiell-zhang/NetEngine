@@ -10,13 +10,6 @@ namespace Repository.Database
 
 
         /// <summary>
-        /// 标识ID
-        /// </summary>
-        public new Guid Id { get; set; }
-
-
-
-        /// <summary>
         /// 外链表名
         /// </summary>
         public string Table { get; set; }

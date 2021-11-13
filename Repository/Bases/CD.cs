@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Bases
 {
@@ -15,6 +16,7 @@ namespace Repository.Bases
         /// <summary>
         /// 主键标识ID
         /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public long Id { get; set; }
 
 
@@ -45,7 +47,7 @@ namespace Repository.Bases
         /// </summary>
         /// <remarks>通用的RowVersion</remarks>
         [ConcurrencyCheck]
-        public long? RowVersion { get; set; }
+        public Guid? RowVersion { get; set; }
 
 
 

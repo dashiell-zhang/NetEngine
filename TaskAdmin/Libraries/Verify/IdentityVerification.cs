@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System.Linq;
 
@@ -39,8 +40,9 @@ namespace TaskAdmin.Libraries.Verify
                         var controller = actionDescriptor.ControllerName.ToLower();
                         var action = actionDescriptor.ActionName.ToLower();
 
-                        using (var db = new dbContext())
+                        using (var scope = httpContext.RequestServices.CreateScope())
                         {
+                            var db = scope.ServiceProvider.GetService<dbContext>();
 
                             var userIdStr = httpContext.User.Claims.ToList().Where(t => t.Type == "userId").Select(t => t.Value).FirstOrDefault();
 

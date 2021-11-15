@@ -11,7 +11,8 @@ namespace AdminApi.Actions.v1
 
         public static bool SetSiteInfo(string key, string value)
         {
-            var db = Program.ServiceProvider.CreateScope().ServiceProvider.GetService<dbContext>();
+            var db = Program.ServiceProvider.GetService<dbContext>();
+
             var snowflakeHelper = Program.ServiceProvider.GetService<SnowflakeHelper>();
 
             var appSetting = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Site" & t.Key == key).FirstOrDefault() ?? new TAppSetting();

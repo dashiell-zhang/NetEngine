@@ -309,18 +309,18 @@ namespace WebApi
 
 
             //注册缓存服务 SqlServer模式
-            //services.AddDistributedSqlServerCache(options =>
+            //builder.Services.AddDistributedSqlServerCache(options =>
             //{
-            //    options.ConnectionString = Configuration.GetConnectionString("dbConnection");
+            //    options.ConnectionString = builder.Configuration.GetConnectionString("dbConnection");
             //    options.SchemaName = "dbo";
             //    options.TableName = "t_cache";
             //});
 
 
             //注册缓存服务 Redis模式
-            //services.AddStackExchangeRedisCache(options =>
+            //builder.Services.AddStackExchangeRedisCache(options =>
             //{
-            //    options.Configuration = Configuration.GetConnectionString("redisConnection");
+            //    options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
             //    options.InstanceName = "cache";
             //});
 

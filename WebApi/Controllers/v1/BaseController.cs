@@ -130,7 +130,7 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetSnowflakeId")]
         public long GetSnowflakeId()
         {
-            return HttpContext.RequestServices.GetService<SnowflakeHelper>().GetId();
+            return snowflakeHelper.GetId();
         }
 
 

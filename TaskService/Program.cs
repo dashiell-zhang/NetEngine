@@ -83,6 +83,11 @@ namespace TaskService
 
                     services.AddHostedService<Tasks.DemoTask>();
 
+
+                    //注册雪花ID算法示例
+                    services.AddSingleton(new Common.SnowflakeHelper(0, 0));
+
+
                     //注册缓存服务 内存模式
                     services.AddDistributedMemoryCache();
 

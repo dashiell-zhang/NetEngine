@@ -28,10 +28,14 @@ namespace Common
         /// <param name="time">待转换的时间</param>
         /// <param name="startYear">startYear，默认为 1970</param>
         /// <returns></returns>
-        public static long TimeToUnix(DateTime time, int startYear = 1970)
+        public static long TimeToUnix(DateTime? time = null, int startYear = 1970)
         {
+            if (time == null)
+            {
+                time = DateTime.Now;
+            }
             var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
-            return (long)(time - startTime).TotalSeconds; // 相差秒数
+            return (long)(time.Value - startTime).TotalSeconds; // 相差秒数
         }
 
 
@@ -57,10 +61,14 @@ namespace Common
         /// <param name="time">待转换的时间</param>
         /// <param name="startYear">startYear，默认为 1970</param>
         /// <returns></returns>
-        public static long TimeToJs(DateTime time, int startYear = 1970)
+        public static long TimeToJs(DateTime? time = null, int startYear = 1970)
         {
+            if (time == null)
+            {
+                time = DateTime.Now;
+            }
             var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
-            return (long)(time - startTime).TotalMilliseconds;
+            return (long)(time.Value - startTime).TotalMilliseconds;
         }
 
 

@@ -54,8 +54,6 @@ namespace TaskAdmin
             builder.Services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
 
 
-            builder.Services.AddResponseCompression();
-
             builder.Services.AddSingleton<DemoSubscribe>();
             builder.Services.AddCap(options =>
             {
@@ -103,6 +101,21 @@ namespace TaskAdmin
                 options.MaxAge = TimeSpan.FromDays(365);
             });
 
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                //options.KnownProxies.Add(IPAddress.Parse("10.0.0.100"));
+            });
+
+            builder.Services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = true;
+            });
+
+
+            builder.Services.AddControllersWithViews();
+
+
 
             //зЂВс HangFire(Memory)
             builder.Services.AddHangfire(configuration => configuration.UseInMemoryStorage());
@@ -141,14 +154,6 @@ namespace TaskAdmin
             builder.Services.AddHangfireServer(options => options.SchedulePollingInterval = TimeSpan.FromSeconds(3));
 
 
-
-            builder.Services.AddControllersWithViews();
-
-            builder.Services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-                //options.KnownProxies.Add(IPAddress.Parse("10.0.0.100"));
-            });
 
 
             builder.Services.AddAuthentication(options =>

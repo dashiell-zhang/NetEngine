@@ -65,8 +65,6 @@ namespace WebApi
             builder.Services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
 
 
-            builder.Services.AddResponseCompression();
-
             builder.Services.AddSingleton<DemoSubscribe>();
             builder.Services.AddCap(options =>
             {
@@ -129,13 +127,22 @@ namespace WebApi
                 options.MaxAge = TimeSpan.FromDays(365);
             });
 
-            builder.Services.AddControllers();
-
+            
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 //options.KnownProxies.Add(IPAddress.Parse("10.0.0.100"));
             });
+
+            builder.Services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = true;
+            });
+
+
+            builder.Services.AddControllers();
+
+
 
             //注册JWT认证机制
             var jwtSetting = builder.Configuration.GetSection("JWTSetting").Get<JWTSetting>();

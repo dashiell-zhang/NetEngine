@@ -60,9 +60,8 @@ namespace Repository.Database
         public DbSet<TFunctionAuthorize> TFunctionAuthorize { get; set; }
 
 
-        public DbSet<TImgBaiduAI> TImgBaiduAI { get; set; }
-
         public DbSet<TLink> TLink { get; set; }
+
 
         public DbSet<TLog> TLog { get; set; }
 

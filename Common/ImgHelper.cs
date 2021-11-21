@@ -6,7 +6,6 @@ using Encoder = System.Drawing.Imaging.Encoder;
 
 namespace Common
 {
-#pragma warning disable CA1416
 
     public class ImgHelper
     {
@@ -135,5 +134,4 @@ namespace Common
         }
     }
 
-#pragma warning restore CA1416
 }

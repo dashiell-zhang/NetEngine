@@ -282,7 +282,6 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetImage")]
         public FileResult GetImage([Required] long fileId, int width, int height)
         {
-#pragma warning disable CA1416
             var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
             var path = Libraries.IO.Path.WebRootPath() + file.Path;
 
@@ -387,7 +386,6 @@ namespace AdminApi.Controllers.v1
                 }
 
             }
-#pragma warning restore CA1416
         }
 
 

@@ -1,10 +1,11 @@
 ﻿using Medallion.Threading;
-using Medallion.Threading.SqlServer;
+using Medallion.Threading.Redis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using System;
 using System.Net.Http;
 using TaskService.Filters;
@@ -34,11 +35,11 @@ namespace TaskService
 
                     //为各数据库注入连接字符串
                     Repository.Database.dbContext.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
-                    services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
+                    services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 30);
 
-                    services.AddSingleton<IDistributedLockProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
-                    services.AddSingleton<IDistributedSemaphoreProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
-                    services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
+                    services.AddSingleton<IDistributedLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
+                    services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
+                    services.AddSingleton<IDistributedReaderWriterLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
 
                     services.AddLogging(options => options.AddConsole());
 

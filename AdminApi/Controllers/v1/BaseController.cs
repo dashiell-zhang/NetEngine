@@ -89,7 +89,6 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetQrCode")]
         public FileResult GetQrCode(string text)
         {
-#pragma warning disable CA1416
             var image = ImgHelper.GetQrCode(text);
 
             using (var ms = new MemoryStream())
@@ -97,7 +96,6 @@ namespace AdminApi.Controllers.v1
                 image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
                 return File(ms.ToArray(), "image/png");
             }
-#pragma warning restore CA1416
         }
 
 

@@ -109,7 +109,6 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetWeiXinPayPCUrl")]
         public FileResult GetWeiXinPayPCUrl(string orderNo)
         {
-#pragma warning disable CA1416
             string key = "wxpayPCUrl" + orderNo;
 
             string codeUrl = Common.CacheHelper.GetString(key);
@@ -141,7 +140,6 @@ namespace WebApi.Controllers.v1
             MemoryStream ms = new MemoryStream();
             image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
             return File(ms.ToArray(), "image/png");
-#pragma warning restore CA1416
         }
 
 

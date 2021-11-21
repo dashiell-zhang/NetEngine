@@ -1,6 +1,6 @@
 using Hangfire;
 using Medallion.Threading;
-using Medallion.Threading.SqlServer;
+using Medallion.Threading.Redis;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using StackExchange.Redis;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -46,12 +47,12 @@ namespace TaskAdmin
 
             //Îª¸÷Êý¾Ý¿â×¢ÈëÁ¬½Ó×Ö·û´®
             Repository.Database.dbContext.ConnectionString = builder.Configuration.GetConnectionString("dbConnection");
-            builder.Services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
+            builder.Services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 30);
 
 
-            builder.Services.AddSingleton<IDistributedLockProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
-            builder.Services.AddSingleton<IDistributedSemaphoreProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
-            builder.Services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
+            builder.Services.AddSingleton<IDistributedLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
+            builder.Services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
+            builder.Services.AddSingleton<IDistributedReaderWriterLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
 
 
             builder.Services.AddSingleton<DemoSubscribe>();
@@ -122,12 +123,12 @@ namespace TaskAdmin
 
 
             //×¢²á HangFire(Redis)
-            //builder.Services.AddHangfire(options => options.UseRedisStorage(builder.Configuration.GetConnectionString("hangfireConnection")));
+            //builder.Services.AddHangfire(options => options.UseRedisStorage(builder.Configuration.GetConnectionString("dbConnection")));
 
 
             //×¢²á HangFire(SqlServer)
             //builder.Services.AddHangfire(options => options
-            //    .UseSqlServerStorage(builder.Configuration.GetConnectionString("hangfireConnection"), new SqlServerStorageOptions
+            //    .UseSqlServerStorage(builder.Configuration.GetConnectionString("dbConnection"), new SqlServerStorageOptions
             //    {
             //        SchemaName = "hangfire"
             //    }));
@@ -135,7 +136,7 @@ namespace TaskAdmin
 
             //×¢²á HangFire(PostgreSQL)
             //builder.Services.AddHangfire(options => options
-            //    .UsePostgreSqlStorage(builder.Configuration.GetConnectionString("hangfireConnection"), new PostgreSqlStorageOptions
+            //    .UsePostgreSqlStorage(builder.Configuration.GetConnectionString("dbConnection"), new PostgreSqlStorageOptions
             //    {
             //        SchemaName = "hangfire"
             //    }));
@@ -143,7 +144,7 @@ namespace TaskAdmin
 
             //×¢²á HangFire(MySql)
             //builder.Services.AddHangfire(options => options
-            //    .UseStorage(new MySqlStorage(builder.Configuration.GetConnectionString("hangfireConnection") + "Allow User Variables=True", new MySqlStorageOptions
+            //    .UseStorage(new MySqlStorage(builder.Configuration.GetConnectionString("dbConnection") + "Allow User Variables=True", new MySqlStorageOptions
             //    {
             //        TablesPrefix = "hangfire_"
             //    })));

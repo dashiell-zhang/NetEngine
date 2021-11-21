@@ -128,13 +128,13 @@ namespace Repository.Database
                 //SQLServer:"Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100;Encrypt=True"
                 //MySQL:"server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100"
                 //SQLite:"Data Source=../Repository/database.db"
-                //PostgreSQL:"Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=100;SSL Mode=VerifyFull"
+                //PostgreSQL:"Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=30;SSL Mode=VerifyFull"
 
-                optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 25)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                //optionsBuilder.UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 27)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseSqlite(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
             }
 
             //开启调试拦截器

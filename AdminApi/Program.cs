@@ -5,7 +5,7 @@ using AdminApi.Libraries.Verify;
 using AdminApi.Models.AppSetting;
 using AdminApi.Subscribes;
 using Medallion.Threading;
-using Medallion.Threading.SqlServer;
+using Medallion.Threading.Redis;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -23,6 +23,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.IO;
@@ -57,11 +58,11 @@ namespace AdminApi
 
             //为各数据库注入连接字符串
             Repository.Database.dbContext.ConnectionString = builder.Configuration.GetConnectionString("dbConnection");
-            builder.Services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 100);
+            builder.Services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 30);
 
-            builder.Services.AddSingleton<IDistributedLockProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
-            builder.Services.AddSingleton<IDistributedSemaphoreProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
-            builder.Services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
+            builder.Services.AddSingleton<IDistributedLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
+            builder.Services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
+            builder.Services.AddSingleton<IDistributedReaderWriterLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
 
 
             builder.Services.AddSingleton<DemoSubscribe>();

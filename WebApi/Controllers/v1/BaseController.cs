@@ -91,12 +91,7 @@ namespace WebApi.Controllers.v1
         public FileResult GetQrCode(string text)
         {
             var image = ImgHelper.GetQrCode(text);
-
-            using (var ms = new MemoryStream())
-            {
-                image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-                return File(ms.ToArray(), "image/png");
-            }
+            return File(image, "image/png");
         }
 
 

@@ -1,7 +1,9 @@
-﻿using QRCoder;
+﻿using SkiaSharp;
+using SkiaSharp.QrCode;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 
 namespace Common
 {
@@ -9,18 +11,31 @@ namespace Common
     public class ImgHelper
     {
 
-        /// <summary>
-        /// string生成二维码
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        public static Bitmap GetQrCode(string text)
+
+        public static byte[] GetQrCode(string text)
         {
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.L);
-            QRCode qrCode = new QRCode(qrCodeData);
-            Bitmap qrCodeImage = qrCode.GetGraphic(15);
-            return qrCodeImage;
+            using (var generator = new QRCodeGenerator())
+            {
+                // Generate QrCode
+                var qr = generator.CreateQrCode(text, ECCLevel.L);
+
+                // Render to canvas
+                var info = new SKImageInfo(512, 512);
+                using (var surface = SKSurface.Create(info))
+                {
+                    var canvas = surface.Canvas;
+                    canvas.Render(qr, info.Width, info.Height);
+
+                    // Output to Stream -> File
+                    using (var image = surface.Snapshot())
+                    {
+                        using (var data = image.Encode(SKEncodedImageFormat.Jpeg, 100))
+                        {
+                            return data.ToArray();
+                        }
+                    }
+                }
+            }
         }
 
 

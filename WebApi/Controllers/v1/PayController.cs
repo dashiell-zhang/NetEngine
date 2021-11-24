@@ -137,9 +137,8 @@ namespace WebApi.Controllers.v1
             }
 
             var image = Common.ImgHelper.GetQrCode(codeUrl);
-            MemoryStream ms = new MemoryStream();
-            image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-            return File(ms.ToArray(), "image/png");
+
+            return File(image, "image/png");
         }
 
 

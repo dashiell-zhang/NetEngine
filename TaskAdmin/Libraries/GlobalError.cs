@@ -37,7 +37,13 @@ namespace TaskAdmin.Libraries
             {
                 path = path,
                 parameter = parameterStr,
-                error = error
+                error = new
+                {
+                    error.Source,
+                    error.Message,
+                    error.TargetSite,
+                    error.StackTrace
+                }
             };
 
             string strContent = JsonHelper.ObjectToJSON(content);

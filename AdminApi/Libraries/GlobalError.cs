@@ -40,7 +40,13 @@ namespace AdminApi.Libraries
                 path = path,
                 parameter = parameter,
                 authorization = authorization,
-                error = error
+                error = new
+                {
+                    error.Source,
+                    error.Message,
+                    error.TargetSite,
+                    error.StackTrace
+                }
             };
 
             string strContent = JsonHelper.ObjectToJSON(content);

@@ -46,7 +46,7 @@ namespace AdminApi.Libraries.Verify
                     var controller = actionDescriptor.ControllerName.ToLower();
                     var action = actionDescriptor.ActionName.ToLower();
 
-                    using (var scope = httpContext.RequestServices.CreateScope())
+                    using (var scope = Program.ServiceProvider.CreateScope())
                     {
                         var db = scope.ServiceProvider.GetService<dbContext>();
 
@@ -96,7 +96,7 @@ namespace AdminApi.Libraries.Verify
 
             var snowflakeHelper = httpContext.RequestServices.GetService<SnowflakeHelper>();
 
-            using (var scope = httpContext.RequestServices.CreateScope())
+            using (var scope = Program.ServiceProvider.CreateScope())
             {
                 var db = scope.ServiceProvider.GetService<dbContext>();
 

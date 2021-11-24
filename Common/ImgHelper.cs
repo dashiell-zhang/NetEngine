@@ -2,7 +2,6 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using Encoder = System.Drawing.Imaging.Encoder;
 
 namespace Common
 {
@@ -18,21 +17,9 @@ namespace Common
         public static Bitmap GetQrCode(string text)
         {
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
-
             QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.L);
-
             QRCode qrCode = new QRCode(qrCodeData);
-
             Bitmap qrCodeImage = qrCode.GetGraphic(15);
-
-            Encoder myEncoder = Encoder.Quality;
-
-            var myEncoderParameters = new EncoderParameters(5);
-
-            var myEncoderParameter = new EncoderParameter(myEncoder, 25L);
-
-            myEncoderParameters.Param[0] = myEncoderParameter;
-
             return qrCodeImage;
         }
 

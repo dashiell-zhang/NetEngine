@@ -171,7 +171,7 @@ namespace AdminApi.Controllers.v1
                 };
 
                 Common.AliYun.SmsHelper sms = new Common.AliYun.SmsHelper();
-                var smsStatus = sms.SendSms(phone, "短信模板编号", "短信签名", Common.Json.JsonHelper.ObjectToJSON(jsonCode));
+                var smsStatus = sms.SendSms(phone, "短信模板编号", "短信签名", Common.Json.JsonHelper.ObjectToJson(jsonCode));
 
                 if (smsStatus)
                 {

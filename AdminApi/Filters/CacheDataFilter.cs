@@ -66,7 +66,7 @@ namespace AdminApi.Filters
         {
             try
             {
-                var value = JsonHelper.ObjectToJSON(context.Result);
+                var value = JsonHelper.ObjectToJson(context.Result);
                 value = JsonHelper.GetValueByKey(value, "value");
 
 

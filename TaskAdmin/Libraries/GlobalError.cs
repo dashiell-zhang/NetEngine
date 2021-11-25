@@ -26,7 +26,7 @@ namespace TaskAdmin.Libraries
 
             var parameter = Http.HttpContext.GetParameter();
 
-            var parameterStr = JsonHelper.ObjectToJSON(parameter);
+            var parameterStr = JsonHelper.ObjectToJson(parameter);
 
             if (parameterStr.Length > 102400)
             {
@@ -46,7 +46,7 @@ namespace TaskAdmin.Libraries
                 }
             };
 
-            string strContent = JsonHelper.ObjectToJSON(content);
+            string strContent = JsonHelper.ObjectToJson(content);
 
             Common.DBHelper.LogSet("TaskAdmin", "errorlog", strContent);
 

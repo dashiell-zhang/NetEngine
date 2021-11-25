@@ -64,7 +64,7 @@ namespace Common.AliYun
                     error = e
                 };
 
-                var logStr = Json.JsonHelper.ObjectToJSON(log);
+                var logStr = Json.JsonHelper.ObjectToJson(log);
 
                 DBHelper.LogSet("Sms", "error", logStr);
 
@@ -82,7 +82,7 @@ namespace Common.AliYun
                     error = e
                 };
 
-                var logStr = Json.JsonHelper.ObjectToJSON(log);
+                var logStr = Json.JsonHelper.ObjectToJson(log);
 
                 DBHelper.LogSet("Sms", "error", logStr);
 

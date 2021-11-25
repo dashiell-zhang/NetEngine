@@ -52,7 +52,7 @@ namespace AdminApi.Filters
 
             if (UseParameter)
             {
-                var parameter = Common.Json.JsonHelper.ObjectToJSON(Libraries.Http.HttpContext.GetParameter());
+                var parameter = Common.Json.JsonHelper.ObjectToJson(Libraries.Http.HttpContext.GetParameter());
                 key = key + "_" + parameter;
             }
 

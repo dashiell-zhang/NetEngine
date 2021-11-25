@@ -244,7 +244,7 @@ namespace WebApi.Libraries.WeiXin.Public
         */
         public string ToJson()
         {
-            string jsonStr = JsonHelper.ObjectToJSON(m_values).ToString();
+            string jsonStr = JsonHelper.ObjectToJson(m_values).ToString();
             return jsonStr;
         }
 

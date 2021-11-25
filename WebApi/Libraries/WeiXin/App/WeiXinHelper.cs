@@ -159,7 +159,7 @@ namespace WebApi.Libraries.WeiXin.App
 
             var returnJson = HttpHelper.Post(url, "", "form");
 
-            var userInfo = Common.Json.JsonHelper.JSONToObject<GetUserInfo>(returnJson);
+            var userInfo = Common.Json.JsonHelper.JsonToObject<GetUserInfo>(returnJson);
 
             return userInfo;
         }

@@ -313,7 +313,7 @@
 
     async Task<bool> DeleteImg(UploadFileItem file)
     {
-        Console.WriteLine(JsonHelper.ObjectToJSON(file));
+        Console.WriteLine(JsonHelper.ObjectToJson(file));
 
         using (var httpResponse = await Http.DeleteAsJsonAsync("File/DeleteFile", new { Id = file.Id }))
         {
@@ -334,9 +334,9 @@
         if (fileinfo.File.State == UploadState.Success)
         {
 
-            fileinfo.File.Id = JsonHelper.JSONToObject<string>(fileinfo.File.Response);
+            fileinfo.File.Id = JsonHelper.JsonToObject<string>(fileinfo.File.Response);
 
-            Console.WriteLine(JsonHelper.ObjectToJSON(fileinfo));
+            Console.WriteLine(JsonHelper.ObjectToJson(fileinfo));
             fileinfo.File.Url = fileinfo.File.ObjectURL;
         }
     }

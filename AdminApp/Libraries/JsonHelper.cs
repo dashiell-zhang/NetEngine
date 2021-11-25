@@ -4,7 +4,6 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 
 namespace AdminApp.Libraries
@@ -34,73 +33,12 @@ namespace AdminApp.Libraries
 
 
 
-        /// <summary>
-        /// DataRow转JSON
-        /// </summary>
-        /// <param name="row">DataRow</param>
-        /// <returns>JSON格式对象</returns>
-        public static object DataRowToJSON(DataRow row)
-        {
-            Dictionary<string, object> dataList = new Dictionary<string, object>();
-            foreach (DataColumn column in row.Table.Columns)
-            {
-                dataList.Add(column.ColumnName, row[column]);
-            }
-
-            return ObjectToJSON(dataList);
-        }
-
-
-
-
-        /// <summary>
-        /// DataRow转对象
-        /// </summary>
-        /// <typeparam name="T">类型</typeparam>
-        /// <param name="row">DataRow</param>
-        /// <returns>JSON格式对象</returns>
-        public static T DataRowToObject<T>(DataRow row)
-        {
-            return JSONToObject<T>(DataRowToJSON(row).ToString());
-        }
-
-
-
-
-        /// <summary>
-        /// DataTable转List
-        /// </summary>
-        /// <typeparam name="T">类型</typeparam>
-        /// <param name="table">DataTable</param>
-        /// <returns>JSON格式对象</returns>
-        public static List<T> DataTableToList<T>(DataTable table)
-        {
-            return JSONToList<T>(ObjectToJSON(table));
-        }
-
-
-
-
-        /// <summary>
-        /// Json转List
-        /// </summary>
-        /// <typeparam name="T">类型</typeparam>
-        /// <param name="jsonText">JSON文本</param> 
-        /// <returns>JSON格式对象</returns>
-        public static List<T> JSONToList<T>(string jsonText)
-        {
-            return JSONToObject<List<T>>(jsonText);
-        }
-
-
-
-
         /// <summary> 
-        /// 对象转JSON 
+        /// 对象 转 Json
         /// </summary> 
         /// <param name="obj">对象</param> 
         /// <returns>JSON格式的字符串</returns> 
-        public static string ObjectToJSON(object obj)
+        public static string ObjectToJson(object obj)
         {
             try
             {
@@ -123,12 +61,12 @@ namespace AdminApp.Libraries
 
 
         /// <summary> 
-        /// JSON文本转对象
+        /// Json 转 对象
         /// </summary> 
         /// <typeparam name="T">类型</typeparam> 
         /// <param name="jsonText">JSON文本</param> 
         /// <returns>指定类型的对象</returns> 
-        public static T JSONToObject<T>(string jsonText)
+        public static T JsonToObject<T>(string jsonText)
         {
             try
             {
@@ -142,8 +80,9 @@ namespace AdminApp.Libraries
 
 
 
+
         /// <summary>
-        /// 没有Key的 Json 转 数组List
+        /// 没有 Key 的 Json 转 List<JToken>
         /// </summary>
         /// <param name="strJson"></param>
         /// <returns></returns>

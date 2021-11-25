@@ -29,7 +29,7 @@ namespace Common
                     // Output to Stream -> File
                     using (var image = surface.Snapshot())
                     {
-                        using (var data = image.Encode(SKEncodedImageFormat.Jpeg, 100))
+                        using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
                         {
                             return data.ToArray();
                         }

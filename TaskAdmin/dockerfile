@@ -8,8 +8,8 @@ RUN echo "deb https://mirrors.aliyun.com/debian buster main" > /etc/apt/sources.
 RUN echo "deb https://mirrors.aliyun.com/debian-security buster/updates main" >> /etc/apt/sources.list
 RUN echo "deb https://mirrors.aliyun.com/debian buster-updates main" >> /etc/apt/sources.list
 
-#安装 libgdiplus 以解决 System.Drawing 在 linux 下无法运行的问题
-RUN apt-get update && apt-get -y install libgdiplus	
+#安装 libfontconfig1 以解决 SkiaSharp 在 linux 的依赖问题
+RUN apt-get update && apt-get -y install libfontconfig1
 
 #设置时区为中国上海
 ENV TZ=Asia/Shanghai

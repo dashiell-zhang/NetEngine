@@ -190,43 +190,58 @@ namespace Common
 
 
             //创建bitmap位图
-            using (SKBitmap image2d = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul))
+            using (SKBitmap image = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul))
             {
                 //创建画笔
-                using (SKCanvas canvas = new SKCanvas(image2d))
+                using (SKCanvas canvas = new SKCanvas(image))
                 {
                     //填充背景颜色为白色
                     canvas.DrawColor(SKColors.White);
 
-                    SKTypeface font = SKTypeface.FromFamilyName(null, SKFontStyleWeight.SemiBold, SKFontStyleWidth.ExtraCondensed, SKFontStyleSlant.Upright);
-                    SKPaint paint = new SKPaint();
-                    paint.IsAntialias = true;
-                    paint.Color = SKColors.Black;
-                    paint.Typeface = font;
-                    paint.TextSize = height;
 
+                    //画图片的背景噪音线
+                    int x1, y1, x2, y2;
 
-                    //将文字写到画布上
-                    using (SKPaint drawStyle = paint)
-                    {
-                        canvas.DrawText(randString, 1, height - 1, drawStyle);
-                    }
-                    //画随机干扰线
-                    using (SKPaint drawStyle = new SKPaint())
+                    for (int i = 0; i < 100; i++)
                     {
 
-                        int lineNum = 40; //干扰线数量
-                        int lineStrookeWidth = 1; //干扰线宽度
-
-                        for (int i = 0; i < lineNum; i++)
+                        using (SKPaint drawStyle = new SKPaint())
                         {
-                            drawStyle.Color = colors[random.Next(colors.Count)];
-                            drawStyle.StrokeWidth = lineStrookeWidth;
+                            drawStyle.Color = SKColors.Silver;
+
+                            x1 = random.Next(width);
+                            y1 = random.Next(height);
+                            x2 = random.Next(width);
+                            y2 = random.Next(height);
+
                             canvas.DrawLine(random.Next(0, width), random.Next(0, height), random.Next(0, width), random.Next(0, height), drawStyle);
                         }
                     }
-                    //返回图片byte
-                    using (SKImage img = SKImage.FromBitmap(image2d))
+
+
+                    //将文字写到画布上
+                    using (SKPaint drawStyle = new SKPaint())
+                    {
+                        var font = SKTypeface.FromFamilyName("Arial", SKFontStyleWeight.SemiBold, SKFontStyleWidth.ExtraCondensed, SKFontStyleSlant.Italic);
+                        drawStyle.IsAntialias = true;
+                        drawStyle.Color = SKColors.Red;
+                        drawStyle.Typeface = font;
+                        drawStyle.TextSize = height;
+
+                        canvas.DrawText(randString, 1, height - 1, drawStyle);
+                    }
+
+                    //画图片的前景噪音点
+                    for (int i = 0; i < 800; i++)
+                    {
+                        x1 = random.Next(width);
+                        y1 = random.Next(height);
+
+                        image.SetPixel(x1, y1, colors[random.Next(colors.Count)]);
+                    }
+
+
+                    using (var img = SKImage.FromBitmap(image))
                     {
                         using (SKData p = img.Encode(SKEncodedImageFormat.Png, 100))
                         {

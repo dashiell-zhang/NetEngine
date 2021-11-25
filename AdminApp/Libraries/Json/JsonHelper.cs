@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Unicode;
 
-namespace Common.Json
+namespace AdminApp.Libraries.Json
 {
     public class JsonHelper
     {

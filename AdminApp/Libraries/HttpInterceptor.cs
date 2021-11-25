@@ -51,7 +51,7 @@ namespace AdminApp.Libraries
                 await Notice.Open(new NotificationConfig()
                 {
                     Message = "异常",
-                    Description = Libraries.JsonHelper.GetValueByKey(ret, "errMsg"),
+                    Description = Json.JsonHelper.GetValueByKey(ret, "errMsg"),
                     NotificationType = NotificationType.Warning
                 });
 

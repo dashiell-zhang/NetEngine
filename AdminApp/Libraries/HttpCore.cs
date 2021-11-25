@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace AdminApp.Libraries
@@ -16,9 +17,9 @@ namespace AdminApp.Libraries
         {
             var jsonSerializerOptions = new JsonSerializerOptions();
 
-            jsonSerializerOptions.Converters.Add(new JsonConverter.DateTimeConverter());
-            jsonSerializerOptions.Converters.Add(new JsonConverter.DateTimeNullConverter());
-            jsonSerializerOptions.Converters.Add(new JsonConverter.LongConverter());
+            jsonSerializerOptions.Converters.Add(new Json.DateTimeConverter());
+            jsonSerializerOptions.Converters.Add(new Json.DateTimeNullConverter());
+            jsonSerializerOptions.Converters.Add(new Json.LongConverter());
             jsonSerializerOptions.PropertyNameCaseInsensitive = true;
 
             return client.GetFromJsonAsync<TValue>(requestUri, jsonSerializerOptions);
@@ -43,9 +44,9 @@ namespace AdminApp.Libraries
         {
             var jsonSerializerOptions = new JsonSerializerOptions();
 
-            jsonSerializerOptions.Converters.Add(new JsonConverter.DateTimeConverter());
-            jsonSerializerOptions.Converters.Add(new JsonConverter.DateTimeNullConverter());
-            jsonSerializerOptions.Converters.Add(new JsonConverter.LongConverter());
+            jsonSerializerOptions.Converters.Add(new Json.DateTimeConverter());
+            jsonSerializerOptions.Converters.Add(new Json.DateTimeNullConverter());
+            jsonSerializerOptions.Converters.Add(new Json.LongConverter());
             jsonSerializerOptions.PropertyNameCaseInsensitive = true;
 
             var result = httpContent.ReadAsStringAsync().Result;

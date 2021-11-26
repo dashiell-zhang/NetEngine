@@ -1,8 +1,6 @@
 ﻿using SkiaSharp;
 using SkiaSharp.QrCode;
 using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 
 namespace Common
 {
@@ -15,22 +13,23 @@ namespace Common
         {
             using (var generator = new QRCodeGenerator())
             {
-                // Generate QrCode
-                var qr = generator.CreateQrCode(text, ECCLevel.L);
-
-                // Render to canvas
-                var info = new SKImageInfo(512, 512);
-                using (var surface = SKSurface.Create(info))
+                using (var qr = generator.CreateQrCode(text, ECCLevel.L))
                 {
-                    var canvas = surface.Canvas;
-                    canvas.Render(qr, info.Width, info.Height);
+                    var info = new SKImageInfo(500, 500);
 
-                    // Output to Stream -> File
-                    using (var image = surface.Snapshot())
+                    using (var surface = SKSurface.Create(info))
                     {
-                        using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
+                        using (var canvas = surface.Canvas)
                         {
-                            return data.ToArray();
+                            canvas.Render(qr, info.Width, info.Height, SKColors.White, SKColors.Black);
+
+                            using (var image = surface.Snapshot())
+                            {
+                                using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
+                                {
+                                    return data.ToArray();
+                                }
+                            }
                         }
                     }
                 }
@@ -39,42 +38,38 @@ namespace Common
 
 
 
+
         /// <summary>
-        /// 从指定的图片截取指定坐标的部分下来
+        /// 从图片截取部分区域
         /// </summary>
         /// <param name="fromImagePath">源图路径</param>
         /// <param name="offsetX">距上</param>
         /// <param name="offsetY">距左</param>
-        /// <param name="toImagePath">保存路径</param>
         /// <param name="width">宽度</param>
         /// <param name="height">高度</param>
         /// <returns></returns>
-        public static bool Screenshot(string fromImagePath, int offsetX, int offsetY, string toImagePath, int width, int height)
+        public static byte[] Screenshot(string fromImagePath, int offsetX, int offsetY, int width, int height)
         {
-            try
+            using (var original = SKBitmap.Decode(fromImagePath))
             {
-                //原图片文件
-                Image fromImage = Image.FromFile(fromImagePath);
-                //创建新图位图
-                Bitmap bitmap = new Bitmap(width, height);
-                //创建作图区域
-                Graphics graphic = Graphics.FromImage(bitmap);
-                //截取原图相应区域写入作图区
-                graphic.DrawImage(fromImage, 0, 0, new Rectangle(offsetX, offsetY, width, height), GraphicsUnit.Pixel);
-                //从作图区生成新图
-                Image saveImage = Image.FromHbitmap(bitmap.GetHbitmap());
-                //保存图片
-                saveImage.Save(toImagePath, ImageFormat.Png);
-                //释放资源   
-                saveImage.Dispose();
-                graphic.Dispose();
-                bitmap.Dispose();
+                using (var bitmap = new SKBitmap(width, height))
+                {
+                    using (var canvas = new SKCanvas(bitmap))
+                    {
+                        var sourceRect = new SKRect(offsetX, offsetY, offsetX + width, offsetY + height);
+                        var destRect = new SKRect(0, 0, width, height);
 
-                return true;
-            }
-            catch
-            {
-                return false;
+                        canvas.DrawBitmap(original, sourceRect, destRect);
+
+                        using (var img = SKImage.FromBitmap(bitmap))
+                        {
+                            using (SKData p = img.Encode(SKEncodedImageFormat.Png, 100))
+                            {
+                                return p.ToArray();
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -91,7 +86,7 @@ namespace Common
         {
 
             int width = 128;
-            int height =45;
+            int height = 45;
 
             Random random = new();
 

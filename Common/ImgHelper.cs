@@ -1,7 +1,6 @@
 ﻿using SkiaSharp;
 using SkiaSharp.QrCode;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -88,158 +87,52 @@ namespace Common
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <returns></returns>
-        public static byte[] GetVerificationCode(int width, int height)
+        public static byte[] GetVerifyCode(string text)
         {
 
-            Random random = new Random();
+            int width = 128;
+            int height =45;
 
-            string randString = random.Next(1000, 9999).ToString();
-
-            List<SKColor> colors = new();
-
-            colors.Add(SKColors.AliceBlue);
-            colors.Add(SKColors.PaleGreen);
-            colors.Add(SKColors.PaleGoldenrod);
-            colors.Add(SKColors.Orchid);
-            colors.Add(SKColors.OrangeRed);
-            colors.Add(SKColors.Orange);
-            colors.Add(SKColors.OliveDrab);
-            colors.Add(SKColors.Olive);
-            colors.Add(SKColors.OldLace);
-            colors.Add(SKColors.Navy);
-            colors.Add(SKColors.NavajoWhite);
-            colors.Add(SKColors.Moccasin);
-            colors.Add(SKColors.MistyRose);
-            colors.Add(SKColors.MintCream);
-            colors.Add(SKColors.MidnightBlue);
-            colors.Add(SKColors.MediumVioletRed);
-            colors.Add(SKColors.MediumTurquoise);
-            colors.Add(SKColors.MediumSpringGreen);
-            colors.Add(SKColors.LightSlateGray);
-            colors.Add(SKColors.LightSteelBlue);
-            colors.Add(SKColors.LightYellow);
-            colors.Add(SKColors.Lime);
-            colors.Add(SKColors.LimeGreen);
-            colors.Add(SKColors.Linen);
-            colors.Add(SKColors.PaleTurquoise);
-            colors.Add(SKColors.Magenta);
-            colors.Add(SKColors.MediumAquamarine);
-            colors.Add(SKColors.MediumBlue);
-            colors.Add(SKColors.MediumOrchid);
-            colors.Add(SKColors.MediumPurple);
-            colors.Add(SKColors.MediumSeaGreen);
-            colors.Add(SKColors.MediumSlateBlue);
-            colors.Add(SKColors.Maroon);
-            colors.Add(SKColors.PaleVioletRed);
-            colors.Add(SKColors.PapayaWhip);
-            colors.Add(SKColors.PeachPuff);
-            colors.Add(SKColors.Snow);
-            colors.Add(SKColors.SpringGreen);
-            colors.Add(SKColors.SteelBlue);
-            colors.Add(SKColors.Tan);
-            colors.Add(SKColors.Teal);
-            colors.Add(SKColors.Thistle);
-            colors.Add(SKColors.SlateGray);
-            colors.Add(SKColors.Tomato);
-            colors.Add(SKColors.Violet);
-            colors.Add(SKColors.Wheat);
-            colors.Add(SKColors.White);
-            colors.Add(SKColors.WhiteSmoke);
-            colors.Add(SKColors.Yellow);
-            colors.Add(SKColors.YellowGreen);
-            colors.Add(SKColors.Turquoise);
-            colors.Add(SKColors.LightSkyBlue);
-            colors.Add(SKColors.SlateBlue);
-            colors.Add(SKColors.Silver);
-            colors.Add(SKColors.Peru);
-            colors.Add(SKColors.Pink);
-            colors.Add(SKColors.Plum);
-            colors.Add(SKColors.PowderBlue);
-            colors.Add(SKColors.Purple);
-            colors.Add(SKColors.Red);
-            colors.Add(SKColors.SkyBlue);
-            colors.Add(SKColors.RosyBrown);
-            colors.Add(SKColors.SaddleBrown);
-            colors.Add(SKColors.Salmon);
-            colors.Add(SKColors.SandyBrown);
-            colors.Add(SKColors.SeaGreen);
-            colors.Add(SKColors.SeaShell);
-            colors.Add(SKColors.Sienna);
-            colors.Add(SKColors.RoyalBlue);
-            colors.Add(SKColors.LightSeaGreen);
-            colors.Add(SKColors.LightSalmon);
-            colors.Add(SKColors.LightPink);
-            colors.Add(SKColors.Crimson);
-            colors.Add(SKColors.Cyan);
-            colors.Add(SKColors.DarkBlue);
-            colors.Add(SKColors.DarkCyan);
-            colors.Add(SKColors.DarkGoldenrod);
-            colors.Add(SKColors.DarkGray);
-            colors.Add(SKColors.Cornsilk);
-            colors.Add(SKColors.DarkGreen);
-            colors.Add(SKColors.DarkMagenta);
-            colors.Add(SKColors.DarkOliveGreen);
-            colors.Add(SKColors.DarkOrange);
-            colors.Add(SKColors.DarkOrchid);
-            colors.Add(SKColors.DarkRed);
-            colors.Add(SKColors.DarkSalmon);
-            colors.Add(SKColors.DarkKhaki);
-            colors.Add(SKColors.DarkSeaGreen);
-            colors.Add(SKColors.CornflowerBlue);
-            colors.Add(SKColors.Chocolate);
-
+            Random random = new();
 
             //创建bitmap位图
-            using (SKBitmap image = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul))
+            using (var image = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul))
             {
                 //创建画笔
-                using (SKCanvas canvas = new SKCanvas(image))
+                using (var canvas = new SKCanvas(image))
                 {
                     //填充背景颜色为白色
                     canvas.DrawColor(SKColors.White);
 
-
                     //画图片的背景噪音线
-                    int x1, y1, x2, y2;
-
-                    for (int i = 0; i < 100; i++)
+                    for (int i = 0; i < (width * height * 0.015); i++)
                     {
-
                         using (SKPaint drawStyle = new SKPaint())
                         {
-                            drawStyle.Color = SKColors.Silver;
-
-                            x1 = random.Next(width);
-                            y1 = random.Next(height);
-                            x2 = random.Next(width);
-                            y2 = random.Next(height);
+                            drawStyle.Color = new SKColor(Convert.ToUInt32(random.Next(Int32.MaxValue)));
 
                             canvas.DrawLine(random.Next(0, width), random.Next(0, height), random.Next(0, width), random.Next(0, height), drawStyle);
                         }
                     }
 
-
                     //将文字写到画布上
                     using (SKPaint drawStyle = new SKPaint())
                     {
-                        var font = SKTypeface.FromFamilyName("Arial", SKFontStyleWeight.SemiBold, SKFontStyleWidth.ExtraCondensed, SKFontStyleSlant.Italic);
-                        drawStyle.IsAntialias = true;
                         drawStyle.Color = SKColors.Red;
-                        drawStyle.Typeface = font;
                         drawStyle.TextSize = height;
+                        drawStyle.StrokeWidth = 1;
 
-                        canvas.DrawText(randString, 1, height - 1, drawStyle);
+                        float emHeight = height - (float)height * (float)0.14;
+                        float emWidth = ((float)width / text.Length) - ((float)width * (float)0.13);
+
+                        canvas.DrawText(text, emWidth, emHeight, drawStyle);
                     }
 
                     //画图片的前景噪音点
-                    for (int i = 0; i < 800; i++)
+                    for (int i = 0; i < (width * height * 0.6); i++)
                     {
-                        x1 = random.Next(width);
-                        y1 = random.Next(height);
-
-                        image.SetPixel(x1, y1, colors[random.Next(colors.Count)]);
+                        image.SetPixel(random.Next(0, width), random.Next(0, height), new SKColor(Convert.ToUInt32(random.Next(Int32.MaxValue))));
                     }
-
 
                     using (var img = SKImage.FromBitmap(image))
                     {

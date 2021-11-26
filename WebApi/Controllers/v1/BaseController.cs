@@ -2,6 +2,7 @@
 using Medallion.Threading;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -83,7 +84,7 @@ namespace WebApi.Controllers.v1
 
 
         /// <summary>
-        /// 自定义二维码生成方法
+        /// 二维码生成
         /// </summary>
         /// <param name="text">数据内容</param>
         /// <returns></returns>
@@ -91,6 +92,28 @@ namespace WebApi.Controllers.v1
         public FileResult GetQrCode(string text)
         {
             var image = ImgHelper.GetQrCode(text);
+            return File(image, "image/png");
+        }
+
+
+
+
+        /// <summary>
+        /// 图像验证码生成
+        /// </summary>
+        /// <param name="sign">标记</param>
+        /// <returns></returns>
+        [HttpGet("GetVerifyCode")]
+        public FileResult GetVerifyCode(Guid sign)
+        {
+            var cacheKey = "VerifyCode" + sign.ToString();
+            Random random = new();
+            string text = random.Next(1000, 9999).ToString();
+
+            var image = ImgHelper.GetVerifyCode(text);
+
+            CacheHelper.SetString(cacheKey, text, TimeSpan.FromMinutes(5));
+
             return File(image, "image/png");
         }
 

@@ -37,14 +37,14 @@ namespace AdminApp.Libraries.Json
             options.Converters.Add(new DateTimeNullConverter());
             options.Converters.Add(new LongConverter());
 
-            //设置支持中文的unicode编码
-            options.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+            //关闭默认转义
+            options.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
 
             //启用驼峰格式
             options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 
-            //启用缩进设置
-            options.WriteIndented = true;
+            //关闭缩进设置
+            options.WriteIndented = false;
 
             return JsonSerializer.Serialize(obj, options);
         }

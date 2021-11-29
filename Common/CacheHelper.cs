@@ -160,11 +160,16 @@ namespace Common
         /// <returns></returns>
         public static T GetObject<T>(string key)
         {
-            var valueStr = Cache.GetString(key);
-
-            var value = Json.JsonHelper.JsonToObject<T>(valueStr);
-
-            return value;
+            try
+            {
+                var valueStr = Cache.GetString(key);
+                var value = Json.JsonHelper.JsonToObject<T>(valueStr);
+                return value;
+            }
+            catch
+            {
+                return default(T);
+            }
         }
 
 

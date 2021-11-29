@@ -44,7 +44,6 @@ namespace WebApi.Libraries
                 {
                     error.Source,
                     error.Message,
-                    error.TargetSite,
                     error.StackTrace
                 }
             };

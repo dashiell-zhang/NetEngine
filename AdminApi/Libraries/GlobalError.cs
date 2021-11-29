@@ -44,7 +44,6 @@ namespace AdminApi.Libraries
                 {
                     error.Source,
                     error.Message,
-                    error.TargetSite,
                     error.StackTrace
                 }
             };

@@ -41,7 +41,6 @@ namespace TaskAdmin.Libraries
                 {
                     error.Source,
                     error.Message,
-                    error.TargetSite,
                     error.StackTrace
                 }
             };

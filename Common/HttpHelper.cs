@@ -148,6 +148,8 @@ namespace Common
                         content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
                     }
 
+                    content.Headers.ContentType.CharSet = "utf-8";
+
                     using (var httpResponse = client.PostAsync(url, content))
                     {
                         return httpResponse.Result.Content.ReadAsStringAsync().Result;

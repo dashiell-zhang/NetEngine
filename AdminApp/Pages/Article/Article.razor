@@ -61,7 +61,8 @@
 
 
 <Modal Title="文章信息" Style="width:1150px;" Visible="@isShowEditArticle" OnCancel="()=>isShowEditArticle=false" Footer="@editFooter">
-    <Form Model="@editArticle" LabelColSpan="2" WrapperColSpan="22">
+
+    <Form Model="@editArticle" LabelColSpan="2" WrapperColSpan="22" Class="ueditorBody">
 
         <Tabs Type="@TabType.Card" OnTabClick=@(()=>InitUeditor("Content",370))>
 
@@ -127,7 +128,6 @@
         </Tabs>
 
     </Form>
-
 </Modal>
 
 

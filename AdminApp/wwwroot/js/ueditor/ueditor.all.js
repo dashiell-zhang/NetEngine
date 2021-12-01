@@ -29071,7 +29071,7 @@
                         var bk = editor.selection.getRange().createBookmark();
                     }
                     if (fullscreen) {
-                        while (container.tagName != "BODY") {
+                        while (container.className.includes('ueditorBody') == false) {
                             var position = baidu.editor.dom.domUtils.getComputedStyle(container, "position");
                             nodeStack.push(position);
                             container.style.position = "static";
@@ -29098,7 +29098,7 @@
                         editor.iframe.parentNode.style.width = '';
                         this._updateFullScreen();
                     } else {
-                        while (container.tagName != "BODY") {
+                        while (container.className.includes('ueditorBody') == false) {
                             container.style.position = nodeStack.shift();
                             container = container.parentNode;
                         }

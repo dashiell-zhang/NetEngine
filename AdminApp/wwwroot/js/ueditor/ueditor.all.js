@@ -3979,7 +3979,7 @@
             var left = parseInt(element.style.left) | 0;
             var top = parseInt(element.style.top) | 0;
             var rect = element.getBoundingClientRect();
-            var offsetLeft = offset.left - rect.left;
+            var offsetLeft = offset.left - rect.left - 8.5;
             var offsetTop = offset.top - rect.top;
             if (offsetLeft) {
                 element.style.left = left + offsetLeft + 'px';

@@ -60,10 +60,10 @@
 }
 
 
-<Modal Title="文章信息" Style="width:50%;" Visible="@isShowEditArticle" OnCancel="()=>isShowEditArticle=false" Footer="@editFooter">
+<Modal Title="文章信息" Style="width:1150px;" Visible="@isShowEditArticle" OnCancel="()=>isShowEditArticle=false" Footer="@editFooter">
     <Form Model="@editArticle" LabelColSpan="2" WrapperColSpan="22">
 
-        <Tabs Type="@TabType.Card" Style="height:550px" OnTabClick=@(()=>InitUeditor("Content"))>
+        <Tabs Type="@TabType.Card" OnTabClick=@(()=>InitUeditor("Content",370))>
 
             <TabPane Key="1" Tab="基本信息">
                 <FormItem Label="所属栏目">
@@ -116,7 +116,7 @@
 
             <TabPane Key="2" Tab="详细内容" ForceRender="true">
                 <FormItem Label="摘要">
-                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
+                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:80px" />
                 </FormItem>
 
                 <FormItem Label="内容">
@@ -127,10 +127,12 @@
         </Tabs>
 
     </Form>
+
 </Modal>
 
 
 @code {
+
 
     Dictionary<string, string> headers = new();
 
@@ -160,9 +162,9 @@
     }
 
 
-    private async Task InitUeditor(string inputName)
+    private async Task InitUeditor(string inputName, int height)
     {
-        await JS.InvokeVoidAsync("InitUeditor", inputName);
+        await JS.InvokeVoidAsync("InitUeditor", inputName, height);
     }
 
 
@@ -244,7 +246,7 @@
         }
         else
         {
-            fileKey =await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId");
+            fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId");
         }
 
 

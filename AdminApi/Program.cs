@@ -140,13 +140,6 @@ namespace AdminApi
             });
 
 
-            builder.Services.AddControllers(options =>
-            {
-                options.OutputFormatters.RemoveType<StringOutputFormatter>();
-            });
-
-
-
 
             //注册JWT认证机制
             var jwtSetting = builder.Configuration.GetSection("JWTSetting").Get<JWTSetting>();

@@ -114,7 +114,7 @@ namespace Repository.Database
         {
 
             //PostgreSQL 时间格式兼容配置
-            //AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             var optionsBuilder = new DbContextOptionsBuilder<dbContext>();
 

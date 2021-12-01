@@ -9,6 +9,14 @@
 		<DebugType>embedded</DebugType>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <NoWarn>1701;1702;4014</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <NoWarn>1701;1702;4014</NoWarn>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="AntDesign" Version="0.10.2" />
 		<PackageReference Include="Blazored.LocalStorage" Version="4.1.5" />

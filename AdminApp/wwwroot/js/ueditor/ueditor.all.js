@@ -7127,7 +7127,6 @@
                     this.iframe.parentNode.style.height = height + 'px';
                 }
                 !notSetHeight && (this.options.minFrameHeight = this.options.initialFrameHeight = height);
-                this.body.style.height = height + 'px';
                 !notSetHeight && this.trigger('setHeight')
             },
 

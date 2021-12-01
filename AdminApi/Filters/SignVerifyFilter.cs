@@ -81,13 +81,13 @@ namespace AdminApi.Filters
                         {
                             context.HttpContext.Response.StatusCode = 401;
 
-                            context.Result = new JsonResult(new { errMsg = "非法 Token ！" });
+                            context.Result = new JsonResult(new { errMsg = "非法 Token" });
                         }
                     }
                     else
                     {
                         context.HttpContext.Response.StatusCode = 401;
-                        context.Result = new JsonResult(new { errMsg = "Token 有效期以过！" });
+                        context.Result = new JsonResult(new { errMsg = "Token 已过期" });
                     }
                 }
             }

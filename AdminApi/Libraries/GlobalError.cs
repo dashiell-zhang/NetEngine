@@ -18,7 +18,7 @@ namespace AdminApi.Libraries
 
             var ret = new
             {
-                errMsg = "Global internal exception of the system"
+                errMsg = "系统全局内部异常"
             };
 
 

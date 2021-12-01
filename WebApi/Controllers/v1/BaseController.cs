@@ -1,10 +1,8 @@
 ﻿using Common;
 using Medallion.Threading;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using WebApi.Libraries;
 using WebApi.Models.Shared;

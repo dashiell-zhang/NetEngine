@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using WebApi.Libraries;
 using WebApi.Libraries.WeiXin.App.Models;
@@ -152,7 +151,7 @@ namespace WebApi.Controllers.v1
             WxPayData notifyData = JsApiPay.GetNotifyData(); //获取微信传过来的参数
 
             //构造对微信的应答信息
-            WxPayData res = new WxPayData();
+            WxPayData res = new();
 
             if (!notifyData.IsSet("transaction_id"))
             {
@@ -173,7 +172,7 @@ namespace WebApi.Controllers.v1
             var payTime = DateTime.ParseExact(paytimeStr, "yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture);
 
             //从微信验证信息真实性
-            WxPayData req = new WxPayData();
+            WxPayData req = new();
             req.SetValue("transaction_id", transaction_id);
 
             var appIdSettingGroupId = db.TAppSetting.Where(t => t.IsDelete == false & t.Module.StartsWith("WeiXin") & t.Key == "AppId" & t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
@@ -186,7 +185,7 @@ namespace WebApi.Controllers.v1
 
 
 
-            JsApiPay jsApiPay = new JsApiPay(appId, appSecret, mchId, mchKey);
+            JsApiPay jsApiPay = new(appId, appSecret, mchId, mchKey);
 
             WxPayData send = jsApiPay.OrderQuery(req);
             if (!(send.GetValue("return_code").ToString() == "SUCCESS" && send.GetValue("result_code").ToString() == "SUCCESS"))
@@ -279,7 +278,7 @@ namespace WebApi.Controllers.v1
 
             var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-            AliPayHelper aliPayHelper = new AliPayHelper(appId, appPrivateKey, aliPayPublicKey, url);
+            AliPayHelper aliPayHelper = new(appId, appPrivateKey, aliPayPublicKey, url);
 
             string price = Convert.ToString(order.Price);
 
@@ -288,7 +287,7 @@ namespace WebApi.Controllers.v1
             if (string.IsNullOrEmpty(TradeNo))
             {
                 HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "支付宝交易订单创建失败！");
+                HttpContext.Items.Add("errMsg", "支付宝交易订单创建失败");
             }
 
             var keyValue = new dtoKeyValue
@@ -332,7 +331,7 @@ namespace WebApi.Controllers.v1
                 var returnUrl = Libraries.Http.HttpContext.GetBaseUrl();
                 var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                AliPayHelper helper = new AliPayHelper(appId, appPrivateKey, aliPayPublicKey, notifyUrl, returnUrl);
+                AliPayHelper helper = new(appId, appPrivateKey, aliPayPublicKey, notifyUrl, returnUrl);
 
                 string price = order.Price.ToString();
 
@@ -372,7 +371,7 @@ namespace WebApi.Controllers.v1
                 var returnUrl = Libraries.Http.HttpContext.GetBaseUrl();
                 var notifyUrl = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                AliPayHelper helper = new AliPayHelper(appId, appPrivateKey, aliPayPublicKey, notifyUrl, returnUrl, "");
+                AliPayHelper helper = new(appId, appPrivateKey, aliPayPublicKey, notifyUrl, returnUrl, "");
 
                 string price = order.Price.ToString();
 

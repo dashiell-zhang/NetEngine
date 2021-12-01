@@ -69,18 +69,19 @@
 
         using (var httpResponse = await Http.PostAsJsonAsync<dtoLogin>("Authorize/GetToken", loginData))
         {
-            var token = httpResponse.Content.ReadAsStringAsync().Result;
-
-            LocalStorage.SetItem<string>("Authorization", token);
-
-            NavigationManager.NavigateTo("/");
+            if ((int)httpResponse.StatusCode == 200)
+            {
+                var token = httpResponse.Content.ReadAsStringAsync().Result;
+                LocalStorage.SetItem<string>("Authorization", token);
+                NavigationManager.NavigateTo("/");
+            }
         }
 
         loginLoading = false;
 
+        StateHasChanged();
 
     }
-
 
 }
 

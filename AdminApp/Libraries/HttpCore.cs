@@ -2,7 +2,6 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace AdminApp.Libraries
@@ -29,7 +28,7 @@ namespace AdminApp.Libraries
 
         public static Task<HttpResponseMessage> DeleteAsJsonAsync<TValue>(this HttpClient client, string requestUri, TValue value)
         {
-            HttpRequestMessage request = new HttpRequestMessage
+            HttpRequestMessage request = new()
             {
                 Content = JsonContent.Create(value),
                 Method = HttpMethod.Delete,

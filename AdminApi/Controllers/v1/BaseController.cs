@@ -4,7 +4,6 @@ using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace AdminApi.Controllers.v1

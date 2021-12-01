@@ -33,39 +33,44 @@ namespace AdminApp.Libraries
         {
             var authorization = LocalStorage.GetItem<string>("Authorization");
 
-            if (!string.IsNullOrEmpty(authorization))
-            {
-                request.Headers.Add("Authorization", "Bearer " + authorization);
-            }
+            var isGetToken = request.RequestUri.AbsolutePath.Contains("/api/Authorize/GetToken", System.StringComparison.OrdinalIgnoreCase);
 
-            var response = await base.SendAsync(request, cancellationToken);
-
-            if ((int)response.StatusCode == 401)
+            if (!string.IsNullOrEmpty(authorization) || isGetToken)
             {
-                NavigationManager.NavigateTo("/login");
-            }
 
-            if ((int)response.StatusCode == 400)
-            {
-                var ret = await response.Content.ReadAsStringAsync();
-                await Notice.Open(new NotificationConfig()
+                if (!isGetToken)
                 {
-                    Message = "异常",
-                    Description = Json.JsonHelper.GetValueByKey(ret, "errMsg"),
-                    NotificationType = NotificationType.Warning
-                });
+                    request.Headers.Add("Authorization", "Bearer " + authorization);
+                }
 
-            }
+                var response = await base.SendAsync(request, cancellationToken);
 
-            if ((int)response.StatusCode == 200)
-            {
-                if (response.Headers.Contains("NewToken"))
+                if ((int)response.StatusCode == 401)
                 {
-                    var newToken = response.Headers.GetValues("NewToken").ToList().FirstOrDefault();
+                    NavigationManager.NavigateTo("/login");
+                }
 
-                    if (!string.IsNullOrEmpty(newToken))
+                if ((int)response.StatusCode == 400)
+                {
+                    var ret = await response.Content.ReadAsStringAsync(cancellationToken);
+                    Notice.Open(new NotificationConfig()
                     {
-                        LocalStorage.SetItem<string>("Authorization", newToken);
+                        Message = "异常",
+                        Description = Json.JsonHelper.GetValueByKey(ret, "errMsg"),
+                        NotificationType = NotificationType.Warning
+                    });
+                }
+
+                if ((int)response.StatusCode == 200)
+                {
+                    if (response.Headers.Contains("NewToken"))
+                    {
+                        var newToken = response.Headers.GetValues("NewToken").ToList().FirstOrDefault();
+
+                        if (!string.IsNullOrEmpty(newToken))
+                        {
+                            LocalStorage.SetItem<string>("Authorization", newToken);
+                        }
                     }
                 }
 
@@ -73,6 +78,7 @@ namespace AdminApp.Libraries
             }
             else
             {
+                NavigationManager.NavigateTo("/login", true);
                 return default;
             }
         }

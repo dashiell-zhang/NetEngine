@@ -42,7 +42,7 @@ namespace WebApi.Controllers.v1
 
             if (user != null)
             {
-                var userToken = new TUserToken();
+                TUserToken userToken = new();
                 userToken.Id = snowflakeHelper.GetId();
                 userToken.UserId = user.Id;
                 userToken.CreateTime = DateTime.Now;
@@ -65,7 +65,7 @@ namespace WebApi.Controllers.v1
             {
 
                 HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "Authorize.GetToken.'Wrong user name or password'");
+                HttpContext.Items.Add("errMsg", "用户名或密码错误");
 
                 return "";
             }
@@ -111,7 +111,7 @@ namespace WebApi.Controllers.v1
                     if (user == null)
                     {
                         //注册一个只有基本信息的账户出来
-                        user = new TUser();
+                        user = new();
 
                         user.Id = snowflakeHelper.GetId();
                         user.CreateTime = DateTime.Now;
@@ -124,7 +124,7 @@ namespace WebApi.Controllers.v1
 
                         db.SaveChanges();
 
-                        var userBind = new TUserBindExternal();
+                        TUserBindExternal userBind = new();
                         userBind.Id = snowflakeHelper.GetId();
                         userBind.CreateTime = DateTime.Now;
                         userBind.UserId = user.Id;
@@ -165,7 +165,7 @@ namespace WebApi.Controllers.v1
                 {
                     //注册一个只有基本信息的账户出来
 
-                    user = new TUser();
+                    user = new();
 
                     user.Id = snowflakeHelper.GetId();
                     user.CreateTime = DateTime.Now;
@@ -184,7 +184,7 @@ namespace WebApi.Controllers.v1
             else
             {
                 HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "Authorize.GetTokenBySms.'New password is not allowed to be empty'");
+                HttpContext.Items.Add("errMsg", "短信验证码错误");
 
                 return "";
             }
@@ -240,10 +240,10 @@ namespace WebApi.Controllers.v1
 
                 var jsonCode = new
                 {
-                    code = code
+                    code
                 };
 
-                Common.AliYun.SmsHelper sms = new Common.AliYun.SmsHelper();
+                Common.AliYun.SmsHelper sms = new();
                 var smsStatus = sms.SendSms(phone, "短信模板编号", "短信签名", Common.Json.JsonHelper.ObjectToJson(jsonCode));
 
                 if (smsStatus)
@@ -296,7 +296,7 @@ namespace WebApi.Controllers.v1
 
             if (user == null)
             {
-                user = new TUser();
+                user = new();
                 user.Id = snowflakeHelper.GetId();
                 user.IsDelete = false;
                 user.CreateTime = DateTime.Now;
@@ -308,7 +308,7 @@ namespace WebApi.Controllers.v1
                 db.TUser.Add(user);
                 db.SaveChanges();
 
-                var bind = new TUserBindExternal();
+                TUserBindExternal bind = new();
                 bind.Id = snowflakeHelper.GetId();
                 bind.CreateTime = DateTime.Now;
 

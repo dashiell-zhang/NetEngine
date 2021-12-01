@@ -151,7 +151,7 @@ namespace WebApi.Controllers.v1
                 else
                 {
                     HttpContext.Response.StatusCode = 400;
-                    HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'The target mobile number has been bound by another account'");
+                    HttpContext.Items.Add("errMsg", "手机号已被其他账户绑定");
 
                     return false;
                 }
@@ -160,7 +160,7 @@ namespace WebApi.Controllers.v1
             else
             {
                 HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "User.EditUserPhoneBySms.'Error in SMS verification code'");
+                HttpContext.Items.Add("errMsg", "短信验证码错误");
 
                 return false;
             }
@@ -208,7 +208,7 @@ namespace WebApi.Controllers.v1
                 else
                 {
                     HttpContext.Response.StatusCode = 400;
-                    HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'New password is not allowed to be empty'");
+                    HttpContext.Items.Add("errMsg", "新密码不可以为空");
 
                     return false;
                 }
@@ -216,7 +216,7 @@ namespace WebApi.Controllers.v1
             else
             {
                 HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "User.EditUserPassWordBySms.'Error in SMS verification code'");
+                HttpContext.Items.Add("errMsg", "短信验证码错误");
 
                 return false;
             }

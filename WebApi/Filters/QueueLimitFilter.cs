@@ -74,7 +74,7 @@ namespace WebApi.Filters
                     {
                         if (IsBlock)
                         {
-                            context.Result = new BadRequestObjectResult(new { errMsg = "Please do not request frequently" });
+                            context.Result = new BadRequestObjectResult(new { errMsg = "请勿频繁操作" });
                             break;
                         }
                         else

@@ -10,7 +10,6 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -87,7 +86,7 @@ namespace AdminApi.Controllers.v1
                 if (isSuccess)
                 {
 
-                    var f = new TFile();
+                    TFile f = new();
                     f.Id = snowflakeHelper.GetId();
                     f.Name = fileInfo.Value.ToString();
                     f.Path = filePath;
@@ -105,7 +104,7 @@ namespace AdminApi.Controllers.v1
             }
 
             HttpContext.Response.StatusCode = 400;
-            HttpContext.Items.Add("errMsg", "文件上传失败！");
+            HttpContext.Items.Add("errMsg", "文件上传失败");
 
             return default;
         }
@@ -176,7 +175,7 @@ namespace AdminApi.Controllers.v1
             if (isSuccess)
             {
 
-                var f = new TFile();
+                TFile f = new();
                 f.Id = fileName;
                 f.IsDelete = false;
                 f.Name = file.FileName;
@@ -195,7 +194,7 @@ namespace AdminApi.Controllers.v1
             {
                 HttpContext.Response.StatusCode = 400;
 
-                HttpContext.Items.Add("errMsg", "文件上传失败！");
+                HttpContext.Items.Add("errMsg", "文件上传失败");
 
                 return default;
             }
@@ -220,7 +219,7 @@ namespace AdminApi.Controllers.v1
             var ReqFiles = Request.Form.Files;
 
 
-            List<IFormFile> Attachments = new List<IFormFile>();
+            List<IFormFile> Attachments = new();
             for (int i = 0; i < ReqFiles.Count; i++)
             {
                 Attachments.Add(ReqFiles[i]);
@@ -290,56 +289,44 @@ namespace AdminApi.Controllers.v1
             var provider = new FileExtensionContentTypeProvider();
             var memi = provider.Mappings[fileExt];
 
-            using (var fileStream = System.IO.File.OpenRead(path))
+            using var fileStream = System.IO.File.OpenRead(path);
+
+            if (width == 0 && height == 0)
+            {
+                return File(fileStream, memi, file.Name);
+            }
+            else
             {
 
-                if (width == 0 && height == 0)
+                using var original = SKBitmap.Decode(path);
+                if (original.Width < width || original.Height < height)
                 {
                     return File(fileStream, memi, file.Name);
                 }
                 else
                 {
 
-                    using (var original = SKBitmap.Decode(path))
+                    if (width != 0 && height == 0)
                     {
-                        if (original.Width < width || original.Height < height)
-                        {
-                            return File(fileStream, memi, file.Name);
-                        }
-                        else
-                        {
+                        var percent = ((float)width / (float)original.Width);
 
-                            if (width != 0 && height == 0)
-                            {
-                                var percent = ((float)width / (float)original.Width);
-
-                                width = (int)(original.Width * percent);
-                                height = (int)(original.Height * percent);
-                            }
-
-                            if (width == 0 && height != 0)
-                            {
-                                var percent = ((float)height / (float)original.Height);
-
-                                width = (int)(original.Width * percent);
-                                height = (int)(original.Height * percent);
-                            }
-
-                            using (var resizeBitmap = original.Resize(new SKImageInfo(width, height), SKFilterQuality.High))
-                            {
-                                using (var image = SKImage.FromBitmap(resizeBitmap))
-                                {
-                                    using (var imageData = image.Encode(SKEncodedImageFormat.Png, 100))
-                                    {
-                                        return File(imageData.ToArray(), "image/png");
-                                    }
-                                }
-                            }
-                        }
-
+                        width = (int)(original.Width * percent);
+                        height = (int)(original.Height * percent);
                     }
-                }
 
+                    if (width == 0 && height != 0)
+                    {
+                        var percent = ((float)height / (float)original.Height);
+
+                        width = (int)(original.Width * percent);
+                        height = (int)(original.Height * percent);
+                    }
+
+                    using var resizeBitmap = original.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
+                    using var image = SKImage.FromBitmap(resizeBitmap);
+                    using var imageData = image.Encode(SKEncodedImageFormat.Png, 100);
+                    return File(imageData.ToArray(), "image/png");
+                }
             }
         }
 
@@ -367,7 +354,7 @@ namespace AdminApi.Controllers.v1
             else
             {
                 HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件！");
+                HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件");
 
                 return null;
             }

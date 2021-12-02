@@ -88,7 +88,7 @@
                 </FormItem>
 
                 <FormItem Label="点击量">
-                    <Input Placeholder="请输入点击量" @bind-Value="@context.ClickCount" style="width: 190px" />
+                    <Input Placeholder="请输入点击量" Type="number" @bind-Value="@context.ClickCount" style="width: 190px" />
                 </FormItem>
 
                 <FormItem Label="封面图">
@@ -231,6 +231,7 @@
             editArticle.CategoryId = article.CategoryId;
             editArticle.Title = article.Title;
             editArticle.Sort = article.Sort;
+            editArticle.ClickCount = article.ClickCount;
             editArticle.Abstract = article.Abstract;
             editArticle.Content = article.Content;
             editArticle.IsDisplay = article.IsDisplay;
@@ -239,7 +240,7 @@
             fileList = article.CoverImageList.Select(t => new UploadFileItem
                 {
                     Id = t.Key.ToString(),
-                    FileName = "123.jpg",
+                    FileName = "coverImg.jpg",
                     Url = "https://localhost:9833/" + t.Value.ToString(),
                     State = UploadState.Success
                 }).ToList();

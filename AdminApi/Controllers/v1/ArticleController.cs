@@ -431,7 +431,16 @@ namespace AdminApi.Controllers.v1
             article.IsDisplay = createArticle.IsDisplay;
             article.Sort = createArticle.Sort;
             article.ClickCount = createArticle.ClickCount;
-            article.Abstract = createArticle.Abstract;
+
+            if (string.IsNullOrEmpty(createArticle.Abstract))
+            {
+                string content = Common.StringHelper.NoHtml(createArticle.Content);
+                article.Abstract = content.Length > 255 ? content[..255] : content;
+            }
+            else
+            {
+                article.Abstract = createArticle.Abstract;
+            }
 
             db.TArticle.Add(article);
 
@@ -469,7 +478,16 @@ namespace AdminApi.Controllers.v1
             article.IsDisplay = updateArticle.IsDisplay;
             article.Sort = updateArticle.Sort;
             article.ClickCount = updateArticle.ClickCount;
-            article.Abstract = updateArticle.Abstract;
+
+            if (string.IsNullOrEmpty(updateArticle.Abstract))
+            {
+                string content = Common.StringHelper.NoHtml(updateArticle.Content);
+                article.Abstract = content.Length > 255 ? content[..255] : content;
+            }
+            else
+            {
+                article.Abstract = updateArticle.Abstract;
+            }
 
             db.SaveChanges();
 

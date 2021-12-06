@@ -212,14 +212,14 @@ namespace Repository.Database
 
 
                         //bool to bit 使用 MySQL 时需要取消注释
-                        //if (property.ClrType.Name == typeof(bool).Name)
+                        //if (property.ClrType.Name == "Boolean" || property.ClrType.FullName.StartsWith("System.Nullable`1[[System.Boolean"))
                         //{
                         //    property.SetColumnType("bit");
                         //}
 
 
                         //guid to char(36) 使用 MySQL 并且采用 MySql.EntityFrameworkCore 时需要取消注释
-                        //if (property.ClrType.Name == typeof(Guid).Name)
+                        //if (/*property.ClrType.Name == "Guid" ||*/ property.ClrType.FullName.StartsWith("System.Nullable`1[[System.Guid"))
                         //{
                         //    property.SetColumnType("char(36)");
                         //}

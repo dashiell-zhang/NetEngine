@@ -49,7 +49,7 @@ namespace TaskService.Tasks
             //周期性执行的方法
             Console.WriteLine("HelloWord");
 
-            cap.Publish("ShowMessage", DateTime.Now.ToString());
+            cap.Publish("ShowMessage", DateTime.UtcNow.ToString());
         }
 
     }

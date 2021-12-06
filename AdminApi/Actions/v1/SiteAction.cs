@@ -22,7 +22,7 @@ namespace AdminApi.Actions.v1
             if (appSetting.Id == default)
             {
                 appSetting.Id = snowflakeHelper.GetId();
-                appSetting.CreateTime = DateTime.Now;
+                appSetting.CreateTime = DateTime.UtcNow;
                 appSetting.Module = "Site";
                 appSetting.Key = key;
                 db.TAppSetting.Add(appSetting);

@@ -108,7 +108,7 @@ namespace WebApi.Libraries.Verify
                 var expTime = DateTimeHelper.UnixToTime(exp);
 
                 //当前Token过期前15分钟开始签发新的Token
-                if (expTime < DateTime.Now.AddMinutes(15))
+                if (expTime < DateTime.UtcNow.AddMinutes(15))
                 {
 
                     var tokenId = long.Parse(JWTToken.GetClaims("tokenId"));
@@ -133,7 +133,7 @@ namespace WebApi.Libraries.Verify
                                 userToken.Id = snowflakeHelper.GetId();
                                 userToken.UserId = userId;
                                 userToken.LastId = tokenId;
-                                userToken.CreateTime = DateTime.Now;
+                                userToken.CreateTime = DateTime.UtcNow;
 
                                 var claims = new Claim[]{
                                     new Claim("tokenId",userToken.Id.ToString()),
@@ -186,7 +186,7 @@ namespace WebApi.Libraries.Verify
                     {
                         var db = scope.ServiceProvider.GetService<dbContext>();
 
-                        var clearTime = DateTime.Now.AddDays(-7);
+                        var clearTime = DateTime.UtcNow.AddDays(-7);
                         var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
                         db.TUserToken.RemoveRange(clearList);
 

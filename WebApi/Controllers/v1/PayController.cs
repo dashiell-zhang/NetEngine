@@ -42,7 +42,7 @@ namespace WebApi.Controllers.v1
             {
                 t.OrderNo,
                 t.Price,
-                ProductName = DateTime.Now.ToString("yyyyMMddHHmm") + "交易",
+                ProductName = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
                 t.CreateUserId,
                 UserOpenId = db.TUserBindExternal.Where(w => w.IsDelete == false & w.UserId == t.CreateUserId & w.AppName == "WeiXinMiniApp" & w.AppId == appId).Select(w => w.OpenId).FirstOrDefault()
             }).FirstOrDefault();
@@ -129,7 +129,7 @@ namespace WebApi.Controllers.v1
 
                 int price = Convert.ToInt32(order.Price * 100);
 
-                codeUrl = weiXinHelper.CreatePay(order.Id, order.OrderNo, DateTime.Now.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
+                codeUrl = weiXinHelper.CreatePay(order.Id, order.OrderNo, DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
 
                 Common.CacheHelper.SetString(key, codeUrl, TimeSpan.FromMinutes(115));
 

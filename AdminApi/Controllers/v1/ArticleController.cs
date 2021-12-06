@@ -107,7 +107,7 @@ namespace AdminApi.Controllers.v1
         {
             var channel = new TChannel();
             channel.Id = snowflakeHelper.GetId();
-            channel.CreateTime = DateTime.Now;
+            channel.CreateTime = DateTime.UtcNow;
             channel.CreateUserId = userId;
 
             channel.Name = createChannel.Name;
@@ -157,7 +157,7 @@ namespace AdminApi.Controllers.v1
             var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
             channel.IsDelete = true;
-            channel.DeleteTime = DateTime.Now;
+            channel.DeleteTime = DateTime.UtcNow;
             channel.DeleteUserId = userId;
 
             db.SaveChanges();
@@ -261,7 +261,7 @@ namespace AdminApi.Controllers.v1
         {
             var category = new TCategory();
             category.Id = snowflakeHelper.GetId();
-            category.CreateTime = DateTime.Now;
+            category.CreateTime = DateTime.UtcNow;
             category.CreateUserId = userId;
 
             category.ChannelId = createCategory.ChannelId;
@@ -314,7 +314,7 @@ namespace AdminApi.Controllers.v1
             var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
             category.IsDelete = true;
-            category.DeleteTime = DateTime.Now;
+            category.DeleteTime = DateTime.UtcNow;
             category.DeleteUserId = userId;
 
             db.SaveChanges();
@@ -421,7 +421,7 @@ namespace AdminApi.Controllers.v1
         {
             var article = new TArticle();
             article.Id = snowflakeHelper.GetId();
-            article.CreateTime = DateTime.Now;
+            article.CreateTime = DateTime.UtcNow;
             article.CreateUserId = userId;
 
             article.CategoryId = createArticle.CategoryId;
@@ -507,7 +507,7 @@ namespace AdminApi.Controllers.v1
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
             article.IsDelete = true;
-            article.DeleteTime = DateTime.Now;
+            article.DeleteTime = DateTime.UtcNow;
             article.DeleteUserId = userId;
 
             db.SaveChanges();

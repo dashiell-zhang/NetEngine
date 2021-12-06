@@ -49,7 +49,7 @@ namespace WebApi.Controllers.v1
             var sign = new TSign();
 
             sign.Id = snowflakeHelper.GetId();
-            sign.CreateTime = DateTime.Now;
+            sign.CreateTime = DateTime.UtcNow;
             sign.CreateUserId = userId;
             sign.Table = addSign.Table;
             sign.TableId = addSign.TableId;
@@ -76,7 +76,7 @@ namespace WebApi.Controllers.v1
             if (sign != null)
             {
                 sign.IsDelete = true;
-                sign.DeleteTime = DateTime.Now;
+                sign.DeleteTime = DateTime.UtcNow;
                 sign.DeleteUserId = userId;
 
                 db.SaveChanges();

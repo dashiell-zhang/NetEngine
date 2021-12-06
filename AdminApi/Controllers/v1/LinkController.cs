@@ -88,7 +88,7 @@ namespace AdminApi.Controllers.v1
         {
             var link = new TLink();
             link.Id = snowflakeHelper.GetId();
-            link.CreateTime = DateTime.Now;
+            link.CreateTime = DateTime.UtcNow;
             link.CreateUserId = userId;
 
             link.Name = createLink.Name;
@@ -138,7 +138,7 @@ namespace AdminApi.Controllers.v1
             var link = db.TLink.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
             link.IsDelete = true;
-            link.DeleteTime = DateTime.Now;
+            link.DeleteTime = DateTime.UtcNow;
             link.DeleteUserId = userId;
 
             db.SaveChanges();

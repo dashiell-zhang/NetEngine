@@ -36,7 +36,7 @@ namespace WebApi.Filters
                     var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
                     var time = Common.DateTimeHelper.JsToTime(long.Parse(timeStr));
 
-                    if (time.AddMinutes(10) > DateTime.Now)
+                    if (time.AddMinutes(10) > DateTime.UtcNow)
                     {
                         string privatekey = "gPmgRr9Dp3wzubTaGIgmMSpfNiKqkIAA0C8gkaBSN0ca3GWxk3W6682KuXRpxnDq";
 

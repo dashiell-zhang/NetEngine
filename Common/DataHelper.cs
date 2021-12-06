@@ -379,12 +379,7 @@ namespace Common
             ms.Seek(0, SeekOrigin.Begin);
             ms.AllowClose = true;
 
-
-            //string filename = DateTime.Now.ToString("yyyyMMddHHmmssfff") + "运算结果.xlsx";
-            //return File(ms, "application/vnd.ms-excel", filename);
-
             return ms;
-
 
         }
 
@@ -444,12 +439,7 @@ namespace Common
             ms.Seek(0, SeekOrigin.Begin);
             ms.AllowClose = true;
 
-
-            //string filename = DateTime.Now.ToString("yyyyMMddHHmmssfff") + "运算结果.xlsx";
-            //return File(ms, "application/vnd.ms-excel", filename);
-
             return ms;
-
 
         }
     }

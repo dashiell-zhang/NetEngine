@@ -38,6 +38,7 @@ namespace WebApi.Controllers.v1
         public string GetToken([FromBody] dtoLogin login)
         {
 
+
             var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false & (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
 
             if (user != null)
@@ -45,7 +46,7 @@ namespace WebApi.Controllers.v1
                 TUserToken userToken = new();
                 userToken.Id = snowflakeHelper.GetId();
                 userToken.UserId = user.Id;
-                userToken.CreateTime = DateTime.Now;
+                userToken.CreateTime = DateTime.UtcNow;
 
                 db.TUserToken.Add(userToken);
                 db.SaveChanges();
@@ -114,8 +115,8 @@ namespace WebApi.Controllers.v1
                         user = new();
 
                         user.Id = snowflakeHelper.GetId();
-                        user.CreateTime = DateTime.Now;
-                        user.Name = DateTime.Now.ToString() + "微信小程序新用户";
+                        user.CreateTime = DateTime.UtcNow;
+                        user.Name = DateTime.UtcNow.ToString() + "微信小程序新用户";
                         user.NickName = user.Name;
                         user.PassWord = Guid.NewGuid().ToString();
 
@@ -126,7 +127,7 @@ namespace WebApi.Controllers.v1
 
                         TUserBindExternal userBind = new();
                         userBind.Id = snowflakeHelper.GetId();
-                        userBind.CreateTime = DateTime.Now;
+                        userBind.CreateTime = DateTime.UtcNow;
                         userBind.UserId = user.Id;
                         userBind.AppName = "WeiXinMiniApp";
                         userBind.AppId = appid;
@@ -168,8 +169,8 @@ namespace WebApi.Controllers.v1
                     user = new();
 
                     user.Id = snowflakeHelper.GetId();
-                    user.CreateTime = DateTime.Now;
-                    user.Name = DateTime.Now.ToString() + "手机短信新用户";
+                    user.CreateTime = DateTime.UtcNow;
+                    user.Name = DateTime.UtcNow.ToString() + "手机短信新用户";
                     user.NickName = user.Name;
                     user.PassWord = Guid.NewGuid().ToString();
                     user.Phone = phone;
@@ -299,7 +300,7 @@ namespace WebApi.Controllers.v1
                 user = new();
                 user.Id = snowflakeHelper.GetId();
                 user.IsDelete = false;
-                user.CreateTime = DateTime.Now;
+                user.CreateTime = DateTime.UtcNow;
 
                 user.Name = userInfo.nickname;
                 user.NickName = user.Name;
@@ -310,7 +311,7 @@ namespace WebApi.Controllers.v1
 
                 TUserBindExternal bind = new();
                 bind.Id = snowflakeHelper.GetId();
-                bind.CreateTime = DateTime.Now;
+                bind.CreateTime = DateTime.UtcNow;
 
                 bind.AppName = "WeiXinApp";
                 bind.AppId = appid;

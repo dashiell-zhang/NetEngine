@@ -126,7 +126,7 @@ namespace WebApi.Libraries.WeiXin.Public
             inputObj.SetValue("appid", appid);//公众账号ID
             inputObj.SetValue("mch_id", mchid);//商户号
             inputObj.SetValue("user_ip", Http.HttpContext.Current().Connection.RemoteIpAddress.ToString());//终端ip
-            inputObj.SetValue("time", DateTime.Now.ToString("yyyyMMddHHmmss"));//商户上报时间	 
+            inputObj.SetValue("time", DateTime.UtcNow.AddHours(8).ToString("yyyyMMddHHmmss"));//商户上报时间	 
             inputObj.SetValue("nonce_str", GenerateNonceStr());//随机字符串
             inputObj.SetValue("sign", inputObj.MakeSign(mchkey));//签名
             string xml = inputObj.ToXml();
@@ -138,15 +138,7 @@ namespace WebApi.Libraries.WeiXin.Public
             return result;
         }
 
-        /**
-        * 生成时间戳，标准北京时间，时区为东八区，自1970年1月1日 0点0分0秒以来的秒数
-         * @return 时间戳
-        */
-        public static string GenerateTimeStamp()
-        {
-            TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            return Convert.ToInt64(ts.TotalSeconds).ToString();
-        }
+
 
         /**
         * 生成随机串，随机串包含字母或数字
@@ -214,12 +206,12 @@ namespace WebApi.Libraries.WeiXin.Public
             inputObj.SetValue("nonce_str", GenerateNonceStr());//随机字符串
             inputObj.SetValue("sign", inputObj.MakeSign(mchkey));//签名
             string xml = inputObj.ToXml();
-            var startTime = DateTime.Now; //开始时间
+            var startTime = DateTime.UtcNow; //开始时间
             string response = Common.HttpHelper.Post(sendUrl, xml, "xml");//调用HTTP通信接口提交数据
-            var endTime = DateTime.Now; //结束时间
+            var endTime = DateTime.UtcNow; //结束时间
             int timeCost = (int)((endTime - startTime).TotalMilliseconds); //计算所用时间
             //将xml格式的数据转化为对象以返回
-            WxPayData result = new WxPayData();
+            WxPayData result = new ();
             result.FromXml(response, mchkey);
             ReportCostTime(sendUrl, timeCost, result);//测速上报
             return result;

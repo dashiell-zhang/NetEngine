@@ -56,7 +56,7 @@ namespace WebApi.Libraries.Verify
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             //生成token
-            var token = new JwtSecurityToken(jwtSetting.Issuer, jwtSetting.Audience, claims, DateTime.Now, DateTime.Now.AddMinutes(30), creds);
+            var token = new JwtSecurityToken(jwtSetting.Issuer, jwtSetting.Audience, claims, DateTime.UtcNow, DateTime.UtcNow.AddMinutes(30), creds);
 
             var ret = new JwtSecurityTokenHandler().WriteToken(token);
 

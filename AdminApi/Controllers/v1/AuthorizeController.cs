@@ -44,7 +44,7 @@ namespace AdminApi.Controllers.v1
                 TUserToken userToken = new();
                 userToken.Id = snowflakeHelper.GetId();
                 userToken.UserId = user.Id;
-                userToken.CreateTime = DateTime.Now;
+                userToken.CreateTime = DateTime.UtcNow;
 
                 db.TUserToken.Add(userToken);
                 db.SaveChanges();
@@ -95,8 +95,8 @@ namespace AdminApi.Controllers.v1
                     user = new();
 
                     user.Id = snowflakeHelper.GetId();
-                    user.CreateTime = DateTime.Now;
-                    user.Name = DateTime.Now.ToString() + "手机短信新用户";
+                    user.CreateTime = DateTime.UtcNow;
+                    user.Name = DateTime.UtcNow.ToString() + "手机短信新用户";
                     user.NickName = user.Name;
                     user.PassWord = Guid.NewGuid().ToString();
                     user.Phone = phone;

@@ -144,7 +144,7 @@ namespace Common
                     log.Sign = Sign;
                     log.Type = Type;
                     log.Content = Content;
-                    log.CreateTime = DateTime.Now;
+                    log.CreateTime = DateTime.UtcNow;
 
                     db.TLog.Add(log);
 
@@ -176,7 +176,7 @@ namespace Common
                 if (info.Id != default)
                 {
                     info.Count = info.Count + 1;
-                    info.UpdateTime = DateTime.Now;
+                    info.UpdateTime = DateTime.UtcNow;
 
                     db.SaveChanges();
 
@@ -192,7 +192,7 @@ namespace Common
                     info.Id = snowflakeHelper.GetId();
                     info.Tag = tag;
                     info.Count = 1;
-                    info.CreateTime = DateTime.Now;
+                    info.CreateTime = DateTime.UtcNow;
 
                     db.TCount.Add(info);
 

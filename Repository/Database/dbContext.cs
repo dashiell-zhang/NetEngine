@@ -113,8 +113,6 @@ namespace Repository.Database
         private static DbContextOptions<dbContext> GetDbContextOptions(DbContextOptions<dbContext> options = default)
         {
 
-            //PostgreSQL 时间格式兼容配置
-            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             var optionsBuilder = new DbContextOptionsBuilder<dbContext>();
 
@@ -477,7 +475,7 @@ namespace Repository.Database
 
                 var osLog = new TOSLog();
                 osLog.Id = osLogId;
-                osLog.CreateTime = DateTime.Now;
+                osLog.CreateTime = DateTime.UtcNow;
                 osLog.Table = type.Name;
                 osLog.TableId = entityId;
                 osLog.Sign = "Modified";

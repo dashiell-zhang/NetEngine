@@ -27,7 +27,7 @@ namespace Common
             int RandKey = ran.Next(10000, 99999);
 
 
-            orderno = sign + DateTime.Now.ToString("yyyyMMddHHmmssfff") + RandKey;
+            orderno = sign + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + RandKey;
 
             return orderno;
         }

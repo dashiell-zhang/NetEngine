@@ -203,7 +203,7 @@ namespace Common
                 }
             }
 
-            string boundary = "----" + DateTime.Now.Ticks.ToString("x");
+            string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
 
             using (MultipartFormDataContent formDataContent = new MultipartFormDataContent(boundary))
             {

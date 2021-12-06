@@ -37,14 +37,14 @@ namespace AdminApi.Libraries.Ueditor
                 return rand.Next((int)Math.Pow(10, digit), (int)Math.Pow(10, digit + 1)).ToString();
             }));
 
-            pathFormat = pathFormat.Replace("{time}", DateTime.Now.Ticks.ToString());
-            pathFormat = pathFormat.Replace("{yyyy}", DateTime.Now.Year.ToString());
-            pathFormat = pathFormat.Replace("{yy}", (DateTime.Now.Year % 100).ToString("D2"));
-            pathFormat = pathFormat.Replace("{mm}", DateTime.Now.Month.ToString("D2"));
-            pathFormat = pathFormat.Replace("{dd}", DateTime.Now.Day.ToString("D2"));
-            pathFormat = pathFormat.Replace("{hh}", DateTime.Now.Hour.ToString("D2"));
-            pathFormat = pathFormat.Replace("{ii}", DateTime.Now.Minute.ToString("D2"));
-            pathFormat = pathFormat.Replace("{ss}", DateTime.Now.Second.ToString("D2"));
+            pathFormat = pathFormat.Replace("{time}", DateTime.UtcNow.Ticks.ToString());
+            pathFormat = pathFormat.Replace("{yyyy}", DateTime.UtcNow.Year.ToString());
+            pathFormat = pathFormat.Replace("{yy}", (DateTime.UtcNow.Year % 100).ToString("D2"));
+            pathFormat = pathFormat.Replace("{mm}", DateTime.UtcNow.Month.ToString("D2"));
+            pathFormat = pathFormat.Replace("{dd}", DateTime.UtcNow.Day.ToString("D2"));
+            pathFormat = pathFormat.Replace("{hh}", DateTime.UtcNow.Hour.ToString("D2"));
+            pathFormat = pathFormat.Replace("{ii}", DateTime.UtcNow.Minute.ToString("D2"));
+            pathFormat = pathFormat.Replace("{ss}", DateTime.UtcNow.Second.ToString("D2"));
 
             return pathFormat + extension;
         }

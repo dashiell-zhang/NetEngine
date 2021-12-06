@@ -52,7 +52,7 @@
 
             var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
 
-            if (expTime > DateTime.Now)
+            if (expTime > DateTime.UtcNow)
             {
                 NavigationManager.NavigateTo("/");
             }

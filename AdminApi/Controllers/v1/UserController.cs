@@ -104,7 +104,7 @@ namespace AdminApi.Controllers.v1
         {
             var user = new TUser();
             user.Id = snowflakeHelper.GetId();
-            user.CreateTime = DateTime.Now;
+            user.CreateTime = DateTime.UtcNow;
             user.CreateUserId = userId;
 
             user.Name = createUser.Name;
@@ -134,7 +134,7 @@ namespace AdminApi.Controllers.v1
         {
             var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
 
-            user.UpdateTime = DateTime.Now;
+            user.UpdateTime = DateTime.UtcNow;
             user.UpdateUserId = base.userId;
 
             user.Name = updateUser.Name;
@@ -165,7 +165,7 @@ namespace AdminApi.Controllers.v1
             var user = db.TUser.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
             user.IsDelete = true;
-            user.DeleteTime = DateTime.Now;
+            user.DeleteTime = DateTime.UtcNow;
             user.DeleteUserId = userId;
 
             db.SaveChanges();

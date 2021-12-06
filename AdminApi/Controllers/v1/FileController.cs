@@ -45,7 +45,7 @@ namespace AdminApi.Controllers.v1
             var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
 
-            string basepath = "/Upload/" + DateTime.Now.ToString("yyyy/MM/dd");
+            string basepath = "/Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
 
             var filePath = Libraries.IO.Path.WebRootPath() + basepath + "/";
 
@@ -94,7 +94,7 @@ namespace AdminApi.Controllers.v1
                     f.TableId = key;
                     f.Sign = sign;
                     f.CreateUserId = userId;
-                    f.CreateTime = DateTime.Now;
+                    f.CreateTime = DateTime.UtcNow;
                     db.TFile.Add(f);
                     db.SaveChanges();
 
@@ -124,7 +124,7 @@ namespace AdminApi.Controllers.v1
         public long UploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
-            string basepath = "/Upload/" + DateTime.Now.ToString("yyyy/MM/dd");
+            string basepath = "/Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
             string filepath = Libraries.IO.Path.WebRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
@@ -154,13 +154,13 @@ namespace AdminApi.Controllers.v1
 
                     var oss = new Common.AliYun.OssHelper();
 
-                    var upload = oss.FileUpload(path, "Upload/" + DateTime.Now.ToString("yyyy/MM/dd"), file.FileName);
+                    var upload = oss.FileUpload(path, "Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
 
                     if (upload)
                     {
                         Common.IO.IOHelper.DeleteFile(path);
 
-                        path = "/Upload/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fullFileName;
+                        path = "/Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
                     }
                 }
@@ -184,7 +184,7 @@ namespace AdminApi.Controllers.v1
                 f.TableId = key;
                 f.Sign = sign;
                 f.CreateUserId = userId;
-                f.CreateTime = DateTime.Now;
+                f.CreateTime = DateTime.UtcNow;
                 db.TFile.Add(f);
                 db.SaveChanges();
 
@@ -376,7 +376,7 @@ namespace AdminApi.Controllers.v1
             var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
             file.IsDelete = true;
-            file.DeleteTime = DateTime.Now;
+            file.DeleteTime = DateTime.UtcNow;
 
             db.SaveChanges();
 

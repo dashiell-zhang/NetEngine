@@ -16,7 +16,7 @@ namespace Common
         /// <returns></returns>
         public static DateTime UnixToTime(long unix, int startYear = 1970)
         {
-            var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
+            var startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return startTime.AddSeconds(unix);
         }
 
@@ -32,9 +32,14 @@ namespace Common
         {
             if (time == null)
             {
-                time = DateTime.Now;
+                time = DateTime.UtcNow;
             }
-            var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
+            else
+            {
+                time = time.Value.ToUniversalTime();
+            }
+
+            var startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return (long)(time.Value - startTime).TotalSeconds; // 相差秒数
         }
 
@@ -48,8 +53,7 @@ namespace Common
         /// <returns></returns>
         public static DateTime JsToTime(long js, int startYear = 1970)
         {
-
-            var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
+            var startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return startTime.AddMilliseconds(js);
         }
 
@@ -65,9 +69,13 @@ namespace Common
         {
             if (time == null)
             {
-                time = DateTime.Now;
+                time = DateTime.UtcNow;
             }
-            var startTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(startYear, 1, 1)).ToLocalTime()).ToLocalTime(); // 当地时区
+            else
+            {
+                time = time.Value.ToUniversalTime();
+            }
+            var startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return (long)(time.Value - startTime).TotalMilliseconds;
         }
 

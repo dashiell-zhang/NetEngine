@@ -302,7 +302,7 @@ namespace Common.AliYun
 
             if (ExpirationTime == default)
             {
-                ExpirationTime = DateTime.Now.AddDays(7);
+                ExpirationTime = DateTime.UtcNow.AddDays(7);
             }
 
             req.Expiration = ExpirationTime;

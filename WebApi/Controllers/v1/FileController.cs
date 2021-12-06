@@ -45,7 +45,7 @@ namespace WebApi.Controllers.v1
             var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
 
-            string basepath = "Files/" + DateTime.Now.ToString("yyyy/MM/dd");
+            string basepath = "Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
 
             var filePath = Libraries.IO.Path.ContentRootPath() + "/" + basepath + "/";
 
@@ -94,7 +94,7 @@ namespace WebApi.Controllers.v1
                     f.TableId = key;
                     f.Sign = sign;
                     f.CreateUserId = userId;
-                    f.CreateTime = DateTime.Now;
+                    f.CreateTime = DateTime.UtcNow;
                     db.TFile.Add(f);
                     db.SaveChanges();
 
@@ -124,7 +124,7 @@ namespace WebApi.Controllers.v1
         public long UploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
-            string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd");
+            string basepath = "/Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
@@ -154,13 +154,13 @@ namespace WebApi.Controllers.v1
 
                     var oss = new Common.AliYun.OssHelper();
 
-                    var upload = oss.FileUpload(path, "Files/" + DateTime.Now.ToString("yyyy/MM/dd"), file.FileName);
+                    var upload = oss.FileUpload(path, "Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
 
                     if (upload)
                     {
                         Common.IO.IOHelper.DeleteFile(path);
 
-                        path = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fullFileName;
+                        path = "/Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
                     }
                 }
@@ -184,7 +184,7 @@ namespace WebApi.Controllers.v1
                 f.TableId = key;
                 f.Sign = sign;
                 f.CreateUserId = userId;
-                f.CreateTime = DateTime.Now;
+                f.CreateTime = DateTime.UtcNow;
                 db.TFile.Add(f);
                 db.SaveChanges();
 
@@ -384,7 +384,7 @@ namespace WebApi.Controllers.v1
 
                 var fileid = Guid.NewGuid().ToString() + Path.GetExtension(fileName).ToLowerInvariant(); ;
 
-                string basepath = "/Files/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fileid;
+                string basepath = "/Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fileid;
 
 
                 TFile f = new();
@@ -394,7 +394,7 @@ namespace WebApi.Controllers.v1
                 f.Table = business;
                 f.TableId = key;
                 f.Sign = sign;
-                f.CreateTime = DateTime.Now;
+                f.CreateTime = DateTime.UtcNow;
 
                 db.TFile.Add(f);
                 db.SaveChanges();
@@ -437,7 +437,7 @@ namespace WebApi.Controllers.v1
                 var fileExtension = string.Empty;
                 var fullFileName = string.Empty;
 
-                string basepath = "/Files/Group/" + DateTime.Now.ToString("yyyy/MM/dd") + "/" + fileId;
+                string basepath = "/Files/Group/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fileId;
                 string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);
@@ -469,7 +469,7 @@ namespace WebApi.Controllers.v1
                 groupfile.FileId = group.FileId;
                 groupfile.Path = path;
                 groupfile.Index = index;
-                groupfile.CreateTime = DateTime.Now;
+                groupfile.CreateTime = DateTime.UtcNow;
 
                 db.TFileGroupFile.Add(groupfile);
 
@@ -536,7 +536,7 @@ namespace WebApi.Controllers.v1
             var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
             file.IsDelete = true;
-            file.DeleteTime = DateTime.Now;
+            file.DeleteTime = DateTime.UtcNow;
 
             db.SaveChanges();
 

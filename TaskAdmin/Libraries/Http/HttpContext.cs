@@ -67,9 +67,9 @@ namespace TaskAdmin.Libraries.Http
 
                     requestBody.Position = 0;
 
-                    using (GZipStream decompressedStream = new GZipStream(requestBody, CompressionMode.Decompress))
+                    using (GZipStream decompressedStream = new(requestBody, CompressionMode.Decompress))
                     {
-                        using (StreamReader sr = new StreamReader(decompressedStream, Encoding.UTF8))
+                        using (StreamReader sr = new(decompressedStream, Encoding.UTF8))
                         {
                             requestContent = sr.ReadToEnd();
                         }

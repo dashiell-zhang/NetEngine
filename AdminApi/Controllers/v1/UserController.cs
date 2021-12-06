@@ -102,7 +102,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateUser")]
         public long CreateUser(dtoEditUser createUser)
         {
-            var user = new TUser();
+            TUser user = new();
             user.Id = snowflakeHelper.GetId();
             user.CreateTime = DateTime.UtcNow;
             user.CreateUserId = userId;

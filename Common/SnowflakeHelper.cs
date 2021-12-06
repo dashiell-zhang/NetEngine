@@ -15,21 +15,19 @@ namespace Common
         private static long datacenterId = 0L;//数据ID
         private static long sequence = 0L;//计数从零开始
 
-        private static long twepoch = 1609459200000L; //唯一时间随机量，这是一个避免重复的随机量，自行设定不要大于当前时间戳
+        private readonly static long twepoch = 1609459200000L; //唯一时间随机量，这是一个避免重复的随机量，自行设定不要大于当前时间戳
 
-        private static long machineIdBits = 5L; //机器码字节数
-        private static long datacenterIdBits = 5L;//数据字节数
-        private static long maxMachineId = -1L ^ -1L << (int)machineIdBits; //最大机器ID
-        private static long maxDatacenterId = -1L ^ (-1L << (int)datacenterIdBits);//最大数据ID
-
-        private static long sequenceBits = 11L; //计数器字节数，11个字节用来保存计数码，每毫秒可以生成2047个ID
-        private static long machineIdShift = sequenceBits; //机器码数据左移位数，就是后面计数器占用的位数
-        private static long datacenterIdShift = sequenceBits + machineIdBits;
-        private static long timestampLeftShift = sequenceBits + machineIdBits + datacenterIdBits; //时间戳左移动位数就是机器码+计数器总字节数+数据字节数
-        private static long sequenceMask = -1L ^ -1L << (int)sequenceBits; //一微秒内可以产生计数，如果达到该值则等到下一微妙在进行生成
+        private readonly static long machineIdBits = 5L; //机器码字节数
+        private readonly static long datacenterIdBits = 5L;//数据字节数
+        private readonly static long maxMachineId = -1L ^ -1L << (int)machineIdBits; //最大机器ID
+        private readonly static long maxDatacenterId = -1L ^ (-1L << (int)datacenterIdBits);//最大数据ID
+        private readonly static long sequenceBits = 11L; //计数器字节数，11个字节用来保存计数码，每毫秒可以生成2047个ID
+        private readonly static long machineIdShift = sequenceBits; //机器码数据左移位数，就是后面计数器占用的位数
+        private readonly static long datacenterIdShift = sequenceBits + machineIdBits;
+        private readonly static long timestampLeftShift = sequenceBits + machineIdBits + datacenterIdBits; //时间戳左移动位数就是机器码+计数器总字节数+数据字节数
+        private readonly static long sequenceMask = -1L ^ -1L << (int)sequenceBits; //一微秒内可以产生计数，如果达到该值则等到下一微妙在进行生成
         private static long lastTimestamp = -1L;//最后时间戳
-
-        private static object syncRoot = new();//加锁对象
+        private readonly static object syncRoot = new();//加锁对象
 
 
 
@@ -46,7 +44,7 @@ namespace Common
 
 
 
-        private void Snowflakes(long machineId, long datacenterId)
+        private static void Snowflakes(long machineId, long datacenterId)
         {
             if (machineId < 0 || machineId > maxMachineId)
             {
@@ -146,7 +144,7 @@ namespace Common
 
             var timeBits = 64 - machineIdBits - datacenterIdBits - sequenceBits - 1;
 
-            var timeStr2 = idStr2.Substring(0, Convert.ToInt32(timeBits));
+            var timeStr2 = idStr2[..Convert.ToInt32(timeBits)];
 
             var timeJsStamp = Convert.ToInt64(timeStr2, 2);
 

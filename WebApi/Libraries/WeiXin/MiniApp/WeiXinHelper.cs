@@ -15,15 +15,15 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 {
     public class WeiXinHelper
     {
-        private string appid;
+        private readonly string appid;
 
-        private string secret;
+        private readonly string secret;
 
-        private string mchid;
+        private readonly string mchid;
 
-        private string mchkey;
+        private readonly string mchkey;
 
-        private string notifyurl;
+        private readonly string notifyurl;
 
         public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
         {
@@ -124,7 +124,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             var getdata = Common.HttpHelper.Post(url, zhi, "form");
 
             //获取xml数据
-            XmlDocument doc = new XmlDocument();
+            XmlDocument doc = new();
             doc.LoadXml(getdata);
 
 
@@ -137,7 +137,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             {
                 string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
 
-                var info = new dtoCreatePayMiniApp();
+                dtoCreatePayMiniApp info = new();
                 info.nonceStr = nonceStr;
                 info.package = "prepay_id=" + prepay_id;
 
@@ -185,11 +185,11 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
             string result;
 
-            using (MemoryStream msDecrypt = new MemoryStream(encryptedData))
+            using (MemoryStream msDecrypt = new(encryptedData))
             {
-                using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                using (CryptoStream csDecrypt = new(msDecrypt, decryptor, CryptoStreamMode.Read))
                 {
-                    using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                    using (StreamReader srDecrypt = new(csDecrypt))
                     {
 
                         result = srDecrypt.ReadToEnd();
@@ -211,13 +211,13 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         {
             var sslPath = IO.Path.ContentRootPath() + "/ssl/apiclient_cert.p12";
 
-            using (HttpClientHandler handler = new HttpClientHandler())
+            using (HttpClientHandler handler = new())
             {
-                X509Certificate2 cert = new X509Certificate2(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
+                X509Certificate2 cert = new(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
 
                 handler.ClientCertificates.Add(cert);
 
-                using (HttpClient client = new HttpClient(handler))
+                using (HttpClient client = new(handler))
                 {
 
                     client.DefaultRequestVersion = new Version("2.0");
@@ -293,7 +293,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             wxPayData.FromXml(getdata, mchkey);
 
 
-            var retInfo = new dtoCreatePayRefundMiniApp();
+            dtoCreatePayRefundMiniApp retInfo = new();
 
             retInfo.return_code = wxPayData.GetValue("return_code").ToString();
             retInfo.return_msg = wxPayData.GetValue("return_msg").ToString();

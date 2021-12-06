@@ -26,7 +26,7 @@ namespace WebApi.Filters
             {
                 string errMsg = context.HttpContext.Items["errMsg"].ToString();
 
-                context.Result = new JsonResult(new { errMsg = errMsg });
+                context.Result = new JsonResult(new { errMsg });
             }
         }
 

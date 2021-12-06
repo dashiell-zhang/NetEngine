@@ -22,7 +22,7 @@ namespace WebApi.Libraries.WeiXin.Public
         }
 
         //采用排序的Dictionary的好处是方便对数据包进行签名，不用再签名之前再做一次排序
-        private SortedDictionary<string, object> m_values = new SortedDictionary<string, object>();
+        private readonly SortedDictionary<string, object> m_values = new();
 
         /**
         * 设置某个字段的值
@@ -41,8 +41,7 @@ namespace WebApi.Libraries.WeiXin.Public
         */
         public object GetValue(string key)
         {
-            object o = null;
-            m_values.TryGetValue(key, out o);
+            m_values.TryGetValue(key, out object o);
             return o;
         }
 
@@ -53,8 +52,7 @@ namespace WebApi.Libraries.WeiXin.Public
          */
         public bool IsSet(string key)
         {
-            object o = null;
-            m_values.TryGetValue(key, out o);
+            m_values.TryGetValue(key, out object o);
             if (null != o)
                 return true;
             else
@@ -111,7 +109,7 @@ namespace WebApi.Libraries.WeiXin.Public
             System.IO.Stream s = HttpContext.Current().Request.Body;
             int count = 0;
             byte[] buffer = new byte[1024];
-            StringBuilder builder = new StringBuilder();
+            StringBuilder builder = new();
             while ((count = s.Read(buffer, 0, 1024)) > 0)
             {
                 builder.Append(Encoding.UTF8.GetString(buffer, 0, count));
@@ -124,7 +122,7 @@ namespace WebApi.Libraries.WeiXin.Public
                 throw new WxPayException("将空的xml串转换为WxPayData不合法!");
             }
 
-            XmlDocument xmlDoc = new XmlDocument();
+            XmlDocument xmlDoc = new();
             xmlDoc.LoadXml(builder.ToString());
             XmlNode xmlNode = xmlDoc.FirstChild;//获取到根节点<xml>
             XmlNodeList nodes = xmlNode.ChildNodes;
@@ -150,7 +148,7 @@ namespace WebApi.Libraries.WeiXin.Public
                 throw new WxPayException("将空的xml串转换为WxPayData不合法!");
             }
 
-            XmlDocument xmlDoc = new XmlDocument();
+            XmlDocument xmlDoc = new();
             xmlDoc.LoadXml(xml);
             XmlNode xmlNode = xmlDoc.FirstChild;//获取到根节点<xml>
             XmlNodeList nodes = xmlNode.ChildNodes;
@@ -189,7 +187,7 @@ namespace WebApi.Libraries.WeiXin.Public
                 throw new WxPayException("将空的xml串转换为WxPayData不合法!");
             }
 
-            XmlDocument xmlDoc = new XmlDocument();
+            XmlDocument xmlDoc = new();
             xmlDoc.LoadXml(xml);
             XmlNode xmlNode = xmlDoc.FirstChild;//获取到根节点<xml>
             XmlNodeList nodes = xmlNode.ChildNodes;

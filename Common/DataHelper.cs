@@ -30,7 +30,7 @@ namespace Common
             {
 
                 IList<T> list = new List<T>();
-                T model = default(T);
+                T model = default;
                 foreach (DataRow dr in table.Rows)
                 {
                     model = Activator.CreateInstance<T>();
@@ -92,7 +92,7 @@ namespace Common
             {
 
                 IList<T> list = new List<T>();
-                T model = default(T);
+                T model = default;
                 foreach (DataRow dr in table.Rows)
                 {
                     model = Activator.CreateInstance<T>();
@@ -156,7 +156,7 @@ namespace Common
             {
                 return null;
             }
-            DataTable dt = new DataTable(typeof(T).Name);
+            DataTable dt = new(typeof(T).Name);
             DataColumn column;
             DataRow row;
 
@@ -335,14 +335,14 @@ namespace Common
         {
 
             //创建Excel文件的对象
-            NPOI.XSSF.UserModel.XSSFWorkbook book = new NPOI.XSSF.UserModel.XSSFWorkbook();
+            NPOI.XSSF.UserModel.XSSFWorkbook book = new();
             //添加一个sheet
             NPOI.SS.UserModel.ISheet sheet1 = book.CreateSheet("Sheet1");
 
             //给sheet1添加第一行的头部标题
             NPOI.SS.UserModel.IRow row1 = sheet1.CreateRow(0);
 
-            T model = new T();
+            T model = new();
             var dict = PropertyHelper.GetPropertiesDisplayName(model);
 
             int x = 0;
@@ -372,7 +372,7 @@ namespace Common
 
 
             //写入到客户端 
-            var ms = new IO.NpoiMemoryStream();
+            IO.NpoiMemoryStream ms = new();
             ms.AllowClose = false;
             book.Write(ms);
             ms.Flush();
@@ -395,14 +395,14 @@ namespace Common
         {
 
             //创建Excel文件的对象
-            NPOI.XSSF.UserModel.XSSFWorkbook book = new NPOI.XSSF.UserModel.XSSFWorkbook();
+            NPOI.XSSF.UserModel.XSSFWorkbook book = new();
             //添加一个sheet
             NPOI.SS.UserModel.ISheet sheet1 = book.CreateSheet("Sheet1");
 
             //给sheet1添加第一行的头部标题
             NPOI.SS.UserModel.IRow row1 = sheet1.CreateRow(0);
 
-            T model = new T();
+            T model = new();
             var dict = PropertyHelper.GetPropertiesDisplayName(model);
 
             int x = 0;
@@ -432,7 +432,7 @@ namespace Common
 
 
             //写入到客户端 
-            var ms = new IO.NpoiMemoryStream();
+            IO.NpoiMemoryStream ms = new();
             ms.AllowClose = false;
             book.Write(ms);
             ms.Flush();

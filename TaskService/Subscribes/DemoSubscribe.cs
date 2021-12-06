@@ -11,7 +11,7 @@ namespace TaskService.Subscribes
 
 
         [CapSubscribe("ShowMessage")]
-        public void ShowMessage(string msg)
+        public static void ShowMessage(string msg)
         {
 
             using (var scope = Program.ServiceProvider.CreateScope())

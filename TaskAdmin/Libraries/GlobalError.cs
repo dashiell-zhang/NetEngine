@@ -30,13 +30,13 @@ namespace TaskAdmin.Libraries
 
             if (parameterStr.Length > 102400)
             {
-                parameterStr = parameterStr.Substring(0, 102400);
+                parameterStr = parameterStr[..102400];
             }
 
             var content = new
             {
-                path = path,
-                parameter = parameterStr,
+                path,
+                parameterStr,
                 error = new
                 {
                     error.Source,

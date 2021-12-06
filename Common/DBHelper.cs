@@ -138,7 +138,7 @@ namespace Common
                     var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
                     var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>();
 
-                    var log = new TLog();
+                    TLog log = new();
 
                     log.Id = snowflakeHelper.GetId();
                     log.Sign = Sign;
@@ -214,14 +214,14 @@ namespace Common
         /// <param name="starttime">开始时间</param>
         /// <param name="endtime">结束时间</param>
         /// <returns></returns>
-        public static int RunCountGet(string tag, DateTime starttime = default(DateTime), DateTime endtime = default(DateTime))
+        public static int RunCountGet(string tag, DateTime starttime = default, DateTime endtime = default)
         {
 
             using (var db = new dbContext())
             {
                 var query = db.TCount.Where(t => t.Tag.Contains(tag));
 
-                if (starttime != default(DateTime) & endtime != default(DateTime))
+                if (starttime != default & endtime != default)
                 {
                     query = query.Where(t => t.CreateTime >= starttime & t.CreateTime <= endtime);
                 }

@@ -168,7 +168,7 @@ namespace Common
             }
             catch
             {
-                return default(T);
+                return default;
             }
         }
 

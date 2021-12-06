@@ -11,7 +11,7 @@ namespace AdminApi.Libraries.Ueditor
     /// </summary>
     public static class Config
     {
-        private static bool noCache = true;
+        private readonly static bool noCache = true;
         private static JObject BuildItems()
         {
             var path = IO.Path.WebRootPath() + "/ueditor/config.json";

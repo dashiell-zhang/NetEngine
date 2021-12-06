@@ -81,7 +81,7 @@ namespace Common
         public static string ModelToUriParam(object obj, string url = "")
         {
             PropertyInfo[] propertis = obj.GetType().GetProperties();
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append(url);
             sb.Append("?");
             foreach (var p in propertis)
@@ -205,7 +205,7 @@ namespace Common
 
             string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
 
-            using (MultipartFormDataContent formDataContent = new MultipartFormDataContent(boundary))
+            using (MultipartFormDataContent formDataContent = new(boundary))
             {
                 foreach (var item in formItems)
                 {

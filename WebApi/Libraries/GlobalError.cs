@@ -30,16 +30,16 @@ namespace WebApi.Libraries
 
             if (parameterStr.Length > 102400)
             {
-                parameterStr = parameterStr.Substring(0, 102400);
+                parameterStr = parameterStr[..102400];
             }
 
             var authorization = Http.HttpContext.Current().Request.Headers["Authorization"].ToString();
 
             var content = new
             {
-                path = path,
-                parameter = parameter,
-                authorization = authorization,
+                path,
+                parameter,
+                authorization,
                 error = new
                 {
                     error.Source,

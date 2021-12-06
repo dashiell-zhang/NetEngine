@@ -9,16 +9,15 @@ namespace Common.AliYun
 {
     public class OssHelper
     {
-        string endpoint = IO.Config.Get()["OSSEndpoint"];
-        string accessKeyId = "";
-        string accessKeySecret = "";
-        string bucketName = "";
+        private readonly string endpoint = IO.Config.Get()["OSSEndpoint"];
+        private readonly string accessKeyId;
+        private readonly string accessKeySecret;
+        private readonly string bucketName;
 
         public OssHelper()
         {
 
         }
-
 
 
 
@@ -195,7 +194,7 @@ namespace Common.AliYun
 
                 if (exist == false)
                 {
-                    var request = new CreateBucketRequest(bucketName);
+                    CreateBucketRequest request = new(bucketName);
 
                     //设置存储空间访问权限ACL。
                     request.ACL = CannedAccessControlList.PublicRead;

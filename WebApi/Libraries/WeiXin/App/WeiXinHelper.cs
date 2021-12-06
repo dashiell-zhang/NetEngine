@@ -9,15 +9,15 @@ namespace WebApi.Libraries.WeiXin.App
 {
     public class WeiXinHelper
     {
-        private string appid;
+        private readonly string appid;
 
-        private string appsecret;
+        private readonly string appsecret;
 
-        private string mchid;
+        private readonly string mchid;
 
-        private string mchkey;
+        private readonly string mchkey;
 
-        private string notifyurl;
+        private readonly string notifyurl;
 
         public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
         {
@@ -81,7 +81,7 @@ namespace WebApi.Libraries.WeiXin.App
             var getdata = HttpHelper.Post(url, zhi, "form");
 
             //获取xml数据
-            XmlDocument doc = new XmlDocument();
+            XmlDocument doc = new();
             doc.LoadXml(getdata);
 
 
@@ -94,7 +94,7 @@ namespace WebApi.Libraries.WeiXin.App
             {
                 string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
 
-                var info = new dtoCreatePayApp();
+                dtoCreatePayApp info = new();
                 info.appid = appid;
                 info.partnerid = mchid;
                 info.prepayid = prepay_id;

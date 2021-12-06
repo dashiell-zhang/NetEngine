@@ -125,7 +125,7 @@ namespace WebApi.Controllers.v1
 
                 var url = Libraries.Http.HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
 
-                var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(appId, appSecret, mchId, mchKey, url);
+                var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(appId, mchId, mchKey, url);
 
                 int price = Convert.ToInt32(order.Price * 100);
 

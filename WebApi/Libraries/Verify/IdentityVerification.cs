@@ -129,7 +129,7 @@ namespace WebApi.Libraries.Verify
                             if (tokenInfo != null)
                             {
 
-                                var userToken = new TUserToken();
+                                TUserToken userToken = new();
                                 userToken.Id = snowflakeHelper.GetId();
                                 userToken.UserId = userId;
                                 userToken.LastId = tokenId;

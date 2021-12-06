@@ -11,18 +11,18 @@ namespace Common.TencentCloud
         /// <summary>
         /// SDK AppId (非账号APPId)
         /// </summary>
-        string appId = "";
+        private readonly string appId = "";
 
         /// <summary>
         /// 账号密钥ID
         /// </summary>
-        string secretId = "";
+        private readonly string secretId = "";
 
 
         /// <summary>
         /// 账号密钥Key
         /// </summary>
-        string secretKey = "";
+        private readonly string secretKey = "";
 
 
         public SmsHelper()
@@ -51,15 +51,15 @@ namespace Common.TencentCloud
             try
             {
 
-                Credential cred = new Credential
+                Credential cred = new()
                 {
                     SecretId = secretId,
                     SecretKey = secretKey
                 };
 
-                SmsClient client = new SmsClient(cred, "ap-guangzhou");
+                SmsClient client = new(cred, "ap-guangzhou");
 
-                SendSmsRequest req = new SendSmsRequest();
+                SendSmsRequest req = new();
 
                 req.SmsSdkAppid = appId;
 

@@ -283,7 +283,7 @@ namespace WebApi
                                     Id = "Bearer"
                                 }
                             },
-                        new string[] { }
+                        Array.Empty<string>()
                     }
                 });
             });

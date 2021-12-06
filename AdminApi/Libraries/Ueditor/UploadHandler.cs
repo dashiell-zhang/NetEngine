@@ -195,7 +195,7 @@ namespace AdminApi.Libraries.Ueditor
             });
         }
 
-        private string GetStateMessage(UploadState state)
+        private static string GetStateMessage(UploadState state)
         {
             switch (state)
             {

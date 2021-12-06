@@ -21,7 +21,7 @@ namespace Common
 
             string encoded = base64.Replace("/", "_").Replace("+", "-");
 
-            return encoded.Substring(0, 22);
+            return encoded[..22];
         }
 
 

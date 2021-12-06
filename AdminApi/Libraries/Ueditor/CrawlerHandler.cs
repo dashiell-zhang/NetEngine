@@ -64,7 +64,7 @@ namespace AdminApi.Libraries.Ueditor
             }
 
 
-            using (HttpClient client = new HttpClient())
+            using (HttpClient client = new())
             {
                 client.DefaultRequestVersion = new Version("2.0");
                 using (var httpResponse = client.GetAsync(this.SourceUrl).Result)
@@ -128,7 +128,7 @@ namespace AdminApi.Libraries.Ueditor
 
         }
 
-        private bool IsExternalIPAddress(string url)
+        private static bool IsExternalIPAddress(string url)
         {
             var uri = new Uri(url);
             switch (uri.HostNameType)
@@ -154,7 +154,7 @@ namespace AdminApi.Libraries.Ueditor
             return false;
         }
 
-        private bool IsPrivateIP(IPAddress myIPAddress)
+        private static bool IsPrivateIP(IPAddress myIPAddress)
         {
             if (IPAddress.IsLoopback(myIPAddress)) return true;
             if (myIPAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)

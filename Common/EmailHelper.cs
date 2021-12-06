@@ -24,12 +24,12 @@ namespace Common
 
                 string server = "smtp.qq.com";
 
-                var client = new SmtpClient();
+                SmtpClient client = new();
                 client.Host = server;
                 client.UseDefaultCredentials = false;
                 client.Credentials = new System.Net.NetworkCredential(sendAccount, sendAccountPwd);
                 client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                var message = new MailMessage(sendAccount, receiveAccount);
+                MailMessage message = new(sendAccount, receiveAccount);
                 message.Subject = title;
                 message.Body = content;
                 message.BodyEncoding = System.Text.Encoding.UTF8;

@@ -168,7 +168,7 @@ namespace Repository.Database
                 {
 
                     //设置生成数据库时的表名为小写格式并添加前缀 t_
-                    var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value.ToString()).FirstOrDefault()).FirstOrDefault() ?? ("t_" + entity.ClrType.Name.Substring(1));
+                    var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value.ToString()).FirstOrDefault()).FirstOrDefault() ?? ("t_" + entity.ClrType.Name[1..]);
                     builder.ToTable(tableName.ToLower());
 
 
@@ -237,7 +237,7 @@ namespace Repository.Database
 
 
 
-        public string GetEntityComment(string typeName, string fieldName = null, List<string> baseTypeNames = null)
+        public static string GetEntityComment(string typeName, string fieldName = null, List<string> baseTypeNames = null)
         {
             var path = AppContext.BaseDirectory + "/Repository.xml";
             var xml = new XmlDocument();
@@ -313,7 +313,7 @@ namespace Repository.Database
 
 
 
-        public string ComparisonEntity<T>(T original, T after) where T : new()
+        public static string ComparisonEntity<T>(T original, T after) where T : new()
         {
             var retValue = "";
 
@@ -473,7 +473,7 @@ namespace Repository.Database
 
 
 
-                var osLog = new TOSLog();
+                TOSLog osLog = new();
                 osLog.Id = osLogId;
                 osLog.CreateTime = DateTime.UtcNow;
                 osLog.Table = type.Name;

@@ -86,7 +86,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateLink")]
         public long CreateLink(dtoEditLink createLink)
         {
-            var link = new TLink();
+            TLink link = new();
             link.Id = snowflakeHelper.GetId();
             link.CreateTime = DateTime.UtcNow;
             link.CreateUserId = userId;

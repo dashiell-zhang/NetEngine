@@ -7,20 +7,17 @@ namespace WebApi.Libraries.WeiXin.Web
 {
     public class WeiXinHelper
     {
-        private string appid;
+        private readonly string appid;
 
-        private string secret;
+        private readonly string mchid;
 
-        private string mchid;
+        private readonly string mchkey;
 
-        private string mchkey;
+        private readonly string notifyurl;
 
-        private string notifyurl;
-
-        public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
+        public WeiXinHelper(string in_appid, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
         {
             appid = in_appid;
-            secret = in_secret;
             mchid = in_mchid;
             mchkey = in_mchkey;
             notifyurl = in_notifyurl;
@@ -80,7 +77,7 @@ namespace WebApi.Libraries.WeiXin.Web
             var getdata = Common.HttpHelper.Post(url, zhi, "form");
 
             //获取xml数据
-            XmlDocument doc = new XmlDocument();
+            XmlDocument doc = new();
             doc.LoadXml(getdata);
 
 
@@ -91,11 +88,7 @@ namespace WebApi.Libraries.WeiXin.Web
 
             if (jo["xml"]["return_code"]["#cdata-section"].ToString() == "SUCCESS")
             {
-                string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
-
-
                 string codeUrl = jo["xml"]["code_url"]["#cdata-section"].ToString();
-
 
                 return codeUrl;
             }

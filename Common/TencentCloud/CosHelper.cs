@@ -8,11 +8,11 @@ namespace Common.TencentCloud
 {
     public class CosHelper
     {
-        string endpoint = "";
-        string appId = "";
-        string secretId = "";
-        string secretKey = "";
-        string bucketName = "";
+        private readonly string endpoint = "";
+        private readonly string appId = "";
+        private readonly string secretId = "";
+        private readonly string secretKey = "";
+        private readonly string bucketName = "";
 
         public CosHelper()
         {
@@ -61,7 +61,7 @@ namespace Common.TencentCloud
                     string bucket = bucketName; //存储桶
 
 
-                    PutObjectRequest request = new PutObjectRequest(bucket, remotepath, localpath);
+                    PutObjectRequest request = new(bucket, remotepath, localpath);
 
                     //设置签名有效时长
                     request.SetSign(TimeUtils.GetCurrentTime(TimeUnit.Seconds), durationSecond);

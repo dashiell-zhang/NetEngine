@@ -36,7 +36,7 @@ namespace AdminApi.Controllers.v1
                 t.Value
             }).ToList();
 
-            var site = new dtoSite();
+            dtoSite site = new();
             site.WebUrl = kvList.Where(t => t.Key == "WebUrl").Select(t => t.Value).FirstOrDefault();
             site.ManagerName = kvList.Where(t => t.Key == "ManagerName").Select(t => t.Value).FirstOrDefault();
             site.ManagerAddress = kvList.Where(t => t.Key == "ManagerAddress").Select(t => t.Value).FirstOrDefault();

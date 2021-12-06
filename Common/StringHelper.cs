@@ -23,7 +23,7 @@ namespace Common
         {
             string orderno = "";
 
-            Random ran = new Random();
+            Random ran = new();
             int RandKey = ran.Next(10000, 99999);
 
 
@@ -55,7 +55,7 @@ namespace Common
         /// <returns></returns>
         public static bool IsContainsCN(string text)
         {
-            Regex reg = new Regex(@"[\u4e00-\u9fa5]");//正则表达式
+            Regex reg = new(@"[\u4e00-\u9fa5]");//正则表达式
 
             if (reg.IsMatch(text))
             {
@@ -137,11 +137,11 @@ namespace Common
 
             RegexOptions.IgnoreCase);
 
-            Htmlstring.Replace("<", "");
+            Htmlstring = Htmlstring.Replace("<", "");
 
-            Htmlstring.Replace(">", "");
+            Htmlstring = Htmlstring.Replace(">", "");
 
-            Htmlstring.Replace("\r\n", "");
+            Htmlstring = Htmlstring.Replace("\r\n", "");
 
             Htmlstring = WebUtility.HtmlEncode(Htmlstring).Trim();
 
@@ -186,7 +186,7 @@ namespace Common
 
             if (NeiRong.Length > length)
             {
-                NeiRong = NeiRong.Substring(0, length);
+                NeiRong = NeiRong[..length];
 
                 NeiRong = NeiRong + "...";
 

@@ -25,9 +25,9 @@ namespace AdminApp.Libraries
         /// <returns></returns>
         public static string Get(string url, Dictionary<string, string> headers = default)
         {
-            using (HttpClientHandler handler = new HttpClientHandler())
+            using (HttpClientHandler handler = new())
             {
-                using (HttpClient client = new HttpClient(handler))
+                using (HttpClient client = new(handler))
                 {
                     client.DefaultRequestVersion = new Version("2.0");
 
@@ -59,7 +59,7 @@ namespace AdminApp.Libraries
         public static string ModelToUriParam(object obj, string url = "")
         {
             PropertyInfo[] propertis = obj.GetType().GetProperties();
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append(url);
             sb.Append("?");
             foreach (var p in propertis)
@@ -92,10 +92,10 @@ namespace AdminApp.Libraries
         public static string Post(string url, string data, string type, Dictionary<string, string> headers = default)
         {
 
-            using (HttpClientHandler handler = new HttpClientHandler())
+            using (HttpClientHandler handler = new())
             {
 
-                using (HttpClient client = new HttpClient(handler))
+                using (HttpClient client = new(handler))
                 {
                     client.DefaultRequestVersion = new Version("2.0");
 
@@ -172,10 +172,10 @@ namespace AdminApp.Libraries
         /// <returns></returns>
         public static string PostForm(string url, List<PostFormItem> formItems, Dictionary<string, string> headers = default)
         {
-            using (HttpClientHandler handler = new HttpClientHandler())
+            using (HttpClientHandler handler = new())
             {
 
-                using (HttpClient client = new HttpClient(handler))
+                using (HttpClient client = new(handler))
                 {
                     client.DefaultRequestVersion = new Version("2.0");
 
@@ -189,7 +189,7 @@ namespace AdminApp.Libraries
 
                     string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
 
-                    using (MultipartFormDataContent formDataContent = new MultipartFormDataContent(boundary))
+                    using (MultipartFormDataContent formDataContent = new(boundary))
                     {
 
                         foreach (var item in formItems)

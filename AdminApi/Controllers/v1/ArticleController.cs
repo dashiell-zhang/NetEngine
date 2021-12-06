@@ -105,7 +105,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateChannel")]
         public long CreateChannel(dtoEditChannel createChannel)
         {
-            var channel = new TChannel();
+            TChannel channel = new();
             channel.Id = snowflakeHelper.GetId();
             channel.CreateTime = DateTime.UtcNow;
             channel.CreateUserId = userId;
@@ -259,7 +259,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateCategory")]
         public long CreateCategory(dtoEditCategory createCategory)
         {
-            var category = new TCategory();
+            TCategory category = new();
             category.Id = snowflakeHelper.GetId();
             category.CreateTime = DateTime.UtcNow;
             category.CreateUserId = userId;
@@ -419,7 +419,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateArticle")]
         public long CreateArticle(dtoEditArticle createArticle, long fileKey)
         {
-            var article = new TArticle();
+            TArticle article = new();
             article.Id = snowflakeHelper.GetId();
             article.CreateTime = DateTime.UtcNow;
             article.CreateUserId = userId;

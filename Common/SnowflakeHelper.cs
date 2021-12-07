@@ -15,7 +15,7 @@ namespace Common
         private static long sequence = 0L;//计数从零开始
         private static long lastTimestamp = -1L;//最后时间戳
 
-        //twepoch 为2021-01-01 8:00 , sequenceBits 调整为11位，所以时间戳可用 42位，未来139年 可用
+        //twepoch 1609459200000L 为 UTC 2021-01-01 00:00 , sequenceBits 调整为11位，所以时间戳可用 42位，未来139年 可用
         private readonly static long twepoch = 1609459200000L; //唯一时间随机量，这是一个避免重复的随机量，自行设定不要大于当前时间戳
         private readonly static long machineIdBits = 5L; //机器码字节数
         private readonly static long datacenterIdBits = 5L;//数据字节数

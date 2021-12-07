@@ -8,16 +8,11 @@ namespace AdminApp.Libraries.Json
     {
 
 
-        private readonly string _dateFormatString;
         public DateTimeNullConverter()
         {
-            _dateFormatString = "yyyy/MM/dd HH:mm:ss";
+
         }
 
-        public DateTimeNullConverter(string dateFormatString)
-        {
-            _dateFormatString = dateFormatString;
-        }
 
 
         public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -28,7 +23,7 @@ namespace AdminApp.Libraries.Json
 
         public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
         {
-            writer.WriteStringValue(value?.ToString(_dateFormatString));
+            writer.WriteStringValue(value?.ToString());
         }
     }
 

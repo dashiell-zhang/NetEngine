@@ -205,8 +205,6 @@ namespace AdminApi
 
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
             });
 

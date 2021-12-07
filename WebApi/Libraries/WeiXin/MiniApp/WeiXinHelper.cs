@@ -86,7 +86,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <returns></returns>
-        public DtoCreatePayMiniApp CreatePay(string openid, string orderno,  string body, int price)
+        public DtoCreatePayMiniApp CreatePay(string openid, string orderno, string body, int price)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");

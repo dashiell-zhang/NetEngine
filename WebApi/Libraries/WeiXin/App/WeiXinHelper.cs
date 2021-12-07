@@ -39,7 +39,7 @@ namespace WebApi.Libraries.WeiXin.App
         /// <param name="price">价格，单位为分</param>
         /// <param name="ip">服务器IP</param>
         /// <returns></returns>
-        public DtoCreatePayApp CreatePay(string orderno,  string body, int price, string ip)
+        public DtoCreatePayApp CreatePay(string orderno, string body, int price, string ip)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");

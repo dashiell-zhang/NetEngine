@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 
@@ -16,7 +15,7 @@ namespace AdminApi.Libraries.Ueditor
         public UploadConfig UploadConfig { get; private set; }
         public UploadResult Result { get; private set; }
 
-        public UploadHandler( UploadConfig config)
+        public UploadHandler(UploadConfig config)
             : base()
         {
             this.UploadConfig = config;

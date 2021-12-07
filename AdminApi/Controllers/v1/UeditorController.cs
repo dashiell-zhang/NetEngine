@@ -1,7 +1,6 @@
 ﻿using AdminApi.Libraries;
 using AdminApi.Libraries.Ueditor;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AdminApi.Controllers.v1
@@ -22,14 +21,14 @@ namespace AdminApi.Controllers.v1
             Handler action = (Request.Query["action"].Count != 0 ? Request.Query["action"].ToString() : "") switch
             {
                 "config" => new ConfigHandler(),
-                "uploadimage" => new UploadHandler( new UploadConfig()
+                "uploadimage" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = Config.GetStringList("imageAllowFiles"),
                     PathFormat = Config.GetString("imagePathFormat"),
                     SizeLimit = Config.GetInt("imageMaxSize"),
                     UploadFieldName = Config.GetString("imageFieldName")
                 }),
-                "uploadscrawl" => new UploadHandler( new UploadConfig()
+                "uploadscrawl" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = new string[] { ".png" },
                     PathFormat = Config.GetString("scrawlPathFormat"),
@@ -38,14 +37,14 @@ namespace AdminApi.Controllers.v1
                     Base64 = true,
                     Base64Filename = "scrawl.png"
                 }),
-                "uploadvideo" => new UploadHandler( new UploadConfig()
+                "uploadvideo" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = Config.GetStringList("videoAllowFiles"),
                     PathFormat = Config.GetString("videoPathFormat"),
                     SizeLimit = Config.GetInt("videoMaxSize"),
                     UploadFieldName = Config.GetString("videoFieldName")
                 }),
-                "uploadfile" => new UploadHandler( new UploadConfig()
+                "uploadfile" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = Config.GetStringList("fileAllowFiles"),
                     PathFormat = Config.GetString("filePathFormat"),

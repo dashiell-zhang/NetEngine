@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-
-
-namespace AdminApi.Libraries.Ueditor
+﻿namespace AdminApi.Libraries.Ueditor
 {
 
     /// <summary>

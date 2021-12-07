@@ -45,7 +45,7 @@ namespace AdminApi.Controllers.v1
             var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
 
-            string basepath = "/Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
+            string basepath = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
 
             var filePath = Libraries.IO.Path.WebRootPath() + basepath + "/";
 
@@ -124,7 +124,7 @@ namespace AdminApi.Controllers.v1
         public long UploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
-            string basepath = "/Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
+            string basepath = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
             string filepath = Libraries.IO.Path.WebRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
@@ -154,13 +154,13 @@ namespace AdminApi.Controllers.v1
 
                     var oss = new Common.AliYun.OssHelper();
 
-                    var upload = oss.FileUpload(path, "Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
+                    var upload = oss.FileUpload(path, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
 
                     if (upload)
                     {
                         Common.IO.IOHelper.DeleteFile(path);
 
-                        path = "/Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
+                        path = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
                     }
                 }
@@ -347,7 +347,7 @@ namespace AdminApi.Controllers.v1
             {
                 string domain = "https://file.xxxx.com";
 
-                string fileUrl = domain + file.Path.Replace("\\", "/");
+                string fileUrl = domain + file.Path;
 
                 return fileUrl;
             }

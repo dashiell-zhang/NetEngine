@@ -94,13 +94,13 @@ namespace AdminApi.Libraries.Ueditor
                 {
                     //将文件转存至 oss 并清理本地文件
                     var oss = new Common.AliYun.OssHelper();
-                    var upload = oss.FileUpload(savePath, "Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(this.SourceUrl));
+                    var upload = oss.FileUpload(savePath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(this.SourceUrl));
 
                     if (upload)
                     {
                         Common.IO.IOHelper.DeleteFile(savePath);
 
-                        ServerUrl = "Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
+                        ServerUrl = "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
                         State = "SUCCESS";
                     }
                     else

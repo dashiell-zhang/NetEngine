@@ -45,7 +45,7 @@ namespace WebApi.Controllers.v1
             var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
 
-            string basepath = "Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
+            string basepath = "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
 
             var filePath = Libraries.IO.Path.ContentRootPath() + "/" + basepath + "/";
 
@@ -124,7 +124,7 @@ namespace WebApi.Controllers.v1
         public long UploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required] IFormFile file)
         {
 
-            string basepath = "/Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
+            string basepath = "/files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
             string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
             Directory.CreateDirectory(filepath);
@@ -154,13 +154,13 @@ namespace WebApi.Controllers.v1
 
                     var oss = new Common.AliYun.OssHelper();
 
-                    var upload = oss.FileUpload(path, "Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
+                    var upload = oss.FileUpload(path, "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
 
                     if (upload)
                     {
                         Common.IO.IOHelper.DeleteFile(path);
 
-                        path = "/Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
+                        path = "/files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
                     }
                 }
@@ -347,7 +347,7 @@ namespace WebApi.Controllers.v1
             {
                 string domain = "https://file.xxxx.com";
 
-                string fileUrl = domain + file.Path.Replace("\\", "/");
+                string fileUrl = domain + file.Path;
 
                 return fileUrl;
             }
@@ -384,7 +384,7 @@ namespace WebApi.Controllers.v1
 
                 var fileid = Guid.NewGuid().ToString() + Path.GetExtension(fileName).ToLowerInvariant(); ;
 
-                string basepath = "/Files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fileid;
+                string basepath = "/files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fileid;
 
 
                 TFile f = new();
@@ -437,7 +437,7 @@ namespace WebApi.Controllers.v1
                 var fileExtension = string.Empty;
                 var fullFileName = string.Empty;
 
-                string basepath = "/Files/Group/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fileId;
+                string basepath = "/files/groups/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fileId;
                 string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
 
                 Directory.CreateDirectory(filepath);

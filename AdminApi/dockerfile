@@ -1,0 +1,35 @@
+#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+WORKDIR /app
+
+#修改镜像内部软件源采用阿里镜像
+RUN echo "deb https://mirrors.aliyun.com/debian buster main" > /etc/apt/sources.list
+RUN echo "deb https://mirrors.aliyun.com/debian-security buster/updates main" >> /etc/apt/sources.list
+RUN echo "deb https://mirrors.aliyun.com/debian buster-updates main" >> /etc/apt/sources.list
+
+#安装 libfontconfig1 以解决 SkiaSharp 在 linux 的依赖问题
+RUN apt-get update && apt-get -y install libfontconfig1
+
+#设置时区为中国上海
+ENV TZ=Asia/Shanghai
+
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+
+WORKDIR /src
+COPY ["AdminApi/AdminApi.csproj", "AdminApi/"]
+RUN dotnet restore "AdminApi/AdminApi.csproj"
+COPY . .
+WORKDIR "/src/AdminApi"
+RUN dotnet build "AdminApi.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "AdminApi.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "AdminApi.dll"]

@@ -1,0 +1,199 @@
+﻿@page "/link"
+@using AdminShared.Models.v1.Link
+
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>返回上一页</BreadcrumbItem>
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>友链管理</BreadcrumbItem>
+        <BreadcrumbItem>所有友链</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background">
+
+        <div style="margin-bottom:10px">
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditLink()">添加</Button>
+        </div>
+        <Table TItem="DtoLink" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+            <RowTemplate>
+                <Column @bind-Field="@context.Name" Title="名称"></Column>
+                <Column @bind-Field="@context.Url" Title="Url"></Column>
+                <Column @bind-Field="@context.Sort" Title="排序"></Column>
+                <Column @bind-Field="@context.CreateTime" Title="创建时间">
+                </Column>
+                <ActionColumn Title="操作">
+                    <Space>
+                        <SpaceItem>
+                            <a @onclick="()=>EditLink(context)">编辑</a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Popconfirm Title="确认要删除吗？"
+                                        OnConfirm="_=>DeleteLink(context.Id)"
+                                        OkText="Yes"
+                                        CancelText="No">
+                                <a style="color:red">删除</a>
+                            </Popconfirm>
+
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </RowTemplate>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
+        </Table>
+
+
+
+    </Content>
+</Layout>
+
+
+<Drawer Closable="true" Width="380" Visible="isShowEditLink" Title='("友情链接信息")' OnClose="()=>isShowEditLink=false">
+    <Template style="height:90%">
+
+        <Form Model="@editLink" OnFinish="SaveLink">
+
+            <FormItem>
+                <Text>名称</Text>
+                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+            </FormItem>
+
+            <FormItem>
+                <Text>Url</Text>
+                <Input Placeholder="请输入Url" @bind-Value="@context.Url" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>排序</Text>
+                <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" />
+            </FormItem>
+
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <div style="float:right">
+                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditLink=false">取消</Button>
+                    </div>
+                </AntDesign.Col>
+            </Row>
+        </Form>
+    </Template>
+</Drawer>
+
+
+@code{
+
+    override protected void OnInitialized()
+    {
+        GetLinkList();
+    }
+
+    bool saveLoading = false;
+    bool tableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+
+    DtoPageList<DtoLink> pageList = new();
+
+    async void GetLinkList()
+    {
+        tableLoading = true;
+        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetLinkList();
+    }
+
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowEditLink = false;
+
+    long linkId;
+    DtoEditLink editLink = new();
+
+    void EditLink(DtoLink link = null)
+    {
+        linkId = default;
+        editLink = new DtoEditLink();
+
+        if (link != null)
+        {
+            linkId = link.Id;
+            editLink.Name = link.Name;
+            editLink.Url = link.Url;
+            editLink.Sort = link.Sort;
+        }
+
+        isShowEditLink = true;
+
+        StateHasChanged();
+    }
+
+    async void SaveLink()
+    {
+        saveLoading = true;
+        if (linkId == default)
+        {
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/CreateLink", editLink))
+            {
+                var createLinkId = httpResponse.Content.ReadAsStringAsync().Result;
+
+                Message.Success("添加成功");
+            }
+        }
+        else
+        {
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink))
+            {
+                var updateLinkRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                if (bool.Parse(updateLinkRet))
+                {
+                    Message.Success("编辑成功");
+                }
+            }
+        }
+        saveLoading = false;
+
+        GetLinkList();
+        isShowEditLink = false;
+    }
+
+
+    async void DeleteLink(long linkId)
+    {
+        using (var httpResponse = await Http.DeleteAsJsonAsync("Link/DeleteLink", new { Id = linkId }))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetLinkList();
+                Message.Success("删除成功");
+            }
+        }
+    }
+
+}

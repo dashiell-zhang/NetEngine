@@ -1,0 +1,257 @@
+﻿@page "/category/{channelId}"
+@using AdminShared.Models.v1.Article
+
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>返回上一页</BreadcrumbItem>
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>栏目管理</BreadcrumbItem>
+        <BreadcrumbItem>所有栏目</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background">
+
+        <div style="margin-bottom:10px">
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditCategory()">添加</Button>
+        </div>
+        <Table TItem="DtoCategory" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+            <RowTemplate>
+                <Column @bind-Field="@context.Name" Title="名称"></Column>
+                <Column @bind-Field="@context.Remarks" Title="备注"></Column>
+                <Column @bind-Field="@context.ParentName" Title="父级栏目"></Column>
+                <Column @bind-Field="@context.Sort" Title="排序"></Column>
+                <Column @bind-Field="@context.CreateTime" Title="创建时间"></Column>
+                <ActionColumn Title="操作">
+                    <Space>
+                        <SpaceItem>
+                            <a @onclick="()=>EditCategory(context)">编辑</a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Popconfirm Title="确认要删除吗？"
+                                        OnConfirm="_=>DeleteCategory(context.Id)"
+                                        OkText="Yes"
+                                        CancelText="No">
+                                <a style="color:red">删除</a>
+                            </Popconfirm>
+
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </RowTemplate>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
+        </Table>
+
+    </Content>
+</Layout>
+
+
+<Drawer Closable="true" Width="380" Visible="isShowEditCategory" Title='("栏目信息")' OnClose="()=>isShowEditCategory=false">
+    <Template style="height:90%">
+
+        <Form Model="@editCategory" OnFinish="SaveCategory">
+
+            <FormItem>
+                <Text>名称</Text>
+                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>父级栏目</Text>
+                <Select DataSource="@selectCategoryList" DefaultValue="@(0)" ValueName="@nameof(DtoSelect.Value)" LabelName="@nameof(DtoSelect.Label)" DisabledName="@nameof(DtoSelect.IsDisabled)" @bind-Value="@context.ParentId"></Select>
+            </FormItem>
+
+
+            <FormItem>
+                <Text>备注</Text>
+                <Input Placeholder=" 请输入昵称" @bind-Value="@context.Remarks" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>排序</Text>
+                <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" />
+            </FormItem>
+
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <div style="float:right">
+                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditCategory=false">取消</Button>
+                    </div>
+                </AntDesign.Col>
+            </Row>
+        </Form>
+    </Template>
+</Drawer>
+
+
+@code{
+
+    [Parameter]
+    public string channelId { get; set; }
+
+    List<DtoSelect> selectCategoryList;
+
+    override protected void OnInitialized()
+    {
+        GetSelectCategoryList();
+    }
+
+    override protected void OnParametersSet()
+    {
+        GetCategoryList();
+        GetSelectCategoryList();
+    }
+
+
+    async void GetSelectCategoryList()
+    {
+        var parentKVList = new List<DtoKeyValue>();
+
+
+        parentKVList.Add(new DtoKeyValue { Key = 0, Value = "无父级栏目" });
+
+        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
+
+        parentKVList.AddRange(kvList);
+
+        selectCategoryList = parentKVList.Select(t => new DtoSelect
+        {
+            Label = t.Value.ToString(),
+            Value = long.Parse(t.Key.ToString())
+        }).ToList();
+
+    }
+
+    bool saveLoading = false;
+
+
+    bool tableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    DtoPageList<DtoCategory> pageList = new();
+
+    async void GetCategoryList()
+    {
+        tableLoading = true;
+        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetCategoryList();
+    }
+
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowEditCategory = false;
+    DtoEditCategory editCategory = new();
+    long categoryId;
+
+
+    void EditCategory(DtoCategory category = null)
+    {
+        editCategory = new DtoEditCategory();
+        categoryId = default;
+
+        GetSelectCategoryList();
+
+        if (category != null)
+        {
+            categoryId = category.Id;
+            editCategory.Name = category.Name;
+            editCategory.Remarks = category.Remarks;
+            editCategory.Sort = category.Sort;
+
+            if (category.ParentId == null)
+            {
+                editCategory.ParentId = 0;
+            }
+            else
+            {
+                editCategory.ParentId = category.ParentId;
+            }
+        }
+
+        isShowEditCategory = true;
+
+        StateHasChanged();
+    }
+
+    async void SaveCategory()
+    {
+        saveLoading = true;
+
+        if (editCategory.ParentId == 0)
+        {
+            editCategory.ParentId = null;
+        }
+
+        if (categoryId == default)
+        {
+            editCategory.ChannelId = long.Parse(channelId);
+
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory))
+            {
+                var createCategoryId = httpResponse.Content.ReadAsStringAsync().Result;
+
+                Message.Success("添加成功");
+            }
+        }
+        else
+        {
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/UpdateCategory?categoryId=" + categoryId, editCategory))
+            {
+                var updateCategoryRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                if (bool.Parse(updateCategoryRet))
+                {
+                    Message.Success("编辑成功");
+                }
+            }
+        }
+
+        saveLoading = false;
+
+        GetCategoryList();
+        isShowEditCategory = false;
+    }
+
+
+    async void DeleteCategory(long categoryId)
+    {
+        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteCategory", new { Id = categoryId }))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetCategoryList();
+                Message.Success("删除成功");
+            }
+        }
+    }
+
+
+}

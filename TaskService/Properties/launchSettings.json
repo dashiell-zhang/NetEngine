@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TaskService": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

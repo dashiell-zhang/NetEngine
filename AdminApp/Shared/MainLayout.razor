@@ -1,0 +1,182 @@
+﻿@inherits LayoutComponentBase
+@using System.IdentityModel.Tokens.Jwt;
+@using AdminShared.Models.v1.User
+
+<Layout>
+    <Header Class="header" style="display:flex;margin-left:-30px">
+
+        <div style="width:210px" class="logo"><img src="/img/logo.png" style="width:180px;height:31px" /></div>
+        <div style="width:75%">
+
+            <Menu Theme="MenuTheme.Dark" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new []{"1"})>
+                <MenuItem Key="1" OnClick="()=>changeShow(0)">内容管理</MenuItem>
+                <MenuItem Key="2" OnClick="()=>changeShow(1)">系统设置</MenuItem>
+            </Menu>
+        </div>
+
+
+        <div style="width:13.5%">
+            <div style="float: right;">
+                <Avatar Src="/img/touxiang.jpg" Size="large" />
+                <Dropdown>
+                    <Overlay>
+                        <Menu>
+                            <MenuItem OnClick="Logout">
+                                注销登录
+                            </MenuItem>
+                        </Menu>
+                    </Overlay>
+                    <ChildContent>
+                        <a class="ant-dropdown-link" @onclick:preventDefault style="color: rgba(255,255,255,.7)">
+                            您好，@user.NickName  <Icon Type="down" Style="margin-left: 5px;font-size:1.1em;" />
+                        </a>
+                    </ChildContent>
+                </Dropdown>
+            </div>
+        </div>
+
+
+    </Header>
+    <Layout>
+        <Sider Width="200" Class="rule-action">
+
+            @switch (showIndex)
+            {
+                case 0:
+                    {
+                        <Menu Mode="MenuMode.Inline" Style="height: 100%; border-right: 0;">
+
+                            @foreach (var channel in channelKVList)
+                            {
+                                <SubMenu IsOpen Title="@channel.Value.ToString()">
+                                    <MenuItem><a href="/article/@channel.Key">文章管理</a></MenuItem>
+                                    <MenuItem> <a href="/category/@channel.Key">栏目管理</a></MenuItem>
+                                </SubMenu>
+                            }
+
+                        </Menu>
+                        break;
+                    }
+
+                case 1:
+                    {
+                        <Menu Mode="MenuMode.Inline" DefaultSelectedKeys=@(new[] {"1"}) DefaultOpenKeys=@(new[] {"sub1"}) Style="height: 100%; border-right: 0;">
+
+                            <SubMenu Key="sub1" Title="系统设置">
+                                <MenuItem><a href="/user">用户管理</a></MenuItem>
+                                <MenuItem><a href="/channel">频道管理</a></MenuItem>
+                                <MenuItem><a href="/link">友链管理</a></MenuItem>
+                                <MenuItem><a href="/site">信息维护</a></MenuItem>
+                            </SubMenu>
+
+                        </Menu>
+                        break;
+                    }
+            }
+
+
+        </Sider>
+
+        @Body
+
+    </Layout>
+</Layout>
+
+<style>
+    #components-layout-demo-top-side-2 .logo {
+        width: 120px;
+        height: 31px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 16px 28px 16px 0;
+        float: left;
+    }
+
+    .ant-layout-header {
+        height: 64px;
+        padding: 0 20px;
+        color: rgba(0,0,0,.85);
+        line-height: 64px;
+        background: #001529;
+    }
+</style>
+
+@code{
+
+    public static DtoUser user = new();
+
+    int showIndex = 0;
+
+
+    override protected void OnInitialized()
+    {
+        Authentication();
+        GetChannelList();
+    }
+
+
+    private List<DtoKeyValue> channelKVList = new();
+    async void GetChannelList()
+    {
+        channelKVList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetChannelKVList");
+
+        StateHasChanged();
+    }
+
+
+
+    private async void Authentication()
+    {
+        var authorization = LocalStorage.GetItem<string>("Authorization");
+
+        if (string.IsNullOrEmpty(authorization))
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+            var securityToken = new JwtSecurityToken(authorization);
+
+            var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault().Value);
+
+            var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
+
+            if (expTime < DateTime.UtcNow)
+            {
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                try
+                {
+                    user = await Http.GetFromJsonAsync<DtoUser>("User/GetUser");
+                }
+                catch
+                {
+                    LocalStorage.RemoveItem("Authorization");
+                    NavigationManager.NavigateTo("/login");
+                }
+
+
+                StateHasChanged();
+            }
+        }
+    }
+
+
+    private void Logout()
+    {
+        LocalStorage.RemoveItem("Authorization");
+
+        NavigationManager.NavigateTo("/login");
+    }
+
+    void changeShow(int _showIndex)
+    {
+        showIndex = _showIndex;
+        StateHasChanged();
+    }
+
+}
+
+
+

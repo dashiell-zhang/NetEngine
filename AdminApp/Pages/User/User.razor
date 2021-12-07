@@ -1,0 +1,221 @@
+﻿@page "/user"
+@using AdminShared.Models.v1.User
+
+
+<Layout Style=" padding: 0 24px 24px;">
+    <Breadcrumb Style="margin: 16px 0;">
+        <BreadcrumbItem>返回上一页</BreadcrumbItem>
+        <BreadcrumbItem>首页</BreadcrumbItem>
+        <BreadcrumbItem>用户管理</BreadcrumbItem>
+        <BreadcrumbItem>所有用户</BreadcrumbItem>
+    </Breadcrumb>
+    <Content Class="site-layout-background">
+
+        <div style="margin-bottom:10px">
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditUser()">添加</Button>
+        </div>
+        <Table TItem="DtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+            <RowTemplate>
+                <Column @bind-Field="@context.Name" Title="用户名"></Column>
+                <Column @bind-Field="@context.NickName" Title="昵称"></Column>
+                <Column @bind-Field="@context.Phone" Title="电话"></Column>
+                <Column @bind-Field="@context.Email" Title="邮箱"></Column>
+                <Column @bind-Field="@context.CreateTime" Title="创建时间">
+                </Column>
+                <ActionColumn Title="操作">
+                    <Space>
+                        <SpaceItem>
+                            <a @onclick="()=>EditUser(context)">编辑</a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Popconfirm Title="确认要删除吗？"
+                                        OnConfirm="_=>DeleteUser(context.Id)"
+                                        OkText="Yes"
+                                        CancelText="No">
+                                <a style="color:red">删除</a>
+                            </Popconfirm>
+
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </RowTemplate>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
+        </Table>
+
+
+
+    </Content>
+</Layout>
+
+
+<Drawer Closable="true" Width="380" Visible="isShowEditUser" Title='("用户信息")' OnClose="()=>isShowEditUser=false">
+    <Template style="height:90%">
+
+        <Form Model="@editUser" OnFinish="SaveUser">
+
+            <FormItem>
+                <Text>用户名</Text>
+                <Input Placeholder="请输入用户名" @bind-Value="@context.Name" />
+            </FormItem>
+
+            <FormItem>
+                <Text>昵称</Text>
+                <Input Placeholder="请输入昵称" @bind-Value="@context.NickName" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>手机</Text>
+                <Input Placeholder="请输入手机号" Type="number" @bind-Value="@context.Phone" />
+            </FormItem>
+
+            <FormItem>
+                <Text>邮箱</Text>
+                <Input Placeholder="请输入邮箱" Type="email" @bind-Value="@context.Email" />
+            </FormItem>
+
+
+            <FormItem>
+                <Text>密码</Text>
+                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.PassWord" VisibilityToggle="false" />
+            </FormItem>
+
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <div style="float:right">
+                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditUser=false">取消</Button>
+                    </div>
+                </AntDesign.Col>
+            </Row>
+        </Form>
+    </Template>
+</Drawer>
+
+
+
+@code{
+
+    override protected void OnInitialized()
+    {
+        GetUserList();
+    }
+
+    bool saveLoading = false;
+    bool tableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    DtoPageList<DtoUser> pageList = new();
+
+    async void GetUserList()
+    {
+        tableLoading = true;
+        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetUserList();
+    }
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowEditUser = false;
+    DtoEditUser editUser = new();
+    long userId;
+
+    async void SaveUser()
+    {
+        saveLoading = true;
+
+        if (userId == default)
+        {
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/CreateUser", editUser))
+            {
+                var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
+
+                Message.Success("添加成功");
+            }
+        }
+        else
+        {
+            if (editUser.PassWord == "default")
+            {
+                editUser.PassWord = null;
+            }
+
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser))
+            {
+                var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                if (bool.Parse(updateUserRet))
+                {
+                    Message.Success("编辑成功");
+                }
+            }
+        }
+
+        saveLoading = false;
+
+        GetUserList();
+
+        isShowEditUser = false;
+    }
+
+
+    void EditUser(DtoUser user = null)
+    {
+        editUser = new DtoEditUser();
+        userId = default;
+        if (user != null)
+        {
+            userId = user.Id;
+            editUser.Name = user.Name;
+            editUser.NickName = user.NickName;
+            editUser.Phone = user.Phone;
+            editUser.Email = user.Email;
+            editUser.PassWord = "default";
+        }
+
+        isShowEditUser = true;
+
+        StateHasChanged();
+    }
+
+
+
+    async void DeleteUser(long userId)
+    {
+        using (var httpResponse = await Http.DeleteAsJsonAsync("User/DeleteUser", new { Id = userId }))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetUserList();
+                Message.Success("删除成功");
+            }
+        }
+    }
+
+}

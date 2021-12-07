@@ -1,6 +1,6 @@
 ﻿namespace AdminShared.Models
 {
-    public class dtoKeyValue
+    public class DtoKeyValue
     {
 
 

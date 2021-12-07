@@ -7,7 +7,7 @@ namespace AdminShared.Models
     /// <summary>
     /// 文件信息
     /// </summary>
-    public class dtoFileInfo
+    public class DtoFileInfo
     {
 
 

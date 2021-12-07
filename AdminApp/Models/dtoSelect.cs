@@ -1,6 +1,6 @@
 ﻿namespace AdminApp.Models
 {
-    public class dtoSelect
+    public class DtoSelect
     {
 
 

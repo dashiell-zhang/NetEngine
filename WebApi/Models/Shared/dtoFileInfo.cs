@@ -7,7 +7,7 @@ namespace WebApi.Models.Shared
     /// <summary>
     /// 文件信息
     /// </summary>
-    public class dtoFileInfo
+    public class DtoFileInfo
     {
 
 

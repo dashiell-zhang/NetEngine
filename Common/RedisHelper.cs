@@ -331,10 +331,7 @@ namespace Common
             var sub = ConnectionMultiplexer.GetSubscriber();
             sub.Subscribe(channel, (channel, message) =>
             {
-                if (handler != null)
-                {
-                    handler(channel, message);
-                }
+                handler?.Invoke(channel, message);
             });
         }
 

@@ -25,11 +25,11 @@
 
 @code{
 
-    List<dtoKeyValue> serverInfos = new();
+    List<DtoKeyValue> serverInfos = new();
 
     async override protected void OnInitialized()
     {
-        serverInfos = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Site/GetServerInfo");
+        serverInfos = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Site/GetServerInfo");
 
         StateHasChanged();
     }

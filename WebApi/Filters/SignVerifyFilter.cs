@@ -9,6 +9,7 @@ namespace WebApi.Filters
     /// <summary>
     /// 签名过滤器
     /// </summary>
+    [AttributeUsage(AttributeTargets.All)]
     public class SignVerifyFilter : Attribute, IActionFilter
     {
 
@@ -50,7 +51,7 @@ namespace WebApi.Filters
                             if (!string.IsNullOrEmpty(body))
                             {
                                 body = Common.StringHelper.NoEmoji(body);
-                                strdata = strdata + body;
+                                strdata += body;
                             }
                             else if (context.HttpContext.Request.HasFormContentType)
                             {

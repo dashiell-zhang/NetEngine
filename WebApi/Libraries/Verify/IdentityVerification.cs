@@ -46,32 +46,30 @@ namespace WebApi.Libraries.Verify
                     var controller = actionDescriptor.ControllerName.ToLower();
                     var action = actionDescriptor.ActionName.ToLower();
 
-                    using (var scope = Program.ServiceProvider.CreateScope())
+                    using var scope = Program.ServiceProvider.CreateScope();
+                    var db = scope.ServiceProvider.GetService<DatabaseContext>();
+
+                    var userId = long.Parse(JWTToken.GetClaims("userId"));
+                    var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
+
+                    var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
+
+                    if (functionId != default)
                     {
-                        var db = scope.ServiceProvider.GetService<dbContext>();
+                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
 
-                        var userId = long.Parse(JWTToken.GetClaims("userId"));
-                        var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
-
-                        var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
-
-                        if (functionId != default)
-                        {
-                            var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
-
-                            if (functionAuthorizeId != default)
-                            {
-                                return true;
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        }
-                        else
+                        if (functionAuthorizeId != default)
                         {
                             return true;
                         }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return true;
                     }
 
                 }
@@ -97,74 +95,72 @@ namespace WebApi.Libraries.Verify
 
             var snowflakeHelper = httpContext.RequestServices.GetService<SnowflakeHelper>();
 
-            using (var scope = Program.ServiceProvider.CreateScope())
+            using var scope = Program.ServiceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetService<DatabaseContext>();
+
+            var nbf = Convert.ToInt64(JWTToken.GetClaims("nbf"));
+            var exp = Convert.ToInt64(JWTToken.GetClaims("exp"));
+
+            var nbfTime = DateTimeHelper.UnixToTime(nbf);
+            var expTime = DateTimeHelper.UnixToTime(exp);
+
+            //当前Token过期前15分钟开始签发新的Token
+            if (expTime < DateTime.UtcNow.AddMinutes(15))
             {
-                var db = scope.ServiceProvider.GetService<dbContext>();
 
-                var nbf = Convert.ToInt64(JWTToken.GetClaims("nbf"));
-                var exp = Convert.ToInt64(JWTToken.GetClaims("exp"));
+                var tokenId = long.Parse(JWTToken.GetClaims("tokenId"));
+                var userId = long.Parse(JWTToken.GetClaims("userId"));
 
-                var nbfTime = DateTimeHelper.UnixToTime(nbf);
-                var expTime = DateTimeHelper.UnixToTime(exp);
 
-                //当前Token过期前15分钟开始签发新的Token
-                if (expTime < DateTime.UtcNow.AddMinutes(15))
+                string key = "IssueNewToken" + tokenId;
+
+                var distLock = httpContext.RequestServices.GetService<IDistributedLockProvider>();
+                if (distLock.TryAcquireLock(key) != null)
                 {
+                    var newToken = db.TUserToken.Where(t => t.IsDelete == false & t.LastId == tokenId & t.CreateTime > nbfTime).FirstOrDefault();
 
-                    var tokenId = long.Parse(JWTToken.GetClaims("tokenId"));
-                    var userId = long.Parse(JWTToken.GetClaims("userId"));
-
-
-                    string key = "IssueNewToken" + tokenId;
-
-                    var distLock = httpContext.RequestServices.GetService<IDistributedLockProvider>();
-                    if (distLock.TryAcquireLock(key) != null)
+                    if (newToken == null)
                     {
-                        var newToken = db.TUserToken.Where(t => t.IsDelete == false & t.LastId == tokenId & t.CreateTime > nbfTime).FirstOrDefault();
+                        var tokenInfo = db.TUserToken.Where(t => t.Id == tokenId).FirstOrDefault();
 
-                        if (newToken == null)
+                        if (tokenInfo != null)
                         {
-                            var tokenInfo = db.TUserToken.Where(t => t.Id == tokenId).FirstOrDefault();
 
-                            if (tokenInfo != null)
-                            {
+                            TUserToken userToken = new();
+                            userToken.Id = snowflakeHelper.GetId();
+                            userToken.UserId = userId;
+                            userToken.LastId = tokenId;
+                            userToken.CreateTime = DateTime.UtcNow;
 
-                                TUserToken userToken = new();
-                                userToken.Id = snowflakeHelper.GetId();
-                                userToken.UserId = userId;
-                                userToken.LastId = tokenId;
-                                userToken.CreateTime = DateTime.UtcNow;
-
-                                var claims = new Claim[]{
+                            var claims = new Claim[]{
                                     new Claim("tokenId",userToken.Id.ToString()),
                                     new Claim("userId",userId.ToString())
                                 };
 
 
-                                var token = JWTToken.GetToken(claims);
+                            var token = JWTToken.GetToken(claims);
 
-                                userToken.Token = token;
+                            userToken.Token = token;
 
-                                db.TUserToken.Add(userToken);
+                            db.TUserToken.Add(userToken);
 
-                                db.SaveChanges();
+                            db.SaveChanges();
 
 #pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                                ClearExpireToken();
+                            ClearExpireToken();
 #pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 
-                                httpContext.Response.Headers.Add("NewToken", token);
-                                httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
-                            }
-                        }
-                        else
-                        {
-                            httpContext.Response.Headers.Add("NewToken", newToken.Token);
+                            httpContext.Response.Headers.Add("NewToken", token);
                             httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
                         }
                     }
-
+                    else
+                    {
+                        httpContext.Response.Headers.Add("NewToken", newToken.Token);
+                        httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
+                    }
                 }
+
             }
 
         }
@@ -182,16 +178,14 @@ namespace WebApi.Libraries.Verify
                 var distLock = Program.ServiceProvider.GetService<IDistributedLockProvider>();
                 if (distLock.TryAcquireLock("ClearExpireToken") != null)
                 {
-                    using (var scope = Program.ServiceProvider.CreateScope())
-                    {
-                        var db = scope.ServiceProvider.GetService<dbContext>();
+                    using var scope = Program.ServiceProvider.CreateScope();
+                    var db = scope.ServiceProvider.GetService<DatabaseContext>();
 
-                        var clearTime = DateTime.UtcNow.AddDays(-7);
-                        var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
-                        db.TUserToken.RemoveRange(clearList);
+                    var clearTime = DateTime.UtcNow.AddDays(-7);
+                    var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
+                    db.TUserToken.RemoveRange(clearList);
 
-                        db.SaveChanges();
-                    }
+                    db.SaveChanges();
                 }
             });
         }
@@ -204,7 +198,7 @@ namespace WebApi.Libraries.Verify
         /// </summary>
         /// <param name="keyValue">key 为手机号，value 为验证码</param>
         /// <returns></returns>
-        public static bool SmsVerifyPhone(dtoKeyValue keyValue)
+        public static bool SmsVerifyPhone(DtoKeyValue keyValue)
         {
             string phone = keyValue.Key.ToString();
 

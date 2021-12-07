@@ -4,7 +4,7 @@
     /// <summary>
     /// 单Id数据模型
     /// </summary>
-    public class dtoId
+    public class DtoId
     {
 
         /// <summary>

@@ -34,7 +34,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
         [HttpPost("GetToken")]
-        public string GetToken([FromBody] dtoLogin login)
+        public string GetToken([FromBody] DtoLogin login)
         {
 
             var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false & (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
@@ -80,7 +80,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="keyValue">key 为手机号，value 为验证码</param>
         /// <returns></returns>
         [HttpPost("GetTokenBySms")]
-        public string GetTokenBySms(dtoKeyValue keyValue)
+        public string GetTokenBySms(DtoKeyValue keyValue)
         {
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
@@ -106,7 +106,7 @@ namespace AdminApi.Controllers.v1
                     db.SaveChanges();
                 }
 
-                return GetToken(new dtoLogin { Name = user.Name, PassWord = user.PassWord });
+                return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
             }
             else
             {
@@ -129,12 +129,12 @@ namespace AdminApi.Controllers.v1
         [Authorize]
         [CacheDataFilter(TTL = 60, UseToken = true)]
         [HttpGet("GetFunctionList")]
-        public List<dtoKeyValue> GetFunctionList(string sign)
+        public List<DtoKeyValue> GetFunctionList(string sign)
         {
 
             var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new dtoKeyValue
+            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new DtoKeyValue
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name
@@ -152,7 +152,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="keyValue">key 为手机号，value 可为空</param>
         /// <returns></returns>
         [HttpPost("SendSmsVerifyPhone")]
-        public bool SendSmsVerifyPhone(dtoKeyValue keyValue)
+        public bool SendSmsVerifyPhone(DtoKeyValue keyValue)
         {
 
             string phone = keyValue.Key.ToString();

@@ -26,9 +26,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetLinkList")]
-        public dtoPageList<dtoLink> GetLinkList(int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoLink> GetLinkList(int pageNum, int pageSize, string searchKey)
         {
-            var data = new dtoPageList<dtoLink>();
+            var data = new DtoPageList<DtoLink>();
 
             int skip = (pageNum - 1) * pageSize;
 
@@ -41,7 +41,7 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new dtoLink
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoLink
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -61,9 +61,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="linkId">链接ID</param>
         /// <returns></returns>
         [HttpGet("GetLink")]
-        public dtoLink GetLink(long linkId)
+        public DtoLink GetLink(long linkId)
         {
-            var link = db.TLink.Where(t => t.IsDelete == false & t.Id == linkId).Select(t => new dtoLink
+            var link = db.TLink.Where(t => t.IsDelete == false & t.Id == linkId).Select(t => new DtoLink
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -84,7 +84,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createLink"></param>
         /// <returns></returns>
         [HttpPost("CreateLink")]
-        public long CreateLink(dtoEditLink createLink)
+        public long CreateLink(DtoEditLink createLink)
         {
             TLink link = new();
             link.Id = snowflakeHelper.GetId();
@@ -112,7 +112,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateLink"></param>
         /// <returns></returns>
         [HttpPost("UpdateLink")]
-        public bool UpdateLink(long linkId, dtoEditLink updateLink)
+        public bool UpdateLink(long linkId, DtoEditLink updateLink)
         {
             var link = db.TLink.Where(t => t.IsDelete == false & t.Id == linkId).FirstOrDefault();
 
@@ -133,7 +133,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteLink")]
-        public bool DeleteLink(dtoId id)
+        public bool DeleteLink(DtoId id)
         {
             var link = db.TLink.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 

@@ -38,7 +38,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
         /// <returns>文件ID</returns>
         [HttpPost("RemoteUploadFile")]
-        public long RemoteUploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required][FromBody] dtoKeyValue fileInfo)
+        public long RemoteUploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required][FromBody] DtoKeyValue fileInfo)
         {
             string remoteFileUrl = fileInfo.Key.ToString();
 
@@ -370,7 +370,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="id">文件ID</param>
         /// <returns></returns>
         [HttpDelete("DeleteFile")]
-        public bool DeleteFile(dtoId id)
+        public bool DeleteFile(DtoId id)
         {
 
             var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();

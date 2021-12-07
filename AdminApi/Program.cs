@@ -57,8 +57,8 @@ namespace AdminApi
             // Add services to the container.
 
             //为各数据库注入连接字符串
-            Repository.Database.dbContext.ConnectionString = builder.Configuration.GetConnectionString("dbConnection");
-            builder.Services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 30);
+            Repository.Database.DatabaseContext.ConnectionString = builder.Configuration.GetConnectionString("dbConnection");
+            builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options => { }, 30);
 
             builder.Services.AddSingleton<IDistributedLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
             builder.Services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
@@ -90,7 +90,7 @@ namespace AdminApi
 
 
                 //使用 ef 搭配 db 存储执行情况
-                options.UseEntityFramework<Repository.Database.dbContext>();
+                options.UseEntityFramework<Repository.Database.DatabaseContext>();
 
                 options.UseDashboard();
                 options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
@@ -274,7 +274,7 @@ namespace AdminApi
                                     Id = "Bearer"
                                 }
                             },
-                        new string[] { }
+                        Array.Empty<string>()
                     }
                 });
             });

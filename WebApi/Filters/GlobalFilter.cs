@@ -8,6 +8,7 @@ namespace WebApi.Filters
     /// <summary>
     /// 全局过滤器
     /// </summary>
+    [AttributeUsage(AttributeTargets.All)]
     public class GlobalFilter : Attribute, IActionFilter
     {
 
@@ -20,7 +21,7 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
             //格式化返回值
-            resultFormatting(context.Result as ObjectResult);
+            ResultFormatting(context.Result as ObjectResult);
 
             if (context.HttpContext.Response.StatusCode == 400)
             {
@@ -37,7 +38,7 @@ namespace WebApi.Filters
         /// </summary>
         /// <param name="result"></param>
         /// <remarks>处理 string null 为 "" ，List null 为 []</remarks>
-        void resultFormatting(ObjectResult result)
+        static void ResultFormatting(ObjectResult result)
         {
 
             if (result != null)
@@ -115,7 +116,7 @@ namespace WebApi.Filters
 
                                     //如果属性的值不是 null 且该属性不是 系统自带类型，则当作自定义类型进行递归操作值替换
 
-                                    resultFormatting(new ObjectResult(propertyValue));
+                                    ResultFormatting(new ObjectResult(propertyValue));
 
                                 }
                             }

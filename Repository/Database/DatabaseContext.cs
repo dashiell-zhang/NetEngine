@@ -9,7 +9,7 @@ using System.Xml;
 
 namespace Repository.Database
 {
-    public class dbContext : DbContext
+    public class DatabaseContext : DbContext
     {
 
 
@@ -17,7 +17,7 @@ namespace Repository.Database
 
 
 
-        public dbContext(DbContextOptions<dbContext> options = default) : base(options = GetDbContextOptions(options))
+        public DatabaseContext(DbContextOptions<DatabaseContext> options = default) : base(_ = GetDbContextOptions(options))
         {
         }
 
@@ -110,15 +110,15 @@ namespace Repository.Database
 
 
 
-        private static DbContextOptions<dbContext> GetDbContextOptions(DbContextOptions<dbContext> options = default)
+        private static DbContextOptions<DatabaseContext> GetDbContextOptions(DbContextOptions<DatabaseContext> options = default)
         {
 
 
-            var optionsBuilder = new DbContextOptionsBuilder<dbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>();
 
             if (options != default)
             {
-                optionsBuilder = new DbContextOptionsBuilder<dbContext>(options);
+                optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>(options);
             }
 
             if (!optionsBuilder.IsConfigured)
@@ -346,30 +346,28 @@ namespace Repository.Database
                     {
                         var foreignTable = fields.FirstOrDefault(t => t.Name == pi.Name.Replace("Id", ""));
 
-                        using (var db = new dbContext())
+                        using var db = new DatabaseContext();
+                        var foreignName = foreignTable.PropertyType.GetProperties().Where(t => t.CustomAttributes.Where(c => c.AttributeType.Name == "ForeignNameAttribute").Any()).FirstOrDefault();
+
+                        if (foreignName != null)
                         {
-                            var foreignName = foreignTable.PropertyType.GetProperties().Where(t => t.CustomAttributes.Where(c => c.AttributeType.Name == "ForeignNameAttribute").Count() > 0).FirstOrDefault();
 
-                            if (foreignName != null)
+                            if (oldValue != null)
                             {
-
-                                if (oldValue != null)
-                                {
-                                    var oldForeignInfo = db.Find(foreignTable.PropertyType, Guid.Parse(oldValue));
-                                    oldValue = foreignName.GetValue(oldForeignInfo).ToString();
-                                }
-
-                                if (newValue != null)
-                                {
-                                    var newForeignInfo = db.Find(foreignTable.PropertyType, Guid.Parse(newValue));
-                                    newValue = foreignName.GetValue(newForeignInfo).ToString();
-                                }
-
+                                var oldForeignInfo = db.Find(foreignTable.PropertyType, Guid.Parse(oldValue));
+                                oldValue = foreignName.GetValue(oldForeignInfo).ToString();
                             }
 
-                            retValue += (oldValue ?? "") + " -> ";
-                            retValue += (newValue ?? "") + "； \n";
+                            if (newValue != null)
+                            {
+                                var newForeignInfo = db.Find(foreignTable.PropertyType, Guid.Parse(newValue));
+                                newValue = foreignName.GetValue(newForeignInfo).ToString();
+                            }
+
                         }
+
+                        retValue += (oldValue ?? "") + " -> ";
+                        retValue += (newValue ?? "") + "； \n";
 
                     }
                     else if (typename == "System.Boolean")
@@ -401,7 +399,7 @@ namespace Repository.Database
         public override int SaveChanges()
         {
 
-            dbContext db = this;
+            DatabaseContext db = this;
 
             var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
 
@@ -418,7 +416,7 @@ namespace Repository.Database
         public int SaveChangesWithSaveLog(long osLogId, long? actionUserId = null, string ipAddress = null, string deviceMark = null)
         {
 
-            dbContext db = this;
+            DatabaseContext db = this;
 
             var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
 
@@ -445,7 +443,7 @@ namespace Repository.Database
 
                 object[] parameters = { oldEntity, newEntity };
 
-                var result = new dbContext().GetType().GetMethod("ComparisonEntity").MakeGenericMethod(type).Invoke(new dbContext(), parameters);
+                var result = new DatabaseContext().GetType().GetMethod("ComparisonEntity").MakeGenericMethod(type).Invoke(new DatabaseContext(), parameters);
 
                 if (ipAddress == null | deviceMark == null)
                 {

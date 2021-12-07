@@ -1,6 +1,6 @@
 ﻿namespace TaskAdmin.Models.Shared
 {
-    public class dtoKeyValue
+    public class DtoKeyValue
     {
 
 

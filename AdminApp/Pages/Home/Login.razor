@@ -60,14 +60,14 @@
     }
 
 
-    private dtoLogin loginData = new();
+    private DtoLogin loginData = new();
 
     private async void OnFinish()
     {
 
         loginLoading = true;
 
-        using (var httpResponse = await Http.PostAsJsonAsync<dtoLogin>("Authorize/GetToken", loginData))
+        using (var httpResponse = await Http.PostAsJsonAsync<DtoLogin>("Authorize/GetToken", loginData))
         {
             if ((int)httpResponse.StatusCode == 200)
             {

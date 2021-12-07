@@ -44,7 +44,7 @@ namespace WebApi.Controllers.v1
         /// <param name="addSign"></param>
         /// <returns></returns>
         [HttpPost("AddSign")]
-        public bool AddSign([FromBody] dtoSign addSign)
+        public bool AddSign([FromBody] DtoSign addSign)
         {
             TSign sign = new();
 
@@ -69,7 +69,7 @@ namespace WebApi.Controllers.v1
         /// <param name="deleteSign"></param>
         /// <returns></returns>
         [HttpDelete("DeleteSign")]
-        public bool DeleteSign(dtoSign deleteSign)
+        public bool DeleteSign(DtoSign deleteSign)
         {
             var sign = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
 

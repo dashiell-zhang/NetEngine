@@ -7,7 +7,7 @@ namespace AdminShared.Models.v1.Article
     /// <summary>
     /// 文章数据结构
     /// </summary>
-    public class dtoArticle
+    public class DtoArticle
     {
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 封面图
         /// </summary>
-        public List<dtoKeyValue> CoverImageList { get; set; }
+        public List<DtoKeyValue> CoverImageList { get; set; }
 
 
     }

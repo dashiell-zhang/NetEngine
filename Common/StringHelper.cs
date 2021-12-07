@@ -21,14 +21,11 @@ namespace Common
         /// <returns></returns>
         public static string GetOrderNo(string sign)
         {
-            string orderno = "";
-
             Random ran = new();
             int RandKey = ran.Next(10000, 99999);
 
 
-            orderno = sign + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + RandKey;
-
+            string orderno = sign + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + RandKey;
             return orderno;
         }
 
@@ -72,81 +69,86 @@ namespace Common
         /// <summary>
         /// 从传入的HTML代码中提取文本内容
         /// </summary>
-        /// <param name="Htmlstring"></param>
+        /// <param name="htmlText"></param>
         /// <returns></returns>
-        public static string NoHtml(string Htmlstring)
+        public static string NoHtml(string htmlText)
         {
+            if (!string.IsNullOrEmpty(htmlText))
+            {
+                //删除脚本
 
-            //删除脚本
+                htmlText = Regex.Replace(htmlText, @"<script[^>]*?>.*?</script>", "",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"<script[^>]*?>.*?</script>", "",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                //删除HTML
 
-            //删除HTML
+                htmlText = Regex.Replace(htmlText, @"<(.[^>]*)>", "",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"<(.[^>]*)>", "",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"([\r\n])[\s]+", "",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"([\r\n])[\s]+", "",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"-->", "", RegexOptions.IgnoreCase);
 
-            Htmlstring = Regex.Replace(Htmlstring, @"-->", "", RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"<!--.*", "", RegexOptions.IgnoreCase);
 
-            Htmlstring = Regex.Replace(Htmlstring, @"<!--.*", "", RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(quot|#34);", "\"",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(quot|#34);", "\"",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(amp|#38);", "&",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(amp|#38);", "&",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(lt|#60);", "<",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(lt|#60);", "<",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(gt|#62);", ">",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(gt|#62);", ">",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(nbsp|#160);", " ",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(nbsp|#160);", " ",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(iexcl|#161);", "\xa1",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(iexcl|#161);", "\xa1",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(cent|#162);", "\xa2",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(cent|#162);", "\xa2",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(pound|#163);", "\xa3",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(pound|#163);", "\xa3",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&(copy|#169);", "\xa9",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&(copy|#169);", "\xa9",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = Regex.Replace(htmlText, @"&#(\d+);", "",
 
-            Htmlstring = Regex.Replace(Htmlstring, @"&#(\d+);", "",
+                RegexOptions.IgnoreCase);
 
-            RegexOptions.IgnoreCase);
+                htmlText = htmlText.Replace("<", "");
 
-            Htmlstring = Htmlstring.Replace("<", "");
+                htmlText = htmlText.Replace(">", "");
 
-            Htmlstring = Htmlstring.Replace(">", "");
+                htmlText = htmlText.Replace("\r\n", "");
 
-            Htmlstring = Htmlstring.Replace("\r\n", "");
+                htmlText = WebUtility.HtmlEncode(htmlText).Trim();
 
-            Htmlstring = WebUtility.HtmlEncode(Htmlstring).Trim();
-
-            return Htmlstring;
-
+                return htmlText;
+            }
+            else
+            {
+                return htmlText;
+            }
         }
 
 
@@ -188,7 +190,7 @@ namespace Common
             {
                 NeiRong = NeiRong[..length];
 
-                NeiRong = NeiRong + "...";
+                NeiRong += "...";
 
                 return NoHtml(NeiRong);
             }
@@ -217,7 +219,7 @@ namespace Common
 
                 for (int i = 0; i < group; i++)
                 {
-                    pstars = pstars + "*";
+                    pstars += "*";
                 }
 
                 text = text.Replace(stars, pstars);
@@ -231,7 +233,7 @@ namespace Common
 
                 for (int i = 0; i < 1; i++)
                 {
-                    pstars = pstars + "*";
+                    pstars += "*";
                 }
 
                 text = text.Replace(stars, pstars);

@@ -83,24 +83,20 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// </summary>
         /// <param name="openid">用户 OpenId</param>
         /// <param name="orderno">订单号</param>
-        /// <param name="title">商品名称</param>
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <returns></returns>
-        public dtoCreatePayMiniApp CreatePay(string openid, string orderno, string title, string body, int price)
+        public DtoCreatePayMiniApp CreatePay(string openid, string orderno,  string body, int price)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
 
-
             var url = "https://api.mch.weixin.qq.com/pay/unifiedorder";//微信统一下单请求地址
-
 
             //参与统一下单签名的参数，除最后的key外，已经按参数名ASCII码从小到大排序
             var unifiedorderSignParam = string.Format("appid={0}&body={1}&mch_id={2}&nonce_str={3}&notify_url={4}&openid={5}&out_trade_no={6}&total_fee={7}&trade_type={8}&key={9}"
                 , appid, body, mchid, nonceStr, notifyurl
                 , openid, orderno, price, "JSAPI", mchkey);
-
 
             var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
 
@@ -137,14 +133,14 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             {
                 string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
 
-                dtoCreatePayMiniApp info = new();
-                info.nonceStr = nonceStr;
-                info.package = "prepay_id=" + prepay_id;
+                DtoCreatePayMiniApp info = new();
+                info.NonceStr = nonceStr;
+                info.Package = "prepay_id=" + prepay_id;
 
                 //再次签名返回数据至小程序
-                string strB = "appId=" + appid + "&nonceStr=" + nonceStr + "&package=prepay_id=" + prepay_id + "&signType=MD5&timeStamp=" + info.timeStamp + "&key=" + mchkey;
+                string strB = "appId=" + appid + "&nonceStr=" + nonceStr + "&package=prepay_id=" + prepay_id + "&signType=MD5&timeStamp=" + info.TimeStamp + "&key=" + mchkey;
 
-                info.paySign = Common.CryptoHelper.GetMd5(strB).ToUpper();
+                info.PaySign = Common.CryptoHelper.GetMd5(strB).ToUpper();
 
                 return info;
             }
@@ -187,14 +183,10 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
             using (MemoryStream msDecrypt = new(encryptedData))
             {
-                using (CryptoStream csDecrypt = new(msDecrypt, decryptor, CryptoStreamMode.Read))
-                {
-                    using (StreamReader srDecrypt = new(csDecrypt))
-                    {
+                using CryptoStream csDecrypt = new(msDecrypt, decryptor, CryptoStreamMode.Read);
+                using StreamReader srDecrypt = new(csDecrypt);
 
-                        result = srDecrypt.ReadToEnd();
-                    }
-                }
+                result = srDecrypt.ReadToEnd();
             }
             return result;
         }
@@ -211,33 +203,22 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         {
             var sslPath = IO.Path.ContentRootPath() + "/ssl/apiclient_cert.p12";
 
-            using (HttpClientHandler handler = new())
-            {
-                X509Certificate2 cert = new(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
+            using HttpClientHandler handler = new();
+            X509Certificate2 cert = new(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
 
-                handler.ClientCertificates.Add(cert);
+            handler.ClientCertificates.Add(cert);
 
-                using (HttpClient client = new(handler))
-                {
+            using HttpClient client = new(handler);
 
-                    client.DefaultRequestVersion = new Version("2.0");
+            client.DefaultRequestVersion = new Version("2.0");
 
-                    using (Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
-                    {
-                        using (HttpContent content = new StreamContent(dataStream))
-                        {
+            using Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data));
+            using HttpContent content = new StreamContent(dataStream);
 
-                            content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
-                            using (var httpResponse = client.PostAsync(url, content))
-                            {
-                                return httpResponse.Result.Content.ReadAsStringAsync().Result;
-                            }
-                        }
-                    }
-
-                }
-            }
+            using var httpResponse = client.PostAsync(url, content);
+            return httpResponse.Result.Content.ReadAsStringAsync().Result;
 
         }
 
@@ -253,7 +234,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <param name="total_fee">支付单总金额</param>
         /// <param name="transaction_id">微信支付订单号</param>
         /// <returns></returns>
-        public dtoCreatePayRefundMiniApp CreateRefund(string out_refund_no, int refund_fee, int total_fee, string transaction_id)
+        public DtoCreatePayRefundMiniApp CreateRefund(string out_refund_no, int refund_fee, int total_fee, string transaction_id)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -293,34 +274,34 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             wxPayData.FromXml(getdata, mchkey);
 
 
-            dtoCreatePayRefundMiniApp retInfo = new();
+            DtoCreatePayRefundMiniApp retInfo = new();
 
-            retInfo.return_code = wxPayData.GetValue("return_code").ToString();
-            retInfo.return_msg = wxPayData.GetValue("return_msg").ToString();
+            retInfo.Return_code = wxPayData.GetValue("return_code").ToString();
+            retInfo.Return_msg = wxPayData.GetValue("return_msg").ToString();
 
-            retInfo.appid = wxPayData.GetValue("appid").ToString();
-            retInfo.mch_id = wxPayData.GetValue("mch_id").ToString();
-            retInfo.nonce_str = wxPayData.GetValue("nonce_str").ToString();
-            retInfo.sign = wxPayData.GetValue("sign").ToString();
+            retInfo.AppId = wxPayData.GetValue("appid").ToString();
+            retInfo.Mch_id = wxPayData.GetValue("mch_id").ToString();
+            retInfo.Nonce_str = wxPayData.GetValue("nonce_str").ToString();
+            retInfo.Sign = wxPayData.GetValue("sign").ToString();
 
-            retInfo.result_code = wxPayData.GetValue("result_code").ToString();
+            retInfo.Result_code = wxPayData.GetValue("result_code").ToString();
 
 
-            if (retInfo.result_code == "SUCCESS")
+            if (retInfo.Result_code == "SUCCESS")
             {
-                retInfo.transaction_id = wxPayData.GetValue("transaction_id").ToString();
-                retInfo.out_trade_no = wxPayData.GetValue("out_trade_no").ToString();
-                retInfo.out_refund_no = wxPayData.GetValue("out_refund_no").ToString();
-                retInfo.refund_id = wxPayData.GetValue("refund_id").ToString();
-                retInfo.refund_fee = Convert.ToInt32(wxPayData.GetValue("refund_fee"));
-                retInfo.total_fee = Convert.ToInt32(wxPayData.GetValue("total_fee"));
-                retInfo.cash_fee = Convert.ToInt32(wxPayData.GetValue("cash_fee"));
-                retInfo.cash_refund_fee = Convert.ToInt32(wxPayData.GetValue("cash_refund_fee"));
+                retInfo.Transaction_Id = wxPayData.GetValue("transaction_id").ToString();
+                retInfo.Out_trade_no = wxPayData.GetValue("out_trade_no").ToString();
+                retInfo.Out_refund_no = wxPayData.GetValue("out_refund_no").ToString();
+                retInfo.Refund_id = wxPayData.GetValue("refund_id").ToString();
+                retInfo.Refund_fee = Convert.ToInt32(wxPayData.GetValue("refund_fee"));
+                retInfo.Total_fee = Convert.ToInt32(wxPayData.GetValue("total_fee"));
+                retInfo.Cash_fee = Convert.ToInt32(wxPayData.GetValue("cash_fee"));
+                retInfo.Cash_refund_fee = Convert.ToInt32(wxPayData.GetValue("cash_refund_fee"));
             }
             else
             {
-                retInfo.err_code = wxPayData.GetValue("err_code").ToString();
-                retInfo.err_code_des = wxPayData.GetValue("err_code_des").ToString();
+                retInfo.Err_code = wxPayData.GetValue("err_code").ToString();
+                retInfo.Err_code_des = wxPayData.GetValue("err_code_des").ToString();
             }
 
             return retInfo;

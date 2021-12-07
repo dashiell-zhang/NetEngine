@@ -35,12 +35,11 @@ namespace WebApi.Libraries.WeiXin.App
         /// 微信APP支付商户平台下单方法
         /// </summary>
         /// <param name="orderno">订单号</param>
-        /// <param name="title">商品名称</param>
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <param name="ip">服务器IP</param>
         /// <returns></returns>
-        public dtoCreatePayApp CreatePay(string orderno, string title, string body, int price, string ip)
+        public DtoCreatePayApp CreatePay(string orderno,  string body, int price, string ip)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -94,17 +93,17 @@ namespace WebApi.Libraries.WeiXin.App
             {
                 string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
 
-                dtoCreatePayApp info = new();
-                info.appid = appid;
-                info.partnerid = mchid;
-                info.prepayid = prepay_id;
-                info.package = "Sign=WXPay";
-                info.noncestr = nonceStr;
+                DtoCreatePayApp info = new();
+                info.AppId = appid;
+                info.PartnerId = mchid;
+                info.PrepayId = prepay_id;
+                info.Package = "Sign=WXPay";
+                info.NonceStr = nonceStr;
 
                 //再次签名返回数据至APP
-                string strB = "appid=" + appid + "&noncestr=" + nonceStr + "&package=Sign=WXPay&partnerid=" + info.partnerid + "&prepayid=" + prepay_id + "&timestamp=" + info.timestamp + "&key=" + mchkey;
+                string strB = "appid=" + appid + "&noncestr=" + nonceStr + "&package=Sign=WXPay&partnerid=" + info.PartnerId + "&prepayid=" + prepay_id + "&timestamp=" + info.TimeStamp + "&key=" + mchkey;
 
-                info.sign = Common.CryptoHelper.GetMd5(strB).ToUpper();
+                info.Sign = Common.CryptoHelper.GetMd5(strB).ToUpper();
 
                 return info;
             }
@@ -153,13 +152,13 @@ namespace WebApi.Libraries.WeiXin.App
         /// <param name="accessToken"></param>
         /// <param name="openId"></param>
         /// <returns></returns>
-        public GetUserInfo GetUserInfo(string accessToken, string openId)
+        public DtoGetUserInfo GetUserInfo(string accessToken, string openId)
         {
             string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
 
             var returnJson = HttpHelper.Post(url, "", "form");
 
-            var userInfo = Common.Json.JsonHelper.JsonToObject<GetUserInfo>(returnJson);
+            var userInfo = Common.Json.JsonHelper.JsonToObject<DtoGetUserInfo>(returnJson);
 
             return userInfo;
         }

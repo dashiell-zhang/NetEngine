@@ -30,10 +30,9 @@ namespace Common
             {
 
                 IList<T> list = new List<T>();
-                T model = default;
                 foreach (DataRow dr in table.Rows)
                 {
-                    model = Activator.CreateInstance<T>();
+                    T model = Activator.CreateInstance<T>();
 
                     foreach (DataColumn dc in dr.Table.Columns)
                     {
@@ -209,12 +208,8 @@ namespace Common
         {
             DataTable dataTable = null;
             FileStream fs = null;
-            DataColumn column = null;
-            DataRow dataRow = null;
             IWorkbook workbook = null;
             ISheet sheet = null;
-            IRow row = null;
-            ICell cell = null;
             int startRow = 0;
             try
             {
@@ -239,6 +234,8 @@ namespace Common
                                 IRow firstRow = sheet.GetRow(0);//第一行  
                                 int cellCount = firstRow.LastCellNum;//列数  
 
+                                DataColumn column;
+                                ICell cell;
                                 //构建datatable的列  
                                 if (isColumnName)
                                 {
@@ -268,10 +265,10 @@ namespace Common
                                 //填充行  
                                 for (int i = startRow; i <= rowCount; ++i)
                                 {
-                                    row = sheet.GetRow(i);
+                                    IRow row = sheet.GetRow(i);
                                     if (row == null | row.Cells.Count == 0) continue;
 
-                                    dataRow = dataTable.NewRow();
+                                    DataRow dataRow = dataTable.NewRow();
                                     for (int j = row.FirstCellNum; j < cellCount; ++j)
                                     {
                                         cell = row.GetCell(j);

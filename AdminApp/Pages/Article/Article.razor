@@ -13,7 +13,7 @@
         <div style="margin-bottom:10px">
             <Button Icon="plus" Type="@ButtonType.Primary" OnClick="()=>EditArticle()">添加</Button>
         </div>
-        <Table TItem="dtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="DtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <RowTemplate>
                 <Column @bind-Field="@context.Title" Title="标题"></Column>
@@ -68,7 +68,7 @@
 
             <TabPane Key="1" Tab="基本信息">
                 <FormItem Label="所属栏目">
-                    <Select DataSource="@selectCategoryList" DefaultValue="@(0)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.CategoryId" style="width: 190px"></Select>
+                    <Select DataSource="@selectCategoryList" DefaultValue="@(0)" ValueName="@nameof(DtoSelect.Value)" LabelName="@nameof(DtoSelect.Label)" DisabledName="@nameof(DtoSelect.IsDisabled)" @bind-Value="@context.CategoryId" style="width: 190px"></Select>
                 </FormItem>
 
                 <FormItem Label="标题">
@@ -144,7 +144,7 @@
     [Parameter]
     public string channelId { get; set; }
 
-    List<dtoSelect> selectCategoryList;
+    List<DtoSelect> selectCategoryList;
 
     override protected void OnInitialized()
     {
@@ -170,9 +170,9 @@
 
     async void GetSelectCategoryList()
     {
-        var parentKVList = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
+        var parentKVList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
 
-        selectCategoryList = parentKVList.Select(t => new dtoSelect
+        selectCategoryList = parentKVList.Select(t => new DtoSelect
             {
                 Label = t.Value.ToString(),
                 Value = long.Parse(t.Key.ToString())
@@ -183,12 +183,12 @@
     bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
-    dtoPageList<dtoArticle> pageList = new();
+    DtoPageList<DtoArticle> pageList = new();
 
     async void GetArticleList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
         tableLoading = false;
         StateHasChanged();
     }
@@ -211,14 +211,14 @@
 
 
     bool isShowEditArticle = false;
-    dtoEditArticle editArticle = new();
+    DtoEditArticle editArticle = new();
     long articleId;
 
 
-    async void EditArticle(dtoArticle article = null)
+    async void EditArticle(DtoArticle article = null)
     {
 
-        editArticle = new dtoEditArticle();
+        editArticle = new DtoEditArticle();
         fileList = new();
         articleId = default;
 
@@ -265,7 +265,7 @@
 
         if (articleId == default)
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle))
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle))
             {
                 var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -274,7 +274,7 @@
         }
         else
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle))
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle))
             {
                 var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
 

@@ -13,6 +13,7 @@ namespace WebApi.Filters
     /// <summary>
     /// 队列过滤器
     /// </summary>
+    [AttributeUsage(AttributeTargets.All)]
     public class QueueLimitFilter : Attribute, IActionFilter
     {
 
@@ -35,7 +36,7 @@ namespace WebApi.Filters
         public bool IsBlock { get; set; }
 
 
-        private IDistributedSynchronizationHandle locakHandle { get; set; }
+        private IDistributedSynchronizationHandle LockHandle { get; set; }
 
 
 
@@ -67,7 +68,7 @@ namespace WebApi.Filters
                     var handle = distLock.TryAcquireLock(key);
                     if (handle != null)
                     {
-                        locakHandle = handle;
+                        LockHandle = handle;
                         break;
                     }
                     else
@@ -96,7 +97,7 @@ namespace WebApi.Filters
         {
             try
             {
-                locakHandle.Dispose();
+                LockHandle.Dispose();
             }
             catch
             {

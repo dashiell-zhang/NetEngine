@@ -4,7 +4,7 @@
     /// <summary>
     /// 标记喜欢方法入参
     /// </summary>
-    public class dtoSign
+    public class DtoSign
     {
 
         /// <summary>

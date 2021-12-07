@@ -5,7 +5,7 @@ namespace AdminShared.Models.v1.User
 {
 
 
-    public class dtoEditUser
+    public class DtoEditUser
     {
 
 

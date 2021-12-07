@@ -25,26 +25,20 @@ namespace AdminApp.Libraries
         /// <returns></returns>
         public static string Get(string url, Dictionary<string, string> headers = default)
         {
-            using (HttpClientHandler handler = new())
+            using HttpClientHandler handler = new();
+            using HttpClient client = new(handler);
+            client.DefaultRequestVersion = new Version("2.0");
+
+            if (headers != default)
             {
-                using (HttpClient client = new(handler))
+                foreach (var header in headers)
                 {
-                    client.DefaultRequestVersion = new Version("2.0");
-
-                    if (headers != default)
-                    {
-                        foreach (var header in headers)
-                        {
-                            client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                        }
-                    }
-
-                    using (var httpResponse = client.GetStringAsync(url))
-                    {
-                        return httpResponse.Result;
-                    }
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
             }
+
+            using var httpResponse = client.GetStringAsync(url);
+            return httpResponse.Result;
         }
 
 
@@ -61,7 +55,7 @@ namespace AdminApp.Libraries
             PropertyInfo[] propertis = obj.GetType().GetProperties();
             StringBuilder sb = new();
             sb.Append(url);
-            sb.Append("?");
+            sb.Append('?');
             foreach (var p in propertis)
             {
                 var v = p.GetValue(obj, null);
@@ -69,9 +63,9 @@ namespace AdminApp.Libraries
                     continue;
 
                 sb.Append(p.Name);
-                sb.Append("=");
+                sb.Append('=');
                 sb.Append(HttpUtility.UrlEncode(v.ToString()));
-                sb.Append("&");
+                sb.Append('&');
             }
             sb.Remove(sb.Length - 1, 1);
 
@@ -92,53 +86,43 @@ namespace AdminApp.Libraries
         public static string Post(string url, string data, string type, Dictionary<string, string> headers = default)
         {
 
-            using (HttpClientHandler handler = new())
+            using HttpClientHandler handler = new();
+
+            using HttpClient client = new(handler);
+            client.DefaultRequestVersion = new Version("2.0");
+
+            if (headers != default)
             {
-
-                using (HttpClient client = new(handler))
+                foreach (var header in headers)
                 {
-                    client.DefaultRequestVersion = new Version("2.0");
-
-                    if (headers != default)
-                    {
-                        foreach (var header in headers)
-                        {
-                            client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                        }
-                    }
-
-                    using (Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
-                    {
-                        using (HttpContent content = new StreamContent(dataStream))
-                        {
-
-                            if (type == "form")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-                            }
-                            else if (type == "data")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-                            }
-                            else if (type == "json")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                            }
-                            else if (type == "xml")
-                            {
-                                content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
-                            }
-
-                            content.Headers.ContentType.CharSet = "utf-8";
-
-                            using (var httpResponse = client.PostAsync(url, content))
-                            {
-                                return httpResponse.Result.Content.ReadAsStringAsync().Result;
-                            }
-                        }
-                    }
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
             }
+
+            using Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data));
+            using HttpContent content = new StreamContent(dataStream);
+
+            if (type == "form")
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+            }
+            else if (type == "data")
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
+            }
+            else if (type == "json")
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            }
+            else if (type == "xml")
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
+            }
+
+            content.Headers.ContentType.CharSet = "utf-8";
+
+            using var httpResponse = client.PostAsync(url, content);
+            return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
 
@@ -172,49 +156,39 @@ namespace AdminApp.Libraries
         /// <returns></returns>
         public static string PostForm(string url, List<PostFormItem> formItems, Dictionary<string, string> headers = default)
         {
-            using (HttpClientHandler handler = new())
+            using HttpClientHandler handler = new();
+
+            using HttpClient client = new(handler);
+            client.DefaultRequestVersion = new Version("2.0");
+
+            if (headers != default)
             {
-
-                using (HttpClient client = new(handler))
+                foreach (var header in headers)
                 {
-                    client.DefaultRequestVersion = new Version("2.0");
-
-                    if (headers != default)
-                    {
-                        foreach (var header in headers)
-                        {
-                            client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                        }
-                    }
-
-                    string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
-
-                    using (MultipartFormDataContent formDataContent = new(boundary))
-                    {
-
-                        foreach (var item in formItems)
-                        {
-                            if (item.IsFile)
-                            {
-                                //上传文件
-                                formDataContent.Add(new StreamContent(item.FileContent), item.Key, item.FileName);
-                            }
-                            else
-                            {
-                                //上传文本
-                                formDataContent.Add(new StringContent(item.Value), item.Key);
-                            }
-                        }
-
-                        using (var httpResponse = client.PostAsync(url, formDataContent))
-                        {
-                            return httpResponse.Result.Content.ReadAsStringAsync().Result;
-                        }
-
-                    }
-
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
             }
+
+            string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
+
+            using MultipartFormDataContent formDataContent = new(boundary);
+
+            foreach (var item in formItems)
+            {
+                if (item.IsFile)
+                {
+                    //上传文件
+                    formDataContent.Add(new StreamContent(item.FileContent), item.Key, item.FileName);
+                }
+                else
+                {
+                    //上传文本
+                    formDataContent.Add(new StringContent(item.Value), item.Key);
+                }
+            }
+
+            using var httpResponse = client.PostAsync(url, formDataContent);
+            return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
 

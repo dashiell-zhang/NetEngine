@@ -9,14 +9,14 @@ namespace Common
     public class SnowflakeHelper
     {
 
-        //twepoch 为2021-01-01 8:00 , sequenceBits 调整为11位，所以时间戳可用 42位，未来139年 可用
 
         private static long machineId;//机器ID
         private static long datacenterId = 0L;//数据ID
         private static long sequence = 0L;//计数从零开始
+        private static long lastTimestamp = -1L;//最后时间戳
 
+        //twepoch 为2021-01-01 8:00 , sequenceBits 调整为11位，所以时间戳可用 42位，未来139年 可用
         private readonly static long twepoch = 1609459200000L; //唯一时间随机量，这是一个避免重复的随机量，自行设定不要大于当前时间戳
-
         private readonly static long machineIdBits = 5L; //机器码字节数
         private readonly static long datacenterIdBits = 5L;//数据字节数
         private readonly static long maxMachineId = -1L ^ -1L << (int)machineIdBits; //最大机器ID
@@ -26,9 +26,7 @@ namespace Common
         private readonly static long datacenterIdShift = sequenceBits + machineIdBits;
         private readonly static long timestampLeftShift = sequenceBits + machineIdBits + datacenterIdBits; //时间戳左移动位数就是机器码+计数器总字节数+数据字节数
         private readonly static long sequenceMask = -1L ^ -1L << (int)sequenceBits; //一微秒内可以产生计数，如果达到该值则等到下一微妙在进行生成
-        private static long lastTimestamp = -1L;//最后时间戳
         private readonly static object syncRoot = new();//加锁对象
-
 
 
 
@@ -88,10 +86,12 @@ namespace Common
 
 
         /// <summary>
-        /// 获取长整形的ID
+        /// 获取一个雪花ID
         /// </summary>
         /// <returns></returns>
+#pragma warning disable CA1822 // 将成员标记为 static
         public long GetId()
+#pragma warning restore CA1822 // 将成员标记为 static
         {
             lock (syncRoot)
             {

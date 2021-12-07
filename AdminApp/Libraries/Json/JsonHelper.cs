@@ -14,12 +14,10 @@ namespace AdminApp.Libraries.Json
         /// <returns></returns>
         public static string GetValueByKey(string json, string key)
         {
-            using (JsonDocument doc = JsonDocument.Parse(json))
-            {
-                var jsonElement = doc.RootElement.Clone();
+            using JsonDocument doc = JsonDocument.Parse(json);
+            var jsonElement = doc.RootElement.Clone();
 
-                return jsonElement.GetProperty(key).GetString();
-            }
+            return jsonElement.GetProperty(key).GetString();
         }
 
 

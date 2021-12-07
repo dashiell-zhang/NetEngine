@@ -28,7 +28,7 @@ namespace AdminApi.Controllers.v1
         /// </summary>
         /// <returns></returns>
         [HttpGet("GetSite")]
-        public dtoSite GetSite()
+        public DtoSite GetSite()
         {
             var kvList = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Site").Select(t => new
             {
@@ -36,7 +36,7 @@ namespace AdminApi.Controllers.v1
                 t.Value
             }).ToList();
 
-            dtoSite site = new();
+            DtoSite site = new();
             site.WebUrl = kvList.Where(t => t.Key == "WebUrl").Select(t => t.Value).FirstOrDefault();
             site.ManagerName = kvList.Where(t => t.Key == "ManagerName").Select(t => t.Value).FirstOrDefault();
             site.ManagerAddress = kvList.Where(t => t.Key == "ManagerAddress").Select(t => t.Value).FirstOrDefault();
@@ -60,7 +60,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="editSite"></param>
         /// <returns></returns>
         [HttpPost("EditSite")]
-        public bool EditSite(dtoSite editSite)
+        public bool EditSite(DtoSite editSite)
         {
             var query = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Site");
 
@@ -87,51 +87,52 @@ namespace AdminApi.Controllers.v1
         /// </summary>
         /// <returns></returns>
         [HttpGet("GetServerInfo")]
-        public List<dtoKeyValue> GetServerInfo()
+        public List<DtoKeyValue> GetServerInfo()
         {
-            var list = new List<dtoKeyValue>();
-
-            list.Add(new dtoKeyValue
+            var list = new List<DtoKeyValue>
             {
-                Key = "服务器名称",
-                Value = Environment.MachineName
-            });
+                new DtoKeyValue
+                {
+                    Key = "服务器名称",
+                    Value = Environment.MachineName
+                },
 
-            list.Add(new dtoKeyValue
-            {
-                Key = "服务器IP",
-                Value = HttpContext.Connection.LocalIpAddress.ToString()
-            });
+                new DtoKeyValue
+                {
+                    Key = "服务器IP",
+                    Value = HttpContext.Connection.LocalIpAddress.ToString()
+                },
 
-            list.Add(new dtoKeyValue
-            {
-                Key = "操作系统",
-                Value = Environment.OSVersion.ToString()
-            });
+                new DtoKeyValue
+                {
+                    Key = "操作系统",
+                    Value = Environment.OSVersion.ToString()
+                },
 
-            list.Add(new dtoKeyValue
-            {
-                Key = "外部端口",
-                Value = HttpContext.Connection.LocalPort.ToString()
-            });
+                new DtoKeyValue
+                {
+                    Key = "外部端口",
+                    Value = HttpContext.Connection.LocalPort.ToString()
+                },
 
-            list.Add(new dtoKeyValue
-            {
-                Key = "目录物理路径",
-                Value = Environment.CurrentDirectory
-            });
+                new DtoKeyValue
+                {
+                    Key = "目录物理路径",
+                    Value = Environment.CurrentDirectory
+                },
 
-            list.Add(new dtoKeyValue
-            {
-                Key = "服务器CPU",
-                Value = Environment.ProcessorCount.ToString() + "核"
-            });
+                new DtoKeyValue
+                {
+                    Key = "服务器CPU",
+                    Value = Environment.ProcessorCount.ToString() + "核"
+                },
 
-            list.Add(new dtoKeyValue
-            {
-                Key = "本网站占用内存",
-                Value = ((Double)GC.GetTotalMemory(false) / 1048576).ToString("N2") + "M"
-            });
+                new DtoKeyValue
+                {
+                    Key = "本网站占用内存",
+                    Value = ((Double)GC.GetTotalMemory(false) / 1048576).ToString("N2") + "M"
+                }
+            };
 
             return list;
         }

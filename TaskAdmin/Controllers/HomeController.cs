@@ -9,14 +9,6 @@ namespace TaskAdmin.Controllers
     public class HomeController : Controller
     {
 
-        private readonly dbContext db;
-
-        public HomeController(dbContext context)
-        {
-            db = context;
-        }
-
-
 
         public void Index()
         {

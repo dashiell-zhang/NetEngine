@@ -2,7 +2,7 @@
 
 namespace AdminShared.Models.v1.User
 {
-    public class dtoUser
+    public class DtoUser
     {
 
 

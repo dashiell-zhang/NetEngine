@@ -14,7 +14,6 @@ namespace AdminApi.Libraries.Ueditor
     {
         private string[] Sources;
         private Crawler[] Crawlers;
-        public CrawlerHandler(HttpContext context) : base() { }
 
         public override string Process()
         {
@@ -64,67 +63,63 @@ namespace AdminApi.Libraries.Ueditor
             }
 
 
-            using (HttpClient client = new())
+            using HttpClient client = new();
+            client.DefaultRequestVersion = new Version("2.0");
+            using var httpResponse = client.GetAsync(this.SourceUrl).Result;
+            if (httpResponse.StatusCode != HttpStatusCode.OK)
             {
-                client.DefaultRequestVersion = new Version("2.0");
-                using (var httpResponse = client.GetAsync(this.SourceUrl).Result)
-                {
-                    if (httpResponse.StatusCode != HttpStatusCode.OK)
-                    {
-                        State = "Url returns " + httpResponse.StatusCode;
-                        return this;
-                    }
-
-
-                    if (httpResponse.Content.Headers.ContentType.MediaType.IndexOf("image") == -1)
-                    {
-                        State = "Url is not an image";
-                        return this;
-                    }
-                    ServerUrl = PathFormatter.Format(Path.GetFileName(this.SourceUrl), Config.GetString("catcherPathFormat"));
-                    var savePath = IO.Path.WebRootPath() + ServerUrl;
-                    if (!Directory.Exists(Path.GetDirectoryName(savePath)))
-                    {
-                        Directory.CreateDirectory(Path.GetDirectoryName(savePath));
-                    }
-                    try
-                    {
-
-                        File.WriteAllBytes(savePath, httpResponse.Content.ReadAsByteArrayAsync().Result);
-
-                        bool upRemote = false;
-
-                        if (upRemote)
-                        {
-                            //将文件转存至 oss 并清理本地文件
-                            var oss = new Common.AliYun.OssHelper();
-                            var upload = oss.FileUpload(savePath, "Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(this.SourceUrl));
-
-                            if (upload)
-                            {
-                                Common.IO.IOHelper.DeleteFile(savePath);
-
-                                ServerUrl = "Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
-                                State = "SUCCESS";
-                            }
-                            else
-                            {
-                                State = "抓取错误：阿里云OSS转存失败";
-                            }
-                        }
-                        else
-                        {
-                            State = "SUCCESS";
-                        }
-
-                    }
-                    catch (Exception e)
-                    {
-                        State = "抓取错误：" + e.Message;
-                    }
-                    return this;
-                }
+                State = "Url returns " + httpResponse.StatusCode;
+                return this;
             }
+
+
+            if (httpResponse.Content.Headers.ContentType.MediaType.Contains("image") == false)
+            {
+                State = "Url is not an image";
+                return this;
+            }
+            ServerUrl = PathFormatter.Format(Path.GetFileName(this.SourceUrl), Config.GetString("catcherPathFormat"));
+            var savePath = IO.Path.WebRootPath() + ServerUrl;
+            if (!Directory.Exists(Path.GetDirectoryName(savePath)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(savePath));
+            }
+            try
+            {
+
+                File.WriteAllBytes(savePath, httpResponse.Content.ReadAsByteArrayAsync().Result);
+
+                bool upRemote = false;
+
+                if (upRemote)
+                {
+                    //将文件转存至 oss 并清理本地文件
+                    var oss = new Common.AliYun.OssHelper();
+                    var upload = oss.FileUpload(savePath, "Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(this.SourceUrl));
+
+                    if (upload)
+                    {
+                        Common.IO.IOHelper.DeleteFile(savePath);
+
+                        ServerUrl = "Upload/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
+                        State = "SUCCESS";
+                    }
+                    else
+                    {
+                        State = "抓取错误：阿里云OSS转存失败";
+                    }
+                }
+                else
+                {
+                    State = "SUCCESS";
+                }
+
+            }
+            catch (Exception e)
+            {
+                State = "抓取错误：" + e.Message;
+            }
+            return this;
 
         }
 
@@ -137,7 +132,7 @@ namespace AdminApi.Libraries.Ueditor
                     var ipHostEntry = Dns.GetHostEntry(uri.DnsSafeHost);
                     foreach (IPAddress ipAddress in ipHostEntry.AddressList)
                     {
-                        byte[] ipBytes = ipAddress.GetAddressBytes();
+                        _ = ipAddress.GetAddressBytes();
                         if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                         {
                             if (!IsPrivateIP(ipAddress))

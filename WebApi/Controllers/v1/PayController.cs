@@ -31,7 +31,7 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinMiniAppPay")]
-        public dtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, long weiXinKeyId)
+        public DtoCreatePayMiniApp CreateWeiXinMiniAppPay(string orderno, long weiXinKeyId)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
@@ -57,7 +57,7 @@ namespace WebApi.Controllers.v1
 
             int price = Convert.ToInt32(order.Price * 100);
 
-            var pay = weiXinHelper.CreatePay(order.UserOpenId, order.OrderNo, order.ProductName, order.ProductName, price);
+            var pay = weiXinHelper.CreatePay(order.UserOpenId, order.OrderNo, order.ProductName, price);
 
             return pay;
 
@@ -73,7 +73,7 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateWeiXinAppPay")]
-        public dtoCreatePayApp CreateWeiXinAppPay(string orderno, long weiXinKeyId)
+        public DtoCreatePayApp CreateWeiXinAppPay(string orderno, long weiXinKeyId)
         {
 
 
@@ -92,7 +92,7 @@ namespace WebApi.Controllers.v1
 
             int price = Convert.ToInt32(order.Price * 100);
 
-            var pay = weiXinHelper.CreatePay(order.OrderNo, "订单号：" + orderno, "订单号：" + orderno, price, "119.29.29.29");
+            var pay = weiXinHelper.CreatePay(order.OrderNo, "订单号：" + orderno, price, "119.29.29.29");
 
             return pay;
 
@@ -258,7 +258,7 @@ namespace WebApi.Controllers.v1
         /// <remarks>用于在支付宝商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet("CreateAliPayMiniApp")]
-        public dtoKeyValue CreateAliPayMiniApp(string orderno, long aliPayKeyId)
+        public DtoKeyValue CreateAliPayMiniApp(string orderno, long aliPayKeyId)
         {
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "AliPayMiniApp" & t.GroupId == aliPayKeyId).ToList();
@@ -290,7 +290,7 @@ namespace WebApi.Controllers.v1
                 HttpContext.Items.Add("errMsg", "支付宝交易订单创建失败");
             }
 
-            var keyValue = new dtoKeyValue
+            var keyValue = new DtoKeyValue
             {
                 Key = "TradeNo",
                 Value = TradeNo

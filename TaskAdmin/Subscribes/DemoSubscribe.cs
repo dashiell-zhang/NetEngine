@@ -16,7 +16,7 @@ namespace TaskAdmin.Subscribes
 
             using (var scope = Program.ServiceProvider.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<dbContext>();
+                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
             }
 

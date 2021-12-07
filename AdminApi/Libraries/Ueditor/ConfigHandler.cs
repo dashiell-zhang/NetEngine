@@ -9,7 +9,7 @@ namespace AdminApi.Libraries.Ueditor
     /// </summary>
     public class ConfigHandler : Handler
     {
-        public ConfigHandler(HttpContext context) : base() { }
+
 
         public override string Process()
         {

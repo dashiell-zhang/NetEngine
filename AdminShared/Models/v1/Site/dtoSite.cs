@@ -1,6 +1,6 @@
 ﻿namespace AdminShared.Models.v1.Site
 {
-    public class dtoSite
+    public class DtoSite
     {
 
 

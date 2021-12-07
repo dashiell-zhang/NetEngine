@@ -30,9 +30,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey"></param>
         /// <returns></returns>
         [HttpGet("GetUserList")]
-        public dtoPageList<dtoUser> GetUserList(int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoUser> GetUserList(int pageNum, int pageSize, string searchKey)
         {
-            var data = new dtoPageList<dtoUser>();
+            var data = new DtoPageList<DtoUser>();
 
             int skip = (pageNum - 1) * pageSize;
 
@@ -46,7 +46,7 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new dtoUser
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -69,7 +69,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
-        public dtoUser GetUser(long? userId)
+        public DtoUser GetUser(long? userId)
         {
 
             if (userId == null)
@@ -77,7 +77,7 @@ namespace AdminApi.Controllers.v1
                 userId = base.userId;
             }
 
-            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new dtoUser
+            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -100,7 +100,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createUser"></param>
         /// <returns></returns>
         [HttpPost("CreateUser")]
-        public long CreateUser(dtoEditUser createUser)
+        public long CreateUser(DtoEditUser createUser)
         {
             TUser user = new();
             user.Id = snowflakeHelper.GetId();
@@ -130,7 +130,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateUser"></param>
         /// <returns></returns>
         [HttpPost("UpdateUser")]
-        public bool UpdateUser(long userId, dtoEditUser updateUser)
+        public bool UpdateUser(long userId, DtoEditUser updateUser)
         {
             var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
 
@@ -160,7 +160,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteUser")]
-        public bool DeleteUser(dtoId id)
+        public bool DeleteUser(DtoId id)
         {
             var user = db.TUser.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 

@@ -13,7 +13,7 @@
         <div style="margin-bottom:10px">
             <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditChannel()">添加</Button>
         </div>
-        <Table TItem="dtoChannel" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="DtoChannel" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <RowTemplate>
                 <Column @bind-Field="@context.Name" Title="名称"></Column>
@@ -99,11 +99,11 @@
     bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
-    dtoPageList<dtoChannel> pageList = new();
+    DtoPageList<DtoChannel> pageList = new();
     async void GetChannelList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoChannel>>("Article/GetChannelList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoChannel>>("Article/GetChannelList?pageNum=" + pageNum + "&pageSize=" + pageSize);
         tableLoading = false;
         StateHasChanged();
     }
@@ -125,10 +125,10 @@
 
 
     bool isShowEditChannel = false;
-    dtoEditChannel editChannel = new();
+    DtoEditChannel editChannel = new();
     long channelId;
 
-    void EditChannel(dtoChannel channel = null)
+    void EditChannel(DtoChannel channel = null)
     {
         editChannel = new();
         channelId = default;
@@ -152,7 +152,7 @@
         saveLoading = true;
         if (channelId == default)
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditChannel>("Article/CreateChannel", editChannel))
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditChannel>("Article/CreateChannel", editChannel))
             {
                 var createChannelId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -161,7 +161,7 @@
         }
         else
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditChannel>("Article/UpdateChannel?channelId=" + channelId, editChannel))
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditChannel>("Article/UpdateChannel?channelId=" + channelId, editChannel))
             {
                 var updateChannelRet = httpResponse.Content.ReadAsStringAsync().Result;
 

@@ -6,7 +6,7 @@ namespace AdminShared.Models.v1.Authorize
     /// <summary>
     /// 登录信息
     /// </summary>
-    public class dtoLogin
+    public class DtoLogin
     {
 
 

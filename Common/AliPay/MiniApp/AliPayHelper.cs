@@ -94,7 +94,6 @@ namespace Common.AliPay.MiniApp
 
             //如果密文的
             bool isDataEncrypted = !response.StartsWith("{", StringComparison.Ordinal);
-            bool signCheckPass = false;
 
             //2. 验签
             string signContent = response;
@@ -112,6 +111,7 @@ namespace Common.AliPay.MiniApp
             {
                 signContent = "\"" + signContent + "\"";
             }
+            bool signCheckPass;
             try
             {
                 signCheckPass = AlipaySignature.RSACheckContent(signContent, sign, signVeriKey, charset, signType, false);
@@ -128,7 +128,7 @@ namespace Common.AliPay.MiniApp
             }
 
             //3. 解密
-            string plainData = null;
+            string plainData;
             if (isDataEncrypted)
             {
                 try

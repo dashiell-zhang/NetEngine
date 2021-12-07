@@ -27,23 +27,23 @@ namespace AdminApi.Controllers.v1
         /// <returns></returns>
         /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
         [HttpGet("GetRegion")]
-        public List<dtoKeyValue> GetRegion(int provinceId, int cityId)
+        public List<DtoKeyValue> GetRegion(int provinceId, int cityId)
         {
-            var list = new List<dtoKeyValue>();
+            var list = new List<DtoKeyValue>();
 
             if (provinceId == 0 && cityId == 0)
             {
-                list = db.TRegionProvince.Select(t => new dtoKeyValue { Key = t.Id, Value = t.Province }).ToList();
+                list = db.TRegionProvince.Select(t => new DtoKeyValue { Key = t.Id, Value = t.Province }).ToList();
             }
 
             if (provinceId != 0)
             {
-                list = db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new dtoKeyValue { Key = t.Id, Value = t.City }).ToList();
+                list = db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new DtoKeyValue { Key = t.Id, Value = t.City }).ToList();
             }
 
             if (cityId != 0)
             {
-                list = db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new dtoKeyValue { Key = t.Id, Value = t.Area }).ToList();
+                list = db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new DtoKeyValue { Key = t.Id, Value = t.Area }).ToList();
             }
 
             return list;
@@ -56,18 +56,18 @@ namespace AdminApi.Controllers.v1
         /// </summary>
         /// <returns></returns>
         [HttpGet("GetRegionAll")]
-        public List<dtoKeyValueChild> GetRegionAll()
+        public List<DtoKeyValueChild> GetRegionAll()
         {
 
-            var list = db.TRegionProvince.Select(t => new dtoKeyValueChild
+            var list = db.TRegionProvince.Select(t => new DtoKeyValueChild
             {
                 Key = t.Id,
                 Value = t.Province,
-                ChildList = t.TRegionCity.Select(c => new dtoKeyValueChild
+                ChildList = t.TRegionCity.Select(c => new DtoKeyValueChild
                 {
                     Key = c.Id,
                     Value = c.City,
-                    ChildList = c.TRegionArea.Select(a => new dtoKeyValueChild
+                    ChildList = c.TRegionArea.Select(a => new DtoKeyValueChild
                     {
                         Key = a.Id,
                         Value = a.Area
@@ -100,10 +100,10 @@ namespace AdminApi.Controllers.v1
         /// <param name="groupId"></param>
         /// <returns></returns>
         [HttpGet("GetValueList")]
-        public List<dtoKeyValue> GetValueList(long groupId)
+        public List<DtoKeyValue> GetValueList(long groupId)
         {
 
-            var list = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Dictionary" & t.GroupId == groupId).Select(t => new dtoKeyValue
+            var list = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Dictionary" & t.GroupId == groupId).Select(t => new DtoKeyValue
             {
                 Key = t.Key,
                 Value = t.Value

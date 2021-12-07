@@ -107,7 +107,7 @@ namespace Repository.Interceptors
                                         }
                                         else
                                         {
-                                            newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]");
+                                            newTempSql += tempSql.Replace("[" + table + "]", "[" + newTable + "]");
                                         }
                                     }
                                 }
@@ -131,7 +131,7 @@ namespace Repository.Interceptors
                                         }
                                         else
                                         {
-                                            newTempSql = newTempSql + tempSql.Replace("[" + table + "]", "[" + newTable + "]");
+                                            newTempSql += tempSql.Replace("[" + table + "]", "[" + newTable + "]");
                                         }
                                     }
 

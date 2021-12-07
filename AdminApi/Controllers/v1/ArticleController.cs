@@ -27,9 +27,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetChannelList")]
-        public dtoPageList<dtoChannel> GetChannelList(int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoChannel> GetChannelList(int pageNum, int pageSize, string searchKey)
         {
-            var data = new dtoPageList<dtoChannel>();
+            var data = new DtoPageList<DtoChannel>();
 
             int skip = (pageNum - 1) * pageSize;
 
@@ -42,7 +42,7 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new dtoChannel
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoChannel
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -61,9 +61,9 @@ namespace AdminApi.Controllers.v1
         /// </summary>
         /// <returns></returns>
         [HttpGet("GetChannelKVList")]
-        public List<dtoKeyValue> GetChannelKVList()
+        public List<DtoKeyValue> GetChannelKVList()
         {
-            var list = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new dtoKeyValue
+            var list = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoKeyValue
             {
                 Key = t.Id,
                 Value = t.Name
@@ -80,9 +80,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="channelId">频道ID</param>
         /// <returns></returns>
         [HttpGet("GetChannel")]
-        public dtoChannel GetChannel(long channelId)
+        public DtoChannel GetChannel(long channelId)
         {
-            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).Select(t => new dtoChannel
+            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).Select(t => new DtoChannel
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -103,7 +103,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createChannel"></param>
         /// <returns></returns>
         [HttpPost("CreateChannel")]
-        public long CreateChannel(dtoEditChannel createChannel)
+        public long CreateChannel(DtoEditChannel createChannel)
         {
             TChannel channel = new();
             channel.Id = snowflakeHelper.GetId();
@@ -131,7 +131,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateChannel"></param>
         /// <returns></returns>
         [HttpPost("UpdateChannel")]
-        public bool UpdateChannel(long channelId, dtoEditChannel updateChannel)
+        public bool UpdateChannel(long channelId, DtoEditChannel updateChannel)
         {
             var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).FirstOrDefault();
 
@@ -152,7 +152,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteChannel")]
-        public bool DeleteChannel(dtoId id)
+        public bool DeleteChannel(DtoId id)
         {
             var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
@@ -177,9 +177,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetCategoryList")]
-        public dtoPageList<dtoCategory> GetCategoryList(long channelId, int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoCategory> GetCategoryList(long channelId, int pageNum, int pageSize, string searchKey)
         {
-            var data = new dtoPageList<dtoCategory>();
+            var data = new DtoPageList<DtoCategory>();
 
             int skip = (pageNum - 1) * pageSize;
 
@@ -192,7 +192,7 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new dtoCategory
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -213,9 +213,9 @@ namespace AdminApi.Controllers.v1
         /// </summary>
         /// <returns></returns>
         [HttpGet("GetCategoryKVList")]
-        public List<dtoKeyValue> GetCategoryKVList(long channelId)
+        public List<DtoKeyValue> GetCategoryKVList(long channelId)
         {
-            var list = db.TCategory.Where(t => t.IsDelete == false & t.ChannelId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new dtoKeyValue
+            var list = db.TCategory.Where(t => t.IsDelete == false & t.ChannelId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoKeyValue
             {
                 Key = t.Id,
                 Value = t.Name
@@ -232,9 +232,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="categoryId">栏目ID</param>
         /// <returns></returns>
         [HttpGet("GetCategory")]
-        public dtoCategory GetCategory(long categoryId)
+        public DtoCategory GetCategory(long categoryId)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new dtoCategory
+            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new DtoCategory
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -257,7 +257,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="createCategory"></param>
         /// <returns></returns>
         [HttpPost("CreateCategory")]
-        public long CreateCategory(dtoEditCategory createCategory)
+        public long CreateCategory(DtoEditCategory createCategory)
         {
             TCategory category = new();
             category.Id = snowflakeHelper.GetId();
@@ -287,7 +287,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateCategory"></param>
         /// <returns></returns>
         [HttpPost("UpdateCategory")]
-        public bool UpdateCategory(long categoryId, dtoEditCategory updateCategory)
+        public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory)
         {
             var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).FirstOrDefault();
 
@@ -309,7 +309,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteCategory")]
-        public bool DeleteCategory(dtoId id)
+        public bool DeleteCategory(DtoId id)
         {
             var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
@@ -334,9 +334,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetArticleList")]
-        public dtoPageList<dtoArticle> GetArticleList(long channelId, int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoArticle> GetArticleList(long channelId, int pageNum, int pageSize, string searchKey)
         {
-            var data = new dtoPageList<dtoArticle>();
+            var data = new DtoPageList<DtoArticle>();
 
             int skip = (pageNum - 1) * pageSize;
 
@@ -349,7 +349,7 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new dtoArticle
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
@@ -362,7 +362,7 @@ namespace AdminApi.Controllers.v1
                 ClickCount = t.ClickCount,
                 Abstract = t.Abstract,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new dtoKeyValue
+                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
                     Value = f.Path
@@ -382,9 +382,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="articleId">文章ID</param>
         /// <returns></returns>
         [HttpGet("GetArticle")]
-        public dtoArticle GetArticle(long articleId)
+        public DtoArticle GetArticle(long articleId)
         {
-            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new dtoArticle
+            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
@@ -397,7 +397,7 @@ namespace AdminApi.Controllers.v1
                 ClickCount = t.ClickCount,
                 Abstract = t.Abstract,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new dtoKeyValue
+                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
                     Value = f.Path
@@ -417,7 +417,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="fileKey">文件key</param>
         /// <returns></returns>
         [HttpPost("CreateArticle")]
-        public long CreateArticle(dtoEditArticle createArticle, long fileKey)
+        public long CreateArticle(DtoEditArticle createArticle, long fileKey)
         {
             TArticle article = new();
             article.Id = snowflakeHelper.GetId();
@@ -432,7 +432,7 @@ namespace AdminApi.Controllers.v1
             article.Sort = createArticle.Sort;
             article.ClickCount = createArticle.ClickCount;
 
-            if (string.IsNullOrEmpty(createArticle.Abstract))
+            if (string.IsNullOrEmpty(createArticle.Abstract) & !string.IsNullOrEmpty(createArticle.Content))
             {
                 string content = Common.StringHelper.NoHtml(createArticle.Content);
                 article.Abstract = content.Length > 255 ? content[..255] : content;
@@ -467,7 +467,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="updateArticle"></param>
         /// <returns></returns>
         [HttpPost("UpdateArticle")]
-        public bool UpdateArticle(long articleId, dtoEditArticle updateArticle)
+        public bool UpdateArticle(long articleId, DtoEditArticle updateArticle)
         {
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).FirstOrDefault();
 
@@ -502,7 +502,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteArticle")]
-        public bool DeleteArticle(dtoId id)
+        public bool DeleteArticle(DtoId id)
         {
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 

@@ -16,7 +16,7 @@ namespace Common
         /// <returns></returns>
         public static DateTime UnixToTime(long unix, int startYear = 1970)
         {
-            var startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var startTime = new DateTime(startYear, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return startTime.AddSeconds(unix);
         }
 
@@ -39,7 +39,7 @@ namespace Common
                 time = time.Value.ToUniversalTime();
             }
 
-            var startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var startTime = new DateTime(startYear, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return (long)(time.Value - startTime).TotalSeconds; // 相差秒数
         }
 
@@ -53,7 +53,7 @@ namespace Common
         /// <returns></returns>
         public static DateTime JsToTime(long js, int startYear = 1970)
         {
-            var startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var startTime = new DateTime(startYear, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return startTime.AddMilliseconds(js);
         }
 
@@ -75,7 +75,7 @@ namespace Common
             {
                 time = time.Value.ToUniversalTime();
             }
-            var startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var startTime = new DateTime(startYear, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return (long)(time.Value - startTime).TotalMilliseconds;
         }
 

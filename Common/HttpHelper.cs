@@ -63,10 +63,8 @@ namespace Common
                 }
             }
 
-            using (var httpResponse = client.GetStringAsync(url))
-            {
-                return httpResponse.Result;
-            }
+            using var httpResponse = client.GetStringAsync(url);
+            return httpResponse.Result;
         }
 
 
@@ -83,7 +81,7 @@ namespace Common
             PropertyInfo[] propertis = obj.GetType().GetProperties();
             StringBuilder sb = new();
             sb.Append(url);
-            sb.Append("?");
+            sb.Append('?');
             foreach (var p in propertis)
             {
                 var v = p.GetValue(obj, null);
@@ -91,9 +89,9 @@ namespace Common
                     continue;
 
                 sb.Append(p.Name);
-                sb.Append("=");
+                sb.Append('=');
                 sb.Append(HttpUtility.UrlEncode(v.ToString()));
-                sb.Append("&");
+                sb.Append('&');
             }
             sb.Remove(sb.Length - 1, 1);
 
@@ -127,35 +125,29 @@ namespace Common
                 }
             }
 
-            using (Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
+            using Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data));
+            using HttpContent content = new StreamContent(dataStream);
+            if (type == "form")
             {
-                using (HttpContent content = new StreamContent(dataStream))
-                {
-                    if (type == "form")
-                    {
-                        content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-                    }
-                    else if (type == "data")
-                    {
-                        content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-                    }
-                    else if (type == "json")
-                    {
-                        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                    }
-                    else if (type == "xml")
-                    {
-                        content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
-                    }
-
-                    content.Headers.ContentType.CharSet = "utf-8";
-
-                    using (var httpResponse = client.PostAsync(url, content))
-                    {
-                        return httpResponse.Result.Content.ReadAsStringAsync().Result;
-                    }
-                }
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
             }
+            else if (type == "data")
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
+            }
+            else if (type == "json")
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            }
+            else if (type == "xml")
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
+            }
+
+            content.Headers.ContentType.CharSet = "utf-8";
+
+            using var httpResponse = client.PostAsync(url, content);
+            return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
 
@@ -205,28 +197,23 @@ namespace Common
 
             string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
 
-            using (MultipartFormDataContent formDataContent = new(boundary))
+            using MultipartFormDataContent formDataContent = new(boundary);
+            foreach (var item in formItems)
             {
-                foreach (var item in formItems)
+                if (item.IsFile)
                 {
-                    if (item.IsFile)
-                    {
-                        //上传文件
-                        formDataContent.Add(new StreamContent(item.FileContent), item.Key, item.FileName);
-                    }
-                    else
-                    {
-                        //上传文本
-                        formDataContent.Add(new StringContent(item.Value), item.Key);
-                    }
+                    //上传文件
+                    formDataContent.Add(new StreamContent(item.FileContent), item.Key, item.FileName);
                 }
-
-                using (var httpResponse = client.PostAsync(url, formDataContent))
+                else
                 {
-                    return httpResponse.Result.Content.ReadAsStringAsync().Result;
+                    //上传文本
+                    formDataContent.Add(new StringContent(item.Value), item.Key);
                 }
-
             }
+
+            using var httpResponse = client.PostAsync(url, formDataContent);
+            return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
 

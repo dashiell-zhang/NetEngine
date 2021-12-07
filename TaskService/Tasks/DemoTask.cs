@@ -30,7 +30,7 @@ namespace TaskService.Tasks
 
                 timer.Elapsed += TimerElapsed;
                 timer.Start();
-            });
+            }, stoppingToken);
         }
 
 
@@ -41,7 +41,7 @@ namespace TaskService.Tasks
 
             using (var scope = Program.ServiceProvider.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<dbContext>();
+                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
             }
 

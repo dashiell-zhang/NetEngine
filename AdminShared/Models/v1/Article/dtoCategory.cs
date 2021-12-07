@@ -6,7 +6,7 @@ namespace AdminShared.Models.v1.Article
     /// <summary>
     /// 栏目信息
     /// </summary>
-    public class dtoCategory
+    public class DtoCategory
     {
 
         /// <summary>

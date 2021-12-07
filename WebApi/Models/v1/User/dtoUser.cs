@@ -2,7 +2,7 @@
 
 namespace WebApi.Models.v1.User
 {
-    public class dtoUser
+    public class DtoUser
     {
         /// <summary>
         /// 用户名

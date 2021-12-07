@@ -102,7 +102,7 @@
 
 @code{
 
-    public static dtoUser user = new();
+    public static DtoUser user = new();
 
     int showIndex = 0;
 
@@ -114,10 +114,10 @@
     }
 
 
-    private List<dtoKeyValue> channelKVList = new();
+    private List<DtoKeyValue> channelKVList = new();
     async void GetChannelList()
     {
-        channelKVList = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Article/GetChannelKVList");
+        channelKVList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetChannelKVList");
 
         StateHasChanged();
     }
@@ -148,7 +148,7 @@
             {
                 try
                 {
-                    user = await Http.GetFromJsonAsync<dtoUser>("User/GetUser");
+                    user = await Http.GetFromJsonAsync<DtoUser>("User/GetUser");
                 }
                 catch
                 {

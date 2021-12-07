@@ -6,7 +6,7 @@ namespace AdminShared.Models.v1.Article
     /// <summary>
     /// 创建栏目
     /// </summary>
-    public class dtoEditCategory
+    public class DtoEditCategory
     {
 
 

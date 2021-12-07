@@ -13,7 +13,7 @@
         <div style="margin-bottom:10px">
             <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditLink()">添加</Button>
         </div>
-        <Table TItem="dtoLink" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="DtoLink" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <RowTemplate>
                 <Column @bind-Field="@context.Name" Title="名称"></Column>
@@ -100,12 +100,12 @@
     int pageNum = 1;
     int pageSize = 10;
 
-    dtoPageList<dtoLink> pageList = new();
+    DtoPageList<DtoLink> pageList = new();
 
     async void GetLinkList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize);
         tableLoading = false;
         StateHasChanged();
     }
@@ -131,12 +131,12 @@
     bool isShowEditLink = false;
 
     long linkId;
-    dtoEditLink editLink = new();
+    DtoEditLink editLink = new();
 
-    void EditLink(dtoLink link = null)
+    void EditLink(DtoLink link = null)
     {
         linkId = default;
-        editLink = new dtoEditLink();
+        editLink = new DtoEditLink();
 
         if (link != null)
         {
@@ -156,7 +156,7 @@
         saveLoading = true;
         if (linkId == default)
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditLink>("Link/CreateLink", editLink))
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/CreateLink", editLink))
             {
                 var createLinkId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -165,7 +165,7 @@
         }
         else
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink))
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink))
             {
                 var updateLinkRet = httpResponse.Content.ReadAsStringAsync().Result;
 

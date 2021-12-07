@@ -97,7 +97,7 @@ namespace WebApi.Controllers.v1
         /// <returns></returns>
         [HttpGet("GetUser")]
         [CacheDataFilter(TTL = 60, UseToken = true)]
-        public dtoUser GetUser(long? userId)
+        public DtoUser GetUser(long? userId)
         {
 
             if (userId == null)
@@ -105,7 +105,7 @@ namespace WebApi.Controllers.v1
                 userId = base.userId;
             }
 
-            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new dtoUser
+            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
             {
                 Name = t.Name,
                 NickName = t.NickName,
@@ -126,7 +126,7 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
         /// <returns></returns>
         [HttpPost("EditUserPhoneBySms")]
-        public bool EditUserPhoneBySms([FromBody] dtoKeyValue keyValue)
+        public bool EditUserPhoneBySms([FromBody] DtoKeyValue keyValue)
         {
 
             if (IdentityVerification.SmsVerifyPhone(keyValue))
@@ -174,7 +174,7 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key为新密码，value为短信验证码</param>
         /// <returns></returns>
         [HttpPost("EditUserPassWordBySms")]
-        public bool EditUserPassWordBySms([FromBody] dtoKeyValue keyValue)
+        public bool EditUserPassWordBySms([FromBody] DtoKeyValue keyValue)
         {
 
 
@@ -182,7 +182,7 @@ namespace WebApi.Controllers.v1
 
             string smsCode = keyValue.Value.ToString();
 
-            var checkSms = IdentityVerification.SmsVerifyPhone(new dtoKeyValue { Key = phone, Value = smsCode });
+            var checkSms = IdentityVerification.SmsVerifyPhone(new DtoKeyValue { Key = phone, Value = smsCode });
 
             if (checkSms)
             {

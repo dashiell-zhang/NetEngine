@@ -34,8 +34,8 @@ namespace TaskService
                 {
 
                     //为各数据库注入连接字符串
-                    Repository.Database.dbContext.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
-                    services.AddDbContextPool<Repository.Database.dbContext>(options => { }, 30);
+                    Repository.Database.DatabaseContext.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
+                    services.AddDbContextPool<Repository.Database.DatabaseContext>(options => { }, 30);
 
                     services.AddSingleton<IDistributedLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
                     services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
@@ -68,7 +68,7 @@ namespace TaskService
 
 
                         //使用 ef 搭配 db 存储执行情况
-                        options.UseEntityFramework<Repository.Database.dbContext>();
+                        options.UseEntityFramework<Repository.Database.DatabaseContext>();
 
                         options.DefaultGroupName = "default";   //默认组名称
                         options.GroupNamePrefix = null; //全局组名称前缀

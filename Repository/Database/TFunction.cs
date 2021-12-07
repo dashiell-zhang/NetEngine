@@ -47,8 +47,8 @@ namespace Repository.Database
         /// <summary>
         /// 类型
         /// </summary>
-        public enumType Type { get; set; }
-        public enum enumType
+        public EnumType Type { get; set; }
+        public enum EnumType
         {
             模块 = 1,
             功能 = 2

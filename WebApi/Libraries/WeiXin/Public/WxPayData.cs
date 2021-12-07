@@ -107,9 +107,9 @@ namespace WebApi.Libraries.WeiXin.Public
         {
             //接收从微信后台POST过来的数据
             System.IO.Stream s = HttpContext.Current().Request.Body;
-            int count = 0;
             byte[] buffer = new byte[1024];
             StringBuilder builder = new();
+            int count;
             while ((count = s.Read(buffer, 0, 1024)) > 0)
             {
                 builder.Append(Encoding.UTF8.GetString(buffer, 0, count));

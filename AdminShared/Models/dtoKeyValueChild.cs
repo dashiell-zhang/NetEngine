@@ -2,7 +2,7 @@
 
 namespace AdminShared.Models
 {
-    public class dtoKeyValueChild
+    public class DtoKeyValueChild
     {
 
 
@@ -26,7 +26,7 @@ namespace AdminShared.Models
         /// <summary>
         /// 子级集合信息
         /// </summary>
-        public List<dtoKeyValueChild> ChildList { get; set; }
+        public List<DtoKeyValueChild> ChildList { get; set; }
 
 
 

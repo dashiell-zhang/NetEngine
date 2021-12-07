@@ -70,13 +70,13 @@
 
 @code{
 
-    dtoSite editSite = new();
+    DtoSite editSite = new();
     bool saveLoading = false;
 
     async override protected void OnInitialized()
     {
 
-        editSite = await Http.GetFromJsonAsync<dtoSite>("Site/GetSite");
+        editSite = await Http.GetFromJsonAsync<DtoSite>("Site/GetSite");
 
         StateHasChanged();
     }
@@ -85,7 +85,7 @@
     {
         saveLoading = true;
 
-        using (var httpResponse = await Http.PostAsJsonAsync<dtoSite>("Site/EditSite", editSite))
+        using (var httpResponse = await Http.PostAsJsonAsync<DtoSite>("Site/EditSite", editSite))
         {
             var editSiteRet = httpResponse.Content.ReadAsStringAsync().Result;
 

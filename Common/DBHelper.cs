@@ -28,10 +28,8 @@ namespace Common
 
             if (connection == default)
             {
-                using (var db = new dbContext())
-                {
-                    connection = db.Database.GetDbConnection();
-                }
+                using var db = new DatabaseContext();
+                connection = db.Database.GetDbConnection();
             }
 
             connection.Open();
@@ -86,10 +84,8 @@ namespace Common
 
             if (connection == default)
             {
-                using (var db = new dbContext())
-                {
-                    connection = db.Database.GetDbConnection();
-                }
+                using var db = new DatabaseContext();
+                connection = db.Database.GetDbConnection();
             }
 
             connection.Open();
@@ -131,7 +127,7 @@ namespace Common
         {
             try
             {
-                using (var db = new dbContext())
+                using (var db = new DatabaseContext())
                 {
 
                     var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
@@ -168,39 +164,36 @@ namespace Common
         /// <returns></returns>
         public static int RunCountSet(string tag)
         {
-            using (var db = new dbContext())
+            using var db = new DatabaseContext();
+
+            var info = db.TCount.Where(t => t.Tag == tag).FirstOrDefault() ?? new TCount();
+
+            if (info.Id != default)
+            {
+                info.Count++;
+                info.UpdateTime = DateTime.UtcNow;
+
+                db.SaveChanges();
+
+                return info.Count;
+            }
+            else
             {
 
-                var info = db.TCount.Where(t => t.Tag == tag).FirstOrDefault() ?? new TCount();
+                var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
+                var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
+                var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>();
 
-                if (info.Id != default)
-                {
-                    info.Count = info.Count + 1;
-                    info.UpdateTime = DateTime.UtcNow;
+                info.Id = snowflakeHelper.GetId();
+                info.Tag = tag;
+                info.Count = 1;
+                info.CreateTime = DateTime.UtcNow;
 
-                    db.SaveChanges();
+                db.TCount.Add(info);
 
-                    return info.Count;
-                }
-                else
-                {
+                db.SaveChanges();
 
-                    var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
-                    var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
-                    var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>();
-
-                    info.Id = snowflakeHelper.GetId();
-                    info.Tag = tag;
-                    info.Count = 1;
-                    info.CreateTime = DateTime.UtcNow;
-
-                    db.TCount.Add(info);
-
-                    db.SaveChanges();
-
-                    return info.Count;
-
-                }
+                return info.Count;
 
             }
         }
@@ -217,17 +210,15 @@ namespace Common
         public static int RunCountGet(string tag, DateTime starttime = default, DateTime endtime = default)
         {
 
-            using (var db = new dbContext())
+            using var db = new DatabaseContext();
+            var query = db.TCount.Where(t => t.Tag.Contains(tag));
+
+            if (starttime != default & endtime != default)
             {
-                var query = db.TCount.Where(t => t.Tag.Contains(tag));
-
-                if (starttime != default & endtime != default)
-                {
-                    query = query.Where(t => t.CreateTime >= starttime & t.CreateTime <= endtime);
-                }
-
-                return query.ToList().Sum(t => t.Count);
+                query = query.Where(t => t.CreateTime >= starttime & t.CreateTime <= endtime);
             }
+
+            return query.ToList().Sum(t => t.Count);
 
         }
 

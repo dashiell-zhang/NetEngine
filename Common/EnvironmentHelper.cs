@@ -20,11 +20,12 @@ namespace Common
         /// </summary>
         public static void InitTestServer()
         {
-            var testIpList = new List<string>();
+            List<string> testIpList = new()
+            {
+                "x.x.x.x"
+            };
 
-            testIpList.Add("x.x.x.x");
-
-            if (testIpList.Count() != 0)
+            if (testIpList.Any())
             {
                 var localIpList = SystemHelper.GetAllIpAddress();
 

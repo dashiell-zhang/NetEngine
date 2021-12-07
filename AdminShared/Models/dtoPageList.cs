@@ -8,7 +8,7 @@ namespace AdminShared.Models
     /// 分页数据信息基类
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class dtoPageList<T>
+    public class DtoPageList<T>
     {
 
 

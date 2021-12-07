@@ -16,7 +16,7 @@ namespace AdminApi.Libraries.Ueditor
         public UploadConfig UploadConfig { get; private set; }
         public UploadResult Result { get; private set; }
 
-        public UploadHandler(HttpContext context, UploadConfig config)
+        public UploadHandler( UploadConfig config)
             : base()
         {
             this.UploadConfig = config;
@@ -27,21 +27,17 @@ namespace AdminApi.Libraries.Ueditor
         {
 
             string value = "";
-            byte[] uploadFileBytes = null;
-            string uploadFileName = null;
-
+            string uploadFileName;
             if (UploadConfig.Base64)
             {
                 uploadFileName = UploadConfig.Base64Filename;
-                uploadFileBytes = Convert.FromBase64String(Http.HttpContext.Current().Request.Form[UploadConfig.UploadFieldName]);
+                byte[] uploadFileBytes = Convert.FromBase64String(Http.HttpContext.Current().Request.Form[UploadConfig.UploadFieldName]);
 
                 var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat);
                 var localPath = IO.Path.WebRootPath() + savePath;
 
                 try
                 {
-
-
 
                     if (!Directory.Exists(Path.GetDirectoryName(localPath)))
                     {
@@ -107,7 +103,7 @@ namespace AdminApi.Libraries.Ueditor
                     value = WriteResult();
                 }
 
-                uploadFileBytes = new byte[file.Length];
+                _ = new byte[file.Length];
                 try
                 {
                     file.OpenReadStream();
@@ -197,20 +193,15 @@ namespace AdminApi.Libraries.Ueditor
 
         private static string GetStateMessage(UploadState state)
         {
-            switch (state)
+            return state switch
             {
-                case UploadState.Success:
-                    return "SUCCESS";
-                case UploadState.FileAccessError:
-                    return "文件访问出错，请检查写入权限";
-                case UploadState.SizeLimitExceed:
-                    return "文件大小超出服务器限制";
-                case UploadState.TypeNotAllow:
-                    return "不允许的文件格式";
-                case UploadState.NetworkError:
-                    return "网络错误";
-            }
-            return "未知错误";
+                UploadState.Success => "SUCCESS",
+                UploadState.FileAccessError => "文件访问出错，请检查写入权限",
+                UploadState.SizeLimitExceed => "文件大小超出服务器限制",
+                UploadState.TypeNotAllow => "不允许的文件格式",
+                UploadState.NetworkError => "网络错误",
+                _ => "未知错误",
+            };
         }
 
         private bool CheckFileType(string filename)

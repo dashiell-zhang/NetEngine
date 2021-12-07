@@ -98,7 +98,7 @@ namespace WebApi.Libraries.WeiXin.Public
 	    * @throws WxPayException
 	    * @return 成功时返回测速上报接口返回的结果，其他抛异常
 	    */
-        public WxPayData Report(WxPayData inputObj, int timeOut = 1)
+        public WxPayData Report(WxPayData inputObj)
         {
             string url = "https://api.mch.weixin.qq.com/payitil/report";
             //检测必填参数
@@ -157,9 +157,9 @@ namespace WebApi.Libraries.WeiXin.Public
         {
             //接收从微信后台POST过来的数据
             System.IO.Stream s = Http.HttpContext.Current().Request.Body;
-            int count = 0;
             byte[] buffer = new byte[1024];
             StringBuilder builder = new();
+            int count;
             while ((count = s.Read(buffer, 0, 1024)) > 0)
             {
                 builder.Append(Encoding.UTF8.GetString(buffer, 0, count));
@@ -193,7 +193,7 @@ namespace WebApi.Libraries.WeiXin.Public
         * @throws WxPayException
         * @return 成功时返回订单查询结果，其他抛异常
         */
-        public WxPayData OrderQuery(WxPayData inputObj, int timeOut = 6)
+        public WxPayData OrderQuery(WxPayData inputObj)
         {
             string sendUrl = "https://api.mch.weixin.qq.com/pay/orderquery";
             //检测必填参数

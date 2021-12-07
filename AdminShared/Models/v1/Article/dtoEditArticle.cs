@@ -4,7 +4,7 @@
     /// <summary>
     /// 创建文章
     /// </summary>
-    public class dtoEditArticle
+    public class DtoEditArticle
     {
 
 

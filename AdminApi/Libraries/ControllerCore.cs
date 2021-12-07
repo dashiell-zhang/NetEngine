@@ -11,7 +11,7 @@ namespace AdminApi.Libraries
     {
 
 
-        public readonly dbContext db;
+        public readonly DatabaseContext db;
         public readonly ICapPublisher cap;
         public readonly long userId;
         public readonly IDistributedLockProvider distLock;
@@ -22,7 +22,7 @@ namespace AdminApi.Libraries
 
         protected ControllerCore()
         {
-            db = Http.HttpContext.Current().RequestServices.GetService<dbContext>();
+            db = Http.HttpContext.Current().RequestServices.GetService<DatabaseContext>();
             cap = Http.HttpContext.Current().RequestServices.GetService<ICapPublisher>();
             distLock = Http.HttpContext.Current().RequestServices.GetService<IDistributedLockProvider>();
             distSemaphoreLock = Http.HttpContext.Current().RequestServices.GetService<IDistributedSemaphoreProvider>();

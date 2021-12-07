@@ -2,7 +2,7 @@
 
 namespace AdminShared.Models.v1.Article
 {
-    public class dtoEditChannel
+    public class DtoEditChannel
     {
 
 

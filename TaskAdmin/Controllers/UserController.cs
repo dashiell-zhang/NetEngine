@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repository.Database;
 using System;
 using System.Security.Claims;
 
@@ -14,15 +13,7 @@ namespace TaskAdmin.Controllers
     {
 
 
-        private readonly dbContext db;
-
-        public UserController(dbContext context)
-        {
-            db = context;
-        }
-
-
-        public IActionResult Login(string returnUrl)
+        public IActionResult Login()
         {
             return View();
         }

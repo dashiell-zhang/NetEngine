@@ -35,7 +35,7 @@ namespace WebApi.Controllers.v1
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
         [HttpPost("GetToken")]
-        public string GetToken([FromBody] dtoLogin login)
+        public string GetToken([FromBody] DtoLogin login)
         {
 
 
@@ -81,7 +81,7 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
         /// <returns></returns>
         [HttpPost("GetTokenByWeiXinMiniAppCode")]
-        public string GetTokenByWeiXinMiniAppCode([FromBody] dtoKeyValue keyValue)
+        public string GetTokenByWeiXinMiniAppCode([FromBody] DtoKeyValue keyValue)
         {
 
             var weiXinKeyId = long.Parse(keyValue.Key.ToString());
@@ -142,7 +142,7 @@ namespace WebApi.Controllers.v1
 
             }
 
-            return GetToken(new dtoLogin { Name = user.Name, PassWord = user.PassWord });
+            return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
         }
 
 
@@ -154,7 +154,7 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key 为手机号，value 为验证码</param>
         /// <returns></returns>
         [HttpPost("GetTokenBySms")]
-        public string GetTokenBySms(dtoKeyValue keyValue)
+        public string GetTokenBySms(DtoKeyValue keyValue)
         {
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
@@ -180,7 +180,7 @@ namespace WebApi.Controllers.v1
                     db.SaveChanges();
                 }
 
-                return GetToken(new dtoLogin { Name = user.Name, PassWord = user.PassWord });
+                return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
             }
             else
             {
@@ -203,12 +203,12 @@ namespace WebApi.Controllers.v1
         [Authorize]
         [CacheDataFilter(TTL = 60, UseToken = true)]
         [HttpGet("GetFunctionList")]
-        public List<dtoKeyValue> GetFunctionList(string sign)
+        public List<DtoKeyValue> GetFunctionList(string sign)
         {
 
             var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new dtoKeyValue
+            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new DtoKeyValue
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name
@@ -226,7 +226,7 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key 为手机号，value 可为空</param>
         /// <returns></returns>
         [HttpPost("SendSmsVerifyPhone")]
-        public bool SendSmsVerifyPhone(dtoKeyValue keyValue)
+        public bool SendSmsVerifyPhone(DtoKeyValue keyValue)
         {
 
             string phone = keyValue.Key.ToString();
@@ -274,7 +274,7 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
         /// <returns></returns>
         [HttpPost("GetTokenByWeiXinAppCode")]
-        public string GetTokenByWeiXinAppCode(dtoKeyValue keyValue)
+        public string GetTokenByWeiXinAppCode(DtoKeyValue keyValue)
         {
 
             var weiXinKeyId = long.Parse(keyValue.Key.ToString());
@@ -293,7 +293,7 @@ namespace WebApi.Controllers.v1
 
             var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
 
-            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" & t.AppId == appid & t.OpenId == userInfo.openid).Select(t => t.User).FirstOrDefault();
+            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" & t.AppId == appid & t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
 
             if (user == null)
             {
@@ -302,7 +302,7 @@ namespace WebApi.Controllers.v1
                 user.IsDelete = false;
                 user.CreateTime = DateTime.UtcNow;
 
-                user.Name = userInfo.nickname;
+                user.Name = userInfo.NickName;
                 user.NickName = user.Name;
                 user.PassWord = Guid.NewGuid().ToString();
 
@@ -323,7 +323,7 @@ namespace WebApi.Controllers.v1
                 db.SaveChanges();
             }
 
-            return GetToken(new dtoLogin { Name = user.Name, PassWord = user.PassWord });
+            return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
 
         }
 

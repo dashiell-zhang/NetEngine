@@ -43,7 +43,7 @@ namespace AdminApi.Libraries.Http
 
             if (Current().Request.Host.Port != null)
             {
-                url = url + $":{Current().Request.Host.Port}";
+                url += $":{Current().Request.Host.Port}";
             }
 
             return url;
@@ -62,36 +62,26 @@ namespace AdminApi.Libraries.Http
 
             if (contentEncoding != null && contentEncoding.Equals("gzip", System.StringComparison.OrdinalIgnoreCase))
             {
-                using (Stream requestBody = new MemoryStream())
-                {
-                    Current().Request.Body.CopyTo(requestBody);
-                    Current().Request.Body.Position = 0;
+                using Stream requestBody = new MemoryStream();
+                Current().Request.Body.CopyTo(requestBody);
+                Current().Request.Body.Position = 0;
 
-                    requestBody.Position = 0;
+                requestBody.Position = 0;
 
-                    using (GZipStream decompressedStream = new(requestBody, CompressionMode.Decompress))
-                    {
-                        using (StreamReader sr = new(decompressedStream, Encoding.UTF8))
-                        {
-                            requestContent = sr.ReadToEnd();
-                        }
-                    }
-                }
+                using GZipStream decompressedStream = new(requestBody, CompressionMode.Decompress);
+                using StreamReader sr = new(decompressedStream, Encoding.UTF8);
+                requestContent = sr.ReadToEnd();
             }
             else
             {
-                using (Stream requestBody = new MemoryStream())
-                {
-                    Current().Request.Body.CopyTo(requestBody);
-                    Current().Request.Body.Position = 0;
+                using Stream requestBody = new MemoryStream();
+                Current().Request.Body.CopyTo(requestBody);
+                Current().Request.Body.Position = 0;
 
-                    requestBody.Position = 0;
+                requestBody.Position = 0;
 
-                    using (var requestReader = new StreamReader(requestBody))
-                    {
-                        requestContent = requestReader.ReadToEnd();
-                    }
-                }
+                using var requestReader = new StreamReader(requestBody);
+                requestContent = requestReader.ReadToEnd();
             }
 
             return requestContent;
@@ -102,11 +92,11 @@ namespace AdminApi.Libraries.Http
         /// <summary>
         /// 获取 http 请求中的全部参数
         /// </summary>
-        public static List<dtoKeyValue> GetParameter()
+        public static List<DtoKeyValue> GetParameter()
         {
             var context = Current();
 
-            var parameters = new List<dtoKeyValue>();
+            var parameters = new List<DtoKeyValue>();
 
             if (context.Request.Method == "POST")
             {
@@ -114,7 +104,7 @@ namespace AdminApi.Libraries.Http
 
                 if (!string.IsNullOrEmpty(body))
                 {
-                    parameters.Add(new dtoKeyValue { Key = "body", Value = body });
+                    parameters.Add(new DtoKeyValue { Key = "body", Value = body });
                 }
                 else if (context.Request.HasFormContentType)
                 {
@@ -122,7 +112,7 @@ namespace AdminApi.Libraries.Http
 
                     foreach (var fm in fromlist)
                     {
-                        parameters.Add(new dtoKeyValue { Key = fm.Key, Value = fm.Value.ToString() });
+                        parameters.Add(new DtoKeyValue { Key = fm.Key, Value = fm.Value.ToString() });
                     }
                 }
             }
@@ -132,7 +122,7 @@ namespace AdminApi.Libraries.Http
 
                 foreach (var query in queryList)
                 {
-                    parameters.Add(new dtoKeyValue { Key = query.Key, Value = query.Value });
+                    parameters.Add(new DtoKeyValue { Key = query.Key, Value = query.Value });
                 }
             }
 

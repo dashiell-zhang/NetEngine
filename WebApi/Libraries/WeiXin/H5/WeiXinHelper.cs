@@ -90,18 +90,18 @@ namespace WebApi.Libraries.WeiXin.H5
         /// 获取 JsSDK 签名信息
         /// </summary>
         /// <returns></returns>
-        public WeiXinJsSdkSign GetJsSDKSign()
+        public DtoWeiXinJsSdkSign GetJsSDKSign()
         {
-            var sdkSign = new WeiXinJsSdkSign();
+            var sdkSign = new DtoWeiXinJsSdkSign();
 
             string url = HttpContext.GetUrl();
 
-            sdkSign.appid = appid;
-            sdkSign.timestamp = Common.DateTimeHelper.TimeToUnix(DateTime.UtcNow);
-            sdkSign.noncestr = Guid.NewGuid().ToString().Replace("-", "");
+            sdkSign.AppId = appid;
+            sdkSign.TimeStamp = Common.DateTimeHelper.TimeToUnix(DateTime.UtcNow);
+            sdkSign.NonceStr = Guid.NewGuid().ToString().Replace("-", "");
 
             string jsapi_ticket = GetTicketID();
-            string strYW = "jsapi_ticket=" + jsapi_ticket + "&noncestr=" + sdkSign.noncestr + "&timestamp=" + sdkSign.timestamp + "&url=" + url;
+            string strYW = "jsapi_ticket=" + jsapi_ticket + "&noncestr=" + sdkSign.NonceStr + "&timestamp=" + sdkSign.TimeStamp + "&url=" + url;
 
             using (var sha1 = SHA1.Create())
             {
@@ -110,7 +110,7 @@ namespace WebApi.Libraries.WeiXin.H5
                 string str_sha1_out = BitConverter.ToString(bytes_sha1_out);
                 str_sha1_out = str_sha1_out.Replace("-", "").ToLower();
 
-                sdkSign.signature = str_sha1_out;
+                sdkSign.Signature = str_sha1_out;
             }
 
             return sdkSign;

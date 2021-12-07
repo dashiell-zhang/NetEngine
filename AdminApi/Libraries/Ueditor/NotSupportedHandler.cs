@@ -9,10 +9,7 @@ namespace AdminApi.Libraries.Ueditor
     /// </summary>
     public class NotSupportedHandler : Handler
     {
-        public NotSupportedHandler(HttpContext context)
-            : base()
-        {
-        }
+      
 
         public override string Process()
         {

@@ -13,7 +13,7 @@
         <div style="margin-bottom:10px">
             <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditCategory()">添加</Button>
         </div>
-        <Table TItem="dtoCategory" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="DtoCategory" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <RowTemplate>
                 <Column @bind-Field="@context.Name" Title="名称"></Column>
@@ -64,7 +64,7 @@
 
             <FormItem>
                 <Text>父级栏目</Text>
-                <Select DataSource="@selectCategoryList" DefaultValue="@(0)" ValueName="@nameof(dtoSelect.Value)" LabelName="@nameof(dtoSelect.Label)" DisabledName="@nameof(dtoSelect.IsDisabled)" @bind-Value="@context.ParentId"></Select>
+                <Select DataSource="@selectCategoryList" DefaultValue="@(0)" ValueName="@nameof(DtoSelect.Value)" LabelName="@nameof(DtoSelect.Label)" DisabledName="@nameof(DtoSelect.IsDisabled)" @bind-Value="@context.ParentId"></Select>
             </FormItem>
 
 
@@ -98,7 +98,7 @@
     [Parameter]
     public string channelId { get; set; }
 
-    List<dtoSelect> selectCategoryList;
+    List<DtoSelect> selectCategoryList;
 
     override protected void OnInitialized()
     {
@@ -114,16 +114,16 @@
 
     async void GetSelectCategoryList()
     {
-        var parentKVList = new List<dtoKeyValue>();
+        var parentKVList = new List<DtoKeyValue>();
 
 
-        parentKVList.Add(new dtoKeyValue { Key = 0, Value = "无父级栏目" });
+        parentKVList.Add(new DtoKeyValue { Key = 0, Value = "无父级栏目" });
 
-        var kvList = await Http.GetFromJsonAsync<List<dtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
+        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
 
         parentKVList.AddRange(kvList);
 
-        selectCategoryList = parentKVList.Select(t => new dtoSelect
+        selectCategoryList = parentKVList.Select(t => new DtoSelect
         {
             Label = t.Value.ToString(),
             Value = long.Parse(t.Key.ToString())
@@ -137,12 +137,12 @@
     bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
-    dtoPageList<dtoCategory> pageList = new();
+    DtoPageList<DtoCategory> pageList = new();
 
     async void GetCategoryList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<dtoPageList<dtoCategory>>("Article/GetCategoryList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
         tableLoading = false;
         StateHasChanged();
     }
@@ -166,13 +166,13 @@
 
 
     bool isShowEditCategory = false;
-    dtoEditCategory editCategory = new();
+    DtoEditCategory editCategory = new();
     long categoryId;
 
 
-    void EditCategory(dtoCategory category = null)
+    void EditCategory(DtoCategory category = null)
     {
-        editCategory = new dtoEditCategory();
+        editCategory = new DtoEditCategory();
         categoryId = default;
 
         GetSelectCategoryList();
@@ -212,7 +212,7 @@
         {
             editCategory.ChannelId = long.Parse(channelId);
 
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditCategory>("Article/CreateCategory", editCategory))
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory))
             {
                 var createCategoryId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -221,7 +221,7 @@
         }
         else
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<dtoEditCategory>("Article/UpdateCategory?categoryId=" + categoryId, editCategory))
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/UpdateCategory?categoryId=" + categoryId, editCategory))
             {
                 var updateCategoryRet = httpResponse.Content.ReadAsStringAsync().Result;
 

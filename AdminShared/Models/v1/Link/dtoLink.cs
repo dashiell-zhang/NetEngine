@@ -6,7 +6,7 @@ namespace AdminShared.Models.v1.Link
     /// <summary>
     /// 友情链接
     /// </summary>
-    public class dtoLink
+    public class DtoLink
     {
 
 

@@ -11,7 +11,7 @@ namespace AdminApi.Actions.v1
 
         public static bool SetSiteInfo(string key, string value)
         {
-            var db = Program.ServiceProvider.GetService<dbContext>();
+            var db = Program.ServiceProvider.GetService<DatabaseContext>();
 
             var snowflakeHelper = Program.ServiceProvider.GetService<SnowflakeHelper>();
 

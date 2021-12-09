@@ -434,7 +434,7 @@ namespace AdminApi.Controllers.v1
 
             if (string.IsNullOrEmpty(createArticle.Abstract) & !string.IsNullOrEmpty(createArticle.Content))
             {
-                string content = Common.StringHelper.NoHtml(createArticle.Content);
+                string content = Common.StringHelper.RemoveHtml(createArticle.Content);
                 article.Abstract = content.Length > 255 ? content[..255] : content;
             }
             else
@@ -481,7 +481,7 @@ namespace AdminApi.Controllers.v1
 
             if (string.IsNullOrEmpty(updateArticle.Abstract))
             {
-                string content = Common.StringHelper.NoHtml(updateArticle.Content);
+                string content = Common.StringHelper.RemoveHtml(updateArticle.Content);
                 article.Abstract = content.Length > 255 ? content[..255] : content;
             }
             else

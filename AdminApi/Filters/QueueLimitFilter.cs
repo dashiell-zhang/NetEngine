@@ -13,7 +13,7 @@ namespace AdminApi.Filters
     /// <summary>
     /// 队列过滤器
     /// </summary>
-    [AttributeUsage(AttributeTargets.All)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class QueueLimitFilter : Attribute, IActionFilter
     {
 

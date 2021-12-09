@@ -9,7 +9,7 @@ namespace AdminApi.Filters
     /// <summary>
     /// 签名过滤器
     /// </summary>
-    [AttributeUsage(AttributeTargets.All)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class SignVerifyFilter : Attribute, IActionFilter
     {
 

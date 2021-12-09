@@ -12,7 +12,7 @@ namespace WebApi.Filters
     /// <summary>
     /// 缓存过滤器
     /// </summary>
-    [AttributeUsage(AttributeTargets.All)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class CacheDataFilter : Attribute, IActionFilter
     {
 

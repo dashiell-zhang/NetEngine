@@ -8,7 +8,7 @@ namespace WebApi.Filters
     /// <summary>
     /// 全局过滤器
     /// </summary>
-    [AttributeUsage(AttributeTargets.All)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class GlobalFilter : Attribute, IActionFilter
     {
 

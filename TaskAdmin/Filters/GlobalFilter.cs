@@ -3,7 +3,7 @@ using System;
 
 namespace TaskAdmin.Filters
 {
-    [AttributeUsage(AttributeTargets.All)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class GlobalFilter : Attribute, IActionFilter
     {
 

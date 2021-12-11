@@ -13,7 +13,13 @@ namespace AdminApp
     {
         public static async Task Main(string[] args)
         {
+
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+
+            var appApiUrl = "https://localhost:9833/api/";
+            //var appApiUrl = builder.HostEnvironment.BaseAddress.ToLower();
+
 
 
             CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("zh-CN");
@@ -23,10 +29,11 @@ namespace AdminApp
 
             builder.Services.AddScoped<HttpInterceptor>();
 
+
+
             builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<HttpInterceptor>())
             {
-                //BaseAddress = new Uri(builder.HostEnvironment.BaseAddress.ToLower().Replace("admin", "api"))
-                BaseAddress = new Uri("https://localhost:9833/api/")
+                BaseAddress = new Uri(appApiUrl)
             });
 
 
@@ -34,7 +41,14 @@ namespace AdminApp
 
             builder.Services.AddAntDesign();
 
-            await builder.Build().RunAsync();
+            await using WebAssemblyHost host = builder.Build();
+
+
+            var localStorage = host.Services.GetService<ISyncLocalStorageService>();
+            localStorage.SetItemAsString("AppApiUrl", appApiUrl);
+
+            await host.RunAsync();
+
         }
     }
 }

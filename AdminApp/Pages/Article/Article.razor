@@ -92,7 +92,7 @@
                 </FormItem>
 
                 <FormItem Label="封面图">
-                    <Upload Action="@("https://localhost:9833/api/File/UploadFile?business=TArticle&key="+fileKey+"&sign=cover")"
+                    <Upload Action="@(LocalStorage.GetItemAsString("AppApiUrl")+"File/UploadFile?business=TArticle&key="+fileKey+"&sign=cover")"
                             Name="file"
                             Headers=headers
                             @bind-FileList="fileList"
@@ -150,7 +150,7 @@
     {
         GetSelectCategoryList();
 
-        var authorization = LocalStorage.GetItem<string>("Authorization");
+        var authorization = LocalStorage.GetItemAsString("Authorization");
 
         headers.Add("Authorization", "Bearer " + authorization);
     }
@@ -241,7 +241,7 @@
                 {
                     Id = t.Key.ToString(),
                     FileName = "coverImg.jpg",
-                    Url = "https://localhost:9833/" + t.Value.ToString(),
+                    Url = t.Value.ToString(),
                     State = UploadState.Success
                 }).ToList();
         }

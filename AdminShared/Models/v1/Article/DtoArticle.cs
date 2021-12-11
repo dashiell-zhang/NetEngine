@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace AdminShared.Models.v1.Article
 {
@@ -28,6 +29,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 标题
         /// </summary>
+        [Required(ErrorMessage = "标题不可以空")]
         public string Title { get; set; }
 
 
@@ -35,6 +37,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 内容
         /// </summary>
+        [Required(ErrorMessage = "内容不可以空")]
         public string Content { get; set; }
 
 

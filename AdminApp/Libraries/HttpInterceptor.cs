@@ -31,7 +31,7 @@ namespace AdminApp.Libraries
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var authorization = LocalStorage.GetItem<string>("Authorization");
+            var authorization = LocalStorage.GetItemAsString("Authorization");
 
             var isGetToken = request.RequestUri.AbsolutePath.Contains("/api/Authorize/GetToken", System.StringComparison.OrdinalIgnoreCase);
 
@@ -69,7 +69,7 @@ namespace AdminApp.Libraries
 
                         if (!string.IsNullOrEmpty(newToken))
                         {
-                            LocalStorage.SetItem<string>("Authorization", newToken);
+                            LocalStorage.SetItemAsString("Authorization", newToken);
                         }
                     }
                 }

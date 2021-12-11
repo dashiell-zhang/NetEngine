@@ -115,7 +115,7 @@
 
     private async void Authentication()
     {
-        var authorization = LocalStorage.GetItem<string>("Authorization");
+        var authorization = LocalStorage.GetItemAsString("Authorization");
 
         if (string.IsNullOrEmpty(authorization))
         {

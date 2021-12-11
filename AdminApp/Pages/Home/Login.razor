@@ -42,7 +42,7 @@
 
     override protected void OnInitialized()
     {
-        var authorization = LocalStorage.GetItem<string>("Authorization");
+        var authorization = LocalStorage.GetItemAsString("Authorization");
 
         if (!string.IsNullOrEmpty(authorization))
         {
@@ -72,7 +72,7 @@
             if ((int)httpResponse.StatusCode == 200)
             {
                 var token = httpResponse.Content.ReadAsStringAsync().Result;
-                LocalStorage.SetItem<string>("Authorization", token);
+                LocalStorage.SetItemAsString("Authorization", token);
                 NavigationManager.NavigateTo("");
             }
         }

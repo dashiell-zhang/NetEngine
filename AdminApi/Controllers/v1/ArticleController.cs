@@ -349,6 +349,8 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
+            var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
+
             data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
             {
                 Id = t.Id,
@@ -365,7 +367,7 @@ namespace AdminApi.Controllers.v1
                 CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
-                    Value = f.Path
+                    Value = fileServerUrl + f.Path
                 }).ToList()
             }).Skip(skip).Take(pageSize).ToList();
 
@@ -384,6 +386,9 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetArticle")]
         public DtoArticle GetArticle(long articleId)
         {
+            var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
+
+
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new DtoArticle
             {
                 Id = t.Id,
@@ -400,7 +405,7 @@ namespace AdminApi.Controllers.v1
                 CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
-                    Value = f.Path
+                    Value = fileServerUrl + f.Path
                 }).ToList()
             }).FirstOrDefault();
 

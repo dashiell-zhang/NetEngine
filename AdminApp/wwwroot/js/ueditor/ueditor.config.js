@@ -21,14 +21,7 @@
      */
     var URL = window.UEDITOR_HOME_URL || getUEBasePath();
 
-    var baseUrl = window.location.protocol + "//" + window.location.hostname;
-
-    if (window.location.port != "") {
-        baseUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port;
-    }
-
-    baseUrl = "https://localhost:9833/api";
-    console.log(baseUrl);
+    var baseUrl = localStorage.getItem('AppApiUrl');
 
 
     /**
@@ -40,7 +33,7 @@
         UEDITOR_HOME_URL: URL
 
         // 服务器统一请求接口路径
-        , serverUrl: baseUrl + "/ueditor/ProcessRequest"
+        , serverUrl: baseUrl + "ueditor/ProcessRequest"
 
         //工具栏上的所有的功能按钮和下拉框，可以在new编辑器的实例时选择自己需要的重新定义
         , toolbars: [[

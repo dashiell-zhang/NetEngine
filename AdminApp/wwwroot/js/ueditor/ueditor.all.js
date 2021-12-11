@@ -8239,7 +8239,7 @@
                 }
             };
 
-            var authorization = 'Bearer ' + localStorage.getItem('Authorization').replaceAll('"', '');
+            var authorization = 'Bearer ' + localStorage.getItem('Authorization');
 
             if (method == "POST") {
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -23830,7 +23830,7 @@
             fd.append('type', 'ajax');
             xhr.open("post", url, true);
             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-            xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('Authorization').replaceAll('"', ''));
+            xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('Authorization'));
 
             xhr.addEventListener('load', function (e) {
                 try {

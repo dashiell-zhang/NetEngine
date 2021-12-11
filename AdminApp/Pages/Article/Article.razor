@@ -54,7 +54,7 @@
 
 @{
     RenderFragment editFooter = @<Template>
-        <Button OnClick="SaveArticle" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
+        <Button OnClick="()=>_editArticleForm.Submit()" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
         <Button OnClick="()=>isShowEditArticle=false" @key="@("back")">取消</Button>
     </Template>;
 }
@@ -62,7 +62,7 @@
 
 <Modal Title="文章信息" Style="width:1160px;" Visible="@isShowEditArticle" OnCancel="()=>isShowEditArticle=false" Footer="@editFooter">
 
-    <Form Model="@editArticle" LabelColSpan="2" WrapperColSpan="22" Class="ueditorBody">
+    <Form @ref="@_editArticleForm" OnFinish="SaveArticle" Model="@editArticle" LabelColSpan="2" WrapperColSpan="22" Class="ueditorBody" Name="EditArticleForm">
 
         <Tabs Type="@TabType.Card" OnTabClick=@(()=>InitUeditor("Content",370))>
 
@@ -133,6 +133,7 @@
 
 @code {
 
+    private Form<DtoEditArticle> _editArticleForm;
 
     Dictionary<string, string> headers = new();
 
@@ -261,6 +262,7 @@
 
     async void SaveArticle()
     {
+
         saveLoading = true;
 
         if (articleId == default)

@@ -65,7 +65,7 @@
 
             <FormItem>
                 <Text>Url</Text>
-                <Input Placeholder="请输入Url" @bind-Value="@context.Url" />
+                <Input Placeholder="请输入Url" Type="url" @bind-Value="@context.Url" />
             </FormItem>
 
 
@@ -88,7 +88,7 @@
 </Drawer>
 
 
-@code{
+@code {
 
     override protected void OnInitialized()
     {

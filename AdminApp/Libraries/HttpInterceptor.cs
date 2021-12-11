@@ -47,7 +47,7 @@ namespace AdminApp.Libraries
 
                 if ((int)response.StatusCode == 401)
                 {
-                    NavigationManager.NavigateTo("/login");
+                    NavigationManager.NavigateTo("login");
                 }
 
                 if ((int)response.StatusCode == 400)
@@ -78,7 +78,7 @@ namespace AdminApp.Libraries
             }
             else
             {
-                NavigationManager.NavigateTo("/login", true);
+                NavigationManager.NavigateTo("login", true);
                 return default;
             }
         }

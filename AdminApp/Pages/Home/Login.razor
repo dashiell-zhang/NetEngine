@@ -54,7 +54,7 @@
 
             if (expTime > DateTime.UtcNow)
             {
-                NavigationManager.NavigateTo("/");
+                NavigationManager.NavigateTo("");
             }
         }
     }
@@ -73,7 +73,7 @@
             {
                 var token = httpResponse.Content.ReadAsStringAsync().Result;
                 LocalStorage.SetItem<string>("Authorization", token);
-                NavigationManager.NavigateTo("/");
+                NavigationManager.NavigateTo("");
             }
         }
 

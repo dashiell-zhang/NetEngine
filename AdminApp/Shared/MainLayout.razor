@@ -46,8 +46,8 @@
                             @foreach (var channel in channelKVList)
                             {
                                 <SubMenu IsOpen Title="@channel.Value.ToString()">
-                                    <MenuItem><a href="/article/@channel.Key">文章管理</a></MenuItem>
-                                    <MenuItem> <a href="/category/@channel.Key">栏目管理</a></MenuItem>
+                                    <MenuItem><a href="article/@channel.Key">文章管理</a></MenuItem>
+                                    <MenuItem> <a href="category/@channel.Key">栏目管理</a></MenuItem>
                                 </SubMenu>
                             }
                         </Menu>
@@ -58,10 +58,10 @@
                     {
                         <Menu Mode="MenuMode.Inline" DefaultSelectedKeys=@(new[] {"1"}) DefaultOpenKeys=@(new[] {"sub1"}) Style="height: 100%; border-right: 0;">
                             <SubMenu Key="sub1" Title="系统设置">
-                                <MenuItem><a href="/user">用户管理</a></MenuItem>
-                                <MenuItem><a href="/channel">频道管理</a></MenuItem>
-                                <MenuItem><a href="/link">友链管理</a></MenuItem>
-                                <MenuItem><a href="/site">信息维护</a></MenuItem>
+                                <MenuItem><a href="user">用户管理</a></MenuItem>
+                                <MenuItem><a href="channel">频道管理</a></MenuItem>
+                                <MenuItem><a href="link">友链管理</a></MenuItem>
+                                <MenuItem><a href="site">信息维护</a></MenuItem>
                             </SubMenu>
                         </Menu>
                         break;
@@ -119,7 +119,7 @@
 
         if (string.IsNullOrEmpty(authorization))
         {
-            NavigationManager.NavigateTo("/login");
+            NavigationManager.NavigateTo("login");
         }
         else
         {
@@ -131,7 +131,7 @@
 
             if (expTime < DateTime.UtcNow)
             {
-                NavigationManager.NavigateTo("/login");
+                NavigationManager.NavigateTo("login");
             }
             else
             {
@@ -142,7 +142,7 @@
                 catch
                 {
                     LocalStorage.RemoveItem("Authorization");
-                    NavigationManager.NavigateTo("/login");
+                    NavigationManager.NavigateTo("login");
                 }
 
                 StateHasChanged();
@@ -155,7 +155,7 @@
     {
         LocalStorage.RemoveItem("Authorization");
 
-        NavigationManager.NavigateTo("/login");
+        NavigationManager.NavigateTo("login");
     }
 
     void changeShow(int _showIndex)

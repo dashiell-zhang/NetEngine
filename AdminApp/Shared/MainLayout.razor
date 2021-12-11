@@ -14,7 +14,6 @@
             </Menu>
         </div>
 
-
         <div style="width:13.5%">
             <div style="float: right;">
                 <Avatar Src="/img/touxiang.jpg" Size="large" />
@@ -35,7 +34,6 @@
             </div>
         </div>
 
-
     </Header>
     <Layout>
         <Sider Width="200" Class="rule-action">
@@ -45,7 +43,6 @@
                 case 0:
                     {
                         <Menu Mode="MenuMode.Inline" Style="height: 100%; border-right: 0;">
-
                             @foreach (var channel in channelKVList)
                             {
                                 <SubMenu IsOpen Title="@channel.Value.ToString()">
@@ -53,7 +50,6 @@
                                     <MenuItem> <a href="/category/@channel.Key">栏目管理</a></MenuItem>
                                 </SubMenu>
                             }
-
                         </Menu>
                         break;
                     }
@@ -61,19 +57,16 @@
                 case 1:
                     {
                         <Menu Mode="MenuMode.Inline" DefaultSelectedKeys=@(new[] {"1"}) DefaultOpenKeys=@(new[] {"sub1"}) Style="height: 100%; border-right: 0;">
-
                             <SubMenu Key="sub1" Title="系统设置">
                                 <MenuItem><a href="/user">用户管理</a></MenuItem>
                                 <MenuItem><a href="/channel">频道管理</a></MenuItem>
                                 <MenuItem><a href="/link">友链管理</a></MenuItem>
                                 <MenuItem><a href="/site">信息维护</a></MenuItem>
                             </SubMenu>
-
                         </Menu>
                         break;
                     }
             }
-
 
         </Sider>
 
@@ -100,19 +93,17 @@
     }
 </style>
 
-@code{
+@code {
 
     public static DtoUser user = new();
 
     int showIndex = 0;
-
 
     override protected void OnInitialized()
     {
         Authentication();
         GetChannelList();
     }
-
 
     private List<DtoKeyValue> channelKVList = new();
     async void GetChannelList()
@@ -121,8 +112,6 @@
 
         StateHasChanged();
     }
-
-
 
     private async void Authentication()
     {
@@ -156,7 +145,6 @@
                     NavigationManager.NavigateTo("/login");
                 }
 
-
                 StateHasChanged();
             }
         }
@@ -173,6 +161,12 @@
     void changeShow(int _showIndex)
     {
         showIndex = _showIndex;
+
+        if (_showIndex == 0)
+        {
+            GetChannelList();
+        }
+
         StateHasChanged();
     }
 

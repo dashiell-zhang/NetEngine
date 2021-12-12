@@ -29576,3 +29576,21 @@
 
 
 })();
+
+
+function InitUeditor(inputName, height) {
+    if (document.getElementById(inputName).nodeName == "TEXTAREA") {
+        var UEditor = new baidu.editor.ui.Editor({
+            autoFloatEnabled: true,
+            pasteplain: false,
+            autoHeightEnabled: false,
+            initialFrameHeight: height
+        });
+
+        UEditor.render(inputName);
+    }
+}
+
+function GetUeditorContent(inputName) {
+    return UE.getEditor(inputName).getContent();
+}

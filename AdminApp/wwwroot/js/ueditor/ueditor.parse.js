@@ -641,7 +641,7 @@ UE.parse.register('charts',function( utils ){
         if ( !window.jQuery ) {
 
             utils.loadFile(document,{
-                src : resourceRoot + "/third-party/jquery-1.10.2.min.js",
+                src : resourceRoot + "/third-party/jquery-1.10.2.js",
                 tag : "script",
                 type : "text/javascript",
                 defer : "defer"
@@ -992,7 +992,7 @@ UE.parse.register('vedio',function(utils){
     if(video.length || audio.length){
         var sourcePath = utils.removeLastbs(this.rootPath),
             jsurl = sourcePath + '/third-party/video-js/video.js',
-            cssurl = sourcePath + '/third-party/video-js/video-js.min.css',
+            cssurl = sourcePath + '/third-party/video-js/video-js.css',
             swfUrl = sourcePath + '/third-party/video-js/video-js.swf';
 
         if(window.videojs) {

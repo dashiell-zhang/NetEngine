@@ -1,6 +1,13 @@
 /*基础UI构建
 */
 /* common layer */
+
+.edui-default {
+    padding: unset;
+    border: unset;
+    position: static
+}
+
 .edui-default .edui-box {
     border: none;
     padding: 0;

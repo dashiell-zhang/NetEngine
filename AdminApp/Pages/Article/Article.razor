@@ -54,7 +54,7 @@
 
 @{
     RenderFragment editFooter = @<Template>
-        <Button OnClick="()=>_editArticleForm.Submit()" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
+        <Button OnClick="SaveArticle" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
         <Button OnClick="()=>isShowEditArticle=false" @key="@("back")">取消</Button>
     </Template>;
 }
@@ -62,9 +62,9 @@
 
 <Modal Title="文章信息" Style="width:1160px;" Visible="@isShowEditArticle" OnCancel="()=>isShowEditArticle=false" Footer="@editFooter">
 
-    <Form @ref="@_editArticleForm" OnFinish="SaveArticle" Model="@editArticle" LabelColSpan="2" WrapperColSpan="22" Class="ueditorBody" Name="EditArticleForm">
+    <Form @ref="@_editArticleForm" Model="@editArticle" LabelColSpan="2" WrapperColSpan="22" Class="ueditorBody">
 
-        <Tabs Type="@TabType.Card" OnTabClick=@(()=>InitUeditor("Content",370))>
+        <Tabs Type="@TabType.Card">
 
             <TabPane Key="1" Tab="基本信息">
                 <FormItem Label="所属栏目">
@@ -121,7 +121,7 @@
                 </FormItem>
 
                 <FormItem Label="内容">
-                    <textarea id="Content" name="Content" @bind="@context.Content"></textarea>
+                    <TextArea Id="Content" @bind-Value="@context.Content" />
                 </FormItem>
             </TabPane>
 
@@ -163,10 +163,7 @@
     }
 
 
-    private async Task InitUeditor(string inputName, int height)
-    {
-        await JS.InvokeVoidAsync("InitUeditor", inputName, height);
-    }
+
 
 
     async void GetSelectCategoryList()
@@ -257,41 +254,50 @@
         isShowEditArticle = true;
 
         StateHasChanged();
+
+        await Task.Delay(200);
+
+        JS.InvokeVoidAsync("InitUeditor", "Content", 370);
+
     }
 
 
     async void SaveArticle()
     {
+        editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
 
-        saveLoading = true;
-
-        if (articleId == default)
+        if (_editArticleForm.Validate())
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle))
-            {
-                var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
+            saveLoading = true;
 
-                Message.Success("添加成功");
-            }
-        }
-        else
-        {
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle))
+            if (articleId == default)
             {
-                var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
-
-                if (bool.Parse(updateArticleRet))
+                using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle))
                 {
-                    Message.Success("编辑成功");
+                    var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
+
+                    Message.Success("添加成功");
                 }
             }
+            else
+            {
+                using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle))
+                {
+                    var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                    if (bool.Parse(updateArticleRet))
+                    {
+                        Message.Success("编辑成功");
+                    }
+                }
+            }
+
+            saveLoading = false;
+
+            GetArticleList();
+
+            isShowEditArticle = false;
         }
-
-        saveLoading = false;
-
-        GetArticleList();
-
-        isShowEditArticle = false;
     }
 
 
@@ -318,7 +324,6 @@
 
     async Task<bool> DeleteImg(UploadFileItem file)
     {
-        Console.WriteLine(JsonHelper.ObjectToJson(file));
 
         using (var httpResponse = await Http.DeleteAsJsonAsync("File/DeleteFile", new { Id = file.Id }))
         {
@@ -341,7 +346,6 @@
 
             fileinfo.File.Id = JsonHelper.JsonToObject<string>(fileinfo.File.Response);
 
-            Console.WriteLine(JsonHelper.ObjectToJson(fileinfo));
             fileinfo.File.Url = fileinfo.File.ObjectURL;
         }
     }

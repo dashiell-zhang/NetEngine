@@ -108,10 +108,6 @@ namespace TaskAdmin
                 //options.KnownProxies.Add(IPAddress.Parse("10.0.0.100"));
             });
 
-            builder.Services.AddResponseCompression(options =>
-            {
-                options.EnableForHttps = true;
-            });
 
 
             builder.Services.AddControllersWithViews();
@@ -287,7 +283,6 @@ namespace TaskAdmin
 
             app.UseForwardedHeaders();
 
-            app.UseResponseCompression();
 
             //设置本地化信息，可实现 固定 Hangfire 管理面板为中文显示
             app.UseRequestLocalization(new RequestLocalizationOptions

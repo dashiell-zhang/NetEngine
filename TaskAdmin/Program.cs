@@ -152,7 +152,7 @@ namespace TaskAdmin
 
 
 
-
+            //身份认证模块配置
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -164,7 +164,7 @@ namespace TaskAdmin
                 options.ExpireTimeSpan = TimeSpan.FromHours(20);
             });
 
-
+            //身份权限校验模块配置
             //builder.Services.AddAuthorization(options =>
             //{
             //    options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build();

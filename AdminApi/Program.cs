@@ -397,6 +397,7 @@ namespace AdminApi
             //注入 adminapp 项目
             //app.MapWhen(ctx => ctx.Request.Path.Value.ToLower().Contains("/admin"), adminapp =>
             //{
+            //    adminapp.UseStaticFiles("/admin");
             //    adminapp.UseBlazorFrameworkFiles("/admin");
 
             //    adminapp.UseEndpoints(endpoints =>

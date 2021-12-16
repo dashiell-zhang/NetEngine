@@ -37,8 +37,6 @@ namespace WebApi.Controllers.v1
         [HttpPost("GetToken")]
         public string GetToken([FromBody] DtoLogin login)
         {
-
-
             var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false & (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
 
             if (user != null)

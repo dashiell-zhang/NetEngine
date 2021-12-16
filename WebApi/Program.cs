@@ -142,10 +142,7 @@ namespace WebApi
             });
 
 
-            builder.Services.AddControllers(options =>
-            {
-                options.OutputFormatters.RemoveType<StringOutputFormatter>();
-            });
+            builder.Services.AddControllers();
 
 
 

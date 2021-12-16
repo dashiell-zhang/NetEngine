@@ -213,7 +213,7 @@ namespace Common
             int startRow = 0;
             try
             {
-                using (fs = System.IO.File.OpenRead(filePath))
+                using (fs = File.OpenRead(filePath))
                 {
                     // 2007版本  
                     if (filePath.IndexOf(".xlsx") > 0)
@@ -286,7 +286,7 @@ namespace Common
                                                     break;
                                                 case CellType.Numeric:
                                                     //NPOI中数字和日期都是NUMERIC类型的，这里对其进行判断是否是日期类型
-                                                    if (HSSFDateUtil.IsCellDateFormatted(cell))//日期类型
+                                                    if (DateUtil.IsCellDateFormatted(cell))//日期类型
                                                     {
                                                         dataRow[j] = cell.DateCellValue;
                                                     }
@@ -332,12 +332,12 @@ namespace Common
         {
 
             //创建Excel文件的对象
-            NPOI.XSSF.UserModel.XSSFWorkbook book = new();
+            XSSFWorkbook book = new();
             //添加一个sheet
-            NPOI.SS.UserModel.ISheet sheet1 = book.CreateSheet("Sheet1");
+            ISheet sheet1 = book.CreateSheet("Sheet1");
 
             //给sheet1添加第一行的头部标题
-            NPOI.SS.UserModel.IRow row1 = sheet1.CreateRow(0);
+            IRow row1 = sheet1.CreateRow(0);
 
             T model = new();
             var dict = PropertyHelper.GetPropertiesDisplayName(model);
@@ -355,7 +355,7 @@ namespace Common
             foreach (var item in list)
             {
                 int i = list.IndexOf(item);
-                NPOI.SS.UserModel.IRow rowtemp = sheet1.CreateRow(i + 1);
+                IRow rowtemp = sheet1.CreateRow(i + 1);
 
                 dict = PropertyHelper.GetProperties(item);
                 int d = 0;
@@ -392,12 +392,12 @@ namespace Common
         {
 
             //创建Excel文件的对象
-            NPOI.XSSF.UserModel.XSSFWorkbook book = new();
+            XSSFWorkbook book = new();
             //添加一个sheet
-            NPOI.SS.UserModel.ISheet sheet1 = book.CreateSheet("Sheet1");
+            ISheet sheet1 = book.CreateSheet("Sheet1");
 
             //给sheet1添加第一行的头部标题
-            NPOI.SS.UserModel.IRow row1 = sheet1.CreateRow(0);
+            IRow row1 = sheet1.CreateRow(0);
 
             T model = new();
             var dict = PropertyHelper.GetPropertiesDisplayName(model);
@@ -415,7 +415,7 @@ namespace Common
             foreach (var item in list)
             {
                 int i = list.IndexOf(item);
-                NPOI.SS.UserModel.IRow rowtemp = sheet1.CreateRow(i + 1);
+                IRow rowtemp = sheet1.CreateRow(i + 1);
 
                 dict = PropertyHelper.GetProperties(item);
                 int d = 0;

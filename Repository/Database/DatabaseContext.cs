@@ -17,7 +17,7 @@ namespace Repository.Database
 
 
 
-        public DatabaseContext(DbContextOptions<DatabaseContext> options = default) : base(_ = GetDbContextOptions(options))
+        public DatabaseContext(DbContextOptions<DatabaseContext> options = default) : base(GetDbContextOptions(options))
         {
         }
 

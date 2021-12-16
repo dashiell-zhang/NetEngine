@@ -345,9 +345,9 @@ namespace WebApi.Controllers.v1
 
             if (file != null)
             {
-                string domain = "https://file.xxxx.com";
+                var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
 
-                string fileUrl = domain + file.Path;
+                string fileUrl = fileServerUrl + file.Path;
 
                 return fileUrl;
             }

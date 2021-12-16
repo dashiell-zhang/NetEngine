@@ -175,9 +175,6 @@ namespace Repository.Database
                     //设置表的备注
                     builder.HasComment(GetEntityComment(entity.Name));
 
-                    //开启 PostgreSQL 全库行并发乐观锁
-                    //builder.UseXminAsConcurrencyToken();
-
 
                     foreach (var property in entity.GetProperties())
                     {
@@ -230,6 +227,10 @@ namespace Repository.Database
                         }
 
                     }
+
+
+                    //开启 PostgreSQL 全库行并发乐观锁
+                    builder.UseXminAsConcurrencyToken();
                 });
             }
         }
@@ -396,20 +397,20 @@ namespace Repository.Database
         }
 
 
-        public override int SaveChanges()
-        {
-
-            DatabaseContext db = this;
-
-            var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
-
-            foreach (var item in list)
-            {
-                item.Entity.GetType().GetProperty("RowVersion")?.SetValue(item.Entity, Guid.NewGuid());
-            }
-
-            return base.SaveChanges();
-        }
+        ///// <summary>
+        ///// 通用的RowVersion重写保存方法
+        ///// </summary>
+        ///// <returns></returns>
+        //public override int SaveChanges()
+        //{
+        //    DatabaseContext db = this;
+        //    var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
+        //    foreach (var item in list)
+        //    {
+        //        item.Entity.GetType().GetProperty("RowVersion")?.SetValue(item.Entity, Guid.NewGuid());
+        //    }
+        //    return base.SaveChanges();
+        //}
 
 
 

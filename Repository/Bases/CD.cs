@@ -56,7 +56,9 @@ namespace Repository.Bases
         /// </summary>
         /// <remarks>PostgreSql的RowVersion</remarks>
 
-        public uint Xmin { get; set; }
+#pragma warning disable IDE1006 // 命名样式
+        public uint xmin { get; set; }
+#pragma warning restore IDE1006 // 命名样式
 
 
 

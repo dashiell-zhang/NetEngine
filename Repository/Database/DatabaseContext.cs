@@ -167,6 +167,10 @@ namespace Repository.Database
                 modelBuilder.Entity(entity.Name, builder =>
                 {
 
+                    //开启 PostgreSQL 全库行并发乐观锁
+                    builder.UseXminAsConcurrencyToken();
+
+
                     //设置生成数据库时的表名为小写格式并添加前缀 t_
                     var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value.ToString()).FirstOrDefault()).FirstOrDefault() ?? ("t_" + entity.ClrType.Name[1..]);
                     builder.ToTable(tableName.ToLower());
@@ -227,10 +231,6 @@ namespace Repository.Database
                         }
 
                     }
-
-
-                    //开启 PostgreSQL 全库行并发乐观锁
-                    builder.UseXminAsConcurrencyToken();
                 });
             }
         }

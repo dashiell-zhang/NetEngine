@@ -1,8 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
-
-
-namespace AdminApi.Libraries.Ueditor
+﻿namespace AdminApi.Libraries.Ueditor
 {
 
     /// <summary>
@@ -16,21 +12,8 @@ namespace AdminApi.Libraries.Ueditor
 
         protected string WriteJson(object response)
         {
-
-
-
-            string jsonpCallback = "";
-            //string jsonpCallback = Request["callback"],
-            string json = JsonConvert.SerializeObject(response);
-            if (String.IsNullOrWhiteSpace(jsonpCallback))
-            {
-                return json;
-            }
-            else
-            {
-                return String.Format("{0}({1});", jsonpCallback, json);
-            }
-
+            string json = Common.Json.JsonHelper.ObjectToJson(response);
+            return json;
         }
     }
 

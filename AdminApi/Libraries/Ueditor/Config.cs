@@ -1,7 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Linq;
-
+﻿using System.Text.Json;
 
 namespace AdminApi.Libraries.Ueditor
 {
@@ -11,7 +8,8 @@ namespace AdminApi.Libraries.Ueditor
     public static class Config
     {
         private readonly static bool noCache = true;
-        private static JObject BuildItems()
+
+        private static JsonDocument BuildItems()
         {
             var json = @"{
                               /* 上传图片配置项 */
@@ -69,10 +67,15 @@ namespace AdminApi.Libraries.Ueditor
 
             json = json.Replace("FileServerUrl", fileServerUrl);
 
-            return JObject.Parse(json);
+            var options = new JsonDocumentOptions
+            {
+                CommentHandling = JsonCommentHandling.Skip,
+            };
+
+            return JsonDocument.Parse(json, options);
         }
 
-        public static JObject Items
+        public static JsonDocument Items
         {
             get
             {
@@ -83,27 +86,24 @@ namespace AdminApi.Libraries.Ueditor
                 return _Items;
             }
         }
-        private static JObject _Items;
+        private static JsonDocument _Items;
 
 
-        public static T GetValue<T>(string key)
+
+
+        public static string[] GetStringList(string key)
         {
-            return Items[key].Value<T>();
+            return Items.RootElement.Clone().GetProperty(key).Deserialize<string[]>();
         }
 
-        public static String[] GetStringList(string key)
+        public static string GetString(string key)
         {
-            return Items[key].Select(x => x.Value<String>()).ToArray();
-        }
-
-        public static String GetString(string key)
-        {
-            return GetValue<String>(key);
+            return Items.RootElement.Clone().GetProperty(key).GetString();
         }
 
         public static int GetInt(string key)
         {
-            return GetValue<int>(key);
+            return Items.RootElement.Clone().GetProperty(key).GetInt32();
         }
     }
 

@@ -15,7 +15,7 @@ namespace Repository.Bases
         /// <summary>
         /// 更新时间
         /// </summary>
-        public DateTime? UpdateTime { get; set; }
+        public DateTimeOffset? UpdateTime { get; set; }
 
     }
 }

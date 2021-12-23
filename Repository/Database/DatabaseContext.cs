@@ -139,9 +139,6 @@ namespace Repository.Database
             //optionsBuilder.AddInterceptors(new DeBugInterceptor());
 
 
-            //开启数据分表拦截器
-            //optionsBuilder.AddInterceptors(new SubTableInterceptor());
-
 
             //开启全局懒加载
             //optionsBuilder.UseLazyLoadingProxies();

@@ -22,7 +22,7 @@ namespace Repository.Bases
         /// <summary>
         /// 创建时间
         /// </summary>
-        public DateTime CreateTime { get; set; }
+        public DateTimeOffset CreateTime { get; set; }
 
 
 
@@ -36,7 +36,7 @@ namespace Repository.Bases
         /// <summary>
         /// 删除时间
         /// </summary>
-        public DateTime? DeleteTime { get; set; }
+        public DateTimeOffset? DeleteTime { get; set; }
 
 
 

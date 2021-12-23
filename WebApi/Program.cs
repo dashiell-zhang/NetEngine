@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
@@ -213,6 +212,8 @@ namespace WebApi
             {
                 options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeOffsetConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeOffsetNullConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
             });
 

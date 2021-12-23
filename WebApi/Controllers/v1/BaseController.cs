@@ -30,6 +30,7 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetRegion")]
         public List<DtoKeyValue> GetRegion(int provinceId, int cityId)
         {
+
             var list = new List<DtoKeyValue>();
 
             if (provinceId == 0 && cityId == 0)

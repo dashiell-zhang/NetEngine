@@ -130,7 +130,7 @@ namespace Common
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public DateTime GetTimeById(long id)
+        public DateTimeOffset GetTimeById(long id)
         {
             var idStr2 = Convert.ToString(id, 2);
 

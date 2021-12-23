@@ -4,22 +4,22 @@ using System.Text.Json.Serialization;
 
 namespace Common.Json
 {
-    public class DateTimeConverter : JsonConverter<DateTime>
+    public class DateTimeOffsetConverter : JsonConverter<DateTimeOffset>
     {
 
 
         private readonly string formatString;
-        public DateTimeConverter()
+        public DateTimeOffsetConverter()
         {
-            formatString = "yyyy/MM/dd HH:mm:ss";
+            formatString = "yyyy/MM/dd HH:mm:ss zzz";
         }
 
-        public DateTimeConverter(string inFormatString)
+        public DateTimeOffsetConverter(string inFormatString)
         {
             formatString = inFormatString;
         }
 
-        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.String)
             {
@@ -32,7 +32,7 @@ namespace Common.Json
         }
 
 
-        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
         {
             writer.WriteStringValue(value.ToString(formatString));
         }

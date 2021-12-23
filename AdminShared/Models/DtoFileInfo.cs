@@ -55,7 +55,7 @@ namespace AdminShared.Models
         /// <summary>
         /// 创建时间
         /// </summary>
-        public DateTime CreateTime { get; set; }
+        public DateTimeOffset CreateTime { get; set; }
 
 
 

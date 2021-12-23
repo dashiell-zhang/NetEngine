@@ -32,6 +32,8 @@ namespace Common.Json
             JsonSerializerOptions options = new();
             options.Converters.Add(new DateTimeConverter());
             options.Converters.Add(new DateTimeNullConverter());
+            options.Converters.Add(new DateTimeOffsetConverter());
+            options.Converters.Add(new DateTimeOffsetNullConverter());
             options.Converters.Add(new LongConverter());
 
             //关闭默认转义
@@ -60,6 +62,8 @@ namespace Common.Json
             JsonSerializerOptions options = new();
             options.Converters.Add(new DateTimeConverter());
             options.Converters.Add(new DateTimeNullConverter());
+            options.Converters.Add(new DateTimeOffsetConverter());
+            options.Converters.Add(new DateTimeOffsetNullConverter());
             options.Converters.Add(new LongConverter());
 
             //启用大小写不敏感

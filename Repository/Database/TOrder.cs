@@ -63,7 +63,7 @@ namespace Repository.Database
         /// <summary>
         /// 支付时间
         /// </summary>
-        public DateTime? PayTime { get; set; }
+        public DateTimeOffset? PayTime { get; set; }
 
 
 

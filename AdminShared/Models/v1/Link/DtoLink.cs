@@ -40,7 +40,7 @@ namespace AdminShared.Models.v1.Link
         /// <summary>
         /// 创建时间
         /// </summary>
-        public DateTime CreateTime { get; set; }
+        public DateTimeOffset CreateTime { get; set; }
 
     }
 }

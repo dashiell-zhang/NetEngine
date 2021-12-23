@@ -74,10 +74,10 @@ namespace Common
         /// <returns></returns>
         private static long GetNextTimestamp(long lastTimestamp)
         {
-            long timestamp = DateTimeHelper.TimeToJs();
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             if (timestamp <= lastTimestamp)
             {
-                timestamp = DateTimeHelper.TimeToJs();
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
             return timestamp;
         }
@@ -95,7 +95,7 @@ namespace Common
         {
             lock (syncRoot)
             {
-                long timestamp = DateTimeHelper.TimeToJs();
+                long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 if (lastTimestamp == timestamp)
                 { //同一微妙中生成ID
                     sequence = (sequence + 1) & sequenceMask; //用&运算计算该微秒内产生的计数是否已经到达上限
@@ -148,7 +148,7 @@ namespace Common
 
             var timeJsStamp = Convert.ToInt64(timeStr2, 2);
 
-            var twepochTime = DateTimeHelper.JsToTime(twepoch);
+            var twepochTime = DateTimeOffset.FromUnixTimeMilliseconds(twepoch);
 
             var time = DateTimeHelper.JsToTime(timeJsStamp, twepochTime.Year);
 

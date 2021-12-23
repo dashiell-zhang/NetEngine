@@ -203,7 +203,7 @@ namespace Common
         /// 获取NTC时间
         /// </summary>
         /// <returns></returns>
-        public static DateTime GetNetworkTime()
+        public static DateTimeOffset GetNetworkTime()
         {
 
             string ntpServer = "ntp.onekib.com";
@@ -238,7 +238,7 @@ namespace Common
 
             var networkDateTime = (new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc)).AddMilliseconds((long)milliseconds);
 
-            return networkDateTime.ToLocalTime();
+            return networkDateTime;
         }
 
 

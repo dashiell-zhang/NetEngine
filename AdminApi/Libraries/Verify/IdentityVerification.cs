@@ -100,8 +100,8 @@ namespace AdminApi.Libraries.Verify
             var nbf = Convert.ToInt64(JWTToken.GetClaims("nbf"));
             var exp = Convert.ToInt64(JWTToken.GetClaims("exp"));
 
-            var nbfTime = DateTimeHelper.UnixToTime(nbf);
-            var expTime = DateTimeHelper.UnixToTime(exp);
+            var nbfTime = DateTimeOffset.FromUnixTimeSeconds(nbf);
+            var expTime = DateTimeOffset.FromUnixTimeSeconds(exp);
 
             //当前Token过期前15分钟开始签发新的Token
             if (expTime < DateTime.UtcNow.AddMinutes(15))

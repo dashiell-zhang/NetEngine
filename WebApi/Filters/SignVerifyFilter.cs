@@ -35,7 +35,7 @@ namespace WebApi.Filters
                 if (!rip.Contains("127.0.0.1"))
                 {
                     var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
-                    var time = Common.DateTimeHelper.JsToTime(long.Parse(timeStr));
+                    var time = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timeStr));
 
                     if (time.AddMinutes(10) > DateTime.UtcNow)
                     {

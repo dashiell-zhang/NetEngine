@@ -22,7 +22,7 @@ namespace Common.Json
 
         public override DateTimeOffset? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return string.IsNullOrEmpty(reader.GetString()) ? default(DateTime?) : DateTime.Parse(reader.GetString());
+            return string.IsNullOrEmpty(reader.GetString()) ? default(DateTimeOffset?) : DateTimeOffset.Parse(reader.GetString());
         }
 
 

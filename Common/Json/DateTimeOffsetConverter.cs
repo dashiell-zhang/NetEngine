@@ -23,12 +23,12 @@ namespace Common.Json
         {
             if (reader.TokenType == JsonTokenType.String)
             {
-                if (DateTime.TryParse(reader.GetString(), out DateTime date))
+                if (DateTimeOffset.TryParse(reader.GetString(), out DateTimeOffset date))
                 {
                     return date;
                 }
             }
-            return reader.GetDateTime();
+            return reader.GetDateTimeOffset();
         }
 
 

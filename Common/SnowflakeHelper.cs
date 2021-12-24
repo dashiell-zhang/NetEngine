@@ -150,9 +150,8 @@ namespace Common
 
             var twepochTime = DateTimeOffset.FromUnixTimeMilliseconds(twepoch);
 
-            var time = DateTimeHelper.JsToTime(timeJsStamp, twepochTime.Year);
-
-            return time;
+            var startTime = new DateTime(twepochTime.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return startTime.AddMilliseconds(timeJsStamp);
         }
 
 

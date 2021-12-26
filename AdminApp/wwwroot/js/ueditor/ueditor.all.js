@@ -8469,6 +8469,10 @@
                 })
                 //针对wps添加的多余标签处理
                 .replace(/<\/?div[^>]*>/g, '')
+
+                //移除 img 标签
+                .replace(/<\/?img[^>]*>/g, '')
+
                 //去掉多余的属性
                 .replace(/v:\w+=(["']?)[^'"]+\1/g, '')
                 .replace(/<(!|script[^>]*>.*?<\/script(?=[>\s])|\/?(\?xml(:\w+)?|xml|meta|link|style|\w+:\w+)(?=[\s\/>]))[^>]*>/gi, "")

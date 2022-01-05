@@ -3,7 +3,6 @@ using Aliyun.OSS.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace Common.AliYun
 {
@@ -172,105 +171,6 @@ namespace Common.AliYun
             catch (Exception ex)
             {
                 Console.WriteLine("Delete objects failed. {0}", ex.Message);
-                return false;
-            }
-        }
-
-
-
-
-        /// <summary>
-        /// 创建存储空间（Bucket）
-        /// </summary>
-        /// <param name="bucketName"></param>
-        public bool BucketCreate(string bucketName)
-        {
-            try
-            {
-                // 初始化OssClient。
-                var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
-
-                var exist = client.DoesBucketExist(bucketName);
-
-                if (exist == false)
-                {
-                    CreateBucketRequest request = new(bucketName);
-
-                    //设置存储空间访问权限ACL。
-                    request.ACL = CannedAccessControlList.PublicRead;
-
-                    //设置数据容灾类型。
-                    request.DataRedundancyType = DataRedundancyType.LRS;
-
-                    // 创建存储空间。
-                    client.CreateBucket(request);
-                }
-
-                return true;
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Create bucket failed. {0}", ex.Message);
-
-                return false;
-            }
-        }
-
-
-
-
-        /// <summary>
-        /// 删除存储空间（Bucket）
-        /// </summary>
-        /// <param name="bucketName"></param>
-        /// <param name="isCoerce">是否强制删除</param>
-        public bool BucketDelete(string bucketName, bool isCoerce = false)
-        {
-            try
-            {
-
-                // 初始化OssClient。
-                var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
-
-                if (isCoerce)
-                {
-
-                    while (true)
-                    {
-                        var listObjectsRequest = new ListObjectsRequest(bucketName);
-
-                        var result = client.ListObjects(listObjectsRequest);
-
-                        var keys = result.ObjectSummaries.ToList().Select(t => t.Key).ToList();
-
-                        if (keys.Count == 0)
-                        {
-                            break;
-                        }
-
-                        var request = new DeleteObjectsRequest(bucketName, keys, true);
-                        client.DeleteObjects(request);
-                    }
-
-                }
-
-
-
-                var exist = client.DoesBucketExist(bucketName);
-
-                if (exist == true)
-                {
-                    client.DeleteBucket(bucketName);
-                }
-
-                return true;
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Delete bucket failed. {0}", ex.Message);
-
                 return false;
             }
         }

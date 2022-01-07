@@ -11,10 +11,10 @@
 		<PackageReference Include="aliyun-net-sdk-core" Version="1.5.11" />
 		<PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />
 		<PackageReference Include="DistributedLock.Redis" Version="1.0.1" />
-		<PackageReference Include="DotNetCore.CAP" Version="5.2.0" />
-		<PackageReference Include="DotNetCore.CAP.Dashboard" Version="5.2.0" />
-		<PackageReference Include="DotNetCore.CAP.PostgreSql" Version="5.2.0" />
-		<PackageReference Include="DotNetCore.CAP.RedisStreams" Version="5.2.0" />
+		<PackageReference Include="DotNetCore.CAP" Version="6.0.0" />
+		<PackageReference Include="DotNetCore.CAP.Dashboard" Version="6.0.0" />
+		<PackageReference Include="DotNetCore.CAP.PostgreSql" Version="6.0.0" />
+		<PackageReference Include="DotNetCore.CAP.RedisStreams" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
 		<PackageReference Include="NPOI" Version="2.5.5" />
 		<PackageReference Include="SkiaSharp" Version="2.80.3" />
@@ -22,7 +22,7 @@
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.4.1" />
 		<PackageReference Include="StackExchange.Redis" Version="2.2.88" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.25" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.438" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.440" />
 	</ItemGroup>
 
 	<ItemGroup>

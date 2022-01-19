@@ -35,9 +35,33 @@
 <body>
     <div id="app"></div>
     <script src="_framework/blazor.webassembly.js" autostart="false"></script>
-    <script>
+    <script type="module">
+        import { BrotliDecode } from './js/brotli.decode.js';
         Blazor.start({
-            applicationCulture: 'zh-CN'
+            applicationCulture: 'zh-CN',
+            loadBootResource: function (type, name, defaultUri, integrity) {
+
+                if (type !== 'dotnetjs' && location.hostname !== 'localhost') {
+                    return (async function () {
+
+                        var cdnPath = "";
+
+                        const response = await fetch(cdnPath + defaultUri + '.br', {
+                            headers: { 'sec-fetch-mode': 'cors' }
+                        });
+                        if (!response.ok) {
+                            throw new Error(response.statusText);
+                        }
+                        const originalResponseBuffer = await response.arrayBuffer();
+                        const originalResponseArray = new Int8Array(originalResponseBuffer);
+                        const decompressedResponseArray = BrotliDecode(originalResponseArray);
+                        const contentType = type ===
+                            'dotnetwasm' ? 'application/wasm' : 'application/octet-stream';
+                        return new Response(decompressedResponseArray,
+                            { headers: { 'content-type': contentType } });
+                    })();
+                }
+            }
         });
     </script>
 </body>

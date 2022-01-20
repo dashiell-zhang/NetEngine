@@ -20,7 +20,7 @@
                 <Column @bind-Field="@context.Remarks" Title="备注"></Column>
                 <Column @bind-Field="@context.ParentName" Title="父级栏目"></Column>
                 <Column @bind-Field="@context.Sort" Title="排序"></Column>
-                <Column @bind-Field="@context.CreateTime" Title="创建时间"></Column>
+                <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></Column>
                 <ActionColumn Title="操作">
                     <Space>
                         <SpaceItem>
@@ -192,6 +192,10 @@
             {
                 editCategory.ParentId = category.ParentId;
             }
+        }
+        else
+        {
+            editCategory.Sort = 99;
         }
 
         isShowEditCategory = true;

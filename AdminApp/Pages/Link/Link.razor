@@ -19,7 +19,7 @@
                 <Column @bind-Field="@context.Name" Title="名称"></Column>
                 <Column @bind-Field="@context.Url" Title="Url"></Column>
                 <Column @bind-Field="@context.Sort" Title="排序"></Column>
-                <Column @bind-Field="@context.CreateTime" Title="创建时间">
+                <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间">
                 </Column>
                 <ActionColumn Title="操作">
                     <Space>
@@ -68,12 +68,10 @@
                 <Input Placeholder="请输入Url" Type="url" @bind-Value="@context.Url" />
             </FormItem>
 
-
             <FormItem>
                 <Text>排序</Text>
                 <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" />
             </FormItem>
-
 
             <Row Gutter="24">
                 <AntDesign.Col Span="24">
@@ -144,6 +142,10 @@
             editLink.Name = link.Name;
             editLink.Url = link.Url;
             editLink.Sort = link.Sort;
+        }
+        else
+        {
+            editLink.Sort = 99;
         }
 
         isShowEditLink = true;

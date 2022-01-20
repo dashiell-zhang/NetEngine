@@ -21,7 +21,7 @@
                 <Column @bind-Field="@context.IsRecommend" Title="是否推荐"></Column>
                 <Column @bind-Field="@context.IsDisplay" Title="显示状态"></Column>
                 <Column @bind-Field="@context.ClickCount" Title="点击量"></Column>
-                <Column @bind-Field="@context.CreateTime" Title="创建时间"></Column>
+                <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></Column>
                 <ActionColumn Title="操作">
                     <Space>
                         <SpaceItem>
@@ -164,8 +164,6 @@
 
 
 
-
-
     async void GetSelectCategoryList()
     {
         var parentKVList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
@@ -246,6 +244,8 @@
         else
         {
             fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId");
+            editArticle.IsDisplay = true;
+            editArticle.Sort = 99;
         }
 
 

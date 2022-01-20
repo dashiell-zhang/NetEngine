@@ -21,7 +21,7 @@
                 <Column @bind-Field="@context.NickName" Title="昵称"></Column>
                 <Column @bind-Field="@context.Phone" Title="电话"></Column>
                 <Column @bind-Field="@context.Email" Title="邮箱"></Column>
-                <Column @bind-Field="@context.CreateTime" Title="创建时间">
+                <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间">
                 </Column>
                 <ActionColumn Title="操作">
                     <Space>

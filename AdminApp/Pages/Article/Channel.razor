@@ -19,7 +19,7 @@
                 <Column @bind-Field="@context.Name" Title="名称"></Column>
                 <Column @bind-Field="@context.Remarks" Title="备注"></Column>
                 <Column @bind-Field="@context.Sort" Title="排序"></Column>
-                <Column @bind-Field="@context.CreateTime" Title="创建时间">
+                <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间">
                 </Column>
                 <ActionColumn Title="操作">
                     <Space>
@@ -139,6 +139,10 @@
             editChannel.Name = channel.Name;
             editChannel.Remarks = channel.Remarks;
             editChannel.Sort = channel.Sort;
+        }
+        else
+        {
+            editChannel.Sort = 99;
         }
 
         isShowEditChannel = true;

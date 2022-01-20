@@ -45,7 +45,7 @@ namespace AdminApi.Libraries.Ueditor
                     File.WriteAllBytes(localPath, uploadFileBytes);
 
 
-                    bool upRemote = false;
+                    var upRemote = false;
 
                     if (upRemote)
                     {
@@ -126,7 +126,7 @@ namespace AdminApi.Libraries.Ueditor
                         }
 
 
-                        bool upRemote = false;
+                        var upRemote = false;
 
                         if (upRemote)
                         {

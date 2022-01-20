@@ -88,7 +88,7 @@ namespace AdminApi.Libraries.Ueditor
 
                 File.WriteAllBytes(savePath, httpResponse.Content.ReadAsByteArrayAsync().Result);
 
-                bool upRemote = false;
+                var upRemote = false;
 
                 if (upRemote)
                 {

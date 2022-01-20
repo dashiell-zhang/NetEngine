@@ -68,7 +68,7 @@
     </Content>
 </Layout>
 
-@code{
+@code {
 
     DtoSite editSite = new();
     bool saveLoading = false;
@@ -97,7 +97,7 @@
 
         saveLoading = false;
 
+        StateHasChanged();
     }
-
 
 }

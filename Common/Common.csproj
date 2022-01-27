@@ -3,11 +3,12 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<DebugType>embedded</DebugType>
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 
 	<ItemGroup>
-		<PackageReference Include="AlipaySDKNet.Standard" Version="4.6.135" />
+		<PackageReference Include="AlipaySDKNet.Standard" Version="4.6.167" />
 		<PackageReference Include="aliyun-net-sdk-core" Version="1.5.11" />
 		<PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />
 		<PackageReference Include="DistributedLock.Redis" Version="1.0.1" />
@@ -22,7 +23,7 @@
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.4.1" />
 		<PackageReference Include="StackExchange.Redis" Version="2.2.88" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.26" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.449" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.454" />
 	</ItemGroup>
 
 	<ItemGroup>

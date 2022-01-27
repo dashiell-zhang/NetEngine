@@ -14,17 +14,17 @@ namespace Common
         /// <typeparam name="T">实体类</typeparam>  
         /// <param name="t">实例化</param>  
         /// <returns></returns>  
-        public static Dictionary<object, object> GetProperties<T>(T t)
+        public static Dictionary<object, object?> GetProperties<T>(T t) where T : notnull, new()
         {
-            var ret = new Dictionary<object, object>();
-            if (t == null) { return null; }
+            Dictionary<object, object?> ret = new();
+
             PropertyInfo[] properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            if (properties.Length <= 0) { return null; }
+
             foreach (PropertyInfo item in properties)
             {
 
                 string name = item.Name;
-                object value = item.GetValue(t, null);
+                object? value = item.GetValue(t, null);
 
                 if (item.PropertyType == typeof(DateTime))
                 {
@@ -35,6 +35,7 @@ namespace Common
                     ret.Add(name, value);
                 }
             }
+
             return ret;
         }
 
@@ -46,18 +47,18 @@ namespace Common
         /// <typeparam name="T">实体类</typeparam>  
         /// <param name="t">实例化</param>  
         /// <returns></returns>  
-        public static Dictionary<object, object> GetPropertiesDisplayName<T>(T t)
+        public static Dictionary<object, object?> GetPropertiesDisplayName<T>(T t) where T : notnull
         {
-            var ret = new Dictionary<object, object>();
-            if (t == null) { return null; }
+            var ret = new Dictionary<object, object?>();
+
             PropertyInfo[] properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            if (properties.Length <= 0) { return null; }
+
             foreach (PropertyInfo item in properties)
             {
-                var displayName = item.CustomAttributes.Where(t => t.AttributeType.Name == "DisplayNameAttribute").Select(t => t.ConstructorArguments.Select(v => v.Value).FirstOrDefault()).FirstOrDefault();
+                object? displayName = item.CustomAttributes.Where(t => t.AttributeType.Name == "DisplayNameAttribute").Select(t => t.ConstructorArguments.Select(v => v.Value).FirstOrDefault()).FirstOrDefault();
 
-                string name = displayName != null ? displayName.ToString() : item.Name;
-                object value = item.GetValue(t, null);
+                string name = displayName != null ? displayName.ToString()! : item.Name;
+                object? value = item.GetValue(t, null);
 
                 if (item.PropertyType == typeof(DateTime))
                 {
@@ -77,15 +78,14 @@ namespace Common
         /// </summary>
         /// <param name="left">=号左边</param>
         /// <param name="right">=号右边</param>
-        public static void Assignment<T>(T left, T right)
+        public static void Assignment<T>(T left, T right) where T : notnull
         {
             Type type = left.GetType();
             List<PropertyInfo> pList = type.GetProperties().ToList();
             for (int i = 0; i < pList.Count; i++)
             {
                 //根据属性名获得指定的属性对象
-                PropertyInfo gc = type.GetProperty(pList[i].Name);
-
+                PropertyInfo gc = type.GetProperty(pList[i].Name)!;
 
                 //验证属性是否可以Set
                 if (gc.CanWrite == true)
@@ -102,9 +102,9 @@ namespace Common
         /// </summary>
         /// <param name="left">=号左边</param>
         /// <param name="right">=号右边</param>
-        public static void Assignment<L, R>(L left, R right)
+        public static void Assignment<L, R>(L left, R right) where L : notnull where R : notnull
         {
-            var ltype = left.GetType();
+            Type ltype = left.GetType();
 
             List<PropertyInfo> lList = ltype.GetProperties().ToList();
 
@@ -113,7 +113,7 @@ namespace Common
             for (int i = 0; i < lList.Count; i++)
             {
                 //根据属性名获得指定的属性对象
-                PropertyInfo gc = ltype.GetProperty(lList[i].Name);
+                PropertyInfo gc = ltype.GetProperty(lList[i].Name)!;
 
 
                 //验证属性是否可以Set
@@ -121,7 +121,7 @@ namespace Common
                 {
                     try
                     {
-                        var value = rList.Where(t => t.Name == gc.Name).FirstOrDefault().GetValue(right, null);
+                        object? value = rList.Where(t => t.Name == gc.Name).FirstOrDefault()?.GetValue(right, null);
 
                         //设置属性的值
                         gc.SetValue(left, value, null);
@@ -141,7 +141,7 @@ namespace Common
         /// </summary>
         /// <param name="lift"></param>
         /// <param name="right"></param>
-        public static List<L> Assignment<L, R>(List<R> right) where L : new()
+        public static List<L> Assignment<L, R>(List<R> right) where L : notnull, new() where R : notnull, new()
         {
             var lift = new List<L>();
 
@@ -178,20 +178,20 @@ namespace Common
             {
                 var pi = fields[i];
 
-                string oldValue = pi.GetValue(original)?.ToString();
-                string newValue = pi.GetValue(after)?.ToString();
+                string? oldValue = pi.GetValue(original)?.ToString();
+                string? newValue = pi.GetValue(after)?.ToString();
 
-                string typename = pi.PropertyType.FullName;
+                string typename = pi.PropertyType.FullName!;
 
-                if ((typename != "System.Decimal" && oldValue != newValue) || (typename == "System.Decimal" && decimal.Parse(oldValue) != decimal.Parse(newValue)))
+                if ((typename != "System.Decimal" && oldValue != newValue) || (typename == "System.Decimal" && decimal.Parse(oldValue!) != decimal.Parse(newValue!)))
                 {
 
                     retValue += DBHelper.GetEntityComment<T>(pi.Name) + ":";
 
                     if (typename == "System.Boolean")
                     {
-                        retValue += (bool.Parse(oldValue) ? "是" : "否") + " -> ";
-                        retValue += (bool.Parse(newValue) ? "是" : "否") + "； \n";
+                        retValue += (bool.Parse(oldValue!) ? "是" : "否") + " -> ";
+                        retValue += (bool.Parse(newValue!) ? "是" : "否") + "； \n";
                     }
                     else if (typename == "System.DateTime")
                     {

@@ -180,7 +180,7 @@ namespace Repository.Database
                     foreach (var property in entity.GetProperties())
                     {
 
-                        string columnName = property.GetColumnName(StoreObjectIdentifier.Create(property.DeclaringEntityType, StoreObjectType.Table).Value);
+                        string columnName = property.GetColumnName(StoreObjectIdentifier.Create(property.DeclaringEntityType, StoreObjectType.Table)!.Value)!;
 
 
                         //设置字段名为小写
@@ -190,7 +190,7 @@ namespace Repository.Database
                         var baseType = entity.ClrType.BaseType;
                         while (baseType != null)
                         {
-                            baseTypeNames.Add(baseType.FullName);
+                            baseTypeNames.Add(baseType.FullName!);
                             baseType = baseType.BaseType;
                         }
 
@@ -318,48 +318,48 @@ namespace Repository.Database
             var fields = typeof(T).GetProperties();
 
             var baseTypeNames = new List<string>();
-            var baseType = original.GetType().BaseType;
+            var baseType = original?.GetType().BaseType;
             while (baseType != null)
             {
-                baseTypeNames.Add(baseType.FullName);
+                baseTypeNames.Add(baseType.FullName!);
                 baseType = baseType.BaseType;
             }
 
             for (int i = 0; i < fields.Length; i++)
             {
-                var pi = fields[i];
+                PropertyInfo pi = fields[i];
 
-                string oldValue = pi.GetValue(original)?.ToString();
-                string newValue = pi.GetValue(after)?.ToString();
+                string? oldValue = pi.GetValue(original)?.ToString();
+                string? newValue = pi.GetValue(after)?.ToString();
 
-                string typename = pi.PropertyType.FullName;
+                string typename = pi.PropertyType.FullName!;
 
-                if ((typename != "System.Decimal" && oldValue != newValue) || (typename == "System.Decimal" && decimal.Parse(oldValue) != decimal.Parse(newValue)))
+                if ((typename != "System.Decimal" && oldValue != newValue) || (typename == "System.Decimal" && decimal.Parse(oldValue!) != decimal.Parse(newValue!)))
                 {
 
-                    retValue += GetEntityComment(original.GetType().ToString(), pi.Name, baseTypeNames) + ":";
+                    retValue += GetEntityComment(original!.GetType().ToString(), pi.Name, baseTypeNames) + ":";
 
 
-                    if (pi.Name != "Id" & pi.Name.EndsWith("Id"))
+                    if (pi.Name != "Id" && pi.Name.EndsWith("Id"))
                     {
                         var foreignTable = fields.FirstOrDefault(t => t.Name == pi.Name.Replace("Id", ""));
 
                         using var db = new DatabaseContext();
-                        var foreignName = foreignTable.PropertyType.GetProperties().Where(t => t.CustomAttributes.Where(c => c.AttributeType.Name == "ForeignNameAttribute").Any()).FirstOrDefault();
+                        var foreignName = foreignTable?.PropertyType.GetProperties().Where(t => t.CustomAttributes.Where(c => c.AttributeType.Name == "ForeignNameAttribute").Any()).FirstOrDefault();
 
                         if (foreignName != null)
                         {
 
                             if (oldValue != null)
                             {
-                                var oldForeignInfo = db.Find(foreignTable.PropertyType, Guid.Parse(oldValue));
-                                oldValue = foreignName.GetValue(oldForeignInfo).ToString();
+                                var oldForeignInfo = db.Find(foreignTable!.PropertyType, Guid.Parse(oldValue));
+                                oldValue = foreignName.GetValue(oldForeignInfo)?.ToString();
                             }
 
                             if (newValue != null)
                             {
-                                var newForeignInfo = db.Find(foreignTable.PropertyType, Guid.Parse(newValue));
-                                newValue = foreignName.GetValue(newForeignInfo).ToString();
+                                var newForeignInfo = db.Find(foreignTable!.PropertyType, Guid.Parse(newValue));
+                                newValue = foreignName.GetValue(newForeignInfo)?.ToString();
                             }
 
                         }
@@ -441,27 +441,27 @@ namespace Repository.Database
 
                 object[] parameters = { oldEntity, newEntity };
 
-                var result = new DatabaseContext().GetType().GetMethod("ComparisonEntity").MakeGenericMethod(type).Invoke(new DatabaseContext(), parameters);
+                var result = new DatabaseContext().GetType().GetMethod("ComparisonEntity")!.MakeGenericMethod(type).Invoke(new DatabaseContext(), parameters);
 
                 if (ipAddress == null | deviceMark == null)
                 {
                     var assembly = Assembly.GetEntryAssembly();
-                    var httpContextType = assembly.GetTypes().Where(t => t.FullName.Contains("Libraries.Http.HttpContext")).FirstOrDefault();
+                    var httpContextType = assembly!.GetTypes().Where(t => t.FullName.Contains("Libraries.Http.HttpContext")).FirstOrDefault();
 
                     if (httpContextType != null)
                     {
                         if (ipAddress == null)
                         {
-                            ipAddress = httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static).Invoke(null, null).ToString();
+                            ipAddress = httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!.ToString()!;
                         }
 
                         if (deviceMark == null)
                         {
-                            deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { "DeviceMark" }).ToString();
+                            deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "DeviceMark" })!.ToString()!;
 
                             if (deviceMark == "")
                             {
-                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { "User-Agent" }).ToString();
+                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "User-Agent" })!.ToString()!;
                             }
                         }
                     }

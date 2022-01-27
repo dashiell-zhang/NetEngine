@@ -38,15 +38,15 @@ namespace Common
                     {
                         object drValue = dr[dc.ColumnName];
 
-                        PropertyInfo pi = model.GetType().GetProperty(dc.ColumnName);
+                        PropertyInfo? pi = model.GetType().GetProperty(dc.ColumnName);
 
                         if (pi != null && pi.CanWrite && (drValue != null && !Convert.IsDBNull(drValue)))
                         {
-                            string piFullName = pi.PropertyType.FullName;
+                            string piFullName = pi.PropertyType.FullName!;
 
                             if (piFullName.Contains("System.DateTime"))
                             {
-                                if (pi.PropertyType.FullName.StartsWith("System.Nullable`1[[System.DateTime"))
+                                if (piFullName.StartsWith("System.Nullable`1[[System.DateTime"))
                                 {
                                     pi.SetValue(model, null, null);
                                 }
@@ -91,10 +91,10 @@ namespace Common
             {
 
                 IList<T> list = new List<T>();
-                T model = default;
+
                 foreach (DataRow dr in table.Rows)
                 {
-                    model = Activator.CreateInstance<T>();
+                    T model = Activator.CreateInstance<T>();
 
                     foreach (DataColumn dc in dr.Table.Columns)
                     {
@@ -104,15 +104,15 @@ namespace Common
 
                         var displayNamePI = properties.Where(p => p.CustomAttributes.Where(t => t.AttributeType.Name == "DisplayNameAttribute").Select(t => t.ConstructorArguments.Select(v => v.Value.ToString()).FirstOrDefault()).FirstOrDefault() == dc.ColumnName).FirstOrDefault();
 
-                        PropertyInfo pi = model.GetType().GetProperty(dc.ColumnName) ?? displayNamePI;
+                        PropertyInfo? pi = model.GetType().GetProperty(dc.ColumnName) ?? displayNamePI;
 
                         if (pi != null && pi.CanWrite && (drValue != null && !Convert.IsDBNull(drValue)))
                         {
-                            string piFullName = pi.PropertyType.FullName;
+                            string piFullName = pi.PropertyType.FullName!;
 
                             if (piFullName.Contains("System.DateTime"))
                             {
-                                if (pi.PropertyType.FullName.StartsWith("System.Nullable`1[[System.DateTime"))
+                                if (piFullName.StartsWith("System.Nullable`1[[System.DateTime"))
                                 {
                                     pi.SetValue(model, null, null);
                                 }
@@ -206,10 +206,10 @@ namespace Common
         /// <returns>返回datatable</returns>  
         public static DataTable ExcelToDataTable(string filePath, bool isColumnName)
         {
-            DataTable dataTable = null;
-            FileStream fs = null;
-            IWorkbook workbook = null;
-            ISheet sheet = null;
+            DataTable? dataTable = null;
+            FileStream? fs = null;
+            IWorkbook? workbook = null;
+            ISheet? sheet = null;
             int startRow = 0;
             try
             {

@@ -41,7 +41,7 @@ namespace WebApi.Libraries.WeiXin.Public
         */
         public object GetValue(string key)
         {
-            m_values.TryGetValue(key, out object o);
+            m_values.TryGetValue(key, out object? o);
             return o;
         }
 
@@ -52,7 +52,7 @@ namespace WebApi.Libraries.WeiXin.Public
          */
         public bool IsSet(string key)
         {
-            m_values.TryGetValue(key, out object o);
+            m_values.TryGetValue(key, out object? o);
             if (null != o)
                 return true;
             else
@@ -124,7 +124,7 @@ namespace WebApi.Libraries.WeiXin.Public
 
             XmlDocument xmlDoc = new();
             xmlDoc.LoadXml(builder.ToString());
-            XmlNode xmlNode = xmlDoc.FirstChild;//获取到根节点<xml>
+            XmlNode xmlNode = xmlDoc.FirstChild!;//获取到根节点<xml>
             XmlNodeList nodes = xmlNode.ChildNodes;
             foreach (XmlNode xn in nodes)
             {
@@ -150,7 +150,7 @@ namespace WebApi.Libraries.WeiXin.Public
 
             XmlDocument xmlDoc = new();
             xmlDoc.LoadXml(xml);
-            XmlNode xmlNode = xmlDoc.FirstChild;//获取到根节点<xml>
+            XmlNode xmlNode = xmlDoc.FirstChild!;//获取到根节点<xml>
             XmlNodeList nodes = xmlNode.ChildNodes;
             foreach (XmlNode xn in nodes)
             {
@@ -189,7 +189,7 @@ namespace WebApi.Libraries.WeiXin.Public
 
             XmlDocument xmlDoc = new();
             xmlDoc.LoadXml(xml);
-            XmlNode xmlNode = xmlDoc.FirstChild;//获取到根节点<xml>
+            XmlNode xmlNode = xmlDoc.FirstChild!;//获取到根节点<xml>
             XmlNodeList nodes = xmlNode.ChildNodes;
             foreach (XmlNode xn in nodes)
             {
@@ -305,7 +305,7 @@ namespace WebApi.Libraries.WeiXin.Public
             }
 
             //获取接收到的签名
-            string return_sign = GetValue("sign").ToString();
+            string return_sign = GetValue("sign").ToString()!;
 
             //在本地计算新的签名
             string cal_sign = MakeSign(key);

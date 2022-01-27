@@ -43,7 +43,7 @@ namespace WebApi.Filters
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
-            string key = context.ActionDescriptor.DisplayName;
+            string key = context.ActionDescriptor.DisplayName!;
 
             if (UseToken)
             {

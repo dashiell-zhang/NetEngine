@@ -84,7 +84,7 @@ namespace AdminApi.Controllers.v1
         {
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
-                string phone = keyValue.Key.ToString();
+                string phone = keyValue.Key.ToString()!;
 
                 var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
 
@@ -155,7 +155,7 @@ namespace AdminApi.Controllers.v1
         public bool SendSmsVerifyPhone(DtoKeyValue keyValue)
         {
 
-            string phone = keyValue.Key.ToString();
+            string phone = keyValue.Key.ToString()!;
 
             string key = "VerifyPhone_" + phone;
 

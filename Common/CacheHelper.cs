@@ -21,9 +21,9 @@ namespace Common
             {
                 if (!IsInit)
                 {
-                    var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
-                    var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
-                    InitCache = serviceProvider.GetService<IDistributedCache>();
+                    var programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
+                    IServiceProvider serviceProvider = (IServiceProvider)programType!.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
+                    InitCache = serviceProvider.GetService<IDistributedCache>()!;
                     IsInit = true;
                 }
 

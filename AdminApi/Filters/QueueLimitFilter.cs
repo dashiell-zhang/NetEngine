@@ -43,7 +43,7 @@ namespace AdminApi.Filters
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
-            string key = context.ActionDescriptor.DisplayName;
+            string key = context.ActionDescriptor.DisplayName!;
 
             if (UseToken)
             {
@@ -61,7 +61,7 @@ namespace AdminApi.Filters
 
             try
             {
-                var distLock = context.HttpContext.RequestServices.GetService<IDistributedLockProvider>();
+                var distLock = context.HttpContext.RequestServices.GetService<IDistributedLockProvider>()!;
 
                 while (true)
                 {

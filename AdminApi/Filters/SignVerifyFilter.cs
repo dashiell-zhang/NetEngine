@@ -23,14 +23,14 @@ namespace AdminApi.Filters
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
 
-            var filter = (SignVerifyFilter)context.Filters.Where(t => t.ToString() == (typeof(SignVerifyFilter).Assembly.GetName().Name + ".Filters.SignVerifyFilter")).ToList().LastOrDefault();
+            SignVerifyFilter filter = (SignVerifyFilter)context.Filters.Where(t => t.ToString() == (typeof(SignVerifyFilter).Assembly.GetName().Name + ".Filters.SignVerifyFilter")).ToList().LastOrDefault()!;
 
 
             if (!filter.IsSkip)
             {
                 var token = context.HttpContext.Request.Headers["Token"].ToString().ToLower();
 
-                var rip = context.HttpContext.Connection.RemoteIpAddress.ToString();
+                string rip = context.HttpContext.Connection.RemoteIpAddress!.ToString();
 
                 if (!rip.Contains("127.0.0.1"))
                 {

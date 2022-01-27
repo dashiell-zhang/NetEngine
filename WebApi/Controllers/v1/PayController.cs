@@ -162,13 +162,13 @@ namespace WebApi.Controllers.v1
             }
 
             //获取订单信息
-            string transaction_id = notifyData.GetValue("transaction_id").ToString(); //微信流水号
-            string order_no = notifyData.GetValue("out_trade_no").ToString().ToUpper(); //商户订单号
-            string total_fee = notifyData.GetValue("total_fee").ToString(); //获取总金额
+            string transaction_id = notifyData.GetValue("transaction_id").ToString()!; //微信流水号
+            string order_no = notifyData.GetValue("out_trade_no").ToString()!.ToUpper(); //商户订单号
+            string total_fee = notifyData.GetValue("total_fee").ToString()!; //获取总金额
 
-            string appid = notifyData.GetValue("appid").ToString();
+            string appid = notifyData.GetValue("appid").ToString()!;
 
-            string paytimeStr = notifyData.GetValue("time_end").ToString();
+            string paytimeStr = notifyData.GetValue("time_end").ToString()!;
             var payTime = DateTime.ParseExact(paytimeStr, "yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture);
 
             //从微信验证信息真实性

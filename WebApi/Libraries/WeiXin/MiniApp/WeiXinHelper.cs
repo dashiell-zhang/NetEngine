@@ -125,8 +125,8 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
 
             //xml格式转json
-            string json = Newtonsoft.Json.JsonConvert.SerializeXmlNode(doc);
-            JObject jo = (JObject)JsonConvert.DeserializeObject(json);
+            string json = JsonConvert.SerializeXmlNode(doc);
+            JObject jo = (JObject)JsonConvert.DeserializeObject(json)!;
 
 
             if (jo["xml"]["return_code"]["#cdata-section"].ToString() == "SUCCESS")

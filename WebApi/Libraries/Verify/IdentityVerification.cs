@@ -200,7 +200,7 @@ namespace WebApi.Libraries.Verify
         /// <returns></returns>
         public static bool SmsVerifyPhone(DtoKeyValue keyValue)
         {
-            string phone = keyValue.Key.ToString();
+            string phone = keyValue.Key.ToString()!;
 
             string key = "VerifyPhone_" + phone;
 

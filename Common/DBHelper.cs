@@ -130,9 +130,9 @@ namespace Common
                 using (var db = new DatabaseContext())
                 {
 
-                    var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
-                    var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
-                    var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>();
+                    Type programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault()!;
+                    IServiceProvider serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
+                    var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>()!;
 
                     TLog log = new();
 
@@ -180,9 +180,9 @@ namespace Common
             else
             {
 
-                var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
-                var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
-                var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>();
+                var programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault()!;
+                var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
+                var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>()!;
 
                 info.Id = snowflakeHelper.GetId();
                 info.Tag = tag;

@@ -49,7 +49,7 @@ namespace Common
             using StringReader stringReader = new(xmlText);
             XmlSerializer xmlSerializer = new(typeof(T));
 
-            return (T)xmlSerializer.Deserialize(stringReader);
+            return (T)xmlSerializer.Deserialize(stringReader)!;
         }
 
 

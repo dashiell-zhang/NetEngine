@@ -31,9 +31,9 @@ namespace Common
             {
                 if (!IsInit)
                 {
-                    var programType = Assembly.GetEntryAssembly().GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
-                    var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static).GetValue(programType);
-                    InitHttpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
+                    var programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
+                    var serviceProvider = (IServiceProvider)programType!.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
+                    InitHttpClientFactory = serviceProvider.GetService<IHttpClientFactory>()!;
                     IsInit = true;
                 }
 

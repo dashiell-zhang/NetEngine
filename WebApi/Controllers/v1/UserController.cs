@@ -132,7 +132,7 @@ namespace WebApi.Controllers.v1
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
 
-                string phone = keyValue.Key.ToString();
+                string phone = keyValue.Key.ToString()!;
 
 
                 var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == phone).Count();
@@ -178,15 +178,15 @@ namespace WebApi.Controllers.v1
         {
 
 
-            string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault();
+            string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault()!;
 
-            string smsCode = keyValue.Value.ToString();
+            string smsCode = keyValue.Value.ToString()!;
 
             var checkSms = IdentityVerification.SmsVerifyPhone(new DtoKeyValue { Key = phone, Value = smsCode });
 
             if (checkSms)
             {
-                string password = keyValue.Key.ToString();
+                string password = keyValue.Key.ToString()!;
 
                 if (!string.IsNullOrEmpty(password))
                 {

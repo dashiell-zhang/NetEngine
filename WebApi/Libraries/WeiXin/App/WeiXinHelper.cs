@@ -86,12 +86,12 @@ namespace WebApi.Libraries.WeiXin.App
 
             //xml格式转json
             string json = Newtonsoft.Json.JsonConvert.SerializeXmlNode(doc);
-            JObject jo = (JObject)JsonConvert.DeserializeObject(json);
+            JObject jo = (JObject)JsonConvert.DeserializeObject(json)!;
 
 
-            if (jo["xml"]["return_code"]["#cdata-section"].ToString() == "SUCCESS")
+            if (jo["xml"]!["return_code"]!["#cdata-section"]!.ToString() == "SUCCESS")
             {
-                string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
+                string prepay_id = jo["xml"]!["prepay_id"]!["#cdata-section"]!.ToString();
 
                 DtoCreatePayApp info = new();
                 info.AppId = appid;

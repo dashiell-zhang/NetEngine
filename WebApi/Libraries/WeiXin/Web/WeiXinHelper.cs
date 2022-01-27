@@ -83,7 +83,7 @@ namespace WebApi.Libraries.WeiXin.Web
 
             //xml格式转json
             string json = Newtonsoft.Json.JsonConvert.SerializeXmlNode(doc);
-            JObject jo = (JObject)JsonConvert.DeserializeObject(json);
+            JObject jo = (JObject)JsonConvert.DeserializeObject(json)!;
 
 
             if (jo["xml"]["return_code"]["#cdata-section"].ToString() == "SUCCESS")

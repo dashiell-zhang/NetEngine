@@ -40,9 +40,9 @@ namespace WebApi.Controllers.v1
         [HttpPost("RemoteUploadFile")]
         public long RemoteUploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required][FromBody] DtoKeyValue fileInfo)
         {
-            string remoteFileUrl = fileInfo.Key.ToString();
+            string remoteFileUrl = fileInfo.Key.ToString()!;
 
-            var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
+            var fileExtension = Path.GetExtension(fileInfo.Value.ToString()!).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
 
             string basepath = "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
@@ -492,7 +492,7 @@ namespace WebApi.Controllers.v1
                     using (FileStream outStream = new(fullfilepath, FileMode.Create))
                     {
                         int readedLen = 0;
-                        FileStream srcStream = null;
+                        FileStream? srcStream = null;
 
                         var filelist = db.TFileGroupFile.Where(t => t.FileId == fileinfo.Id).OrderBy(t => t.Index).ToList();
 

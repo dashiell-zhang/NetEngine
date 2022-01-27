@@ -40,9 +40,9 @@ namespace AdminApi.Controllers.v1
         [HttpPost("RemoteUploadFile")]
         public long RemoteUploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required][FromBody] DtoKeyValue fileInfo)
         {
-            string remoteFileUrl = fileInfo.Key.ToString();
+            string remoteFileUrl = fileInfo.Key.ToString()!;
 
-            var fileExtension = Path.GetExtension(fileInfo.Value.ToString()).ToLower();
+            var fileExtension = Path.GetExtension(fileInfo.Value.ToString()!).ToLower();
             var fileName = Guid.NewGuid().ToString() + fileExtension;
 
             string basepath = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd");

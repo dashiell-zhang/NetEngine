@@ -83,8 +83,8 @@ namespace WebApi.Controllers.v1
         public string GetTokenByWeiXinMiniAppCode([FromBody] DtoKeyValue keyValue)
         {
 
-            var weiXinKeyId = long.Parse(keyValue.Key.ToString());
-            string code = keyValue.Value.ToString();
+            var weiXinKeyId = long.Parse(keyValue.Key.ToString()!);
+            string code = keyValue.Value.ToString()!;
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
@@ -157,7 +157,7 @@ namespace WebApi.Controllers.v1
         {
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
-                string phone = keyValue.Key.ToString();
+                string phone = keyValue.Key.ToString()!;
 
                 var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
 
@@ -228,7 +228,7 @@ namespace WebApi.Controllers.v1
         public bool SendSmsVerifyPhone(DtoKeyValue keyValue)
         {
 
-            string phone = keyValue.Key.ToString();
+            string phone = keyValue.Key.ToString()!;
 
             string key = "VerifyPhone_" + phone;
 
@@ -276,8 +276,8 @@ namespace WebApi.Controllers.v1
         public string GetTokenByWeiXinAppCode(DtoKeyValue keyValue)
         {
 
-            var weiXinKeyId = long.Parse(keyValue.Key.ToString());
-            string code = keyValue.Value.ToString();
+            var weiXinKeyId = long.Parse(keyValue.Key.ToString()!);
+            string code = keyValue.Value.ToString()!;
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinApp" & t.GroupId == weiXinKeyId).ToList();
 

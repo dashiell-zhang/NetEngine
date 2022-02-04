@@ -45,12 +45,6 @@ namespace Repository.Database
         public DbSet<TFile> TFile { get; set; }
 
 
-        public DbSet<TFileGroup> TFileGroup { get; set; }
-
-
-        public DbSet<TFileGroupFile> TFileGroupFile { get; set; }
-
-
         public DbSet<TFunction> TFunction { get; set; }
 
 

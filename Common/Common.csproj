@@ -23,7 +23,7 @@
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.4.1" />
 		<PackageReference Include="StackExchange.Redis" Version="2.2.88" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.26" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.454" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.455" />
 	</ItemGroup>
 
 	<ItemGroup>

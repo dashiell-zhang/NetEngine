@@ -202,40 +202,6 @@ namespace AdminApi.Controllers.v1
 
 
 
-        /// <summary>
-        /// 多文件上传接口
-        /// </summary>
-        /// <param name="business">业务领域</param>
-        /// <param name="key">记录值</param>
-        /// <param name="sign">标记</param>
-        /// <returns></returns>
-        /// <remarks>swagger 暂不支持多文件接口测试，请使用 postman</remarks>
-        [DisableRequestSizeLimit]
-        [HttpPost("BatchUploadFile")]
-        public List<long> BatchUploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign)
-        {
-            var fileIds = new List<long>();
-
-            var ReqFiles = Request.Form.Files;
-
-
-            List<IFormFile> Attachments = new();
-            for (int i = 0; i < ReqFiles.Count; i++)
-            {
-                Attachments.Add(ReqFiles[i]);
-            }
-
-            foreach (var file in Attachments)
-            {
-                var fileId = UploadFile(business, key, sign, file);
-
-                fileIds.Add(fileId);
-            }
-
-            return fileIds;
-        }
-
-
 
         /// <summary>
         /// 通过文件ID获取文件

@@ -16,6 +16,15 @@ namespace Repository.Database
     {
 
 
+        public TOrder(string orderNo, string type, string state, string payType)
+        {
+            OrderNo = orderNo;
+            Type = type;
+            State = state;
+            PayType = payType;
+        }
+
+
         /// <summary>
         /// 订单号
         /// </summary>
@@ -39,7 +48,7 @@ namespace Repository.Database
         /// <summary>
         /// 支付流水号
         /// </summary>
-        public string SerialNo { get; set; }
+        public string? SerialNo { get; set; }
 
 
         /// <summary>
@@ -71,13 +80,13 @@ namespace Repository.Database
         /// 实际支付金额
         /// </summary>
         [Column(TypeName = "decimal(38,2)")]
-        public decimal PayPrice { get; set; }
+        public decimal? PayPrice { get; set; }
 
 
 
         /// <summary>
         /// 订单详情
         /// </summary>
-        public virtual List<TOrderDetail> OrderDetails { get; set; }
+        public virtual List<TOrderDetail>? OrderDetails { get; set; }
     }
 }

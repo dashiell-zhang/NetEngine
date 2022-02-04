@@ -73,7 +73,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 摘要
         /// </summary>
-        public string Abstract { get; set; }
+        public string Digest { get; set; }
 
 
 

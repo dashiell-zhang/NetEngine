@@ -13,11 +13,19 @@ namespace Repository.Database
     {
 
 
+        public TFunctionAction(string module, string controller, string action)
+        {
+            Module = module;
+            Controller = controller;
+            Action = action;
+        }
+
+
         /// <summary>
         /// 功能信息
         /// </summary>
         public long FunctionId { get; set; }
-        public virtual TFunction Function { get; set; }
+        public virtual TFunction Function { get; set; } = null!;
 
 
 
@@ -46,7 +54,7 @@ namespace Repository.Database
         /// <summary>
         /// 备注
         /// </summary>
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
 
     }

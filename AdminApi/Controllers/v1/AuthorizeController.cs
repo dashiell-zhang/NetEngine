@@ -74,52 +74,6 @@ namespace AdminApi.Controllers.v1
 
 
 
-        /// <summary>
-        /// 利用手机号和短信验证码获取Token认证信息
-        /// </summary>
-        /// <param name="keyValue">key 为手机号，value 为验证码</param>
-        /// <returns></returns>
-        [HttpPost("GetTokenBySms")]
-        public string GetTokenBySms(DtoKeyValue keyValue)
-        {
-            if (IdentityVerification.SmsVerifyPhone(keyValue))
-            {
-                string phone = keyValue.Key.ToString()!;
-
-                var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
-
-                if (user == null)
-                {
-                    //注册一个只有基本信息的账户出来
-
-                    user = new();
-
-                    user.Id = snowflakeHelper.GetId();
-                    user.CreateTime = DateTime.UtcNow;
-                    user.Name = DateTime.UtcNow.ToString() + "手机短信新用户";
-                    user.NickName = user.Name;
-                    user.PassWord = Guid.NewGuid().ToString();
-                    user.Phone = phone;
-
-                    db.TUser.Add(user);
-
-                    db.SaveChanges();
-                }
-
-                return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "短信验证码错误");
-
-                return "";
-            }
-
-        }
-
-
-
 
         /// <summary>
         /// 获取授权功能列表
@@ -142,56 +96,6 @@ namespace AdminApi.Controllers.v1
 
             return kvList;
         }
-
-
-
-
-        /// <summary>
-        /// 发送短信验证手机号码所有权
-        /// </summary>
-        /// <param name="keyValue">key 为手机号，value 可为空</param>
-        /// <returns></returns>
-        [HttpPost("SendSmsVerifyPhone")]
-        public bool SendSmsVerifyPhone(DtoKeyValue keyValue)
-        {
-
-            string phone = keyValue.Key.ToString()!;
-
-            string key = "VerifyPhone_" + phone;
-
-            if (Common.CacheHelper.IsContainKey(key) == false)
-            {
-
-                var ran = new Random();
-                string code = ran.Next(100000, 999999).ToString();
-
-                var jsonCode = new
-                {
-                    code
-                };
-
-                Common.AliYun.SmsHelper sms = new();
-                var smsStatus = sms.SendSms(phone, "短信模板编号", "短信签名", Common.Json.JsonHelper.ObjectToJson(jsonCode));
-
-                if (smsStatus)
-                {
-                    Common.CacheHelper.SetString(key, code, new TimeSpan(0, 0, 5, 0));
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-
-            }
-            else
-            {
-                return false;
-            }
-
-        }
-
 
 
 

@@ -13,98 +13,98 @@ namespace Repository.Database
     {
 
 
-        public static string ConnectionString { get; set; }
+        public static string ConnectionString { get; set; } = null!;
 
 
 
-        public DatabaseContext(DbContextOptions<DatabaseContext> options = default) : base(GetDbContextOptions(options))
+        public DatabaseContext(DbContextOptions<DatabaseContext> options = default!) : base(GetDbContextOptions(options))
         {
         }
 
 
 
 
-        public DbSet<TAppSetting> TAppSetting { get; set; }
+        public DbSet<TAppSetting> TAppSetting => Set<TAppSetting>();
 
 
-        public DbSet<TArticle> TArticle { get; set; }
+        public DbSet<TArticle> TArticle => Set<TArticle>();
 
 
-        public DbSet<TCategory> TCategory { get; set; }
+        public DbSet<TCategory> TCategory => Set<TCategory>();
 
 
-        public DbSet<TChannel> TChannel { get; set; }
+        public DbSet<TChannel> TChannel => Set<TChannel>();
 
 
-        public DbSet<TCount> TCount { get; set; }
+        public DbSet<TCount> TCount => Set<TCount>();
 
 
-        public DbSet<TOSLog> TOSLog { get; set; }
+        public DbSet<TOSLog> TOSLog => Set<TOSLog>();
 
 
-        public DbSet<TFile> TFile { get; set; }
+        public DbSet<TFile> TFile => Set<TFile>();
 
 
-        public DbSet<TFunction> TFunction { get; set; }
+        public DbSet<TFunction> TFunction => Set<TFunction>();
 
 
-        public DbSet<TFunctionAction> TFunctionAction { get; set; }
+        public DbSet<TFunctionAction> TFunctionAction => Set<TFunctionAction>();
 
 
-        public DbSet<TFunctionAuthorize> TFunctionAuthorize { get; set; }
+        public DbSet<TFunctionAuthorize> TFunctionAuthorize => Set<TFunctionAuthorize>();
 
 
-        public DbSet<TLink> TLink { get; set; }
+        public DbSet<TLink> TLink => Set<TLink>();
 
 
-        public DbSet<TLog> TLog { get; set; }
+        public DbSet<TLog> TLog => Set<TLog>();
 
 
-        public DbSet<TOrder> TOrder { get; set; }
+        public DbSet<TOrder> TOrder => Set<TOrder>();
 
 
-        public DbSet<TOrderDetail> TOrderDetail { get; set; }
+        public DbSet<TOrderDetail> TOrderDetail => Set<TOrderDetail>();
 
 
-        public DbSet<TProduct> TProduct { get; set; }
+        public DbSet<TProduct> TProduct => Set<TProduct>();
 
 
-        public DbSet<TRegionArea> TRegionArea { get; set; }
+        public DbSet<TRegionArea> TRegionArea => Set<TRegionArea>();
 
 
-        public DbSet<TRegionCity> TRegionCity { get; set; }
+        public DbSet<TRegionCity> TRegionCity => Set<TRegionCity>();
 
 
-        public DbSet<TRegionProvince> TRegionProvince { get; set; }
+        public DbSet<TRegionProvince> TRegionProvince => Set<TRegionProvince>();
 
 
-        public DbSet<TRegionTown> TRegionTown { get; set; }
+        public DbSet<TRegionTown> TRegionTown => Set<TRegionTown>();
 
 
-        public DbSet<TRole> TRole { get; set; }
+        public DbSet<TRole> TRole => Set<TRole>();
 
 
-        public DbSet<TSign> TSign { get; set; }
+        public DbSet<TSign> TSign => Set<TSign>();
 
 
-        public DbSet<TUser> TUser { get; set; }
+        public DbSet<TUser> TUser => Set<TUser>();
 
 
-        public DbSet<TUserBindExternal> TUserBindExternal { get; set; }
+        public DbSet<TUserBindExternal> TUserBindExternal => Set<TUserBindExternal>();
 
 
-        public DbSet<TUserInfo> TUserInfo { get; set; }
+        public DbSet<TUserInfo> TUserInfo => Set<TUserInfo>();
 
 
-        public DbSet<TUserRole> TUserRole { get; set; }
+        public DbSet<TUserRole> TUserRole => Set<TUserRole>();
 
 
-        public DbSet<TUserToken> TUserToken { get; set; }
+        public DbSet<TUserToken> TUserToken => Set<TUserToken>();
 
 
 
 
-        private static DbContextOptions<DatabaseContext> GetDbContextOptions(DbContextOptions<DatabaseContext> options = default)
+        private static DbContextOptions<DatabaseContext> GetDbContextOptions(DbContextOptions<DatabaseContext> options = default!)
         {
 
 
@@ -163,7 +163,7 @@ namespace Repository.Database
 
 
                     //设置生成数据库时的表名为小写格式并添加前缀 t_
-                    var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value.ToString()).FirstOrDefault()).FirstOrDefault() ?? ("t_" + entity.ClrType.Name[1..]);
+                    var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value?.ToString()).FirstOrDefault()).FirstOrDefault() ?? ("t_" + entity.ClrType.Name[1..]);
                     builder.ToTable(tableName.ToLower());
 
 
@@ -229,12 +229,12 @@ namespace Repository.Database
 
 
 
-        public static string GetEntityComment(string typeName, string fieldName = null, List<string> baseTypeNames = null)
+        public static string GetEntityComment(string typeName, string? fieldName = null, List<string>? baseTypeNames = null)
         {
             var path = AppContext.BaseDirectory + "/Repository.xml";
             var xml = new XmlDocument();
             xml.Load(path);
-            var memebers = xml.SelectNodes("/doc/members/member");
+            XmlNodeList memebers = xml.SelectNodes("/doc/members/member")!;
 
             var fieldList = new Dictionary<string, string>();
 
@@ -247,7 +247,7 @@ namespace Repository.Database
                 {
                     if (m is XmlNode node)
                     {
-                        var name = node.Attributes["name"].Value;
+                        var name = node.Attributes!["name"]!.Value;
 
                         var summary = node.InnerText.Trim();
 
@@ -258,7 +258,7 @@ namespace Repository.Database
                     }
                 }
 
-                return fieldList.FirstOrDefault(t => t.Key.ToLower() == matchKey.ToLower()).Value ?? typeName.ToString().Split(".").ToList().LastOrDefault();
+                return fieldList.FirstOrDefault(t => t.Key.ToLower() == matchKey.ToLower()).Value ?? typeName.ToString().Split(".").ToList().LastOrDefault()!;
             }
             else
             {
@@ -267,7 +267,7 @@ namespace Repository.Database
                 {
                     if (m is XmlNode node)
                     {
-                        var name = node.Attributes["name"].Value;
+                        string name = node.Attributes!["name"]!.Value;
 
                         var summary = node.InnerText.Trim();
 
@@ -405,7 +405,7 @@ namespace Repository.Database
 
 
 
-        public int SaveChangesWithSaveLog(long osLogId, long? actionUserId = null, string ipAddress = null, string deviceMark = null)
+        public int SaveChangesWithSaveLog(long osLogId, long? actionUserId, string? ipAddress, string? deviceMark)
         {
 
             DatabaseContext db = this;
@@ -435,46 +435,46 @@ namespace Repository.Database
 
                 object[] parameters = { oldEntity, newEntity };
 
-                var result = new DatabaseContext().GetType().GetMethod("ComparisonEntity")!.MakeGenericMethod(type).Invoke(new DatabaseContext(), parameters);
+                string result = new DatabaseContext().GetType().GetMethod("ComparisonEntity")!.MakeGenericMethod(type).Invoke(new DatabaseContext(), parameters)!.ToString()!;
 
-                if (ipAddress == null | deviceMark == null)
+                if (result != "")
                 {
-                    var assembly = Assembly.GetEntryAssembly();
-                    var httpContextType = assembly!.GetTypes().Where(t => t.FullName.Contains("Libraries.Http.HttpContext")).FirstOrDefault();
-
-                    if (httpContextType != null)
+                    if (ipAddress == null | deviceMark == null)
                     {
-                        if (ipAddress == null)
-                        {
-                            ipAddress = httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!.ToString()!;
-                        }
+                        var assembly = Assembly.GetEntryAssembly();
+                        var httpContextType = assembly!.GetTypes().Where(t => t.FullName!.Contains("Libraries.Http.HttpContext")).FirstOrDefault();
 
-                        if (deviceMark == null)
+                        if (httpContextType != null)
                         {
-                            deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "DeviceMark" })!.ToString()!;
-
-                            if (deviceMark == "")
+                            if (ipAddress == null)
                             {
-                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "User-Agent" })!.ToString()!;
+                                ipAddress = httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!.ToString()!;
+                            }
+
+                            if (deviceMark == null)
+                            {
+                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "DeviceMark" })!.ToString()!;
+
+                                if (deviceMark == "")
+                                {
+                                    deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "User-Agent" })!.ToString()!;
+                                }
                             }
                         }
                     }
+
+
+
+                    TOSLog osLog = new(type.Name, "Modified", result);
+                    osLog.Id = osLogId;
+                    osLog.CreateTime = DateTime.UtcNow;
+                    osLog.TableId = entityId;
+                    osLog.IpAddress = ipAddress == "" ? null : ipAddress;
+                    osLog.DeviceMark = deviceMark == "" ? null : deviceMark;
+                    osLog.ActionUserId = actionUserId;
+
+                    db.TOSLog.Add(osLog);
                 }
-
-
-
-                TOSLog osLog = new();
-                osLog.Id = osLogId;
-                osLog.CreateTime = DateTime.UtcNow;
-                osLog.Table = type.Name;
-                osLog.TableId = entityId;
-                osLog.Sign = "Modified";
-                osLog.Content = result.ToString();
-                osLog.IpAddress = ipAddress == "" ? null : ipAddress;
-                osLog.DeviceMark = deviceMark == "" ? null : deviceMark;
-                osLog.ActionUserId = actionUserId;
-
-                db.TOSLog.Add(osLog);
 
             }
 

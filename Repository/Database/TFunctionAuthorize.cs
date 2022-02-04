@@ -14,7 +14,7 @@ namespace Repository.Database
         /// 功能ID
         /// </summary>
         public long FunctionId { get; set; }
-        public virtual TFunction Function { get; set; }
+        public virtual TFunction Function { get; set; } = null!;
 
 
 
@@ -22,7 +22,7 @@ namespace Repository.Database
         /// 角色ID
         /// </summary>
         public long? RoleId { get; set; }
-        public virtual TRole Role { get; set; }
+        public virtual TRole? Role { get; set; }
 
 
 
@@ -31,7 +31,7 @@ namespace Repository.Database
         /// 用户信息
         /// </summary>
         public long? UserId { get; set; }
-        public virtual TUser User { get; set; }
+        public virtual TUser? User { get; set; }
 
 
     }

@@ -92,7 +92,7 @@ namespace AdminApi.Libraries.Verify
         private static void IssueNewToken(HttpContext httpContext)
         {
 
-            var snowflakeHelper = httpContext.RequestServices.GetService<SnowflakeHelper>();
+            SnowflakeHelper snowflakeHelper = httpContext.RequestServices.GetRequiredService<SnowflakeHelper>();
 
             using var scope = Program.ServiceProvider.CreateScope();
             var db = scope.ServiceProvider.GetService<DatabaseContext>();

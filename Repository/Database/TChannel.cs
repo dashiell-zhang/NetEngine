@@ -13,6 +13,14 @@ namespace Repository.Database
     public class TChannel : CD_User
     {
 
+
+        public TChannel(string name)
+        {
+            Name = name;
+        }
+
+
+
         /// <summary>
         /// 频道名称
         /// </summary>
@@ -28,7 +36,7 @@ namespace Repository.Database
         /// <summary>
         /// 备注
         /// </summary>
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
 
 
@@ -36,6 +44,6 @@ namespace Repository.Database
         /// <summary>
         /// 所包含的类别记录数据
         /// </summary>
-        public virtual List<TCategory> TCategory { get; set; }
+        public virtual List<TCategory>? TCategory { get; set; }
     }
 }

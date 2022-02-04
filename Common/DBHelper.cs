@@ -134,12 +134,9 @@ namespace Common
                     IServiceProvider serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
                     var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>()!;
 
-                    TLog log = new();
+                    TLog log = new(Sign, Type, Content);
 
                     log.Id = snowflakeHelper.GetId();
-                    log.Sign = Sign;
-                    log.Type = Type;
-                    log.Content = Content;
                     log.CreateTime = DateTime.UtcNow;
 
                     db.TLog.Add(log);
@@ -166,9 +163,9 @@ namespace Common
         {
             using var db = new DatabaseContext();
 
-            var info = db.TCount.Where(t => t.Tag == tag).FirstOrDefault() ?? new TCount();
+            var info = db.TCount.Where(t => t.Tag == tag).FirstOrDefault();
 
-            if (info.Id != default)
+            if (info != null)
             {
                 info.Count++;
                 info.UpdateTime = DateTime.UtcNow;
@@ -184,8 +181,9 @@ namespace Common
                 var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
                 var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>()!;
 
+                info = new TCount(tag);
+
                 info.Id = snowflakeHelper.GetId();
-                info.Tag = tag;
                 info.Count = 1;
                 info.CreateTime = DateTime.UtcNow;
 

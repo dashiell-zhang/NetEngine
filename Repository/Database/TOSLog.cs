@@ -9,6 +9,14 @@ namespace Repository.Database
     {
 
 
+        public TOSLog(string table, string sign, string content)
+        {
+            Table = table;
+            Sign = sign;
+            Content = content;
+        }
+
+
         /// <summary>
         /// 外链表名
         /// </summary>
@@ -41,28 +49,28 @@ namespace Repository.Database
         /// 操作人信息
         /// </summary>
         public long? ActionUserId { get; set; }
-        public virtual TUser ActionUser { get; set; }
+        public virtual TUser? ActionUser { get; set; }
 
 
 
         /// <summary>
         /// 备注
         /// </summary>
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
 
 
         /// <summary>
         /// Ip地址
         /// </summary>
-        public string IpAddress { get; set; }
+        public string? IpAddress { get; set; }
 
 
 
         /// <summary>
         ///  设备标记
         /// </summary>
-        public string DeviceMark { get; set; }
+        public string? DeviceMark { get; set; }
 
 
     }

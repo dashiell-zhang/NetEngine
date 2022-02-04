@@ -27,7 +27,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetChannelList")]
-        public DtoPageList<DtoChannel> GetChannelList(int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoChannel> GetChannelList(int pageNum, int pageSize, string? searchKey)
         {
             var data = new DtoPageList<DtoChannel>();
 
@@ -105,12 +105,11 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateChannel")]
         public long CreateChannel(DtoEditChannel createChannel)
         {
-            TChannel channel = new();
+            TChannel channel = new(createChannel.Name);
             channel.Id = snowflakeHelper.GetId();
             channel.CreateTime = DateTime.UtcNow;
             channel.CreateUserId = userId;
 
-            channel.Name = createChannel.Name;
             channel.Remarks = createChannel.Remarks;
             channel.Sort = createChannel.Sort;
 
@@ -177,7 +176,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetCategoryList")]
-        public DtoPageList<DtoCategory> GetCategoryList(long channelId, int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoCategory> GetCategoryList(long channelId, int pageNum, int pageSize, string? searchKey)
         {
             var data = new DtoPageList<DtoCategory>();
 
@@ -259,13 +258,12 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateCategory")]
         public long CreateCategory(DtoEditCategory createCategory)
         {
-            TCategory category = new();
+            TCategory category = new(createCategory.Name);
             category.Id = snowflakeHelper.GetId();
             category.CreateTime = DateTime.UtcNow;
             category.CreateUserId = userId;
 
             category.ChannelId = createCategory.ChannelId;
-            category.Name = createCategory.Name;
             category.ParentId = createCategory.ParentId;
             category.Remarks = createCategory.Remarks;
             category.Sort = createCategory.Sort;
@@ -334,7 +332,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetArticleList")]
-        public DtoPageList<DtoArticle> GetArticleList(long channelId, int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoArticle> GetArticleList(long channelId, int pageNum, int pageSize, string? searchKey)
         {
             var data = new DtoPageList<DtoArticle>();
 
@@ -362,7 +360,7 @@ namespace AdminApi.Controllers.v1
                 IsDisplay = t.IsDisplay,
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
-                Abstract = t.Abstract,
+                Digest = t.Digest,
                 CreateTime = t.CreateTime,
                 CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
@@ -400,7 +398,7 @@ namespace AdminApi.Controllers.v1
                 IsDisplay = t.IsDisplay,
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
-                Abstract = t.Abstract,
+                Digest = t.Digest,
                 CreateTime = t.CreateTime,
                 CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
@@ -424,27 +422,25 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateArticle")]
         public long CreateArticle(DtoEditArticle createArticle, long fileKey)
         {
-            TArticle article = new();
+            TArticle article = new(createArticle.Title, createArticle.Content,"");
             article.Id = snowflakeHelper.GetId();
             article.CreateTime = DateTime.UtcNow;
             article.CreateUserId = userId;
 
             article.CategoryId = createArticle.CategoryId;
-            article.Title = createArticle.Title;
-            article.Content = createArticle.Content;
             article.IsRecommend = createArticle.IsRecommend;
             article.IsDisplay = createArticle.IsDisplay;
             article.Sort = createArticle.Sort;
             article.ClickCount = createArticle.ClickCount;
 
-            if (string.IsNullOrEmpty(createArticle.Abstract) & !string.IsNullOrEmpty(createArticle.Content))
+            if (string.IsNullOrEmpty(createArticle.Digest) & !string.IsNullOrEmpty(createArticle.Content))
             {
                 string content = Common.StringHelper.RemoveHtml(createArticle.Content);
-                article.Abstract = content.Length > 255 ? content[..255] : content;
+                article.Digest = content.Length > 255 ? content[..255] : content;
             }
             else
             {
-                article.Abstract = createArticle.Abstract;
+                article.Digest = createArticle.Digest;
             }
 
             db.TArticle.Add(article);
@@ -484,14 +480,14 @@ namespace AdminApi.Controllers.v1
             article.Sort = updateArticle.Sort;
             article.ClickCount = updateArticle.ClickCount;
 
-            if (string.IsNullOrEmpty(updateArticle.Abstract))
+            if (string.IsNullOrEmpty(updateArticle.Digest))
             {
                 string content = Common.StringHelper.RemoveHtml(updateArticle.Content);
-                article.Abstract = content.Length > 255 ? content[..255] : content;
+                article.Digest = content.Length > 255 ? content[..255] : content;
             }
             else
             {
-                article.Abstract = updateArticle.Abstract;
+                article.Digest = updateArticle.Digest;
             }
 
             db.SaveChanges();

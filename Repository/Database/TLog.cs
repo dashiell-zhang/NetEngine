@@ -12,10 +12,20 @@ namespace Repository.Database
     {
 
 
+        public TLog(string sign, string type, string content)
+        {
+            Sign = sign;
+            Type = type;
+            Content = content;
+        }
+
+
+
         /// <summary>
         /// 标记
         /// </summary>
         public string Sign { get; set; }
+
 
 
         /// <summary>

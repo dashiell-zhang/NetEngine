@@ -64,8 +64,6 @@ namespace AdminApi.Controllers.v1
         {
             var query = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Site");
 
-            var appSetting = new TAppSetting();
-
             SiteAction.SetSiteInfo("WebUrl", editSite.WebUrl);
             SiteAction.SetSiteInfo("ManagerName", editSite.ManagerName);
             SiteAction.SetSiteInfo("ManagerAddress", editSite.ManagerAddress);

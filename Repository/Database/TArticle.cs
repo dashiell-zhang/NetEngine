@@ -12,11 +12,20 @@ namespace Repository.Database
     public class TArticle : CD_User
     {
 
+
+        public TArticle(string title, string content, string digest)
+        {
+            Title = title;
+            Content = content;
+            Digest = digest;
+        }
+
+
         /// <summary>
         /// 类别ID
         /// </summary>
         public long CategoryId { get; set; }
-        public virtual TCategory Category { get; set; }
+        public virtual TCategory Category { get; set; } = null!;
 
 
         /// <summary>
@@ -58,7 +67,7 @@ namespace Repository.Database
         /// <summary>
         /// 摘要
         /// </summary>
-        public string Abstract { get; set; }
+        public string Digest { get; set; }
 
 
     }

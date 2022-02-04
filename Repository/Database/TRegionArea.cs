@@ -13,6 +13,12 @@ namespace Repository.Database
     {
 
 
+        public TRegionArea(string area)
+        {
+            Area = area;
+        }
+
+
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public new int Id { get; set; }
 
@@ -29,14 +35,14 @@ namespace Repository.Database
         /// 所属城市ID
         /// </summary>
         public int CityId { get; set; }
-        public virtual TRegionCity City { get; set; }
+        public virtual TRegionCity City { get; set; } = null!;
 
 
 
         /// <summary>
         /// 城市下所有乡镇信息
         /// </summary>
-        public virtual List<TRegionTown> TRegionTown { get; set; }
+        public virtual List<TRegionTown>? TRegionTown { get; set; }
 
 
     }

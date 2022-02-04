@@ -30,7 +30,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey"></param>
         /// <returns></returns>
         [HttpGet("GetUserList")]
-        public DtoPageList<DtoUser> GetUserList(int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoUser> GetUserList(int pageNum, int pageSize, string? searchKey)
         {
             var data = new DtoPageList<DtoUser>();
 
@@ -102,16 +102,12 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateUser")]
         public long CreateUser(DtoEditUser createUser)
         {
-            TUser user = new();
+            TUser user = new(createUser.Name, createUser.NickName, createUser.Phone, createUser.PassWord);
             user.Id = snowflakeHelper.GetId();
             user.CreateTime = DateTime.UtcNow;
             user.CreateUserId = userId;
 
-            user.Name = createUser.Name;
-            user.NickName = createUser.NickName;
-            user.Phone = createUser.Phone;
             user.Email = createUser.Email;
-            user.PassWord = createUser.PassWord;
 
             db.TUser.Add(user);
 

@@ -13,10 +13,10 @@ namespace Repository.Database.Bases
         /// <summary>
         /// 创建人ID
         /// </summary>
-        public long CreateUserId { get; set; }
+        public long? CreateUserId { get; set; }
 
         [ForeignKey("CreateUserId")]
-        public virtual TUser CreateUser { get; set; }
+        public virtual TUser? CreateUser { get; set; }
 
 
 
@@ -26,6 +26,6 @@ namespace Repository.Database.Bases
         public long? DeleteUserId { get; set; }
 
         [ForeignKey("DeleteUserId")]
-        public virtual TUser DeleteUser { get; set; }
+        public virtual TUser? DeleteUser { get; set; }
     }
 }

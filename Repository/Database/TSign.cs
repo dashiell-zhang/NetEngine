@@ -12,6 +12,14 @@ namespace Repository.Database
     public class TSign : CD_User
     {
 
+
+        public TSign(string table, string sign)
+        {
+            Table = table;
+            Sign = sign;
+        }
+
+
         /// <summary>
         /// 外链表名称
         /// </summary>

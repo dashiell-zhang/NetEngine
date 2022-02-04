@@ -15,6 +15,13 @@ namespace Repository.Database
     {
 
 
+        public TFunction(string name, string sign)
+        {
+            Name = name;
+            Sign = sign;
+        }
+
+
         /// <summary>
         /// 名称
         /// </summary>
@@ -32,7 +39,7 @@ namespace Repository.Database
         /// <summary>
         /// 备注
         /// </summary>
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
 
 
@@ -40,7 +47,7 @@ namespace Repository.Database
         /// 父级信息
         /// </summary>
         public long? ParentId { get; set; }
-        public virtual TFunction Parent { get; set; }
+        public virtual TFunction? Parent { get; set; }
 
 
 
@@ -59,7 +66,7 @@ namespace Repository.Database
         /// <summary>
         /// 该功能动作集合
         /// </summary>
-        public virtual List<TFunctionAction> TFunctionAction { get; set; }
+        public virtual List<TFunctionAction>? TFunctionAction { get; set; }
 
 
     }

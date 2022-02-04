@@ -26,7 +26,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetLinkList")]
-        public DtoPageList<DtoLink> GetLinkList(int pageNum, int pageSize, string searchKey)
+        public DtoPageList<DtoLink> GetLinkList(int pageNum, int pageSize, string? searchKey)
         {
             var data = new DtoPageList<DtoLink>();
 
@@ -86,13 +86,11 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateLink")]
         public long CreateLink(DtoEditLink createLink)
         {
-            TLink link = new();
+            TLink link = new(createLink.Name, createLink.Url);
             link.Id = snowflakeHelper.GetId();
             link.CreateTime = DateTime.UtcNow;
             link.CreateUserId = userId;
 
-            link.Name = createLink.Name;
-            link.Url = createLink.Url;
             link.Sort = createLink.Sort;
 
             db.TLink.Add(link);

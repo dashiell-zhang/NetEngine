@@ -16,6 +16,16 @@ namespace Repository.Database
     public class TUser : CUD_User
     {
 
+
+        public TUser(string name, string nickName, string phone, string passWord)
+        {
+            Name = name;
+            NickName = nickName;
+            Phone = phone;
+            PassWord = passWord;
+        }
+
+
         /// <summary>
         /// 用户名
         /// </summary>
@@ -38,7 +48,7 @@ namespace Repository.Database
         /// <summary>
         /// 邮箱
         /// </summary>
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
 
         /// <summary>
@@ -52,20 +62,20 @@ namespace Repository.Database
         /// 用户信息
         /// </summary>
         [InverseProperty("User")]
-        public virtual TUserInfo UserInfo { get; set; }
+        public virtual TUserInfo? UserInfo { get; set; }
 
 
 
         [InverseProperty("CreateUser")]
-        public virtual List<TUser> InverseCreateUserList { get; set; }
+        public virtual List<TUser>? InverseCreateUserList { get; set; }
 
 
         [InverseProperty("DeleteUser")]
-        public virtual List<TUser> InverseDeleteUserList { get; set; }
+        public virtual List<TUser>? InverseDeleteUserList { get; set; }
 
 
         [InverseProperty("UpdateUser")]
-        public virtual List<TUser> InverseUpdateUserList { get; set; }
+        public virtual List<TUser>? InverseUpdateUserList { get; set; }
 
 
 

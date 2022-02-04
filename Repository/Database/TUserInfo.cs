@@ -15,21 +15,21 @@ namespace Repository.Database
         public long UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public virtual TUser User { get; set; }
+        public virtual TUser User { get; set; } = null!;
 
 
         /// <summary>
         /// 地址区域ID
         /// </summary>
         public int? RegionAreaId { get; set; }
-        public virtual TRegionArea RegionArea { get; set; }
+        public virtual TRegionArea? RegionArea { get; set; }
 
 
 
         /// <summary>
         /// 地址详细信息
         /// </summary>
-        public string Address { get; set; }
+        public string? Address { get; set; }
 
 
 
@@ -46,7 +46,7 @@ namespace Repository.Database
         public long? UpdateUserId { get; set; }
 
         [ForeignKey("UpdateUserId")]
-        public virtual TUser UpdateUser { get; set; }
+        public virtual TUser? UpdateUser { get; set; }
 
 
     }

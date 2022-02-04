@@ -8,6 +8,12 @@ namespace Repository.Database
     public class TRegionTown : CD
     {
 
+        public TRegionTown(string town)
+        {
+            Town = town;
+        }
+
+
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public new int Id { get; set; }
 
@@ -24,7 +30,7 @@ namespace Repository.Database
         /// 所属区域ID
         /// </summary>
         public int AreaId { get; set; }
-        public virtual TRegionArea Area { get; set; }
+        public virtual TRegionArea Area { get; set; } = null!;
 
 
     }

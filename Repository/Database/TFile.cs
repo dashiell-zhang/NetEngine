@@ -14,6 +14,16 @@ namespace Repository.Database
     {
 
 
+        public TFile(string name, string path, string table, string sign)
+        {
+            Name = name;
+            Path = path;
+            Table = table;
+            Sign = sign;
+        }
+
+
+
         /// <summary>
         /// 文件名称
         /// </summary>

@@ -67,11 +67,13 @@ namespace WebApi.Controllers.v1
 
                 var upRemote = false;
 
+                string fileInfoName = fileInfo.Value.ToString()!;
+
                 if (upRemote == true)
                 {
                     var oss = new Common.AliYun.OssHelper();
 
-                    var upload = oss.FileUpload(dlPath, basepath, fileInfo.Value.ToString());
+                    var upload = oss.FileUpload(dlPath, basepath, fileInfoName);
 
                     if (upload)
                     {
@@ -86,13 +88,9 @@ namespace WebApi.Controllers.v1
                 if (isSuccess)
                 {
 
-                    TFile f = new();
+                    TFile f = new(fileInfoName, filePath, business, sign);
                     f.Id = snowflakeHelper.GetId();
-                    f.Name = fileInfo.Value.ToString();
-                    f.Path = filePath;
-                    f.Table = business;
                     f.TableId = key;
-                    f.Sign = sign;
                     f.CreateUserId = userId;
                     f.CreateTime = DateTime.UtcNow;
                     db.TFile.Add(f);
@@ -105,7 +103,6 @@ namespace WebApi.Controllers.v1
 
             HttpContext.Response.StatusCode = 400;
             HttpContext.Items.Add("errMsg", "文件上传失败");
-
             return default;
         }
 
@@ -170,34 +167,28 @@ namespace WebApi.Controllers.v1
                     isSuccess = true;
                 }
 
+                if (isSuccess)
+                {
+
+                    TFile f = new(file.FileName, path, business, sign);
+                    f.Id = fileName;
+                    f.IsDelete = false;
+                    f.TableId = key;
+                    f.CreateUserId = userId;
+                    f.CreateTime = DateTime.UtcNow;
+                    db.TFile.Add(f);
+                    db.SaveChanges();
+
+                    return fileName;
+                }
+
             }
 
-            if (isSuccess)
-            {
 
-                TFile f = new();
-                f.Id = fileName;
-                f.IsDelete = false;
-                f.Name = file.FileName;
-                f.Path = path;
-                f.Table = business;
-                f.TableId = key;
-                f.Sign = sign;
-                f.CreateUserId = userId;
-                f.CreateTime = DateTime.UtcNow;
-                db.TFile.Add(f);
-                db.SaveChanges();
+            HttpContext.Response.StatusCode = 400;
+            HttpContext.Items.Add("errMsg", "文件上传失败");
+            return default;
 
-                return fileName;
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = 400;
-
-                HttpContext.Items.Add("errMsg", "文件上传失败");
-
-                return default;
-            }
         }
 
 

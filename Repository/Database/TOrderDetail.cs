@@ -13,14 +13,14 @@ namespace Repository.Database
         /// 订单ID
         /// </summary>
         public long OrderId { get; set; }
-        public virtual TOrder Order { get; set; }
+        public virtual TOrder Order { get; set; } = null!;
 
 
         /// <summary>
         /// 产品ID
         /// </summary>
         public long ProductId { get; set; }
-        public virtual TProduct Product { get; set; }
+        public virtual TProduct Product { get; set; } = null!;
 
 
         /// <summary>

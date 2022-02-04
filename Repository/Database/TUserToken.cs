@@ -9,18 +9,19 @@ namespace Repository.Database
     public class TUserToken : CD
     {
 
+
         /// <summary>
         /// 用户ID
         /// </summary>
         public long UserId { get; set; }
-        public virtual TUser User { get; set; }
+        public virtual TUser User { get; set; } = null!;
 
 
 
         /// <summary>
         /// Token
         /// </summary>
-        public string Token { get; set; }
+        public string? Token { get; set; }
 
 
         /// <summary>

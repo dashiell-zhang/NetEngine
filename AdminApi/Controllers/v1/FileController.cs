@@ -29,87 +29,6 @@ namespace AdminApi.Controllers.v1
 
 
 
-        /// <summary>
-        /// 远程单文件上传接口
-        /// </summary>
-        /// <param name="business">业务领域</param>
-        /// <param name="key">记录值</param>
-        /// <param name="sign">自定义标记</param>
-        /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
-        /// <returns>文件ID</returns>
-        [HttpPost("RemoteUploadFile")]
-        public long RemoteUploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required][FromBody] DtoKeyValue fileInfo)
-        {
-            string remoteFileUrl = fileInfo.Key.ToString()!;
-
-            var fileExtension = Path.GetExtension(fileInfo.Value.ToString()!).ToLower();
-            var fileName = Guid.NewGuid().ToString() + fileExtension;
-
-            string basepath = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
-
-            var filePath = Libraries.IO.Path.WebRootPath() + basepath + "/";
-
-            //下载文件
-            var dlPath = Common.IO.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
-
-            if (dlPath == null)
-            {
-                Thread.Sleep(5000);
-                dlPath = Common.IO.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
-            }
-
-            filePath = dlPath.Replace(Libraries.IO.Path.ContentRootPath(), "");
-
-
-            if (dlPath != null)
-            {
-                var isSuccess = true;
-
-                var upRemote = false;
-
-                if (upRemote == true)
-                {
-                    var oss = new Common.AliYun.OssHelper();
-
-                    var upload = oss.FileUpload(dlPath, basepath, fileInfo.Value.ToString());
-
-                    if (upload)
-                    {
-                        Common.IO.IOHelper.DeleteFile(dlPath);
-                    }
-                    else
-                    {
-                        isSuccess = false;
-                    }
-                }
-
-                if (isSuccess)
-                {
-
-                    TFile f = new();
-                    f.Id = snowflakeHelper.GetId();
-                    f.Name = fileInfo.Value.ToString();
-                    f.Path = filePath;
-                    f.Table = business;
-                    f.TableId = key;
-                    f.Sign = sign;
-                    f.CreateUserId = userId;
-                    f.CreateTime = DateTime.UtcNow;
-                    db.TFile.Add(f);
-                    db.SaveChanges();
-
-                    return f.Id;
-                }
-
-            }
-
-            HttpContext.Response.StatusCode = 400;
-            HttpContext.Items.Add("errMsg", "文件上传失败");
-
-            return default;
-        }
-
-
 
         /// <summary>
         /// 单文件上传接口
@@ -170,34 +89,26 @@ namespace AdminApi.Controllers.v1
                     isSuccess = true;
                 }
 
+                if (isSuccess)
+                {
+
+                    TFile f = new(file.FileName, path, business, sign);
+                    f.Id = fileName;
+                    f.IsDelete = false;
+                    f.TableId = key;
+                    f.CreateUserId = userId;
+                    f.CreateTime = DateTime.UtcNow;
+                    db.TFile.Add(f);
+                    db.SaveChanges();
+
+                    return fileName;
+                }
+
             }
 
-            if (isSuccess)
-            {
-
-                TFile f = new();
-                f.Id = fileName;
-                f.IsDelete = false;
-                f.Name = file.FileName;
-                f.Path = path;
-                f.Table = business;
-                f.TableId = key;
-                f.Sign = sign;
-                f.CreateUserId = userId;
-                f.CreateTime = DateTime.UtcNow;
-                db.TFile.Add(f);
-                db.SaveChanges();
-
-                return fileName;
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = 400;
-
-                HttpContext.Items.Add("errMsg", "文件上传失败");
-
-                return default;
-            }
+            HttpContext.Response.StatusCode = 400;
+            HttpContext.Items.Add("errMsg", "文件上传失败");
+            return default;
         }
 
 

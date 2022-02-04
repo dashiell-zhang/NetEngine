@@ -117,7 +117,7 @@
 
             <TabPane Key="2" Tab="详细内容" ForceRender="true">
                 <FormItem Label="摘要">
-                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Abstract" MinRows="4" MaxRows="6" style="width:50em;min-height:80px" />
+                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Digest" MinRows="4" MaxRows="6" style="width:50em;min-height:80px" />
                 </FormItem>
 
                 <FormItem Label="内容">
@@ -228,7 +228,7 @@
             editArticle.Title = article.Title;
             editArticle.Sort = article.Sort;
             editArticle.ClickCount = article.ClickCount;
-            editArticle.Abstract = article.Abstract;
+            editArticle.Digest = article.Digest;
             editArticle.Content = article.Content;
             editArticle.IsDisplay = article.IsDisplay;
             editArticle.IsRecommend = article.IsRecommend;

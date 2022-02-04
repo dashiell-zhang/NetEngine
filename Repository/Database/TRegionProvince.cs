@@ -13,6 +13,13 @@ namespace Repository.Database
     public class TRegionProvince : CD
     {
 
+
+        public TRegionProvince(string province)
+        {
+            Province = province;
+        }
+
+
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public new int Id { get; set; }
 
@@ -28,7 +35,7 @@ namespace Repository.Database
         /// <summary>
         /// 省份下包含的所有城市信息
         /// </summary>
-        public virtual List<TRegionCity> TRegionCity { get; set; }
+        public virtual List<TRegionCity>? TRegionCity { get; set; }
 
     }
 }

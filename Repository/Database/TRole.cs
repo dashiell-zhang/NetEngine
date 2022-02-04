@@ -10,6 +10,13 @@ namespace Repository.Database
     public class TRole : CD
     {
 
+
+        public TRole(string name)
+        {
+            Name = name;
+        }
+
+
         /// <summary>
         /// 角色名称
         /// </summary>
@@ -20,7 +27,7 @@ namespace Repository.Database
         /// <summary>
         /// 备注信息
         /// </summary>
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
 
 

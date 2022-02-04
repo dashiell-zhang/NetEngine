@@ -13,6 +13,16 @@ namespace Repository.Database
     public class TProduct : CUD_User
     {
 
+
+        public TProduct(string sKU, string name, string detail)
+        {
+            SKU = sKU;
+            Name = name;
+            Detail = detail;
+        }
+
+
+
         /// <summary>
         /// SKU
         /// </summary>

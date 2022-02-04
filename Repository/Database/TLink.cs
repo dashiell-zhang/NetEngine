@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Repository.Database.Bases;
 
 namespace Repository.Database
@@ -12,6 +11,14 @@ namespace Repository.Database
     [Index(nameof(Sort))]
     public class TLink : CD_User
     {
+
+
+        public TLink(string name, string url)
+        {
+            Name = name;
+            Url = url;
+        }
+
 
         /// <summary>
         /// 名称
@@ -34,6 +41,6 @@ namespace Repository.Database
         /// <summary>
         /// 备注
         /// </summary>
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
     }
 }

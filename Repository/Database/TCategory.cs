@@ -14,11 +14,18 @@ namespace Repository.Database
     {
 
 
+        public TCategory(string name)
+        {
+            Name = name;
+        }
+
+
+
         /// <summary>
         /// 频道ID
         /// </summary>
         public long ChannelId { get; set; }
-        public virtual TChannel Channel { get; set; }
+        public virtual TChannel Channel { get; set; } = null!;
 
 
         /// <summary>
@@ -37,17 +44,17 @@ namespace Repository.Database
         /// 父级栏目ID
         /// </summary>
         public long? ParentId { get; set; }
-        public virtual TCategory Parent { get; set; }
+        public virtual TCategory? Parent { get; set; }
 
 
         /// <summary>
         /// 备注
         /// </summary>
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
 
 
 
-        public virtual List<TArticle> TArticle { get; set; }
+        public virtual List<TArticle>? TArticle { get; set; }
     }
 }

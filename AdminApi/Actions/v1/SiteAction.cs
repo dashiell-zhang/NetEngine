@@ -9,27 +9,34 @@ namespace AdminApi.Actions.v1
     public class SiteAction
     {
 
-        public static bool SetSiteInfo(string key, string value)
+        public static bool SetSiteInfo(string key, string? value)
         {
-            using var scope = Program.ServiceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetService<DatabaseContext>();
 
-            var snowflakeHelper = Program.ServiceProvider.GetService<SnowflakeHelper>();
-
-            var appSetting = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Site" & t.Key == key).FirstOrDefault() ?? new TAppSetting();
-
-            appSetting.Value = value;
-
-            if (appSetting.Id == default)
+            if (value != null)
             {
-                appSetting.Id = snowflakeHelper.GetId();
-                appSetting.CreateTime = DateTime.UtcNow;
-                appSetting.Module = "Site";
-                appSetting.Key = key;
-                db.TAppSetting.Add(appSetting);
-            }
+                using var scope = Program.ServiceProvider.CreateScope();
+                DatabaseContext db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-            db.SaveChanges();
+                SnowflakeHelper snowflakeHelper = Program.ServiceProvider.GetRequiredService<SnowflakeHelper>();
+
+                var appSetting = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Site" & t.Key == key).FirstOrDefault();
+
+
+                if (appSetting == null)
+                {
+                    appSetting = new TAppSetting("Site", key, value);
+                    appSetting.Id = snowflakeHelper.GetId();
+                    appSetting.CreateTime = DateTime.UtcNow;
+                    db.TAppSetting.Add(appSetting);
+                }
+                else
+                {
+                    appSetting.Value = value;
+                }
+
+                db.SaveChanges();
+
+            }
 
             return true;
         }

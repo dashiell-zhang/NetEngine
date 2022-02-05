@@ -10,12 +10,19 @@ namespace TaskAdmin.Models.Shared
     public class DtoFileInfo
     {
 
+        public DtoFileInfo(string fileName, string fileUrl, string displayLength, string createUserName)
+        {
+            FileName = fileName;
+            FileUrl = fileUrl;
+            DisplayLength = displayLength;
+            CreateUserName = createUserName;
+        }
 
 
         /// <summary>
         /// 文件ID
         /// </summary>
-        public Guid FileId { get; set; }
+        public long FileId { get; set; }
 
 
 

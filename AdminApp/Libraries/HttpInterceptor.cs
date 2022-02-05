@@ -33,7 +33,7 @@ namespace AdminApp.Libraries
         {
             var authorization = LocalStorage.GetItemAsString("Authorization");
 
-            var isGetToken = request.RequestUri.AbsolutePath.Contains("/api/Authorize/GetToken", System.StringComparison.OrdinalIgnoreCase);
+            var isGetToken = request.RequestUri!.AbsolutePath.Contains("/api/Authorize/GetToken", System.StringComparison.OrdinalIgnoreCase);
 
             if (!string.IsNullOrEmpty(authorization) || isGetToken)
             {
@@ -79,7 +79,7 @@ namespace AdminApp.Libraries
             else
             {
                 NavigationManager.NavigateTo("login", true);
-                return default;
+                return new HttpResponseMessage();
             }
         }
     }

@@ -10,6 +10,14 @@ namespace AdminShared.Models.v1.Link
     {
 
 
+        public DtoLink(string name, string url)
+        {
+            Name = name;
+            Url = url;
+        }
+
+
+
         /// <summary>
         /// 标识ID
         /// </summary>

@@ -67,7 +67,7 @@ namespace WebApi.Filters
         {
             try
             {
-                var value = JsonHelper.ObjectToJson(context.Result);
+                var value = JsonHelper.ObjectToJson(context.Result!);
                 value = JsonHelper.GetValueByKey(value, "value");
 
 
@@ -86,7 +86,10 @@ namespace WebApi.Filters
 
                 key = "CacheData_" + CryptoHelper.GetMd5(key);
 
-                CacheHelper.SetString(key, value, TimeSpan.FromSeconds(TTL));
+                if (value != null)
+                {
+                    CacheHelper.SetString(key, value, TimeSpan.FromSeconds(TTL));
+                }
 
             }
             catch

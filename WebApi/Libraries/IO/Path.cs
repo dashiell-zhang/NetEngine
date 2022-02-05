@@ -13,7 +13,7 @@ namespace WebApi.Libraries.IO
         /// <returns></returns>
         public static string WebRootPath()
         {
-            return Program.ServiceProvider.GetService<IWebHostEnvironment>().WebRootPath.Replace("\\", "/");
+            return Program.ServiceProvider.GetRequiredService<IWebHostEnvironment>().WebRootPath.Replace("\\", "/");
         }
 
 
@@ -24,7 +24,7 @@ namespace WebApi.Libraries.IO
         /// <returns></returns>
         public static string ContentRootPath()
         {
-            return Program.ServiceProvider.GetService<IWebHostEnvironment>().ContentRootPath.Replace("\\", "/");
+            return Program.ServiceProvider.GetRequiredService<IWebHostEnvironment>().ContentRootPath.Replace("\\", "/");
         }
 
     }

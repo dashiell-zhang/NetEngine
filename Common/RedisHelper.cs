@@ -326,7 +326,7 @@ namespace Common
         /// </summary>
         /// <param name="channel">频道</param>
         /// <param name="handler">委托方法</param>
-        public static void Subscribe(string channel, Action<RedisChannel, RedisValue> handler = null)
+        public static void Subscribe(string channel, Action<RedisChannel, RedisValue>? handler = null)
         {
             var sub = ConnectionMultiplexer.GetSubscriber();
             sub.Subscribe(channel, (channel, message) =>

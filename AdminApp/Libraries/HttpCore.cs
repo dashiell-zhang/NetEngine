@@ -10,9 +10,8 @@ namespace AdminApp.Libraries
     {
 
 
-#pragma warning disable CS8632 // 只能在 "#nullable" 注释上下文内的代码中使用可为 null 的引用类型的注释。
-        public static Task<TValue?> GetFromJsonAsync<TValue>(this HttpClient client, string? requestUri)
-#pragma warning restore CS8632 // 只能在 "#nullable" 注释上下文内的代码中使用可为 null 的引用类型的注释。
+
+        public static Task<TValue?> GetFromJsonAsync<TValue>(this HttpClient client, string requestUri)
         {
             var jsonSerializerOptions = new JsonSerializerOptions();
 
@@ -39,7 +38,7 @@ namespace AdminApp.Libraries
         }
 
 
-        public static TValue ReadAsEntityAsync<TValue>(this HttpContent httpContent)
+        public static TValue? ReadAsEntityAsync<TValue>(this HttpContent httpContent)
         {
             var jsonSerializerOptions = new JsonSerializerOptions();
 

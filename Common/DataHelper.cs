@@ -148,7 +148,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        public static DataTable ListToDataTable<T>(IList<T> list)
+        public static DataTable? ListToDataTable<T>(IList<T> list)
             where T : class
         {
             if (list == null || list.Count <= 0)
@@ -204,7 +204,7 @@ namespace Common
         /// <param name="filePath">excel路径</param>  
         /// <param name="isColumnName">第一行是否是列名</param>  
         /// <returns>返回datatable</returns>  
-        public static DataTable ExcelToDataTable(string filePath, bool isColumnName)
+        public static DataTable? ExcelToDataTable(string filePath, bool isColumnName)
         {
             DataTable? dataTable = null;
             FileStream? fs = null;
@@ -266,7 +266,7 @@ namespace Common
                                 for (int i = startRow; i <= rowCount; ++i)
                                 {
                                     IRow row = sheet.GetRow(i);
-                                    if (row == null | row.Cells.Count == 0) continue;
+                                    if (row == null || row!.Cells.Count == 0) continue;
 
                                     DataRow dataRow = dataTable.NewRow();
                                     for (int j = row.FirstCellNum; j < cellCount; ++j)
@@ -328,7 +328,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        public static IO.NpoiMemoryStream ListToExcel<T>(List<T> list) where T : new()
+        public static IO.NpoiMemoryStream ListToExcel<T>(List<T> list) where T : notnull, new()
         {
 
             //创建Excel文件的对象
@@ -388,7 +388,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        public static IO.NpoiMemoryStream ListToExcelDispalyName<T>(List<T> list) where T : new()
+        public static IO.NpoiMemoryStream ListToExcelDispalyName<T>(List<T> list) where T : notnull, new()
         {
 
             //创建Excel文件的对象

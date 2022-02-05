@@ -23,7 +23,7 @@ namespace TaskAdmin.Libraries.Verify
         public static bool Authorization(AuthorizationHandlerContext authorizationHandlerContext)
         {
 
-            if (authorizationHandlerContext.User.Identity.IsAuthenticated)
+            if (authorizationHandlerContext.User.Identity!.IsAuthenticated)
             {
 
                 if (authorizationHandlerContext.Resource is HttpContext httpContext)
@@ -33,26 +33,26 @@ namespace TaskAdmin.Libraries.Verify
                     {
                         var module = "taskadmin";
 
-                        var endpoint = httpContext.GetEndpoint();
+                        Endpoint endpoint = httpContext.GetEndpoint()!;
 
-                        var actionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>();
+                        ControllerActionDescriptor actionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>()!;
 
                         var controller = actionDescriptor.ControllerName.ToLower();
                         var action = actionDescriptor.ActionName.ToLower();
 
                         using var scope = Program.ServiceProvider.CreateScope();
-                        var db = scope.ServiceProvider.GetService<DatabaseContext>();
+                        var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
                         var userIdStr = httpContext.User.Claims.ToList().Where(t => t.Type == "userId").Select(t => t.Value).FirstOrDefault();
 
-                        var userId = long.Parse(userIdStr);
+                        var userId = long.Parse(userIdStr!);
                         var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
                         var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
 
                         if (functionId != default)
                         {
-                            var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+                            var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId!.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
 
                             if (functionAuthorizeId != default)
                             {

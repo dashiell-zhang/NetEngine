@@ -83,15 +83,15 @@ namespace WebApi.Controllers.v1
         public string GetTokenByWeiXinMiniAppCode([FromBody] DtoKeyValue keyValue)
         {
 
-            var weiXinKeyId = long.Parse(keyValue.Key.ToString()!);
-            string code = keyValue.Value.ToString()!;
+            var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
+            string code = keyValue.Value!.ToString()!;
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid, appSecret);
+            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid!, appSecret!);
 
 
             var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
@@ -124,7 +124,7 @@ namespace WebApi.Controllers.v1
 
                         db.SaveChanges();
 
-                        TUserBindExternal userBind = new("WeiXinMiniApp", appid, openid);
+                        TUserBindExternal userBind = new("WeiXinMiniApp", appid!, openid);
                         userBind.Id = snowflakeHelper.GetId();
                         userBind.CreateTime = DateTime.UtcNow;
                         userBind.UserId = user.Id;
@@ -138,7 +138,7 @@ namespace WebApi.Controllers.v1
 
             }
 
-            return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
+            return GetToken(new DtoLogin(user.Name, user.PassWord));
         }
 
 
@@ -154,7 +154,7 @@ namespace WebApi.Controllers.v1
         {
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
-                string phone = keyValue.Key.ToString()!;
+                string phone = keyValue.Key!.ToString()!;
 
                 var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
 
@@ -174,7 +174,7 @@ namespace WebApi.Controllers.v1
                     db.SaveChanges();
                 }
 
-                return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
+                return GetToken(new DtoLogin(user.Name, user.PassWord));
             }
             else
             {
@@ -202,7 +202,7 @@ namespace WebApi.Controllers.v1
 
             var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId) & t.Function.Parent.Sign == sign).Select(t => new DtoKeyValue
+            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId!.Value) | t.UserId == userId) & t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name
@@ -223,7 +223,7 @@ namespace WebApi.Controllers.v1
         public bool SendSmsVerifyPhone(DtoKeyValue keyValue)
         {
 
-            string phone = keyValue.Key.ToString()!;
+            string phone = keyValue.Key!.ToString()!;
 
             string key = "VerifyPhone_" + phone;
 
@@ -271,15 +271,15 @@ namespace WebApi.Controllers.v1
         public string GetTokenByWeiXinAppCode(DtoKeyValue keyValue)
         {
 
-            var weiXinKeyId = long.Parse(keyValue.Key.ToString()!);
-            string code = keyValue.Value.ToString()!;
+            var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
+            string code = keyValue.Value!.ToString()!;
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinApp" & t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(appid, appSecret);
+            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(appid!, appSecret!);
 
             var accseetoken = weiXinHelper.GetAccessToken(code).accessToken;
 
@@ -292,7 +292,7 @@ namespace WebApi.Controllers.v1
             if (user == null)
             {
 
-                user = new(userInfo.NickName, userInfo.NickName, "", Guid.NewGuid().ToString());
+                user = new(userInfo.NickName!, userInfo.NickName!, "", Guid.NewGuid().ToString());
                 user.Id = snowflakeHelper.GetId();
                 user.IsDelete = false;
                 user.CreateTime = DateTime.UtcNow;
@@ -300,7 +300,7 @@ namespace WebApi.Controllers.v1
                 db.TUser.Add(user);
                 db.SaveChanges();
 
-                TUserBindExternal bind = new("WeiXinApp", appid, openid);
+                TUserBindExternal bind = new("WeiXinApp", appid!, openid);
                 bind.Id = snowflakeHelper.GetId();
                 bind.CreateTime = DateTime.UtcNow;
 
@@ -311,7 +311,7 @@ namespace WebApi.Controllers.v1
                 db.SaveChanges();
             }
 
-            return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
+            return GetToken(new DtoLogin(user.Name, user.PassWord));
 
         }
 

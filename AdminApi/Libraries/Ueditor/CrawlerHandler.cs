@@ -11,8 +11,8 @@ namespace AdminApi.Libraries.Ueditor
     /// </summary>
     public class CrawlerHandler : Handler
     {
-        private string[] Sources;
-        private Crawler[] Crawlers;
+        private string[]? Sources;
+        private Crawler[]? Crawlers;
 
         public override string Process()
         {
@@ -40,22 +40,21 @@ namespace AdminApi.Libraries.Ueditor
 
     public class Crawler
     {
-        public string SourceUrl { get; set; }
-        public string ServerUrl { get; set; }
-        public string State { get; set; }
+        public string? SourceUrl { get; set; }
+        public string? ServerUrl { get; set; }
+        public string? State { get; set; }
 
 
 
 
         public Crawler(string sourceUrl)
         {
-            this.SourceUrl = sourceUrl;
-
+            SourceUrl = sourceUrl;
         }
 
         public Crawler Fetch()
         {
-            if (!IsExternalIPAddress(this.SourceUrl))
+            if (!IsExternalIPAddress(SourceUrl!))
             {
                 State = "INVALID_URL";
                 return this;
@@ -64,7 +63,7 @@ namespace AdminApi.Libraries.Ueditor
 
             using HttpClient client = new();
             client.DefaultRequestVersion = new Version("2.0");
-            using var httpResponse = client.GetAsync(this.SourceUrl).Result;
+            using var httpResponse = client.GetAsync(SourceUrl).Result;
             if (httpResponse.StatusCode != HttpStatusCode.OK)
             {
                 State = "Url returns " + httpResponse.StatusCode;
@@ -72,16 +71,16 @@ namespace AdminApi.Libraries.Ueditor
             }
 
 
-            if (httpResponse.Content.Headers.ContentType.MediaType.Contains("image") == false)
+            if (httpResponse.Content.Headers.ContentType?.MediaType?.Contains("image") == false)
             {
                 State = "Url is not an image";
                 return this;
             }
-            ServerUrl = PathFormatter.Format(Path.GetFileName(this.SourceUrl), Config.GetString("catcherPathFormat"));
+            ServerUrl = PathFormatter.Format(Path.GetFileName(SourceUrl!), Config.GetString("catcherPathFormat"));
             var savePath = IO.Path.WebRootPath() + ServerUrl;
             if (!Directory.Exists(Path.GetDirectoryName(savePath)))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(savePath));
+                Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
             }
             try
             {
@@ -94,7 +93,7 @@ namespace AdminApi.Libraries.Ueditor
                 {
                     //将文件转存至 oss 并清理本地文件
                     var oss = new Common.AliYun.OssHelper();
-                    var upload = oss.FileUpload(savePath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(this.SourceUrl));
+                    var upload = oss.FileUpload(savePath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(SourceUrl!));
 
                     if (upload)
                     {

@@ -198,7 +198,7 @@ namespace TaskAdmin
                 {
 
                     //获取验证失败的模型字段 
-                    var errors = actionContext.ModelState.Where(e => e.Value.Errors.Count > 0).Select(e => e.Value.Errors.First().ErrorMessage).ToList();
+                    var errors = actionContext.ModelState.Where(e => e.Value!.Errors.Count > 0).Select(e => e.Value!.Errors.First().ErrorMessage).ToList();
 
                     var dataStr = string.Join(" | ", errors);
 
@@ -273,7 +273,7 @@ namespace TaskAdmin
                 AllowAutoRedirect = false,
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
                 {
-                    return string.Equals(cert.Thumbprint, "xxxxxx", StringComparison.OrdinalIgnoreCase);
+                    return string.Equals(cert?.Thumbprint, "xxxxxx", StringComparison.OrdinalIgnoreCase);
                 }
             });
 
@@ -356,6 +356,6 @@ namespace TaskAdmin
         }
 
 
-        public static IServiceProvider ServiceProvider { get; set; }
+        public static IServiceProvider ServiceProvider { get; set; } = null!;
     }
 }

@@ -32,7 +32,7 @@ namespace WebApi.Controllers.v1
         /// <returns>openid,userid</returns>
         /// <remarks>传入租户ID和微信临时 code 获取 openid，如果 openid 在系统有中对应用户，则一并返回用户的ID值，否则用户ID值为空</remarks>
         [HttpGet("GetWeiXinMiniAppOpenId")]
-        public string GetWeiXinMiniAppOpenId(long weiXinKeyId, string code)
+        public string? GetWeiXinMiniAppOpenId(long weiXinKeyId, string code)
         {
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
@@ -40,15 +40,21 @@ namespace WebApi.Controllers.v1
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid, appSecret);
 
-            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
+            if (appid != null && appSecret != null)
+            {
+                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid, appSecret);
 
-            string openid = wxinfo.openid;
+                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
 
-            return openid;
+                string openid = wxinfo.openid;
 
-
+                return openid;
+            }
+            else
+            {
+                return null;
+            }
         }
 
 
@@ -61,7 +67,7 @@ namespace WebApi.Controllers.v1
         /// <param name="code">微信临时code</param>
         /// <param name="weiXinKeyId">微信配置密钥ID</param>
         [HttpGet("GetWeiXinMiniAppPhone")]
-        public string GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, long weiXinKeyId)
+        public string? GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, long weiXinKeyId)
         {
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
@@ -69,23 +75,36 @@ namespace WebApi.Controllers.v1
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appId, appSecret);
+
+            if (appId != null && appSecret != null)
+            {
+                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appId, appSecret);
 
 
-            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
+                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
 
-            string openid = wxinfo.openid;
-            string sessionkey = wxinfo.sessionkey;
+                string openid = wxinfo.openid;
+                string sessionkey = wxinfo.sessionkey;
 
-            var strJson = Libraries.WeiXin.MiniApp.WeiXinHelper.DecryptionData(encryptedData, sessionkey, iv);
+                var strJson = Libraries.WeiXin.MiniApp.WeiXinHelper.DecryptionData(encryptedData, sessionkey, iv);
 
-            var user = db.TUserBindExternal.Where(t => t.IsDelete == false & t.OpenId == openid & t.AppName == "WeiXinMiniApp" & t.AppId == appId).Select(t => t.User).FirstOrDefault();
+                var user = db.TUserBindExternal.Where(t => t.IsDelete == false & t.OpenId == openid & t.AppName == "WeiXinMiniApp" & t.AppId == appId).Select(t => t.User).FirstOrDefault();
 
-            user.Phone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
+                if (user != null)
+                {
+                    var retPhone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
 
-            db.SaveChanges();
+                    if (retPhone != null)
+                    {
+                        user.Phone = retPhone;
+                        db.SaveChanges();
+                        return user.Phone;
+                    }
 
-            return user.Phone;
+                }
+            }
+
+            return null;
         }
 
 
@@ -97,7 +116,7 @@ namespace WebApi.Controllers.v1
         /// <returns></returns>
         [HttpGet("GetUser")]
         [CacheDataFilter(TTL = 60, UseToken = true)]
-        public DtoUser GetUser(long? userId)
+        public DtoUser? GetUser(long? userId)
         {
 
             if (userId == null)
@@ -105,11 +124,8 @@ namespace WebApi.Controllers.v1
                 userId = base.userId;
             }
 
-            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
+            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser(t.Name, t.NickName, t.Phone)
             {
-                Name = t.Name,
-                NickName = t.NickName,
-                Phone = t.Phone,
                 Email = t.Email,
                 Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
@@ -132,30 +148,37 @@ namespace WebApi.Controllers.v1
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
 
-                string phone = keyValue.Key.ToString()!;
-
+                string phone = keyValue.Key!.ToString()!;
 
                 var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == phone).Count();
 
                 var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
-
-                if (checkPhone == 0)
+                if (user != null)
                 {
-                    user.Phone = phone;
+                    if (checkPhone == 0)
+                    {
+                        user.Phone = phone;
 
-                    db.SaveChanges();
+                        db.SaveChanges();
 
-                    return true;
+                        return true;
+                    }
+                    else
+                    {
+                        HttpContext.Response.StatusCode = 400;
+                        HttpContext.Items.Add("errMsg", "手机号已被其他账户绑定");
+
+                        return false;
+                    }
                 }
                 else
                 {
                     HttpContext.Response.StatusCode = 400;
-                    HttpContext.Items.Add("errMsg", "手机号已被其他账户绑定");
+                    HttpContext.Items.Add("errMsg", "账户不存在");
 
                     return false;
                 }
-
             }
             else
             {
@@ -180,30 +203,41 @@ namespace WebApi.Controllers.v1
 
             string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault()!;
 
-            string smsCode = keyValue.Value.ToString()!;
+            string smsCode = keyValue.Value!.ToString()!;
 
             var checkSms = IdentityVerification.SmsVerifyPhone(new DtoKeyValue { Key = phone, Value = smsCode });
 
             if (checkSms)
             {
-                string password = keyValue.Key.ToString()!;
+                string password = keyValue.Key!.ToString()!;
 
                 if (!string.IsNullOrEmpty(password))
                 {
                     var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
 
-                    user.PassWord = password;
+                    if (user != null)
+                    {
+                        user.PassWord = password;
 
-                    db.SaveChanges();
+                        db.SaveChanges();
 
 
-                    var tokenList = db.TUserToken.Where(t => t.IsDelete == false & t.UserId == userId).ToList();
+                        var tokenList = db.TUserToken.Where(t => t.IsDelete == false & t.UserId == userId).ToList();
 
-                    db.TUserToken.RemoveRange(tokenList);
+                        db.TUserToken.RemoveRange(tokenList);
 
-                    db.SaveChanges();
+                        db.SaveChanges();
 
-                    return true;
+                        return true;
+                    }
+                    else
+                    {
+                        HttpContext.Response.StatusCode = 400;
+                        HttpContext.Items.Add("errMsg", "账户不存在");
+
+                        return false;
+                    }
+
                 }
                 else
                 {

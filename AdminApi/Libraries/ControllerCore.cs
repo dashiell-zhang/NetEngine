@@ -16,18 +16,18 @@ namespace AdminApi.Libraries
         public readonly long userId;
         public readonly IDistributedLockProvider distLock;
         public readonly IDistributedSemaphoreProvider distSemaphoreLock;
-        public readonly IDistributedUpgradeableReaderWriterLockProvider distUpgradeableLock;
+        public readonly IDistributedReaderWriterLockProvider distReaderWriterLock;
         public readonly SnowflakeHelper snowflakeHelper;
 
 
         protected ControllerCore()
         {
-            db = Http.HttpContext.Current().RequestServices.GetService<DatabaseContext>();
-            cap = Http.HttpContext.Current().RequestServices.GetService<ICapPublisher>();
-            distLock = Http.HttpContext.Current().RequestServices.GetService<IDistributedLockProvider>();
-            distSemaphoreLock = Http.HttpContext.Current().RequestServices.GetService<IDistributedSemaphoreProvider>();
-            distUpgradeableLock = Http.HttpContext.Current().RequestServices.GetService<IDistributedUpgradeableReaderWriterLockProvider>();
-            snowflakeHelper = Http.HttpContext.Current().RequestServices.GetService<SnowflakeHelper>();
+            db = Http.HttpContext.Current().RequestServices.GetRequiredService<DatabaseContext>();
+            cap = Http.HttpContext.Current().RequestServices.GetRequiredService<ICapPublisher>();
+            distLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedLockProvider>();
+            distSemaphoreLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedSemaphoreProvider>();
+            distReaderWriterLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedReaderWriterLockProvider>();
+            snowflakeHelper = Http.HttpContext.Current().RequestServices.GetRequiredService<SnowflakeHelper>();
 
             var userIdStr = Verify.JWTToken.GetClaims("userId");
 

@@ -31,7 +31,7 @@ namespace Common
 
             var retData = Json.JsonHelper.JsonToObject<DnsReturn>(retStr);
 
-            return retData.Answer.ToList().Select(t => t.Data.Replace("\"", "")).ToList();
+            return retData.Answer!.ToList().Select(t => t.Data!.Replace("\"", "")).ToList();
         }
 
 
@@ -57,7 +57,7 @@ namespace Common
 
             var retData = Json.JsonHelper.JsonToObject<DnsReturn>(retStr);
 
-            return retData.Answer.ToList().Where(t => t.Type == 1).Select(t => t.Data.Replace("\"", "")).ToList();
+            return retData.Answer!.ToList().Where(t => t.Type == 1).Select(t => t.Data!.Replace("\"", "")).ToList();
         }
 
 
@@ -83,7 +83,8 @@ namespace Common
 
             var retData = Json.JsonHelper.JsonToObject<DnsReturn>(retStr);
 
-            return retData.Answer.ToList().Where(t => t.Type == 28).Select(t => t.Data.Replace("\"", "")).ToList();
+
+            return retData.Answer!.ToList().Where(t => t.Type == 28).Select(t => t.Data!.Replace("\"", "")).ToList();
         }
 
 
@@ -102,26 +103,26 @@ namespace Common
 
             public bool CD { get; set; }
 
-            public DomainTextRetQuestion Question { get; set; }
+            public DomainTextRetQuestion? Question { get; set; }
 
             public class DomainTextRetQuestion
             {
-                public string Name { get; set; }
+                public string? Name { get; set; }
 
                 public int Type { get; set; }
             }
 
-            public DomainTextRetAnswer[] Answer { get; set; }
+            public DomainTextRetAnswer[]? Answer { get; set; }
 
             public class DomainTextRetAnswer
             {
-                public string Name { get; set; }
+                public string? Name { get; set; }
 
                 public int TTL { get; set; }
 
                 public int Type { get; set; }
 
-                public string Data { get; set; }
+                public string? Data { get; set; }
             }
 
         }

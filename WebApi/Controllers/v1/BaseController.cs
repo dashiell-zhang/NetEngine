@@ -65,11 +65,11 @@ namespace WebApi.Controllers.v1
             {
                 Key = t.Id,
                 Value = t.Province,
-                ChildList = t.TRegionCity.Select(c => new DtoKeyValueChild
+                ChildList = t.TRegionCity!.Select(c => new DtoKeyValueChild
                 {
                     Key = c.Id,
                     Value = c.City,
-                    ChildList = c.TRegionArea.Select(a => new DtoKeyValueChild
+                    ChildList = c.TRegionArea!.Select(a => new DtoKeyValueChild
                     {
                         Key = a.Id,
                         Value = a.Area
@@ -186,23 +186,23 @@ namespace WebApi.Controllers.v1
             }
 
             //读锁，多人同读，与写锁互斥
-            using (distUpgradeableLock.AcquireReadLock(""))
+            using (distReaderWriterLock.AcquireReadLock(""))
             {
             }
 
 
             //写锁，互斥
-            using (distUpgradeableLock.AcquireWriteLock(""))
+            using (distReaderWriterLock.AcquireWriteLock(""))
             {
             }
 
             //可升级读锁，初始状态为读锁，可手动升级为写锁
-            using (var handle = distUpgradeableLock.AcquireUpgradeableReadLock(""))
-            {
+            //using (var handle = distUpgradeLock.AcquireUpgradeableReadLock(""))
+            //{
 
-                //升级写锁
-                handle.UpgradeToWriteLock();
-            }
+            //    //升级写锁
+            //    handle.UpgradeToWriteLock();
+            //}
 
             return true;
         }

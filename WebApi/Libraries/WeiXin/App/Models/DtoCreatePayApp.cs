@@ -20,34 +20,34 @@ namespace WebApi.Libraries.WeiXin.App.Models
         /// <summary>
         /// 应用ID
         /// </summary>
-        public string AppId { get; set; }
+        public string? AppId { get; set; }
 
 
 
         /// <summary>
         /// 商户号
         /// </summary>
-        public string PartnerId { get; set; }
+        public string? PartnerId { get; set; }
 
 
 
         /// <summary>
         /// 预支付交易会话ID
         /// </summary>
-        public string PrepayId { get; set; }
+        public string? PrepayId { get; set; }
 
 
 
         /// <summary>
         /// 扩展字段
         /// </summary>
-        public string Package { get; set; }
+        public string? Package { get; set; }
 
 
         /// <summary>
         /// 随机字符串，长度为32个字符以下
         /// </summary>
-        public string NonceStr { get; set; }
+        public string? NonceStr { get; set; }
 
 
 
@@ -61,7 +61,7 @@ namespace WebApi.Libraries.WeiXin.App.Models
         /// <summary>
         /// 签名
         /// </summary>
-        public string Sign { get; set; }
+        public string? Sign { get; set; }
 
     }
 }

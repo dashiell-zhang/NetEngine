@@ -88,7 +88,7 @@
 </Drawer>
 
 
-@code{
+@code {
 
     override protected void OnInitialized()
     {
@@ -103,7 +103,13 @@
     async void GetChannelList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoChannel>>("Article/GetChannelList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoChannel>>("Article/GetChannelList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
         tableLoading = false;
         StateHasChanged();
     }
@@ -125,12 +131,12 @@
 
 
     bool isShowEditChannel = false;
-    DtoEditChannel editChannel = new();
+    DtoEditChannel editChannel = new("");
     long channelId;
 
-    void EditChannel(DtoChannel channel = null)
+    void EditChannel(DtoChannel? channel = null)
     {
-        editChannel = new();
+        editChannel = new("");
         channelId = default;
 
         if (channel != null)

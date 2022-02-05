@@ -11,6 +11,17 @@ namespace AdminShared.Models.v1.Article
     public class DtoArticle
     {
 
+
+        public DtoArticle(string categoryName, string title, string content, string digest)
+        {
+            CategoryName = categoryName;
+            Title = title;
+            Content = content;
+            Digest = digest;
+        }
+
+
+
         /// <summary>
         /// 标识ID
         /// </summary>
@@ -87,7 +98,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 封面图
         /// </summary>
-        public List<DtoKeyValue> CoverImageList { get; set; }
+        public List<DtoKeyValue>? CoverImageList { get; set; }
 
 
     }

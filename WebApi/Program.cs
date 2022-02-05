@@ -160,7 +160,7 @@ namespace WebApi
                 {
                     ValidIssuer = jwtSetting.Issuer,
                     ValidAudience = jwtSetting.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey!))
 
                     /***********************************TokenValidationParameters的参数默认值***********************************/
                     // RequireSignedTokens = true,
@@ -295,7 +295,7 @@ namespace WebApi
                 {
 
                     //获取验证失败的模型字段 
-                    var errors = actionContext.ModelState.Where(e => e.Value.Errors.Count > 0).Select(e => e.Value.Errors.First().ErrorMessage).ToList();
+                    var errors = actionContext.ModelState.Where(e => e.Value?.Errors.Count > 0).Select(e => e.Value?.Errors.First().ErrorMessage).ToList();
 
                     var dataStr = string.Join(" | ", errors);
 
@@ -371,7 +371,7 @@ namespace WebApi
                 AllowAutoRedirect = false,
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
                 {
-                    return string.Equals(cert.Thumbprint, "xxxxxx", StringComparison.OrdinalIgnoreCase);
+                    return string.Equals(cert?.Thumbprint, "xxxxxx", StringComparison.OrdinalIgnoreCase);
                 }
             });
 
@@ -426,7 +426,7 @@ namespace WebApi
             //启用中间件服务对swagger-ui，指定Swagger JSON端点
             app.UseSwaggerUI(options =>
             {
-                var apiVersionDescriptionProvider = app.Services.GetService<IApiVersionDescriptionProvider>();
+                var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
                 foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
                 {
                     options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
@@ -444,7 +444,7 @@ namespace WebApi
 
 
 
-        public static IServiceProvider ServiceProvider { get; set; }
+        public static IServiceProvider ServiceProvider { get; set; } = null!;
 
 
     }

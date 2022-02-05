@@ -6,6 +6,13 @@ namespace AdminShared.Models.v1.Article
     public class DtoChannel
     {
 
+
+        public DtoChannel(string name)
+        {
+            Name = name;
+        }
+
+
         /// <summary>
         /// 标识ID
         /// </summary>

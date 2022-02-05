@@ -11,20 +11,18 @@ namespace Common
     {
 
 
-        private static bool IsInit;
-        private static IDistributedCache InitCache;
+        private static IDistributedCache? InitCache;
 
 
         private static IDistributedCache Cache
         {
             get
             {
-                if (!IsInit)
+                if (InitCache == null)
                 {
                     var programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
                     IServiceProvider serviceProvider = (IServiceProvider)programType!.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
                     InitCache = serviceProvider.GetService<IDistributedCache>()!;
-                    IsInit = true;
                 }
 
                 return InitCache;
@@ -168,7 +166,7 @@ namespace Common
             }
             catch
             {
-                return default;
+                return default!;
             }
         }
 

@@ -18,7 +18,7 @@ namespace AdminApi.Libraries.Verify
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static string GetClaims(string key)
+        public static string? GetClaims(string key)
         {
 
             try
@@ -27,7 +27,7 @@ namespace AdminApi.Libraries.Verify
 
                 var securityToken = new JwtSecurityToken(Authorization);
 
-                var value = securityToken.Claims.ToList().Where(t => t.Type == key).FirstOrDefault().Value;
+                var value = securityToken.Claims.ToList().Where(t => t.Type == key).FirstOrDefault()?.Value;
 
                 return value;
             }
@@ -45,12 +45,12 @@ namespace AdminApi.Libraries.Verify
         /// <returns></returns>
         public static string GetToken(Claim[] claims)
         {
-            var conf = Program.ServiceProvider.GetService<IConfiguration>();
+            var conf = Program.ServiceProvider.GetRequiredService<IConfiguration>();
 
             var jwtSetting = conf.GetSection("JWTSetting").Get<JWTSetting>();
 
             //对称秘钥
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey!));
 
             //签名证书(秘钥，加密算法)
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

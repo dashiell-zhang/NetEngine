@@ -10,6 +10,6 @@ namespace WebApi.Models.Shared
     public class DtoIdList
     {
 
-        public List<Guid> IdList { get; set; }
+        public List<long>? IdList { get; set; }
     }
 }

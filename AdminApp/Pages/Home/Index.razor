@@ -14,7 +14,7 @@
             @foreach (var info in serverInfos)
             {
                 <CardGrid Style="width:25%;text-align:left" Hoverable="true">
-                    @(info.Key.ToString()+"："+info.Value.ToString())
+                    @(info.Key!.ToString()+"："+info.Value!.ToString())
                 </CardGrid>
             }
 
@@ -23,13 +23,18 @@
     </Content>
 </Layout>
 
-@code{
+@code {
 
     List<DtoKeyValue> serverInfos = new();
 
     async override protected void OnInitialized()
     {
-        serverInfos = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Site/GetServerInfo");
+        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Site/GetServerInfo");
+
+        if (retData != null)
+        {
+            serverInfos = retData;
+        }
 
         StateHasChanged();
     }

@@ -13,13 +13,13 @@ namespace WebApi.Libraries.WeiXin.App
 
         private readonly string appsecret;
 
-        private readonly string mchid;
+        private readonly string? mchid;
 
-        private readonly string mchkey;
+        private readonly string? mchkey;
 
-        private readonly string notifyurl;
+        private readonly string? notifyurl;
 
-        public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
+        public WeiXinHelper(string in_appid, string in_secret, string? in_mchid = null, string? in_mchkey = null, string? in_notifyurl = null)
         {
             appid = in_appid;
             appsecret = in_secret;
@@ -39,7 +39,7 @@ namespace WebApi.Libraries.WeiXin.App
         /// <param name="price">价格，单位为分</param>
         /// <param name="ip">服务器IP</param>
         /// <returns></returns>
-        public DtoCreatePayApp CreatePay(string orderno, string body, int price, string ip)
+        public DtoCreatePayApp? CreatePay(string orderno, string body, int price, string ip)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -131,8 +131,14 @@ namespace WebApi.Libraries.WeiXin.App
 
                 var returnJson = HttpHelper.Post(url, "", "form");
 
-                token = Common.Json.JsonHelper.GetValueByKey(returnJson, "access_token");
-                openid = Common.Json.JsonHelper.GetValueByKey(returnJson, "openid");
+                var retToken = Common.Json.JsonHelper.GetValueByKey(returnJson, "access_token");
+                var retOpenId = Common.Json.JsonHelper.GetValueByKey(returnJson, "openid");
+
+                if (retToken != null && retOpenId != null)
+                {
+                    token = retToken;
+                    openid = retOpenId;
+                }
 
                 if (!string.IsNullOrEmpty(token))
                 {

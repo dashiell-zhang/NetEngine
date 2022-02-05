@@ -10,6 +10,12 @@ namespace AdminShared.Models.v1.Article
     {
 
 
+        public DtoEditArticle(string title, string content)
+        {
+            Title = title;
+            Content = content;
+        }
+
 
         /// <summary>
         /// 类别ID

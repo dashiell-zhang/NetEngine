@@ -63,11 +63,11 @@ namespace AdminApi.Controllers.v1
             {
                 Key = t.Id,
                 Value = t.Province,
-                ChildList = t.TRegionCity.Select(c => new DtoKeyValueChild
+                ChildList = t.TRegionCity!.Select(c => new DtoKeyValueChild
                 {
                     Key = c.Id,
                     Value = c.City,
-                    ChildList = c.TRegionArea.Select(a => new DtoKeyValueChild
+                    ChildList = c.TRegionArea!.Select(a => new DtoKeyValueChild
                     {
                         Key = a.Id,
                         Value = a.Area
@@ -121,7 +121,7 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetSnowflakeId")]
         public long GetSnowflakeId()
         {
-            return HttpContext.RequestServices.GetService<SnowflakeHelper>().GetId();
+            return snowflakeHelper.GetId();
         }
 
     }

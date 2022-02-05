@@ -10,6 +10,13 @@ namespace AdminShared.Models.v1.Article
     public class DtoCategory
     {
 
+
+        public DtoCategory(string name)
+        {
+            Name = name;
+        }
+
+
         /// <summary>
         /// 标识ID
         /// </summary>
@@ -43,7 +50,7 @@ namespace AdminShared.Models.v1.Article
         /// 父级信息
         /// </summary>
         public long? ParentId { get; set; }
-        public string ParentName { get; set; }
+        public string? ParentName { get; set; }
 
 
 

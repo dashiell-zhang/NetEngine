@@ -29,7 +29,7 @@ namespace WebApi.Libraries.Verify
         public static bool Authorization(AuthorizationHandlerContext authorizationHandlerContext)
         {
 
-            if (authorizationHandlerContext.User.Identity.IsAuthenticated)
+            if (authorizationHandlerContext.User.Identity!.IsAuthenticated)
             {
 
                 if (authorizationHandlerContext.Resource is HttpContext httpContext)
@@ -39,24 +39,24 @@ namespace WebApi.Libraries.Verify
 
                     var module = "webapi";
 
-                    var endpoint = httpContext.GetEndpoint();
+                    Endpoint endpoint = httpContext.GetEndpoint()!;
 
-                    var actionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>();
+                    ControllerActionDescriptor actionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>()!;
 
                     var controller = actionDescriptor.ControllerName.ToLower();
                     var action = actionDescriptor.ActionName.ToLower();
 
                     using var scope = Program.ServiceProvider.CreateScope();
-                    var db = scope.ServiceProvider.GetService<DatabaseContext>();
+                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-                    var userId = long.Parse(JWTToken.GetClaims("userId"));
+                    var userId = long.Parse(JWTToken.GetClaims("userId")!);
                     var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
 
                     var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
 
                     if (functionId != default)
                     {
-                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId!.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
 
                         if (functionAuthorizeId != default)
                         {
@@ -93,10 +93,10 @@ namespace WebApi.Libraries.Verify
         private static void IssueNewToken(HttpContext httpContext)
         {
 
-            var snowflakeHelper = httpContext.RequestServices.GetService<SnowflakeHelper>();
+            var snowflakeHelper = httpContext.RequestServices.GetRequiredService<SnowflakeHelper>();
 
             using var scope = Program.ServiceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetService<DatabaseContext>();
+            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
             var nbf = Convert.ToInt64(JWTToken.GetClaims("nbf"));
             var exp = Convert.ToInt64(JWTToken.GetClaims("exp"));
@@ -108,13 +108,13 @@ namespace WebApi.Libraries.Verify
             if (expTime < DateTime.UtcNow.AddMinutes(15))
             {
 
-                var tokenId = long.Parse(JWTToken.GetClaims("tokenId"));
-                var userId = long.Parse(JWTToken.GetClaims("userId"));
+                var tokenId = long.Parse(JWTToken.GetClaims("tokenId")!);
+                var userId = long.Parse(JWTToken.GetClaims("userId")!);
 
 
                 string key = "IssueNewToken" + tokenId;
 
-                var distLock = httpContext.RequestServices.GetService<IDistributedLockProvider>();
+                var distLock = httpContext.RequestServices.GetRequiredService<IDistributedLockProvider>();
                 if (distLock.TryAcquireLock(key) != null)
                 {
                     var newToken = db.TUserToken.Where(t => t.IsDelete == false & t.LastId == tokenId & t.CreateTime > nbfTime).FirstOrDefault();
@@ -175,11 +175,11 @@ namespace WebApi.Libraries.Verify
         {
             await Task.Run(() =>
             {
-                var distLock = Program.ServiceProvider.GetService<IDistributedLockProvider>();
+                var distLock = Program.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
                 if (distLock.TryAcquireLock("ClearExpireToken") != null)
                 {
                     using var scope = Program.ServiceProvider.CreateScope();
-                    var db = scope.ServiceProvider.GetService<DatabaseContext>();
+                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
                     var clearTime = DateTime.UtcNow.AddDays(-7);
                     var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
@@ -200,13 +200,13 @@ namespace WebApi.Libraries.Verify
         /// <returns></returns>
         public static bool SmsVerifyPhone(DtoKeyValue keyValue)
         {
-            string phone = keyValue.Key.ToString()!;
+            string phone = keyValue.Key!.ToString()!;
 
             string key = "VerifyPhone_" + phone;
 
             var code = Common.CacheHelper.GetString(key);
 
-            if (string.IsNullOrEmpty(code) == false && code == keyValue.Value.ToString())
+            if (string.IsNullOrEmpty(code) == false && code == keyValue.Value!.ToString())
             {
                 return true;
             }

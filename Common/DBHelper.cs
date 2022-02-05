@@ -23,7 +23,7 @@ namespace Common
         /// <param name="connection">数据库连接</param>
         /// <remarks>connection = db.Database.GetDbConnection()</remarks>
         /// <returns></returns>
-        public static IList<T> SelectFromSql<T>(string sql, Dictionary<string, object> parameters = default, DbConnection connection = default) where T : class
+        public static IList<T> SelectFromSql<T>(string sql, Dictionary<string, object>? parameters = default, DbConnection? connection = default) where T : class
         {
 
             if (connection == default)
@@ -79,7 +79,7 @@ namespace Common
         /// <param name="connection">自定义数据库连接</param>
         /// <remarks>connection = db.Database.GetDbConnection()</remarks>
         /// <returns></returns>
-        public static void ExecuteSql(string sql, Dictionary<string, object> parameters = default, DbConnection connection = default)
+        public static void ExecuteSql(string sql, Dictionary<string, object>? parameters = default, DbConnection? connection = default)
         {
 
             if (connection == default)
@@ -181,7 +181,7 @@ namespace Common
                 var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
                 var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>()!;
 
-                info = new TCount(tag);
+                info = new(tag);
 
                 info.Id = snowflakeHelper.GetId();
                 info.Count = 1;
@@ -230,7 +230,7 @@ namespace Common
         /// <param name="fieldName">字段名称</param>
         /// <remarks>字段名称为空时返回表的注释</remarks>
         /// <returns></returns>
-        public static string GetEntityComment<T>(string fieldName = null) where T : new()
+        public static string GetEntityComment<T>(string? fieldName = null) where T : new()
         {
             var path = AppContext.BaseDirectory + "/Repository.xml";
             var xml = new XmlDocument();
@@ -247,11 +247,11 @@ namespace Common
             {
                 var matchKey = "T:" + t.ToString();
 
-                foreach (object m in memebers)
+                foreach (object m in memebers!)
                 {
                     if (m is XmlNode node)
                     {
-                        var name = node.Attributes["name"].Value;
+                        var name = node.Attributes?["name"]?.Value;
 
                         var summary = node.InnerText.Trim();
 
@@ -262,7 +262,8 @@ namespace Common
                     }
                 }
 
-                return fieldList.FirstOrDefault(t => t.Key.ToLower() == matchKey.ToLower()).Value ?? t.ToString().Split(".").ToList().LastOrDefault();
+
+                return fieldList.FirstOrDefault(t => t.Key.ToLower() == matchKey.ToLower()).Value ?? t.ToString()!.Split(".").ToList().LastOrDefault()!;
             }
             else
             {
@@ -270,15 +271,15 @@ namespace Common
                 var baseType = t.GetType().BaseType;
                 while (baseType != null)
                 {
-                    baseTypeNames.Add(baseType.FullName);
+                    baseTypeNames.Add(baseType.FullName!);
                     baseType = baseType.BaseType;
                 }
 
-                foreach (object m in memebers)
+                foreach (object m in memebers!)
                 {
                     if (m is XmlNode node)
                     {
-                        var name = node.Attributes["name"].Value;
+                        var name = node.Attributes!["name"]!.Value;
 
                         var summary = node.InnerText.Trim();
 

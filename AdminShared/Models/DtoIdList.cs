@@ -10,6 +10,6 @@ namespace AdminShared.Models
     public class DtoIdList
     {
 
-        public List<Guid> IdList { get; set; }
+        public List<Guid>? IdList { get; set; }
     }
 }

@@ -31,7 +31,7 @@ namespace Common.AliPay.MiniApp
         /// <summary>
         /// 支付宝加解密密钥
         /// </summary>
-        public string aeskey;
+        public string? aeskey;
 
 
 
@@ -39,7 +39,7 @@ namespace Common.AliPay.MiniApp
         /// <param name="in_appprivatekey">应用私钥</param>
         /// <param name="in_alipaypublickey">支付宝公钥</param>
         /// <param name="in_aeskey">支付宝加解密密钥</param>
-        public AliPayHelper(string in_appid, string in_appprivatekey, string in_alipaypublickey, string in_aeskey = null)
+        public AliPayHelper(string in_appid, string in_appprivatekey, string in_alipaypublickey, string? in_aeskey = null)
         {
             appid = in_appid;
             appprivatekey = in_appprivatekey;
@@ -55,7 +55,7 @@ namespace Common.AliPay.MiniApp
         /// </summary>
         /// <param name="code">前端获取的临时code</param>
         /// <returns></returns>
-        public string GetUserId(string code)
+        public string? GetUserId(string code)
         {
             try
             {
@@ -67,7 +67,7 @@ namespace Common.AliPay.MiniApp
 
                 var body = response.Body;
 
-                var userid = Json.JsonHelper.GetValueByKey(Json.JsonHelper.GetValueByKey(body, "alipay_system_oauth_token_response"), "user_id");
+                var userid = Json.JsonHelper.GetValueByKey(Json.JsonHelper.GetValueByKey(body, "alipay_system_oauth_token_response")!, "user_id");
 
                 return userid;
             }
@@ -103,7 +103,7 @@ namespace Common.AliPay.MiniApp
 
 
             // "你的小程序对应的加解密密钥（为扩展考虑建议用appId+encryptType做密钥存储隔离）"
-            string decryptKey = aeskey;
+            string decryptKey = aeskey!;
 
 
             //如果是加密的报文则需要在密文的前后添加双引号

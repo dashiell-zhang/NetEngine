@@ -11,6 +11,14 @@ namespace WebApi.Models.Shared
     {
 
 
+        public DtoFileInfo(string fileName, string fileUrl, string displayLength, string createUserName)
+        {
+            FileName = fileName;
+            FileUrl = fileUrl;
+            DisplayLength = displayLength;
+            CreateUserName = createUserName;
+        }
+
 
         /// <summary>
         /// 文件ID

@@ -98,7 +98,7 @@ namespace AdminApi.Controllers.v1
                 new DtoKeyValue
                 {
                     Key = "服务器IP",
-                    Value = HttpContext.Connection.LocalIpAddress.ToString()
+                    Value = HttpContext.Connection.LocalIpAddress!.ToString()
                 },
 
                 new DtoKeyValue

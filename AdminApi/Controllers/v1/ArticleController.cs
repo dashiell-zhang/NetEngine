@@ -42,10 +42,9 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoChannel
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoChannel(t.Name)
             {
                 Id = t.Id,
-                Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
@@ -80,12 +79,11 @@ namespace AdminApi.Controllers.v1
         /// <param name="channelId">频道ID</param>
         /// <returns></returns>
         [HttpGet("GetChannel")]
-        public DtoChannel GetChannel(long channelId)
+        public DtoChannel? GetChannel(long channelId)
         {
-            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).Select(t => new DtoChannel
+            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).Select(t => new DtoChannel(t.Name)
             {
                 Id = t.Id,
-                Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
@@ -134,13 +132,21 @@ namespace AdminApi.Controllers.v1
         {
             var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).FirstOrDefault();
 
-            channel.Name = updateChannel.Name;
-            channel.Remarks = updateChannel.Remarks;
-            channel.Sort = updateChannel.Sort;
+            if (channel != null)
+            {
+                channel.Name = updateChannel.Name;
+                channel.Remarks = updateChannel.Remarks;
+                channel.Sort = updateChannel.Sort;
 
-            db.SaveChanges();
+                db.SaveChanges();
 
-            return true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
         }
 
 
@@ -155,13 +161,20 @@ namespace AdminApi.Controllers.v1
         {
             var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
-            channel.IsDelete = true;
-            channel.DeleteTime = DateTime.UtcNow;
-            channel.DeleteUserId = userId;
+            if (channel != null)
+            {
+                channel.IsDelete = true;
+                channel.DeleteTime = DateTime.UtcNow;
+                channel.DeleteUserId = userId;
 
-            db.SaveChanges();
+                db.SaveChanges();
 
-            return true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
 
@@ -191,14 +204,13 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory(t.Name)
             {
                 Id = t.Id,
-                Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
                 ParentId = t.ParentId,
-                ParentName = t.Parent.Name,
+                ParentName = t.Parent!.Name,
                 CreateTime = t.CreateTime
             }).Skip(skip).Take(pageSize).ToList();
 
@@ -231,16 +243,15 @@ namespace AdminApi.Controllers.v1
         /// <param name="categoryId">栏目ID</param>
         /// <returns></returns>
         [HttpGet("GetCategory")]
-        public DtoCategory GetCategory(long categoryId)
+        public DtoCategory? GetCategory(long categoryId)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new DtoCategory
+            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new DtoCategory(t.Name)
             {
                 Id = t.Id,
-                Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
                 ParentId = t.ParentId,
-                ParentName = t.Parent.Name,
+                ParentName = t.Parent!.Name,
                 CreateTime = t.CreateTime
             }).FirstOrDefault();
 
@@ -289,14 +300,21 @@ namespace AdminApi.Controllers.v1
         {
             var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).FirstOrDefault();
 
-            category.Name = updateCategory.Name;
-            category.ParentId = updateCategory.ParentId;
-            category.Remarks = updateCategory.Remarks;
-            category.Sort = updateCategory.Sort;
+            if (category != null)
+            {
+                category.Name = updateCategory.Name;
+                category.ParentId = updateCategory.ParentId;
+                category.Remarks = updateCategory.Remarks;
+                category.Sort = updateCategory.Sort;
 
-            db.SaveChanges();
+                db.SaveChanges();
 
-            return true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
 
@@ -311,13 +329,21 @@ namespace AdminApi.Controllers.v1
         {
             var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
-            category.IsDelete = true;
-            category.DeleteTime = DateTime.UtcNow;
-            category.DeleteUserId = userId;
+            if (category != null)
+            {
+                category.IsDelete = true;
+                category.DeleteTime = DateTime.UtcNow;
+                category.DeleteUserId = userId;
 
-            db.SaveChanges();
+                db.SaveChanges();
 
-            return true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
         }
 
 
@@ -349,18 +375,14 @@ namespace AdminApi.Controllers.v1
 
             var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle(t.Category.Name, t.Title, t.Content, t.Digest)
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
-                CategoryName = t.Category.Name,
-                Title = t.Title,
-                Content = t.Content,
                 IsRecommend = t.IsRecommend,
                 IsDisplay = t.IsDisplay,
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
-                Digest = t.Digest,
                 CreateTime = t.CreateTime,
                 CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
@@ -382,23 +404,19 @@ namespace AdminApi.Controllers.v1
         /// <param name="articleId">文章ID</param>
         /// <returns></returns>
         [HttpGet("GetArticle")]
-        public DtoArticle GetArticle(long articleId)
+        public DtoArticle? GetArticle(long articleId)
         {
             var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
 
 
-            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new DtoArticle
+            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new DtoArticle(t.Category.Name, t.Title, t.Content, t.Digest)
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
-                CategoryName = t.Category.Name,
-                Title = t.Title,
-                Content = t.Content,
                 IsRecommend = t.IsRecommend,
                 IsDisplay = t.IsDisplay,
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
-                Digest = t.Digest,
                 CreateTime = t.CreateTime,
                 CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
@@ -422,7 +440,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateArticle")]
         public long CreateArticle(DtoEditArticle createArticle, long fileKey)
         {
-            TArticle article = new(createArticle.Title, createArticle.Content,"");
+            TArticle article = new(createArticle.Title, createArticle.Content, "");
             article.Id = snowflakeHelper.GetId();
             article.CreateTime = DateTime.UtcNow;
             article.CreateUserId = userId;
@@ -440,7 +458,7 @@ namespace AdminApi.Controllers.v1
             }
             else
             {
-                article.Digest = createArticle.Digest;
+                article.Digest = createArticle.Digest!;
             }
 
             db.TArticle.Add(article);
@@ -472,27 +490,34 @@ namespace AdminApi.Controllers.v1
         {
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).FirstOrDefault();
 
-            article.CategoryId = updateArticle.CategoryId;
-            article.Title = updateArticle.Title;
-            article.Content = updateArticle.Content;
-            article.IsRecommend = updateArticle.IsRecommend;
-            article.IsDisplay = updateArticle.IsDisplay;
-            article.Sort = updateArticle.Sort;
-            article.ClickCount = updateArticle.ClickCount;
-
-            if (string.IsNullOrEmpty(updateArticle.Digest))
+            if (article != null)
             {
-                string content = Common.StringHelper.RemoveHtml(updateArticle.Content);
-                article.Digest = content.Length > 255 ? content[..255] : content;
+                article.CategoryId = updateArticle.CategoryId;
+                article.Title = updateArticle.Title;
+                article.Content = updateArticle.Content;
+                article.IsRecommend = updateArticle.IsRecommend;
+                article.IsDisplay = updateArticle.IsDisplay;
+                article.Sort = updateArticle.Sort;
+                article.ClickCount = updateArticle.ClickCount;
+
+                if (string.IsNullOrEmpty(updateArticle.Digest))
+                {
+                    string content = Common.StringHelper.RemoveHtml(updateArticle.Content);
+                    article.Digest = content.Length > 255 ? content[..255] : content;
+                }
+                else
+                {
+                    article.Digest = updateArticle.Digest;
+                }
+
+                db.SaveChanges();
+
+                return true;
             }
             else
             {
-                article.Digest = updateArticle.Digest;
+                return false;
             }
-
-            db.SaveChanges();
-
-            return true;
         }
 
 
@@ -507,13 +532,21 @@ namespace AdminApi.Controllers.v1
         {
             var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
-            article.IsDelete = true;
-            article.DeleteTime = DateTime.UtcNow;
-            article.DeleteUserId = userId;
+            if (article != null)
+            {
+                article.IsDelete = true;
+                article.DeleteTime = DateTime.UtcNow;
+                article.DeleteUserId = userId;
 
-            db.SaveChanges();
+                db.SaveChanges();
 
-            return true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
         }
 
 

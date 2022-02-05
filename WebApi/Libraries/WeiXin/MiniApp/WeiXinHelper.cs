@@ -19,13 +19,13 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
         private readonly string secret;
 
-        private readonly string mchid;
+        private readonly string? mchid;
 
-        private readonly string mchkey;
+        private readonly string? mchkey;
 
-        private readonly string notifyurl;
+        private readonly string? notifyurl;
 
-        public WeiXinHelper(string in_appid, string in_secret, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
+        public WeiXinHelper(string in_appid, string in_secret, string? in_mchid = null, string? in_mchkey = null, string? in_notifyurl = null)
         {
             appid = in_appid;
             secret = in_secret;
@@ -49,8 +49,8 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
             try
             {
-                string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid");
-                string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key");
+                string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid")!;
+                string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key")!;
 
                 Common.CacheHelper.SetString(code, httpret, new TimeSpan(0, 0, 10));
 
@@ -58,7 +58,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             }
             catch
             {
-                string errcode = Common.Json.JsonHelper.GetValueByKey(httpret, "errcode");
+                string errcode = Common.Json.JsonHelper.GetValueByKey(httpret, "errcode")!;
 
                 if (errcode == "40163")
                 {
@@ -70,8 +70,8 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                     }
                 }
 
-                string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid");
-                string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key");
+                string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid")!;
+                string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key")!;
 
                 return (openid, sessionkey);
             }
@@ -86,7 +86,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <returns></returns>
-        public DtoCreatePayMiniApp CreatePay(string openid, string orderno, string body, int price)
+        public DtoCreatePayMiniApp? CreatePay(string openid, string orderno, string body, int price)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -129,9 +129,9 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             JObject jo = (JObject)JsonConvert.DeserializeObject(json)!;
 
 
-            if (jo["xml"]["return_code"]["#cdata-section"].ToString() == "SUCCESS")
+            if (jo["xml"]!["return_code"]!["#cdata-section"]!.ToString() == "SUCCESS")
             {
-                string prepay_id = jo["xml"]["prepay_id"]["#cdata-section"].ToString();
+                string prepay_id = jo["xml"]!["prepay_id"]!["#cdata-section"]!.ToString();
 
                 DtoCreatePayMiniApp info = new();
                 info.NonceStr = nonceStr;
@@ -271,28 +271,28 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
             var wxPayData = new WxPayData();
 
-            wxPayData.FromXml(getdata, mchkey);
+            wxPayData.FromXml(getdata, mchkey!);
 
 
             DtoCreatePayRefundMiniApp retInfo = new();
 
-            retInfo.Return_code = wxPayData.GetValue("return_code").ToString();
-            retInfo.Return_msg = wxPayData.GetValue("return_msg").ToString();
+            retInfo.Return_code = wxPayData.GetValue("return_code")!.ToString();
+            retInfo.Return_msg = wxPayData.GetValue("return_msg")!.ToString();
 
-            retInfo.AppId = wxPayData.GetValue("appid").ToString();
-            retInfo.Mch_id = wxPayData.GetValue("mch_id").ToString();
-            retInfo.Nonce_str = wxPayData.GetValue("nonce_str").ToString();
-            retInfo.Sign = wxPayData.GetValue("sign").ToString();
+            retInfo.AppId = wxPayData.GetValue("appid")!.ToString();
+            retInfo.Mch_id = wxPayData.GetValue("mch_id")!.ToString();
+            retInfo.Nonce_str = wxPayData.GetValue("nonce_str")!.ToString();
+            retInfo.Sign = wxPayData.GetValue("sign")!.ToString();
 
-            retInfo.Result_code = wxPayData.GetValue("result_code").ToString();
+            retInfo.Result_code = wxPayData.GetValue("result_code")!.ToString();
 
 
             if (retInfo.Result_code == "SUCCESS")
             {
-                retInfo.Transaction_Id = wxPayData.GetValue("transaction_id").ToString();
-                retInfo.Out_trade_no = wxPayData.GetValue("out_trade_no").ToString();
-                retInfo.Out_refund_no = wxPayData.GetValue("out_refund_no").ToString();
-                retInfo.Refund_id = wxPayData.GetValue("refund_id").ToString();
+                retInfo.Transaction_Id = wxPayData.GetValue("transaction_id")!.ToString();
+                retInfo.Out_trade_no = wxPayData.GetValue("out_trade_no")!.ToString();
+                retInfo.Out_refund_no = wxPayData.GetValue("out_refund_no")!.ToString();
+                retInfo.Refund_id = wxPayData.GetValue("refund_id")!.ToString();
                 retInfo.Refund_fee = Convert.ToInt32(wxPayData.GetValue("refund_fee"));
                 retInfo.Total_fee = Convert.ToInt32(wxPayData.GetValue("total_fee"));
                 retInfo.Cash_fee = Convert.ToInt32(wxPayData.GetValue("cash_fee"));
@@ -300,8 +300,8 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             }
             else
             {
-                retInfo.Err_code = wxPayData.GetValue("err_code").ToString();
-                retInfo.Err_code_des = wxPayData.GetValue("err_code_des").ToString();
+                retInfo.Err_code = wxPayData.GetValue("err_code")!.ToString();
+                retInfo.Err_code_des = wxPayData.GetValue("err_code_des")!.ToString();
             }
 
             return retInfo;

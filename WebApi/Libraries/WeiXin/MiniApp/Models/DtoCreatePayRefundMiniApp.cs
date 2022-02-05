@@ -11,13 +11,13 @@
         /// <summary>
         /// 返回状态码,SUCCESS/FAIL
         /// </summary>
-        public string Return_code { get; set; }
+        public string? Return_code { get; set; }
 
 
         /// <summary>
         /// 返回信息
         /// </summary>
-        public string Return_msg { get; set; }
+        public string? Return_msg { get; set; }
 
 
 
@@ -25,77 +25,77 @@
         /// <summary>
         /// 业务结果，SUCCESS/FAIL,SUCCESS退款申请接收成功，结果通过退款查询接口查询,FAIL 提交业务失败
         /// </summary>
-        public string Result_code { get; set; }
+        public string? Result_code { get; set; }
 
 
 
         /// <summary>
         /// 错误代码
         /// </summary>
-        public string Err_code { get; set; }
+        public string? Err_code { get; set; }
 
 
 
         /// <summary>
         /// 错误代码描述
         /// </summary>
-        public string Err_code_des { get; set; }
+        public string? Err_code_des { get; set; }
 
 
 
         /// <summary>
         /// 小程序ID
         /// </summary>
-        public string AppId { get; set; }
+        public string? AppId { get; set; }
 
 
 
         /// <summary>
         /// 商户号
         /// </summary>
-        public string Mch_id { get; set; }
+        public string? Mch_id { get; set; }
 
 
 
         /// <summary>
         /// 随机字符串
         /// </summary>
-        public string Nonce_str { get; set; }
+        public string? Nonce_str { get; set; }
 
 
 
         /// <summary>
         /// 签名
         /// </summary>
-        public string Sign { get; set; }
+        public string? Sign { get; set; }
 
 
 
         /// <summary>
         /// 微信支付订单号
         /// </summary>
-        public string Transaction_Id { get; set; }
+        public string? Transaction_Id { get; set; }
 
 
 
         /// <summary>
         /// 商户订单号
         /// </summary>
-        public string Out_trade_no { get; set; }
+        public string? Out_trade_no { get; set; }
 
 
 
         /// <summary>
         /// 商户退款单号
         /// </summary>
-        public string Out_refund_no { get; set; }
+        public string? Out_refund_no { get; set; }
 
 
 
         /// <summary>
         /// 微信退款单号
         /// </summary>
-        public string Refund_id { get; set; }
+        public string? Refund_id { get; set; }
 
 
 

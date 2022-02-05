@@ -73,7 +73,7 @@ namespace Common.IO
         /// <param name="filePath">保存路径，以 / 结束，否则将取最后一个 / 之前的路径, / 之后的当作自定义文件名前缀</param>
         /// <param name="fileName">保存文件名称,不传则自动通过 url 获取名称</param>
         /// <returns></returns>
-        public static string DownloadFile(string url, string filePath, string fileName = null)
+        public static string? DownloadFile(string url, string filePath, string? fileName = null)
         {
             try
             {

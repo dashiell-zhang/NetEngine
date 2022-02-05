@@ -44,7 +44,7 @@ namespace AdminApp
             await using WebAssemblyHost host = builder.Build();
 
 
-            var localStorage = host.Services.GetService<ISyncLocalStorageService>();
+            var localStorage = host.Services.GetRequiredService<ISyncLocalStorageService>();
             localStorage.SetItemAsString("AppApiUrl", appApiUrl);
 
             await host.RunAsync();

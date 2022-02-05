@@ -48,7 +48,7 @@
         {
             var securityToken = new JwtSecurityToken(authorization);
 
-            var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault().Value);
+            var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault()!.Value);
 
             var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
 
@@ -60,7 +60,7 @@
     }
 
 
-    private DtoLogin loginData = new();
+    private DtoLogin loginData = new("", "");
 
     private async void OnFinish()
     {

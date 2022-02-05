@@ -93,12 +93,12 @@
 </Drawer>
 
 
-@code{
+@code {
 
     [Parameter]
-    public string channelId { get; set; }
+    public string? channelId { get; set; }
 
-    List<DtoSelect> selectCategoryList;
+    List<DtoSelect>? selectCategoryList;
 
     override protected void OnInitialized()
     {
@@ -119,16 +119,20 @@
 
         parentKVList.Add(new DtoKeyValue { Key = 0, Value = "无父级栏目" });
 
+
+
         var kvList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
 
-        parentKVList.AddRange(kvList);
-
-        selectCategoryList = parentKVList.Select(t => new DtoSelect
+        if (kvList != null)
         {
-            Label = t.Value.ToString(),
-            Value = long.Parse(t.Key.ToString())
-        }).ToList();
+            parentKVList.AddRange(kvList);
 
+            selectCategoryList = parentKVList.Select(t => new DtoSelect
+                {
+                    Label = t.Value!.ToString(),
+                    Value = long.Parse(t.Key!.ToString()!)
+                }).ToList();
+        }
     }
 
     bool saveLoading = false;
@@ -142,7 +146,13 @@
     async void GetCategoryList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
         tableLoading = false;
         StateHasChanged();
     }
@@ -166,13 +176,13 @@
 
 
     bool isShowEditCategory = false;
-    DtoEditCategory editCategory = new();
+    DtoEditCategory editCategory = new("");
     long categoryId;
 
 
-    void EditCategory(DtoCategory category = null)
+    void EditCategory(DtoCategory? category = null)
     {
-        editCategory = new DtoEditCategory();
+        editCategory = new("");
         categoryId = default;
 
         GetSelectCategoryList();
@@ -214,7 +224,7 @@
 
         if (categoryId == default)
         {
-            editCategory.ChannelId = long.Parse(channelId);
+            editCategory.ChannelId = long.Parse(channelId!);
 
             using (var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory))
             {

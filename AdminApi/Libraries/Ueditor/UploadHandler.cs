@@ -29,10 +29,10 @@ namespace AdminApi.Libraries.Ueditor
             string uploadFileName;
             if (UploadConfig.Base64)
             {
-                uploadFileName = UploadConfig.Base64Filename;
-                byte[] uploadFileBytes = Convert.FromBase64String(Http.HttpContext.Current().Request.Form[UploadConfig.UploadFieldName]);
+                uploadFileName = UploadConfig.Base64Filename!;
+                byte[] uploadFileBytes = Convert.FromBase64String(Http.HttpContext.Current().Request.Form[UploadConfig.UploadFieldName!]);
 
-                var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat);
+                var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
                 var localPath = IO.Path.WebRootPath() + savePath;
 
                 try
@@ -40,7 +40,7 @@ namespace AdminApi.Libraries.Ueditor
 
                     if (!Directory.Exists(Path.GetDirectoryName(localPath)))
                     {
-                        Directory.CreateDirectory(Path.GetDirectoryName(localPath));
+                        Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
                     }
                     File.WriteAllBytes(localPath, uploadFileBytes);
 
@@ -85,7 +85,7 @@ namespace AdminApi.Libraries.Ueditor
             }
             else
             {
-                var file = Http.HttpContext.Current().Request.Form.Files[UploadConfig.UploadFieldName];
+                var file = Http.HttpContext.Current().Request.Form.Files[UploadConfig.UploadFieldName!]!;
                 uploadFileName = file.FileName;
 
                 if (!CheckFileType(uploadFileName))
@@ -107,8 +107,8 @@ namespace AdminApi.Libraries.Ueditor
                 {
                     file.OpenReadStream();
 
-                    var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat);
-                    var localPath = IO.Path.WebRootPath() + savePath;
+                    string savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
+                    string localPath = IO.Path.WebRootPath() + savePath;
 
                     try
                     {
@@ -117,7 +117,7 @@ namespace AdminApi.Libraries.Ueditor
 
                         if (!Directory.Exists(Path.GetDirectoryName(localPath)))
                         {
-                            Directory.CreateDirectory(Path.GetDirectoryName(localPath));
+                            Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
                         }
                         using (FileStream fs = System.IO.File.Create(localPath))
                         {
@@ -206,7 +206,7 @@ namespace AdminApi.Libraries.Ueditor
         private bool CheckFileType(string filename)
         {
             var fileExtension = Path.GetExtension(filename).ToLower();
-            return UploadConfig.AllowExtensions.Select(x => x.ToLower()).Contains(fileExtension);
+            return UploadConfig.AllowExtensions!.Select(x => x.ToLower()).Contains(fileExtension);
         }
 
         private bool CheckFileSize(int size)
@@ -220,12 +220,12 @@ namespace AdminApi.Libraries.Ueditor
         /// <summary>
         /// 文件命名规则
         /// </summary>
-        public string PathFormat { get; set; }
+        public string? PathFormat { get; set; }
 
         /// <summary>
         /// 上传表单域名称
         /// </summary>
-        public string UploadFieldName { get; set; }
+        public string? UploadFieldName { get; set; }
 
         /// <summary>
         /// 上传大小限制
@@ -235,7 +235,7 @@ namespace AdminApi.Libraries.Ueditor
         /// <summary>
         /// 上传允许的文件格式
         /// </summary>
-        public string[] AllowExtensions { get; set; }
+        public string[]? AllowExtensions { get; set; }
 
         /// <summary>
         /// 文件是否以 Base64 的形式上传
@@ -245,16 +245,16 @@ namespace AdminApi.Libraries.Ueditor
         /// <summary>
         /// Base64 字符串所表示的文件名
         /// </summary>
-        public string Base64Filename { get; set; }
+        public string? Base64Filename { get; set; }
     }
 
     public class UploadResult
     {
         public UploadState State { get; set; }
-        public string Url { get; set; }
-        public string OriginFileName { get; set; }
+        public string? Url { get; set; }
+        public string? OriginFileName { get; set; }
 
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 
     public enum UploadState

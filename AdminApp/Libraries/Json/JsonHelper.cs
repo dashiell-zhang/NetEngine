@@ -12,7 +12,7 @@ namespace AdminApp.Libraries.Json
         /// 通过 Key 获取 Value
         /// </summary>
         /// <returns></returns>
-        public static string GetValueByKey(string json, string key)
+        public static string? GetValueByKey(string json, string key)
         {
             using JsonDocument doc = JsonDocument.Parse(json);
             var jsonElement = doc.RootElement.Clone();
@@ -55,7 +55,7 @@ namespace AdminApp.Libraries.Json
         /// <typeparam name="T">类型</typeparam> 
         /// <param name="jsonText">JSON文本</param> 
         /// <returns>指定类型的对象</returns> 
-        public static T JsonToObject<T>(string json)
+        public static T? JsonToObject<T>(string json)
         {
             JsonSerializerOptions options = new();
             options.Converters.Add(new DateTimeConverter());
@@ -76,7 +76,7 @@ namespace AdminApp.Libraries.Json
         /// </summary>
         /// <param name="strJson"></param>
         /// <returns></returns>
-        public static JsonNode JsonToArrayList(string json)
+        public static JsonNode? JsonToArrayList(string json)
         {
             var jsonNode = JsonNode.Parse(json);
 

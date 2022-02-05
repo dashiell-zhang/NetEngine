@@ -45,7 +45,7 @@
                         <Menu Mode="MenuMode.Inline" DefaultOpenKeys=@(new[] {"channel0","channel1","channel2","channel3"}) Style="height: 100%; border-right: 0;">
                             @foreach (var channel in channelKVList)
                             {
-                                <SubMenu Key=@("channel"+ channelKVList.IndexOf(channel)) Title="@channel.Value.ToString()">
+                                <SubMenu Key=@("channel"+ channelKVList.IndexOf(channel)) Title="@channel.Value!.ToString()">
                                     <MenuItem><a href="article/@channel.Key">文章管理</a></MenuItem>
                                     <MenuItem> <a href="category/@channel.Key">栏目管理</a></MenuItem>
                                 </SubMenu>
@@ -95,7 +95,7 @@
 
 @code {
 
-    public static DtoUser user = new();
+    public static DtoUser user = new("", "", "");
 
     int showIndex = 0;
 
@@ -108,7 +108,12 @@
     private List<DtoKeyValue> channelKVList = new();
     async void GetChannelList()
     {
-        channelKVList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetChannelKVList");
+        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetChannelKVList");
+
+        if (retData != null)
+        {
+            channelKVList = retData;
+        }
 
         StateHasChanged();
     }
@@ -125,7 +130,7 @@
         {
             var securityToken = new JwtSecurityToken(authorization);
 
-            var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault().Value);
+            var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault()!.Value);
 
             var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
 
@@ -137,7 +142,7 @@
             {
                 try
                 {
-                    user = await Http.GetFromJsonAsync<DtoUser>("User/GetUser");
+                    user = (await Http.GetFromJsonAsync<DtoUser>("User/GetUser"))!;
                 }
                 catch
                 {

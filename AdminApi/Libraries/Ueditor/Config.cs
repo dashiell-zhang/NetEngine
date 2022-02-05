@@ -86,19 +86,19 @@ namespace AdminApi.Libraries.Ueditor
                 return _Items;
             }
         }
-        private static JsonDocument _Items;
+        private static JsonDocument? _Items;
 
 
 
 
         public static string[] GetStringList(string key)
         {
-            return Items.RootElement.Clone().GetProperty(key).Deserialize<string[]>();
+            return Items.RootElement.Clone().GetProperty(key).Deserialize<string[]>()!;
         }
 
         public static string GetString(string key)
         {
-            return Items.RootElement.Clone().GetProperty(key).GetString();
+            return Items.RootElement.Clone().GetProperty(key).GetString()!;
         }
 
         public static int GetInt(string key)

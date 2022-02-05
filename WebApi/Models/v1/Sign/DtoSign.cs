@@ -7,6 +7,14 @@
     public class DtoSign
     {
 
+
+        public DtoSign(string table,  string sign)
+        {
+            Table = table;
+            Sign = sign;
+        }
+
+
         /// <summary>
         /// 表名
         /// </summary>

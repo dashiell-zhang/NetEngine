@@ -23,7 +23,7 @@ namespace TaskService.Models.Shared
         /// <summary>
         /// 具体数据内容
         /// </summary>
-        public List<T> List { get; set; }
+        public List<T>? List { get; set; }
 
 
     }

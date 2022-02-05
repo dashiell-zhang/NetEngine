@@ -12,9 +12,9 @@ namespace WebApi.Libraries.WeiXin.H5
     {
 
 
-        private static string appid;
+        private readonly string appid;
 
-        private static string appsecret;
+        private readonly string appsecret;
 
 
 
@@ -35,7 +35,7 @@ namespace WebApi.Libraries.WeiXin.H5
         /// 获取 AccessToken
         /// </summary>
         /// <returns></returns>
-        public string GetAccessToken()
+        public string? GetAccessToken()
         {
 
             string key = appid + appsecret + "accesstoken";
@@ -50,7 +50,10 @@ namespace WebApi.Libraries.WeiXin.H5
 
                 token = JsonHelper.GetValueByKey(returnJson, "access_token");
 
-                Common.CacheHelper.SetString(key, token, TimeSpan.FromSeconds(6000));
+                if (token != null)
+                {
+                    Common.CacheHelper.SetString(key, token, TimeSpan.FromSeconds(6000));
+                }
             }
 
             return token;
@@ -62,7 +65,7 @@ namespace WebApi.Libraries.WeiXin.H5
         /// 获取 TicketID
         /// </summary>
         /// <returns></returns>
-        private string GetTicketID()
+        private string? GetTicketID()
         {
 
             string key = appid + appsecret + "ticketid";
@@ -78,7 +81,10 @@ namespace WebApi.Libraries.WeiXin.H5
 
                 ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
 
-                Common.CacheHelper.SetString(key, ticketid, TimeSpan.FromSeconds(6000));
+                if (ticketid != null)
+                {
+                    Common.CacheHelper.SetString(key, ticketid, TimeSpan.FromSeconds(6000));
+                }
             }
 
             return ticketid;
@@ -100,7 +106,7 @@ namespace WebApi.Libraries.WeiXin.H5
             sdkSign.TimeStamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             sdkSign.NonceStr = Guid.NewGuid().ToString().Replace("-", "");
 
-            string jsapi_ticket = GetTicketID();
+            string jsapi_ticket = GetTicketID()!;
             string strYW = "jsapi_ticket=" + jsapi_ticket + "&noncestr=" + sdkSign.NonceStr + "&timestamp=" + sdkSign.TimeStamp + "&url=" + url;
 
             using (var sha1 = SHA1.Create())

@@ -20,8 +20,7 @@ namespace Common
     {
 
 
-        private static bool IsInit;
-        private static IHttpClientFactory InitHttpClientFactory;
+        private static IHttpClientFactory? InitHttpClientFactory;
 
 
 
@@ -29,12 +28,11 @@ namespace Common
         {
             get
             {
-                if (!IsInit)
+                if (InitHttpClientFactory == null)
                 {
                     var programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
                     var serviceProvider = (IServiceProvider)programType!.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
                     InitHttpClientFactory = serviceProvider.GetService<IHttpClientFactory>()!;
-                    IsInit = true;
                 }
 
                 return InitHttpClientFactory;
@@ -49,7 +47,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string Get(string url, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
+        public static string Get(string url, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
         {
             string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
 
@@ -110,7 +108,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string Post(string url, string data, string type, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
+        public static string Post(string url, string data, string type, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
         {
 
             string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
@@ -144,7 +142,7 @@ namespace Common
                 content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
             }
 
-            content.Headers.ContentType.CharSet = "utf-8";
+            content.Headers.ContentType!.CharSet = "utf-8";
 
             using var httpResponse = client.PostAsync(url, content);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
@@ -162,7 +160,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public async static void PostAsync(string url, string data, string type, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
+        public async static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
         {
             await Task.Run(() =>
             {
@@ -181,7 +179,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string PostForm(string url, List<PostFormItem> formItems, Dictionary<string, string> headers = default, bool isSkipSslVerification = false)
+        public static string PostForm(string url, List<PostFormItem> formItems, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
         {
             string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
 
@@ -203,12 +201,12 @@ namespace Common
                 if (item.IsFile)
                 {
                     //上传文件
-                    formDataContent.Add(new StreamContent(item.FileContent), item.Key, item.FileName);
+                    formDataContent.Add(new StreamContent(item.FileContent!), item.Key!, item.FileName!);
                 }
                 else
                 {
                     //上传文本
-                    formDataContent.Add(new StringContent(item.Value), item.Key);
+                    formDataContent.Add(new StringContent(item.Value!), item.Key!);
                 }
             }
 
@@ -227,14 +225,14 @@ namespace Common
             /// <summary>
             /// 表单键，request["key"]
             /// </summary>
-            public string Key { set; get; }
+            public string? Key { set; get; }
 
 
 
             /// <summary>
             /// 表单值,上传文件时忽略，request["key"].value
             /// </summary>
-            public string Value { set; get; }
+            public string? Value { set; get; }
 
 
 
@@ -259,14 +257,14 @@ namespace Common
             /// <summary>
             /// 上传的文件名
             /// </summary>
-            public string FileName { set; get; }
+            public string? FileName { set; get; }
 
 
 
             /// <summary>
             /// 上传的文件内容
             /// </summary>
-            public Stream FileContent { set; get; }
+            public Stream? FileContent { set; get; }
 
 
         }

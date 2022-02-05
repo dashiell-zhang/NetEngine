@@ -34,8 +34,8 @@ namespace WebApi.Libraries.WeiXin.Public
         public void ReportCostTime(string interface_url, int timeCost, WxPayData inputObj)
         {
             //如果仅失败上报
-            if (inputObj.IsSet("return_code") && inputObj.GetValue("return_code").ToString() == "SUCCESS" &&
-             inputObj.IsSet("result_code") && inputObj.GetValue("result_code").ToString() == "SUCCESS")
+            if (inputObj.IsSet("return_code") && inputObj.GetValue("return_code")!.ToString() == "SUCCESS" &&
+             inputObj.IsSet("result_code") && inputObj.GetValue("result_code")!.ToString() == "SUCCESS")
             {
                 return;
             }
@@ -47,37 +47,37 @@ namespace WebApi.Libraries.WeiXin.Public
             //返回状态码
             if (inputObj.IsSet("return_code"))
             {
-                data.SetValue("return_code", inputObj.GetValue("return_code"));
+                data.SetValue("return_code", inputObj.GetValue("return_code")!);
             }
             //返回信息
             if (inputObj.IsSet("return_msg"))
             {
-                data.SetValue("return_msg", inputObj.GetValue("return_msg"));
+                data.SetValue("return_msg", inputObj.GetValue("return_msg")!);
             }
             //业务结果
             if (inputObj.IsSet("result_code"))
             {
-                data.SetValue("result_code", inputObj.GetValue("result_code"));
+                data.SetValue("result_code", inputObj.GetValue("result_code")!);
             }
             //错误代码
             if (inputObj.IsSet("err_code"))
             {
-                data.SetValue("err_code", inputObj.GetValue("err_code"));
+                data.SetValue("err_code", inputObj.GetValue("err_code")!);
             }
             //错误代码描述
             if (inputObj.IsSet("err_code_des"))
             {
-                data.SetValue("err_code_des", inputObj.GetValue("err_code_des"));
+                data.SetValue("err_code_des", inputObj.GetValue("err_code_des")!);
             }
             //商户订单号
             if (inputObj.IsSet("out_trade_no"))
             {
-                data.SetValue("out_trade_no", inputObj.GetValue("out_trade_no"));
+                data.SetValue("out_trade_no", inputObj.GetValue("out_trade_no")!);
             }
             //设备号
             if (inputObj.IsSet("device_info"))
             {
-                data.SetValue("device_info", inputObj.GetValue("device_info"));
+                data.SetValue("device_info", inputObj.GetValue("device_info")!);
             }
 
             try
@@ -125,7 +125,7 @@ namespace WebApi.Libraries.WeiXin.Public
 
             inputObj.SetValue("appid", appid);//公众账号ID
             inputObj.SetValue("mch_id", mchid);//商户号
-            inputObj.SetValue("user_ip", Http.HttpContext.Current().Connection.RemoteIpAddress.ToString());//终端ip
+            inputObj.SetValue("user_ip", Http.HttpContext.Current().Connection.RemoteIpAddress!.ToString());//终端ip
             inputObj.SetValue("time", DateTime.UtcNow.AddHours(8).ToString("yyyyMMddHHmmss"));//商户上报时间	 
             inputObj.SetValue("nonce_str", GenerateNonceStr());//随机字符串
             inputObj.SetValue("sign", inputObj.MakeSign(mchkey));//签名

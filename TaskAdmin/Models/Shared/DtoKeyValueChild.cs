@@ -10,7 +10,7 @@ namespace TaskAdmin.Models.Shared
         /// <summary>
         /// 键
         /// </summary>
-        public object Key { get; set; }
+        public object? Key { get; set; }
 
 
 
@@ -18,7 +18,7 @@ namespace TaskAdmin.Models.Shared
         /// <summary>
         /// 值
         /// </summary>
-        public object Value { get; set; }
+        public object? Value { get; set; }
 
 
 
@@ -26,7 +26,7 @@ namespace TaskAdmin.Models.Shared
         /// <summary>
         /// 子级集合信息
         /// </summary>
-        public List<DtoKeyValueChild> ChildList { get; set; }
+        public List<DtoKeyValueChild>? ChildList { get; set; }
 
 
 

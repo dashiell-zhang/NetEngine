@@ -26,7 +26,7 @@ namespace Common
         /// 获取本机 IPV4 地址
         /// </summary>
         /// <returns></returns>
-        public static string GetIpv4Address()
+        public static string? GetIpv4Address()
         {
             var ipv4 = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.FirstOrDefault(address => address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.ToString();
 
@@ -39,7 +39,7 @@ namespace Common
         /// 获取本机 IPV6 地址
         /// </summary>
         /// <returns></returns>
-        public static string GetIpv6Address()
+        public static string? GetIpv6Address()
         {
             var ipv6 = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.FirstOrDefault(address => address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)?.ToString();
 

@@ -12,7 +12,7 @@ namespace Common.Json
         /// 通过 Key 获取 Value
         /// </summary>
         /// <returns></returns>
-        public static string GetValueByKey(string json, string key)
+        public static string? GetValueByKey(string json, string key)
         {
             using JsonDocument doc = JsonDocument.Parse(json);
             var jsonElement = doc.RootElement.Clone();
@@ -69,7 +69,7 @@ namespace Common.Json
             //启用大小写不敏感
             options.PropertyNameCaseInsensitive = true;
 
-            return JsonSerializer.Deserialize<T>(json, options);
+            return JsonSerializer.Deserialize<T>(json, options)!;
         }
 
 
@@ -80,7 +80,7 @@ namespace Common.Json
         /// </summary>
         /// <param name="strJson"></param>
         /// <returns></returns>
-        public static JsonNode JsonToArrayList(string json)
+        public static JsonNode? JsonToArrayList(string json)
         {
             var jsonNode = JsonNode.Parse(json);
 

@@ -36,7 +36,7 @@ namespace AdminApi.Filters
         public bool IsBlock { get; set; }
 
 
-        private IDistributedSynchronizationHandle LockHandle { get; set; }
+        private IDistributedSynchronizationHandle? LockHandle { get; set; }
 
 
 
@@ -97,7 +97,7 @@ namespace AdminApi.Filters
         {
             try
             {
-                LockHandle.Dispose();
+                LockHandle?.Dispose();
             }
             catch
             {

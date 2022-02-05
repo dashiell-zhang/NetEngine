@@ -4,6 +4,7 @@
     {
 
 
+
         /// <summary>
         /// 值
         /// </summary>
@@ -13,7 +14,7 @@
         /// <summary>
         /// 标签
         /// </summary>
-        public string Label { get; set; }
+        public string? Label { get; set; }
 
 
         /// <summary>

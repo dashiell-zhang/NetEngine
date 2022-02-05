@@ -42,9 +42,9 @@ namespace WebApi.Libraries
                 authorization,
                 error = new
                 {
-                    error.Source,
-                    error.Message,
-                    error.StackTrace
+                    error?.Source,
+                    error?.Message,
+                    error?.StackTrace
                 }
             };
 

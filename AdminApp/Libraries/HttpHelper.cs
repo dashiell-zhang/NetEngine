@@ -23,7 +23,7 @@ namespace AdminApp.Libraries
         /// <param name="url">请求地址</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static string Get(string url, Dictionary<string, string> headers = default)
+        public static string Get(string url, Dictionary<string, string>? headers = default)
         {
             using HttpClientHandler handler = new();
             using HttpClient client = new(handler);
@@ -83,7 +83,7 @@ namespace AdminApp.Libraries
         /// <param name="type">form,data,json,xml</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static string Post(string url, string data, string type, Dictionary<string, string> headers = default)
+        public static string Post(string url, string data, string type, Dictionary<string, string>? headers = default)
         {
 
             using HttpClientHandler handler = new();
@@ -119,7 +119,7 @@ namespace AdminApp.Libraries
                 content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
             }
 
-            content.Headers.ContentType.CharSet = "utf-8";
+            content.Headers.ContentType!.CharSet = "utf-8";
 
             using var httpResponse = client.PostAsync(url, content);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
@@ -136,7 +136,7 @@ namespace AdminApp.Libraries
         /// <param name="type">form,data,json,xml</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public async static void PostAsync(string url, string data, string type, Dictionary<string, string> headers = default)
+        public async static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default)
         {
             await Task.Run(() =>
             {
@@ -154,7 +154,7 @@ namespace AdminApp.Libraries
         /// <param name="formItems">Post表单内容</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static string PostForm(string url, List<PostFormItem> formItems, Dictionary<string, string> headers = default)
+        public static string PostForm(string url, List<PostFormItem> formItems, Dictionary<string, string>? headers = default)
         {
             using HttpClientHandler handler = new();
 
@@ -178,12 +178,12 @@ namespace AdminApp.Libraries
                 if (item.IsFile)
                 {
                     //上传文件
-                    formDataContent.Add(new StreamContent(item.FileContent), item.Key, item.FileName);
+                    formDataContent.Add(new StreamContent(item.FileContent!), item.Key!, item.FileName!);
                 }
                 else
                 {
                     //上传文本
-                    formDataContent.Add(new StringContent(item.Value), item.Key);
+                    formDataContent.Add(new StringContent(item.Value!), item.Key!);
                 }
             }
 
@@ -203,14 +203,14 @@ namespace AdminApp.Libraries
             /// <summary>
             /// 表单键，request["key"]
             /// </summary>
-            public string Key { set; get; }
+            public string? Key { set; get; }
 
 
 
             /// <summary>
             /// 表单值,上传文件时忽略，request["key"].value
             /// </summary>
-            public string Value { set; get; }
+            public string? Value { set; get; }
 
 
 
@@ -235,14 +235,14 @@ namespace AdminApp.Libraries
             /// <summary>
             /// 上传的文件名
             /// </summary>
-            public string FileName { set; get; }
+            public string? FileName { set; get; }
 
 
 
             /// <summary>
             /// 上传的文件内容
             /// </summary>
-            public Stream FileContent { set; get; }
+            public Stream? FileContent { set; get; }
 
 
         }

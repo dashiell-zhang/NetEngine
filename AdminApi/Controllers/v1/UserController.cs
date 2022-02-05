@@ -46,12 +46,9 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser(t.Name, t.NickName, t.Phone)
             {
                 Id = t.Id,
-                Name = t.Name,
-                NickName = t.NickName,
-                Phone = t.Phone,
                 Email = t.Email,
                 Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
@@ -69,7 +66,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
-        public DtoUser GetUser(long? userId)
+        public DtoUser? GetUser(long? userId)
         {
 
             if (userId == null)
@@ -77,12 +74,9 @@ namespace AdminApi.Controllers.v1
                 userId = base.userId;
             }
 
-            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
+            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser(t.Name, t.NickName, t.Phone)
             {
                 Id = t.Id,
-                Name = t.Name,
-                NickName = t.NickName,
-                Phone = t.Phone,
                 Email = t.Email,
                 Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
@@ -130,22 +124,29 @@ namespace AdminApi.Controllers.v1
         {
             var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
 
-            user.UpdateTime = DateTime.UtcNow;
-            user.UpdateUserId = base.userId;
-
-            user.Name = updateUser.Name;
-            user.NickName = updateUser.NickName;
-            user.Phone = updateUser.Phone;
-            user.Email = updateUser.Email;
-
-            if (!string.IsNullOrEmpty(updateUser.PassWord))
+            if (user != null)
             {
-                user.PassWord = updateUser.PassWord;
+                user.UpdateTime = DateTime.UtcNow;
+                user.UpdateUserId = base.userId;
+
+                user.Name = updateUser.Name;
+                user.NickName = updateUser.NickName;
+                user.Phone = updateUser.Phone;
+                user.Email = updateUser.Email;
+
+                if (updateUser.PassWord != "default")
+                {
+                    user.PassWord = updateUser.PassWord;
+                }
+
+                db.SaveChanges();
+
+                return true;
             }
-
-            db.SaveChanges();
-
-            return true;
+            else
+            {
+                return false;
+            }
         }
 
 
@@ -160,13 +161,21 @@ namespace AdminApi.Controllers.v1
         {
             var user = db.TUser.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
 
-            user.IsDelete = true;
-            user.DeleteTime = DateTime.UtcNow;
-            user.DeleteUserId = userId;
+            if (user != null)
+            {
+                user.IsDelete = true;
+                user.DeleteTime = DateTime.UtcNow;
+                user.DeleteUserId = userId;
 
-            db.SaveChanges();
+                db.SaveChanges();
 
-            return true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
         }
 
 

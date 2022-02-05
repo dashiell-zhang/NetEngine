@@ -133,19 +133,19 @@
 
 @code {
 
-    private Form<DtoEditArticle> _editArticleForm;
+    private Form<DtoEditArticle>? _editArticleForm;
 
     Dictionary<string, string> headers = new();
 
     bool isPreviewImg = false;
-    string previewImgUrl;
+    string? previewImgUrl;
     long fileKey;
     bool saveLoading = false;
 
     [Parameter]
-    public string channelId { get; set; }
+    public string? channelId { get; set; }
 
-    List<DtoSelect> selectCategoryList;
+    List<DtoSelect>? selectCategoryList;
 
     override protected void OnInitialized()
     {
@@ -168,11 +168,14 @@
     {
         var parentKVList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
 
-        selectCategoryList = parentKVList.Select(t => new DtoSelect
-            {
-                Label = t.Value.ToString(),
-                Value = long.Parse(t.Key.ToString())
-            }).ToList();
+        if (parentKVList != null)
+        {
+            selectCategoryList = parentKVList.Select(t => new DtoSelect
+                {
+                    Label = t.Value!.ToString(),
+                    Value = long.Parse(t.Key!.ToString()!)
+                }).ToList();
+        }
     }
 
 
@@ -184,7 +187,13 @@
     async void GetArticleList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
         tableLoading = false;
         StateHasChanged();
     }
@@ -207,14 +216,14 @@
 
 
     bool isShowEditArticle = false;
-    DtoEditArticle editArticle = new();
+    DtoEditArticle editArticle = new("", "");
     long articleId;
 
 
-    async void EditArticle(DtoArticle article = null)
+    async void EditArticle(DtoArticle? article = null)
     {
 
-        editArticle = new DtoEditArticle();
+        editArticle = new("", "");
         fileList = new();
         articleId = default;
 
@@ -233,13 +242,13 @@
             editArticle.IsDisplay = article.IsDisplay;
             editArticle.IsRecommend = article.IsRecommend;
 
-            fileList = article.CoverImageList.Select(t => new UploadFileItem
+            fileList = article.CoverImageList?.Select(t => new UploadFileItem
                 {
-                    Id = t.Key.ToString(),
+                    Id = t.Key!.ToString(),
                     FileName = "coverImg.jpg",
-                    Url = t.Value.ToString(),
+                    Url = t.Value!.ToString(),
                     State = UploadState.Success
-                }).ToList();
+                }).ToList()!;
         }
         else
         {
@@ -266,7 +275,7 @@
     {
         editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
 
-        if (_editArticleForm.Validate())
+        if (_editArticleForm!.Validate())
         {
             saveLoading = true;
 

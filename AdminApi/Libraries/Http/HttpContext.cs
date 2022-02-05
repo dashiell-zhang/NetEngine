@@ -14,9 +14,9 @@ namespace AdminApi.Libraries.Http
 
         public static Microsoft.AspNetCore.Http.HttpContext Current()
         {
-            var httpContextAccessor = Program.ServiceProvider.GetService<IHttpContextAccessor>();
+            var httpContextAccessor = Program.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
 
-            httpContextAccessor.HttpContext.Request.Body.Position = 0;
+            httpContextAccessor.HttpContext!.Request.Body.Position = 0;
 
             return httpContextAccessor.HttpContext;
         }
@@ -138,7 +138,7 @@ namespace AdminApi.Libraries.Http
         /// <returns></returns>
         public static string GetIpAddress()
         {
-            return Current().Connection.RemoteIpAddress.ToString();
+            return Current().Connection.RemoteIpAddress!.ToString();
         }
 
 

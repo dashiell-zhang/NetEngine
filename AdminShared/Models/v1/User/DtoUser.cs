@@ -5,6 +5,14 @@ namespace AdminShared.Models.v1.User
     public class DtoUser
     {
 
+        public DtoUser(string name, string nickName, string phone)
+        {
+            Name = name;
+            NickName = nickName;
+            Phone = phone;
+        }
+
+
 
         /// <summary>
         /// 标识ID
@@ -33,13 +41,13 @@ namespace AdminShared.Models.v1.User
         /// <summary>
         /// 邮箱
         /// </summary>
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
 
         /// <summary>
         /// 角色
         /// </summary>
-        public string Roles { get; set; }
+        public string? Roles { get; set; }
 
 
         /// <summary>

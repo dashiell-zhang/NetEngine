@@ -36,7 +36,7 @@ namespace WebApi.Filters
         public bool IsBlock { get; set; }
 
 
-        private IDistributedSynchronizationHandle LockHandle { get; set; }
+        private IDistributedSynchronizationHandle? LockHandle { get; set; }
 
 
 
@@ -61,7 +61,7 @@ namespace WebApi.Filters
 
             try
             {
-                var distLock = context.HttpContext.RequestServices.GetService<IDistributedLockProvider>();
+                var distLock = context.HttpContext.RequestServices.GetRequiredService<IDistributedLockProvider>();
 
                 while (true)
                 {
@@ -97,7 +97,7 @@ namespace WebApi.Filters
         {
             try
             {
-                LockHandle.Dispose();
+                LockHandle?.Dispose();
             }
             catch
             {

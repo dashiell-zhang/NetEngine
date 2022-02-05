@@ -76,7 +76,12 @@
     async override protected void OnInitialized()
     {
 
-        editSite = await Http.GetFromJsonAsync<DtoSite>("Site/GetSite");
+        var retData = await Http.GetFromJsonAsync<DtoSite>("Site/GetSite");
+
+        if (retData != null)
+        {
+            editSite = retData;
+        }
 
         StateHasChanged();
     }

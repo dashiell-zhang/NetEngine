@@ -30,7 +30,7 @@ namespace Common.AliPay
         /// <summary>
         /// 支付回调 同步URL
         /// </summary>
-        public string returnUrl;
+        public string? returnUrl;
 
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace Common.AliPay
         /// <summary>
         /// 支付中途退出后跳转URL
         /// </summary>
-        public string quitUrl;
+        public string? quitUrl;
 
 
         /// <param name="in_appid">AppId</param>

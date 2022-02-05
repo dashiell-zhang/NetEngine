@@ -103,7 +103,13 @@
     async void GetLinkList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
         tableLoading = false;
         StateHasChanged();
     }
@@ -129,12 +135,12 @@
     bool isShowEditLink = false;
 
     long linkId;
-    DtoEditLink editLink = new();
+    DtoEditLink editLink = new("", "");
 
-    void EditLink(DtoLink link = null)
+    void EditLink(DtoLink? link = null)
     {
         linkId = default;
-        editLink = new DtoEditLink();
+        editLink = new DtoEditLink("", "");
 
         if (link != null)
         {

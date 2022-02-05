@@ -9,9 +9,9 @@ namespace Common.AliYun
     public class OssHelper
     {
         private readonly string endpoint = IO.Config.Get()["OSSEndpoint"];
-        private readonly string accessKeyId;
-        private readonly string accessKeySecret;
-        private readonly string bucketName;
+        private readonly string accessKeyId = "";
+        private readonly string accessKeySecret = "";
+        private readonly string bucketName = "";
 
         public OssHelper()
         {
@@ -37,7 +37,7 @@ namespace Common.AliYun
         /// <param name="localPath">本地文件路径</param>
         /// <param name="remotePath">远端文件路径 以 / 分割多级文件夹，不传默认为更目录</param>
         /// <param name="mode">访问方式,["attachment","inline"]，默认为 attachment</param>
-        public bool FileUpload(string localPath, string remotePath, string fileName = null, string mode = "attachment")
+        public bool FileUpload(string localPath, string remotePath, string? fileName = null, string mode = "attachment")
         {
             try
             {
@@ -186,7 +186,7 @@ namespace Common.AliYun
         /// <param name="ExpirationTime">过期时间,默认为7天</param>
         /// <param name="mode">访问方式,["attachment","inline"]，默认为 attachment</param>
         /// <returns></returns>
-        public string GetTempUrl(string remotePath, string fileName = null, DateTime ExpirationTime = default, string mode = "attachment")
+        public string GetTempUrl(string remotePath, string? fileName = null, DateTime ExpirationTime = default, string mode = "attachment")
         {
 
             var client = new OssClient(endpoint, accessKeyId, accessKeySecret);

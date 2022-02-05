@@ -52,7 +52,7 @@ namespace AdminApi.Controllers.v1
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
             var fullFileName = string.Format("{0}{1}", fileName, fileExtension);
 
-            string path = "";
+            string path;
 
             var isSuccess = false;
 
@@ -121,27 +121,35 @@ namespace AdminApi.Controllers.v1
         /// <returns></returns>
         [AllowAnonymous]
         [HttpGet("GetFile")]
-        public FileResult GetFile([Required] long fileid)
+        public FileResult? GetFile([Required] long fileid)
         {
 
             var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
-            string path = Libraries.IO.Path.WebRootPath() + file.Path;
+
+            if (file != null)
+            {
+                string path = Libraries.IO.Path.WebRootPath() + file.Path;
 
 
-            //读取文件入流
-            var stream = System.IO.File.OpenRead(path);
+                //读取文件入流
+                var stream = System.IO.File.OpenRead(path);
 
-            //获取文件后缀
-            string fileExt = Path.GetExtension(path);
+                //获取文件后缀
+                string fileExt = Path.GetExtension(path);
 
-            //获取系统常规全部mime类型
-            var provider = new FileExtensionContentTypeProvider();
+                //获取系统常规全部mime类型
+                var provider = new FileExtensionContentTypeProvider();
 
-            //通过文件后缀寻找对呀的mime类型
-            var memi = provider.Mappings.ContainsKey(fileExt) ? provider.Mappings[fileExt] : provider.Mappings[".zip"];
+                //通过文件后缀寻找对呀的mime类型
+                var memi = provider.Mappings.ContainsKey(fileExt) ? provider.Mappings[fileExt] : provider.Mappings[".zip"];
 
 
-            return File(stream, memi, file.Name);
+                return File(stream, memi, file.Name);
+            }
+            else
+            {
+                return default;
+            }
         }
 
 
@@ -157,54 +165,63 @@ namespace AdminApi.Controllers.v1
         /// <remarks>不指定宽高参数,返回原图</remarks>
         [AllowAnonymous]
         [HttpGet("GetImage")]
-        public FileResult GetImage([Required] long fileId, int width, int height)
+        public FileResult? GetImage([Required] long fileId, int width, int height)
         {
             var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
-            var path = Libraries.IO.Path.WebRootPath() + file.Path;
 
-            string fileExt = Path.GetExtension(path);
-            var provider = new FileExtensionContentTypeProvider();
-            var memi = provider.Mappings[fileExt];
-
-            using var fileStream = System.IO.File.OpenRead(path);
-
-            if (width == 0 && height == 0)
+            if (file != null)
             {
-                return File(fileStream, memi, file.Name);
-            }
-            else
-            {
+                var path = Libraries.IO.Path.WebRootPath() + file.Path;
 
-                using var original = SKBitmap.Decode(path);
-                if (original.Width < width || original.Height < height)
+                string fileExt = Path.GetExtension(path);
+                var provider = new FileExtensionContentTypeProvider();
+                var memi = provider.Mappings[fileExt];
+
+                using var fileStream = System.IO.File.OpenRead(path);
+
+                if (width == 0 && height == 0)
                 {
                     return File(fileStream, memi, file.Name);
                 }
                 else
                 {
 
-                    if (width != 0 && height == 0)
+                    using var original = SKBitmap.Decode(path);
+                    if (original.Width < width || original.Height < height)
                     {
-                        var percent = ((float)width / (float)original.Width);
-
-                        width = (int)(original.Width * percent);
-                        height = (int)(original.Height * percent);
+                        return File(fileStream, memi, file.Name);
                     }
-
-                    if (width == 0 && height != 0)
+                    else
                     {
-                        var percent = ((float)height / (float)original.Height);
 
-                        width = (int)(original.Width * percent);
-                        height = (int)(original.Height * percent);
+                        if (width != 0 && height == 0)
+                        {
+                            var percent = ((float)width / (float)original.Width);
+
+                            width = (int)(original.Width * percent);
+                            height = (int)(original.Height * percent);
+                        }
+
+                        if (width == 0 && height != 0)
+                        {
+                            var percent = ((float)height / (float)original.Height);
+
+                            width = (int)(original.Width * percent);
+                            height = (int)(original.Height * percent);
+                        }
+
+                        using var resizeBitmap = original.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
+                        using var image = SKImage.FromBitmap(resizeBitmap);
+                        using var imageData = image.Encode(SKEncodedImageFormat.Png, 100);
+                        return File(imageData.ToArray(), "image/png");
                     }
-
-                    using var resizeBitmap = original.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
-                    using var image = SKImage.FromBitmap(resizeBitmap);
-                    using var imageData = image.Encode(SKEncodedImageFormat.Png, 100);
-                    return File(imageData.ToArray(), "image/png");
                 }
             }
+            else
+            {
+                return default;
+            }
+
         }
 
 
@@ -215,7 +232,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
         [HttpGet("GetFilePath")]
-        public string GetFilePath([Required] long fileid)
+        public string? GetFilePath([Required] long fileid)
         {
 
             var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false & t.Id == fileid).FirstOrDefault();
@@ -233,7 +250,7 @@ namespace AdminApi.Controllers.v1
                 HttpContext.Response.StatusCode = 400;
                 HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件");
 
-                return null;
+                return default;
             }
 
         }
@@ -252,12 +269,19 @@ namespace AdminApi.Controllers.v1
 
             var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
-            file.IsDelete = true;
-            file.DeleteTime = DateTime.UtcNow;
+            if (file != null)
+            {
+                file.IsDelete = true;
+                file.DeleteTime = DateTime.UtcNow;
 
-            db.SaveChanges();
+                db.SaveChanges();
 
-            return true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
 
         }
 

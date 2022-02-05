@@ -145,14 +145,14 @@ namespace TaskService
                         AllowAutoRedirect = false,
                         ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
                         {
-                            return string.Equals(cert.Thumbprint, "xxxxxx", StringComparison.OrdinalIgnoreCase);
+                            return string.Equals(cert?.Thumbprint, "xxxxxx", StringComparison.OrdinalIgnoreCase);
                         }
                     });
 
                 });
 
 
-        public static IServiceProvider ServiceProvider { get; set; }
+        public static IServiceProvider ServiceProvider { get; set; } = null!;
 
     }
 

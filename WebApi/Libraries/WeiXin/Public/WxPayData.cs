@@ -39,7 +39,7 @@ namespace WebApi.Libraries.WeiXin.Public
         * @param key 字段名
          * @return key对应的字段值
         */
-        public object GetValue(string key)
+        public object? GetValue(string key)
         {
             m_values.TryGetValue(key, out object? o);
             return o;
@@ -299,13 +299,13 @@ namespace WebApi.Libraries.WeiXin.Public
                 throw new WxPayException("WxPayData签名存在但不合法!");
             }
             //如果设置了签名但是签名为空，则抛异常
-            else if (GetValue("sign") == null || GetValue("sign").ToString() == "")
+            else if (GetValue("sign") == null || GetValue("sign")!.ToString() == "")
             {
                 throw new WxPayException("WxPayData签名存在但不合法!");
             }
 
             //获取接收到的签名
-            string return_sign = GetValue("sign").ToString()!;
+            string return_sign = GetValue("sign")!.ToString()!;
 
             //在本地计算新的签名
             string cal_sign = MakeSign(key);

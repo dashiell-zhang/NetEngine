@@ -9,13 +9,13 @@ namespace WebApi.Libraries.WeiXin.Web
     {
         private readonly string appid;
 
-        private readonly string mchid;
+        private readonly string? mchid;
 
-        private readonly string mchkey;
+        private readonly string? mchkey;
 
-        private readonly string notifyurl;
+        private readonly string? notifyurl;
 
-        public WeiXinHelper(string in_appid, string in_mchid = null, string in_mchkey = null, string in_notifyurl = null)
+        public WeiXinHelper(string in_appid, string? in_mchid = null, string? in_mchkey = null, string? in_notifyurl = null)
         {
             appid = in_appid;
             mchid = in_mchid;
@@ -35,15 +35,12 @@ namespace WebApi.Libraries.WeiXin.Web
         /// <param name="price">价格，单位为分</param>
         /// <param name="ip">服务器IP</param>
         /// <returns></returns>
-        public string CreatePay(long productid, string orderno, string body, int price, string ip)
+        public string? CreatePay(long productid, string orderno, string body, int price, string ip)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
 
-
             var url = "https://api.mch.weixin.qq.com/pay/unifiedorder";//微信统一下单请求地址
-
-
 
 
             //参与统一下单签名的参数，除最后的key外，已经按参数名ASCII码从小到大排序
@@ -71,9 +68,6 @@ namespace WebApi.Libraries.WeiXin.Web
                     ", appid, body, mchid, nonceStr, notifyurl
                               , orderno, productid, ip, price, "NATIVE", unifiedorderSign);
 
-
-
-
             var getdata = Common.HttpHelper.Post(url, zhi, "form");
 
             //获取xml数据
@@ -86,9 +80,9 @@ namespace WebApi.Libraries.WeiXin.Web
             JObject jo = (JObject)JsonConvert.DeserializeObject(json)!;
 
 
-            if (jo["xml"]["return_code"]["#cdata-section"].ToString() == "SUCCESS")
+            if (jo["xml"]!["return_code"]!["#cdata-section"]!.ToString() == "SUCCESS")
             {
-                string codeUrl = jo["xml"]["code_url"]["#cdata-section"].ToString();
+                string codeUrl = jo["xml"]!["code_url"]!["#cdata-section"]!.ToString();
 
                 return codeUrl;
             }

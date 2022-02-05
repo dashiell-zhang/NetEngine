@@ -102,7 +102,7 @@
 
 
 
-@code{
+@code {
 
     override protected void OnInitialized()
     {
@@ -118,7 +118,13 @@
     async void GetUserList()
     {
         tableLoading = true;
-        pageList = await Http.GetFromJsonAsync<DtoPageList<DtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
         tableLoading = false;
         StateHasChanged();
     }
@@ -141,7 +147,7 @@
 
 
     bool isShowEditUser = false;
-    DtoEditUser editUser = new();
+    DtoEditUser editUser = new("", "", "", "");
     long userId;
 
     async void SaveUser()
@@ -159,10 +165,6 @@
         }
         else
         {
-            if (editUser.PassWord == "default")
-            {
-                editUser.PassWord = null;
-            }
 
             using (var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser))
             {
@@ -183,9 +185,9 @@
     }
 
 
-    void EditUser(DtoUser user = null)
+    void EditUser(DtoUser? user = null)
     {
-        editUser = new DtoEditUser();
+        editUser = new DtoEditUser("", "", "", "");
         userId = default;
         if (user != null)
         {

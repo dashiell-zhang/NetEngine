@@ -8,11 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using SkiaSharp;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using System.Threading;
 
 namespace AdminApi.Controllers.v1
 {

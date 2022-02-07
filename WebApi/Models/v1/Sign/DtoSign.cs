@@ -8,7 +8,7 @@
     {
 
 
-        public DtoSign(string table,  string sign)
+        public DtoSign(string table, string sign)
         {
             Table = table;
             Sign = sign;

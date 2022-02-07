@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TaskAdmin.Models.Shared
+﻿namespace TaskAdmin.Models.Shared
 {
 
     /// <summary>

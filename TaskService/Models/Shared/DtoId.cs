@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TaskService.Models.Shared
+﻿namespace TaskService.Models.Shared
 {
 
     /// <summary>

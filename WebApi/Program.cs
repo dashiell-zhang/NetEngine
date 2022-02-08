@@ -73,7 +73,7 @@ namespace WebApi
                 //使用 Redis 传输消息
                 options.UseRedis(builder.Configuration.GetConnectionString("redisConnection"));
 
-                //var rabbitMQSetting = Configuration.GetSection("RabbitMQSetting").Get<RabbitMQSetting>();
+                //var rabbitMQSetting = builder.Configuration.GetSection("RabbitMQSetting").Get<RabbitMQSetting>();
 
                 ////使用 RabbitMQ 传输消息
                 //options.UseRabbitMQ(options =>

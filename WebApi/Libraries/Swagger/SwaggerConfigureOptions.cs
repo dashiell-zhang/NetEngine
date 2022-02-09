@@ -23,6 +23,10 @@ namespace WebApi.Libraries.Swagger
             foreach (var description in provider.ApiVersionDescriptions)
             {
                 options.SwaggerDoc(description.GroupName, CreateInfoForApiVersion(description));
+
+                var modelPrefix = typeof(Program).Assembly.GetName().Name + ".Models.";
+                var versionPrefix = description.GroupName + ".";
+                options.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => (type.ToString().Substring(type.ToString().IndexOf("Models.") + 7)).Replace(modelPrefix, "").Replace(versionPrefix, "").Replace("`1", "") };
             }
         }
 

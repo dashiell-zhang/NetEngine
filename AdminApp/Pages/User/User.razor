@@ -147,7 +147,7 @@
 
 
     bool isShowEditUser = false;
-    DtoEditUser editUser = new("", "", "", "");
+    DtoEditUser editUser = new();
     long userId;
 
     async void SaveUser()
@@ -187,7 +187,7 @@
 
     void EditUser(DtoUser? user = null)
     {
-        editUser = new DtoEditUser("", "", "", "");
+        editUser = new DtoEditUser();
         userId = default;
         if (user != null)
         {

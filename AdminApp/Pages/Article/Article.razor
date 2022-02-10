@@ -216,14 +216,14 @@
 
 
     bool isShowEditArticle = false;
-    DtoEditArticle editArticle = new("", "");
+    DtoEditArticle editArticle = new();
     long articleId;
 
 
     async void EditArticle(DtoArticle? article = null)
     {
 
-        editArticle = new("", "");
+        editArticle = new();
         fileList = new();
         articleId = default;
 

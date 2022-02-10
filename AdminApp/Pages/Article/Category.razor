@@ -176,13 +176,13 @@
 
 
     bool isShowEditCategory = false;
-    DtoEditCategory editCategory = new("");
+    DtoEditCategory editCategory = new();
     long categoryId;
 
 
     void EditCategory(DtoCategory? category = null)
     {
-        editCategory = new("");
+        editCategory = new();
         categoryId = default;
 
         GetSelectCategoryList();

@@ -41,9 +41,11 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoLink(t.Name, t.Url)
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoLink
             {
                 Id = t.Id,
+                Name = t.Name,
+                Url = t.Url,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
             }).Skip(skip).Take(pageSize).ToList();
@@ -61,9 +63,11 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetLink")]
         public DtoLink? GetLink(long linkId)
         {
-            var link = db.TLink.Where(t => t.IsDelete == false & t.Id == linkId).Select(t => new DtoLink(t.Name, t.Url)
+            var link = db.TLink.Where(t => t.IsDelete == false & t.Id == linkId).Select(t => new DtoLink
             {
                 Id = t.Id,
+                Name = t.Name,
+                Url = t.Url,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
             }).FirstOrDefault();

@@ -5,14 +5,6 @@ namespace AdminShared.Models.v1.User
     public class DtoUser
     {
 
-        public DtoUser(string name, string nickName, string phone)
-        {
-            Name = name;
-            NickName = nickName;
-            Phone = phone;
-        }
-
-
 
         /// <summary>
         /// 标识ID

@@ -50,7 +50,7 @@ namespace WebApi.Libraries.Verify
             var jwtSetting = conf.GetSection("JWTSetting").Get<JWTSetting>();
 
             //对称秘钥
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey));
 
             //签名证书(秘钥，加密算法)
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

@@ -5,12 +5,6 @@ namespace AdminShared.Models.v1.Article
     public class DtoEditChannel
     {
 
-        public DtoEditChannel(string name)
-        {
-            Name = name;
-        }
-
-
 
         /// <summary>
         /// 名称

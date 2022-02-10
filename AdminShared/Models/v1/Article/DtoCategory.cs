@@ -11,11 +11,6 @@ namespace AdminShared.Models.v1.Article
     {
 
 
-        public DtoCategory(string name)
-        {
-            Name = name;
-        }
-
 
         /// <summary>
         /// 标识ID

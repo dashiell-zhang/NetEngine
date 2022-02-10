@@ -135,12 +135,12 @@
     bool isShowEditLink = false;
 
     long linkId;
-    DtoEditLink editLink = new("", "");
+    DtoEditLink editLink = new();
 
     void EditLink(DtoLink? link = null)
     {
         linkId = default;
-        editLink = new DtoEditLink("", "");
+        editLink = new DtoEditLink();
 
         if (link != null)
         {

@@ -10,12 +10,6 @@ namespace AdminShared.Models.v1.Link
     {
 
 
-        public DtoEditLink(string name, string url)
-        {
-            Name = name;
-            Url = url;
-        }
-
 
         /// <summary>
         /// 名称

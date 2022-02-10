@@ -46,9 +46,12 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser(t.Name, t.NickName, t.Phone)
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser
             {
                 Id = t.Id,
+                Name = t.Name,
+                NickName = t.NickName,
+                Phone = t.Phone,
                 Email = t.Email,
                 Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
@@ -74,9 +77,12 @@ namespace AdminApi.Controllers.v1
                 userId = base.userId;
             }
 
-            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser(t.Name, t.NickName, t.Phone)
+            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
             {
                 Id = t.Id,
+                Name = t.Name,
+                NickName = t.NickName,
+                Phone = t.Phone,
                 Email = t.Email,
                 Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime

@@ -10,13 +10,6 @@ namespace AdminShared.Models.v1.Authorize
     {
 
 
-        public DtoLogin(string name, string passWord)
-        {
-            Name = name;
-            PassWord = passWord;
-        }
-
-
 
         /// <summary>
         /// 用户名

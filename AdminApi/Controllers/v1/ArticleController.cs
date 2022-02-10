@@ -42,9 +42,10 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoChannel(t.Name)
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoChannel
             {
                 Id = t.Id,
+                Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
@@ -81,9 +82,10 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetChannel")]
         public DtoChannel? GetChannel(long channelId)
         {
-            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).Select(t => new DtoChannel(t.Name)
+            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).Select(t => new DtoChannel
             {
                 Id = t.Id,
+                Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
@@ -204,9 +206,10 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory(t.Name)
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory
             {
                 Id = t.Id,
+                Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
                 ParentId = t.ParentId,
@@ -245,9 +248,10 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetCategory")]
         public DtoCategory? GetCategory(long categoryId)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new DtoCategory(t.Name)
+            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new DtoCategory
             {
                 Id = t.Id,
+                Name = t.Name,
                 Remarks = t.Remarks,
                 Sort = t.Sort,
                 ParentId = t.ParentId,
@@ -375,10 +379,14 @@ namespace AdminApi.Controllers.v1
 
             var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle(t.Category.Name, t.Title, t.Content, t.Digest)
+            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
+                CategoryName = t.Category.Name,
+                Title = t.Title,
+                Content = t.Content,
+                Digest = t.Digest,
                 IsRecommend = t.IsRecommend,
                 IsDisplay = t.IsDisplay,
                 Sort = t.Sort,
@@ -409,10 +417,14 @@ namespace AdminApi.Controllers.v1
             var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
 
 
-            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new DtoArticle(t.Category.Name, t.Title, t.Content, t.Digest)
+            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
+                CategoryName = t.Category.Name,
+                Title = t.Title,
+                Content = t.Content,
+                Digest = t.Digest,
                 IsRecommend = t.IsRecommend,
                 IsDisplay = t.IsDisplay,
                 Sort = t.Sort,

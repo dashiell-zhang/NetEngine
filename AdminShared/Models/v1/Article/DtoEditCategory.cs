@@ -10,11 +10,6 @@ namespace AdminShared.Models.v1.Article
     {
 
 
-        public DtoEditCategory(string name)
-        {
-            Name = name;
-        }
-
 
         /// <summary>
         /// 名称

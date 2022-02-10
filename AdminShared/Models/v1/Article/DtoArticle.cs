@@ -12,15 +12,6 @@ namespace AdminShared.Models.v1.Article
     {
 
 
-        public DtoArticle(string categoryName, string title, string content, string digest)
-        {
-            CategoryName = categoryName;
-            Title = title;
-            Content = content;
-            Digest = digest;
-        }
-
-
 
         /// <summary>
         /// 标识ID

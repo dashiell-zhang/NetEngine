@@ -138,7 +138,7 @@ namespace WebApi.Controllers.v1
 
             }
 
-            return GetToken(new DtoLogin(user.Name, user.PassWord));
+            return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
         }
 
 
@@ -174,7 +174,7 @@ namespace WebApi.Controllers.v1
                     db.SaveChanges();
                 }
 
-                return GetToken(new DtoLogin(user.Name, user.PassWord));
+                return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
             }
             else
             {
@@ -311,7 +311,7 @@ namespace WebApi.Controllers.v1
                 db.SaveChanges();
             }
 
-            return GetToken(new DtoLogin(user.Name, user.PassWord));
+            return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
 
         }
 

@@ -9,15 +9,6 @@ namespace AdminShared.Models.v1.User
     {
 
 
-        public DtoEditUser(string name, string nickName, string phone, string passWord)
-        {
-            Name = name;
-            NickName = nickName;
-            Phone = phone;
-            PassWord = passWord;
-        }
-
-
 
         /// <summary>
         /// 用户名

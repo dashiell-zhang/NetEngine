@@ -19,7 +19,7 @@ namespace AdminApi.Actions.v1
 
                 SnowflakeHelper snowflakeHelper = Program.ServiceProvider.GetRequiredService<SnowflakeHelper>();
 
-                var appSetting = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Site" & t.Key == key).FirstOrDefault();
+                var appSetting = db.TAppSetting.Where(t => t.IsDelete == false && t.Module == "Site" && t.Key == key).FirstOrDefault();
 
 
                 if (appSetting == null)

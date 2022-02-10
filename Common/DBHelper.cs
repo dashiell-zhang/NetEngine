@@ -211,9 +211,9 @@ namespace Common
             using var db = new DatabaseContext();
             var query = db.TCount.Where(t => t.Tag.Contains(tag));
 
-            if (starttime != default & endtime != default)
+            if (starttime != default && endtime != default)
             {
-                query = query.Where(t => t.CreateTime >= starttime & t.CreateTime <= endtime);
+                query = query.Where(t => t.CreateTime >= starttime && t.CreateTime <= endtime);
             }
 
             return query.ToList().Sum(t => t.Count);

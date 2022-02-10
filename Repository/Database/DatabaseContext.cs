@@ -439,7 +439,7 @@ namespace Repository.Database
 
                 if (result != "")
                 {
-                    if (ipAddress == null | deviceMark == null)
+                    if (ipAddress == null || deviceMark == null)
                     {
                         var assembly = Assembly.GetEntryAssembly();
                         var httpContextType = assembly!.GetTypes().Where(t => t.FullName!.Contains("Libraries.Http.HttpContext")).FirstOrDefault();

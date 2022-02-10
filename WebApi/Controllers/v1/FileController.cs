@@ -312,7 +312,7 @@ namespace WebApi.Controllers.v1
         public string? GetFilePath([Required] long fileid)
         {
 
-            var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false & t.Id == fileid).FirstOrDefault();
+            var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false && t.Id == fileid).FirstOrDefault();
 
             if (file != null)
             {

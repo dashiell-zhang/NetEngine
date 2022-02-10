@@ -46,13 +46,13 @@ namespace TaskAdmin.Libraries.Verify
                         var userIdStr = httpContext.User.Claims.ToList().Where(t => t.Type == "userId").Select(t => t.Value).FirstOrDefault();
 
                         var userId = long.Parse(userIdStr!);
-                        var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
+                        var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
 
-                        var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
+                        var functionId = db.TFunctionAction.Where(t => t.IsDelete == false && t.Module.ToLower() == module && t.Controller.ToLower() == controller && t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
 
                         if (functionId != default)
                         {
-                            var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId!.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+                            var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false && t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
 
                             if (functionAuthorizeId != default)
                             {

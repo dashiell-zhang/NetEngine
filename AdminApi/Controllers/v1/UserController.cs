@@ -40,7 +40,7 @@ namespace AdminApi.Controllers.v1
 
             if (!string.IsNullOrEmpty(searchKey))
             {
-                query = query.Where(t => t.Name.Contains(searchKey) | t.NickName.Contains(searchKey) | t.Phone.Contains(searchKey));
+                query = query.Where(t => t.Name.Contains(searchKey) || t.NickName.Contains(searchKey) || t.Phone.Contains(searchKey));
             }
 
 
@@ -53,7 +53,7 @@ namespace AdminApi.Controllers.v1
                 NickName = t.NickName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
             }).Skip(skip).Take(pageSize).ToList();
 
@@ -84,7 +84,7 @@ namespace AdminApi.Controllers.v1
                 NickName = t.NickName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false & r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
             }).FirstOrDefault();
 
@@ -128,7 +128,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("UpdateUser")]
         public bool UpdateUser(long userId, DtoEditUser updateUser)
         {
-            var user = db.TUser.Where(t => t.IsDelete == false & t.Id == userId).FirstOrDefault();
+            var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
 
             if (user != null)
             {
@@ -165,7 +165,7 @@ namespace AdminApi.Controllers.v1
         [HttpDelete("DeleteUser")]
         public bool DeleteUser(DtoId id)
         {
-            var user = db.TUser.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
+            var user = db.TUser.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
             if (user != null)
             {

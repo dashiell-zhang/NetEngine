@@ -82,7 +82,7 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetChannel")]
         public DtoChannel? GetChannel(long channelId)
         {
-            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).Select(t => new DtoChannel
+            var channel = db.TChannel.Where(t => t.IsDelete == false && t.Id == channelId).Select(t => new DtoChannel
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -132,7 +132,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("UpdateChannel")]
         public bool UpdateChannel(long channelId, DtoEditChannel updateChannel)
         {
-            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == channelId).FirstOrDefault();
+            var channel = db.TChannel.Where(t => t.IsDelete == false && t.Id == channelId).FirstOrDefault();
 
             if (channel != null)
             {
@@ -161,7 +161,7 @@ namespace AdminApi.Controllers.v1
         [HttpDelete("DeleteChannel")]
         public bool DeleteChannel(DtoId id)
         {
-            var channel = db.TChannel.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
+            var channel = db.TChannel.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
             if (channel != null)
             {
@@ -197,7 +197,7 @@ namespace AdminApi.Controllers.v1
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TCategory.Where(t => t.IsDelete == false & t.ChannelId == channelId);
+            var query = db.TCategory.Where(t => t.IsDelete == false && t.ChannelId == channelId);
 
             if (!string.IsNullOrEmpty(searchKey))
             {
@@ -229,7 +229,7 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetCategoryKVList")]
         public List<DtoKeyValue> GetCategoryKVList(long channelId)
         {
-            var list = db.TCategory.Where(t => t.IsDelete == false & t.ChannelId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoKeyValue
+            var list = db.TCategory.Where(t => t.IsDelete == false && t.ChannelId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoKeyValue
             {
                 Key = t.Id,
                 Value = t.Name
@@ -248,7 +248,7 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetCategory")]
         public DtoCategory? GetCategory(long categoryId)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).Select(t => new DtoCategory
+            var category = db.TCategory.Where(t => t.IsDelete == false && t.Id == categoryId).Select(t => new DtoCategory
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -302,7 +302,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("UpdateCategory")]
         public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == categoryId).FirstOrDefault();
+            var category = db.TCategory.Where(t => t.IsDelete == false && t.Id == categoryId).FirstOrDefault();
 
             if (category != null)
             {
@@ -331,7 +331,7 @@ namespace AdminApi.Controllers.v1
         [HttpDelete("DeleteCategory")]
         public bool DeleteCategory(DtoId id)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
+            var category = db.TCategory.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
             if (category != null)
             {
@@ -368,7 +368,7 @@ namespace AdminApi.Controllers.v1
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TArticle.Where(t => t.IsDelete == false & t.Category.ChannelId == channelId);
+            var query = db.TArticle.Where(t => t.IsDelete == false && t.Category.ChannelId == channelId);
 
             if (!string.IsNullOrEmpty(searchKey))
             {
@@ -392,7 +392,7 @@ namespace AdminApi.Controllers.v1
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
+                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
                     Value = fileServerUrl + f.Path
@@ -417,7 +417,7 @@ namespace AdminApi.Controllers.v1
             var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
 
 
-            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).Select(t => new DtoArticle
+            var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == articleId).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
@@ -430,7 +430,7 @@ namespace AdminApi.Controllers.v1
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" & f.Table == "TArticle" & f.TableId == t.Id).Select(f => new DtoKeyValue
+                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
                     Value = fileServerUrl + f.Path
@@ -463,7 +463,7 @@ namespace AdminApi.Controllers.v1
             article.Sort = createArticle.Sort;
             article.ClickCount = createArticle.ClickCount;
 
-            if (string.IsNullOrEmpty(createArticle.Digest) & !string.IsNullOrEmpty(createArticle.Content))
+            if (string.IsNullOrEmpty(createArticle.Digest) && !string.IsNullOrEmpty(createArticle.Content))
             {
                 string content = Common.StringHelper.RemoveHtml(createArticle.Content);
                 article.Digest = content.Length > 255 ? content[..255] : content;
@@ -476,7 +476,7 @@ namespace AdminApi.Controllers.v1
             db.TArticle.Add(article);
 
 
-            var fileList = db.TFile.Where(t => t.IsDelete == false & t.Table == "TArticle" & t.TableId == fileKey).ToList();
+            var fileList = db.TFile.Where(t => t.IsDelete == false && t.Table == "TArticle" && t.TableId == fileKey).ToList();
 
             foreach (var file in fileList)
             {
@@ -500,7 +500,7 @@ namespace AdminApi.Controllers.v1
         [HttpPost("UpdateArticle")]
         public bool UpdateArticle(long articleId, DtoEditArticle updateArticle)
         {
-            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == articleId).FirstOrDefault();
+            var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == articleId).FirstOrDefault();
 
             if (article != null)
             {
@@ -542,7 +542,7 @@ namespace AdminApi.Controllers.v1
         [HttpDelete("DeleteArticle")]
         public bool DeleteArticle(DtoId id)
         {
-            var article = db.TArticle.Where(t => t.IsDelete == false & t.Id == id.Id).FirstOrDefault();
+            var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
 
             if (article != null)
             {

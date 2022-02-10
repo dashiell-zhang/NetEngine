@@ -50,13 +50,13 @@ namespace WebApi.Libraries.Verify
                     var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
                     var userId = long.Parse(JWTToken.GetClaims("userId")!);
-                    var roleIds = db.TUserRole.Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
+                    var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
 
-                    var functionId = db.TFunctionAction.Where(t => t.IsDelete == false & t.Module.ToLower() == module & t.Controller.ToLower() == controller & t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
+                    var functionId = db.TFunctionAction.Where(t => t.IsDelete == false && t.Module.ToLower() == module && t.Controller.ToLower() == controller && t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
 
                     if (functionId != default)
                     {
-                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false & t.FunctionId == functionId & (roleIds.Contains(t.RoleId!.Value) | t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false && t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
 
                         if (functionAuthorizeId != default)
                         {
@@ -117,7 +117,7 @@ namespace WebApi.Libraries.Verify
                 var distLock = httpContext.RequestServices.GetRequiredService<IDistributedLockProvider>();
                 if (distLock.TryAcquireLock(key) != null)
                 {
-                    var newToken = db.TUserToken.Where(t => t.IsDelete == false & t.LastId == tokenId & t.CreateTime > nbfTime).FirstOrDefault();
+                    var newToken = db.TUserToken.Where(t => t.IsDelete == false && t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefault();
 
                     if (newToken == null)
                     {

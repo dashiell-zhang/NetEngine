@@ -38,7 +38,7 @@ namespace WebApi.Controllers.v1
         [HttpPost("GetToken")]
         public string GetToken([FromBody] DtoLogin login)
         {
-            var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false & (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
+            var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
 
             if (user != null)
             {
@@ -86,7 +86,7 @@ namespace WebApi.Controllers.v1
             var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
             string code = keyValue.Value!.ToString()!;
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinMiniApp" & t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -99,14 +99,14 @@ namespace WebApi.Controllers.v1
             string openid = wxinfo.openid;
             string sessionkey = wxinfo.sessionkey;
 
-            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
+            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 
             if (user == null)
             {
 
                 using (distLock.AcquireLock("GetTokenByWeiXinMiniAppCode" + openid))
                 {
-                    user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false & t.AppName == "WeiXinMiniApp" & t.AppId == appid & t.OpenId == openid).Select(t => t.User).FirstOrDefault();
+                    user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 
                     if (user == null)
                     {
@@ -200,9 +200,9 @@ namespace WebApi.Controllers.v1
         public List<DtoKeyValue> GetFunctionList(string sign)
         {
 
-            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
+            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId!.Value) | t.UserId == userId) & t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
+            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId) && t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name
@@ -274,7 +274,7 @@ namespace WebApi.Controllers.v1
             var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
             string code = keyValue.Value!.ToString()!;
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false & t.Module == "WeiXinApp" & t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinApp" && t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -287,7 +287,7 @@ namespace WebApi.Controllers.v1
 
             var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
 
-            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" & t.AppId == appid & t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
+            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" && t.AppId == appid && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
 
             if (user == null)
             {

@@ -37,7 +37,7 @@ namespace AdminApi.Controllers.v1
         public string GetToken([FromBody] DtoLogin login)
         {
 
-            var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false & (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
+            var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
 
             if (user != null)
             {
@@ -86,9 +86,9 @@ namespace AdminApi.Controllers.v1
         public List<DtoKeyValue> GetFunctionList(string sign)
         {
 
-            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false & t.UserId == userId).Select(t => t.RoleId).ToList();
+            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false & (roleIds.Contains(t.RoleId!.Value) | t.UserId == userId) & t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
+            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId) && t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name

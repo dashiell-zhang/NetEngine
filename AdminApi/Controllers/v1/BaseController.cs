@@ -102,7 +102,7 @@ namespace AdminApi.Controllers.v1
         public List<DtoKeyValue> GetValueList(long groupId)
         {
 
-            var list = db.TAppSetting.Where(t => t.IsDelete == false & t.Module == "Dictionary" & t.GroupId == groupId).Select(t => new DtoKeyValue
+            var list = db.TAppSetting.Where(t => t.IsDelete == false && t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new DtoKeyValue
             {
                 Key = t.Key,
                 Value = t.Value

@@ -6,19 +6,12 @@ namespace Repository.Database
     {
 
 
-        public TUserBindExternal(string appName, string appId, string openId)
-        {
-            AppName = appName;
-            AppId = appId;
-            OpenId = openId;
-        }
-
 
         /// <summary>
         /// 用户信息
         /// </summary>
         public long UserId { get; set; }
-        public TUser User { get; set; } = null!;
+        public TUser User { get; set; } 
 
 
 

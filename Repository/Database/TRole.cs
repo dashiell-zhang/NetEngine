@@ -11,11 +11,6 @@ namespace Repository.Database
     {
 
 
-        public TRole(string name)
-        {
-            Name = name;
-        }
-
 
         /// <summary>
         /// 角色名称

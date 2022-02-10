@@ -102,8 +102,12 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateUser")]
         public long CreateUser(DtoEditUser createUser)
         {
-            TUser user = new(createUser.Name, createUser.NickName, createUser.Phone, createUser.PassWord);
+            TUser user = new();
             user.Id = snowflakeHelper.GetId();
+            user.Name = createUser.Name;
+            user.NickName = createUser.NickName;
+            user.Phone = createUser.Phone;
+            user.PassWord = createUser.PassWord;
             user.CreateTime = DateTime.UtcNow;
             user.CreateUserId = userId;
 

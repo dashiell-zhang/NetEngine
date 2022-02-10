@@ -10,7 +10,7 @@ namespace Repository.Database
         /// 角色信息
         /// </summary>
         public long RoleId { get; set; }
-        public virtual TRole Role { get; set; } = null!;
+        public virtual TRole Role { get; set; } 
 
 
 
@@ -18,7 +18,7 @@ namespace Repository.Database
         /// 用户信息
         /// </summary>
         public long UserId { get; set; }
-        public virtual TUser User { get; set; } = null!;
+        public virtual TUser User { get; set; } 
 
 
     }

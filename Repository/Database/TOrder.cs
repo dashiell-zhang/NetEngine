@@ -16,15 +16,6 @@ namespace Repository.Database
     {
 
 
-        public TOrder(string orderNo, string type, string state, string payType)
-        {
-            OrderNo = orderNo;
-            Type = type;
-            State = state;
-            PayType = payType;
-        }
-
-
         /// <summary>
         /// 订单号
         /// </summary>

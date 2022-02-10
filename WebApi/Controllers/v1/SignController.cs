@@ -46,13 +46,14 @@ namespace WebApi.Controllers.v1
         [HttpPost("AddSign")]
         public bool AddSign([FromBody] DtoSign addSign)
         {
-            TSign sign = new(addSign.Table, addSign.Sign);
+            TSign sign = new();
 
             sign.Id = snowflakeHelper.GetId();
             sign.CreateTime = DateTime.UtcNow;
             sign.CreateUserId = userId;
+            sign.Table = addSign.Table;
             sign.TableId = addSign.TableId;
-
+            sign.Sign = addSign.Sign;
             db.TSign.Add(sign);
             db.SaveChanges();
 

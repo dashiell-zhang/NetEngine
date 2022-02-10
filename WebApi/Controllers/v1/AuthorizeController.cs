@@ -114,20 +114,27 @@ namespace WebApi.Controllers.v1
                         string userName = DateTime.UtcNow.ToString() + "微信小程序新用户";
 
                         //注册一个只有基本信息的账户出来
-                        user = new(userName, userName, "", Guid.NewGuid().ToString());
+                        user = new();
 
                         user.Id = snowflakeHelper.GetId();
                         user.CreateTime = DateTime.UtcNow;
-
+                        user.Name = userName;
+                        user.NickName = userName;
+                        user.Phone = "";
+                        user.PassWord = Guid.NewGuid().ToString();
 
                         db.TUser.Add(user);
 
                         db.SaveChanges();
 
-                        TUserBindExternal userBind = new("WeiXinMiniApp", appid!, openid);
+                        TUserBindExternal userBind = new();
                         userBind.Id = snowflakeHelper.GetId();
                         userBind.CreateTime = DateTime.UtcNow;
                         userBind.UserId = user.Id;
+                        userBind.AppName = "WeiXinMiniApp";
+                        userBind.AppId = appid!;
+                        userBind.OpenId = openid;
+
 
                         db.TUserBindExternal.Add(userBind);
 
@@ -164,10 +171,14 @@ namespace WebApi.Controllers.v1
 
                     string userName = DateTime.UtcNow.ToString() + "手机短信新用户";
 
-                    user = new(userName, userName, phone, Guid.NewGuid().ToString());
+                    user = new();
 
                     user.Id = snowflakeHelper.GetId();
                     user.CreateTime = DateTime.UtcNow;
+                    user.Name = userName;
+                    user.NickName = userName;
+                    user.Phone = phone;
+                    user.PassWord = Guid.NewGuid().ToString();
 
                     db.TUser.Add(user);
 
@@ -287,31 +298,48 @@ namespace WebApi.Controllers.v1
 
             var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
 
-            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" && t.AppId == appid && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
-
-            if (user == null)
+            if (userInfo.NickName != null)
             {
+                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" && t.AppId == appid && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
 
-                user = new(userInfo.NickName!, userInfo.NickName!, "", Guid.NewGuid().ToString());
-                user.Id = snowflakeHelper.GetId();
-                user.IsDelete = false;
-                user.CreateTime = DateTime.UtcNow;
+                if (user == null)
+                {
 
-                db.TUser.Add(user);
-                db.SaveChanges();
+                    user = new();
+                    user.Id = snowflakeHelper.GetId();
+                    user.IsDelete = false;
+                    user.CreateTime = DateTime.UtcNow;
+                    user.Name = userInfo.NickName;
+                    user.NickName = userInfo.NickName;
+                    user.Phone = "";
+                    user.PassWord = Guid.NewGuid().ToString();
 
-                TUserBindExternal bind = new("WeiXinApp", appid!, openid);
-                bind.Id = snowflakeHelper.GetId();
-                bind.CreateTime = DateTime.UtcNow;
+                    db.TUser.Add(user);
+                    db.SaveChanges();
 
-                bind.UserId = user.Id;
+                    TUserBindExternal bind = new();
+                    bind.Id = snowflakeHelper.GetId();
+                    bind.CreateTime = DateTime.UtcNow;
+                    bind.AppName = "WeiXinApp";
+                    bind.AppId = appid!;
+                    bind.OpenId = openid;
 
-                db.TUserBindExternal.Add(bind);
+                    bind.UserId = user.Id;
 
-                db.SaveChanges();
+                    db.TUserBindExternal.Add(bind);
+
+                    db.SaveChanges();
+                }
+
+                return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
             }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "微信授权失败");
 
-            return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
+                return "";
+            }
 
         }
 

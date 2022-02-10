@@ -90,9 +90,12 @@ namespace AdminApi.Controllers.v1
                 if (isSuccess)
                 {
 
-                    TFile f = new(file.FileName, path, business, sign);
+                    TFile f = new();
                     f.Id = fileName;
-                    f.IsDelete = false;
+                    f.Name = file.FileName;
+                    f.Path = path;
+                    f.Table = business;
+                    f.Sign = sign;
                     f.TableId = key;
                     f.CreateUserId = userId;
                     f.CreateTime = DateTime.UtcNow;

@@ -13,19 +13,11 @@ namespace Repository.Database
     {
 
 
-        public TArticle(string title, string content, string digest)
-        {
-            Title = title;
-            Content = content;
-            Digest = digest;
-        }
-
-
         /// <summary>
         /// 类别ID
         /// </summary>
         public long CategoryId { get; set; }
-        public virtual TCategory Category { get; set; } = null!;
+        public virtual TCategory Category { get; set; } 
 
 
         /// <summary>

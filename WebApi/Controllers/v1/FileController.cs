@@ -87,9 +87,13 @@ namespace WebApi.Controllers.v1
                 if (isSuccess)
                 {
 
-                    TFile f = new(fileInfoName, filePath, business, sign);
+                    TFile f = new();
                     f.Id = snowflakeHelper.GetId();
+                    f.Name = fileInfoName;
+                    f.Path = filePath;
+                    f.Table = business;
                     f.TableId = key;
+                    f.Sign = sign;
                     f.CreateUserId = userId;
                     f.CreateTime = DateTime.UtcNow;
                     db.TFile.Add(f);
@@ -169,10 +173,13 @@ namespace WebApi.Controllers.v1
                 if (isSuccess)
                 {
 
-                    TFile f = new(file.FileName, path, business, sign);
+                    TFile f = new();
                     f.Id = fileName;
-                    f.IsDelete = false;
+                    f.Name = file.FileName;
+                    f.Path = path;
+                    f.Table = business;
                     f.TableId = key;
+                    f.Sign = sign;
                     f.CreateUserId = userId;
                     f.CreateTime = DateTime.UtcNow;
                     db.TFile.Add(f);

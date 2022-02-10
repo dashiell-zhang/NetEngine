@@ -14,18 +14,11 @@ namespace Repository.Database
     {
 
 
-        public TCategory(string name)
-        {
-            Name = name;
-        }
-
-
-
         /// <summary>
         /// 频道ID
         /// </summary>
         public long ChannelId { get; set; }
-        public virtual TChannel Channel { get; set; } = null!;
+        public virtual TChannel Channel { get; set; } 
 
 
         /// <summary>

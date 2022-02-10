@@ -14,12 +14,6 @@ namespace Repository.Database
     {
 
 
-        public TRegionCity(string city)
-        {
-            City = city;
-        }
-
-
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public new int Id { get; set; }
 
@@ -34,7 +28,7 @@ namespace Repository.Database
         /// 所属省份ID
         /// </summary>
         public int ProvinceId { get; set; }
-        public virtual TRegionProvince Province { get; set; } = null!;
+        public virtual TRegionProvince Province { get; set; } 
 
 
         /// <summary>

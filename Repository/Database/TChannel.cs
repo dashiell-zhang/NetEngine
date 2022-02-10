@@ -14,13 +14,6 @@ namespace Repository.Database
     {
 
 
-        public TChannel(string name)
-        {
-            Name = name;
-        }
-
-
-
         /// <summary>
         /// 频道名称
         /// </summary>

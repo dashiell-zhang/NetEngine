@@ -14,12 +14,6 @@ namespace Repository.Database
     {
 
 
-        public TRegionProvince(string province)
-        {
-            Province = province;
-        }
-
-
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public new int Id { get; set; }
 

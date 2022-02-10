@@ -356,6 +356,6 @@ namespace TaskAdmin
         }
 
 
-        public static IServiceProvider ServiceProvider { get; set; } = null!;
+        public static IServiceProvider ServiceProvider { get; set; } 
     }
 }

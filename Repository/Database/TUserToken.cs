@@ -14,7 +14,7 @@ namespace Repository.Database
         /// 用户ID
         /// </summary>
         public long UserId { get; set; }
-        public virtual TUser User { get; set; } = null!;
+        public virtual TUser User { get; set; } 
 
 
 

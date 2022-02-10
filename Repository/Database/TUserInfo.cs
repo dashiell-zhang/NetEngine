@@ -9,13 +9,15 @@ namespace Repository.Database
     public class TUserInfo : CUD
     {
 
+
+
         /// <summary>
         /// 用户ID
         /// </summary>
         public long UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public virtual TUser User { get; set; } = null!;
+        public virtual TUser User { get; set; } 
 
 
         /// <summary>

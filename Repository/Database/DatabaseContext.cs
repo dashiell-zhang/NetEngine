@@ -13,7 +13,7 @@ namespace Repository.Database
     {
 
 
-        public static string ConnectionString { get; set; } = null!;
+        public static string ConnectionString { get; set; }
 
 
 
@@ -465,8 +465,11 @@ namespace Repository.Database
 
 
 
-                    TOSLog osLog = new(type.Name, "Modified", result);
+                    TOSLog osLog = new();
                     osLog.Id = osLogId;
+                    osLog.Table = type.Name;
+                    osLog.Sign = "Modified";
+                    osLog.Content = result;
                     osLog.CreateTime = DateTime.UtcNow;
                     osLog.TableId = entityId;
                     osLog.IpAddress = ipAddress == "" ? null : ipAddress;

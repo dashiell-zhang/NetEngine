@@ -13,12 +13,6 @@ namespace Repository.Database
     {
 
 
-        public TSign(string table, string sign)
-        {
-            Table = table;
-            Sign = sign;
-        }
-
 
         /// <summary>
         /// 外链表名称

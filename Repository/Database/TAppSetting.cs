@@ -14,13 +14,6 @@ namespace Repository.Database
     {
 
 
-        public TAppSetting(string module, string key, string value)
-        {
-            Module = module;
-            Key = key;
-            Value = value;
-        }
-
 
         /// <summary>
         /// 模块

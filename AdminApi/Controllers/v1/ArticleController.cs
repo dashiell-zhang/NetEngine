@@ -105,8 +105,9 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateChannel")]
         public long CreateChannel(DtoEditChannel createChannel)
         {
-            TChannel channel = new(createChannel.Name);
+            TChannel channel = new();
             channel.Id = snowflakeHelper.GetId();
+            channel.Name = createChannel.Name;
             channel.CreateTime = DateTime.UtcNow;
             channel.CreateUserId = userId;
 
@@ -273,11 +274,11 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateCategory")]
         public long CreateCategory(DtoEditCategory createCategory)
         {
-            TCategory category = new(createCategory.Name);
+            TCategory category = new();
             category.Id = snowflakeHelper.GetId();
             category.CreateTime = DateTime.UtcNow;
             category.CreateUserId = userId;
-
+            category.Name = createCategory.Name;
             category.ChannelId = createCategory.ChannelId;
             category.ParentId = createCategory.ParentId;
             category.Remarks = createCategory.Remarks;
@@ -452,11 +453,12 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateArticle")]
         public long CreateArticle(DtoEditArticle createArticle, long fileKey)
         {
-            TArticle article = new(createArticle.Title, createArticle.Content, "");
+            TArticle article = new();
             article.Id = snowflakeHelper.GetId();
             article.CreateTime = DateTime.UtcNow;
             article.CreateUserId = userId;
-
+            article.Title = createArticle.Title;
+            article.Content = createArticle.Content;
             article.CategoryId = createArticle.CategoryId;
             article.IsRecommend = createArticle.IsRecommend;
             article.IsDisplay = createArticle.IsDisplay;

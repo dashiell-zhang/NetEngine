@@ -11,13 +11,6 @@ namespace Repository.Database
     public class TCount : CUD
     {
 
-        public TCount(string tag)
-        {
-            Tag = tag;
-        }
-
-
-
         /// <summary>
         /// 标记
         /// </summary>

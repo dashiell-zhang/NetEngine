@@ -17,14 +17,6 @@ namespace Repository.Database
     {
 
 
-        public TUser(string name, string nickName, string phone, string passWord)
-        {
-            Name = name;
-            NickName = nickName;
-            Phone = phone;
-            PassWord = passWord;
-        }
-
 
         /// <summary>
         /// 用户名

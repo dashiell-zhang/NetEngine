@@ -13,13 +13,6 @@ namespace Repository.Database
     {
 
 
-        public TLink(string name, string url)
-        {
-            Name = name;
-            Url = url;
-        }
-
-
         /// <summary>
         /// 名称
         /// </summary>

@@ -15,13 +15,6 @@ namespace Repository.Database
     {
 
 
-        public TFunction(string name, string sign)
-        {
-            Name = name;
-            Sign = sign;
-        }
-
-
         /// <summary>
         /// 名称
         /// </summary>

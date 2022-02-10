@@ -9,13 +9,6 @@ namespace Repository.Database
     {
 
 
-        public TOSLog(string table, string sign, string content)
-        {
-            Table = table;
-            Sign = sign;
-            Content = content;
-        }
-
 
         /// <summary>
         /// 外链表名

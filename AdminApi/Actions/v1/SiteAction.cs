@@ -21,11 +21,13 @@ namespace AdminApi.Actions.v1
 
                 var appSetting = db.TAppSetting.Where(t => t.IsDelete == false && t.Module == "Site" && t.Key == key).FirstOrDefault();
 
-
                 if (appSetting == null)
                 {
-                    appSetting = new TAppSetting("Site", key, value);
+                    appSetting = new();
                     appSetting.Id = snowflakeHelper.GetId();
+                    appSetting.Module = "Site";
+                    appSetting.Key = key;
+                    appSetting.Value = value;
                     appSetting.CreateTime = DateTime.UtcNow;
                     db.TAppSetting.Add(appSetting);
                 }
@@ -35,7 +37,6 @@ namespace AdminApi.Actions.v1
                 }
 
                 db.SaveChanges();
-
             }
 
             return true;

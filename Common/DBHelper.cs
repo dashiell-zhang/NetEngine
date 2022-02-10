@@ -134,9 +134,12 @@ namespace Common
                     IServiceProvider serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
                     var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>()!;
 
-                    TLog log = new(Sign, Type, Content);
+                    TLog log = new();
 
                     log.Id = snowflakeHelper.GetId();
+                    log.Sign = Sign;
+                    log.Type = Type;
+                    log.Content = Content;
                     log.CreateTime = DateTime.UtcNow;
 
                     db.TLog.Add(log);
@@ -181,10 +184,11 @@ namespace Common
                 var serviceProvider = (IServiceProvider)programType.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
                 var snowflakeHelper = serviceProvider.GetService<SnowflakeHelper>()!;
 
-                info = new(tag);
+                info = new();
 
                 info.Id = snowflakeHelper.GetId();
                 info.Count = 1;
+                info.Tag = tag;
                 info.CreateTime = DateTime.UtcNow;
 
                 db.TCount.Add(info);

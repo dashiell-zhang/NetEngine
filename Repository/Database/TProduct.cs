@@ -14,14 +14,6 @@ namespace Repository.Database
     {
 
 
-        public TProduct(string sKU, string name, string detail)
-        {
-            SKU = sKU;
-            Name = name;
-            Detail = detail;
-        }
-
-
 
         /// <summary>
         /// SKU

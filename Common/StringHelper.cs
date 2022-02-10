@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Common
@@ -256,7 +259,7 @@ namespace Common
         /// <returns></returns>
         public static string RemoveNumber(string key)
         {
-            return System.Text.RegularExpressions.Regex.Replace(key, @"\d", "");
+            return Regex.Replace(key, @"\d", "");
         }
 
 
@@ -268,7 +271,41 @@ namespace Common
         /// <returns></returns>
         public static string RemoveNotNumber(string key)
         {
-            return System.Text.RegularExpressions.Regex.Replace(key, @"[^\d]*", "");
+            return Regex.Replace(key, @"[^\d]*", "");
         }
+
+
+
+        /// <summary>
+        /// 字符串压缩
+        /// </summary>
+        public static string CompressString(string text)
+        {
+            using MemoryStream memoryStream = new();
+            using (GZipStream gZipStream = new(memoryStream, CompressionMode.Compress, true))
+            {
+                gZipStream.Write(Encoding.UTF8.GetBytes(text));
+            }
+            return Convert.ToBase64String(memoryStream.ToArray());
+        }
+
+
+
+
+        /// <summary>
+        /// 字符串解压
+        /// </summary>
+        public static string DecompressString(string str)
+        {
+            byte[] compressBeforeByte = Convert.FromBase64String(str);
+
+            using MemoryStream memoryStream = new(compressBeforeByte);
+            using GZipStream gZipStream = new(memoryStream, CompressionMode.Decompress, true);
+
+            using StreamReader streamReader = new(gZipStream, Encoding.UTF8);
+            return streamReader.ReadToEnd();
+        }
+
+
     }
 }

@@ -11,13 +11,13 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <NoWarn>1701;1702;4014;8618</NoWarn>
-	  <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<NoWarn>4014;8618</NoWarn>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <NoWarn>1701;1702;4014;8618</NoWarn>
-	  <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<NoWarn>4014;8618</NoWarn>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -30,7 +30,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\AdminShared\AdminShared.csproj" />
+		<ProjectReference Include="..\AdminShared\AdminShared.csproj" />
 	</ItemGroup>
 
 </Project>

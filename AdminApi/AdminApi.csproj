@@ -9,12 +9,12 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>1701;1702;1591;8618</NoWarn>
+		<NoWarn>1591;8618</NoWarn>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<NoWarn>1701;1702;1591;8618</NoWarn>
+		<NoWarn>1591;8618</NoWarn>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
@@ -39,7 +39,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="wwwroot\" />
+		<Folder Include="wwwroot\" />
 	</ItemGroup>
 
 </Project>

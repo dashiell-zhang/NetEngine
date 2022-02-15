@@ -328,7 +328,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        public static IO.NpoiMemoryStream ListToExcel<T>(List<T> list) where T : notnull, new()
+        public static byte[] ListToExcel<T>(List<T> list) where T : notnull, new()
         {
 
             //创建Excel文件的对象
@@ -367,16 +367,10 @@ namespace Common
                 }
             }
 
-
-            //写入到客户端 
-            IO.NpoiMemoryStream ms = new();
-            ms.AllowClose = false;
+            using MemoryStream ms = new();
             book.Write(ms);
-            ms.Flush();
-            ms.Seek(0, SeekOrigin.Begin);
-            ms.AllowClose = true;
-
-            return ms;
+            var byteData = ms.ToArray();
+            return byteData;
 
         }
 
@@ -388,7 +382,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        public static IO.NpoiMemoryStream ListToExcelDispalyName<T>(List<T> list) where T : notnull, new()
+        public static byte[] ListToExcelDispalyName<T>(List<T> list) where T : notnull, new()
         {
 
             //创建Excel文件的对象
@@ -428,15 +422,10 @@ namespace Common
             }
 
 
-            //写入到客户端 
-            IO.NpoiMemoryStream ms = new();
-            ms.AllowClose = false;
+            using MemoryStream ms = new();
             book.Write(ms);
-            ms.Flush();
-            ms.Seek(0, SeekOrigin.Begin);
-            ms.AllowClose = true;
-
-            return ms;
+            var byteData = ms.ToArray();
+            return byteData;
 
         }
     }

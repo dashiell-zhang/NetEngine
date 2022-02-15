@@ -75,7 +75,7 @@ namespace AdminApi.Controllers.v1
 
                     if (upload)
                     {
-                        Common.IO.IOHelper.DeleteFile(path);
+                        Common.IOHelper.DeleteFile(path);
 
                         path = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
@@ -240,7 +240,7 @@ namespace AdminApi.Controllers.v1
 
             if (file != null)
             {
-                var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
+                var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
 
                 string fileUrl = fileServerUrl + file.Path;
 

@@ -378,7 +378,7 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
+            var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
 
             data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
             {
@@ -415,7 +415,7 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetArticle")]
         public DtoArticle? GetArticle(long articleId)
         {
-            var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
+            var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
 
 
             var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == articleId).Select(t => new DtoArticle

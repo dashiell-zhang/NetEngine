@@ -63,7 +63,7 @@ namespace AdminApi.Libraries.Ueditor
                               ""fileAllowFiles"": [ "".png"", "".jpg"", "".jpeg"", "".gif"", "".bmp"", "".flv"", "".swf"", "".mkv"", "".avi"", "".rm"", "".rmvb"", "".mpeg"", "".mpg"", "".ogg"", "".ogv"", "".mov"", "".wmv"", "".mp4"", "".webm"", "".mp3"", "".wav"", "".mid"", "".rar"", "".zip"", "".tar"", "".gz"", "".7z"", "".bz2"", "".cab"", "".iso"", "".doc"", "".docx"", "".xls"", "".xlsx"", "".ppt"", "".pptx"", "".pdf"", "".txt"", "".md"", "".xml"" ] /* 上传文件格式显示 */
                             }";
 
-            var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
+            var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
 
             json = json.Replace("FileServerUrl", fileServerUrl);
 

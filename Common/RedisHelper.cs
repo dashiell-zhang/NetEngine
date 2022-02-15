@@ -9,7 +9,7 @@ namespace Common
     public class RedisHelper
     {
 
-        private readonly static string ConnectionString = IO.Config.Get().GetConnectionString("redisConnection");
+        private readonly static string ConnectionString = IOHelper.GetConfig().GetConnectionString("redisConnection");
 
         private readonly static ConnectionMultiplexer ConnectionMultiplexer = ConnectionMultiplexer.Connect(ConnectionString);
 

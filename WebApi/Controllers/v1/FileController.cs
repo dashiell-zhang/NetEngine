@@ -49,12 +49,12 @@ namespace WebApi.Controllers.v1
             var filePath = Libraries.IO.Path.ContentRootPath() + "/" + basepath + "/";
 
             //下载文件
-            var dlPath = Common.IO.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
+            var dlPath = Common.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
 
             if (dlPath == null)
             {
                 Thread.Sleep(5000);
-                dlPath = Common.IO.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
+                dlPath = Common.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
             }
 
 
@@ -76,7 +76,7 @@ namespace WebApi.Controllers.v1
 
                     if (upload)
                     {
-                        Common.IO.IOHelper.DeleteFile(dlPath);
+                        Common.IOHelper.DeleteFile(dlPath);
                     }
                     else
                     {
@@ -158,7 +158,7 @@ namespace WebApi.Controllers.v1
 
                     if (upload)
                     {
-                        Common.IO.IOHelper.DeleteFile(path);
+                        Common.IOHelper.DeleteFile(path);
 
                         path = "/files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
@@ -323,7 +323,7 @@ namespace WebApi.Controllers.v1
 
             if (file != null)
             {
-                var fileServerUrl = Common.IO.Config.Get()["FileServerUrl"].ToString();
+                var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
 
                 string fileUrl = fileServerUrl + file.Path;
 

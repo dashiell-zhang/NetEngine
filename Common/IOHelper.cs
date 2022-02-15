@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 
-namespace Common.IO
+namespace Common
 {
     public class IOHelper
     {
@@ -224,6 +225,19 @@ namespace Common.IO
         /// <param name="filePath">文件地址 D:/1.zip </param>
         public static void CompressZipFile(string folderPath, string filePath)
         {
+
+            DirectoryInfo directoryInfo = new(filePath);
+
+            if (directoryInfo.Parent != null)
+            {
+                directoryInfo = directoryInfo.Parent;
+            }
+
+            if (!directoryInfo.Exists)
+            {
+                directoryInfo.Create();
+            }
+
             ZipFile.CreateFromDirectory(folderPath, filePath, CompressionLevel.Optimal, false);
         }
 
@@ -236,8 +250,39 @@ namespace Common.IO
         /// <param name="folderPath">文件夹地址 D:/1/</param>
         public static void DecompressZipFile(string filePath, string folderPath)
         {
+
+            DirectoryInfo directoryInfo = new(folderPath);
+
+            if (!directoryInfo.Exists)
+            {
+                directoryInfo.Create();
+            }
+
             ZipFile.ExtractToDirectory(filePath, folderPath);
         }
+
+
+
+        /// <summary>
+        /// 读取项目配置文件(appsettings.json)
+        /// </summary>
+        /// <returns></returns>
+        public static IConfigurationRoot GetConfig()
+        {
+            var ev = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+            if (string.IsNullOrEmpty(ev))
+            {
+                ev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            }
+            IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
+            if (!string.IsNullOrEmpty(ev))
+            {
+                builder = new ConfigurationBuilder().AddJsonFile("appsettings." + ev + ".json");
+            }
+            IConfigurationRoot configuration = builder.Build();
+            return configuration;
+        }
+
 
     }
 }

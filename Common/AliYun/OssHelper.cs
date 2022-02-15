@@ -8,7 +8,7 @@ namespace Common.AliYun
 {
     public class OssHelper
     {
-        private readonly string endpoint = IO.Config.Get()["OSSEndpoint"];
+        private readonly string endpoint = IOHelper.GetConfig()["OSSEndpoint"];
         private readonly string accessKeyId = "";
         private readonly string accessKeySecret = "";
         private readonly string bucketName = "";

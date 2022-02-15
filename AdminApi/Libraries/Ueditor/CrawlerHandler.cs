@@ -97,7 +97,7 @@ namespace AdminApi.Libraries.Ueditor
 
                     if (upload)
                     {
-                        Common.IO.IOHelper.DeleteFile(savePath);
+                        Common.IOHelper.DeleteFile(savePath);
 
                         ServerUrl = "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
                         State = "SUCCESS";

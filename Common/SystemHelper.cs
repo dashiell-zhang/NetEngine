@@ -49,7 +49,7 @@ namespace Common
 
 
         /// <summary>
-        /// 运行 shell 脚本
+        /// Linux 运行 shell 脚本
         /// </summary>
         /// <param name="shell"></param>
         /// <returns></returns>
@@ -60,6 +60,53 @@ namespace Common
 
             //创建一个ProcessStartInfo对象 使用系统shell 指定命令和参数 设置标准输出
             var psi = new ProcessStartInfo("/bin/bash", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
+
+
+            //启动
+            using (var proc = Process.Start(psi))
+            {
+
+                if (proc == null)
+                {
+                    Console.WriteLine("Can not exec.");
+                }
+                else
+                {
+                    Console.WriteLine("Shell执行：\n" + shell);
+
+                    output = proc.StandardOutput.ReadToEnd();
+
+                    if (!proc.HasExited)
+                    {
+                        proc.Kill();
+
+                        Console.WriteLine("Shell已结束,进程已关闭");
+                    }
+                }
+
+            }
+
+
+            Console.WriteLine("Shell结果：\n" + output);
+
+            return output;
+        }
+
+
+
+
+        /// <summary>
+        /// Windows 运行 shell 脚本
+        /// </summary>
+        /// <param name="shell"></param>
+        /// <returns></returns>
+        public static string WindowsShell(string shell)
+        {
+
+            string output = "";
+
+            //创建一个ProcessStartInfo对象 使用系统shell 指定命令和参数 设置标准输出
+            var psi = new ProcessStartInfo("powershell", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
 
 
             //启动

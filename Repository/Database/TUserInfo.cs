@@ -17,7 +17,7 @@ namespace Repository.Database
         public long UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public virtual TUser User { get; set; } 
+        public virtual TUser User { get; set; }
 
 
         /// <summary>

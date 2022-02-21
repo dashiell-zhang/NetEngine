@@ -444,7 +444,7 @@ namespace WebApi
 
 
 
-        public static IServiceProvider ServiceProvider { get; set; } 
+        public static IServiceProvider ServiceProvider { get; set; }
 
 
     }

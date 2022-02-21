@@ -405,7 +405,7 @@ namespace Repository.Database
 
 
 
-        public int SaveChangesWithSaveLog(long osLogId, long? actionUserId, string? ipAddress, string? deviceMark)
+        public int SaveChangesWithSaveLog(long osLogId, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
         {
 
             DatabaseContext db = this;

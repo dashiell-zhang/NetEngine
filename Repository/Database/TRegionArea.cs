@@ -30,7 +30,7 @@ namespace Repository.Database
         /// 所属城市ID
         /// </summary>
         public int CityId { get; set; }
-        public virtual TRegionCity City { get; set; } 
+        public virtual TRegionCity City { get; set; }
 
 
 

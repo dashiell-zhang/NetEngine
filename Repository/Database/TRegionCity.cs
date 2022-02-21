@@ -28,7 +28,7 @@ namespace Repository.Database
         /// 所属省份ID
         /// </summary>
         public int ProvinceId { get; set; }
-        public virtual TRegionProvince Province { get; set; } 
+        public virtual TRegionProvince Province { get; set; }
 
 
         /// <summary>

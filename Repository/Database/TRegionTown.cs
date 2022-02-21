@@ -25,7 +25,7 @@ namespace Repository.Database
         /// 所属区域ID
         /// </summary>
         public int AreaId { get; set; }
-        public virtual TRegionArea Area { get; set; } 
+        public virtual TRegionArea Area { get; set; }
 
 
     }

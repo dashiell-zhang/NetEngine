@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using SkiaSharp;
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 
@@ -38,7 +37,7 @@ namespace AdminApi.Controllers.v1
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost("UploadFile")]
-        public long UploadFile([FromQuery][Required] string business, [FromQuery][Required] long key, [FromQuery][Required] string sign, [Required] IFormFile file)
+        public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, IFormFile file)
         {
 
             string basepath = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
@@ -122,7 +121,7 @@ namespace AdminApi.Controllers.v1
         /// <returns></returns>
         [AllowAnonymous]
         [HttpGet("GetFile")]
-        public FileResult? GetFile([Required] long fileid)
+        public FileResult? GetFile(long fileid)
         {
 
             var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
@@ -166,7 +165,7 @@ namespace AdminApi.Controllers.v1
         /// <remarks>不指定宽高参数,返回原图</remarks>
         [AllowAnonymous]
         [HttpGet("GetImage")]
-        public FileResult? GetImage([Required] long fileId, int width, int height)
+        public FileResult? GetImage(long fileId, int width, int height)
         {
             var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
 
@@ -233,7 +232,7 @@ namespace AdminApi.Controllers.v1
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
         [HttpGet("GetFilePath")]
-        public string? GetFilePath([Required] long fileid)
+        public string? GetFilePath(long fileid)
         {
 
             var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false && t.Id == fileid).FirstOrDefault();

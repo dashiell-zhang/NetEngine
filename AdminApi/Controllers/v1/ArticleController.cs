@@ -514,7 +514,7 @@ namespace AdminApi.Controllers.v1
                 article.Sort = updateArticle.Sort;
                 article.ClickCount = updateArticle.ClickCount;
 
-                if (string.IsNullOrEmpty(updateArticle.Digest))
+                if (string.IsNullOrEmpty(updateArticle.Digest) && !string.IsNullOrEmpty(updateArticle.Content))
                 {
                     string content = Common.StringHelper.RemoveHtml(updateArticle.Content);
                     article.Digest = content.Length > 255 ? content[..255] : content;

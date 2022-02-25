@@ -29,8 +29,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 内容
         /// </summary>
-        [Required(ErrorMessage = "内容不可以空")]
-        public string Content { get; set; }
+        public string? Content { get; set; }
 
 
 

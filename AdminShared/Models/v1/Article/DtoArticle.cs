@@ -39,8 +39,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 内容
         /// </summary>
-        [Required(ErrorMessage = "内容不可以空")]
-        public string Content { get; set; }
+        public string? Content { get; set; }
 
 
 
@@ -75,7 +74,7 @@ namespace AdminShared.Models.v1.Article
         /// <summary>
         /// 摘要
         /// </summary>
-        public string Digest { get; set; }
+        public string? Digest { get; set; }
 
 
 

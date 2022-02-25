@@ -29,7 +29,7 @@ namespace Repository.Database
         /// <summary>
         /// 内容
         /// </summary>
-        public string Content { get; set; }
+        public string? Content { get; set; }
 
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Repository.Database
         /// <summary>
         /// 摘要
         /// </summary>
-        public string Digest { get; set; }
+        public string? Digest { get; set; }
 
 
     }

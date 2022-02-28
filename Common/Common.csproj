@@ -32,8 +32,8 @@
 		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.80.3" />
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.4.1" />
 		<PackageReference Include="StackExchange.Redis" Version="2.2.88" />
-		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.27" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.468" />
+		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.28" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.469" />
 	</ItemGroup>
 
 	<ItemGroup>

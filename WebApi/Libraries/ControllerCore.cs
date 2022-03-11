@@ -16,7 +16,7 @@ namespace WebApi.Libraries
         public readonly long userId;
         public readonly IDistributedLockProvider distLock;
         public readonly IDistributedSemaphoreProvider distSemaphoreLock;
-        public readonly IDistributedReaderWriterLockProvider distReaderWriterLock;
+        public readonly IDistributedUpgradeableReaderWriterLockProvider distReaderWriterLock;
         public readonly SnowflakeHelper snowflakeHelper;
 
 
@@ -27,7 +27,7 @@ namespace WebApi.Libraries
             cap = Http.HttpContext.Current().RequestServices.GetRequiredService<ICapPublisher>();
             distLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedLockProvider>();
             distSemaphoreLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedSemaphoreProvider>();
-            distReaderWriterLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedReaderWriterLockProvider>();
+            distReaderWriterLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedUpgradeableReaderWriterLockProvider>();
             snowflakeHelper = Http.HttpContext.Current().RequestServices.GetRequiredService<SnowflakeHelper>();
 
 

@@ -57,7 +57,7 @@ namespace AdminApi.Libraries.Ueditor
                         {
                             Common.IOHelper.DeleteFile(localPath);
 
-                            Result.Url = "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
+                            Result.Url = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
                             Result.State = UploadState.Success;
                         }
                         else
@@ -138,7 +138,7 @@ namespace AdminApi.Libraries.Ueditor
                             {
                                 Common.IOHelper.DeleteFile(localPath);
 
-                                Result.Url = "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
+                                Result.Url = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
                                 Result.State = UploadState.Success;
                             }
                             else

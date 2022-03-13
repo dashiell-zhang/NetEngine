@@ -99,7 +99,7 @@ namespace AdminApi.Libraries.Ueditor
                     {
                         Common.IOHelper.DeleteFile(savePath);
 
-                        ServerUrl = "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
+                        ServerUrl = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
                         State = "SUCCESS";
                     }
                     else

@@ -24,3 +24,14 @@ public readonly IDistributedUpgradeableReaderWriterLockProvider distReaderWriter
 distLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedLockProvider>();
 distSemaphoreLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedSemaphoreProvider>();
 distReaderWriterLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedUpgradeableReaderWriterLockProvider>();
+
+
+# PostgreSQL 模式
+builder.Services.AddSingleton<IDistributedLockProvider>(new PostgresDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
+builder.Services.AddSingleton<IDistributedReaderWriterLockProvider>(new PostgresDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
+
+public readonly IDistributedLockProvider distLock;
+public readonly IDistributedReaderWriterLockProvider distReaderWriterLock;
+
+distLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedLockProvider>();
+distReaderWriterLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedReaderWriterLockProvider>();

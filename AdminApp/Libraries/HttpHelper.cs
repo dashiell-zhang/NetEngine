@@ -141,7 +141,7 @@ namespace AdminApp.Libraries
 
 
         /// <summary>
-        /// Post文件和数据到指定url
+        /// Post表单数据到指定url
         /// </summary>
         /// <param name="url"></param>
         /// <param name="formItems">Post表单内容</param>

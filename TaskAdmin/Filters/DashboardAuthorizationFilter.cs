@@ -21,7 +21,7 @@ namespace TaskAdmin.Filters
 
 
                 //302跳转到登录页面 
-                httpContext.Response.Redirect("/User/");
+                httpContext.Response.Redirect("/User/Login");
 
                 return true;
             }

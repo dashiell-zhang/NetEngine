@@ -76,11 +76,11 @@ namespace AdminApp.Libraries
 
 
         /// <summary>
-        /// Post数据到指定url
+        /// Post Json或XML 数据到指定url
         /// </summary>
         /// <param name="url">Url</param>
         /// <param name="data">数据</param>
-        /// <param name="type">form,data,json,xml</param>
+        /// <param name="type">json,xml</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
         public static string Post(string url, string data, string type, Dictionary<string, string>? headers = default)
@@ -102,15 +102,8 @@ namespace AdminApp.Libraries
             using Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data));
             using HttpContent content = new StreamContent(dataStream);
 
-            if (type == "form")
-            {
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-            }
-            else if (type == "data")
-            {
-                content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-            }
-            else if (type == "json")
+
+            if (type == "json")
             {
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             }
@@ -129,11 +122,11 @@ namespace AdminApp.Libraries
 
 
         /// <summary>
-        /// Post数据到指定url,异步执行
+        /// Post Json或XML 数据到指定url,异步执行
         /// </summary>
         /// <param name="url">Url</param>
         /// <param name="data">数据</param>
-        /// <param name="type">form,data,json,xml</param>
+        /// <param name="type">json,xml</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
         public async static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default)
@@ -153,8 +146,42 @@ namespace AdminApp.Libraries
         /// <param name="url"></param>
         /// <param name="formItems">Post表单内容</param>
         /// <param name="headers">自定义Header集合</param>
+        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string PostForm(string url, List<PostFormItem> formItems, Dictionary<string, string>? headers = default)
+        public static string PostForm(string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default)
+        {
+            using HttpClientHandler handler = new();
+
+            using HttpClient client = new(handler);
+            client.DefaultRequestVersion = new Version("2.0");
+
+            if (headers != default)
+            {
+                foreach (var header in headers)
+                {
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                }
+            }
+
+            using FormUrlEncodedContent formContent = new(formItems);
+            formContent.Headers.ContentType!.CharSet = "utf-8";
+
+            using var httpResponse = client.PostAsync(url, formContent);
+            return httpResponse.Result.Content.ReadAsStringAsync().Result;
+        }
+
+
+
+
+        /// <summary>
+        /// Post文件和数据到指定url
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="formItems">Post表单内容</param>
+        /// <param name="headers">自定义Header集合</param>
+        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
+        /// <returns></returns>
+        public static string PostFormData(string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default)
         {
             using HttpClientHandler handler = new();
 
@@ -172,7 +199,6 @@ namespace AdminApp.Libraries
             string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
 
             using MultipartFormDataContent formDataContent = new(boundary);
-
             foreach (var item in formItems)
             {
                 if (item.IsFile)
@@ -193,11 +219,10 @@ namespace AdminApp.Libraries
 
 
 
-
         /// <summary>
-        /// Post 提交 From 表单数据模型结构
+        /// Post 提交 FromData 表单数据模型结构
         /// </summary>
-        public class PostFormItem
+        public class PostFormDataItem
         {
 
             /// <summary>

@@ -23,7 +23,7 @@
             $.ajax({
 
                 type: 'POST',
-                url: "/User/LoginAction/",
+                url: "/User/LoginAction",
                 data: { name: name, pwd: pwd },
                 success: function (Data) {
                     if (Data.status) {

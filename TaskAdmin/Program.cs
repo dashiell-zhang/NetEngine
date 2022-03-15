@@ -158,8 +158,8 @@ namespace TaskAdmin
                 options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             }).AddCookie(options =>
             {
-                options.LoginPath = new PathString("/User/Login/");
-                options.AccessDeniedPath = new PathString("/User/Login/");
+                options.LoginPath = new PathString("/User/Login");
+                options.AccessDeniedPath = new PathString("/User/Login");
                 options.ExpireTimeSpan = TimeSpan.FromHours(20);
             });
 

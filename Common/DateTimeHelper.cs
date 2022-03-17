@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 
@@ -127,7 +128,7 @@ namespace Common
 
 
         /// <summary>
-        /// 获取NTC时间
+        /// 获取NTP网络远程时间
         /// </summary>
         /// <returns></returns>
         public static DateTimeOffset GetNetworkTime()
@@ -166,6 +167,19 @@ namespace Common
             var networkDateTime = (new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc)).AddMilliseconds((long)milliseconds);
 
             return networkDateTime;
+        }
+
+
+
+        /// <summary>
+        /// 通过时间格式字符串获取时间
+        /// </summary>
+        /// <param name="timeText">如：2022.02.02</param>
+        /// <param name="format">如：yyyy.MM.dd</param>
+        /// <returns></returns>
+        public static DateTimeOffset GetTimeByString(string timeText, string format)
+        {
+            return DateTimeOffset.ParseExact(timeText, format, CultureInfo.CurrentCulture);
         }
 
 

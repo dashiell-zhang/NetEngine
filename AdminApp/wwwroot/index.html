@@ -37,32 +37,37 @@
     <script src="_framework/blazor.webassembly.js" autostart="false"></script>
     <script type="module">
         import { BrotliDecode } from './js/brotli.decode.js';
-        Blazor.start({
-            applicationCulture: 'zh-CN',
-            loadBootResource: function (type, name, defaultUri, integrity) {
 
-                if (type !== 'dotnetjs' && location.hostname !== 'localhost') {
-                    return (async function () {
+        var targetProtocol = "https:";
+        if (window.location.protocol != targetProtocol) {
+            window.location.href = targetProtocol + window.location.href.substring(window.location.protocol.length);
+        }
+        else {
+            Blazor.start({
+                applicationCulture: 'zh-CN',
+                loadBootResource: function (type, name, defaultUri, integrity) {
 
-                        var cdnPath = "";
+                    if (type !== 'dotnetjs' && location.hostname !== 'localhost') {
+                        return (async function () {
 
-                        const response = await fetch(cdnPath + defaultUri + '.br', {
-                            headers: { 'sec-fetch-mode': 'cors' }
-                        });
-                        if (!response.ok) {
-                            throw new Error(response.statusText);
-                        }
-                        const originalResponseBuffer = await response.arrayBuffer();
-                        const originalResponseArray = new Int8Array(originalResponseBuffer);
-                        const decompressedResponseArray = BrotliDecode(originalResponseArray);
-                        const contentType = type ===
-                            'dotnetwasm' ? 'application/wasm' : 'application/octet-stream';
-                        return new Response(decompressedResponseArray,
-                            { headers: { 'content-type': contentType } });
-                    })();
+                            const response = await fetch(defaultUri + '.br', {
+                                headers: { 'sec-fetch-mode': 'cors' }
+                            });
+                            if (!response.ok) {
+                                throw new Error(response.statusText);
+                            }
+                            const originalResponseBuffer = await response.arrayBuffer();
+                            const originalResponseArray = new Int8Array(originalResponseBuffer);
+                            const decompressedResponseArray = BrotliDecode(originalResponseArray);
+                            const contentType = type ===
+                                'dotnetwasm' ? 'application/wasm' : 'application/octet-stream';
+                            return new Response(decompressedResponseArray,
+                                { headers: { 'content-type': contentType } });
+                        })();
+                    }
                 }
-            }
-        });
+            });
+        }
     </script>
 </body>
 

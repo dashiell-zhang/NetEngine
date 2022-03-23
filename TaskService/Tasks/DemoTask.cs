@@ -1,5 +1,4 @@
-﻿using DotNetCore.CAP;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Database;
 using System;
@@ -11,12 +10,11 @@ namespace TaskService.Tasks
     class DemoTask : BackgroundService
     {
 
-        private readonly ICapPublisher cap;
 
 
-        public DemoTask(ICapPublisher capPublisher)
+        public DemoTask()
         {
-            cap = capPublisher;
+
         }
 
 
@@ -49,7 +47,6 @@ namespace TaskService.Tasks
             //周期性执行的方法
             Console.WriteLine("HelloWord");
 
-            cap.Publish("ShowMessage", DateTime.UtcNow.ToString());
         }
 
     }

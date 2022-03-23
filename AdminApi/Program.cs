@@ -3,7 +3,6 @@ using AdminApi.Libraries;
 using AdminApi.Libraries.Swagger;
 using AdminApi.Libraries.Verify;
 using AdminApi.Models.AppSetting;
-using AdminApi.Subscribes;
 using Medallion.Threading;
 using Medallion.Threading.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -64,47 +63,6 @@ namespace AdminApi
             builder.Services.AddSingleton<IDistributedSemaphoreProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
             builder.Services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(builder.Configuration.GetConnectionString("dbConnection")));
 
-
-            builder.Services.AddSingleton<DemoSubscribe>();
-            builder.Services.AddCap(options =>
-            {
-
-                //使用 Redis 传输消息
-                options.UseRedis(builder.Configuration.GetConnectionString("redisConnection"));
-
-                //var rabbitMQSetting = builder.Configuration.GetSection("RabbitMQSetting").Get<RabbitMQSetting>();
-
-                ////使用 RabbitMQ 传输消息
-                //options.UseRabbitMQ(options =>
-                //{
-                //    options.HostName = rabbitMQSetting.HostName;
-                //    options.UserName = rabbitMQSetting.UserName;
-                //    options.Password = rabbitMQSetting.PassWord;
-                //    options.VirtualHost = rabbitMQSetting.VirtualHost;
-                //    options.Port = rabbitMQSetting.Port;
-                //    options.ConnectionFactoryOptions = options =>
-                //    {
-                //        options.Ssl = new RabbitMQ.Client.SslOption { Enabled = rabbitMQSetting.Ssl.Enabled, ServerName = rabbitMQSetting.Ssl.ServerName };
-                //    };
-                //});
-
-
-                //使用 ef 搭配 db 存储执行情况
-                options.UseEntityFramework<Repository.Database.DatabaseContext>();
-
-                options.UseDashboard();
-                options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
-
-                options.DefaultGroupName = "default";   //默认组名称
-                options.GroupNamePrefix = null; //全局组名称前缀
-                options.TopicNamePrefix = null; //Topic 统一前缀
-                options.Version = "v1";
-                options.FailedRetryInterval = 60;   //失败时重试间隔
-                options.ConsumerThreadCount = 1;    //消费者线程并行处理消息的线程数，当这个值大于1时，将不能保证消息执行的顺序
-                options.FailedRetryCount = 10;  //失败时重试的最大次数
-                options.FailedThresholdCallback = null; //重试阈值的失败回调
-                options.SucceedMessageExpiredAfter = 24 * 3600; //成功消息的过期时间（秒）
-            }).AddSubscribeFilter<CapSubscribeFilter>();
 
 
             builder.Services.Configure<FormOptions>(options =>

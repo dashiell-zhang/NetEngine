@@ -1,11 +1,3 @@
-CAP
-	DotNetCore.CAP.MySql
-	DotNetCore.CAP.PostgreSql
-	DotNetCore.CAP.SqlServer
-
-	DotNetCore.CAP.RabbitMQ
-	DotNetCore.CAP.RedisStreams
-
 Hangfire
 	Hangfire.MySqlStorage
 	Hangfire.SqlServer

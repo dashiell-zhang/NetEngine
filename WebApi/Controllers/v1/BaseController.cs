@@ -152,22 +152,6 @@ namespace WebApi.Controllers.v1
 
 
         /// <summary>
-        /// 发送一个CAP消息
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("ShowMessage")]
-        public bool ShowMessage(string msg)
-        {
-
-            cap.Publish("ShowMessage", msg);
-
-            return true;
-        }
-
-
-
-
-        /// <summary>
         /// 分布式锁demo
         /// </summary>
         /// <returns></returns>

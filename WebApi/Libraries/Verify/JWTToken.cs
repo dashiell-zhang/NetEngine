@@ -5,6 +5,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using WebApi.Models.AppSetting;
 
@@ -45,15 +46,17 @@ namespace WebApi.Libraries.Verify
         /// <returns></returns>
         public static string GetToken(Claim[] claims)
         {
+
             var conf = Program.ServiceProvider.GetRequiredService<IConfiguration>();
 
             var jwtSetting = conf.GetSection("JWTSetting").Get<JWTSetting>();
 
-            //对称秘钥
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey));
+            var key = ECDsa.Create();
+            key.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out int i);
+
 
             //签名证书(秘钥，加密算法)
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var creds = new SigningCredentials(new ECDsaSecurityKey(key), SecurityAlgorithms.EcdsaSha256);
 
             //生成token
             var token = new JwtSecurityToken(jwtSetting.Issuer, jwtSetting.Audience, claims, DateTime.UtcNow, DateTime.UtcNow.AddMinutes(30), creds);

@@ -22,6 +22,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
@@ -101,10 +102,10 @@ namespace WebApi
             builder.Services.AddControllers();
 
 
-
             //注册JWT认证机制
             var jwtSetting = builder.Configuration.GetSection("JWTSetting").Get<JWTSetting>();
-
+            var issuerSigningKey = ECDsa.Create();
+            issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -112,28 +113,11 @@ namespace WebApi
             })
             .AddJwtBearer(options =>
             {
-                //主要是jwt  token参数设置
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidIssuer = jwtSetting.Issuer,
                     ValidAudience = jwtSetting.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey))
-
-                    /***********************************TokenValidationParameters的参数默认值***********************************/
-                    // RequireSignedTokens = true,
-                    // SaveSigninToken = false,
-                    // ValidateActor = false,
-                    // 将下面两个参数设置为false，可以不验证Issuer和Audience，但是不建议这样做。
-                    // ValidateAudience = true,
-                    // ValidateIssuer = true, 
-                    // ValidateIssuerSigningKey = false,
-                    // 是否要求Token的Claims中必须包含Expires
-                    // RequireExpirationTime = true,
-                    // 允许的服务器时间偏移量
-                    // ClockSkew = TimeSpan.FromSeconds(300),
-                    // 是否验证Token有效期，使用当前时间与Token的Claims中的NotBefore和Expires对比
-                    // ValidateLifetime = true
-
+                    IssuerSigningKey = new ECDsaSecurityKey(issuerSigningKey)
                 };
             });
 

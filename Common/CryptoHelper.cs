@@ -69,17 +69,14 @@ namespace Common
         /// </summary>
         /// <param name="b"></param>
         /// <returns></returns>
-        private static string ByteToHexString(byte[] b)
+        public static string ByteToHexString(byte[] data)
         {
-            char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7',
-                      '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-            char[] newChar = new char[b.Length * 2];
-            for (int i = 0; i < b.Length; i++)
+            var sbRet = new StringBuilder(data.Length * 2);
+            for (int i = 0; i < data.Length; i++)
             {
-                newChar[2 * i] = hex[(b[i] & 0xf0) >> 4];
-                newChar[2 * i + 1] = hex[b[i] & 0xf];
+                sbRet.Append(Convert.ToString(data[i], 16).PadLeft(2, '0'));
             }
-            return new string(newChar);
+            return sbRet.ToString();
         }
 
 
@@ -248,25 +245,10 @@ namespace Common
             //签名返回
             using var sha256 = SHA256.Create();
             var signData = rsa.SignData(Encoding.UTF8.GetBytes(contentForSign), sha256);
-            return BytesToHex(signData);
+            return ByteToHexString(signData);
         }
 
 
-
-        /// <summary>
-        /// Byte 转 Hex
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        public static string BytesToHex(byte[] data)
-        {
-            var sbRet = new StringBuilder(data.Length * 2);
-            for (int i = 0; i < data.Length; i++)
-            {
-                sbRet.Append(Convert.ToString(data[i], 16).PadLeft(2, '0'));
-            }
-            return sbRet.ToString();
-        }
 
     }
 }

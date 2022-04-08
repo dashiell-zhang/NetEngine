@@ -24,9 +24,16 @@
 
 
         /// <summary>
-        /// 加密的key
+        /// 私钥
         /// </summary>
-        public string SecretKey { get; set; }
+        public string PrivateKey { get; set; }
+
+
+
+        /// <summary>
+        /// 公钥
+        /// </summary>
+        public string PublicKey { get; set; }
 
 
     }

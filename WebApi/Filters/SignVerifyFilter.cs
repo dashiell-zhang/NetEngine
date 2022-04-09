@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -24,6 +25,7 @@ namespace WebApi.Filters
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
 
+
             var filter = (SignVerifyFilter)context.Filters.Where(t => t.ToString() == (typeof(SignVerifyFilter).Assembly.GetName().Name + ".Filters.SignVerifyFilter")).ToList().LastOrDefault()!;
 
 
@@ -40,9 +42,13 @@ namespace WebApi.Filters
 
                     if (time.AddMinutes(10) > DateTime.UtcNow)
                     {
-                        string privatekey = "gPmgRr9Dp3wzubTaGIgmMSpfNiKqkIAA0C8gkaBSN0ca3GWxk3W6682KuXRpxnDq";
 
-                        string strdata = privatekey + timeStr;
+                        var authorizationStr = context.HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                        var securityToken = new JwtSecurityToken(authorizationStr);
+
+                        string privateKey = securityToken.RawSignature;
+
+                        string dataStr = privateKey + timeStr;
 
 
                         if (context.HttpContext.Request.Method == "POST")
@@ -54,7 +60,7 @@ namespace WebApi.Filters
                                 foreach (var fm in fromlist)
                                 {
                                     string fmv = fm.Value.ToString();
-                                    strdata = strdata + fm.Key + fmv;
+                                    dataStr = dataStr + fm.Key + fmv;
                                 }
 
                                 var files = context.HttpContext.Request.Form.Files.OrderBy(t => t.Name).ToList();
@@ -67,7 +73,7 @@ namespace WebApi.Filters
 
                                         var fileMd5 = BitConverter.ToString(md5.ComputeHash(fileStream)).Replace("-", "").ToLower();
 
-                                        strdata = strdata + file.Name + fileMd5;
+                                        dataStr = dataStr + file.Name + fileMd5;
                                     }
                                 }
 
@@ -76,7 +82,7 @@ namespace WebApi.Filters
                             {
                                 string body = Libraries.Http.HttpContext.GetRequestBody();
 
-                                strdata += body;
+                                dataStr += body;
                             }
                         }
                         else if (context.HttpContext.Request.Method == "GET")
@@ -86,12 +92,12 @@ namespace WebApi.Filters
                             foreach (var query in queryList)
                             {
                                 string qv = query.Value;
-                                strdata = strdata + query.Key + qv;
+                                dataStr = dataStr + query.Key + qv;
                             }
                         }
 
 
-                        string tk = Common.CryptoHelper.GetMd5(strdata).ToLower();
+                        string tk = Common.CryptoHelper.GetMd5(dataStr).ToLower();
 
                         if (token != tk)
                         {

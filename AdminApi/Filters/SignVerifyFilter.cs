@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace AdminApi.Filters
 {
@@ -46,13 +47,7 @@ namespace AdminApi.Filters
 
                         if (context.HttpContext.Request.Method == "POST")
                         {
-                            string body = Libraries.Http.HttpContext.GetRequestBody();
-
-                            if (!string.IsNullOrEmpty(body))
-                            {
-                                strdata += body;
-                            }
-                            else if (context.HttpContext.Request.HasFormContentType)
+                            if (context.HttpContext.Request.HasFormContentType)
                             {
                                 var fromlist = context.HttpContext.Request.Form.OrderBy(t => t.Key).ToList();
 
@@ -61,6 +56,27 @@ namespace AdminApi.Filters
                                     string fmv = fm.Value.ToString();
                                     strdata = strdata + fm.Key + fmv;
                                 }
+
+                                var files = context.HttpContext.Request.Form.Files.OrderBy(t => t.Name).ToList();
+
+                                foreach (var file in files)
+                                {
+                                    using (var fileStream = file.OpenReadStream())
+                                    {
+                                        using var md5 = MD5.Create();
+
+                                        var fileMd5 = BitConverter.ToString(md5.ComputeHash(fileStream)).Replace("-", "").ToLower();
+
+                                        strdata = strdata + file.Name + fileMd5;
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                string body = Libraries.Http.HttpContext.GetRequestBody();
+
+                                strdata += body;
                             }
                         }
                         else if (context.HttpContext.Request.Method == "GET")

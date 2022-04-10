@@ -56,7 +56,7 @@ namespace WebApi.Libraries.WeiXin.App
                 , orderno, ip, price, "APP", mchkey);
 
 
-            var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Common.CryptoHelper.GetMD5(unifiedorderSignParam).ToUpper();
 
             //构造统一下单的请求参数
             var zhi = string.Format(@"<xml>
@@ -103,7 +103,7 @@ namespace WebApi.Libraries.WeiXin.App
                 //再次签名返回数据至APP
                 string strB = "appid=" + appid + "&noncestr=" + nonceStr + "&package=Sign=WXPay&partnerid=" + info.PartnerId + "&prepayid=" + prepay_id + "&timestamp=" + info.TimeStamp + "&key=" + mchkey;
 
-                info.Sign = Common.CryptoHelper.GetMd5(strB).ToUpper();
+                info.Sign = Common.CryptoHelper.GetMD5(strB).ToUpper();
 
                 return info;
             }

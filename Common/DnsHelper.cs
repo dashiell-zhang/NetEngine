@@ -17,7 +17,7 @@ namespace Common
         /// <returns></returns>
         public static List<string> GetDomainText(string domain)
         {
-            string key = CryptoHelper.GetMd5("dns:" + domain + ":txt");
+            string key = CryptoHelper.GetMD5("dns:" + domain + ":txt");
 
             string retStr = CacheHelper.GetString(key);
 
@@ -43,7 +43,7 @@ namespace Common
         /// <returns></returns>
         public static List<string> GetDomainA(string domain)
         {
-            string key = CryptoHelper.GetMd5("dns:" + domain + ":a");
+            string key = CryptoHelper.GetMD5("dns:" + domain + ":a");
 
             string retStr = CacheHelper.GetString(key);
 
@@ -69,7 +69,7 @@ namespace Common
         /// <returns></returns>
         public static List<string> GetDomainAAAA(string domain)
         {
-            string key = CryptoHelper.GetMd5("dns:" + domain + ":aaaa");
+            string key = CryptoHelper.GetMD5("dns:" + domain + ":aaaa");
 
             string retStr = CacheHelper.GetString(key);
 

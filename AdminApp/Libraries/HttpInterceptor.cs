@@ -5,6 +5,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace AdminApp.Libraries
 {
@@ -37,11 +40,34 @@ namespace AdminApp.Libraries
 
             if (!string.IsNullOrEmpty(authorization) || isGetToken)
             {
-
                 if (!isGetToken)
                 {
+                    var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+
+                    var privateKey = authorization.Split(".").ToList().LastOrDefault();
+                    var requestUrl = request.RequestUri.PathAndQuery;
+
+                    var dataStr = privateKey + timeStr + requestUrl;
+
+                    var requestBody = request.Content?.ReadAsStringAsync().Result;
+
+                    if (requestBody != null)
+                    {
+                        dataStr = dataStr + requestBody;
+                    }
+
+                    using SHA256 sha256 = SHA256.Create();
+                    string dataSign = BitConverter.ToString(sha256.ComputeHash(Encoding.UTF8.GetBytes(dataStr))).Replace("-", "");
+
+                    Console.WriteLine(dataSign);
+
                     request.Headers.Add("Authorization", "Bearer " + authorization);
+                    request.Headers.Add("Token", dataSign);
+                    request.Headers.Add("Time", timeStr);
                 }
+
+
+
 
                 var response = await base.SendAsync(request, cancellationToken);
 

@@ -49,7 +49,7 @@ namespace WebApi.Libraries.WeiXin.Web
                 , orderno, productid, ip, price, "NATIVE", mchkey);
 
 
-            var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Common.CryptoHelper.GetMD5(unifiedorderSignParam).ToUpper();
 
             //构造统一下单的请求参数
             var zhi = string.Format(@"<xml>

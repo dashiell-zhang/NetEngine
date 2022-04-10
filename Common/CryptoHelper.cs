@@ -12,122 +12,43 @@ namespace Common
 
 
         /// <summary>
-        /// Hex 转 Byte
-        /// </summary>
-        /// <param name="hex"></param>
-        /// <returns></returns>
-        private static byte[] HexStringToByte(string hex)
-        {
-            int target_length = hex.Length >> 1;
-            byte[] result = new byte[target_length];
-            char[] achar = hex.ToCharArray();
-            for (int i = 0, j = 0; i < target_length; i++)
-            {
-                char c = achar[j++];
-                if (c >= '0' && c <= '9')
-                {
-                    result[i] = (byte)((c - '0') << 4);
-                }
-                else if (c >= 'a' && c <= 'f')
-                {
-                    result[i] = (byte)((c - 'a' + 10) << 4);
-                }
-                else if (c >= 'A' && c <= 'F')
-                {
-                    result[i] = (byte)((c - 'A' + 10) << 4);
-                }
-                else
-                {
-                    return result;
-                }
-                c = achar[j++];
-
-                if (c >= '0' && c <= '9')
-                {
-                    result[i] |= (byte)(c - '0');
-                }
-                else if (c >= 'a' && c <= 'f')
-                {
-                    result[i] |= (byte)(c - 'a' + 10);
-                }
-                else if (c >= 'A' && c <= 'F')
-                {
-                    result[i] |= (byte)(c - 'A' + 10);
-                }
-                else
-                {
-                    return result;
-                }
-            }
-            return result;
-        }
-
-
-
-        /// <summary>
-        /// Byte 转 Hex
-        /// </summary>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        public static string ByteToHexString(byte[] data)
-        {
-            var sbRet = new StringBuilder(data.Length * 2);
-            for (int i = 0; i < data.Length; i++)
-            {
-                sbRet.Append(Convert.ToString(data[i], 16).PadLeft(2, '0'));
-            }
-            return sbRet.ToString();
-        }
-
-
-
-        /// <summary>
-        /// AES 加密
+        /// 通过AES加密字符串
         /// </summary>
         /// <param name="param">字符串</param>
         /// <param name="skey">密钥</param>
+        /// <remarks>16位采用AES128,24位采用AES192,32位采用AES256</remarks>
         /// <returns></returns>
-        public static string AESEncode(string param, string skey)
+        public static string AESEncode(string text, string privateKey)
         {
-            byte[] key = HexStringToByte(skey.ToLower());
-
             using var aes = Aes.Create();
-            aes.Key = key;
+            aes.Key = Encoding.UTF8.GetBytes(privateKey);
             aes.Mode = CipherMode.ECB;
             aes.Padding = PaddingMode.PKCS7;
-            byte[] inputBuffers = Encoding.UTF8.GetBytes(param);
+            byte[] inputBuffers = Encoding.UTF8.GetBytes(text);
             ICryptoTransform cryptoTransform = aes.CreateEncryptor();
             byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
-            return ByteToHexString(results);
+            return Convert.ToHexString(results);
         }
 
 
 
         /// <summary>
-        /// AES 解密
+        /// 通过AES解密字符串
         /// </summary>
         /// <param name="param">字符串</param>
         /// <param name="skey">密钥</param>
+        /// <remarks>16位采用AES128,24位采用AES192,32位采用AES256</remarks>
         /// <returns></returns>
-        public static string AESDecode(string param, string skey)
+        public static string AESDecode(string text, string privateKey)
         {
-            try
-            {
-                byte[] key = HexStringToByte(skey.ToLower());
-
-                using var aes = Aes.Create();
-                aes.Key = key;
-                aes.Mode = CipherMode.ECB;
-                aes.Padding = PaddingMode.PKCS7;
-                byte[] inputBuffers = HexStringToByte(param);
-                ICryptoTransform cryptoTransform = aes.CreateDecryptor();
-                byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
-                return Encoding.UTF8.GetString(results);
-            }
-            catch
-            {
-                return param;
-            }
+            using var aes = Aes.Create();
+            aes.Key = Encoding.UTF8.GetBytes(privateKey);
+            aes.Mode = CipherMode.ECB;
+            aes.Padding = PaddingMode.PKCS7;
+            byte[] inputBuffers = Convert.FromHexString(text);
+            ICryptoTransform cryptoTransform = aes.CreateDecryptor();
+            byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
+            return Encoding.UTF8.GetString(results);
         }
 
 
@@ -137,24 +58,10 @@ namespace Common
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static string GetMd5(string data)
+        public static string GetMD5(string text)
         {
             using var md5 = MD5.Create();
-            return BitConverter.ToString(md5.ComputeHash(Encoding.GetEncoding("utf-8").GetBytes(data))).Replace("-", "").ToLower();
-        }
-
-
-
-        /// <summary>
-        /// 获取字符串加 Token 后的 MD5 签名
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static string GetMd5(string data, string token)
-        {
-            string dataMD5 = data + token;
-            return GetMd5(dataMD5);
+            return BitConverter.ToString(md5.ComputeHash(Encoding.UTF8.GetBytes(text))).Replace("-", "");
         }
 
 
@@ -166,10 +73,8 @@ namespace Common
         /// <returns></returns>
         public static string Base64Encode(string text)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(text);
-            return Convert.ToBase64String(bytes);
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
         }
-
 
 
 
@@ -180,8 +85,7 @@ namespace Common
         /// <returns></returns>
         public static string Base64Decode(string text)
         {
-            byte[] bytes = Convert.FromBase64String(text);
-            return Encoding.UTF8.GetString(bytes);
+            return Encoding.UTF8.GetString(Convert.FromBase64String(text));
         }
 
 
@@ -191,14 +95,23 @@ namespace Common
         /// </summary>
         /// <param name="srcString">The string to be encrypted</param>
         /// <returns></returns>
-        public static string Sha256(string srcString)
+        public static string GetSHA256(string text)
         {
             using SHA256 sha256 = SHA256.Create();
-            byte[] bytes_sha256_in = Encoding.UTF8.GetBytes(srcString);
-            byte[] bytes_sha256_out = sha256.ComputeHash(bytes_sha256_in);
-            string str_sha256_out = BitConverter.ToString(bytes_sha256_out);
-            str_sha256_out = str_sha256_out.Replace("-", "");
-            return str_sha256_out;
+            return BitConverter.ToString(sha256.ComputeHash(Encoding.UTF8.GetBytes(text))).Replace("-", "");
+        }
+
+
+
+        /// <summary>
+        /// SHA512 签名计算
+        /// </summary>
+        /// <param name="srcString">The string to be encrypted</param>
+        /// <returns></returns>
+        public static string GetSHA512(string text)
+        {
+            using SHA512 sha512 = SHA512.Create();
+            return BitConverter.ToString(sha512.ComputeHash(Encoding.UTF8.GetBytes(text))).Replace("-", "");
         }
 
 
@@ -245,7 +158,8 @@ namespace Common
             //签名返回
             using var sha256 = SHA256.Create();
             var signData = rsa.SignData(Encoding.UTF8.GetBytes(contentForSign), sha256);
-            return ByteToHexString(signData);
+
+            return Convert.ToHexString(signData);
         }
 
 

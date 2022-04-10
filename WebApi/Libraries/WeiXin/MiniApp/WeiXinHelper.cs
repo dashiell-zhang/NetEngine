@@ -98,7 +98,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 , appid, body, mchid, nonceStr, notifyurl
                 , openid, orderno, price, "JSAPI", mchkey);
 
-            var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Common.CryptoHelper.GetMD5(unifiedorderSignParam).ToUpper();
 
             //构造统一下单的请求参数
             var zhi = string.Format(@"<xml>
@@ -140,7 +140,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 //再次签名返回数据至小程序
                 string strB = "appId=" + appid + "&nonceStr=" + nonceStr + "&package=prepay_id=" + prepay_id + "&signType=MD5&timeStamp=" + info.TimeStamp + "&key=" + mchkey;
 
-                info.PaySign = Common.CryptoHelper.GetMd5(strB).ToUpper();
+                info.PaySign = Common.CryptoHelper.GetMD5(strB).ToUpper();
 
                 return info;
             }
@@ -250,7 +250,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 , out_refund_no, refund_fee, total_fee, transaction_id, mchkey);
 
 
-            var unifiedorderSign = Common.CryptoHelper.GetMd5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = Common.CryptoHelper.GetMD5(unifiedorderSignParam).ToUpper();
 
             //构造退款的请求参数
             var zhi = string.Format(@"<xml>

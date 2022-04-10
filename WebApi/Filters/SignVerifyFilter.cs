@@ -24,23 +24,20 @@ namespace WebApi.Filters
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
-
-
             var filter = (SignVerifyFilter)context.Filters.Where(t => t.ToString() == (typeof(SignVerifyFilter).Assembly.GetName().Name + ".Filters.SignVerifyFilter")).ToList().LastOrDefault()!;
-
 
             if (!filter.IsSkip)
             {
-                var token = context.HttpContext.Request.Headers["Token"].ToString().ToLower();
+                var token = context.HttpContext.Request.Headers["Token"].ToString();
 
-                var rip = context.HttpContext.Connection.RemoteIpAddress!.ToString();
+                var remoteIpAddress = context.HttpContext.Connection.RemoteIpAddress!.ToString();
 
-                if (!rip.Contains("127.0.0.1"))
+                if (!remoteIpAddress.Contains("127.0.0.1"))
                 {
                     var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
                     var time = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timeStr));
 
-                    if (time.AddMinutes(10) > DateTime.UtcNow)
+                    if (time.AddSeconds(30) > DateTime.UtcNow)
                     {
 
                         var authorizationStr = context.HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
@@ -50,54 +47,41 @@ namespace WebApi.Filters
 
                         string dataStr = privateKey + timeStr;
 
+                        var requestUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
 
-                        if (context.HttpContext.Request.Method == "POST")
+                        dataStr = dataStr + requestUrl;
+
+                        if (!context.HttpContext.Request.HasFormContentType)
                         {
-                            if (context.HttpContext.Request.HasFormContentType)
-                            {
-                                var fromlist = context.HttpContext.Request.Form.OrderBy(t => t.Key).ToList();
-
-                                foreach (var fm in fromlist)
-                                {
-                                    string fmv = fm.Value.ToString();
-                                    dataStr = dataStr + fm.Key + fmv;
-                                }
-
-                                var files = context.HttpContext.Request.Form.Files.OrderBy(t => t.Name).ToList();
-
-                                foreach (var file in files)
-                                {
-                                    using (var fileStream = file.OpenReadStream())
-                                    {
-                                        using var md5 = MD5.Create();
-
-                                        var fileMd5 = BitConverter.ToString(md5.ComputeHash(fileStream)).Replace("-", "").ToLower();
-
-                                        dataStr = dataStr + file.Name + fileMd5;
-                                    }
-                                }
-
-                            }
-                            else
-                            {
-                                string body = Libraries.Http.HttpContext.GetRequestBody();
-
-                                dataStr += body;
-                            }
+                            string body = Libraries.Http.HttpContext.GetRequestBody();
+                            dataStr += body;
                         }
-                        else if (context.HttpContext.Request.Method == "GET")
+                        else
                         {
-                            var queryList = context.HttpContext.Request.Query.OrderBy(t => t.Key).ToList();
+                            var fromlist = context.HttpContext.Request.Form.OrderBy(t => t.Key).ToList();
 
-                            foreach (var query in queryList)
+                            foreach (var fm in fromlist)
                             {
-                                string qv = query.Value;
-                                dataStr = dataStr + query.Key + qv;
+                                string fmv = fm.Value.ToString();
+                                dataStr = dataStr + fm.Key + fmv;
+                            }
+
+                            var files = context.HttpContext.Request.Form.Files.OrderBy(t => t.Name).ToList();
+
+                            foreach (var file in files)
+                            {
+                                using (var fileStream = file.OpenReadStream())
+                                {
+                                    using var sha256 = SHA256.Create();
+
+                                    var fileSign = BitConverter.ToString(sha256.ComputeHash(fileStream)).Replace("-", "");
+
+                                    dataStr = dataStr + file.Name + fileSign;
+                                }
                             }
                         }
 
-
-                        string tk = Common.CryptoHelper.GetMd5(dataStr).ToLower();
+                        string tk = Common.CryptoHelper.GetSHA256(dataStr);
 
                         if (token != tk)
                         {
@@ -113,7 +97,6 @@ namespace WebApi.Filters
                     }
                 }
             }
-
         }
 
 

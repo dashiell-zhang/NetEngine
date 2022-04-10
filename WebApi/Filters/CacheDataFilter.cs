@@ -44,7 +44,7 @@ namespace WebApi.Filters
                 key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
             }
 
-            key = "CacheData_" + CryptoHelper.GetMd5(key);
+            key = "CacheData_" + CryptoHelper.GetMD5(key);
 
             try
             {
@@ -84,7 +84,7 @@ namespace WebApi.Filters
                     key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
                 }
 
-                key = "CacheData_" + CryptoHelper.GetMd5(key);
+                key = "CacheData_" + CryptoHelper.GetMD5(key);
 
                 if (value != null)
                 {

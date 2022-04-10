@@ -1,4 +1,5 @@
-﻿using AdminApi.Libraries;
+﻿using AdminApi.Filters;
+using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.User;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,7 @@ namespace AdminApi.Controllers.v1
     /// <summary>
     /// 用户数据操作控制器
     /// </summary>
+    [SignVerifyFilter]
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [Authorize]

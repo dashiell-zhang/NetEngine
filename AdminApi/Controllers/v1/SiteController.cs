@@ -1,4 +1,5 @@
 ﻿using AdminApi.Actions.v1;
+using AdminApi.Filters;
 using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.Site;
@@ -14,6 +15,7 @@ namespace AdminApi.Controllers.v1
     /// <summary>
     /// 站点控制器
     /// </summary>
+    [SignVerifyFilter]
     [ApiVersion("1")]
     [Authorize]
     [Route("api/[controller]")]

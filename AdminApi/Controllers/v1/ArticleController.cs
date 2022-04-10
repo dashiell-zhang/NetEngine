@@ -1,4 +1,5 @@
-﻿using AdminApi.Libraries;
+﻿using AdminApi.Filters;
+using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.Article;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,7 @@ using System.Linq;
 
 namespace AdminApi.Controllers.v1
 {
+    [SignVerifyFilter]
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [Authorize]

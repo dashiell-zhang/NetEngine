@@ -1,4 +1,5 @@
-﻿using AdminApi.Libraries;
+﻿using AdminApi.Filters;
+using AdminApi.Libraries;
 using AdminShared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,6 +18,7 @@ namespace AdminApi.Controllers.v1
     /// <summary>
     /// 文件上传控制器
     /// </summary>
+    [SignVerifyFilter]
     [ApiVersion("1")]
     [Authorize]
     [Route("api/[controller]")]

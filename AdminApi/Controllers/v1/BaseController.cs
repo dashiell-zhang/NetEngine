@@ -1,4 +1,5 @@
-﻿using AdminApi.Libraries;
+﻿using AdminApi.Filters;
+using AdminApi.Libraries;
 using AdminShared.Models;
 using Common;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ namespace AdminApi.Controllers.v1
     /// <summary>
     /// 系统基础方法控制器
     /// </summary>
+    [SignVerifyFilter]
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]

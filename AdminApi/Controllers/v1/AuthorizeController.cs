@@ -80,6 +80,7 @@ namespace AdminApi.Controllers.v1
         /// </summary>
         /// <param name="sign">模块标记</param>
         /// <returns></returns>
+        [SignVerifyFilter]
         [Authorize]
         [CacheDataFilter(TTL = 60, UseToken = true)]
         [HttpGet("GetFunctionList")]

@@ -272,13 +272,11 @@ namespace WebApi
             //    options.InstanceName = "cache";
             //});
 
+            builder.Services.AddScoped<Libraries.Http.HttpSignHandler>();
 
             builder.Services.AddHttpClient("", options =>
             {
                 options.DefaultRequestVersion = new Version("2.0");
-                options.DefaultRequestHeaders.Add("Accept", "*/*");
-                options.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36");
-                options.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false
@@ -288,9 +286,6 @@ namespace WebApi
             builder.Services.AddHttpClient("SkipSsl", options =>
             {
                 options.DefaultRequestVersion = new Version("2.0");
-                options.DefaultRequestHeaders.Add("Accept", "*/*");
-                options.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36");
-                options.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
@@ -298,20 +293,13 @@ namespace WebApi
             });
 
 
-            builder.Services.AddHttpClient("xxx.com", options =>
+            builder.Services.AddHttpClient("HttpSign", options =>
             {
                 options.DefaultRequestVersion = new Version("2.0");
-                options.DefaultRequestHeaders.Add("Accept", "*/*");
-                options.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36");
-                options.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.9");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
-                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
-                {
-                    return string.Equals(cert?.Thumbprint, "xxxxxx", StringComparison.OrdinalIgnoreCase);
-                }
-            });
+            }).AddHttpMessageHandler(t => t.GetRequiredService<Libraries.Http.HttpSignHandler>()); ;
 
 
             var app = builder.Build();

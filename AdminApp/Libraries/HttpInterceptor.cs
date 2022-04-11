@@ -63,9 +63,6 @@ namespace AdminApp.Libraries
                     request.Headers.Add("Time", timeStr);
                 }
 
-
-
-
                 var response = await base.SendAsync(request, cancellationToken);
 
                 if ((int)response.StatusCode == 401)
@@ -84,16 +81,13 @@ namespace AdminApp.Libraries
                     });
                 }
 
-                if ((int)response.StatusCode == 200)
+                if ((int)response.StatusCode == 200 && response.Headers.Contains("NewToken"))
                 {
-                    if (response.Headers.Contains("NewToken"))
-                    {
-                        var newToken = response.Headers.GetValues("NewToken").ToList().FirstOrDefault();
+                    var newToken = response.Headers.GetValues("NewToken").ToList().FirstOrDefault();
 
-                        if (!string.IsNullOrEmpty(newToken))
-                        {
-                            LocalStorage.SetItemAsString("Authorization", newToken);
-                        }
+                    if (!string.IsNullOrEmpty(newToken))
+                    {
+                        LocalStorage.SetItemAsString("Authorization", newToken);
                     }
                 }
 

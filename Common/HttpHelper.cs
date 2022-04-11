@@ -32,7 +32,7 @@ namespace Common
                 {
                     var programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
                     var serviceProvider = (IServiceProvider)programType!.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
-                    InitHttpClientFactory = serviceProvider.GetService<IHttpClientFactory>()!;
+                    InitHttpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
                 }
 
                 return InitHttpClientFactory;
@@ -108,12 +108,10 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string Post(string url, string data, string type, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
+        public static string Post(string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
-            string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
-
-            var client = HttpClientFactory.CreateClient(httpClientName);
+            var client = HttpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
@@ -143,6 +141,31 @@ namespace Common
 
 
 
+        /// <summary>
+        /// Delete 方式发出请求
+        /// </summary>
+        /// <param name="url">Url</param>
+        /// <param name="headers">自定义Header集合</param>
+        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
+        /// <returns></returns>
+        public static string Delete(string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        {
+
+            var client = HttpClientFactory.CreateClient(httpClientName!);
+
+            if (headers != default)
+            {
+                foreach (var header in headers)
+                {
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                }
+            }
+
+            using var httpResponse = client.DeleteAsync(url);
+            return httpResponse.Result.Content.ReadAsStringAsync().Result;
+        }
+
+
 
         /// <summary>
         /// Post Json或XML 数据到指定url,异步执行
@@ -153,13 +176,14 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public async static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
+        public async static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
             await Task.Run(() =>
             {
-                Post(url, data, type, headers, isSkipSslVerification);
+                Post(url, data, type, headers, httpClientName);
             });
         }
+
 
 
         /// <summary>
@@ -170,11 +194,10 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string PostForm(string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
+        public static string PostForm(string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
-            string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
 
-            var client = HttpClientFactory.CreateClient(httpClientName);
+            var client = HttpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
@@ -193,7 +216,6 @@ namespace Common
 
 
 
-
         /// <summary>
         /// Post文件和数据到指定url
         /// </summary>
@@ -202,11 +224,10 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string PostFormData(string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
+        public static string PostFormData(string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
-            string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
 
-            var client = HttpClientFactory.CreateClient(httpClientName);
+            var client = HttpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {

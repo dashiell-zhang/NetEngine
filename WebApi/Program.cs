@@ -272,7 +272,6 @@ namespace WebApi
             //    options.InstanceName = "cache";
             //});
 
-            builder.Services.AddScoped<Libraries.Http.HttpSignHandler>();
 
             builder.Services.AddHttpClient("", options =>
             {
@@ -293,6 +292,7 @@ namespace WebApi
             });
 
 
+            builder.Services.AddScoped<Libraries.Http.HttpSignHandler>();
             builder.Services.AddHttpClient("HttpSign", options =>
             {
                 options.DefaultRequestVersion = new Version("2.0");

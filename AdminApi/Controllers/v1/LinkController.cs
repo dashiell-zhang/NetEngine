@@ -138,9 +138,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteLink")]
-        public bool DeleteLink(DtoId id)
+        public bool DeleteLink(long id)
         {
-            var link = db.TLink.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
+            var link = db.TLink.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 
             if (link != null)
             {

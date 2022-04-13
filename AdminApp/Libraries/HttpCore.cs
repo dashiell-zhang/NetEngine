@@ -25,19 +25,6 @@ namespace AdminApp.Libraries
 
 
 
-        public static Task<HttpResponseMessage> DeleteAsJsonAsync<TValue>(this HttpClient client, string requestUri, TValue value)
-        {
-            HttpRequestMessage request = new()
-            {
-                Content = JsonContent.Create(value),
-                Method = HttpMethod.Delete,
-                RequestUri = new Uri(requestUri, UriKind.Relative)
-            };
-
-            return client.SendAsync(request);
-        }
-
-
         public static TValue? ReadAsEntityAsync<TValue>(this HttpContent httpContent)
         {
             var jsonSerializerOptions = new JsonSerializerOptions();

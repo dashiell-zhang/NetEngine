@@ -314,7 +314,7 @@
 
     async void DeleteArticle(long articleId)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteArticle", new { Id = articleId }))
+        using (var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId))
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -335,7 +335,7 @@
 
     async Task<bool> DeleteImg(UploadFileItem file)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("File/DeleteFile", new { Id = file.Id }))
+        using (var httpResponse = await Http.DeleteAsync("File/DeleteFile?id=" + file.Id))
         {
             var retValue = await httpResponse.Content.ReadAsStringAsync();
 

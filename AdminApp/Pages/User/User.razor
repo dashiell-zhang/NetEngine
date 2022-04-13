@@ -208,7 +208,7 @@
 
     async void DeleteUser(long userId)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("User/DeleteUser", new { Id = userId }))
+        using (var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId))
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

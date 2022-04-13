@@ -346,9 +346,9 @@ namespace WebApi.Controllers.v1
         /// <param name="id">文件ID</param>
         /// <returns></returns>
         [HttpDelete("DeleteFile")]
-        public bool DeleteFile(DtoId id)
+        public bool DeleteFile(long id)
         {
-            var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
+            var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 
             if (file != null)
             {

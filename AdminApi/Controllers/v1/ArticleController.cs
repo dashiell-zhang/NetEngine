@@ -162,9 +162,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteChannel")]
-        public bool DeleteChannel(DtoId id)
+        public bool DeleteChannel(long id)
         {
-            var channel = db.TChannel.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
+            var channel = db.TChannel.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 
             if (channel != null)
             {
@@ -332,9 +332,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteCategory")]
-        public bool DeleteCategory(DtoId id)
+        public bool DeleteCategory(long id)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
+            var category = db.TCategory.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 
             if (category != null)
             {
@@ -544,9 +544,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteArticle")]
-        public bool DeleteArticle(DtoId id)
+        public bool DeleteArticle(long id)
         {
-            var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
+            var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 
             if (article != null)
             {

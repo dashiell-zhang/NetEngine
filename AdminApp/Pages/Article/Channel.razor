@@ -192,7 +192,7 @@
 
     async void DeleteChannel(long channelId)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteChannel", new { Id = channelId }))
+        using (var httpResponse = await Http.DeleteAsync("Article/DeleteChannel?id=" + channelId))
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

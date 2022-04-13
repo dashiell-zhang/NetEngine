@@ -169,9 +169,9 @@ namespace AdminApi.Controllers.v1
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("DeleteUser")]
-        public bool DeleteUser(DtoId id)
+        public bool DeleteUser(long id)
         {
-            var user = db.TUser.Where(t => t.IsDelete == false && t.Id == id.Id).FirstOrDefault();
+            var user = db.TUser.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
 
             if (user != null)
             {

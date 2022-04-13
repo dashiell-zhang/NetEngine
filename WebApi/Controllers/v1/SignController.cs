@@ -16,6 +16,7 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [Authorize]
+    [ApiController]
     public class SignController : ControllerCore
     {
 
@@ -68,7 +69,7 @@ namespace WebApi.Controllers.v1
         /// <param name="deleteSign"></param>
         /// <returns></returns>
         [HttpDelete("DeleteSign")]
-        public bool DeleteSign(DtoSign deleteSign)
+        public bool DeleteSign([FromQuery] DtoSign deleteSign)
         {
             var sign = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
 

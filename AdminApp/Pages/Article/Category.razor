@@ -255,7 +255,7 @@
 
     async void DeleteCategory(long categoryId)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("Article/DeleteCategory", new { Id = categoryId }))
+        using (var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId))
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

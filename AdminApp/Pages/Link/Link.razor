@@ -192,7 +192,7 @@
 
     async void DeleteLink(long linkId)
     {
-        using (var httpResponse = await Http.DeleteAsJsonAsync("Link/DeleteLink", new { Id = linkId }))
+        using (var httpResponse = await Http.DeleteAsync("Link/DeleteLink?id=" + linkId))
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

@@ -47,11 +47,10 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
         /// <returns></returns>
-        public static string Get(string url, Dictionary<string, string>? headers = default, bool isSkipSslVerification = false)
+        public static string Get(string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
-            string httpClientName = isSkipSslVerification ? "SkipSsl" : "";
 
-            var client = HttpClientFactory.CreateClient(httpClientName);
+            var client = HttpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {

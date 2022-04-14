@@ -32,7 +32,7 @@ namespace WebApi.Filters
 
                 var remoteIpAddress = context.HttpContext.Connection.RemoteIpAddress!.ToString();
 
-                if (!remoteIpAddress.Contains("127.0.0.1"))
+                if (!remoteIpAddress.Contains("::1"))
                 {
                     var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
                     var time = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timeStr));

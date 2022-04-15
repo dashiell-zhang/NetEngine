@@ -4,14 +4,12 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="zh">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="text/html; charset=utf-8" />
     <title>管理员登录</title>
-    <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
-    <script src="~/lib/jquery.js"></script>
+    <script src="~/lib/jquery-3.6.0.min.js"></script>
     <script src="~/lib/sweetalert.min.js"></script>
-
 
     <script>
         function loginAction() {
@@ -21,7 +19,6 @@
             var pwd = $("#txtPassWord").val();
 
             $.ajax({
-
                 type: 'POST',
                 url: "/User/LoginAction",
                 data: { name: name, pwd: pwd },
@@ -30,7 +27,6 @@
                         location.replace("/");
                     }
                     else {
-
                         swal({
                             icon: "error",
                             text: "用户名和密码不匹配，请重试！",
@@ -39,10 +35,8 @@
                                 location.replace("")
                             });
                     }
-
                 }
             });
-
         }
 
         function nameEnter(e) {
@@ -62,20 +56,31 @@
         }
     </script>
 
+    <style>
+        .input {
+            margin-top: 20px;
+            display: block;
+            width: 100%;
+            padding-left: 10px;
+            height: 38px;
+            border-color: #eee;
+            border-width: 1px;
+            border-style: solid;
+            border-radius: 2px;
+            box-sizing: border-box;
+        }
+    </style>
 </head>
 
-<body>
-    <div style="width: 100vw;height: 100vh;text-align: center;background-image: url('../..//Admin/images/bg.svg');">
+<body style="margin:0;font: 14px Helvetica Neue,Helvetica,PingFang SC,Tahoma,Arial,sans-serif;">
+    <div style="width: 100vw;height: 100vh;text-align: center;background-image: url('/img/bg.svg');">
         <div style="min-width: 360px;display: inline-block;padding-top: calc(50vh - 170px);">
-            <h1>任务调度系统登录</h1>
-            <input type="text" id="txtName" lay-verify="title" autocomplete="off" placeholder="用户名" class="layui-input" style="margin-top:20px" onkeyup="nameEnter(event)">
-            <input type="password" id="txtPassWord" name="title" lay-verify="title" autocomplete="off" placeholder="密码" class="layui-input" style="margin-top:20px" onkeyup="passWordEnter(event)">
-            <button id="btnSubmit" onclick="loginAction()" type="button" class="layui-btn" style="width:100%;margin-top:20px">登录</button>
+            <h1 style="font-weight: 400">任务调度系统登录</h1>
+            <input type="text" id="txtName" autocomplete="off" class="input" placeholder="用户名" onkeyup="nameEnter(event)">
+            <input type="password" id="txtPassWord" autocomplete="off" class="input" placeholder="密码" onkeyup="passWordEnter(event)">
+            <button id="btnSubmit" onclick="loginAction()" type="button" class="layui-btn" style="width:100%;margin-top:20px;height: 38px;line-height: 38px;border: 1px solid transparent;padding: 0 18px;background-color: #009688;color: #fff;white-space: nowrap;text-align: center;font-size: 14px;border-radius: 2px;cursor: pointer;">登录</button>
         </div>
     </div>
-
-
 </body>
-
 
 </html>

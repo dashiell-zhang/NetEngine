@@ -2,27 +2,26 @@
 {
 
     /// <summary>
-    /// 标记喜欢方法入参
+    /// 创建标记方法入参
     /// </summary>
     public class DtoSign
     {
 
 
-
         /// <summary>
-        /// 表名
+        /// 业务领域
         /// </summary>
-        public string Table { get; set; }
+        public string Business { get; set; }
 
 
         /// <summary>
-        /// 记录ID
+        /// 记录值
         /// </summary>
-        public long TableId { get; set; }
+        public long Key { get; set; }
 
 
         /// <summary>
-        /// 标记
+        /// 自定义标记
         /// </summary>
         public string Sign { get; set; }
     }

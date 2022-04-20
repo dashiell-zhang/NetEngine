@@ -16,35 +16,6 @@ namespace Common
 
 
         /// <summary>
-        /// 初始化TestServer
-        /// </summary>
-        public static void InitTestServer()
-        {
-            List<string> testIpList = new()
-            {
-                "x.x.x.x"
-            };
-
-            if (testIpList.Any())
-            {
-                var localIpList = SystemHelper.GetAllIpAddress();
-
-                foreach (var item in localIpList)
-                {
-                    if (testIpList.Contains(item))
-                    {
-                        Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", "Test");
-                        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Test");
-                        break;
-                    }
-                }
-            }
-        }
-
-
-
-
-        /// <summary>
         /// 改变工作目录
         /// </summary>
         /// <param name="args"></param>

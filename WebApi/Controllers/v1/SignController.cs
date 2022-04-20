@@ -25,18 +25,19 @@ namespace WebApi.Controllers.v1
         /// <summary>
         /// 获取标记总数
         /// </summary>
-        /// <param name="table"></param>
-        /// <param name="tableId"></param>
-        /// <param name="sign"></param>
+        /// <param name="business">业务领域</param>
+        /// <param name="sign">自定义标记</param>
+        /// <param name="key">记录值</param>
         /// <returns></returns>
         [HttpGet("GetSignCount")]
-        public int GetSignCount(string table, long tableId, string sign)
+        public int GetSignCount(string business, string sign, long key)
         {
 
-            var count = db.TSign.AsNoTracking().Where(t => t.IsDelete == false && t.Table == table && t.TableId == tableId && t.Sign == sign).Count();
+            var count = db.TSign.AsNoTracking().Where(t => t.IsDelete == false && t.Table == business && t.TableId == key && t.Sign == sign).Count();
 
             return count;
         }
+
 
 
         /// <summary>
@@ -45,15 +46,15 @@ namespace WebApi.Controllers.v1
         /// <param name="addSign"></param>
         /// <returns></returns>
         [HttpPost("AddSign")]
-        public bool AddSign([FromBody] DtoSign addSign)
+        public bool AddSign(DtoSign addSign)
         {
             TSign sign = new();
 
             sign.Id = snowflakeHelper.GetId();
             sign.CreateTime = DateTime.UtcNow;
             sign.CreateUserId = userId;
-            sign.Table = addSign.Table;
-            sign.TableId = addSign.TableId;
+            sign.Table = addSign.Business;
+            sign.TableId = addSign.Key;
             sign.Sign = addSign.Sign;
             db.TSign.Add(sign);
             db.SaveChanges();
@@ -71,7 +72,7 @@ namespace WebApi.Controllers.v1
         [HttpDelete("DeleteSign")]
         public bool DeleteSign([FromQuery] DtoSign deleteSign)
         {
-            var sign = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Table && t.TableId == deleteSign.TableId && t.Sign == deleteSign.Sign).FirstOrDefault();
+            var sign = db.TSign.Where(t => t.IsDelete == false && t.CreateUserId == userId && t.Table == deleteSign.Business && t.TableId == deleteSign.Key && t.Sign == deleteSign.Sign).FirstOrDefault();
 
             if (sign != null)
             {
@@ -81,6 +82,7 @@ namespace WebApi.Controllers.v1
 
                 db.SaveChanges();
             }
+
             return true;
         }
 

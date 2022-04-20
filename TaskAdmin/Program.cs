@@ -27,7 +27,6 @@ namespace TaskAdmin
         public static void Main(string[] args)
         {
             Common.EnvironmentHelper.ChangeDirectory(args);
-            Common.EnvironmentHelper.InitTestServer();
 
             var builder = WebApplication.CreateBuilder(args);
 

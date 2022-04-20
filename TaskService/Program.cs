@@ -15,7 +15,6 @@ namespace TaskService
         static void Main(string[] args)
         {
             Common.EnvironmentHelper.ChangeDirectory(args);
-            Common.EnvironmentHelper.InitTestServer();
 
             using IHost host = CreateHostBuilder(args).Build();
 

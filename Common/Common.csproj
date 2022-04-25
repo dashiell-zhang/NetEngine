@@ -38,4 +38,8 @@
 		<ProjectReference Include="..\Repository\Repository.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="RedisLock\Properties\PublishProfiles\" />
+	</ItemGroup>
+
 </Project>

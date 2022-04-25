@@ -1,10 +1,11 @@
-﻿using Medallion.Threading;
-using Medallion.Threading.SqlServer;
+﻿using Common.RedisLock;
+using Common.RedisLock.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using System;
 using System.Net.Http;
 
@@ -33,10 +34,9 @@ namespace TaskService
                     Repository.Database.DatabaseContext.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
                     services.AddDbContextPool<Repository.Database.DatabaseContext>(options => { }, 100);
 
-                    services.AddSingleton<IDistributedLockProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
-                    services.AddSingleton<IDistributedSemaphoreProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
-                    services.AddSingleton<IDistributedUpgradeableReaderWriterLockProvider>(new SqlDistributedSynchronizationProvider(hostContext.Configuration.GetConnectionString("dbConnection")));
-
+                    services.AddSingleton<IDistributedLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
+                    services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
+                    services.AddSingleton<IDistributedReaderWriterLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
 
                     services.AddLogging(options => options.AddConsole());
 

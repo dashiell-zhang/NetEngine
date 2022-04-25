@@ -1,5 +1,5 @@
 ﻿using Common;
-using Medallion.Threading;
+using Common.RedisLock.Core;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -180,13 +180,6 @@ namespace WebApi.Controllers.v1
             {
             }
 
-            //可升级读锁，初始状态为读锁，可手动升级为写锁
-            //using (var handle = distUpgradeLock.AcquireUpgradeableReadLock(""))
-            //{
-
-            //    //升级写锁
-            //    handle.UpgradeToWriteLock();
-            //}
 
             return true;
         }

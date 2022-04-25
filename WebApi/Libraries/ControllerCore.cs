@@ -1,5 +1,5 @@
 ﻿using Common;
-using Medallion.Threading;
+using Common.RedisLock.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
@@ -14,7 +14,7 @@ namespace WebApi.Libraries
         public readonly long userId;
         public readonly IDistributedLockProvider distLock;
         public readonly IDistributedSemaphoreProvider distSemaphoreLock;
-        public readonly IDistributedUpgradeableReaderWriterLockProvider distReaderWriterLock;
+        public readonly IDistributedReaderWriterLockProvider distReaderWriterLock;
         public readonly SnowflakeHelper snowflakeHelper;
 
 
@@ -24,7 +24,7 @@ namespace WebApi.Libraries
             db = Http.HttpContext.Current().RequestServices.GetRequiredService<DatabaseContext>();
             distLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedLockProvider>();
             distSemaphoreLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedSemaphoreProvider>();
-            distReaderWriterLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedUpgradeableReaderWriterLockProvider>();
+            distReaderWriterLock = Http.HttpContext.Current().RequestServices.GetRequiredService<IDistributedReaderWriterLockProvider>();
             snowflakeHelper = Http.HttpContext.Current().RequestServices.GetRequiredService<SnowflakeHelper>();
 
 

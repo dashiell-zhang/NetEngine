@@ -1,5 +1,5 @@
 ﻿using Common;
-using Medallion.Threading;
+using Common.RedisLock.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;

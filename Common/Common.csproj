@@ -24,13 +24,13 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-		<PackageReference Include="NPOI" Version="2.5.5" />
+		<PackageReference Include="NPOI" Version="2.5.6" />
 		<PackageReference Include="SkiaSharp" Version="2.80.3" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.80.3" />
-		<PackageReference Include="SkiaSharp.QrCode" Version="0.4.1" />
+		<PackageReference Include="SkiaSharp.QrCode" Version="0.5.0" />
 		<PackageReference Include="StackExchange.Redis" Version="2.5.61" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.29" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.505" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.506" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -84,9 +84,6 @@ namespace Repository.Database
         public DbSet<TRole> TRole => Set<TRole>();
 
 
-        public DbSet<TSign> TSign => Set<TSign>();
-
-
         public DbSet<TUser> TUser => Set<TUser>();
 
 

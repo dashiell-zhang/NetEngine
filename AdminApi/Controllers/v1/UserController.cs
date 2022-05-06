@@ -2,6 +2,7 @@
 using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.User;
+using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -109,7 +110,7 @@ namespace AdminApi.Controllers.v1
             user.Name = createUser.Name;
             user.NickName = createUser.NickName;
             user.Phone = createUser.Phone;
-            user.PassWord = createUser.PassWord;
+            user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + createUser.PassWord);
             user.CreateTime = DateTime.UtcNow;
             user.CreateUserId = userId;
 
@@ -148,7 +149,7 @@ namespace AdminApi.Controllers.v1
 
                 if (updateUser.PassWord != "default")
                 {
-                    user.PassWord = updateUser.PassWord;
+                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + updateUser.PassWord);
                 }
 
                 db.SaveChanges();

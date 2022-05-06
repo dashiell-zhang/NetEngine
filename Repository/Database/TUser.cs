@@ -10,12 +10,11 @@ namespace Repository.Database
     /// <summary>
     /// 用户表
     /// </summary>
-    [Index(nameof(Name), nameof(PassWord))]
-    [Index(nameof(Phone), nameof(PassWord))]
-    [Index(nameof(Email), nameof(PassWord))]
+    [Index(nameof(Name))]
+    [Index(nameof(Phone))]
+    [Index(nameof(Email))]
     public class TUser : CUD_User
     {
-
 
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿using Common.RedisLock.Core;
+﻿using Common;
+using Common.RedisLock.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
+using WebApi.Actions.v1;
 using WebApi.Filters;
 using WebApi.Libraries;
 using WebApi.Libraries.Verify;
@@ -29,45 +30,28 @@ namespace WebApi.Controllers.v1
 
 
 
-
         /// <summary>
         /// 获取Token认证信息
         /// </summary>
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
         [HttpPost("GetToken")]
-        public string GetToken([FromBody] DtoLogin login)
+        public string? GetToken(DtoLogin login)
         {
-            var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
+            var userList = db.TUser.Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name)).Select(t => new { t.Id, t.PassWord }).ToList();
+
+            var user = userList.Where(t => t.PassWord == CryptoHelper.GetSHA256(t.Id.ToString() + login.PassWord)).FirstOrDefault();
 
             if (user != null)
             {
-                TUserToken userToken = new();
-                userToken.Id = snowflakeHelper.GetId();
-                userToken.UserId = user.Id;
-                userToken.CreateTime = DateTime.UtcNow;
-
-                db.TUserToken.Add(userToken);
-                db.SaveChanges();
-
-                var claim = new Claim[]
-                {
-                    new Claim("tokenId",userToken.Id.ToString()),
-                    new Claim("userId",user.Id.ToString())
-                };
-
-
-                var ret = JWTToken.GetToken(claim);
-
-                return ret;
+                return AuthorizeAction.GetTokenByUserId(user.Id);
             }
             else
             {
-
                 HttpContext.Response.StatusCode = 400;
                 HttpContext.Items.Add("errMsg", "用户名或密码错误");
 
-                return "";
+                return default;
             }
 
         }
@@ -121,7 +105,7 @@ namespace WebApi.Controllers.v1
                         user.Name = userName;
                         user.NickName = userName;
                         user.Phone = "";
-                        user.PassWord = Guid.NewGuid().ToString();
+                        user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + Guid.NewGuid().ToString());
 
                         db.TUser.Add(user);
 
@@ -145,7 +129,7 @@ namespace WebApi.Controllers.v1
 
             }
 
-            return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
+            return AuthorizeAction.GetTokenByUserId(user.Id);
         }
 
 
@@ -157,7 +141,7 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key 为手机号，value 为验证码</param>
         /// <returns></returns>
         [HttpPost("GetTokenBySms")]
-        public string GetTokenBySms(DtoKeyValue keyValue)
+        public string? GetTokenBySms(DtoKeyValue keyValue)
         {
             if (IdentityVerification.SmsVerifyPhone(keyValue))
             {
@@ -178,21 +162,21 @@ namespace WebApi.Controllers.v1
                     user.Name = userName;
                     user.NickName = userName;
                     user.Phone = phone;
-                    user.PassWord = Guid.NewGuid().ToString();
+                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + Guid.NewGuid().ToString());
 
                     db.TUser.Add(user);
 
                     db.SaveChanges();
                 }
 
-                return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
+                return AuthorizeAction.GetTokenByUserId(user.Id);
             }
             else
             {
                 HttpContext.Response.StatusCode = 400;
                 HttpContext.Items.Add("errMsg", "短信验证码错误");
 
-                return "";
+                return default;
             }
 
         }
@@ -279,7 +263,7 @@ namespace WebApi.Controllers.v1
         /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
         /// <returns></returns>
         [HttpPost("GetTokenByWeiXinAppCode")]
-        public string GetTokenByWeiXinAppCode(DtoKeyValue keyValue)
+        public string? GetTokenByWeiXinAppCode(DtoKeyValue keyValue)
         {
 
             var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
@@ -312,7 +296,7 @@ namespace WebApi.Controllers.v1
                     user.Name = userInfo.NickName;
                     user.NickName = userInfo.NickName;
                     user.Phone = "";
-                    user.PassWord = Guid.NewGuid().ToString();
+                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + Guid.NewGuid().ToString());
 
                     db.TUser.Add(user);
                     db.SaveChanges();
@@ -331,19 +315,112 @@ namespace WebApi.Controllers.v1
                     db.SaveChanges();
                 }
 
-                return GetToken(new DtoLogin { Name = user.Name, PassWord = user.PassWord });
+                return AuthorizeAction.GetTokenByUserId(user.Id);
             }
             else
             {
                 HttpContext.Response.StatusCode = 400;
                 HttpContext.Items.Add("errMsg", "微信授权失败");
 
-                return "";
+                return default;
             }
 
         }
 
 
+
+
+        /// <summary>
+        /// 通过老密码修改密码
+        /// </summary>
+        /// <param name="updatePassWordByOldPassWord"></param>
+        /// <returns></returns>
+        [Authorize]
+        [QueueLimitFilter(IsBlock = true, UseParameter = false, UseToken = true)]
+        [HttpPost("UpdatePassWordByOldPassWord")]
+        public bool UpdatePassWordByOldPassWord(DtoUpdatePassWordByOldPassWord updatePassWordByOldPassWord)
+        {
+
+            var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
+
+            if (user != null)
+            {
+                if (user.PassWord == CryptoHelper.GetSHA256(user.Id.ToString() + updatePassWordByOldPassWord.OldPassWord))
+                {
+                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + updatePassWordByOldPassWord.NewPassWord);
+                    user.UpdateTime = DateTime.UtcNow;
+                    user.UpdateUserId = user.Id;
+                    db.SaveChanges();
+
+                    return true;
+                }
+                else
+                {
+                    HttpContext.Response.StatusCode = 400;
+                    HttpContext.Items.Add("errMsg", "原始密码验证失败");
+
+                    return false;
+                }
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "账户异常，请联系后台工作人员");
+
+                return false;
+            }
+
+        }
+
+
+
+        /// <summary>
+        /// 通过短信验证码修改账户密码</summary>
+        /// <param name="updatePassWordBySms"></param>
+        /// <returns></returns>
+        [HttpPost("UpdatePassWordBySms")]
+        public bool UpdatePassWordBySms(DtoUpdatePassWordBySms updatePassWordBySms)
+        {
+
+            string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault()!;
+
+            var checkSms = IdentityVerification.SmsVerifyPhone(new DtoKeyValue { Key = phone, Value = updatePassWordBySms.SmsCode });
+
+            if (checkSms)
+            {
+                var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
+
+                if (user != null)
+                {
+                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + updatePassWordBySms.NewPassWord);
+                    user.UpdateTime = DateTime.UtcNow;
+                    user.UpdateUserId = userId;
+
+                    var tokenList = db.TUserToken.Where(t => t.IsDelete == false && t.UserId == userId).ToList();
+
+                    db.TUserToken.RemoveRange(tokenList);
+
+                    db.SaveChanges();
+
+                    return true;
+                }
+                else
+                {
+                    HttpContext.Response.StatusCode = 400;
+                    HttpContext.Items.Add("errMsg", "账户不存在");
+
+                    return false;
+                }
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "短信验证码错误");
+
+                return false;
+            }
+
+        }
 
     }
 }

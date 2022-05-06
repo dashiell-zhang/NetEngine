@@ -1,8 +1,10 @@
-﻿using AdminApi.Filters;
+﻿using AdminApi.Actions.v1;
+using AdminApi.Filters;
 using AdminApi.Libraries;
 using AdminApi.Libraries.Verify;
 using AdminShared.Models;
 using AdminShared.Models.v1.Authorize;
+using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,46 +29,28 @@ namespace AdminApi.Controllers.v1
     {
 
 
-
         /// <summary>
         /// 获取Token认证信息
         /// </summary>
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
         [HttpPost("GetToken")]
-        public string GetToken([FromBody] DtoLogin login)
+        public string? GetToken(DtoLogin login)
         {
+            var userList = db.TUser.Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name)).Select(t => new { t.Id, t.PassWord }).ToList();
 
-            var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name) && t.PassWord == login.PassWord).FirstOrDefault();
+            var user = userList.Where(t => t.PassWord == CryptoHelper.GetSHA256(t.Id.ToString() + login.PassWord)).FirstOrDefault();
 
             if (user != null)
             {
-                TUserToken userToken = new();
-                userToken.Id = snowflakeHelper.GetId();
-                userToken.UserId = user.Id;
-                userToken.CreateTime = DateTime.UtcNow;
-
-                db.TUserToken.Add(userToken);
-                db.SaveChanges();
-
-                var claim = new Claim[]
-                {
-                    new Claim("tokenId",userToken.Id.ToString()),
-                    new Claim("userId",user.Id.ToString())
-                };
-
-
-                var ret = JWTToken.GetToken(claim);
-
-                return ret;
+                return AuthorizeAction.GetTokenByUserId(user.Id);
             }
             else
             {
-
                 HttpContext.Response.StatusCode = 400;
                 HttpContext.Items.Add("errMsg", "用户名或密码错误");
 
-                return "";
+                return default;
             }
 
         }
@@ -97,7 +81,6 @@ namespace AdminApi.Controllers.v1
 
             return kvList;
         }
-
 
 
 

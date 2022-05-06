@@ -378,6 +378,8 @@ namespace WebApi.Controllers.v1
         /// 通过短信验证码修改账户密码</summary>
         /// <param name="updatePassWordBySms"></param>
         /// <returns></returns>
+        [Authorize]
+        [QueueLimitFilter(IsBlock = true, UseParameter = false, UseToken = true)]
         [HttpPost("UpdatePassWordBySms")]
         public bool UpdatePassWordBySms(DtoUpdatePassWordBySms updatePassWordBySms)
         {

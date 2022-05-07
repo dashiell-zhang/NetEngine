@@ -113,8 +113,7 @@ namespace WebApi.Libraries.WeiXin.H5
             {
                 byte[] bytes_sha1_in = Encoding.Default.GetBytes(strYW);
                 byte[] bytes_sha1_out = sha1.ComputeHash(bytes_sha1_in);
-                string str_sha1_out = BitConverter.ToString(bytes_sha1_out);
-                str_sha1_out = str_sha1_out.Replace("-", "").ToLower();
+                string str_sha1_out = Convert.ToHexString(bytes_sha1_out).ToLower();
 
                 sdkSign.Signature = str_sha1_out;
             }

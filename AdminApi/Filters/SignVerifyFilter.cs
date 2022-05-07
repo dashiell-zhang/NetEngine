@@ -74,7 +74,7 @@ namespace AdminApi.Filters
                                 {
                                     using var sha256 = SHA256.Create();
 
-                                    var fileSign = BitConverter.ToString(sha256.ComputeHash(fileStream)).Replace("-", "");
+                                    var fileSign = Convert.ToHexString(sha256.ComputeHash(fileStream));
 
                                     dataStr = dataStr + file.Name + fileSign;
                                 }

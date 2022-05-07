@@ -52,7 +52,7 @@ namespace WebApi.Libraries.Http
                     {
                         using (SHA256 sha256 = SHA256.Create())
                         {
-                            var fileSign = BitConverter.ToString(sha256.ComputeHash(item.ReadAsStream())).Replace("-", "");
+                            var fileSign = Convert.ToHexString(sha256.ComputeHash(item.ReadAsStream()));
 
                             item.ReadAsStream().Position = 0;
 
@@ -65,7 +65,7 @@ namespace WebApi.Libraries.Http
 
             using (SHA256 sha256 = SHA256.Create())
             {
-                string dataSign = BitConverter.ToString(sha256.ComputeHash(Encoding.UTF8.GetBytes(dataStr))).Replace("-", "");
+                string dataSign = Convert.ToHexString(sha256.ComputeHash(Encoding.UTF8.GetBytes(dataStr)));
 
                 Console.WriteLine(dataStr);
 

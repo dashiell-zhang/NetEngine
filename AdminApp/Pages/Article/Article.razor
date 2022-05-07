@@ -362,7 +362,7 @@
             using (var fileStream = await Http.GetStreamAsync(file.ObjectURL))
             {
                 using System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create();
-                fileSign = BitConverter.ToString(sha256.ComputeHash(fileStream)).Replace("-", "");
+                fileSign = Convert.ToHexString(sha256.ComputeHash(fileStream));
             }
 
             var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
@@ -373,7 +373,7 @@
             var dataStr = privateKey + timeStr + requestUrl + "file" + fileSign;
 
             using System.Security.Cryptography.SHA256 shaa256 = System.Security.Cryptography.SHA256.Create();
-            string dataSign = BitConverter.ToString(shaa256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(dataStr))).Replace("-", "");
+            string dataSign = Convert.ToHexString(shaa256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(dataStr)));
 
             headers.Remove("Token");
             headers.Remove("Time");

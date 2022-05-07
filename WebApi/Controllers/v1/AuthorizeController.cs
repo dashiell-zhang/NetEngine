@@ -1,6 +1,6 @@
-﻿using Common;
-using Common.RedisLock.Core;
+﻿using Common.RedisLock.Core;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +8,7 @@ using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using WebApi.Actions.v1;
 using WebApi.Filters;
 using WebApi.Libraries;
@@ -40,7 +41,7 @@ namespace WebApi.Controllers.v1
         {
             var userList = db.TUser.Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name)).Select(t => new { t.Id, t.PassWord }).ToList();
 
-            var user = userList.Where(t => t.PassWord == CryptoHelper.GetSHA256(t.Id.ToString() + login.PassWord)).FirstOrDefault();
+            var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
             if (user != null)
             {
@@ -105,7 +106,7 @@ namespace WebApi.Controllers.v1
                         user.Name = userName;
                         user.NickName = userName;
                         user.Phone = "";
-                        user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + Guid.NewGuid().ToString());
+                        user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                         db.TUser.Add(user);
 
@@ -162,7 +163,7 @@ namespace WebApi.Controllers.v1
                     user.Name = userName;
                     user.NickName = userName;
                     user.Phone = phone;
-                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + Guid.NewGuid().ToString());
+                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                     db.TUser.Add(user);
 
@@ -296,7 +297,7 @@ namespace WebApi.Controllers.v1
                     user.Name = userInfo.NickName;
                     user.NickName = userInfo.NickName;
                     user.Phone = "";
-                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + Guid.NewGuid().ToString());
+                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                     db.TUser.Add(user);
                     db.SaveChanges();
@@ -345,9 +346,9 @@ namespace WebApi.Controllers.v1
 
             if (user != null)
             {
-                if (user.PassWord == CryptoHelper.GetSHA256(user.Id.ToString() + updatePassWordByOldPassWord.OldPassWord))
+                if (user.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWordByOldPassWord.OldPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32)))
                 {
-                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + updatePassWordByOldPassWord.NewPassWord);
+                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWordByOldPassWord.NewPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                     user.UpdateTime = DateTime.UtcNow;
                     user.UpdateUserId = user.Id;
                     db.SaveChanges();
@@ -394,7 +395,7 @@ namespace WebApi.Controllers.v1
 
                 if (user != null)
                 {
-                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + updatePassWordBySms.NewPassWord);
+                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWordBySms.NewPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                     user.UpdateTime = DateTime.UtcNow;
                     user.UpdateUserId = userId;
 

@@ -2,12 +2,13 @@
 using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.User;
-using Common;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
 using System;
 using System.Linq;
+using System.Text;
 
 namespace AdminApi.Controllers.v1
 {
@@ -110,7 +111,7 @@ namespace AdminApi.Controllers.v1
             user.Name = createUser.Name;
             user.NickName = createUser.NickName;
             user.Phone = createUser.Phone;
-            user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + createUser.PassWord);
+            user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
             user.CreateTime = DateTime.UtcNow;
             user.CreateUserId = userId;
 
@@ -149,7 +150,7 @@ namespace AdminApi.Controllers.v1
 
                 if (updateUser.PassWord != "default")
                 {
-                    user.PassWord = CryptoHelper.GetSHA256(user.Id.ToString() + updateUser.PassWord);
+                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                 }
 
                 db.SaveChanges();

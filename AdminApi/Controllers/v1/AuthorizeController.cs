@@ -1,19 +1,17 @@
 ﻿using AdminApi.Actions.v1;
 using AdminApi.Filters;
 using AdminApi.Libraries;
-using AdminApi.Libraries.Verify;
 using AdminShared.Models;
 using AdminShared.Models.v1.Authorize;
-using Common;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
+using System.Text;
 
 namespace AdminApi.Controllers.v1
 {
@@ -39,7 +37,7 @@ namespace AdminApi.Controllers.v1
         {
             var userList = db.TUser.Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name)).Select(t => new { t.Id, t.PassWord }).ToList();
 
-            var user = userList.Where(t => t.PassWord == CryptoHelper.GetSHA256(t.Id.ToString() + login.PassWord)).FirstOrDefault();
+            var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
             if (user != null)
             {

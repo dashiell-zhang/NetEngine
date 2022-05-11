@@ -19,7 +19,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.4">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.5">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -39,8 +39,5 @@
 		</None>
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Filters\" />
-	</ItemGroup>
 
 </Project>

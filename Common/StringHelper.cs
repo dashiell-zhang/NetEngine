@@ -307,5 +307,51 @@ namespace Common
         }
 
 
+
+        /// <summary>
+        /// 压缩GUID到22位的字符串
+        /// </summary>
+        /// <param name="value">待压缩的GUID</param>
+        /// <returns></returns>
+        public static string CompressGuid(Guid value)
+        {
+
+            string base64 = Convert.ToBase64String(value.ToByteArray());
+
+            string encoded = base64.Replace("/", "_").Replace("+", "-");
+
+            return encoded[..22];
+        }
+
+
+
+        /// <summary>
+        /// 将22位的字符串还原为GUID
+        /// </summary>
+        /// <param name="vlaue">GUID压缩后的字符串</param>
+        /// <returns></returns>
+        public static Guid DecompressGuid(string vlaue)
+        {
+            Guid result = Guid.Empty;
+
+            if ((!string.IsNullOrEmpty(vlaue)) && (vlaue.Trim().Length == 22))
+            {
+                string encoded = string.Concat(vlaue.Trim().Replace("-", "+").Replace("_", "/"), "==");
+
+                try
+                {
+                    byte[] base64 = Convert.FromBase64String(encoded);
+
+                    result = new Guid(base64);
+                }
+                catch (FormatException)
+                {
+                }
+            }
+
+            return result;
+        }
+
+
     }
 }

@@ -35,5 +35,9 @@
 		<ProjectReference Include="..\Common\Common.csproj" />
 	</ItemGroup>
 
+	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">
+		<Message Text="CleanObjRelease" Importance="high" />
+		<RemoveDir Directories="$(BaseIntermediateOutputPath)\Release\" />
+	</Target>
 
 </Project>

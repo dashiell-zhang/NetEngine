@@ -42,4 +42,9 @@
 		<Folder Include="wwwroot\" />
 	</ItemGroup>
 
+	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">
+		<Message Text="CleanObjRelease" Importance="high" />
+		<RemoveDir Directories="$(BaseIntermediateOutputPath)\Release\" />
+	</Target>
+
 </Project>

@@ -38,8 +38,6 @@ namespace TaskService
                     services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
                     services.AddSingleton<IDistributedReaderWriterLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
 
-                    services.AddLogging(options => options.AddConsole());
-
 
                     services.AddHostedService<Tasks.DemoTask>();
 

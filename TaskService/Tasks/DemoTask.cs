@@ -16,7 +16,6 @@ namespace TaskService.Tasks
             {
                 var timer = new Timer(1000 * 1);
                 timer.Elapsed += TimerElapsed;
-                timer.Elapsed += TimerElapsed;
                 timer.Start();
             }, stoppingToken);
         }

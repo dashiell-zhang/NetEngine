@@ -1,52 +1,38 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Repository.Database;
 using System;
 using System.Threading.Tasks;
 using System.Timers;
+using TaskService.Libraries;
 
 namespace TaskService.Tasks
 {
-    class DemoTask : BackgroundService
+    class DemoTask : TaskCore
     {
-
-
-
-        public DemoTask()
-        {
-
-        }
-
-
-
 
         protected override Task ExecuteAsync(System.Threading.CancellationToken stoppingToken)
         {
             return Task.Run(() =>
             {
-                var timer = new Timer(1000 * 3);
-
-                timer.Elapsed += TimerElapsed!;
+                var timer = new Timer(1000 * 1);
+                timer.Elapsed += TimerElapsed;
+                timer.Elapsed += TimerElapsed;
                 timer.Start();
             }, stoppingToken);
         }
 
 
 
-
-        private void TimerElapsed(object sender, ElapsedEventArgs e)
+        private void TimerElapsed(object? sender, ElapsedEventArgs e)
         {
-
             using (var scope = Program.ServiceProvider.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
+
+                //周期性执行的方法
+                Console.WriteLine("HelloWord" + snowflakeHelper.GetId());
             }
-
-
-            //周期性执行的方法
-            Console.WriteLine("HelloWord");
-
         }
 
     }

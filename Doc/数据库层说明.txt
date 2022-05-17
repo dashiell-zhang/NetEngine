@@ -23,5 +23,5 @@ Scaffold-DbContext "Host=127.0.0.1;Database=webcore;Username=postgres;Password=1
 
 
 MySql
-MySql.EntityFrameworkCore  或   Pomelo.EntityFrameworkCore.MySql
+Pomelo.EntityFrameworkCore.MySql
 Scaffold-DbContext "server=127.0.0.1;userid=webcore;pwd=123456;port=3306;database=webcore;sslmode=none;" MySql.EntityFrameworkCore -OutputDir webcore -Force

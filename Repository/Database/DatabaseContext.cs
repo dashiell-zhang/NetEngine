@@ -119,7 +119,6 @@ namespace Repository.Database
                 //PostgreSQL:"Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=30;SSL Mode=VerifyFull"
 
                 optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySQL(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 28)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
                 //optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
             }
@@ -193,20 +192,6 @@ namespace Repository.Database
                         {
                             property.SetDefaultValue(defaultValueAttribute.Value);
                         }
-
-
-                        //bool to bit 使用 MySQL 时需要取消注释
-                        //if (property.ClrType.Name == "Boolean" || property.ClrType.FullName.StartsWith("System.Nullable`1[[System.Boolean"))
-                        //{
-                        //    property.SetColumnType("bit");
-                        //}
-
-
-                        //guid to char(36) 使用 MySQL 并且采用 MySql.EntityFrameworkCore 时需要取消注释
-                        //if (/*property.ClrType.Name == "Guid" ||*/ property.ClrType.FullName.StartsWith("System.Nullable`1[[System.Guid"))
-                        //{
-                        //    property.SetColumnType("char(36)");
-                        //}
 
 
                         //为所有 tableid 列添加索引

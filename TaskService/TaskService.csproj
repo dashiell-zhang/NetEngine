@@ -5,7 +5,6 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<DebugType>embedded</DebugType>
 		<Nullable>enable</Nullable>
-		<ApplicationIcon>Properties\ApplicationIcon.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

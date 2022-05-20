@@ -297,12 +297,12 @@ namespace Common
         /// </summary>
         /// <param name="key">锁的名称，不可重复</param>
         /// <param name="value">解锁密钥</param>
-        /// <param name="timeOut">失效时长</param>
+        /// <param name="expiry">失效时长</param>
         /// <returns></returns>
-        public static bool Lock(string key, string value, TimeSpan timeOut)
+        public static bool Lock(string key, string value, TimeSpan expiry)
         {
             var database = ConnectionMultiplexer.GetDatabase();
-            return database.LockTake(key, value, timeOut);
+            return database.LockTake(key, value, expiry);
         }
 
 

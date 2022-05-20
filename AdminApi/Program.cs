@@ -3,8 +3,7 @@ using AdminApi.Libraries;
 using AdminApi.Libraries.Swagger;
 using AdminApi.Libraries.Verify;
 using AdminApi.Models.AppSetting;
-using Common.RedisLock;
-using Common.RedisLock.Core;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -55,11 +54,6 @@ namespace AdminApi
             //为各数据库注入连接字符串
             Repository.Database.DatabaseContext.ConnectionString = builder.Configuration.GetConnectionString("dbConnection");
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options => { }, 100);
-
-
-            builder.Services.AddSingleton<IDistributedLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
-            builder.Services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
-            builder.Services.AddSingleton<IDistributedReaderWriterLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
 
 
             builder.Services.Configure<FormOptions>(options =>
@@ -241,6 +235,13 @@ namespace AdminApi
 
             //注册雪花ID算法示例
             builder.Services.AddSingleton(new Common.SnowflakeHelper(0, 0));
+
+
+            //注册分布式锁 Redis模式
+            builder.Services.AddSingleton<IDistributedLock, RedisLock>();
+
+            //注册分布式锁 数据库模式
+            //builder.Services.AddSingleton<IDistributedLock, DataBaseLock>();
 
 
             //注册缓存服务 内存模式

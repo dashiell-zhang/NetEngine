@@ -1,4 +1,4 @@
-﻿using Common.RedisLock.Core;
+﻿using Common.DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,7 +36,7 @@ namespace WebApi.Filters
         public bool IsBlock { get; set; }
 
 
-        private IDistributedSynchronizationHandle? LockHandle { get; set; }
+        private IDisposable? LockHandle { get; set; }
 
 
 
@@ -61,11 +61,11 @@ namespace WebApi.Filters
 
             try
             {
-                var distLock = context.HttpContext.RequestServices.GetRequiredService<IDistributedLockProvider>();
+                var distLock = context.HttpContext.RequestServices.GetRequiredService<IDistributedLock>();
 
                 while (true)
                 {
-                    var handle = distLock.TryAcquireLock(key);
+                    var handle = distLock.TryLock(key);
                     if (handle != null)
                     {
                         LockHandle = handle;

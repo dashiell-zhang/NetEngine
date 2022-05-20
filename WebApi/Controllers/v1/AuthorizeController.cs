@@ -1,5 +1,4 @@
-﻿using Common.RedisLock.Core;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -89,7 +88,7 @@ namespace WebApi.Controllers.v1
             if (user == null)
             {
 
-                using (distLock.AcquireLock("GetTokenByWeiXinMiniAppCode" + openid))
+                using (distLock.Lock("GetTokenByWeiXinMiniAppCode" + openid))
                 {
                     user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 

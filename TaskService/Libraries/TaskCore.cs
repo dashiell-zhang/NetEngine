@@ -1,5 +1,5 @@
 ﻿using Common;
-using Common.RedisLock.Core;
+using Common.DistributedLock;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -11,16 +11,12 @@ namespace TaskService.Libraries
     public class TaskCore : BackgroundService
     {
 
-        public readonly IDistributedLockProvider distLock;
-        public readonly IDistributedSemaphoreProvider distSemaphoreLock;
-        public readonly IDistributedReaderWriterLockProvider distReaderWriterLock;
+        public readonly IDistributedLock distLock;
         public readonly SnowflakeHelper snowflakeHelper;
 
         public TaskCore()
         {
-            distLock = Program.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
-            distSemaphoreLock = Program.ServiceProvider.GetRequiredService<IDistributedSemaphoreProvider>();
-            distReaderWriterLock = Program.ServiceProvider.GetRequiredService<IDistributedReaderWriterLockProvider>();
+            distLock = Program.ServiceProvider.GetRequiredService<IDistributedLock>();
             snowflakeHelper = Program.ServiceProvider.GetRequiredService<SnowflakeHelper>();
         }
 

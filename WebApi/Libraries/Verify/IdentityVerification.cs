@@ -1,5 +1,5 @@
 ﻿using Common;
-using Common.RedisLock.Core;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -114,8 +114,8 @@ namespace WebApi.Libraries.Verify
 
                 string key = "IssueNewToken" + tokenId;
 
-                var distLock = httpContext.RequestServices.GetRequiredService<IDistributedLockProvider>();
-                if (distLock.TryAcquireLock(key) != null)
+                var distLock = httpContext.RequestServices.GetRequiredService<IDistributedLock>();
+                if (distLock.TryLock(key) != null)
                 {
                     var newToken = db.TUserToken.Where(t => t.IsDelete == false && t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefault();
 
@@ -175,8 +175,8 @@ namespace WebApi.Libraries.Verify
         {
             await Task.Run(() =>
             {
-                var distLock = Program.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
-                if (distLock.TryAcquireLock("ClearExpireToken") != null)
+                var distLock = Program.ServiceProvider.GetRequiredService<IDistributedLock>();
+                if (distLock.TryLock("ClearExpireToken") != null)
                 {
                     using var scope = Program.ServiceProvider.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();

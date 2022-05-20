@@ -16,12 +16,6 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
-	<ItemGroup>
-	  <Compile Remove="RedisLock\Properties\**" />
-	  <EmbeddedResource Remove="RedisLock\Properties\**" />
-	  <None Remove="RedisLock\Properties\**" />
-	</ItemGroup>
-
 
 	<ItemGroup>
 		<PackageReference Include="AlipaySDKNet.Standard" Version="4.6.240" />
@@ -36,7 +30,7 @@
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.6.0" />
 		<PackageReference Include="StackExchange.Redis" Version="2.5.61" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.29" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.516" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.519" />
 	</ItemGroup>
 
 	<ItemGroup>

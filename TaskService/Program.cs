@@ -1,11 +1,8 @@
-﻿using Common.RedisLock;
-using Common.RedisLock.Core;
+﻿using Common.DistributedLock;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System;
 using System.Net.Http;
 
@@ -34,16 +31,19 @@ namespace TaskService
                     Repository.Database.DatabaseContext.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
                     services.AddDbContextPool<Repository.Database.DatabaseContext>(options => { }, 100);
 
-                    services.AddSingleton<IDistributedLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
-                    services.AddSingleton<IDistributedSemaphoreProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
-                    services.AddSingleton<IDistributedReaderWriterLockProvider>(new RedisDistributedSynchronizationProvider(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")).GetDatabase()));
-
 
                     services.AddHostedService<Tasks.DemoTask>();
 
 
                     //注册雪花ID算法示例
                     services.AddSingleton(new Common.SnowflakeHelper(0, 0));
+
+
+                    //注册分布式锁 Redis模式
+                    services.AddSingleton<IDistributedLock, RedisLock>();
+
+                    //注册分布式锁 数据库模式
+                    //services.AddSingleton<IDistributedLock, DataBaseLock>();
 
 
                     //注册缓存服务 内存模式

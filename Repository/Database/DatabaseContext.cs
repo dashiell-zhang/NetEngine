@@ -57,6 +57,9 @@ namespace Repository.Database
         public DbSet<TLink> TLink => Set<TLink>();
 
 
+        public DbSet<TLock> TLock => Set<TLock>();
+
+
         public DbSet<TLog> TLog => Set<TLog>();
 
 
@@ -254,6 +257,12 @@ namespace Repository.Database
                         if (name.StartsWith(matchKey))
                         {
                             name = name.Replace(matchKey, "");
+
+                            if (fieldList.ContainsKey(name))
+                            {
+                                fieldList.Remove(name);
+                            }
+
                             fieldList.Add(name, summary);
                         }
 

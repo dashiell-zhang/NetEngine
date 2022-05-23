@@ -79,7 +79,6 @@ namespace WebApi
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-                //options.KnownProxies.Add(IPAddress.Parse("10.0.0.100"));
             });
 
             builder.Services.AddResponseCompression(options =>
@@ -165,7 +164,6 @@ namespace WebApi
                 options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);
 
                 options.ApiVersionReader = new HeaderApiVersionReader("api-version");
-                //options.ApiVersionReader = new QueryStringApiVersionReader("api-version");
             });
 
 
@@ -361,9 +359,7 @@ namespace WebApi
             });
 
 
-
             app.Run();
-
         }
 
 

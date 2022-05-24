@@ -9,6 +9,15 @@ namespace Common.DistributedLock
     public class DataBaseLock : IDistributedLock
     {
 
+        private readonly DatabaseContext db;
+
+        public DataBaseLock(DatabaseContext _db)
+        {
+            db = _db;
+        }
+
+
+
         public DataBaseLock()
         {
             var timer = new System.Timers.Timer(1000 * 1);
@@ -27,7 +36,7 @@ namespace Common.DistributedLock
 
             var endTime = DateTime.UtcNow + expiry;
 
-            DataBaseLockHandle dataBaseLockHandle = new();
+            DataBaseLockHandle dataBaseLockHandle = new(db);
 
         StartTag:
             {
@@ -38,20 +47,17 @@ namespace Common.DistributedLock
 
                     try
                     {
-                        using (DatabaseContext db = new())
-                        {
+                        TLock lk = new();
 
-                            TLock lk = new();
+                        lk.Id = keyMd5;
+                        lk.TTL = expiry.TotalSeconds;
+                        lk.CreateTime = DateTime.UtcNow;
 
-                            lk.Id = keyMd5;
-                            lk.TTL = expiry.TotalSeconds;
-                            lk.CreateTime = DateTime.UtcNow;
-
-                            db.TLock.Add(lk);
+                        db.TLock.Add(lk);
 
 
-                            db.SaveChanges();
-                        }
+                        db.SaveChanges();
+
 
                         dataBaseLockHandle.LockKey = keyMd5;
                         return dataBaseLockHandle;
@@ -97,20 +103,18 @@ namespace Common.DistributedLock
 
                 try
                 {
-                    using (var db = new DatabaseContext())
-                    {
 
-                        TLock lk = new();
+                    TLock lk = new();
 
-                        lk.Id = keyMd5;
-                        lk.TTL = expiry.TotalSeconds;
-                        lk.CreateTime = DateTime.UtcNow;
+                    lk.Id = keyMd5;
+                    lk.TTL = expiry.TotalSeconds;
+                    lk.CreateTime = DateTime.UtcNow;
 
-                        db.TLock.Add(lk);
+                    db.TLock.Add(lk);
 
-                        db.SaveChanges();
-                    }
-                    DataBaseLockHandle dataBaseLockHandle = new();
+                    db.SaveChanges();
+
+                    DataBaseLockHandle dataBaseLockHandle = new(db);
 
                     dataBaseLockHandle.LockKey = keyMd5;
                     return dataBaseLockHandle;
@@ -130,15 +134,11 @@ namespace Common.DistributedLock
         {
             try
             {
+                var nowTime = DateTime.UtcNow;
+                var lkList = db.TLock.Where(t => t.CreateTime.AddSeconds(t.TTL) < nowTime).ToList();
 
-                using (DatabaseContext db = new())
-                {
-                    var nowTime = DateTime.UtcNow;
-                    var lkList = db.TLock.Where(t => t.CreateTime.AddSeconds(t.TTL) < nowTime).ToList();
-
-                    db.TLock.RemoveRange(lkList);
-                    db.SaveChanges();
-                }
+                db.TLock.RemoveRange(lkList);
+                db.SaveChanges();
             }
             catch
             {

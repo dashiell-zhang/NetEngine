@@ -13,14 +13,7 @@ namespace Repository.Database
     {
 
 
-        public static string ConnectionString { get; set; }
-
-
-
-        public DatabaseContext(DbContextOptions<DatabaseContext> options = default!) : base(GetDbContextOptions(options))
-        {
-        }
-
+        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
 
 
@@ -36,10 +29,9 @@ namespace Repository.Database
         public DbSet<TChannel> TChannel => Set<TChannel>();
 
 
-        public DbSet<TCount> TCount => Set<TCount>();
 
+        public DbSet<TDataUpdateLog> TDataUpdateLog => Set<TDataUpdateLog>();
 
-        public DbSet<TOSLog> TOSLog => Set<TOSLog>();
 
 
         public DbSet<TFile> TFile => Set<TFile>();
@@ -100,41 +92,6 @@ namespace Repository.Database
 
 
         public DbSet<TUserToken> TUserToken => Set<TUserToken>();
-
-
-
-
-        private static DbContextOptions<DatabaseContext> GetDbContextOptions(DbContextOptions<DatabaseContext> options = default!)
-        {
-
-
-            var optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>();
-
-            if (options != default)
-            {
-                optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>(options);
-            }
-
-            if (!optionsBuilder.IsConfigured)
-            {
-                //SQLServer:"Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100;Encrypt=True"
-                //MySQL:"server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100"
-                //PostgreSQL:"Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=30;SSL Mode=VerifyFull"
-
-                optionsBuilder.UseSqlServer(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 28)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
-                //optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
-            }
-
-            //开启调试拦截器
-            //optionsBuilder.AddInterceptors(new DeBugInterceptor());
-
-
-            //开启全局懒加载
-            //optionsBuilder.UseLazyLoadingProxies();
-
-            return optionsBuilder.Options;
-        }
 
 
 
@@ -287,93 +244,9 @@ namespace Repository.Database
 
                 return fieldList.FirstOrDefault(t => t.Key.ToLower() == fieldName.ToLower()).Value ?? fieldName;
             }
-
-
         }
 
 
-
-        public static string ComparisonEntity<T>(T original, T after) where T : new()
-        {
-            var retValue = "";
-
-            var fields = typeof(T).GetProperties();
-
-            var baseTypeNames = new List<string>();
-            var baseType = original?.GetType().BaseType;
-            while (baseType != null)
-            {
-                baseTypeNames.Add(baseType.FullName!);
-                baseType = baseType.BaseType;
-            }
-
-            for (int i = 0; i < fields.Length; i++)
-            {
-                PropertyInfo pi = fields[i];
-
-                string? oldValue = pi.GetValue(original)?.ToString();
-                string? newValue = pi.GetValue(after)?.ToString();
-
-                string typename = pi.PropertyType.FullName!;
-
-                if ((typename != "System.Decimal" && oldValue != newValue) || (typename == "System.Decimal" && decimal.Parse(oldValue!) != decimal.Parse(newValue!)))
-                {
-
-                    retValue += GetEntityComment(original!.GetType().ToString(), pi.Name, baseTypeNames) + ":";
-
-
-                    if (pi.Name != "Id" && pi.Name.EndsWith("Id"))
-                    {
-                        var foreignTable = fields.FirstOrDefault(t => t.Name == pi.Name.Replace("Id", ""));
-
-                        using var db = new DatabaseContext();
-                        var foreignName = foreignTable?.PropertyType.GetProperties().Where(t => t.CustomAttributes.Where(c => c.AttributeType.Name == "ForeignNameAttribute").Any()).FirstOrDefault();
-
-                        if (foreignName != null)
-                        {
-
-                            if (oldValue != null)
-                            {
-                                var oldForeignInfo = db.Find(foreignTable!.PropertyType, Guid.Parse(oldValue));
-                                oldValue = foreignName.GetValue(oldForeignInfo)?.ToString();
-                            }
-
-                            if (newValue != null)
-                            {
-                                var newForeignInfo = db.Find(foreignTable!.PropertyType, Guid.Parse(newValue));
-                                newValue = foreignName.GetValue(newForeignInfo)?.ToString();
-                            }
-
-                        }
-
-                        retValue += (oldValue ?? "") + " -> ";
-                        retValue += (newValue ?? "") + "； \n";
-
-                    }
-                    else if (typename == "System.Boolean")
-                    {
-                        retValue += (oldValue != null ? (bool.Parse(oldValue) ? "是" : "否") : "") + " -> ";
-                        retValue += (newValue != null ? (bool.Parse(newValue) ? "是" : "否") : "") + "； \n";
-                    }
-                    else if (typename == "System.DateTime")
-                    {
-                        retValue += (oldValue != null ? DateTime.Parse(oldValue).ToString("yyyy-MM-dd") : "") + " ->";
-                        retValue += (newValue != null ? DateTime.Parse(newValue).ToString("yyyy-MM-dd") : "") + "； \n";
-                    }
-                    else
-                    {
-                        retValue += (oldValue ?? "") + " -> ";
-                        retValue += (newValue ?? "") + "； \n";
-                    }
-
-                }
-
-
-
-            }
-
-            return retValue;
-        }
 
 
         ///// <summary>
@@ -390,87 +263,6 @@ namespace Repository.Database
         //    }
         //    return base.SaveChanges();
         //}
-
-
-
-        public int SaveChangesWithSaveLog(long osLogId, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
-        {
-
-            DatabaseContext db = this;
-
-            var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
-
-            foreach (var item in list)
-            {
-
-                var type = item.Entity.GetType();
-
-                var oldEntity = item.OriginalValues.ToObject();
-
-                var newEntity = item.CurrentValues.ToObject();
-
-                var entityId = item.CurrentValues.GetValue<long>("Id");
-
-                if (actionUserId == null)
-                {
-                    var isHaveUpdateUserId = item.Properties.Where(t => t.Metadata.Name == "UpdateUserId").Count();
-
-                    if (isHaveUpdateUserId > 0)
-                    {
-                        actionUserId = item.CurrentValues.GetValue<long?>("UpdateUserId");
-                    }
-                }
-
-                object[] parameters = { oldEntity, newEntity };
-
-                string result = new DatabaseContext().GetType().GetMethod("ComparisonEntity")!.MakeGenericMethod(type).Invoke(new DatabaseContext(), parameters)!.ToString()!;
-
-                if (result != "")
-                {
-                    if (ipAddress == null || deviceMark == null)
-                    {
-                        var assembly = Assembly.GetEntryAssembly();
-                        var httpContextType = assembly!.GetTypes().Where(t => t.FullName!.Contains("Libraries.Http.HttpContext")).FirstOrDefault();
-
-                        if (httpContextType != null)
-                        {
-                            if (ipAddress == null)
-                            {
-                                ipAddress = httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!.ToString()!;
-                            }
-
-                            if (deviceMark == null)
-                            {
-                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "DeviceMark" })!.ToString()!;
-
-                                if (deviceMark == "")
-                                {
-                                    deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "User-Agent" })!.ToString()!;
-                                }
-                            }
-                        }
-                    }
-
-
-
-                    TOSLog osLog = new();
-                    osLog.Id = osLogId;
-                    osLog.Table = type.Name;
-                    osLog.Sign = "Modified";
-                    osLog.Content = result;
-                    osLog.CreateTime = DateTime.UtcNow;
-                    osLog.TableId = entityId;
-                    osLog.IpAddress = ipAddress == "" ? null : ipAddress;
-                    osLog.DeviceMark = deviceMark == "" ? null : deviceMark;
-                    osLog.ActionUserId = actionUserId;
-
-                    db.TOSLog.Add(osLog);
-                }
-
-            }
-
-            return db.SaveChanges();
-        }
 
 
     }

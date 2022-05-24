@@ -32,7 +32,7 @@ namespace Common.AliYun
         /// <param name="signName">签名</param>
         /// <param name="templateParam">模板中包含得变量值，Json 格式</param>
         /// <returns></returns>
-        public bool SendSms(string phoneNumbers, string templateCode, string signName, string templateParam)
+        public void SendSms(string phoneNumbers, string templateCode, string signName, string templateParam)
         {
             IClientProfile profile = DefaultProfile.GetProfile("cn-hangzhou", accessKeyId, accessKeySecret);
             DefaultAcsClient client = new(profile);
@@ -50,8 +50,6 @@ namespace Common.AliYun
                 CommonResponse response = client.GetCommonResponse(request);
 
                 string retValue = System.Text.Encoding.Default.GetString(response.HttpResponse.Content);
-
-                return true;
             }
             catch (ServerException e)
             {
@@ -66,13 +64,11 @@ namespace Common.AliYun
 
                 var logStr = Json.JsonHelper.ObjectToJson(log);
 
-                DBHelper.LogSet("Sms", "error", logStr);
+                throw new System.Exception(logStr);
 
-                return false;
             }
             catch (ClientException e)
             {
-
                 var log = new
                 {
                     phoneNumbers,
@@ -84,9 +80,7 @@ namespace Common.AliYun
 
                 var logStr = Json.JsonHelper.ObjectToJson(log);
 
-                DBHelper.LogSet("Sms", "error", logStr);
-
-                return false;
+                throw new System.Exception(logStr);
             }
         }
 

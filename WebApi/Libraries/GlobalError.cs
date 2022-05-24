@@ -1,6 +1,10 @@
-﻿using Common.Json;
+﻿using Common;
+using Common.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Repository.Database;
+using Repository.Extensions;
 using System.Threading.Tasks;
 
 namespace WebApi.Libraries
@@ -50,7 +54,11 @@ namespace WebApi.Libraries
 
             string strContent = JsonHelper.ObjectToJson(content);
 
-            Common.DBHelper.LogSet("WebApi", "errorlog", strContent);
+            var db = Http.HttpContext.Current().RequestServices.GetRequiredService<DatabaseContext>();
+            var snowflakeHelper = Http.HttpContext.Current().RequestServices.GetRequiredService<SnowflakeHelper>();
+
+
+            db.CreateLog(snowflakeHelper.GetId(), "WebApi", "errorlog", strContent);
 
             context.Response.StatusCode = 400;
 

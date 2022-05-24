@@ -27,9 +27,10 @@ namespace TaskService
                 .ConfigureServices((hostContext, services) =>
                 {
 
-                    //为各数据库注入连接字符串
-                    Repository.Database.DatabaseContext.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
-                    services.AddDbContextPool<Repository.Database.DatabaseContext>(options => { }, 100);
+                    services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
+                    {
+                        options.UseSqlServer(hostContext.Configuration.GetConnectionString("dbConnection"), o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                    }, 100);
 
 
                     services.AddHostedService<Tasks.DemoTask>();
@@ -40,10 +41,10 @@ namespace TaskService
 
 
                     //注册分布式锁 Redis模式
-                    services.AddSingleton<IDistributedLock, RedisLock>();
+                    //services.AddSingleton<IDistributedLock, RedisLock>();
 
                     //注册分布式锁 数据库模式
-                    //services.AddSingleton<IDistributedLock, DataBaseLock>();
+                    services.AddScoped<IDistributedLock, DataBaseLock>();
 
 
                     //注册缓存服务 内存模式

@@ -186,7 +186,7 @@ namespace Common
                 if ((typename != "System.Decimal" && oldValue != newValue) || (typename == "System.Decimal" && decimal.Parse(oldValue!) != decimal.Parse(newValue!)))
                 {
 
-                    retValue += DBHelper.GetEntityComment<T>(pi.Name) + ":";
+                    retValue += pi.Name + ":";
 
                     if (typename == "System.Boolean")
                     {

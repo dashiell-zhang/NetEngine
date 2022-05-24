@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,9 +52,10 @@ namespace AdminApi
 
             // Add services to the container.
 
-            //为各数据库注入连接字符串
-            Repository.Database.DatabaseContext.ConnectionString = builder.Configuration.GetConnectionString("dbConnection");
-            builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options => { }, 100);
+            builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("dbConnection"), o => o.MigrationsHistoryTable("__efmigrationshistory"));
+            }, 100);
 
 
             builder.Services.Configure<FormOptions>(options =>
@@ -236,10 +238,10 @@ namespace AdminApi
 
 
             //注册分布式锁 Redis模式
-            builder.Services.AddSingleton<IDistributedLock, RedisLock>();
+            //builder.Services.AddSingleton<IDistributedLock, RedisLock>();
 
             //注册分布式锁 数据库模式
-            //builder.Services.AddSingleton<IDistributedLock, DataBaseLock>();
+            builder.Services.AddScoped<IDistributedLock, DataBaseLock>();
 
 
             //注册缓存服务 内存模式

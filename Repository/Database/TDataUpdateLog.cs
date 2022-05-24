@@ -4,8 +4,8 @@ using System;
 
 namespace Repository.Database
 {
-    [Index(nameof(Table)), Index(nameof(TableId)), Index(nameof(Sign))]
-    public class TOSLog : CD
+    [Index(nameof(Table)), Index(nameof(TableId))]
+    public class TDataUpdateLog : CD
     {
 
 
@@ -25,13 +25,6 @@ namespace Repository.Database
 
 
         /// <summary>
-        /// 标记
-        /// </summary>
-        public string Sign { get; set; }
-
-
-
-        /// <summary>
         /// 变动内容
         /// </summary>
         public string Content { get; set; }
@@ -44,12 +37,6 @@ namespace Repository.Database
         public long? ActionUserId { get; set; }
         public virtual TUser? ActionUser { get; set; }
 
-
-
-        /// <summary>
-        /// 备注
-        /// </summary>
-        public string? Remarks { get; set; }
 
 
 

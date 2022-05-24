@@ -120,8 +120,10 @@ namespace Repository.Database
                     builder.ToTable(tableName.ToLower());
 
 
+#if DEBUG
                     //设置表的备注
                     builder.HasComment(GetEntityComment(entity.Name));
+#endif
 
 
                     foreach (var property in entity.GetProperties())
@@ -141,10 +143,10 @@ namespace Repository.Database
                             baseType = baseType.BaseType;
                         }
 
-
+#if DEBUG
                         //设置字段的备注
                         property.SetComment(GetEntityComment(entity.Name, property.Name, baseTypeNames));
-
+#endif
 
                         //设置字段的默认值 
                         var defaultValueAttribute = property.PropertyInfo?.GetCustomAttribute<DefaultValueAttribute>();

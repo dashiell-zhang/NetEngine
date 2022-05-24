@@ -234,22 +234,17 @@ namespace WebApi.Controllers.v1
                 };
 
                 Common.AliYun.SmsHelper sms = new();
-                var smsStatus = sms.SendSms(phone, "短信模板编号", "短信签名", Common.Json.JsonHelper.ObjectToJson(jsonCode));
+                sms.SendSms(phone, "短信模板编号", "短信签名", Common.Json.JsonHelper.ObjectToJson(jsonCode));
 
-                if (smsStatus)
-                {
-                    Common.CacheHelper.SetString(key, code, new TimeSpan(0, 0, 5, 0));
+                Common.CacheHelper.SetString(key, code, new TimeSpan(0, 0, 5, 0));
 
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-
+                return true;
             }
             else
             {
+                HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "请勿频繁获取验证码！");
+
                 return false;
             }
 

@@ -46,42 +46,30 @@ namespace Common.TencentCloud
         /// <param name="SignName">签名</param>
         /// <param name="TemplateParam">模板中包含得变量值，数组形式，多个参数按照顺序传入</param>
         /// <returns></returns>
-        public bool SendSms(string Phone, string TemplateCode, string SignName, string[] TemplateParam)
+        public void SendSms(string Phone, string TemplateCode, string SignName, string[] TemplateParam)
         {
-            try
+            Credential cred = new()
             {
+                SecretId = secretId,
+                SecretKey = secretKey
+            };
 
-                Credential cred = new()
-                {
-                    SecretId = secretId,
-                    SecretKey = secretKey
-                };
+            SmsClient client = new(cred, "ap-guangzhou");
 
-                SmsClient client = new(cred, "ap-guangzhou");
+            SendSmsRequest req = new();
 
-                SendSmsRequest req = new();
+            req.SmsSdkAppid = appId;
 
-                req.SmsSdkAppid = appId;
+            req.Sign = SignName;
 
-                req.Sign = SignName;
+            req.PhoneNumberSet = new String[] { "+86" + Phone };
 
-                req.PhoneNumberSet = new String[] { "+86" + Phone };
+            req.TemplateID = TemplateCode;
 
-                req.TemplateID = TemplateCode;
-
-                req.TemplateParamSet = TemplateParam;
+            req.TemplateParamSet = TemplateParam;
 
 
-                client.SendSms(req);
-
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-                return false;
-            }
-
-            return true;
+            client.SendSms(req);
         }
     }
 }

@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -20,24 +18,9 @@ namespace Common
     {
 
 
-        private static IHttpClientFactory? InitHttpClientFactory;
+        public static IHttpClientFactory httpClientFactory;
 
 
-
-        private static IHttpClientFactory HttpClientFactory
-        {
-            get
-            {
-                if (InitHttpClientFactory == null)
-                {
-                    var programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
-                    var serviceProvider = (IServiceProvider)programType!.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
-                    InitHttpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-                }
-
-                return InitHttpClientFactory;
-            }
-        }
 
 
         /// <summary>
@@ -50,7 +33,7 @@ namespace Common
         public static string Get(string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
-            var client = HttpClientFactory.CreateClient(httpClientName!);
+            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
@@ -110,7 +93,7 @@ namespace Common
         public static string Post(string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
-            var client = HttpClientFactory.CreateClient(httpClientName!);
+            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
@@ -150,7 +133,7 @@ namespace Common
         public static string Delete(string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
-            var client = HttpClientFactory.CreateClient(httpClientName!);
+            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
@@ -196,7 +179,7 @@ namespace Common
         public static string PostForm(string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
-            var client = HttpClientFactory.CreateClient(httpClientName!);
+            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
@@ -226,7 +209,7 @@ namespace Common
         public static string PostFormData(string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
-            var client = HttpClientFactory.CreateClient(httpClientName!);
+            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {

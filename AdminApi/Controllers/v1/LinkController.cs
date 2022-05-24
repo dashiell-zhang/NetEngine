@@ -1,7 +1,8 @@
 ﻿using AdminApi.Filters;
-using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.Link;
+using Common;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -15,8 +16,30 @@ namespace AdminApi.Controllers.v1
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class LinkController : ControllerCore
+    public class LinkController : ControllerBase
     {
+
+
+        private readonly long userId;
+
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+
+        public LinkController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
 
 
 

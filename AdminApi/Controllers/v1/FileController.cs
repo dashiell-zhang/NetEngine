@@ -1,6 +1,6 @@
 ﻿using AdminApi.Filters;
-using AdminApi.Libraries;
-using AdminShared.Models;
+using Common;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,9 +23,30 @@ namespace AdminApi.Controllers.v1
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class FileController : ControllerCore
+    public class FileController : ControllerBase
     {
 
+
+        private readonly long userId;
+
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+
+        public FileController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
 
 
 

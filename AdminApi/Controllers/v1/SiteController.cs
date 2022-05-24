@@ -1,10 +1,12 @@
 ﻿using AdminApi.Actions.v1;
 using AdminApi.Filters;
-using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.Site;
+using Common;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,8 +22,32 @@ namespace AdminApi.Controllers.v1
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class SiteController : ControllerCore
+    public class SiteController : ControllerBase
     {
+
+
+        private readonly long userId;
+
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+
+
+        public SiteController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
+
 
 
         /// <summary>

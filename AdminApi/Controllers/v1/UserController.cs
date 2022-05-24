@@ -1,7 +1,8 @@
 ﻿using AdminApi.Filters;
-using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.User;
+using Common;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
@@ -22,8 +23,31 @@ namespace AdminApi.Controllers.v1
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class UserController : ControllerCore
+    public class UserController : ControllerBase
     {
+
+
+        private readonly long userId;
+
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+
+        public UserController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
+
 
 
         /// <summary>
@@ -78,7 +102,7 @@ namespace AdminApi.Controllers.v1
 
             if (userId == null)
             {
-                userId = base.userId;
+                userId = this.userId;
             }
 
             var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
@@ -141,7 +165,7 @@ namespace AdminApi.Controllers.v1
             if (user != null)
             {
                 user.UpdateTime = DateTime.UtcNow;
-                user.UpdateUserId = base.userId;
+                user.UpdateUserId = this.userId;
 
                 user.Name = updateUser.Name;
                 user.NickName = updateUser.NickName;

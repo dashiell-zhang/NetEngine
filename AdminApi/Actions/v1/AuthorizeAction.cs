@@ -1,9 +1,9 @@
-﻿using Common;
+﻿using AdminApi.Libraries.Verify;
+using Common;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System;
 using System.Security.Claims;
-using AdminApi.Libraries.Verify;
 
 namespace AdminApi.Actions.v1
 {

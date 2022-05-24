@@ -1,7 +1,9 @@
-﻿using AdminApi.Libraries;
-using AdminApi.Libraries.Ueditor;
+﻿using AdminApi.Libraries.Ueditor;
+using Common;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Repository.Database;
 
 namespace AdminApi.Controllers.v1
 {
@@ -9,8 +11,30 @@ namespace AdminApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
-    public class UeditorController : ControllerCore
+    public class UeditorController : ControllerBase
     {
+
+
+        private readonly long userId;
+
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+
+        public UeditorController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
 
 
         [DisableRequestSizeLimit]

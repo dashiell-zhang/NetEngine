@@ -1,8 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Linq;
-using System.Reflection;
 using System.Text;
 
 namespace Common
@@ -11,23 +8,11 @@ namespace Common
     {
 
 
-        private static IDistributedCache? InitCache;
 
 
-        private static IDistributedCache Cache
-        {
-            get
-            {
-                if (InitCache == null)
-                {
-                    var programType = Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.Name == "Program").FirstOrDefault();
-                    IServiceProvider serviceProvider = (IServiceProvider)programType!.GetProperty("ServiceProvider", BindingFlags.Public | BindingFlags.Static)!.GetValue(programType)!;
-                    InitCache = serviceProvider.GetService<IDistributedCache>()!;
-                }
+        public static IDistributedCache distributedCache;
 
-                return InitCache;
-            }
-        }
+
 
 
         /// <summary>
@@ -39,7 +24,7 @@ namespace Common
         {
             try
             {
-                Cache.Remove(key);
+                distributedCache.Remove(key);
                 return true;
             }
             catch
@@ -60,7 +45,7 @@ namespace Common
         {
             try
             {
-                Cache.SetString(key, value);
+                distributedCache.SetString(key, value);
                 return true;
             }
             catch
@@ -82,7 +67,7 @@ namespace Common
             try
             {
                 var valueStr = Json.JsonHelper.ObjectToJson(value);
-                Cache.SetString(key, valueStr);
+                distributedCache.SetString(key, valueStr);
                 return true;
             }
             catch
@@ -104,7 +89,7 @@ namespace Common
         {
             try
             {
-                Cache.SetString(key, value, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
+                distributedCache.SetString(key, value, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
                 return true;
             }
             catch
@@ -127,7 +112,7 @@ namespace Common
             try
             {
                 var valueStr = Json.JsonHelper.ObjectToJson(value);
-                Cache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
+                distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
                 return true;
             }
             catch
@@ -145,7 +130,7 @@ namespace Common
         /// <returns></returns>
         public static string GetString(string key)
         {
-            return Cache.GetString(key);
+            return distributedCache.GetString(key);
         }
 
 
@@ -160,7 +145,7 @@ namespace Common
         {
             try
             {
-                var valueStr = Cache.GetString(key);
+                var valueStr = distributedCache.GetString(key);
                 var value = Json.JsonHelper.JsonToObject<T>(valueStr);
                 return value;
             }

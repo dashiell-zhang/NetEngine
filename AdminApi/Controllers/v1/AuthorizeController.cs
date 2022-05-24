@@ -1,13 +1,15 @@
 ﻿using AdminApi.Actions.v1;
 using AdminApi.Filters;
-using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.Authorize;
+using Common;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,8 +25,32 @@ namespace AdminApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthorizeController : ControllerCore
+    public class AuthorizeController : ControllerBase
     {
+
+        private readonly long userId;
+
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
+
+
+
 
 
         /// <summary>

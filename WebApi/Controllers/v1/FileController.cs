@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common;
+using Common.DistributedLock;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -9,7 +11,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using WebApi.Libraries;
 using WebApi.Models.Shared;
 
 namespace WebApi.Controllers.v1
@@ -22,8 +23,31 @@ namespace WebApi.Controllers.v1
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class FileController : ControllerCore
+    public class FileController : ControllerBase
     {
+
+
+        public readonly DatabaseContext db;
+        public readonly long userId;
+        public readonly IDistributedLock distLock;
+        public readonly SnowflakeHelper snowflakeHelper;
+
+
+
+        public FileController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
 
 
 

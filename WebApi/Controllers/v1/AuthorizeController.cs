@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common;
+using Common.DistributedLock;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +12,6 @@ using System.Linq;
 using System.Text;
 using WebApi.Actions.v1;
 using WebApi.Filters;
-using WebApi.Libraries;
 using WebApi.Libraries.Verify;
 using WebApi.Models.Shared;
 using WebApi.Models.v1.Authorize;
@@ -25,8 +26,32 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthorizeController : ControllerCore
+    public class AuthorizeController : ControllerBase
     {
+
+
+
+        public readonly DatabaseContext db;
+        public readonly long userId;
+        public readonly IDistributedLock distLock;
+        public readonly SnowflakeHelper snowflakeHelper;
+
+
+
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+
+            var userIdStr = JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
 
 
 

@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common;
+using Common.DistributedLock;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Repository.Database;
 using System.Linq;
 using WebApi.Filters;
-using WebApi.Libraries;
 using WebApi.Libraries.Verify;
 using WebApi.Models.Shared;
 using WebApi.Models.v1.User;
@@ -19,8 +21,31 @@ namespace WebApi.Controllers.v1
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class UserController : ControllerCore
+    public class UserController : ControllerBase
     {
+
+
+        public readonly DatabaseContext db;
+        public readonly long userId;
+        public readonly IDistributedLock distLock;
+        public readonly SnowflakeHelper snowflakeHelper;
+
+
+
+        public UserController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+
+            var userIdStr = JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
 
 
 
@@ -121,7 +146,7 @@ namespace WebApi.Controllers.v1
 
             if (userId == null)
             {
-                userId = base.userId;
+                userId = this.userId;
             }
 
             var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser

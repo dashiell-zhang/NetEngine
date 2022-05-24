@@ -3,6 +3,7 @@ using AdminApi.Libraries;
 using AdminApi.Libraries.Swagger;
 using AdminApi.Libraries.Verify;
 using AdminApi.Models.AppSetting;
+using Common;
 using Common.DistributedLock;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -16,13 +17,13 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.IO;
@@ -292,6 +293,9 @@ namespace AdminApi
 
 
             var app = builder.Build();
+
+            CacheHelper.distributedCache = app.Services.GetRequiredService<IDistributedCache>();
+            HttpHelper.httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
 
             ServiceProvider = app.Services;
 

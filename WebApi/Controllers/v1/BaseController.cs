@@ -1,9 +1,10 @@
 ﻿using Common;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Mvc;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WebApi.Libraries;
 using WebApi.Models.Shared;
 
 namespace WebApi.Controllers.v1
@@ -14,9 +15,31 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
-    public class BaseController : ControllerCore
+    public class BaseController : ControllerBase
     {
 
+
+        public readonly DatabaseContext db;
+        public readonly long userId;
+        public readonly IDistributedLock distLock;
+        public readonly SnowflakeHelper snowflakeHelper;
+
+
+
+        public BaseController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
 
 
         /// <summary>

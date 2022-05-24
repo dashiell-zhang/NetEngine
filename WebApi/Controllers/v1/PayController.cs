@@ -1,12 +1,14 @@
 ﻿using Aop.Api.Util;
+using Common;
 using Common.AliPay;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WebApi.Libraries;
 using WebApi.Libraries.WeiXin.App.Models;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
 using WebApi.Libraries.WeiXin.Public;
@@ -20,8 +22,31 @@ namespace WebApi.Controllers.v1
     [ApiVersion("1")]
     [Route("api/[controller]")]
     [ApiController]
-    public class PayController : ControllerCore
+    public class PayController : ControllerBase
     {
+
+
+        public readonly DatabaseContext db;
+        public readonly long userId;
+        public readonly IDistributedLock distLock;
+        public readonly SnowflakeHelper snowflakeHelper;
+
+
+
+        public PayController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+
+
+            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+
+            if (userIdStr != null)
+            {
+                userId = long.Parse(userIdStr);
+            }
+        }
 
 
 

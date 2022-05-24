@@ -1,14 +1,23 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Common;
+using Common.DistributedLock;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Repository.Database;
 using System;
 using System.Threading.Tasks;
 using System.Timers;
-using TaskService.Libraries;
 
 namespace TaskService.Tasks
 {
-    class DemoTask : TaskCore
+    public class DemoTask : BackgroundService
     {
+
+        private readonly IServiceProvider serviceProvider;
+
+        public DemoTask(IServiceProvider serviceProvider)
+        {
+            this.serviceProvider = serviceProvider;
+        }
 
         protected override Task ExecuteAsync(System.Threading.CancellationToken stoppingToken)
         {
@@ -24,9 +33,13 @@ namespace TaskService.Tasks
 
         private void TimerElapsed(object? sender, ElapsedEventArgs e)
         {
-            using (var scope = Program.ServiceProvider.CreateScope())
+
+            var snowflakeHelper = serviceProvider.GetRequiredService<SnowflakeHelper>();
+
+            using (var scope = serviceProvider.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                var distLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
 
                 //周期性执行的方法

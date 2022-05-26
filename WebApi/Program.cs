@@ -51,8 +51,6 @@ namespace WebApi
             //});
             //builder.WebHost.UseUrls("https://*");
 
-            // Add services to the container.
-
 
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
@@ -369,7 +367,6 @@ namespace WebApi
 
             app.Run();
         }
-
 
 
 

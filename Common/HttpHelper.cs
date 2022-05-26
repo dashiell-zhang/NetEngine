@@ -28,7 +28,7 @@ namespace Common
         /// </summary>
         /// <param name="url">请求地址</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
+        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
         public static string Get(string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
@@ -88,7 +88,7 @@ namespace Common
         /// <param name="data">数据</param>
         /// <param name="type">json,xml</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
+        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
         public static string Post(string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
@@ -128,7 +128,7 @@ namespace Common
         /// </summary>
         /// <param name="url">Url</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
+        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
         public static string Delete(string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
@@ -156,7 +156,7 @@ namespace Common
         /// <param name="data">数据</param>
         /// <param name="type">json,xml</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
+        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
         public async static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
@@ -174,7 +174,7 @@ namespace Common
         /// <param name="url"></param>
         /// <param name="formItems">Post表单内容</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
+        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
         public static string PostForm(string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
@@ -204,7 +204,7 @@ namespace Common
         /// <param name="url"></param>
         /// <param name="formItems">Post表单内容</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="isSkipSslVerification">是否跳过SSL验证</param>
+        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
         public static string PostFormData(string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {

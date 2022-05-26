@@ -18,7 +18,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="AlipaySDKNet.Standard" Version="4.6.240" />
+		<PackageReference Include="AlipaySDKNet.Standard" Version="4.6.285" />
 		<PackageReference Include="aliyun-net-sdk-core" Version="1.5.11" />
 		<PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="6.0.0" />
@@ -30,7 +30,7 @@
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.6.0" />
 		<PackageReference Include="StackExchange.Redis" Version="2.5.61" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.29" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.521" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.523" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -86,7 +86,6 @@ namespace Common
 
             }
 
-
             Console.WriteLine("Shell结果：\n" + output);
 
             return output;
@@ -102,7 +101,6 @@ namespace Common
         /// <returns></returns>
         public static string WindowsShell(string shell)
         {
-
             string output = "";
 
             //创建一个ProcessStartInfo对象 使用系统shell 指定命令和参数 设置标准输出
@@ -133,10 +131,64 @@ namespace Common
 
             }
 
-
             Console.WriteLine("Shell结果：\n" + output);
 
             return output;
+        }
+
+
+
+
+        /// <summary>
+        /// Word转PDF (运行机器需要安装 office)
+        /// </summary>
+        /// <param name="wordPath">word源文件路径</param>
+        /// <param name="pdfPath">pdf保存路径</param>
+        /// <returns></returns>
+        /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
+        public static bool WordToPDF(string wordPath, string pdfPath)
+        {
+            string shell = "$File='" + wordPath + "'\n$OutFile = '" + pdfPath + "'\n$Word = New-Object –ComObject Word.Application\n$Doc =$Word.Documents.Open($File)\n$Doc.ExportAsFixedFormat($OutFile, 17)\n$Doc.Close()\n";
+
+            WindowsShell(shell);
+
+            return System.IO.File.Exists(pdfPath);
+        }
+
+
+
+        /// <summary>
+        /// Excel转PDF (运行机器需要安装 office)
+        /// </summary>
+        /// <param name="excelPath">excel源文件路径</param>
+        /// <param name="pdfPath">pdf保存路径</param>
+        /// <returns></returns>
+        /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
+        public static bool ExcelToPDF(string excelPath, string pdfPath)
+        {
+            string shell = "$File = '" + excelPath + "'\n$OutFile = '" + pdfPath + "'\n$Excel = New-Object –ComObject Excel.Application\n$Workbook =$Excel.Workbooks.Open($File)\n$Workbook.ExportAsFixedFormat(0,$OutFile)\n$Workbook.Close()\n";
+
+            WindowsShell(shell);
+
+            return System.IO.File.Exists(pdfPath);
+        }
+
+
+
+        /// <summary>
+        /// PPT转PDF 运行机器需要安装 office)
+        /// </summary>
+        /// <param name="pptPath">ppt源文件路径</param>
+        /// <param name="pdfPath">pdf保存路径</param>
+        /// <returns></returns>
+        /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
+        public static bool PPTToPDF(string pptPath, string pdfPath)
+        {
+            string shell = "$File = '" + pptPath + "'\n$OutFile = '" + pdfPath + "'\n$PowerPoint = New-Object –ComObject PowerPoint.Application\n$Presentation =$PowerPoint.Presentations.Open($File,$True,$False,$False)\n$Presentation.SaveAs($OutFile, 32)\n$Presentation.Close()\n";
+
+            WindowsShell(shell);
+
+            return System.IO.File.Exists(pdfPath);
         }
 
     }

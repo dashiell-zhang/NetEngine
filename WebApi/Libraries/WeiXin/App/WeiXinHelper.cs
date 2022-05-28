@@ -131,8 +131,8 @@ namespace WebApi.Libraries.WeiXin.App
 
                 var returnJson = HttpHelper.Post(url, "", "form");
 
-                var retToken = Common.Json.JsonHelper.GetValueByKey(returnJson, "access_token");
-                var retOpenId = Common.Json.JsonHelper.GetValueByKey(returnJson, "openid");
+                var retToken = JsonHelper.GetValueByKey(returnJson, "access_token");
+                var retOpenId = JsonHelper.GetValueByKey(returnJson, "openid");
 
                 if (retToken != null && retOpenId != null)
                 {
@@ -164,7 +164,7 @@ namespace WebApi.Libraries.WeiXin.App
 
             var returnJson = HttpHelper.Post(url, "", "form");
 
-            var userInfo = Common.Json.JsonHelper.JsonToObject<DtoGetUserInfo>(returnJson);
+            var userInfo = JsonHelper.JsonToObject<DtoGetUserInfo>(returnJson);
 
             return userInfo;
         }

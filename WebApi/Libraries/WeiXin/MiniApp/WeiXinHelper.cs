@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Common;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
@@ -49,8 +50,8 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
             try
             {
-                string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid")!;
-                string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key")!;
+                string openid = JsonHelper.GetValueByKey(httpret, "openid")!;
+                string sessionkey = JsonHelper.GetValueByKey(httpret, "session_key")!;
 
                 Common.CacheHelper.SetString(code, httpret, new TimeSpan(0, 0, 10));
 
@@ -58,7 +59,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             }
             catch
             {
-                string errcode = Common.Json.JsonHelper.GetValueByKey(httpret, "errcode")!;
+                string errcode = JsonHelper.GetValueByKey(httpret, "errcode")!;
 
                 if (errcode == "40163")
                 {
@@ -70,8 +71,8 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                     }
                 }
 
-                string openid = Common.Json.JsonHelper.GetValueByKey(httpret, "openid")!;
-                string sessionkey = Common.Json.JsonHelper.GetValueByKey(httpret, "session_key")!;
+                string openid = JsonHelper.GetValueByKey(httpret, "openid")!;
+                string sessionkey = JsonHelper.GetValueByKey(httpret, "session_key")!;
 
                 return (openid, sessionkey);
             }

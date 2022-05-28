@@ -138,7 +138,7 @@ namespace AdminApi
 
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                options.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
             });
 
 

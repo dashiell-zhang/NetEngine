@@ -67,7 +67,7 @@ namespace Common.AliPay.MiniApp
 
                 var body = response.Body;
 
-                var userid = Json.JsonHelper.GetValueByKey(Json.JsonHelper.GetValueByKey(body, "alipay_system_oauth_token_response")!, "user_id");
+                var userid = JsonHelper.GetValueByKey(JsonHelper.GetValueByKey(body, "alipay_system_oauth_token_response")!, "user_id");
 
                 return userid;
             }

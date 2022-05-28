@@ -62,7 +62,7 @@ namespace Common.AliYun
                     error = e
                 };
 
-                var logStr = Json.JsonHelper.ObjectToJson(log);
+                var logStr = JsonHelper.ObjectToJson(log);
 
                 throw new System.Exception(logStr);
 
@@ -78,7 +78,7 @@ namespace Common.AliYun
                     error = e
                 };
 
-                var logStr = Json.JsonHelper.ObjectToJson(log);
+                var logStr = JsonHelper.ObjectToJson(log);
 
                 throw new System.Exception(logStr);
             }

@@ -117,7 +117,7 @@ namespace WebApi.Controllers.v1
 
                 if (user != null)
                 {
-                    var retPhone = Common.Json.JsonHelper.GetValueByKey(strJson, "phoneNumber");
+                    var retPhone = JsonHelper.GetValueByKey(strJson, "phoneNumber");
 
                     if (retPhone != null)
                     {

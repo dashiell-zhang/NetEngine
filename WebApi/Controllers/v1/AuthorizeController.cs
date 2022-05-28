@@ -259,7 +259,7 @@ namespace WebApi.Controllers.v1
                 };
 
                 Common.AliYun.SmsHelper sms = new();
-                sms.SendSms(phone, "短信模板编号", "短信签名", Common.Json.JsonHelper.ObjectToJson(jsonCode));
+                sms.SendSms(phone, "短信模板编号", "短信签名", JsonHelper.ObjectToJson(jsonCode));
 
                 Common.CacheHelper.SetString(key, code, new TimeSpan(0, 0, 5, 0));
 

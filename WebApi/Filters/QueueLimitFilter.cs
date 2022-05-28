@@ -1,4 +1,5 @@
-﻿using Common.DistributedLock;
+﻿using Common;
+using Common.DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,7 +54,7 @@ namespace WebApi.Filters
 
             if (UseParameter)
             {
-                var parameter = Common.Json.JsonHelper.ObjectToJson(Libraries.Http.HttpContext.GetParameter());
+                var parameter = JsonHelper.ObjectToJson(Libraries.Http.HttpContext.GetParameter());
                 key = key + "_" + parameter;
             }
 

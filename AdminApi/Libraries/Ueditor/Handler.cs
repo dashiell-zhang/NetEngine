@@ -1,4 +1,6 @@
-﻿namespace AdminApi.Libraries.Ueditor
+﻿using Common;
+
+namespace AdminApi.Libraries.Ueditor
 {
 
     /// <summary>
@@ -12,7 +14,7 @@
 
         protected string WriteJson(object response)
         {
-            string json = Common.Json.JsonHelper.ObjectToJson(response);
+            string json = JsonHelper.ObjectToJson(response);
             return json;
         }
     }

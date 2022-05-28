@@ -104,7 +104,7 @@ namespace WebApi.Libraries.Http
                     passWord = "123456"
                 };
 
-                var getTKStr = Common.Json.JsonHelper.ObjectToJson(getTK);
+                var getTKStr = JsonHelper.ObjectToJson(getTK);
 
                 token = HttpHelper.Post("https://localhost:9833/api/Authorize/GetToken", getTKStr, "json");
 

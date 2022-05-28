@@ -66,7 +66,7 @@ namespace Common
         {
             try
             {
-                var valueStr = Json.JsonHelper.ObjectToJson(value);
+                var valueStr = JsonHelper.ObjectToJson(value);
                 distributedCache.SetString(key, valueStr);
                 return true;
             }
@@ -111,7 +111,7 @@ namespace Common
         {
             try
             {
-                var valueStr = Json.JsonHelper.ObjectToJson(value);
+                var valueStr = JsonHelper.ObjectToJson(value);
                 distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
                 return true;
             }
@@ -146,7 +146,7 @@ namespace Common
             try
             {
                 var valueStr = distributedCache.GetString(key);
-                var value = Json.JsonHelper.JsonToObject<T>(valueStr);
+                var value = JsonHelper.JsonToObject<T>(valueStr);
                 return value;
             }
             catch

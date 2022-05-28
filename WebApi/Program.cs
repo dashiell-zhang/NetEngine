@@ -142,11 +142,11 @@ namespace WebApi
 
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeNullConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeOffsetConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.Json.DateTimeOffsetNullConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.Json.LongConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeNullConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetNullConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
             });
 
 

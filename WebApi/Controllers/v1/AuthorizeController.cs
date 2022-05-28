@@ -10,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using WebApi.Actions.v1;
+using WebApi.Services.v1;
 using WebApi.Filters;
 using WebApi.Libraries.Verify;
 using WebApi.Models.Shared;
@@ -36,14 +36,16 @@ namespace WebApi.Controllers.v1
         public readonly IDistributedLock distLock;
         public readonly SnowflakeHelper snowflakeHelper;
 
+        private AuthorizeService authorizeService;
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, AuthorizeService authorizeService)
         {
             this.db = db;
             this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
-
+            this.authorizeService = authorizeService;
 
             var userIdStr = JWTToken.GetClaims("userId");
 
@@ -63,13 +65,14 @@ namespace WebApi.Controllers.v1
         [HttpPost("GetToken")]
         public string? GetToken(DtoLogin login)
         {
+
             var userList = db.TUser.Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name)).Select(t => new { t.Id, t.PassWord }).ToList();
 
             var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
             if (user != null)
             {
-                return AuthorizeAction.GetTokenByUserId(user.Id);
+                return authorizeService.GetTokenByUserId(user.Id);
             }
             else
             {
@@ -154,7 +157,7 @@ namespace WebApi.Controllers.v1
 
             }
 
-            return AuthorizeAction.GetTokenByUserId(user.Id);
+            return authorizeService.GetTokenByUserId(user.Id);
         }
 
 
@@ -194,7 +197,7 @@ namespace WebApi.Controllers.v1
                     db.SaveChanges();
                 }
 
-                return AuthorizeAction.GetTokenByUserId(user.Id);
+                return authorizeService.GetTokenByUserId(user.Id);
             }
             else
             {
@@ -335,7 +338,7 @@ namespace WebApi.Controllers.v1
                     db.SaveChanges();
                 }
 
-                return AuthorizeAction.GetTokenByUserId(user.Id);
+                return authorizeService.GetTokenByUserId(user.Id);
             }
             else
             {

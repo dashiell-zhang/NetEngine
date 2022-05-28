@@ -283,7 +283,7 @@ namespace AdminApi
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
             });
 
-
+            builder.Services.AddCustomServices();
 
             var app = builder.Build();
 

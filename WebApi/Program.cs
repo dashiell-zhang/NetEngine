@@ -302,6 +302,10 @@ namespace WebApi
             }).AddHttpMessageHandler(t => t.GetRequiredService<Libraries.Http.HttpSignHandler>()); ;
 
 
+
+            builder.Services.AddCustomServices();
+
+
             var app = builder.Build();
 
             CacheHelper.distributedCache = app.Services.GetRequiredService<IDistributedCache>();
@@ -371,6 +375,8 @@ namespace WebApi
 
 
         public static IServiceProvider ServiceProvider { get; set; }
+
+
 
 
     }

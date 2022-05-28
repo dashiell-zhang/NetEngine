@@ -1,5 +1,5 @@
-﻿using AdminApi.Actions.v1;
-using AdminApi.Filters;
+﻿using AdminApi.Filters;
+using AdminApi.Services.v1;
 using AdminShared.Models;
 using AdminShared.Models.v1.Site;
 using Common;
@@ -32,13 +32,17 @@ namespace AdminApi.Controllers.v1
         private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
 
+        private readonly SiteService siteService;
 
 
-        public SiteController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+
+        public SiteController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, SiteService siteService)
         {
             this.db = db;
             this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
+            this.siteService = siteService;
+
 
             var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
 
@@ -46,6 +50,7 @@ namespace AdminApi.Controllers.v1
             {
                 userId = long.Parse(userIdStr);
             }
+
         }
 
 
@@ -91,16 +96,16 @@ namespace AdminApi.Controllers.v1
         {
             var query = db.TAppSetting.Where(t => t.IsDelete == false && t.Module == "Site");
 
-            SiteAction.SetSiteInfo("WebUrl", editSite.WebUrl);
-            SiteAction.SetSiteInfo("ManagerName", editSite.ManagerName);
-            SiteAction.SetSiteInfo("ManagerAddress", editSite.ManagerAddress);
-            SiteAction.SetSiteInfo("ManagerPhone", editSite.ManagerPhone);
-            SiteAction.SetSiteInfo("ManagerEmail", editSite.ManagerEmail);
-            SiteAction.SetSiteInfo("RecordNumber", editSite.RecordNumber);
-            SiteAction.SetSiteInfo("SeoTitle", editSite.SeoTitle);
-            SiteAction.SetSiteInfo("SeoKeyWords", editSite.SeoKeyWords);
-            SiteAction.SetSiteInfo("SeoDescription", editSite.SeoDescription);
-            SiteAction.SetSiteInfo("FootCode", editSite.FootCode);
+            siteService.SetSiteInfo("WebUrl", editSite.WebUrl);
+            siteService.SetSiteInfo("ManagerName", editSite.ManagerName);
+            siteService.SetSiteInfo("ManagerAddress", editSite.ManagerAddress);
+            siteService.SetSiteInfo("ManagerPhone", editSite.ManagerPhone);
+            siteService.SetSiteInfo("ManagerEmail", editSite.ManagerEmail);
+            siteService.SetSiteInfo("RecordNumber", editSite.RecordNumber);
+            siteService.SetSiteInfo("SeoTitle", editSite.SeoTitle);
+            siteService.SetSiteInfo("SeoKeyWords", editSite.SeoKeyWords);
+            siteService.SetSiteInfo("SeoDescription", editSite.SeoDescription);
+            siteService.SetSiteInfo("FootCode", editSite.FootCode);
 
             return true;
         }

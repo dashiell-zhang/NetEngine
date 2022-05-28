@@ -1,26 +1,39 @@
-﻿using AdminApi.Libraries.Verify;
+﻿using AdminApi.Attributes;
+using AdminApi.Libraries.Verify;
 using Common;
+using Common.DistributedLock;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System;
 using System.Security.Claims;
 
-namespace AdminApi.Actions.v1
+namespace AdminApi.Services.v1
 {
-    public class AuthorizeAction
+
+    [Service(ServiceLifetime.Scoped)]
+    public class AuthorizeService
     {
+
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+        public AuthorizeService(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+        }
+
+
 
         /// <summary>
         /// 通过用户id获取 token
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public static string GetTokenByUserId(long userId)
+        public string GetTokenByUserId(long userId)
         {
-
-            using var scope = Program.ServiceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-            var snowflakeHelper = scope.ServiceProvider.GetRequiredService<SnowflakeHelper>();
 
             TUserToken userToken = new();
             userToken.Id = snowflakeHelper.GetId();

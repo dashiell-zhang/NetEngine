@@ -1,5 +1,5 @@
-﻿using AdminApi.Actions.v1;
-using AdminApi.Filters;
+﻿using AdminApi.Filters;
+using AdminApi.Services.v1;
 using AdminShared.Models;
 using AdminShared.Models.v1.Authorize;
 using Common;
@@ -34,12 +34,16 @@ namespace AdminApi.Controllers.v1
         private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
 
+        private AuthorizeService authorizeService;
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, AuthorizeService authorizeService)
         {
             this.db = db;
             this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
+            this.authorizeService = authorizeService;
+
 
             var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
 
@@ -47,6 +51,7 @@ namespace AdminApi.Controllers.v1
             {
                 userId = long.Parse(userIdStr);
             }
+
         }
 
 
@@ -67,7 +72,7 @@ namespace AdminApi.Controllers.v1
 
             if (user != null)
             {
-                return AuthorizeAction.GetTokenByUserId(user.Id);
+                return authorizeService.GetTokenByUserId(user.Id);
             }
             else
             {

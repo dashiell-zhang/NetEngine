@@ -1,23 +1,32 @@
 ﻿using Common;
-using Microsoft.Extensions.DependencyInjection;
+using Common.DistributedLock;
 using Repository.Database;
 using System;
 using System.Linq;
 
-namespace AdminApi.Actions.v1
+namespace AdminApi.Services.v1
 {
-    public class SiteAction
+    public class SiteService
     {
 
-        public static bool SetSiteInfo(string key, string? value)
+
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+        public SiteService(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        {
+            this.db = db;
+            this.distLock = distLock;
+            this.snowflakeHelper = snowflakeHelper;
+        }
+
+
+        public bool SetSiteInfo(string key, string? value)
         {
 
             if (value != null)
             {
-                using var scope = Program.ServiceProvider.CreateScope();
-                DatabaseContext db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-                SnowflakeHelper snowflakeHelper = Program.ServiceProvider.GetRequiredService<SnowflakeHelper>();
 
                 var appSetting = db.TAppSetting.Where(t => t.IsDelete == false && t.Module == "Site" && t.Key == key).FirstOrDefault();
 

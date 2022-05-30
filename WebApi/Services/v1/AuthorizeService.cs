@@ -15,14 +15,12 @@ namespace WebApi.Services.v1
     {
 
         private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
 
 
-        public AuthorizeService(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        public AuthorizeService(DatabaseContext db,  SnowflakeHelper snowflakeHelper)
         {
             this.db = db;
-            this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
         }
 

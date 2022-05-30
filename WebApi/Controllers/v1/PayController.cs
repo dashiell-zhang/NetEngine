@@ -27,25 +27,12 @@ namespace WebApi.Controllers.v1
 
 
         private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
-        private readonly SnowflakeHelper snowflakeHelper;
-
-        private readonly long userId;
 
 
 
-        public PayController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        public PayController(DatabaseContext db)
         {
             this.db = db;
-            this.distLock = distLock;
-            this.snowflakeHelper = snowflakeHelper;
-
-
-            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
         }
 
 

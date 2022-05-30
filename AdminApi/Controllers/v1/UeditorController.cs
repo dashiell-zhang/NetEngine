@@ -14,25 +14,11 @@ namespace AdminApi.Controllers.v1
     public class UeditorController : ControllerBase
     {
 
-        private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
-        private readonly SnowflakeHelper snowflakeHelper;
-
-        private readonly long userId;
 
 
-        public UeditorController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        public UeditorController()
         {
-            this.db = db;
-            this.distLock = distLock;
-            this.snowflakeHelper = snowflakeHelper;
-
-            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
-
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
+        
         }
 
 

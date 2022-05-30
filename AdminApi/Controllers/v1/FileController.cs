@@ -28,16 +28,14 @@ namespace AdminApi.Controllers.v1
 
 
         private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
 
         private readonly long userId;
 
 
-        public FileController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper)
         {
             this.db = db;
-            this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
 
             var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");

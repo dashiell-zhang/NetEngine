@@ -11,13 +11,11 @@ namespace AdminApi.Services.v1
 
 
         private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
 
-        public SiteService(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        public SiteService(DatabaseContext db, SnowflakeHelper snowflakeHelper)
         {
             this.db = db;
-            this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
         }
 

@@ -26,27 +26,16 @@ namespace AdminApi.Controllers.v1
     {
 
         private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
-        private readonly SnowflakeHelper snowflakeHelper;
 
         private readonly SiteService siteService;
 
-        private readonly long userId;
 
 
-        public SiteController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, SiteService siteService)
+        public SiteController(DatabaseContext db, SiteService siteService)
         {
             this.db = db;
-            this.distLock = distLock;
-            this.snowflakeHelper = snowflakeHelper;
 
             this.siteService = siteService;
-
-            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
 
         }
 

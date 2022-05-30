@@ -26,19 +26,14 @@ namespace WebApi.Controllers.v1
 
 
         private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
-        private readonly SnowflakeHelper snowflakeHelper;
 
         private readonly long userId;
 
 
 
-        public UserController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
+        public UserController(DatabaseContext db)
         {
             this.db = db;
-            this.distLock = distLock;
-            this.snowflakeHelper = snowflakeHelper;
-
 
             var userIdStr = JWTToken.GetClaims("userId");
             if (userIdStr != null)

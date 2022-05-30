@@ -30,8 +30,6 @@ namespace AdminApi.Controllers.v1
 
 
         private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
-        private readonly SnowflakeHelper snowflakeHelper;
 
         private AuthorizeService authorizeService;
 
@@ -39,11 +37,9 @@ namespace AdminApi.Controllers.v1
 
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, AuthorizeService authorizeService)
+        public AuthorizeController(DatabaseContext db, AuthorizeService authorizeService)
         {
             this.db = db;
-            this.distLock = distLock;
-            this.snowflakeHelper = snowflakeHelper;
 
             this.authorizeService = authorizeService;
 

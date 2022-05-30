@@ -1,6 +1,6 @@
 ﻿using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -30,14 +30,18 @@ namespace WebApi.Controllers.v1
         private readonly DatabaseContext db;
         private readonly SnowflakeHelper snowflakeHelper;
 
+        private readonly string rootPath;
+
         private readonly long userId;
 
 
 
-        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper)
+        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
+
+            rootPath = webHostEnvironment.ContentRootPath.Replace("\\", "/");
 
             var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
 
@@ -60,6 +64,7 @@ namespace WebApi.Controllers.v1
         [HttpPost("RemoteUploadFile")]
         public long RemoteUploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, [FromBody] DtoKeyValue fileInfo)
         {
+
             string remoteFileUrl = fileInfo.Key!.ToString()!;
 
             var fileExtension = Path.GetExtension(fileInfo.Value!.ToString()!).ToLower();
@@ -67,7 +72,7 @@ namespace WebApi.Controllers.v1
 
             string basepath = "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
 
-            var filePath = Libraries.IO.Path.ContentRootPath() + "/" + basepath + "/";
+            var filePath = rootPath + "/" + basepath + "/";
 
             //下载文件
             var dlPath = Common.IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
@@ -81,7 +86,7 @@ namespace WebApi.Controllers.v1
 
             if (dlPath != null)
             {
-                filePath = dlPath.Replace(Libraries.IO.Path.ContentRootPath(), "");
+                filePath = dlPath.Replace(rootPath, "");
 
                 var isSuccess = true;
 
@@ -148,7 +153,7 @@ namespace WebApi.Controllers.v1
         {
 
             string basepath = "/files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
-            string filepath = Libraries.IO.Path.ContentRootPath() + basepath;
+            string filepath = rootPath + basepath;
 
             Directory.CreateDirectory(filepath);
 
@@ -239,7 +244,7 @@ namespace WebApi.Controllers.v1
 
             if (file != null)
             {
-                string path = Libraries.IO.Path.ContentRootPath() + file.Path;
+                string path = rootPath + file.Path;
 
 
                 //读取文件入流
@@ -277,11 +282,12 @@ namespace WebApi.Controllers.v1
         [HttpGet("GetImage")]
         public FileResult? GetImage(long fileId, int width, int height)
         {
+
             var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
 
             if (file != null)
             {
-                var path = Libraries.IO.Path.ContentRootPath() + file.Path;
+                var path = rootPath + file.Path;
 
                 string fileExt = Path.GetExtension(path);
                 var provider = new FileExtensionContentTypeProvider();

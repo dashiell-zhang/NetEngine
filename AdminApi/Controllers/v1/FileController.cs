@@ -2,6 +2,7 @@
 using Common;
 using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -30,13 +31,17 @@ namespace AdminApi.Controllers.v1
         private readonly DatabaseContext db;
         private readonly SnowflakeHelper snowflakeHelper;
 
+        private readonly string rootPath;
+
         private readonly long userId;
 
 
-        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper)
+        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
+
+            rootPath = webHostEnvironment.WebRootPath.Replace("\\", "/");
 
             var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
 
@@ -62,7 +67,7 @@ namespace AdminApi.Controllers.v1
         {
 
             string basepath = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
-            string filepath = Libraries.IO.Path.WebRootPath() + basepath;
+            string filepath = rootPath + basepath;
 
             Directory.CreateDirectory(filepath);
 
@@ -151,7 +156,7 @@ namespace AdminApi.Controllers.v1
 
             if (file != null)
             {
-                string path = Libraries.IO.Path.WebRootPath() + file.Path;
+                string path = rootPath + file.Path;
 
 
                 //读取文件入流
@@ -194,7 +199,7 @@ namespace AdminApi.Controllers.v1
 
             if (file != null)
             {
-                var path = Libraries.IO.Path.WebRootPath() + file.Path;
+                var path = rootPath + file.Path;
 
                 string fileExt = Path.GetExtension(path);
                 var provider = new FileExtensionContentTypeProvider();

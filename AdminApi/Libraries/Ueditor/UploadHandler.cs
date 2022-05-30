@@ -15,11 +15,15 @@ namespace AdminApi.Libraries.Ueditor
         public UploadConfig UploadConfig { get; private set; }
         public UploadResult Result { get; private set; }
 
-        public UploadHandler(UploadConfig config)
-            : base()
+        private readonly string rootPath;
+
+
+        public UploadHandler(UploadConfig config, string rootPath) : base()
         {
             this.UploadConfig = config;
             this.Result = new UploadResult() { State = UploadState.Unknown };
+
+            this.rootPath = rootPath;
         }
 
         public override string Process()
@@ -33,7 +37,7 @@ namespace AdminApi.Libraries.Ueditor
                 byte[] uploadFileBytes = Convert.FromBase64String(Http.HttpContext.Current().Request.Form[UploadConfig.UploadFieldName!]);
 
                 var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
-                var localPath = IO.Path.WebRootPath() + savePath;
+                var localPath = rootPath + savePath;
 
                 try
                 {
@@ -108,7 +112,7 @@ namespace AdminApi.Libraries.Ueditor
                     file.OpenReadStream();
 
                     string savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
-                    string localPath = IO.Path.WebRootPath() + savePath;
+                    string localPath = rootPath + savePath;
 
                     try
                     {

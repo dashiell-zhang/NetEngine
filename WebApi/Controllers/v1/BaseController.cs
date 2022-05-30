@@ -30,6 +30,16 @@ namespace WebApi.Controllers.v1
         }
 
 
+
+        [HttpGet("a")]
+        public string a()
+        {
+          //  var s = Libraries.IO.Path.ContentRootPath();
+
+            return "";
+        }
+
+
         /// <summary>
         /// 获取省市级联地址数据
         /// </summary>

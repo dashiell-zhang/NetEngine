@@ -14,6 +14,12 @@ namespace AdminApi.Libraries.Ueditor
         private string[]? Sources;
         private Crawler[]? Crawlers;
 
+        private readonly string rootPath;
+        public CrawlerHandler(string rootPath)
+        {
+            this.rootPath = rootPath;
+        }
+
         public override string Process()
         {
             Sources = Http.HttpContext.Current().Request.Form["source[]"];
@@ -24,7 +30,7 @@ namespace AdminApi.Libraries.Ueditor
                     state = "参数错误：没有指定抓取源"
                 });
             }
-            Crawlers = Sources.Select(x => new Crawler(x).Fetch()).ToArray();
+            Crawlers = Sources.Select(x => new Crawler(x,rootPath).Fetch()).ToArray();
             return WriteJson(new
             {
                 state = "SUCCESS",
@@ -44,12 +50,14 @@ namespace AdminApi.Libraries.Ueditor
         public string? ServerUrl { get; set; }
         public string? State { get; set; }
 
+        private readonly string rootPath;
 
 
 
-        public Crawler(string sourceUrl)
+        public Crawler(string sourceUrl,string rootPath)
         {
             SourceUrl = sourceUrl;
+            this.rootPath = rootPath;
         }
 
         public Crawler Fetch()
@@ -77,7 +85,7 @@ namespace AdminApi.Libraries.Ueditor
                 return this;
             }
             ServerUrl = PathFormatter.Format(Path.GetFileName(SourceUrl!), Config.GetString("catcherPathFormat"));
-            var savePath = IO.Path.WebRootPath() + ServerUrl;
+            var savePath = rootPath + ServerUrl;
             if (!Directory.Exists(Path.GetDirectoryName(savePath)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);

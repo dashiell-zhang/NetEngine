@@ -204,7 +204,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <returns></returns>
         private string UseCretPost(string url, string data)
         {
-            var sslPath = IO.Path.ContentRootPath() + "/ssl/apiclient_cert.p12";
+            var sslPath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/ssl/apiclient_cert.p12";
 
             using HttpClientHandler handler = new();
             X509Certificate2 cert = new(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);

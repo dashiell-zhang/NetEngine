@@ -2,6 +2,7 @@
 using Common;
 using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
 
@@ -14,11 +15,11 @@ namespace AdminApi.Controllers.v1
     public class UeditorController : ControllerBase
     {
 
+        private readonly IWebHostEnvironment webHostEnvironment;
 
-
-        public UeditorController()
+        public UeditorController(IWebHostEnvironment webHostEnvironment)
         {
-        
+            this.webHostEnvironment = webHostEnvironment;
         }
 
 
@@ -27,6 +28,8 @@ namespace AdminApi.Controllers.v1
         [HttpPost("ProcessRequest")]
         public string ProcessRequest()
         {
+            string rootPath = webHostEnvironment.WebRootPath.Replace("\\", "/");
+
             Handler action = (Request.Query["action"].Count != 0 ? Request.Query["action"].ToString() : "") switch
             {
                 "config" => new ConfigHandler(),
@@ -36,7 +39,7 @@ namespace AdminApi.Controllers.v1
                     PathFormat = Config.GetString("imagePathFormat"),
                     SizeLimit = Config.GetInt("imageMaxSize"),
                     UploadFieldName = Config.GetString("imageFieldName")
-                }),
+                }, rootPath),
                 "uploadscrawl" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = new string[] { ".png" },
@@ -45,22 +48,22 @@ namespace AdminApi.Controllers.v1
                     UploadFieldName = Config.GetString("scrawlFieldName"),
                     Base64 = true,
                     Base64Filename = "scrawl.png"
-                }),
+                }, rootPath),
                 "uploadvideo" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = Config.GetStringList("videoAllowFiles"),
                     PathFormat = Config.GetString("videoPathFormat"),
                     SizeLimit = Config.GetInt("videoMaxSize"),
                     UploadFieldName = Config.GetString("videoFieldName")
-                }),
+                }, rootPath),
                 "uploadfile" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = Config.GetStringList("fileAllowFiles"),
                     PathFormat = Config.GetString("filePathFormat"),
                     SizeLimit = Config.GetInt("fileMaxSize"),
                     UploadFieldName = Config.GetString("fileFieldName")
-                }),
-                "catchimage" => new CrawlerHandler(),
+                }, rootPath),
+                "catchimage" => new CrawlerHandler(rootPath),
                 _ => new NotSupportedHandler(),
             };
             return action.Process();

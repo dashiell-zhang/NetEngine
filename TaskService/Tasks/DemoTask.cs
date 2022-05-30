@@ -33,7 +33,12 @@ namespace TaskService.Tasks
 
         private void TimerElapsed(object? sender, ElapsedEventArgs e)
         {
+            Run();
+        }
 
+
+        private void Run()
+        {
             var snowflakeHelper = serviceProvider.GetRequiredService<SnowflakeHelper>();
 
             using var scope = serviceProvider.CreateScope();

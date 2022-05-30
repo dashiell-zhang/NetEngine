@@ -40,7 +40,7 @@ namespace TaskService
 
 
                     //注册雪花ID算法示例
-                    services.AddSingleton(new Common.SnowflakeHelper(0, 0));
+                    services.AddSingleton(new SnowflakeHelper(0, 0));
 
 
                     //注册分布式锁 Redis模式
@@ -57,7 +57,7 @@ namespace TaskService
                     //注册缓存服务 SqlServer模式
                     //services.AddDistributedSqlServerCache(options =>
                     //{
-                    //    options.ConnectionString = Configuration.GetConnectionString("dbConnection");
+                    //    options.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
                     //    options.SchemaName = "dbo";
                     //    options.TableName = "t_cache";
                     //});
@@ -66,9 +66,10 @@ namespace TaskService
                     //注册缓存服务 Redis模式
                     //services.AddStackExchangeRedisCache(options =>
                     //{
-                    //    options.Configuration = Configuration.GetConnectionString("redisConnection");
+                    //    options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
                     //    options.InstanceName = "cache";
                     //});
+
 
                     services.AddHttpClient("", options =>
                     {

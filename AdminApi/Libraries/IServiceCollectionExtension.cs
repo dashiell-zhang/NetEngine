@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AdminApi.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using AdminApi.Attributes;
 
 namespace AdminApi.Libraries
 {
@@ -20,7 +20,7 @@ namespace AdminApi.Libraries
 
 
         /// <summary>
-        /// 通过 
+        /// 通过 ServiceAttribute 批量注册服务
         /// </summary>
         /// <param name="services"></param>
         /// <param name="serviceLifetime"></param>

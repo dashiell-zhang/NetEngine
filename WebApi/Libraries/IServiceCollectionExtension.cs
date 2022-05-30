@@ -20,7 +20,7 @@ namespace WebApi.Libraries
 
 
         /// <summary>
-        /// 通过 
+        /// 通过 ServiceAttribute 批量注册服务
         /// </summary>
         /// <param name="services"></param>
         /// <param name="serviceLifetime"></param>

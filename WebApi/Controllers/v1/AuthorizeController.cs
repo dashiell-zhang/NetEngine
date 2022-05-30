@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using WebApi.Filters;
-using WebApi.Libraries.Verify;
+using WebApi.Libraries;
 using WebApi.Models.Shared;
 using WebApi.Models.v1.Authorize;
 using WebApi.Services.v1;
@@ -39,7 +39,7 @@ namespace WebApi.Controllers.v1
         private readonly long userId;
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, AuthorizeService authorizeService)
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distLock = distLock;
@@ -47,7 +47,7 @@ namespace WebApi.Controllers.v1
 
             this.authorizeService = authorizeService;
 
-            var userIdStr = JWTToken.GetClaims("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
 
             if (userIdStr != null)
             {

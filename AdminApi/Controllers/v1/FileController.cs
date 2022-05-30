@@ -1,6 +1,6 @@
 ﻿using AdminApi.Filters;
+using AdminApi.Libraries;
 using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -36,14 +36,14 @@ namespace AdminApi.Controllers.v1
         private readonly long userId;
 
 
-        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment)
+        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
 
             rootPath = webHostEnvironment.WebRootPath.Replace("\\", "/");
 
-            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
 
             if (userIdStr != null)
             {

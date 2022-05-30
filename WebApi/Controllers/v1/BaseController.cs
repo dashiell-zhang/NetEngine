@@ -1,5 +1,4 @@
 ﻿using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
 using System;
@@ -23,21 +22,12 @@ namespace WebApi.Controllers.v1
         private readonly SnowflakeHelper snowflakeHelper;
 
 
-        public BaseController(DatabaseContext db,  SnowflakeHelper snowflakeHelper)
+        public BaseController(DatabaseContext db, SnowflakeHelper snowflakeHelper)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
         }
 
-
-
-        [HttpGet("a")]
-        public string a()
-        {
-          //  var s = Libraries.IO.Path.ContentRootPath();
-
-            return "";
-        }
 
 
         /// <summary>

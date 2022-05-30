@@ -1,9 +1,10 @@
 ﻿using AdminApi.Filters;
+using AdminApi.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.v1.Article;
 using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
 using System;
@@ -28,12 +29,12 @@ namespace AdminApi.Controllers.v1
 
 
 
-        public ArticleController(DatabaseContext db, SnowflakeHelper snowflakeHelper)
+        public ArticleController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
 
-            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
 
             if (userIdStr != null)
             {

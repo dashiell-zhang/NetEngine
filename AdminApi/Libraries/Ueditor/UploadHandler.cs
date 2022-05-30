@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.IO;
 using System.Linq;
 
@@ -17,13 +18,16 @@ namespace AdminApi.Libraries.Ueditor
 
         private readonly string rootPath;
 
+        private readonly HttpContext httpContext;
 
-        public UploadHandler(UploadConfig config, string rootPath) : base()
+
+        public UploadHandler(UploadConfig config, string rootPath, HttpContext httpContext) : base()
         {
             this.UploadConfig = config;
             this.Result = new UploadResult() { State = UploadState.Unknown };
 
             this.rootPath = rootPath;
+            this.httpContext = httpContext;
         }
 
         public override string Process()
@@ -34,7 +38,7 @@ namespace AdminApi.Libraries.Ueditor
             if (UploadConfig.Base64)
             {
                 uploadFileName = UploadConfig.Base64Filename!;
-                byte[] uploadFileBytes = Convert.FromBase64String(Http.HttpContext.Current().Request.Form[UploadConfig.UploadFieldName!]);
+                byte[] uploadFileBytes = Convert.FromBase64String(httpContext.Current().Request.Form[UploadConfig.UploadFieldName!]);
 
                 var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
                 var localPath = rootPath + savePath;
@@ -89,7 +93,7 @@ namespace AdminApi.Libraries.Ueditor
             }
             else
             {
-                var file = Http.HttpContext.Current().Request.Form.Files[UploadConfig.UploadFieldName!]!;
+                var file = httpContext.Current().Request.Form.Files[UploadConfig.UploadFieldName!]!;
                 uploadFileName = file.FileName;
 
                 if (!CheckFileType(uploadFileName))

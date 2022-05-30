@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -15,14 +16,17 @@ namespace AdminApi.Libraries.Ueditor
         private Crawler[]? Crawlers;
 
         private readonly string rootPath;
-        public CrawlerHandler(string rootPath)
+        private readonly HttpContext httpContext;
+
+        public CrawlerHandler(string rootPath, HttpContext httpContext)
         {
             this.rootPath = rootPath;
+            this.httpContext = httpContext;
         }
 
         public override string Process()
         {
-            Sources = Http.HttpContext.Current().Request.Form["source[]"];
+            Sources = httpContext.Current().Request.Form["source[]"];
             if (Sources == null || Sources.Length == 0)
             {
                 return WriteJson(new
@@ -30,7 +34,7 @@ namespace AdminApi.Libraries.Ueditor
                     state = "参数错误：没有指定抓取源"
                 });
             }
-            Crawlers = Sources.Select(x => new Crawler(x,rootPath).Fetch()).ToArray();
+            Crawlers = Sources.Select(x => new Crawler(x, rootPath).Fetch()).ToArray();
             return WriteJson(new
             {
                 state = "SUCCESS",
@@ -54,7 +58,7 @@ namespace AdminApi.Libraries.Ueditor
 
 
 
-        public Crawler(string sourceUrl,string rootPath)
+        public Crawler(string sourceUrl, string rootPath)
         {
             SourceUrl = sourceUrl;
             this.rootPath = rootPath;

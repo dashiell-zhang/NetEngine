@@ -1,11 +1,14 @@
 ﻿using AdminApi.Attributes;
-using AdminApi.Libraries.Verify;
+using AdminApi.Models.AppSetting;
 using Common;
-using Common.DistributedLock;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace AdminApi.Services.v1
 {
@@ -16,11 +19,13 @@ namespace AdminApi.Services.v1
 
         private readonly DatabaseContext db;
         private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IConfiguration configuration;
 
-        public AuthorizeService(DatabaseContext db,  SnowflakeHelper snowflakeHelper)
+        public AuthorizeService(DatabaseContext db, SnowflakeHelper snowflakeHelper, IConfiguration configuration)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
+            this.configuration = configuration;
         }
 
 
@@ -43,13 +48,20 @@ namespace AdminApi.Services.v1
             db.TUserToken.Add(userToken);
             db.SaveChanges();
 
-            var claim = new Claim[]
+            var claims = new Claim[]
             {
                 new Claim("tokenId",userToken.Id.ToString()),
                 new Claim("userId",userId.ToString())
             };
 
-            return JWTToken.GetToken(claim);
+            var jwtSetting = configuration.GetSection("JWTSetting").Get<JWTSetting>();
+
+            var jwtPrivateKey = ECDsa.Create();
+            jwtPrivateKey.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);
+            var creds = new SigningCredentials(new ECDsaSecurityKey(jwtPrivateKey), SecurityAlgorithms.EcdsaSha256);
+            var jwtSecurityToken = new JwtSecurityToken(jwtSetting.Issuer, jwtSetting.Audience, claims, DateTime.UtcNow, DateTime.UtcNow + jwtSetting.Expiry, creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
         }
 
 

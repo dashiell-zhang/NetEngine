@@ -1,7 +1,6 @@
 ﻿using AdminApi.Filters;
 using AdminApi.Libraries;
 using AdminApi.Libraries.Swagger;
-using AdminApi.Libraries.Verify;
 using AdminApi.Models.AppSetting;
 using Common;
 using Common.DistributedLock;
@@ -289,7 +288,6 @@ namespace AdminApi
 
             CacheHelper.distributedCache = app.Services.GetRequiredService<IDistributedCache>();
             HttpHelper.httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
-            Libraries.Http.HttpContext.httpContextAccessor = app.Services.GetRequiredService<IHttpContextAccessor>();
 
 
             app.UseForwardedHeaders();

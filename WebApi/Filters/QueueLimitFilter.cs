@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Threading;
+using WebApi.Libraries;
 
 namespace WebApi.Filters
 {
@@ -54,7 +55,7 @@ namespace WebApi.Filters
 
             if (UseParameter)
             {
-                var parameter = JsonHelper.ObjectToJson(Libraries.Http.HttpContext.GetParameter());
+                var parameter = JsonHelper.ObjectToJson(context.HttpContext.GetParameter());
                 key = key + "_" + parameter;
             }
 

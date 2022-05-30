@@ -2,8 +2,6 @@
 using AdminApi.Services.v1;
 using AdminShared.Models;
 using AdminShared.Models.v1.Site;
-using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;

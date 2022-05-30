@@ -1,4 +1,5 @@
-﻿using Common;
+﻿using AdminApi.Libraries;
+using Common;
 using Common.DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -54,11 +55,11 @@ namespace AdminApi.Filters
 
             if (UseParameter)
             {
-                var parameter = JsonHelper.ObjectToJson(Libraries.Http.HttpContext.GetParameter());
+                var parameter = JsonHelper.ObjectToJson(context.HttpContext.GetParameter());
                 key = key + "_" + parameter;
             }
 
-            key = "QueueLimit_" + Common.CryptoHelper.GetMD5(key);
+            key = "QueueLimit_" + CryptoHelper.GetMD5(key);
 
             try
             {

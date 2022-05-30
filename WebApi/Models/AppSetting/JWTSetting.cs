@@ -1,4 +1,6 @@
-﻿namespace WebApi.Models.AppSetting
+﻿using System;
+
+namespace WebApi.Models.AppSetting
 {
 
 
@@ -34,6 +36,13 @@
         /// 公钥
         /// </summary>
         public string PublicKey { get; set; }
+
+
+
+        /// <summary>
+        /// 失效时长
+        /// </summary>
+        public TimeSpan Expiry { get; set; }
 
 
     }

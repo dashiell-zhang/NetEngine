@@ -27,8 +27,8 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using WebApi.Filters;
 using WebApi.Libraries;
+using WebApi.Libraries.HttpHandler;
 using WebApi.Libraries.Swagger;
-using WebApi.Libraries.Verify;
 using WebApi.Models.AppSetting;
 
 namespace WebApi
@@ -37,6 +37,7 @@ namespace WebApi
     {
         public static void Main(string[] args)
         {
+
             EnvironmentHelper.ChangeDirectory(args);
 
             var builder = WebApplication.CreateBuilder(args);
@@ -292,14 +293,14 @@ namespace WebApi
             });
 
 
-            builder.Services.AddScoped<Libraries.Http.HttpSignHandler>();
+            builder.Services.AddScoped<HttpSignHandler>();
             builder.Services.AddHttpClient("HttpSign", options =>
             {
                 options.DefaultRequestVersion = new Version("2.0");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
-            }).AddHttpMessageHandler(t => t.GetRequiredService<Libraries.Http.HttpSignHandler>()); ;
+            }).AddHttpMessageHandler(t => t.GetRequiredService<HttpSignHandler>()); ;
 
 
 
@@ -310,7 +311,6 @@ namespace WebApi
 
             CacheHelper.distributedCache = app.Services.GetRequiredService<IDistributedCache>();
             HttpHelper.httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
-            Libraries.Http.HttpContext.httpContextAccessor = app.Services.GetRequiredService<IHttpContextAccessor>();
 
 
             app.UseForwardedHeaders();

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
-using WebApi.Libraries.Http;
 
 namespace WebApi.Libraries.WeiXin.Public
 {
@@ -103,27 +102,15 @@ namespace WebApi.Libraries.WeiXin.Public
         * @return 经转换得到的Dictionary
         * @throws WxPayException
         */
-        public SortedDictionary<string, object> GetRequest()
+        public SortedDictionary<string, object> GetRequest(string requestBody)
         {
-            //接收从微信后台POST过来的数据
-            System.IO.Stream s = HttpContext.Current().Request.Body;
-            byte[] buffer = new byte[1024];
-            StringBuilder builder = new();
-            int count;
-            while ((count = s.Read(buffer, 0, 1024)) > 0)
-            {
-                builder.Append(Encoding.UTF8.GetString(buffer, 0, count));
-            }
-            s.Close();
-            s.Dispose();
-
-            if (string.IsNullOrEmpty(builder.ToString()))
+            if (string.IsNullOrEmpty(requestBody))
             {
                 throw new WxPayException("将空的xml串转换为WxPayData不合法!");
             }
 
             XmlDocument xmlDoc = new();
-            xmlDoc.LoadXml(builder.ToString());
+            xmlDoc.LoadXml(requestBody);
             XmlNode xmlNode = xmlDoc.FirstChild!;//获取到根节点<xml>
             XmlNodeList nodes = xmlNode.ChildNodes;
             foreach (XmlNode xn in nodes)

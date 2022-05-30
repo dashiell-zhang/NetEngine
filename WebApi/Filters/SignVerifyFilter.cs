@@ -4,6 +4,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
+using WebApi.Libraries;
 
 namespace WebApi.Filters
 {
@@ -53,7 +54,7 @@ namespace WebApi.Filters
 
                         if (!context.HttpContext.Request.HasFormContentType)
                         {
-                            string body = Libraries.Http.HttpContext.GetRequestBody();
+                            string body = context.HttpContext.GetRequestBody();
                             dataStr += body;
                         }
                         else

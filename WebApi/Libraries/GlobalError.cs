@@ -14,9 +14,9 @@ namespace WebApi.Libraries
     {
 
 
-        public static Task ErrorEvent(HttpContext context)
+        public static Task ErrorEvent(HttpContext httpContext)
         {
-            var feature = context.Features.Get<IExceptionHandlerFeature>();
+            var feature = httpContext.Features.Get<IExceptionHandlerFeature>();
             var error = feature?.Error;
 
             var ret = new
@@ -25,9 +25,9 @@ namespace WebApi.Libraries
             };
 
 
-            string path = Http.HttpContext.GetUrl();
+            string path = httpContext.GetUrl();
 
-            var parameter = Http.HttpContext.GetParameter();
+            var parameter = httpContext.GetParameter();
 
             var parameterStr = JsonHelper.ObjectToJson(parameter);
 
@@ -36,7 +36,7 @@ namespace WebApi.Libraries
                 _ = parameterStr[..102400];
             }
 
-            var authorization = Http.HttpContext.Current().Request.Headers["Authorization"].ToString();
+            var authorization = httpContext.Request.Headers["Authorization"].ToString();
 
             var content = new
             {
@@ -53,15 +53,15 @@ namespace WebApi.Libraries
 
             string strContent = JsonHelper.ObjectToJson(content);
 
-            var db = Http.HttpContext.Current().RequestServices.GetRequiredService<DatabaseContext>();
-            var snowflakeHelper = Http.HttpContext.Current().RequestServices.GetRequiredService<SnowflakeHelper>();
+            var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
+            var snowflakeHelper = httpContext.RequestServices.GetRequiredService<SnowflakeHelper>();
 
 
             db.CreateLog(snowflakeHelper.GetId(), "WebApi", "errorlog", strContent);
 
-            context.Response.StatusCode = 400;
+            httpContext.Response.StatusCode = 400;
 
-            return context.Response.WriteAsJsonAsync(ret);
+            return httpContext.Response.WriteAsJsonAsync(ret);
         }
 
 

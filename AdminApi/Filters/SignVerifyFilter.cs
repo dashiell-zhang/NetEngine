@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AdminApi.Libraries;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -53,7 +54,7 @@ namespace AdminApi.Filters
 
                         if (!context.HttpContext.Request.HasFormContentType)
                         {
-                            string body = Libraries.Http.HttpContext.GetRequestBody();
+                            string body = context.HttpContext.GetRequestBody();
                             dataStr += body;
                         }
                         else

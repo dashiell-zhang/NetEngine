@@ -1,7 +1,6 @@
 ﻿using AdminApi.Filters;
 using AdminShared.Models;
 using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
 using System.Collections.Generic;

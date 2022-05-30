@@ -1,12 +1,12 @@
 ﻿using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System.Linq;
 using WebApi.Filters;
-using WebApi.Libraries.Verify;
+using WebApi.Libraries;
 using WebApi.Models.Shared;
 using WebApi.Models.v1.User;
 
@@ -31,11 +31,11 @@ namespace WebApi.Controllers.v1
 
 
 
-        public UserController(DatabaseContext db)
+        public UserController(DatabaseContext db, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
 
-            var userIdStr = JWTToken.GetClaims("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)
             {
                 userId = long.Parse(userIdStr);

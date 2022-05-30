@@ -2,7 +2,6 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
-using WebApi.Libraries.Http;
 using WebApi.Libraries.WeiXin.H5.Models;
 
 namespace WebApi.Libraries.WeiXin.H5
@@ -95,12 +94,12 @@ namespace WebApi.Libraries.WeiXin.H5
         /// <summary>
         /// 获取 JsSDK 签名信息
         /// </summary>
+        /// <param name="url">HttpContext.GetUrl()</param>
         /// <returns></returns>
-        public DtoWeiXinJsSdkSign GetJsSDKSign()
+        public DtoWeiXinJsSdkSign GetJsSDKSign(string url)
         {
             var sdkSign = new DtoWeiXinJsSdkSign();
 
-            string url = HttpContext.GetUrl();
 
             sdkSign.AppId = appid;
             sdkSign.TimeStamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();

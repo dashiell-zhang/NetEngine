@@ -1,10 +1,7 @@
 ﻿using AdminApi.Libraries.Ueditor;
-using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Repository.Database;
 
 namespace AdminApi.Controllers.v1
 {
@@ -39,7 +36,7 @@ namespace AdminApi.Controllers.v1
                     PathFormat = Config.GetString("imagePathFormat"),
                     SizeLimit = Config.GetInt("imageMaxSize"),
                     UploadFieldName = Config.GetString("imageFieldName")
-                }, rootPath),
+                }, rootPath, HttpContext),
                 "uploadscrawl" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = new string[] { ".png" },
@@ -48,22 +45,22 @@ namespace AdminApi.Controllers.v1
                     UploadFieldName = Config.GetString("scrawlFieldName"),
                     Base64 = true,
                     Base64Filename = "scrawl.png"
-                }, rootPath),
+                }, rootPath, HttpContext),
                 "uploadvideo" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = Config.GetStringList("videoAllowFiles"),
                     PathFormat = Config.GetString("videoPathFormat"),
                     SizeLimit = Config.GetInt("videoMaxSize"),
                     UploadFieldName = Config.GetString("videoFieldName")
-                }, rootPath),
+                }, rootPath, HttpContext),
                 "uploadfile" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = Config.GetStringList("fileAllowFiles"),
                     PathFormat = Config.GetString("filePathFormat"),
                     SizeLimit = Config.GetInt("fileMaxSize"),
                     UploadFieldName = Config.GetString("fileFieldName")
-                }, rootPath),
-                "catchimage" => new CrawlerHandler(rootPath),
+                }, rootPath, HttpContext),
+                "catchimage" => new CrawlerHandler(rootPath, HttpContext),
                 _ => new NotSupportedHandler(),
             };
             return action.Process();

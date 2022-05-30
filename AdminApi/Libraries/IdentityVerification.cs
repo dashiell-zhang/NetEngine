@@ -1,16 +1,21 @@
-﻿using Common;
+﻿using AdminApi.Models.AppSetting;
+using AdminShared.Models;
+using Common;
 using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using WebApi.Models.Shared;
+using System.Security.Cryptography;
 
-namespace WebApi.Libraries.Verify
+namespace AdminApi.Libraries
 {
 
     /// <summary>
@@ -45,9 +50,9 @@ namespace WebApi.Libraries.Verify
                     var controller = actionDescriptor.ControllerName.ToLower();
                     var action = actionDescriptor.ActionName.ToLower();
 
-                    using var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
+                    var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-                    var userId = long.Parse(JWTToken.GetClaims("userId")!);
+                    var userId = long.Parse(httpContext.GetClaimByAuthorization("userId")!);
                     var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
 
                     var functionId = db.TFunctionAction.Where(t => t.IsDelete == false && t.Module.ToLower() == module && t.Controller.ToLower() == controller && t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
@@ -69,10 +74,9 @@ namespace WebApi.Libraries.Verify
                     {
                         return true;
                     }
-
                 }
 
-                return false;
+                return true;
             }
             else
             {
@@ -91,12 +95,12 @@ namespace WebApi.Libraries.Verify
         private static void IssueNewToken(HttpContext httpContext)
         {
 
-            var snowflakeHelper = httpContext.RequestServices.GetRequiredService<SnowflakeHelper>();
+            SnowflakeHelper snowflakeHelper = httpContext.RequestServices.GetRequiredService<SnowflakeHelper>();
 
             var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-            var nbf = Convert.ToInt64(JWTToken.GetClaims("nbf"));
-            var exp = Convert.ToInt64(JWTToken.GetClaims("exp"));
+            var nbf = Convert.ToInt64(httpContext.GetClaimByAuthorization("nbf"));
+            var exp = Convert.ToInt64(httpContext.GetClaimByAuthorization("exp"));
 
             var nbfTime = DateTimeOffset.FromUnixTimeSeconds(nbf);
             var expTime = DateTimeOffset.FromUnixTimeSeconds(exp);
@@ -105,8 +109,9 @@ namespace WebApi.Libraries.Verify
             if (expTime < DateTime.UtcNow.AddMinutes(15))
             {
 
-                var tokenId = long.Parse(JWTToken.GetClaims("tokenId")!);
-                var userId = long.Parse(JWTToken.GetClaims("userId")!);
+                var tokenId = long.Parse(httpContext.GetClaimByAuthorization("tokenId")!);
+                var userId = long.Parse(httpContext.GetClaimByAuthorization("userId")!);
+
 
                 string key = "IssueNewToken" + tokenId;
 
@@ -136,12 +141,18 @@ namespace WebApi.Libraries.Verify
                                 };
 
 
-                            var token = JWTToken.GetToken(claims);
+                            var configuration = httpContext.RequestServices.GetRequiredService<IConfiguration>();
+                            var jwtSetting = configuration.GetSection("JWTSetting").Get<JWTSetting>();
+                            var jwtPrivateKey = ECDsa.Create();
+                            jwtPrivateKey.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);
+                            var creds = new SigningCredentials(new ECDsaSecurityKey(jwtPrivateKey), SecurityAlgorithms.EcdsaSha256);
+                            var jwtSecurityToken = new JwtSecurityToken(jwtSetting.Issuer, jwtSetting.Audience, claims, DateTime.UtcNow, DateTime.UtcNow + jwtSetting.Expiry, creds);
+
+                            var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
 
                             userToken.Token = token;
 
                             db.TUserToken.Add(userToken);
-
 
                             if (distLock.TryLock("ClearExpireToken") != null)
                             {
@@ -151,6 +162,7 @@ namespace WebApi.Libraries.Verify
                             }
 
                             db.SaveChanges();
+
 
                             httpContext.Response.Headers.Add("NewToken", token);
                             httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
@@ -162,10 +174,15 @@ namespace WebApi.Libraries.Verify
                         httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
                     }
                 }
-
             }
 
         }
+
+
+
+
+
+
 
 
 
@@ -176,13 +193,13 @@ namespace WebApi.Libraries.Verify
         /// <returns></returns>
         public static bool SmsVerifyPhone(DtoKeyValue keyValue)
         {
-            string phone = keyValue.Key!.ToString()!;
+            string phone = keyValue.Key?.ToString()!;
 
             string key = "VerifyPhone_" + phone;
 
             var code = CacheHelper.GetString(key);
 
-            if (string.IsNullOrEmpty(code) == false && code == keyValue.Value!.ToString())
+            if (string.IsNullOrEmpty(code) == false && code == keyValue.Value?.ToString())
             {
                 return true;
             }

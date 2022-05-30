@@ -11,6 +11,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using WebApi.Libraries;
 using WebApi.Models.Shared;
 
 namespace WebApi.Controllers.v1
@@ -36,14 +37,14 @@ namespace WebApi.Controllers.v1
 
 
 
-        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment)
+        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
 
             rootPath = webHostEnvironment.ContentRootPath.Replace("\\", "/");
 
-            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
 
             if (userIdStr != null)
             {

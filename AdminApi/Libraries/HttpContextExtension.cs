@@ -1,35 +1,66 @@
 ﻿using AdminShared.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
 
-namespace AdminApi.Libraries.Http
+namespace AdminApi.Libraries
 {
-    public class HttpContext
+
+    /// <summary>
+    /// HttpContext扩展方法
+    /// </summary>
+    public static class HttpContextExtension
     {
 
-        public static IHttpContextAccessor httpContextAccessor { get; set; }
 
-
-        public static Microsoft.AspNetCore.Http.HttpContext Current()
+        /// <summary>
+        /// 获取当前HttpContext
+        /// </summary>
+        /// <param name="httpContext"></param>
+        /// <returns></returns>
+        public static HttpContext Current(this HttpContext httpContext)
         {
-            httpContextAccessor.HttpContext!.Request.Body.Position = 0;
-
-            return httpContextAccessor.HttpContext;
+            httpContext.Request.Body.Position = 0;
+            return httpContext;
         }
 
 
         /// <summary>
-        /// 获取Url信息
+        /// 通过Authorization获取Claim
+        /// </summary>
+        /// <param name="httpContext"></param>
+        /// <param name="key">Claim关键字</param>
+        /// <returns></returns>
+        public static string? GetClaimByAuthorization(this HttpContext httpContext, string key)
+        {
+            try
+            {
+                var authorization = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+                var securityToken = new JwtSecurityToken(authorization);
+
+                var value = securityToken.Claims.ToList().Where(t => t.Type == key).FirstOrDefault()?.Value;
+
+                return value;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+
+        /// <summary>
+        /// 获取完整Url信息
         /// </summary>
         /// <returns></returns>
-        public static string GetUrl()
+        public static string GetUrl(this HttpContext httpContext)
         {
-            return GetBaseUrl() + $"{Current().Request.Path}{Current().Request.QueryString}";
+            return httpContext.GetBaseUrl() + $"{httpContext.Request.Path}{httpContext.Request.QueryString}";
         }
 
 
@@ -37,14 +68,13 @@ namespace AdminApi.Libraries.Http
         /// 获取基础Url信息
         /// </summary>
         /// <returns></returns>
-        public static string GetBaseUrl()
+        public static string GetBaseUrl(this HttpContext httpContext)
         {
+            var url = $"{httpContext.Request.Scheme}://{httpContext.Request.Host.Host}";
 
-            var url = $"{Current().Request.Scheme}://{Current().Request.Host.Host}";
-
-            if (Current().Request.Host.Port != null)
+            if (httpContext.Request.Host.Port != null)
             {
-                url += $":{Current().Request.Host.Port}";
+                url += $":{httpContext.Request.Host.Port}";
             }
 
             return url;
@@ -53,19 +83,21 @@ namespace AdminApi.Libraries.Http
 
 
         /// <summary>
-        /// RequestBody中的内容
+        /// 获取RequestBody中的内容
         /// </summary>
-        public static string GetRequestBody()
+        public static string GetRequestBody(this HttpContext httpContext)
         {
+            httpContext.Request.Body.Position = 0;
+
             var requestContent = "";
 
-            var contentEncoding = Current().Request.Headers.ContentEncoding.FirstOrDefault();
+            var contentEncoding = httpContext.Request.Headers.ContentEncoding.FirstOrDefault();
 
             if (contentEncoding != null && contentEncoding.Equals("gzip", System.StringComparison.OrdinalIgnoreCase))
             {
                 using Stream requestBody = new MemoryStream();
-                Current().Request.Body.CopyTo(requestBody);
-                Current().Request.Body.Position = 0;
+                httpContext.Request.Body.CopyTo(requestBody);
+                httpContext.Request.Body.Position = 0;
 
                 requestBody.Position = 0;
 
@@ -76,8 +108,8 @@ namespace AdminApi.Libraries.Http
             else
             {
                 using Stream requestBody = new MemoryStream();
-                Current().Request.Body.CopyTo(requestBody);
-                Current().Request.Body.Position = 0;
+                httpContext.Request.Body.CopyTo(requestBody);
+                httpContext.Request.Body.Position = 0;
 
                 requestBody.Position = 0;
 
@@ -91,17 +123,18 @@ namespace AdminApi.Libraries.Http
 
 
         /// <summary>
-        /// 获取 http 请求中的全部参数
+        /// 获取Http请求中的全部参数
         /// </summary>
-        public static List<DtoKeyValue> GetParameter()
+        public static List<DtoKeyValue> GetParameter(this HttpContext httpContext)
         {
-            var context = Current();
+
+            var context = httpContext;
 
             var parameters = new List<DtoKeyValue>();
 
             if (context.Request.Method == "POST")
             {
-                string body = GetRequestBody();
+                string body = httpContext.GetRequestBody();
 
                 if (!string.IsNullOrEmpty(body))
                 {
@@ -130,39 +163,5 @@ namespace AdminApi.Libraries.Http
             return parameters;
         }
 
-
-
-
-        /// <summary>
-        /// 获取IP地址
-        /// </summary>
-        /// <returns></returns>
-        public static string GetIpAddress()
-        {
-            return Current().Connection.RemoteIpAddress!.ToString();
-        }
-
-
-
-        /// <summary>
-        /// 获取Header中的值
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public static string GetHeader(string key)
-        {
-            var query = Current().Request.Headers.Where(t => t.Key.ToLower() == key.ToLower()).Select(t => t.Value);
-
-            var ishave = query.Count();
-
-            if (ishave != 0)
-            {
-                return query.FirstOrDefault().ToString();
-            }
-            else
-            {
-                return "";
-            }
-        }
     }
 }

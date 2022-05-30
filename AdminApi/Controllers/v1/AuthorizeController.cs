@@ -1,9 +1,8 @@
 ﻿using AdminApi.Filters;
+using AdminApi.Libraries;
 using AdminApi.Services.v1;
 using AdminShared.Models;
 using AdminShared.Models.v1.Authorize;
-using Common;
-using Common.DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
@@ -37,18 +36,17 @@ namespace AdminApi.Controllers.v1
 
 
 
-        public AuthorizeController(DatabaseContext db, AuthorizeService authorizeService)
+        public AuthorizeController(DatabaseContext db, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
 
             this.authorizeService = authorizeService;
 
-            var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)
             {
                 userId = long.Parse(userIdStr);
             }
-
         }
 
 

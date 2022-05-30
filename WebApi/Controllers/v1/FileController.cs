@@ -27,10 +27,11 @@ namespace WebApi.Controllers.v1
     {
 
 
-        public readonly DatabaseContext db;
-        public readonly long userId;
-        public readonly IDistributedLock distLock;
-        public readonly SnowflakeHelper snowflakeHelper;
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
+        private readonly long userId;
 
 
 
@@ -39,7 +40,6 @@ namespace WebApi.Controllers.v1
             this.db = db;
             this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
-
 
             var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
 

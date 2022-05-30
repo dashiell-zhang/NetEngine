@@ -20,11 +20,12 @@ namespace AdminApi.Controllers.v1
     public class ArticleController : ControllerBase
     {
 
-        private readonly long userId;
 
         private readonly DatabaseContext db;
         private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
+
+        private readonly long userId;
 
 
 

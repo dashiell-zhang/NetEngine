@@ -14,9 +14,10 @@ namespace WebApi.Services.v1
     public class AuthorizeService
     {
 
-        public readonly DatabaseContext db;
-        public readonly IDistributedLock distLock;
-        public readonly SnowflakeHelper snowflakeHelper;
+        private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
+        private readonly SnowflakeHelper snowflakeHelper;
+
 
         public AuthorizeService(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
         {

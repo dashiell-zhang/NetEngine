@@ -27,11 +27,11 @@ namespace AdminApi.Controllers.v1
     {
 
 
-        private readonly long userId;
-
         private readonly DatabaseContext db;
         private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
+
+        private readonly long userId;
 
 
         public FileController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)

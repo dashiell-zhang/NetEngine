@@ -19,12 +19,12 @@ namespace AdminApi.Controllers.v1
     public class LinkController : ControllerBase
     {
 
-
-        private readonly long userId;
-
         private readonly DatabaseContext db;
         private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
+
+        private readonly long userId;
+
 
 
         public LinkController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper)
@@ -34,7 +34,6 @@ namespace AdminApi.Controllers.v1
             this.snowflakeHelper = snowflakeHelper;
 
             var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
-
             if (userIdStr != null)
             {
                 userId = long.Parse(userIdStr);

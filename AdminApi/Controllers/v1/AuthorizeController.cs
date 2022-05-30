@@ -28,7 +28,6 @@ namespace AdminApi.Controllers.v1
     public class AuthorizeController : ControllerBase
     {
 
-        private readonly long userId;
 
         private readonly DatabaseContext db;
         private readonly IDistributedLock distLock;
@@ -36,17 +35,19 @@ namespace AdminApi.Controllers.v1
 
         private AuthorizeService authorizeService;
 
+        private readonly long userId;
+
+
 
         public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, AuthorizeService authorizeService)
         {
             this.db = db;
             this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
+
             this.authorizeService = authorizeService;
 
-
             var userIdStr = Libraries.Verify.JWTToken.GetClaims("userId");
-
             if (userIdStr != null)
             {
                 userId = long.Parse(userIdStr);

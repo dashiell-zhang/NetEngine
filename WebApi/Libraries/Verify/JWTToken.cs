@@ -20,15 +20,11 @@ namespace WebApi.Libraries.Verify
         /// <returns></returns>
         public static string? GetClaims(string key)
         {
-
             try
             {
                 var Authorization = Http.HttpContext.Current().Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-
                 var securityToken = new JwtSecurityToken(Authorization);
-
-                var value = securityToken.Claims.ToList().Where(t => t.Type == key).FirstOrDefault()!.Value;
-
+                var value = securityToken.Claims.ToList().Where(t => t.Type == key).FirstOrDefault()?.Value;
                 return value;
             }
             catch
@@ -46,9 +42,7 @@ namespace WebApi.Libraries.Verify
         public static string GetToken(Claim[] claims)
         {
 
-            var conf = Program.ServiceProvider.GetRequiredService<IConfiguration>();
-
-            var jwtSetting = conf.GetSection("JWTSetting").Get<JWTSetting>();
+            var jwtSetting = Common.IOHelper.GetConfig().GetSection("JWTSetting").Get<JWTSetting>();
 
             var key = ECDsa.Create();
             key.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);

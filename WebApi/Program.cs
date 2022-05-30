@@ -37,7 +37,7 @@ namespace WebApi
     {
         public static void Main(string[] args)
         {
-            Common.EnvironmentHelper.ChangeDirectory(args);
+            EnvironmentHelper.ChangeDirectory(args);
 
             var builder = WebApplication.CreateBuilder(args);
 
@@ -311,7 +311,6 @@ namespace WebApi
             CacheHelper.distributedCache = app.Services.GetRequiredService<IDistributedCache>();
             HttpHelper.httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
             Libraries.Http.HttpContext.httpContextAccessor = app.Services.GetRequiredService<IHttpContextAccessor>();
-            ServiceProvider = app.Services;
 
 
             app.UseForwardedHeaders();
@@ -373,7 +372,6 @@ namespace WebApi
             app.Run();
         }
 
-        public static IServiceProvider ServiceProvider { get; set; }
 
     }
 }

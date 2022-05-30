@@ -12,10 +12,11 @@ namespace AdminApi.Libraries.Http
     public class HttpContext
     {
 
+        public static IHttpContextAccessor httpContextAccessor { get; set; }
+
+
         public static Microsoft.AspNetCore.Http.HttpContext Current()
         {
-            var httpContextAccessor = Program.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
-
             httpContextAccessor.HttpContext!.Request.Body.Position = 0;
 
             return httpContextAccessor.HttpContext;

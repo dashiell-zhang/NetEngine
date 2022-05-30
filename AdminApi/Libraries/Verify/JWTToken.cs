@@ -1,6 +1,5 @@
 ﻿using AdminApi.Models.AppSetting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -46,9 +45,7 @@ namespace AdminApi.Libraries.Verify
         public static string GetToken(Claim[] claims)
         {
 
-            var conf = Program.ServiceProvider.GetRequiredService<IConfiguration>();
-
-            var jwtSetting = conf.GetSection("JWTSetting").Get<JWTSetting>();
+            var jwtSetting = Common.IOHelper.GetConfig().GetSection("JWTSetting").Get<JWTSetting>();
 
             var key = ECDsa.Create();
             key.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);

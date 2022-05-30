@@ -9,7 +9,6 @@ using Repository.Database;
 using System;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace AdminApi.Libraries.Verify
 {
@@ -46,8 +45,7 @@ namespace AdminApi.Libraries.Verify
                     var controller = actionDescriptor.ControllerName.ToLower();
                     var action = actionDescriptor.ActionName.ToLower();
 
-                    using var scope = Program.ServiceProvider.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                    var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
                     var userId = long.Parse(JWTToken.GetClaims("userId")!);
                     var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
@@ -94,8 +92,7 @@ namespace AdminApi.Libraries.Verify
 
             SnowflakeHelper snowflakeHelper = httpContext.RequestServices.GetRequiredService<SnowflakeHelper>();
 
-            using var scope = Program.ServiceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+            var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
             var nbf = Convert.ToInt64(JWTToken.GetClaims("nbf"));
             var exp = Convert.ToInt64(JWTToken.GetClaims("exp"));
@@ -145,11 +142,15 @@ namespace AdminApi.Libraries.Verify
 
                             db.TUserToken.Add(userToken);
 
+                            if (distLock.TryLock("ClearExpireToken") != null)
+                            {
+                                var clearTime = DateTime.UtcNow.AddDays(-7);
+                                var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
+                                db.TUserToken.RemoveRange(clearList);
+                            }
+
                             db.SaveChanges();
 
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                            ClearExpireToken();
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 
                             httpContext.Response.Headers.Add("NewToken", token);
                             httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
@@ -168,26 +169,7 @@ namespace AdminApi.Libraries.Verify
 
 
 
-        /// <summary>
-        /// 清理过期Token
-        /// </summary>
-        private static async Task ClearExpireToken()
-        {
-            await Task.Run(() =>
-            {
-                var distLock = Program.ServiceProvider.GetRequiredService<IDistributedLock>();
-                if (distLock.TryLock("ClearExpireToken") != null)
-                {
-                    using var scope = Program.ServiceProvider.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-                    var clearTime = DateTime.UtcNow.AddDays(-7);
-                    var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
-                    db.TUserToken.RemoveRange(clearList);
 
-                    db.SaveChanges();
-                }
-            });
-        }
 
 
 

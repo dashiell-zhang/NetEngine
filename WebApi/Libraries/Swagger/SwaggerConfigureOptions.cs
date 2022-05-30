@@ -26,7 +26,7 @@ namespace WebApi.Libraries.Swagger
 
                 var modelPrefix = typeof(Program).Assembly.GetName().Name + ".Models.";
                 var versionPrefix = description.GroupName + ".";
-                options.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => (type.ToString().Substring(type.ToString().IndexOf("Models.") + 7)).Replace(modelPrefix, "").Replace(versionPrefix, "").Replace("`1", "").Replace("+", ".") };
+                options.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => (type.ToString()[(type.ToString().IndexOf("Models.") + 7)..]).Replace(modelPrefix, "").Replace(versionPrefix, "").Replace("`1", "").Replace("+", ".") };
             }
         }
 

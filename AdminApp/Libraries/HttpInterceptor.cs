@@ -52,7 +52,7 @@ namespace AdminApp.Libraries
 
                     if (requestBody != null)
                     {
-                        dataStr = dataStr + requestBody;
+                        dataStr += requestBody;
                     }
 
                     using SHA256 sha256 = SHA256.Create();

@@ -36,7 +36,7 @@ namespace WebApi.Libraries.Http
 
                     if (requestBody != null)
                     {
-                        dataStr = dataStr + requestBody;
+                        dataStr += requestBody;
                     }
                 }
                 else if (request.Content.Headers.ContentType.MediaType == "multipart/form-data")
@@ -50,14 +50,12 @@ namespace WebApi.Libraries.Http
 
                     foreach (var item in dataContents!.Where(t => t.Headers.ContentType == null).OrderBy(t => t.Headers.ContentDisposition?.Name).ToList())
                     {
-                        using (SHA256 sha256 = SHA256.Create())
-                        {
-                            var fileSign = Convert.ToHexString(sha256.ComputeHash(item.ReadAsStream()));
+                        using SHA256 sha256 = SHA256.Create();
+                        var fileSign = Convert.ToHexString(sha256.ComputeHash(item.ReadAsStream()));
 
-                            item.ReadAsStream().Position = 0;
+                        item.ReadAsStream().Position = 0;
 
-                            dataStr = dataStr + item.Headers.ContentDisposition?.Name + fileSign;
-                        }
+                        dataStr = dataStr + item.Headers.ContentDisposition?.Name + fileSign;
                     }
                 }
             }

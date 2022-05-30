@@ -49,7 +49,7 @@ namespace AdminApi.Filters
 
                         var requestUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
 
-                        dataStr = dataStr + requestUrl;
+                        dataStr += requestUrl;
 
                         if (!context.HttpContext.Request.HasFormContentType)
                         {
@@ -70,14 +70,12 @@ namespace AdminApi.Filters
 
                             foreach (var file in files)
                             {
-                                using (var fileStream = file.OpenReadStream())
-                                {
-                                    using var sha256 = SHA256.Create();
+                                using var fileStream = file.OpenReadStream();
+                                using var sha256 = SHA256.Create();
 
-                                    var fileSign = Convert.ToHexString(sha256.ComputeHash(fileStream));
+                                var fileSign = Convert.ToHexString(sha256.ComputeHash(fileStream));
 
-                                    dataStr = dataStr + file.Name + fileSign;
-                                }
+                                dataStr = dataStr + file.Name + fileSign;
                             }
                         }
 

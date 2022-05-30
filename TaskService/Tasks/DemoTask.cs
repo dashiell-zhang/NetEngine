@@ -36,15 +36,13 @@ namespace TaskService.Tasks
 
             var snowflakeHelper = serviceProvider.GetRequiredService<SnowflakeHelper>();
 
-            using (var scope = serviceProvider.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-                var distLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
+            using var scope = serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+            var distLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
 
-                //周期性执行的方法
-                Console.WriteLine("HelloWord" + snowflakeHelper.GetId());
-            }
+            //周期性执行的方法
+            Console.WriteLine("HelloWord" + snowflakeHelper.GetId());
         }
 
     }

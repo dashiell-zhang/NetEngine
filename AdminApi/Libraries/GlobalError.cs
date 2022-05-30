@@ -33,7 +33,7 @@ namespace AdminApi.Libraries
 
             if (parameterStr.Length > 102400)
             {
-                parameterStr = parameterStr[..102400];
+                _ = parameterStr[..102400];
             }
 
             var authorization = Http.HttpContext.Current().Request.Headers["Authorization"].ToString();

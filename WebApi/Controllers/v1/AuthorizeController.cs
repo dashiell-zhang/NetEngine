@@ -34,7 +34,7 @@ namespace WebApi.Controllers.v1
         private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
 
-        private AuthorizeService authorizeService;
+        private readonly AuthorizeService authorizeService;
 
         private readonly long userId;
 

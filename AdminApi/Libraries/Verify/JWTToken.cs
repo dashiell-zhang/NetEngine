@@ -51,7 +51,7 @@ namespace AdminApi.Libraries.Verify
             var jwtSetting = conf.GetSection("JWTSetting").Get<JWTSetting>();
 
             var key = ECDsa.Create();
-            key.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out int i);
+            key.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);
 
 
             //签名证书(秘钥，加密算法)

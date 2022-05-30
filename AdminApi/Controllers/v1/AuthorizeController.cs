@@ -31,7 +31,7 @@ namespace AdminApi.Controllers.v1
 
         private readonly DatabaseContext db;
 
-        private AuthorizeService authorizeService;
+        private readonly AuthorizeService authorizeService;
 
         private readonly long userId;
 

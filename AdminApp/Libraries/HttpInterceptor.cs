@@ -48,7 +48,7 @@ namespace AdminApp.Libraries
 
                     var dataStr = privateKey + timeStr + requestUrl;
 
-                    var requestBody = request.Content?.ReadAsStringAsync().Result;
+                    var requestBody = request.Content?.ReadAsStringAsync(cancellationToken).Result;
 
                     if (requestBody != null)
                     {

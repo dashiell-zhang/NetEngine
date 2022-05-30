@@ -3,6 +3,8 @@ using System;
 
 namespace WebApi.Attributes
 {
+
+    [AttributeUsage(AttributeTargets.Class)]
     public class ServiceAttribute : Attribute
     {
 

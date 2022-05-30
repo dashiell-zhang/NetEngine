@@ -32,6 +32,9 @@ namespace Common.DistributedLock
             {
 
             }
+
+            GC.SuppressFinalize(this);
+
         }
     }
 }

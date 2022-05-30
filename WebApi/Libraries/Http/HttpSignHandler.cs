@@ -32,7 +32,7 @@ namespace WebApi.Libraries.Http
             {
                 if (request.Content.Headers.ContentType.MediaType == "application/json")
                 {
-                    var requestBody = request.Content?.ReadAsStringAsync().Result;
+                    var requestBody = request.Content?.ReadAsStringAsync(cancellationToken).Result;
 
                     if (requestBody != null)
                     {
@@ -45,15 +45,15 @@ namespace WebApi.Libraries.Http
 
                     foreach (var item in dataContents!.Where(t => t.Headers.ContentType?.MediaType == "text/plain").OrderBy(t => t.Headers.ContentDisposition?.Name).ToList())
                     {
-                        dataStr = dataStr + item.Headers.ContentDisposition?.Name + item.ReadAsStringAsync().Result;
+                        dataStr = dataStr + item.Headers.ContentDisposition?.Name + item.ReadAsStringAsync(cancellationToken).Result;
                     }
 
                     foreach (var item in dataContents!.Where(t => t.Headers.ContentType == null).OrderBy(t => t.Headers.ContentDisposition?.Name).ToList())
                     {
                         using SHA256 sha256 = SHA256.Create();
-                        var fileSign = Convert.ToHexString(sha256.ComputeHash(item.ReadAsStream()));
+                        var fileSign = Convert.ToHexString(sha256.ComputeHash(item.ReadAsStream(cancellationToken)));
 
-                        item.ReadAsStream().Position = 0;
+                        item.ReadAsStream(cancellationToken).Position = 0;
 
                         dataStr = dataStr + item.Headers.ContentDisposition?.Name + fileSign;
                     }
@@ -90,7 +90,7 @@ namespace WebApi.Libraries.Http
         }
 
 
-        private string GetToken()
+        private static string GetToken()
         {
             var token = CacheHelper.GetString("token");
 

@@ -3,6 +3,8 @@ using System;
 
 namespace AdminApi.Attributes
 {
+
+    [AttributeUsage(AttributeTargets.Class)]
     public class ServiceAttribute : Attribute
     {
 

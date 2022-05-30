@@ -128,11 +128,13 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateUser")]
         public long CreateUser(DtoEditUser createUser)
         {
-            TUser user = new();
-            user.Id = snowflakeHelper.GetId();
-            user.Name = createUser.Name;
-            user.NickName = createUser.NickName;
-            user.Phone = createUser.Phone;
+            TUser user = new()
+            {
+                Id = snowflakeHelper.GetId(),
+                Name = createUser.Name,
+                NickName = createUser.NickName,
+                Phone = createUser.Phone
+            };
             user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
             user.CreateTime = DateTime.UtcNow;
             user.CreateUserId = userId;

@@ -93,12 +93,14 @@ namespace WebApi.Libraries.WeiXin.App
             {
                 string prepay_id = jo["xml"]!["prepay_id"]!["#cdata-section"]!.ToString();
 
-                DtoCreatePayApp info = new();
-                info.AppId = appid;
-                info.PartnerId = mchid;
-                info.PrepayId = prepay_id;
-                info.Package = "Sign=WXPay";
-                info.NonceStr = nonceStr;
+                DtoCreatePayApp info = new()
+                {
+                    AppId = appid,
+                    PartnerId = mchid,
+                    PrepayId = prepay_id,
+                    Package = "Sign=WXPay",
+                    NonceStr = nonceStr
+                };
 
                 //再次签名返回数据至APP
                 string strB = "appid=" + appid + "&noncestr=" + nonceStr + "&package=Sign=WXPay&partnerid=" + info.PartnerId + "&prepayid=" + prepay_id + "&timestamp=" + info.TimeStamp + "&key=" + mchkey;

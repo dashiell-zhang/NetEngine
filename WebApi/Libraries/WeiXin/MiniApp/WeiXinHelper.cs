@@ -134,9 +134,11 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             {
                 string prepay_id = jo["xml"]!["prepay_id"]!["#cdata-section"]!.ToString();
 
-                DtoCreatePayMiniApp info = new();
-                info.NonceStr = nonceStr;
-                info.Package = "prepay_id=" + prepay_id;
+                DtoCreatePayMiniApp info = new()
+                {
+                    NonceStr = nonceStr,
+                    Package = "prepay_id=" + prepay_id
+                };
 
                 //再次签名返回数据至小程序
                 string strB = "appId=" + appid + "&nonceStr=" + nonceStr + "&package=prepay_id=" + prepay_id + "&signType=MD5&timeStamp=" + info.TimeStamp + "&key=" + mchkey;
@@ -275,17 +277,18 @@ namespace WebApi.Libraries.WeiXin.MiniApp
             wxPayData.FromXml(getdata, mchkey!);
 
 
-            DtoCreatePayRefundMiniApp retInfo = new();
+            DtoCreatePayRefundMiniApp retInfo = new()
+            {
+                Return_code = wxPayData.GetValue("return_code")!.ToString(),
+                Return_msg = wxPayData.GetValue("return_msg")!.ToString(),
 
-            retInfo.Return_code = wxPayData.GetValue("return_code")!.ToString();
-            retInfo.Return_msg = wxPayData.GetValue("return_msg")!.ToString();
+                AppId = wxPayData.GetValue("appid")!.ToString(),
+                Mch_id = wxPayData.GetValue("mch_id")!.ToString(),
+                Nonce_str = wxPayData.GetValue("nonce_str")!.ToString(),
+                Sign = wxPayData.GetValue("sign")!.ToString(),
 
-            retInfo.AppId = wxPayData.GetValue("appid")!.ToString();
-            retInfo.Mch_id = wxPayData.GetValue("mch_id")!.ToString();
-            retInfo.Nonce_str = wxPayData.GetValue("nonce_str")!.ToString();
-            retInfo.Sign = wxPayData.GetValue("sign")!.ToString();
-
-            retInfo.Result_code = wxPayData.GetValue("result_code")!.ToString();
+                Result_code = wxPayData.GetValue("result_code")!.ToString()
+            };
 
 
             if (retInfo.Result_code == "SUCCESS")

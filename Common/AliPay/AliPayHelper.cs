@@ -96,14 +96,15 @@ namespace Common.AliPay
             DefaultAopClient client = new(gatewayUrl, appid, appprivatekey, "json", "1.0", "RSA2", alipaypublickey, "UTF-8", false);
 
             // 组装业务参数model
-            AlipayTradeWapPayModel model = new();
-
-            model.OutTradeNo = orderno;
-            model.Subject = title;
-            model.TotalAmount = price;
-            model.Body = describe;
-            model.ProductCode = "QUICK_WAP_WAY";
-            model.QuitUrl = quitUrl;
+            AlipayTradeWapPayModel model = new()
+            {
+                OutTradeNo = orderno,
+                Subject = title,
+                TotalAmount = price,
+                Body = describe,
+                ProductCode = "QUICK_WAP_WAY",
+                QuitUrl = quitUrl
+            };
 
             AlipayTradeWapPayRequest request = new();
 
@@ -190,12 +191,14 @@ namespace Common.AliPay
             DefaultAopClient client = new("https://openapi.alipay.com/gateway.do", appid, appprivatekey, "json", "2.0", "RSA2", alipaypublickey, "UTF-8", false);
 
             // 组装业务参数model
-            AlipayTradePagePayModel model = new();
-            model.Body = body;
-            model.Subject = subject;
-            model.TotalAmount = totalAmout;
-            model.OutTradeNo = tradeno;
-            model.ProductCode = "FAST_INSTANT_TRADE_PAY";
+            AlipayTradePagePayModel model = new()
+            {
+                Body = body,
+                Subject = subject,
+                TotalAmount = totalAmout,
+                OutTradeNo = tradeno,
+                ProductCode = "FAST_INSTANT_TRADE_PAY"
+            };
 
             AlipayTradePagePayRequest request = new();
             // 设置同步回调地址

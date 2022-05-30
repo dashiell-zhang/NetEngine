@@ -36,9 +36,11 @@ namespace Common.AliYun
         {
             IClientProfile profile = DefaultProfile.GetProfile("cn-hangzhou", accessKeyId, accessKeySecret);
             DefaultAcsClient client = new(profile);
-            CommonRequest request = new();
-            request.Method = MethodType.POST;
-            request.Domain = "dysmsapi.aliyuncs.com";
+            CommonRequest request = new()
+            {
+                Method = MethodType.POST,
+                Domain = "dysmsapi.aliyuncs.com"
+            };
             request.AddQueryParameters("PhoneNumbers", phoneNumbers);
             request.AddQueryParameters("SignName", signName);
             request.AddQueryParameters("TemplateCode", templateCode);

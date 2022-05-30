@@ -168,15 +168,17 @@ namespace Repository.Extensions
 
 
 
-                    TDataUpdateLog osLog = new();
-                    osLog.Id = logId;
-                    osLog.Table = type.Name;
-                    osLog.Content = result;
-                    osLog.CreateTime = DateTime.UtcNow;
-                    osLog.TableId = entityId;
-                    osLog.IpAddress = ipAddress == "" ? null : ipAddress;
-                    osLog.DeviceMark = deviceMark == "" ? null : deviceMark;
-                    osLog.ActionUserId = actionUserId;
+                    TDataUpdateLog osLog = new()
+                    {
+                        Id = logId,
+                        Table = type.Name,
+                        Content = result,
+                        CreateTime = DateTime.UtcNow,
+                        TableId = entityId,
+                        IpAddress = ipAddress == "" ? null : ipAddress,
+                        DeviceMark = deviceMark == "" ? null : deviceMark,
+                        ActionUserId = actionUserId
+                    };
 
                     db.TDataUpdateLog.Add(osLog);
                 }
@@ -298,13 +300,14 @@ namespace Repository.Extensions
         {
             try
             {
-                TLog log = new();
-
-                log.Id = logId;
-                log.Sign = Sign;
-                log.Type = Type;
-                log.Content = Content;
-                log.CreateTime = DateTime.UtcNow;
+                TLog log = new()
+                {
+                    Id = logId,
+                    Sign = Sign,
+                    Type = Type,
+                    Content = Content,
+                    CreateTime = DateTime.UtcNow
+                };
 
                 db.TLog.Add(log);
 

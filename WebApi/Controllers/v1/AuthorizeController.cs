@@ -126,26 +126,29 @@ namespace WebApi.Controllers.v1
                         string userName = DateTime.UtcNow.ToString() + "微信小程序新用户";
 
                         //注册一个只有基本信息的账户出来
-                        user = new();
-
-                        user.Id = snowflakeHelper.GetId();
-                        user.CreateTime = DateTime.UtcNow;
-                        user.Name = userName;
-                        user.NickName = userName;
-                        user.Phone = "";
+                        user = new()
+                        {
+                            Id = snowflakeHelper.GetId(),
+                            CreateTime = DateTime.UtcNow,
+                            Name = userName,
+                            NickName = userName,
+                            Phone = ""
+                        };
                         user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                         db.TUser.Add(user);
 
                         db.SaveChanges();
 
-                        TUserBindExternal userBind = new();
-                        userBind.Id = snowflakeHelper.GetId();
-                        userBind.CreateTime = DateTime.UtcNow;
-                        userBind.UserId = user.Id;
-                        userBind.AppName = "WeiXinMiniApp";
-                        userBind.AppId = appid!;
-                        userBind.OpenId = openid;
+                        TUserBindExternal userBind = new()
+                        {
+                            Id = snowflakeHelper.GetId(),
+                            CreateTime = DateTime.UtcNow,
+                            UserId = user.Id,
+                            AppName = "WeiXinMiniApp",
+                            AppId = appid!,
+                            OpenId = openid
+                        };
 
 
                         db.TUserBindExternal.Add(userBind);
@@ -183,13 +186,14 @@ namespace WebApi.Controllers.v1
 
                     string userName = DateTime.UtcNow.ToString() + "手机短信新用户";
 
-                    user = new();
-
-                    user.Id = snowflakeHelper.GetId();
-                    user.CreateTime = DateTime.UtcNow;
-                    user.Name = userName;
-                    user.NickName = userName;
-                    user.Phone = phone;
+                    user = new()
+                    {
+                        Id = snowflakeHelper.GetId(),
+                        CreateTime = DateTime.UtcNow,
+                        Name = userName,
+                        NickName = userName,
+                        Phone = phone
+                    };
                     user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                     db.TUser.Add(user);
@@ -312,26 +316,30 @@ namespace WebApi.Controllers.v1
                 if (user == null)
                 {
 
-                    user = new();
-                    user.Id = snowflakeHelper.GetId();
-                    user.IsDelete = false;
-                    user.CreateTime = DateTime.UtcNow;
-                    user.Name = userInfo.NickName;
-                    user.NickName = userInfo.NickName;
-                    user.Phone = "";
+                    user = new()
+                    {
+                        Id = snowflakeHelper.GetId(),
+                        IsDelete = false,
+                        CreateTime = DateTime.UtcNow,
+                        Name = userInfo.NickName,
+                        NickName = userInfo.NickName,
+                        Phone = ""
+                    };
                     user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                     db.TUser.Add(user);
                     db.SaveChanges();
 
-                    TUserBindExternal bind = new();
-                    bind.Id = snowflakeHelper.GetId();
-                    bind.CreateTime = DateTime.UtcNow;
-                    bind.AppName = "WeiXinApp";
-                    bind.AppId = appid!;
-                    bind.OpenId = openid;
+                    TUserBindExternal bind = new()
+                    {
+                        Id = snowflakeHelper.GetId(),
+                        CreateTime = DateTime.UtcNow,
+                        AppName = "WeiXinApp",
+                        AppId = appid!,
+                        OpenId = openid,
 
-                    bind.UserId = user.Id;
+                        UserId = user.Id
+                    };
 
                     db.TUserBindExternal.Add(bind);
 

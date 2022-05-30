@@ -131,14 +131,16 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateChannel")]
         public long CreateChannel(DtoEditChannel createChannel)
         {
-            TChannel channel = new();
-            channel.Id = snowflakeHelper.GetId();
-            channel.Name = createChannel.Name;
-            channel.CreateTime = DateTime.UtcNow;
-            channel.CreateUserId = userId;
+            TChannel channel = new()
+            {
+                Id = snowflakeHelper.GetId(),
+                Name = createChannel.Name,
+                CreateTime = DateTime.UtcNow,
+                CreateUserId = userId,
 
-            channel.Remarks = createChannel.Remarks;
-            channel.Sort = createChannel.Sort;
+                Remarks = createChannel.Remarks,
+                Sort = createChannel.Sort
+            };
 
             db.TChannel.Add(channel);
 
@@ -300,15 +302,17 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateCategory")]
         public long CreateCategory(DtoEditCategory createCategory)
         {
-            TCategory category = new();
-            category.Id = snowflakeHelper.GetId();
-            category.CreateTime = DateTime.UtcNow;
-            category.CreateUserId = userId;
-            category.Name = createCategory.Name;
-            category.ChannelId = createCategory.ChannelId;
-            category.ParentId = createCategory.ParentId;
-            category.Remarks = createCategory.Remarks;
-            category.Sort = createCategory.Sort;
+            TCategory category = new()
+            {
+                Id = snowflakeHelper.GetId(),
+                CreateTime = DateTime.UtcNow,
+                CreateUserId = userId,
+                Name = createCategory.Name,
+                ChannelId = createCategory.ChannelId,
+                ParentId = createCategory.ParentId,
+                Remarks = createCategory.Remarks,
+                Sort = createCategory.Sort
+            };
 
             db.TCategory.Add(category);
 
@@ -479,17 +483,19 @@ namespace AdminApi.Controllers.v1
         [HttpPost("CreateArticle")]
         public long CreateArticle(DtoEditArticle createArticle, long fileKey)
         {
-            TArticle article = new();
-            article.Id = snowflakeHelper.GetId();
-            article.CreateTime = DateTime.UtcNow;
-            article.CreateUserId = userId;
-            article.Title = createArticle.Title;
-            article.Content = createArticle.Content;
-            article.CategoryId = createArticle.CategoryId;
-            article.IsRecommend = createArticle.IsRecommend;
-            article.IsDisplay = createArticle.IsDisplay;
-            article.Sort = createArticle.Sort;
-            article.ClickCount = createArticle.ClickCount;
+            TArticle article = new()
+            {
+                Id = snowflakeHelper.GetId(),
+                CreateTime = DateTime.UtcNow,
+                CreateUserId = userId,
+                Title = createArticle.Title,
+                Content = createArticle.Content,
+                CategoryId = createArticle.CategoryId,
+                IsRecommend = createArticle.IsRecommend,
+                IsDisplay = createArticle.IsDisplay,
+                Sort = createArticle.Sort,
+                ClickCount = createArticle.ClickCount
+            };
 
             if (string.IsNullOrEmpty(createArticle.Digest) && !string.IsNullOrEmpty(createArticle.Content))
             {

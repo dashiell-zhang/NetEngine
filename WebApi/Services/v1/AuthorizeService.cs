@@ -36,10 +36,12 @@ namespace WebApi.Services.v1
         {
 
 
-            TUserToken userToken = new();
-            userToken.Id = snowflakeHelper.GetId();
-            userToken.UserId = userId;
-            userToken.CreateTime = DateTime.UtcNow;
+            TUserToken userToken = new()
+            {
+                Id = snowflakeHelper.GetId(),
+                UserId = userId,
+                CreateTime = DateTime.UtcNow
+            };
 
             db.TUserToken.Add(userToken);
             db.SaveChanges();

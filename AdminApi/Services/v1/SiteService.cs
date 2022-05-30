@@ -32,12 +32,14 @@ namespace AdminApi.Services.v1
 
                 if (appSetting == null)
                 {
-                    appSetting = new();
-                    appSetting.Id = snowflakeHelper.GetId();
-                    appSetting.Module = "Site";
-                    appSetting.Key = key;
-                    appSetting.Value = value;
-                    appSetting.CreateTime = DateTime.UtcNow;
+                    appSetting = new()
+                    {
+                        Id = snowflakeHelper.GetId(),
+                        Module = "Site",
+                        Key = key,
+                        Value = value,
+                        CreateTime = DateTime.UtcNow
+                    };
                     db.TAppSetting.Add(appSetting);
                 }
                 else

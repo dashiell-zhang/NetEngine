@@ -112,15 +112,17 @@ namespace AdminApi.Controllers.v1
                 if (isSuccess)
                 {
 
-                    TFile f = new();
-                    f.Id = fileName;
-                    f.Name = file.FileName;
-                    f.Path = path;
-                    f.Table = business;
-                    f.Sign = sign;
-                    f.TableId = key;
-                    f.CreateUserId = userId;
-                    f.CreateTime = DateTime.UtcNow;
+                    TFile f = new()
+                    {
+                        Id = fileName,
+                        Name = file.FileName,
+                        Path = path,
+                        Table = business,
+                        Sign = sign,
+                        TableId = key,
+                        CreateUserId = userId,
+                        CreateTime = DateTime.UtcNow
+                    };
                     db.TFile.Add(f);
                     db.SaveChanges();
 

@@ -17,9 +17,11 @@ namespace Common
         public static string ObjectToXml(object obj)
         {
             using MemoryStream memoryStream = new();
-            XmlWriterSettings xmlWriterSettings = new();
-            xmlWriterSettings.Encoding = Encoding.UTF8;
-            xmlWriterSettings.OmitXmlDeclaration = true;
+            XmlWriterSettings xmlWriterSettings = new()
+            {
+                Encoding = Encoding.UTF8,
+                OmitXmlDeclaration = true
+            };
 
             using var xmlWriter = XmlWriter.Create(memoryStream, xmlWriterSettings);
             //去除默认命名空间xmlns:xsd和xmlns:xsi

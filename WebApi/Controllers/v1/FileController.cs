@@ -110,15 +110,17 @@ namespace WebApi.Controllers.v1
                 if (isSuccess)
                 {
 
-                    TFile f = new();
-                    f.Id = snowflakeHelper.GetId();
-                    f.Name = fileInfoName;
-                    f.Path = filePath;
-                    f.Table = business;
-                    f.TableId = key;
-                    f.Sign = sign;
-                    f.CreateUserId = userId;
-                    f.CreateTime = DateTime.UtcNow;
+                    TFile f = new()
+                    {
+                        Id = snowflakeHelper.GetId(),
+                        Name = fileInfoName,
+                        Path = filePath,
+                        Table = business,
+                        TableId = key,
+                        Sign = sign,
+                        CreateUserId = userId,
+                        CreateTime = DateTime.UtcNow
+                    };
                     db.TFile.Add(f);
                     db.SaveChanges();
 
@@ -196,15 +198,17 @@ namespace WebApi.Controllers.v1
                 if (isSuccess)
                 {
 
-                    TFile f = new();
-                    f.Id = fileName;
-                    f.Name = file.FileName;
-                    f.Path = path;
-                    f.Table = business;
-                    f.TableId = key;
-                    f.Sign = sign;
-                    f.CreateUserId = userId;
-                    f.CreateTime = DateTime.UtcNow;
+                    TFile f = new()
+                    {
+                        Id = fileName,
+                        Name = file.FileName,
+                        Path = path,
+                        Table = business,
+                        TableId = key,
+                        Sign = sign,
+                        CreateUserId = userId,
+                        CreateTime = DateTime.UtcNow
+                    };
                     db.TFile.Add(f);
                     db.SaveChanges();
 

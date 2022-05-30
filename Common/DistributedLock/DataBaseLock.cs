@@ -47,11 +47,12 @@ namespace Common.DistributedLock
 
                     try
                     {
-                        TLock lk = new();
-
-                        lk.Id = keyMd5;
-                        lk.TTL = expiry.TotalSeconds;
-                        lk.CreateTime = DateTime.UtcNow;
+                        TLock lk = new()
+                        {
+                            Id = keyMd5,
+                            TTL = expiry.TotalSeconds,
+                            CreateTime = DateTime.UtcNow
+                        };
 
                         db.TLock.Add(lk);
 
@@ -104,19 +105,21 @@ namespace Common.DistributedLock
                 try
                 {
 
-                    TLock lk = new();
-
-                    lk.Id = keyMd5;
-                    lk.TTL = expiry.TotalSeconds;
-                    lk.CreateTime = DateTime.UtcNow;
+                    TLock lk = new()
+                    {
+                        Id = keyMd5,
+                        TTL = expiry.TotalSeconds,
+                        CreateTime = DateTime.UtcNow
+                    };
 
                     db.TLock.Add(lk);
 
                     db.SaveChanges();
 
-                    DataBaseLockHandle dataBaseLockHandle = new(db);
-
-                    dataBaseLockHandle.LockKey = keyMd5;
+                    DataBaseLockHandle dataBaseLockHandle = new(db)
+                    {
+                        LockKey = keyMd5
+                    };
                     return dataBaseLockHandle;
                 }
                 catch

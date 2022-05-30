@@ -56,17 +56,18 @@ namespace Common.TencentCloud
 
             SmsClient client = new(cred, "ap-guangzhou");
 
-            SendSmsRequest req = new();
+            SendSmsRequest req = new()
+            {
+                SmsSdkAppid = appId,
 
-            req.SmsSdkAppid = appId;
+                Sign = SignName,
 
-            req.Sign = SignName;
+                PhoneNumberSet = new String[] { "+86" + Phone },
 
-            req.PhoneNumberSet = new String[] { "+86" + Phone };
+                TemplateID = TemplateCode,
 
-            req.TemplateID = TemplateCode;
-
-            req.TemplateParamSet = TemplateParam;
+                TemplateParamSet = TemplateParam
+            };
 
 
             client.SendSms(req);

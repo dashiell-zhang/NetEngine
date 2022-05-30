@@ -88,9 +88,10 @@ namespace Common.DistributedLock
                 {
                     if (RedisHelper.Lock(keyMd5, "123456", expiry))
                     {
-                        RedisLockHandle redisLockHandle = new();
-
-                        redisLockHandle.LockKey = keyMd5;
+                        RedisLockHandle redisLockHandle = new()
+                        {
+                            LockKey = keyMd5
+                        };
                         return redisLockHandle;
                     }
                 }

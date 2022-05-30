@@ -125,11 +125,13 @@ namespace AdminApi.Libraries.Verify
                         if (tokenInfo != null)
                         {
 
-                            TUserToken userToken = new();
-                            userToken.Id = snowflakeHelper.GetId();
-                            userToken.UserId = userId;
-                            userToken.LastId = tokenId;
-                            userToken.CreateTime = DateTime.UtcNow;
+                            TUserToken userToken = new()
+                            {
+                                Id = snowflakeHelper.GetId(),
+                                UserId = userId,
+                                LastId = tokenId,
+                                CreateTime = DateTime.UtcNow
+                            };
 
                             var claims = new Claim[]{
                                     new Claim("tokenId",userToken.Id.ToString()),

@@ -1,4 +1,5 @@
 ﻿using Common;
+using Microsoft.Extensions.Caching.Distributed;
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -16,6 +17,15 @@ namespace WebApi.Libraries.HttpHandler
     /// </summary>
     public class HttpSignHandler : DelegatingHandler
     {
+
+
+        private readonly IDistributedCache distributedCache;
+
+
+        public HttpSignHandler(IDistributedCache distributedCache)
+        {
+            this.distributedCache = distributedCache;
+        }
 
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -81,7 +91,7 @@ namespace WebApi.Libraries.HttpHandler
 
                 if (!string.IsNullOrEmpty(newToken))
                 {
-                    CacheHelper.SetString("token", newToken);
+                    distributedCache.SetString("token", newToken);
                 }
             }
 
@@ -90,9 +100,9 @@ namespace WebApi.Libraries.HttpHandler
         }
 
 
-        private static string GetToken()
+        private string GetToken()
         {
-            var token = CacheHelper.GetString("token");
+            var token = distributedCache.GetString("token");
 
             if (string.IsNullOrEmpty(token))
             {
@@ -106,7 +116,7 @@ namespace WebApi.Libraries.HttpHandler
 
                 token = HttpHelper.Post("https://localhost:9833/api/Authorize/GetToken", getTKStr, "json");
 
-                CacheHelper.SetString("token", token);
+                distributedCache.SetString("token", token);
             }
 
             return token;

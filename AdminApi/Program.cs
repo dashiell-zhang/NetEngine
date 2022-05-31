@@ -16,7 +16,6 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -286,7 +285,6 @@ namespace AdminApi
 
             var app = builder.Build();
 
-            CacheHelper.distributedCache = app.Services.GetRequiredService<IDistributedCache>();
             HttpHelper.httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
 
 

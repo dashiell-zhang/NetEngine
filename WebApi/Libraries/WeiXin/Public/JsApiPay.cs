@@ -7,17 +7,15 @@ namespace WebApi.Libraries.WeiXin.Public
 
         private readonly string appid;
 
-        private readonly string secret;
 
         private readonly string mchid;
 
         private readonly string mchkey;
 
 
-        public JsApiPay(string appid, string secret, string mchid, string mchkey)
+        public JsApiPay(string appid, string mchid, string mchkey)
         {
             this.appid = appid;
-            this.secret = secret;
             this.mchid = mchid;
             this.mchkey = mchkey;
         }
@@ -44,10 +42,7 @@ namespace WebApi.Libraries.WeiXin.Public
             inputObj.SetValue("nonce_str", Guid.NewGuid().ToString().Replace("-", ""));//随机字符串
             inputObj.SetValue("sign", inputObj.MakeSign(mchkey));//签名
             string xml = inputObj.ToXml();
-            var startTime = DateTime.UtcNow; //开始时间
             string response = Common.HttpHelper.Post(sendUrl, xml, "xml");//调用HTTP通信接口提交数据
-            var endTime = DateTime.UtcNow; //结束时间
-            int timeCost = (int)((endTime - startTime).TotalMilliseconds); //计算所用时间
             //将xml格式的数据转化为对象以返回
             WxPayData result = new();
             result.FromXml(response, mchkey);

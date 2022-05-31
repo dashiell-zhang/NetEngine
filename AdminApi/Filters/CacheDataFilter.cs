@@ -1,6 +1,8 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 
@@ -47,7 +49,9 @@ namespace AdminApi.Filters
 
             try
             {
-                var cacheInfo = CacheHelper.GetString(key);
+
+                var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
+                var cacheInfo = distributedCache.GetString(key);
 
                 if (!string.IsNullOrEmpty(cacheInfo))
                 {
@@ -87,7 +91,8 @@ namespace AdminApi.Filters
 
                 if (value != null)
                 {
-                    CacheHelper.SetString(key, value, TimeSpan.FromSeconds(TTL));
+                    var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
+                    distributedCache.SetString(key, value, TimeSpan.FromSeconds(TTL));
                 }
 
             }

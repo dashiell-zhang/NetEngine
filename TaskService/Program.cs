@@ -1,7 +1,6 @@
 ﻿using Common;
 using Common.DistributedLock;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,7 +18,6 @@ namespace TaskService
 
             using IHost host = CreateHostBuilder(args).Build();
 
-            CacheHelper.distributedCache = host.Services.GetRequiredService<IDistributedCache>();
             HttpHelper.httpClientFactory = host.Services.GetRequiredService<IHttpClientFactory>();
 
             host.Run();

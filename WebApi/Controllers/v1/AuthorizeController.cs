@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -34,16 +35,19 @@ namespace WebApi.Controllers.v1
         private readonly IDistributedLock distLock;
         private readonly SnowflakeHelper snowflakeHelper;
 
+        private readonly IDistributedCache distributedCache;
+
         private readonly AuthorizeService authorizeService;
 
         private readonly long userId;
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, IDistributedCache distributedCache, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
+            this.distributedCache = distributedCache;
 
             this.authorizeService = authorizeService;
 
@@ -106,7 +110,7 @@ namespace WebApi.Controllers.v1
             var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid!, appSecret!);
 
 
-            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
+            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, code);
 
             string openid = wxinfo.openid;
             string sessionkey = wxinfo.sessionkey;
@@ -174,10 +178,15 @@ namespace WebApi.Controllers.v1
         [HttpPost("GetTokenBySms")]
         public string? GetTokenBySms(DtoKeyValue keyValue)
         {
-            if (IdentityVerification.SmsVerifyPhone(keyValue))
-            {
-                string phone = keyValue.Key!.ToString()!;
 
+            string phone = keyValue.Key!.ToString()!;
+
+            string key = "VerifyPhone_" + phone;
+
+            var code = distributedCache.GetString(key);
+
+            if (string.IsNullOrEmpty(code) == false && code == keyValue.Value!.ToString())
+            {
                 var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
 
                 if (user == null)
@@ -254,7 +263,7 @@ namespace WebApi.Controllers.v1
 
             string key = "VerifyPhone_" + phone;
 
-            if (Common.CacheHelper.IsContainKey(key) == false)
+            if (distributedCache.IsContainKey(key) == false)
             {
 
                 var ran = new Random();
@@ -268,7 +277,7 @@ namespace WebApi.Controllers.v1
                 Common.AliYun.SmsHelper sms = new();
                 sms.SendSms(phone, "短信模板编号", "短信签名", JsonHelper.ObjectToJson(jsonCode));
 
-                Common.CacheHelper.SetString(key, code, new TimeSpan(0, 0, 5, 0));
+                distributedCache.SetString(key, code, new TimeSpan(0, 0, 5, 0));
 
                 return true;
             }
@@ -303,9 +312,9 @@ namespace WebApi.Controllers.v1
 
             var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(appid!, appSecret!);
 
-            var accseetoken = weiXinHelper.GetAccessToken(code).accessToken;
+            var accseetoken = weiXinHelper.GetAccessToken(distributedCache, code).accessToken;
 
-            var openid = weiXinHelper.GetAccessToken(code).openId;
+            var openid = weiXinHelper.GetAccessToken(distributedCache, code).openId;
 
             var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
 
@@ -417,9 +426,12 @@ namespace WebApi.Controllers.v1
 
             string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault()!;
 
-            var checkSms = IdentityVerification.SmsVerifyPhone(new DtoKeyValue { Key = phone, Value = updatePassWordBySms.SmsCode });
+            string key = "VerifyPhone_" + phone;
 
-            if (checkSms)
+            var code = distributedCache.GetString(key);
+
+
+            if (string.IsNullOrEmpty(code) == false && code == updatePassWordBySms.SmsCode)
             {
                 var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
 

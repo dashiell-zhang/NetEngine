@@ -1,4 +1,5 @@
 ﻿using Common;
+using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -121,10 +122,10 @@ namespace WebApi.Libraries.WeiXin.App
         /// 获取 AccessToken
         /// </summary>
         /// <returns></returns>
-        public (string accessToken, string openId) GetAccessToken(string code)
+        public (string accessToken, string openId) GetAccessToken(IDistributedCache distributedCache, string code)
         {
-            string token = CacheHelper.GetString("wxappaccesstoken" + code);
-            string openid = CacheHelper.GetString("wxappopenid" + code);
+            string token = distributedCache.GetString("wxappaccesstoken" + code);
+            string openid = distributedCache.GetString("wxappopenid" + code);
 
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(openid))
             {
@@ -144,8 +145,8 @@ namespace WebApi.Libraries.WeiXin.App
 
                 if (!string.IsNullOrEmpty(token))
                 {
-                    CacheHelper.SetString("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
-                    CacheHelper.SetString("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
+                    distributedCache.SetString("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
+                    distributedCache.SetString("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
                 }
             }
 

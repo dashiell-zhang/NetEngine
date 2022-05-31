@@ -1,4 +1,5 @@
 ﻿using Common;
+using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -40,9 +41,10 @@ namespace WebApi.Libraries.WeiXin.MiniApp
         /// <summary>
         /// 获取用户OpenId 和 SessionKey
         /// </summary>
+        /// <param name="distributedCache"></param>
         /// <param name="code"></param>
         /// <returns></returns>
-        public (string openid, string sessionkey) GetOpenIdAndSessionKey(string code)
+        public (string openid, string sessionkey) GetOpenIdAndSessionKey(IDistributedCache distributedCache, string code)
         {
             string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appid + "&secret=" + secret + "&js_code=" + code + "&grant_type=authorization_code";
 
@@ -53,7 +55,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
                 string openid = JsonHelper.GetValueByKey(httpret, "openid")!;
                 string sessionkey = JsonHelper.GetValueByKey(httpret, "session_key")!;
 
-                Common.CacheHelper.SetString(code, httpret, new TimeSpan(0, 0, 10));
+                distributedCache.SetString(code, httpret, new TimeSpan(0, 0, 10));
 
                 return (openid, sessionkey);
             }
@@ -63,7 +65,7 @@ namespace WebApi.Libraries.WeiXin.MiniApp
 
                 if (errcode == "40163")
                 {
-                    var cachHttpRet = Common.CacheHelper.GetString(code);
+                    var cachHttpRet = distributedCache.GetString(code);
 
                     if (!string.IsNullOrEmpty(cachHttpRet))
                     {

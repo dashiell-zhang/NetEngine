@@ -1,8 +1,10 @@
 ﻿using Aop.Api.Util;
+using Common;
 using Common.AliPay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -26,12 +28,15 @@ namespace WebApi.Controllers.v1
 
 
         private readonly DatabaseContext db;
+        private readonly IDistributedCache distributedCache;
 
 
 
-        public PayController(DatabaseContext db)
+
+        public PayController(DatabaseContext db, IDistributedCache distributedCache)
         {
             this.db = db;
+            this.distributedCache = distributedCache;
         }
 
 
@@ -138,7 +143,7 @@ namespace WebApi.Controllers.v1
         {
             string key = "wxpayPCUrl" + orderNo;
 
-            string codeUrl = Common.CacheHelper.GetString(key);
+            string codeUrl = distributedCache.GetString(key);
 
             if (string.IsNullOrEmpty(codeUrl))
             {
@@ -165,9 +170,9 @@ namespace WebApi.Controllers.v1
                     {
                         codeUrl = retCodeUrl;
 
-                        Common.CacheHelper.SetString(key, codeUrl, TimeSpan.FromMinutes(115));
+                        distributedCache.SetString(key, codeUrl, TimeSpan.FromMinutes(115));
 
-                        var image = Common.ImgHelper.GetQrCode(codeUrl);
+                        var image = ImgHelper.GetQrCode(codeUrl);
 
                         return File(image, "image/png");
                     }
@@ -227,7 +232,7 @@ namespace WebApi.Controllers.v1
 
                 if (appId != null && appSecret != null && mchId != null && mchKey != null)
                 {
-                    JsApiPay jsApiPay = new(appId, appSecret, mchId, mchKey);
+                    JsApiPay jsApiPay = new(appId, mchId, mchKey);
 
                     WxPayData send = jsApiPay.OrderQuery(req);
                     if (!(send.GetValue("return_code")!.ToString() == "SUCCESS" && send.GetValue("result_code")!.ToString() == "SUCCESS"))

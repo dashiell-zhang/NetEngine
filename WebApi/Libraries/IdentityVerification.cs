@@ -13,7 +13,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using WebApi.Models.AppSetting;
-using WebApi.Models.Shared;
 
 namespace WebApi.Libraries
 {
@@ -181,28 +180,7 @@ namespace WebApi.Libraries
 
 
 
-        /// <summary>
-        /// 校验短信身份验证码
-        /// </summary>
-        /// <param name="keyValue">key 为手机号，value 为验证码</param>
-        /// <returns></returns>
-        public static bool SmsVerifyPhone(DtoKeyValue keyValue)
-        {
-            string phone = keyValue.Key!.ToString()!;
 
-            string key = "VerifyPhone_" + phone;
-
-            var code = CacheHelper.GetString(key);
-
-            if (string.IsNullOrEmpty(code) == false && code == keyValue.Value!.ToString())
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
 
 
     }

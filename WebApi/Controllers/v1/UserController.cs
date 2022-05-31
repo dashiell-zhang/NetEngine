@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System.Linq;
 using WebApi.Filters;
@@ -27,13 +28,17 @@ namespace WebApi.Controllers.v1
 
         private readonly DatabaseContext db;
 
+        private readonly IDistributedCache distributedCache;
+
+
         private readonly long userId;
 
 
 
-        public UserController(DatabaseContext db, IHttpContextAccessor httpContextAccessor)
+        public UserController(DatabaseContext db, IDistributedCache distributedCache, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
+            this.distributedCache = distributedCache;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)
@@ -65,7 +70,7 @@ namespace WebApi.Controllers.v1
             {
                 var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid, appSecret);
 
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
+                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, code);
 
                 string openid = wxinfo.openid;
 
@@ -101,7 +106,7 @@ namespace WebApi.Controllers.v1
                 var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appId, appSecret);
 
 
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(code);
+                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, code);
 
                 string openid = wxinfo.openid;
                 string sessionkey = wxinfo.sessionkey;
@@ -168,10 +173,15 @@ namespace WebApi.Controllers.v1
         public bool EditUserPhoneBySms([FromBody] DtoKeyValue keyValue)
         {
 
-            if (IdentityVerification.SmsVerifyPhone(keyValue))
-            {
+            string phone = keyValue.Key!.ToString()!;
 
-                string phone = keyValue.Key!.ToString()!;
+            string key = "VerifyPhone_" + phone;
+
+            var code = distributedCache.GetString(key);
+
+
+            if (string.IsNullOrEmpty(code) == false && code == keyValue.Value!.ToString())
+            {
 
                 var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == phone).Count();
 

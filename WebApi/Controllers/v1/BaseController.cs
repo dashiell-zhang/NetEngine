@@ -1,5 +1,6 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -20,12 +21,15 @@ namespace WebApi.Controllers.v1
 
         private readonly DatabaseContext db;
         private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDistributedCache distributedCache;
 
 
-        public BaseController(DatabaseContext db, SnowflakeHelper snowflakeHelper)
+
+        public BaseController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IDistributedCache distributedCache)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
+            this.distributedCache = distributedCache;
         }
 
 
@@ -121,7 +125,7 @@ namespace WebApi.Controllers.v1
 
             var image = ImgHelper.GetVerifyCode(text);
 
-            CacheHelper.SetString(cacheKey, text, TimeSpan.FromMinutes(5));
+            distributedCache.SetString(cacheKey, text, TimeSpan.FromMinutes(5));
 
             return File(image, "image/png");
         }

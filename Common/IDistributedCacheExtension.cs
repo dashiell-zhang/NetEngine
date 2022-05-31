@@ -1,18 +1,10 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using System;
-using System.Text;
 
 namespace Common
 {
-    public class CacheHelper
+    public static class IDistributedCacheExtension
     {
-
-
-
-
-        public static IDistributedCache distributedCache;
-
-
 
 
         /// <summary>
@@ -20,32 +12,11 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static bool Remove(string key)
+        public static bool Remove(this IDistributedCache distributedCache, string key)
         {
             try
             {
                 distributedCache.Remove(key);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-
-
-        /// <summary>
-        /// 设置string类型的key
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static bool SetString(string key, string value)
-        {
-            try
-            {
-                distributedCache.SetString(key, value);
                 return true;
             }
             catch
@@ -62,7 +33,7 @@ namespace Common
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static bool SetObject(string key, object value)
+        public static bool SetObject(this IDistributedCache distributedCache, string key, object value)
         {
             try
             {
@@ -85,7 +56,7 @@ namespace Common
         /// <param name="value"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static bool SetString(string key, string value, TimeSpan timeOut)
+        public static bool SetString(this IDistributedCache distributedCache, string key, string value, TimeSpan timeOut)
         {
             try
             {
@@ -107,7 +78,7 @@ namespace Common
         /// <param name="value"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static bool SetObject(string key, object value, TimeSpan timeOut)
+        public static bool SetObject(this IDistributedCache distributedCache, string key, object value, TimeSpan timeOut)
         {
             try
             {
@@ -123,17 +94,6 @@ namespace Common
 
 
 
-        /// <summary>
-        /// 读取string类型的key
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public static string GetString(string key)
-        {
-            return distributedCache.GetString(key);
-        }
-
-
 
         /// <summary>
         /// 读取 Object 类型的key
@@ -141,7 +101,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static T GetObject<T>(string key)
+        public static T GetObject<T>(this IDistributedCache distributedCache, string key)
         {
             try
             {
@@ -162,9 +122,9 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static bool IsContainKey(string key)
+        public static bool IsContainKey(this IDistributedCache distributedCache, string key)
         {
-            if (string.IsNullOrEmpty(GetString(key)))
+            if (string.IsNullOrEmpty(distributedCache.GetString(key)))
             {
                 return false;
             }
@@ -173,7 +133,6 @@ namespace Common
                 return true;
             }
         }
-
 
 
     }

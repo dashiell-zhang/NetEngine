@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using Common;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Net.Http;
 using System.Xml;
 
 namespace WebApi.Libraries.WeiXin.Web
@@ -29,13 +31,14 @@ namespace WebApi.Libraries.WeiXin.Web
         /// <summary>
         /// 微信网页支付商户平台下单方法
         /// </summary>
+        /// <param name="httpClientFactory"></param>
         /// <param name="productid">产品ID</param>
         /// <param name="orderno">订单号</param>
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <param name="ip">服务器IP</param>
         /// <returns></returns>
-        public string? CreatePay(long productid, string orderno, string body, int price, string ip)
+        public string? CreatePay(IHttpClientFactory httpClientFactory, long productid, string orderno, string body, int price, string ip)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -68,7 +71,7 @@ namespace WebApi.Libraries.WeiXin.Web
                     ", appid, body, mchid, nonceStr, notifyurl
                               , orderno, productid, ip, price, "NATIVE", unifiedorderSign);
 
-            var getdata = Common.HttpHelper.Post(url, zhi, "form");
+            var getdata = httpClientFactory.Post(url, zhi, "form");
 
             //获取xml数据
             XmlDocument doc = new();

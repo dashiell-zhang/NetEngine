@@ -308,8 +308,6 @@ namespace WebApi
 
             var app = builder.Build();
 
-            HttpHelper.httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
-
 
             app.UseForwardedHeaders();
 

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System.Linq;
+using System.Net.Http;
 using WebApi.Filters;
 using WebApi.Libraries;
 using WebApi.Models.Shared;
@@ -30,15 +31,18 @@ namespace WebApi.Controllers.v1
 
         private readonly IDistributedCache distributedCache;
 
+        private readonly IHttpClientFactory httpClientFactory;
+
 
         private readonly long userId;
 
 
 
-        public UserController(DatabaseContext db, IDistributedCache distributedCache, IHttpContextAccessor httpContextAccessor)
+        public UserController(DatabaseContext db, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distributedCache = distributedCache;
+            this.httpClientFactory = httpClientFactory;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)
@@ -70,7 +74,7 @@ namespace WebApi.Controllers.v1
             {
                 var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid, appSecret);
 
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, code);
+                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);
 
                 string openid = wxinfo.openid;
 
@@ -106,7 +110,7 @@ namespace WebApi.Controllers.v1
                 var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appId, appSecret);
 
 
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, code);
+                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);
 
                 string openid = wxinfo.openid;
                 string sessionkey = wxinfo.sessionkey;

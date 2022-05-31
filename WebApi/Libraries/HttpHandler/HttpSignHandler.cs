@@ -20,11 +20,13 @@ namespace WebApi.Libraries.HttpHandler
 
 
         private readonly IDistributedCache distributedCache;
+        private readonly IHttpClientFactory httpClientFactory;
 
 
-        public HttpSignHandler(IDistributedCache distributedCache)
+        public HttpSignHandler(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory)
         {
             this.distributedCache = distributedCache;
+            this.httpClientFactory = httpClientFactory;
         }
 
 
@@ -114,7 +116,7 @@ namespace WebApi.Libraries.HttpHandler
 
                 var getTKStr = JsonHelper.ObjectToJson(getTK);
 
-                token = HttpHelper.Post("https://localhost:9833/api/Authorize/GetToken", getTKStr, "json");
+                token = httpClientFactory.Post("https://localhost:9833/api/Authorize/GetToken", getTKStr, "json");
 
                 distributedCache.SetString("token", token);
             }

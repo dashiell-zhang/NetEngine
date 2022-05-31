@@ -10,6 +10,7 @@ using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using WebApi.Filters;
 using WebApi.Libraries;
@@ -37,17 +38,20 @@ namespace WebApi.Controllers.v1
 
         private readonly IDistributedCache distributedCache;
 
+        private readonly IHttpClientFactory httpClientFactory;
+
         private readonly AuthorizeService authorizeService;
 
         private readonly long userId;
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, IDistributedCache distributedCache, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distLock = distLock;
             this.snowflakeHelper = snowflakeHelper;
             this.distributedCache = distributedCache;
+            this.httpClientFactory = httpClientFactory;
 
             this.authorizeService = authorizeService;
 
@@ -110,7 +114,7 @@ namespace WebApi.Controllers.v1
             var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid!, appSecret!);
 
 
-            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, code);
+            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);
 
             string openid = wxinfo.openid;
             string sessionkey = wxinfo.sessionkey;
@@ -312,11 +316,11 @@ namespace WebApi.Controllers.v1
 
             var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(appid!, appSecret!);
 
-            var accseetoken = weiXinHelper.GetAccessToken(distributedCache, code).accessToken;
+            var accseetoken = weiXinHelper.GetAccessToken(distributedCache, httpClientFactory, code).accessToken;
 
-            var openid = weiXinHelper.GetAccessToken(distributedCache, code).openId;
+            var openid = weiXinHelper.GetAccessToken(distributedCache, httpClientFactory, code).openId;
 
-            var userInfo = weiXinHelper.GetUserInfo(accseetoken, openid);
+            var userInfo = weiXinHelper.GetUserInfo(httpClientFactory, accseetoken, openid);
 
             if (userInfo.NickName != null)
             {

@@ -18,8 +18,6 @@ namespace TaskService
 
             using IHost host = CreateHostBuilder(args).Build();
 
-            HttpHelper.httpClientFactory = host.Services.GetRequiredService<IHttpClientFactory>();
-
             host.Run();
         }
 

@@ -1,6 +1,7 @@
 ﻿using Common;
 using Microsoft.Extensions.Caching.Distributed;
 using System;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using WebApi.Libraries.WeiXin.H5.Models;
@@ -35,7 +36,7 @@ namespace WebApi.Libraries.WeiXin.H5
         /// 获取 AccessToken
         /// </summary>
         /// <returns></returns>
-        public string? GetAccessToken(IDistributedCache distributedCache)
+        public string? GetAccessToken(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory)
         {
 
             string key = appid + appsecret + "accesstoken";
@@ -46,7 +47,7 @@ namespace WebApi.Libraries.WeiXin.H5
             {
                 string url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + appsecret;
 
-                var returnJson = Common.HttpHelper.Post(url, "", "form");
+                var returnJson = httpClientFactory.Post(url, "", "form");
 
                 token = JsonHelper.GetValueByKey(returnJson, "access_token");
 
@@ -65,7 +66,7 @@ namespace WebApi.Libraries.WeiXin.H5
         /// 获取 TicketID
         /// </summary>
         /// <returns></returns>
-        private string GetTicketID(IDistributedCache distributedCache)
+        private string GetTicketID(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory)
         {
 
             string key = appid + appsecret + "ticketid";
@@ -75,9 +76,9 @@ namespace WebApi.Libraries.WeiXin.H5
             if (string.IsNullOrEmpty(ticketid))
             {
 
-                string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken(distributedCache) + "&type=jsapi";
+                string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken(distributedCache, httpClientFactory) + "&type=jsapi";
 
-                string returnJson = HttpHelper.Post(getUrl, "", "form");
+                string returnJson = httpClientFactory.Post(getUrl, "", "form");
 
                 ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
 
@@ -104,9 +105,10 @@ namespace WebApi.Libraries.WeiXin.H5
         /// 获取 JsSDK 签名信息
         /// </summary>
         /// <param name="distributedCache"></param>
+        /// <param name="httpClientFactory"></param>
         /// <param name="url">HttpContext.GetUrl()</param>
         /// <returns></returns>
-        public DtoWeiXinJsSdkSign GetJsSDKSign(IDistributedCache distributedCache, string url)
+        public DtoWeiXinJsSdkSign GetJsSDKSign(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, string url)
         {
             var sdkSign = new DtoWeiXinJsSdkSign
             {
@@ -115,7 +117,7 @@ namespace WebApi.Libraries.WeiXin.H5
                 NonceStr = Guid.NewGuid().ToString().Replace("-", "")
             };
 
-            string jsapi_ticket = GetTicketID(distributedCache);
+            string jsapi_ticket = GetTicketID(distributedCache, httpClientFactory);
             string strYW = "jsapi_ticket=" + jsapi_ticket + "&noncestr=" + sdkSign.NonceStr + "&timestamp=" + sdkSign.TimeStamp + "&url=" + url;
 
             using (var sha1 = SHA1.Create())

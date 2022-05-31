@@ -3,23 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace Common
 {
 
     /// <summary>
-    /// 常用Http操作类集合
+    /// 扩展 Http客户端工厂接口,集成常用方法
     /// </summary>
-    public class HttpHelper
+    public static class IHttpClientFactoryExtension
     {
-
-
-        public static IHttpClientFactory httpClientFactory;
-
 
 
 
@@ -30,7 +24,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string Get(string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string Get(this IHttpClientFactory httpClientFactory, string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
             var client = httpClientFactory.CreateClient(httpClientName!);
@@ -51,37 +45,6 @@ namespace Common
 
 
         /// <summary>
-        /// Model对象转换为Uri网址参数形式
-        /// </summary>
-        /// <param name="obj">Model对象</param>
-        /// <param name="url">前部分网址</param>
-        /// <returns></returns>
-        public static string ModelToUriParam(object obj, string url = "")
-        {
-            PropertyInfo[] propertis = obj.GetType().GetProperties();
-            StringBuilder sb = new();
-            sb.Append(url);
-            sb.Append('?');
-            foreach (var p in propertis)
-            {
-                var v = p.GetValue(obj, null);
-                if (v == null)
-                    continue;
-
-                sb.Append(p.Name);
-                sb.Append('=');
-                sb.Append(HttpUtility.UrlEncode(v.ToString()));
-                sb.Append('&');
-            }
-            sb.Remove(sb.Length - 1, 1);
-
-            return sb.ToString();
-        }
-
-
-
-
-        /// <summary>
         /// Post Json或XML 数据到指定url
         /// </summary>
         /// <param name="url">Url</param>
@@ -90,7 +53,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string Post(string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string Post(this IHttpClientFactory httpClientFactory, string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
             var client = httpClientFactory.CreateClient(httpClientName!);
@@ -123,6 +86,7 @@ namespace Common
 
 
 
+
         /// <summary>
         /// Delete 方式发出请求
         /// </summary>
@@ -130,7 +94,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string Delete(string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string Delete(this IHttpClientFactory httpClientFactory, string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
             var client = httpClientFactory.CreateClient(httpClientName!);
@@ -149,6 +113,7 @@ namespace Common
 
 
 
+
         /// <summary>
         /// Post Json或XML 数据到指定url,异步执行
         /// </summary>
@@ -158,13 +123,14 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public async static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static async void PostAsync(this IHttpClientFactory httpClientFactory, string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
             await Task.Run(() =>
             {
-                Post(url, data, type, headers, httpClientName);
+                Post(httpClientFactory, url, data, type, headers, httpClientName);
             });
         }
+
 
 
 
@@ -176,7 +142,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string PostForm(string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string PostForm(this IHttpClientFactory httpClientFactory, string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
             var client = httpClientFactory.CreateClient(httpClientName!);
@@ -198,6 +164,7 @@ namespace Common
 
 
 
+
         /// <summary>
         /// Post文件和数据到指定url
         /// </summary>
@@ -206,7 +173,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string PostFormData(string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string PostFormData(this IHttpClientFactory httpClientFactory, string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
         {
 
             var client = httpClientFactory.CreateClient(httpClientName!);

@@ -2,7 +2,6 @@
 using AdminApi.Libraries;
 using AdminApi.Libraries.Swagger;
 using AdminApi.Models.AppSetting;
-using Common;
 using Common.DistributedLock;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -284,9 +283,6 @@ namespace AdminApi
             builder.Services.AddCustomServices();
 
             var app = builder.Build();
-
-            HttpHelper.httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
-
 
             app.UseForwardedHeaders();
 

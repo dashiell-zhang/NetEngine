@@ -9,6 +9,7 @@ using Repository.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using WebApi.Libraries;
 using WebApi.Libraries.WeiXin.App.Models;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
@@ -29,14 +30,16 @@ namespace WebApi.Controllers.v1
 
         private readonly DatabaseContext db;
         private readonly IDistributedCache distributedCache;
+        private readonly IHttpClientFactory httpClientFactory;
 
 
 
 
-        public PayController(DatabaseContext db, IDistributedCache distributedCache)
+        public PayController(DatabaseContext db, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory)
         {
             this.db = db;
             this.distributedCache = distributedCache;
+            this.httpClientFactory = httpClientFactory;
         }
 
 
@@ -75,7 +78,7 @@ namespace WebApi.Controllers.v1
 
                 int price = Convert.ToInt32(order.Price * 100);
 
-                var pay = weiXinHelper.CreatePay(order.UserOpenId!, order.OrderNo, order.ProductName, price);
+                var pay = weiXinHelper.CreatePay(httpClientFactory, order.UserOpenId!, order.OrderNo, order.ProductName, price);
 
                 return pay;
             }
@@ -118,7 +121,7 @@ namespace WebApi.Controllers.v1
 
                 int price = Convert.ToInt32(order.Price * 100);
 
-                var pay = weiXinHelper.CreatePay(order.OrderNo, "订单号：" + orderno, price, "119.29.29.29");
+                var pay = weiXinHelper.CreatePay(httpClientFactory, order.OrderNo, "订单号：" + orderno, price, "119.29.29.29");
 
                 return pay;
             }
@@ -164,7 +167,7 @@ namespace WebApi.Controllers.v1
 
                     int price = Convert.ToInt32(order.Price * 100);
 
-                    var retCodeUrl = weiXinHelper.CreatePay(order.Id, order.OrderNo, DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
+                    var retCodeUrl = weiXinHelper.CreatePay(httpClientFactory, order.Id, order.OrderNo, DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
 
                     if (retCodeUrl != null)
                     {
@@ -234,7 +237,7 @@ namespace WebApi.Controllers.v1
                 {
                     JsApiPay jsApiPay = new(appId, mchId, mchKey);
 
-                    WxPayData send = jsApiPay.OrderQuery(req);
+                    WxPayData send = jsApiPay.OrderQuery(req, httpClientFactory);
                     if (!(send.GetValue("return_code")!.ToString() == "SUCCESS" && send.GetValue("result_code")!.ToString() == "SUCCESS"))
                     {
                         //如果订单信息在微信后台不存在,立即返回失败

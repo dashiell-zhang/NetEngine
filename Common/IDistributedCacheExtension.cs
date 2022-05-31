@@ -3,6 +3,10 @@ using System;
 
 namespace Common
 {
+
+    /// <summary>
+    /// 扩展分布式缓存接口,集成常用方法
+    /// </summary>
     public static class IDistributedCacheExtension
     {
 

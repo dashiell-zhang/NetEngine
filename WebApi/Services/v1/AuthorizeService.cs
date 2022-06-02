@@ -7,7 +7,6 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using WebApi.Attributes;
 using WebApi.Models.AppSetting;
 
 namespace WebApi.Services.v1

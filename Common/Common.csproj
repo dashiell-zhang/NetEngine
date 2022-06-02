@@ -23,6 +23,7 @@
 		<PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
 		<PackageReference Include="NPOI" Version="2.5.6" />
 		<PackageReference Include="SkiaSharp" Version="2.88.0" />
@@ -30,7 +31,7 @@
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.6.0" />
 		<PackageReference Include="StackExchange.Redis" Version="2.5.61" />
 		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.29" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.525" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.528" />
 	</ItemGroup>
 
 	<ItemGroup>

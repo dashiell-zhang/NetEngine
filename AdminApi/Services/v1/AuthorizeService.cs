@@ -1,5 +1,4 @@
-﻿using AdminApi.Attributes;
-using AdminApi.Models.AppSetting;
+﻿using AdminApi.Models.AppSetting;
 using Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

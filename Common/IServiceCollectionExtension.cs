@@ -1,20 +1,22 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using WebApi.Attributes;
 
-namespace WebApi.Libraries
+namespace Common
 {
     public static class IServiceCollectionExtension
     {
 
-        public static void AddCustomServices(this IServiceCollection services)
+        public static void BatchRegisterServices(this IServiceCollection services)
         {
             services.RegisterServiceByAttribute(ServiceLifetime.Singleton);
             services.RegisterServiceByAttribute(ServiceLifetime.Scoped);
             services.RegisterServiceByAttribute(ServiceLifetime.Transient);
+
+            services.RegisterBackgroundService();
         }
 
 
@@ -58,5 +60,37 @@ namespace WebApi.Libraries
         }
 
 
+
+
+        /// <summary>
+        /// 注册后台服务
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="serviceLifetime"></param>
+        private static void RegisterBackgroundService(this IServiceCollection services)
+        {
+            List<Type> types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(t => t.GetTypes()).Where(t => typeof(BackgroundService).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract).ToList();
+
+            foreach (var type in types)
+            {
+                services.AddSingleton(typeof(IHostedService), type);
+            }
+        }
+
+
+    }
+
+
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public class ServiceAttribute : Attribute
+    {
+
+        public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Transient;
+
+        public ServiceAttribute(ServiceLifetime lifetime)
+        {
+            Lifetime = lifetime;
+        }
     }
 }

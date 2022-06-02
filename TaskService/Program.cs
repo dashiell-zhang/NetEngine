@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Net.Http;
-using TaskService.Libraries;
 
 namespace TaskService
 {
@@ -33,7 +32,7 @@ namespace TaskService
                     }, 100);
 
 
-                    services.AddCustomServices();
+                    services.BatchRegisterServices();
 
 
                     //注册雪花ID算法示例

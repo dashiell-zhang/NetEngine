@@ -2,6 +2,7 @@
 using AdminApi.Libraries;
 using AdminApi.Libraries.Swagger;
 using AdminApi.Models.AppSetting;
+using Common;
 using Common.DistributedLock;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -280,7 +281,7 @@ namespace AdminApi
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
             });
 
-            builder.Services.AddCustomServices();
+            builder.Services.BatchRegisterServices();
 
             var app = builder.Build();
 

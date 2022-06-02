@@ -303,7 +303,7 @@ namespace WebApi
 
 
 
-            builder.Services.AddCustomServices();
+            builder.Services.BatchRegisterServices();
 
 
             var app = builder.Build();

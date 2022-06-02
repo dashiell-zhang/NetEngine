@@ -18,7 +18,6 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="AlipaySDKNet.Standard" Version="4.6.285" />
 		<PackageReference Include="aliyun-net-sdk-core" Version="1.5.11" />
 		<PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="6.0.0" />

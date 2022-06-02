@@ -1,6 +1,5 @@
 ﻿using Aop.Api.Util;
 using Common;
-using Common.AliPay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using WebApi.Libraries;
+using WebApi.Libraries.AliPay;
 using WebApi.Libraries.WeiXin.App.Models;
 using WebApi.Libraries.WeiXin.MiniApp.Models;
 using WebApi.Libraries.WeiXin.Public;

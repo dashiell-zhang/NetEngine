@@ -4,7 +4,7 @@ using Aop.Api.Request;
 using Aop.Api.Response;
 using System;
 
-namespace Common.AliPay
+namespace WebApi.Libraries.AliPay
 {
     public class AliPayHelper
     {
@@ -12,70 +12,70 @@ namespace Common.AliPay
         /// <summary>
         /// AppId
         /// </summary>
-        public string appid;
+        private readonly string appid;
 
 
         /// <summary>
         /// 应用私钥
         /// </summary>
-        public string appprivatekey;
+        private readonly string appprivatekey;
 
 
         /// <summary>
         /// 支付宝公钥
         /// </summary>
-        public string alipaypublickey;
+        private readonly string alipaypublickey;
 
 
         /// <summary>
         /// 支付回调 同步URL
         /// </summary>
-        public string? returnUrl;
+        private readonly string? returnUrl;
 
 
         /// <summary>
         /// 支付回调 异步URL
         /// </summary>
-        public string notifyUrl;
+        private readonly string notifyUrl;
 
 
 
         /// <summary>
         /// 支付中途退出后跳转URL
         /// </summary>
-        public string? quitUrl;
+        private readonly string? quitUrl;
 
 
-        /// <param name="in_appid">AppId</param>
-        /// <param name="in_appprivatekey">应用私钥</param>
-        /// <param name="in_alipaypublickey">支付宝公钥</param>
-        /// <param name="in_returnUrl">支付回调 同步URL</param>
-        /// <param name="in_notifyUrl">支付回调 异步URL</param>
-        /// <param name="in_quitUrl">支付中途退出后跳转URL</param>
+        /// <param name="appId">AppId</param>
+        /// <param name="privateKey">应用私钥</param>
+        /// <param name="publicKey">支付宝公钥</param>
+        /// <param name="notifyUrl">支付回调 异步URL</param>
+        /// <param name="returnUrl">支付回调 同步URL</param>
+        /// <param name="quitUrl">支付中途退出后跳转URL</param>
         /// <remarks>H5 支付初始化</remarks>
-        public AliPayHelper(string in_appid, string in_appprivatekey, string in_alipaypublickey, string in_notifyUrl, string in_returnUrl, string in_quitUrl)
+        public AliPayHelper(string appId, string privateKey, string publicKey, string notifyUrl, string returnUrl, string quitUrl)
         {
-            appid = in_appid;
-            appprivatekey = in_appprivatekey;
-            alipaypublickey = in_alipaypublickey;
-            returnUrl = in_returnUrl;
-            notifyUrl = in_notifyUrl;
-            quitUrl = in_quitUrl;
+            appid = appId;
+            appprivatekey = privateKey;
+            alipaypublickey = publicKey;
+            this.returnUrl = returnUrl;
+            this.notifyUrl = notifyUrl;
+            this.quitUrl = quitUrl;
         }
 
 
 
-        /// <param name="in_appid">AppId</param>
-        /// <param name="in_appprivatekey">应用私钥</param>
-        /// <param name="in_alipaypublickey">支付宝公钥</param>
-        /// <param name="in_notifyUrl">支付回调 异步URL</param>
+        /// <param name="appId">AppId</param>
+        /// <param name="privateKey">应用私钥</param>
+        /// <param name="publicKey">支付宝公钥</param>
+        /// <param name="notifyUrl">支付回调 异步URL</param>
         /// <remarks>APP支付初始化</remarks>
-        public AliPayHelper(string in_appid, string in_appprivatekey, string in_alipaypublickey, string in_notifyUrl)
+        public AliPayHelper(string appId, string privateKey, string publicKey, string notifyUrl)
         {
-            appid = in_appid;
-            appprivatekey = in_appprivatekey;
-            alipaypublickey = in_alipaypublickey;
-            notifyUrl = in_notifyUrl;
+            appid = appId;
+            appprivatekey = privateKey;
+            alipaypublickey = publicKey;
+            this.notifyUrl = notifyUrl;
         }
 
 
@@ -83,12 +83,12 @@ namespace Common.AliPay
         /// <summary>
         /// 创建支付宝商户订单_H5
         /// </summary>
-        /// <param name="orderno">商户订单号</param>
+        /// <param name="orderNo">商户订单号</param>
         /// <param name="title">商品名称</param>
         /// <param name="price">商品价格</param>
         /// <param name="describe">商品描述</param>
         /// <returns></returns>
-        public string CreatePayH5(string orderno, string title, string price, string describe)
+        public string CreatePayH5(string orderNo, string title, string price, string describe)
         {
             // 支付宝网关
             string gatewayUrl = "https://openapi.alipay.com/gateway.do";
@@ -98,7 +98,7 @@ namespace Common.AliPay
             // 组装业务参数model
             AlipayTradeWapPayModel model = new()
             {
-                OutTradeNo = orderno,
+                OutTradeNo = orderNo,
                 Subject = title,
                 TotalAmount = price,
                 Body = describe,
@@ -122,8 +122,6 @@ namespace Common.AliPay
             var response = client.pageExecute(request, null, "post");
             return response.Body;
         }
-
-
 
 
 
@@ -162,18 +160,19 @@ namespace Common.AliPay
 
 
 
-        /// <param name="in_appid">AppId</param>
-        /// <param name="in_appprivatekey">应用私钥</param>
-        /// <param name="in_alipaypublickey">支付宝公钥</param>
-        /// <param name="in_notifyUrl">支付回调 异步URL</param>
+        /// <param name="appId">AppId</param>
+        /// <param name="privateKey">应用私钥</param>
+        /// <param name="publicKey">支付宝公钥</param>
+        /// <param name="notifyUrl">支付回调 异步URL</param>
+        /// <param name="returnUrl">支付回调 同步URL</param>
         /// <remarks>WEB网站支付初始化</remarks>
-        public AliPayHelper(string in_appid, string in_appprivatekey, string in_alipaypublickey, string in_notifyUrl, string in_returnUrl)
+        public AliPayHelper(string appId, string privateKey, string publicKey, string notifyUrl, string returnUrl)
         {
-            appid = in_appid;
-            appprivatekey = in_appprivatekey;
-            alipaypublickey = in_alipaypublickey;
-            notifyUrl = in_notifyUrl;
-            returnUrl = in_returnUrl;
+            appid = appId;
+            appprivatekey = privateKey;
+            alipaypublickey = publicKey;
+            this.notifyUrl = notifyUrl;
+            this.returnUrl = returnUrl;
         }
 
 
@@ -184,9 +183,9 @@ namespace Common.AliPay
         /// <param name="body">订单描述</param>
         /// <param name="subject">订单名称</param>
         /// <param name="totalAmout">订单金额</param>
-        /// <param name="tradeno">商户订单号</param>
+        /// <param name="tradeNo">商户订单号</param>
         /// <returns></returns>
-        public string CreatePayPC(string body, string subject, string totalAmout, string tradeno)
+        public string CreatePayPC(string body, string subject, string totalAmout, string tradeNo)
         {
             DefaultAopClient client = new("https://openapi.alipay.com/gateway.do", appid, appprivatekey, "json", "2.0", "RSA2", alipaypublickey, "UTF-8", false);
 
@@ -196,7 +195,7 @@ namespace Common.AliPay
                 Body = body,
                 Subject = subject,
                 TotalAmount = totalAmout,
-                OutTradeNo = tradeno,
+                OutTradeNo = tradeNo,
                 ProductCode = "FAST_INSTANT_TRADE_PAY"
             };
 
@@ -209,7 +208,7 @@ namespace Common.AliPay
             request.SetBizModel(model);
 
             var response = client.SdkExecute(request);
-            Console.WriteLine($"订单支付发起成功，订单号：{tradeno}");
+            Console.WriteLine($"订单支付发起成功，订单号：{tradeNo}");
 
             //跳转支付宝支付
             string url = "https://openapi.alipay.com/gateway.do" + "?" + response.Body;

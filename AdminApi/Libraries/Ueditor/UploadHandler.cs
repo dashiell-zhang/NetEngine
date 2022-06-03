@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Common.FileStorage;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Linq;
@@ -20,6 +22,8 @@ namespace AdminApi.Libraries.Ueditor
 
         private readonly HttpContext httpContext;
 
+        private readonly IFileStorage fileStorage;
+
 
         public UploadHandler(UploadConfig config, string rootPath, HttpContext httpContext) : base()
         {
@@ -28,6 +32,8 @@ namespace AdminApi.Libraries.Ueditor
 
             this.rootPath = rootPath;
             this.httpContext = httpContext;
+
+            this.fileStorage = httpContext.RequestServices.GetRequiredService<IFileStorage>();
         }
 
         public override string Process()
@@ -57,9 +63,8 @@ namespace AdminApi.Libraries.Ueditor
 
                     if (upRemote)
                     {
-                        //将文件转存至 oss 并清理本地文件
-                        var oss = new Common.AliYun.OssHelper();
-                        var upload = oss.FileUpload(localPath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(localPath));
+
+                        var upload = fileStorage.FileUpload(localPath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(localPath));
 
                         if (upload)
                         {
@@ -71,7 +76,7 @@ namespace AdminApi.Libraries.Ueditor
                         else
                         {
                             Result.State = UploadState.FileAccessError;
-                            Result.ErrorMessage = "阿里云OSS文件转存失败";
+                            Result.ErrorMessage = "文件存储转存失败";
                         }
                     }
                     else
@@ -138,9 +143,8 @@ namespace AdminApi.Libraries.Ueditor
 
                         if (upRemote)
                         {
-                            //将文件转存至 oss 并清理本地文件
-                            var oss = new Common.AliYun.OssHelper();
-                            var upload = oss.FileUpload(localPath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
+
+                            var upload = fileStorage.FileUpload(localPath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
 
                             if (upload)
                             {
@@ -152,7 +156,7 @@ namespace AdminApi.Libraries.Ueditor
                             else
                             {
                                 Result.State = UploadState.FileAccessError;
-                                Result.ErrorMessage = "阿里云OSS文件转存失败";
+                                Result.ErrorMessage = "文件存储转存失败";
                             }
                         }
                         else

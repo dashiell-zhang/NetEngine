@@ -1,4 +1,5 @@
 ﻿using Common;
+using Common.FileStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -30,6 +31,7 @@ namespace WebApi.Controllers.v1
 
         private readonly DatabaseContext db;
         private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IFileStorage fileStorage;
 
         private readonly string rootPath;
 
@@ -37,10 +39,11 @@ namespace WebApi.Controllers.v1
 
 
 
-        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
+        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IFileStorage fileStorage, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
+            this.fileStorage = fileStorage;
 
             rootPath = webHostEnvironment.ContentRootPath.Replace("\\", "/");
 
@@ -51,6 +54,7 @@ namespace WebApi.Controllers.v1
                 userId = long.Parse(userIdStr);
             }
         }
+
 
 
 
@@ -97,13 +101,11 @@ namespace WebApi.Controllers.v1
 
                 if (upRemote == true)
                 {
-                    var oss = new Common.AliYun.OssHelper();
-
-                    var upload = oss.FileUpload(dlPath, basepath, fileInfoName);
+                    var upload = fileStorage.FileUpload(dlPath, basepath, fileInfoName);
 
                     if (upload)
                     {
-                        Common.IOHelper.DeleteFile(dlPath);
+                        IOHelper.DeleteFile(dlPath);
                     }
                     else
                     {
@@ -181,13 +183,11 @@ namespace WebApi.Controllers.v1
                 if (upRemote)
                 {
 
-                    var oss = new Common.AliYun.OssHelper();
-
-                    var upload = oss.FileUpload(path, "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
+                    var upload = fileStorage.FileUpload(path, "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
 
                     if (upload)
                     {
-                        Common.IOHelper.DeleteFile(path);
+                        IOHelper.DeleteFile(path);
 
                         path = "/files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;

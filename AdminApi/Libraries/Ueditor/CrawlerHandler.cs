@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Common.FileStorage;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Linq;
@@ -34,7 +36,10 @@ namespace AdminApi.Libraries.Ueditor
                     state = "参数错误：没有指定抓取源"
                 });
             }
-            Crawlers = Sources.Select(x => new Crawler(x, rootPath).Fetch()).ToArray();
+
+            var fileStorage = httpContext.RequestServices.GetRequiredService<IFileStorage>();
+
+            Crawlers = Sources.Select(x => new Crawler(x, rootPath).Fetch(fileStorage)).ToArray();
             return WriteJson(new
             {
                 state = "SUCCESS",
@@ -64,7 +69,7 @@ namespace AdminApi.Libraries.Ueditor
             this.rootPath = rootPath;
         }
 
-        public Crawler Fetch()
+        public Crawler Fetch(IFileStorage fileStorage)
         {
             if (!IsExternalIPAddress(SourceUrl!))
             {
@@ -103,9 +108,8 @@ namespace AdminApi.Libraries.Ueditor
 
                 if (upRemote)
                 {
-                    //将文件转存至 oss 并清理本地文件
-                    var oss = new Common.AliYun.OssHelper();
-                    var upload = oss.FileUpload(savePath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(SourceUrl!));
+
+                    var upload = fileStorage.FileUpload(savePath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(SourceUrl!));
 
                     if (upload)
                     {
@@ -116,7 +120,7 @@ namespace AdminApi.Libraries.Ueditor
                     }
                     else
                     {
-                        State = "抓取错误：阿里云OSS转存失败";
+                        State = "抓取错误：文件存储转存失败";
                     }
                 }
                 else

@@ -52,7 +52,7 @@ namespace WebApi.Services.v1
                 new Claim("userId",userId.ToString())
             };
 
-            var jwtSetting = configuration.GetSection("JWTSetting").Get<JWTSetting>();
+            var jwtSetting = configuration.GetSection("JWT").Get<JWTSetting>();
 
             var jwtPrivateKey = ECDsa.Create();
             jwtPrivateKey.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);

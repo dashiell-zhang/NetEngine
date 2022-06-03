@@ -4,6 +4,7 @@ using AdminApi.Libraries.Swagger;
 using AdminApi.Models.AppSetting;
 using Common;
 using Common.DistributedLock;
+using Common.FileStorage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -282,6 +283,17 @@ namespace AdminApi
             });
 
             builder.Services.BatchRegisterServices();
+
+
+            //注册腾讯云COS文件服务
+            var cosFileStorageSetting = builder.Configuration.GetSection("CosFileStorage").Get<CosFileStorageSetting>();
+            builder.Services.AddSingleton<IFileStorage>(new CosFileStorage(cosFileStorageSetting.AppId, cosFileStorageSetting.Region, cosFileStorageSetting.SecretId, cosFileStorageSetting.SecretKey, cosFileStorageSetting.BucketName));
+
+
+            //注册阿里云OSS文件服务
+            //var ossFileStorageSetting = builder.Configuration.GetSection("OssFileStorage").Get<OssFileStorageSetting>();
+            //builder.Services.AddSingleton<IFileStorage>(new OssFileStorage(ossFileStorageSetting.Endpoint, ossFileStorageSetting.AccessKeyId, ossFileStorageSetting.AccessKeySecret, ossFileStorageSetting.BucketName));
+
 
             var app = builder.Build();
 

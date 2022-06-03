@@ -1,6 +1,7 @@
 ﻿using AdminApi.Filters;
 using AdminApi.Libraries;
 using Common;
+using Common.FileStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -30,16 +31,18 @@ namespace AdminApi.Controllers.v1
 
         private readonly DatabaseContext db;
         private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IFileStorage fileStorage;
 
         private readonly string rootPath;
 
         private readonly long userId;
 
 
-        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
+        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IFileStorage fileStorage, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.snowflakeHelper = snowflakeHelper;
+            this.fileStorage = fileStorage;
 
             rootPath = webHostEnvironment.WebRootPath.Replace("\\", "/");
 
@@ -94,9 +97,7 @@ namespace AdminApi.Controllers.v1
                 if (upRemote)
                 {
 
-                    var oss = new Common.AliYun.OssHelper();
-
-                    var upload = oss.FileUpload(path, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
+                    var upload = fileStorage.FileUpload(path, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
 
                     if (upload)
                     {

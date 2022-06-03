@@ -1,11 +1,13 @@
 ﻿using Common;
 using Common.DistributedLock;
+using Common.FileStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Net.Http;
+using TaskService.Models.AppSetting;
 
 namespace TaskService
 {
@@ -33,6 +35,16 @@ namespace TaskService
 
 
                     services.BatchRegisterServices();
+
+                    //注册腾讯云COS文件服务
+                    var cosFileStorageSetting = hostContext.Configuration.GetSection("CosFileStorage").Get<CosFileStorageSetting>();
+                    services.AddSingleton<IFileStorage>(new CosFileStorage(cosFileStorageSetting.AppId, cosFileStorageSetting.Region, cosFileStorageSetting.SecretId, cosFileStorageSetting.SecretKey, cosFileStorageSetting.BucketName));
+
+
+                    //注册阿里云OSS文件服务
+                    //var ossFileStorageSetting = hostContext.Configuration.GetSection("OssFileStorage").Get<OssFileStorageSetting>();
+                    //services.AddSingleton<IFileStorage>(new OssFileStorage(ossFileStorageSetting.Endpoint, ossFileStorageSetting.AccessKeyId, ossFileStorageSetting.AccessKeySecret, ossFileStorageSetting.BucketName));
+
 
 
                     //注册雪花ID算法示例

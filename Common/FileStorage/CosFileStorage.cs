@@ -14,7 +14,7 @@ namespace Common.FileStorage
     /// <summary>
     /// 腾讯云COS文件存储
     /// </summary>
-    public class CosFileStorage : IFileStorage
+    public class TencentCloudFileStorage : IFileStorage
     {
 
         private readonly string appId;
@@ -26,7 +26,7 @@ namespace Common.FileStorage
 
 
 
-        public CosFileStorage(string appId, string region, string secretId, string secretKey, string bucketName)
+        public TencentCloudFileStorage(string appId, string region, string secretId, string secretKey, string bucketName)
         {
             this.appId = appId;
             this.region = region;

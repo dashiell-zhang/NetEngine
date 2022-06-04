@@ -1,6 +1,6 @@
 ﻿namespace TaskService.Models.AppSetting
 {
-    public class OssFileStorageSetting
+    public class AliCloudFileStorageSetting
     {
 
         /// <summary>

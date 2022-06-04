@@ -1,12 +1,7 @@
 ﻿namespace AdminApi.Models.AppSetting
 {
-    public class OssFileStorageSetting
+    public class AliCloudSMSSetting
     {
-
-        /// <summary>
-        /// 对象存储区域节点
-        /// </summary>
-        public string Endpoint { get; set; }
 
 
         /// <summary>
@@ -21,13 +16,6 @@
         public string AccessKeySecret { get; set; }
 
 
-        /// <summary>
-        /// 存储桶名称
-        /// </summary>
-        public string BucketName { get; set; }
-
     }
-
-
 
 }

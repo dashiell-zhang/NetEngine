@@ -10,7 +10,7 @@ namespace Common.FileStorage
     /// <summary>
     /// 阿里云OSS文件存储
     /// </summary>
-    public class OssFileStorage : IFileStorage
+    public class AliCloudFileStorage : IFileStorage
     {
 
         private readonly string endpoint;
@@ -20,7 +20,7 @@ namespace Common.FileStorage
 
 
 
-        public OssFileStorage(string endpoint, string accessKeyId, string accessKeySecret, string bucketName)
+        public AliCloudFileStorage(string endpoint, string accessKeyId, string accessKeySecret, string bucketName)
         {
             this.endpoint = endpoint;
             this.accessKeyId = accessKeyId;

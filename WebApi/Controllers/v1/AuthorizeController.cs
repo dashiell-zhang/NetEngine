@@ -1,5 +1,6 @@
 ﻿using Common;
 using Common.DistributedLock;
+using Common.SMS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
@@ -257,10 +258,11 @@ namespace WebApi.Controllers.v1
         /// <summary>
         /// 发送短信验证手机号码所有权
         /// </summary>
+        /// <param name="sms"></param>
         /// <param name="keyValue">key 为手机号，value 可为空</param>
         /// <returns></returns>
         [HttpPost("SendSmsVerifyPhone")]
-        public bool SendSmsVerifyPhone(DtoKeyValue keyValue)
+        public bool SendSmsVerifyPhone([FromServices] ISMS sms, DtoKeyValue keyValue)
         {
 
             string phone = keyValue.Key!.ToString()!;
@@ -273,13 +275,11 @@ namespace WebApi.Controllers.v1
                 var ran = new Random();
                 string code = ran.Next(100000, 999999).ToString();
 
-                var jsonCode = new
-                {
-                    code
-                };
+                Dictionary<string, string> templateParams = new();
 
-                Common.AliYun.SmsHelper sms = new();
-                sms.SendSms(phone, "短信模板编号", "短信签名", JsonHelper.ObjectToJson(jsonCode));
+                templateParams.Add("code", code);
+
+                sms.SendSMS("短信签名", phone, "短信模板编号", templateParams);
 
                 distributedCache.SetString(key, code, new TimeSpan(0, 0, 5, 0));
 

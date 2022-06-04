@@ -1,6 +1,6 @@
 ﻿namespace TaskService.Models.AppSetting
 {
-    public class CosFileStorageSetting
+    public class TencentCloudFileStorageSetting
     {
 
         /// <summary>

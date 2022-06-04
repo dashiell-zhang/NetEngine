@@ -1,6 +1,7 @@
 ﻿using Common;
 using Common.DistributedLock;
 using Common.FileStorage;
+using Common.SMS;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -307,14 +308,24 @@ namespace WebApi
             builder.Services.BatchRegisterServices();
 
 
+            //注册腾讯云短信服务
+            //var tencentCloudSMSSetting = builder.Configuration.GetSection("TencentCloudSMS").Get<TencentCloudSMSSetting>();
+            //builder.Services.AddSingleton<ISMS>(new TencentCloudSMS(tencentCloudSMSSetting.AppId, tencentCloudSMSSetting.SecretId, tencentCloudSMSSetting.SecretKey));
+
+
+            //注册阿里云短信服务
+            //var aliCloudSMSSetting = builder.Configuration.GetSection("AliCloudSMS").Get<AliCloudSMSSetting>();
+            //builder.Services.AddSingleton<ISMS>(new AliCloudSMS(aliCloudSMSSetting.AccessKeyId, aliCloudSMSSetting.AccessKeySecret));
+
+
             //注册腾讯云COS文件服务
-            var cosFileStorageSetting = builder.Configuration.GetSection("CosFileStorage").Get<CosFileStorageSetting>();
-            builder.Services.AddSingleton<IFileStorage>(new CosFileStorage(cosFileStorageSetting.AppId, cosFileStorageSetting.Region, cosFileStorageSetting.SecretId, cosFileStorageSetting.SecretKey, cosFileStorageSetting.BucketName));
+            //var tencentCloudFileStorageSetting = builder.Configuration.GetSection("TencentCloudFileStorage").Get<TencentCloudFileStorageSetting>();
+            //builder.Services.AddSingleton<IFileStorage>(new TencentCloudFileStorage(tencentCloudFileStorageSetting.AppId, tencentCloudFileStorageSetting.Region, tencentCloudFileStorageSetting.SecretId, tencentCloudFileStorageSetting.SecretKey, tencentCloudFileStorageSetting.BucketName));
 
 
             //注册阿里云OSS文件服务
-            //var ossFileStorageSetting = builder.Configuration.GetSection("OssFileStorage").Get<OssFileStorageSetting>();
-            //builder.Services.AddSingleton<IFileStorage>(new OssFileStorage(ossFileStorageSetting.Endpoint, ossFileStorageSetting.AccessKeyId, ossFileStorageSetting.AccessKeySecret, ossFileStorageSetting.BucketName));
+            //var aliCloudFileStorageSetting = builder.Configuration.GetSection("AliCloudFileStorage").Get<AliCloudFileStorageSetting>();
+            //builder.Services.AddSingleton<IFileStorage>(new AliCloudFileStorage(aliCloudFileStorageSetting.Endpoint, aliCloudFileStorageSetting.AccessKeyId, aliCloudFileStorageSetting.AccessKeySecret, aliCloudFileStorageSetting.BucketName));
 
 
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StackExchange.Redis;
+using System;
 using System.Threading;
 
 namespace Common.DistributedLock
@@ -6,6 +7,14 @@ namespace Common.DistributedLock
     public class RedisLock : IDistributedLock
     {
 
+        private readonly ConnectionMultiplexer connectionMultiplexer;
+
+
+
+        public RedisLock(string connectionString)
+        {
+            connectionMultiplexer = ConnectionMultiplexer.Connect(connectionString);
+        }
 
 
 
@@ -36,10 +45,12 @@ namespace Common.DistributedLock
 
                     try
                     {
-                        if (RedisHelper.Lock(keyMd5, "123456", expiry))
-                        {
+                        var database = connectionMultiplexer.GetDatabase();
 
+                        if (database.LockTake(keyMd5, "123456", expiry))
+                        {
                             redisLockHandle.LockKey = keyMd5;
+                            redisLockHandle.Database = database;
                             return redisLockHandle;
                         }
                     }
@@ -86,11 +97,14 @@ namespace Common.DistributedLock
 
                 try
                 {
-                    if (RedisHelper.Lock(keyMd5, "123456", expiry))
+                    var database = connectionMultiplexer.GetDatabase();
+
+                    if (database.LockTake(keyMd5, "123456", expiry))
                     {
                         RedisLockHandle redisLockHandle = new()
                         {
-                            LockKey = keyMd5
+                            LockKey = keyMd5,
+                            Database = database
                         };
                         return redisLockHandle;
                     }

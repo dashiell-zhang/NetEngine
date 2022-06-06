@@ -238,7 +238,7 @@ namespace AdminApi
 
 
             //注册分布式锁 Redis模式
-            //builder.Services.AddSingleton<IDistributedLock, RedisLock>();
+            //builder.Services.AddSingleton<IDistributedLock>(new RedisLock(builder.Configuration.GetConnectionString("redisConnection")));
 
             //注册分布式锁 数据库模式
             builder.Services.AddScoped<IDistributedLock, DataBaseLock>();

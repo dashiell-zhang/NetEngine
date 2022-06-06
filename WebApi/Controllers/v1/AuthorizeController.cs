@@ -275,9 +275,10 @@ namespace WebApi.Controllers.v1
                 var ran = new Random();
                 string code = ran.Next(100000, 999999).ToString();
 
-                Dictionary<string, string> templateParams = new();
-
-                templateParams.Add("code", code);
+                Dictionary<string, string> templateParams = new()
+                {
+                    { "code", code }
+                };
 
                 sms.SendSMS("短信签名", phone, "短信模板编号", templateParams);
 

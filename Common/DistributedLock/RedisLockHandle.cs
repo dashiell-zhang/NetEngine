@@ -1,17 +1,22 @@
-﻿using System;
+﻿using StackExchange.Redis;
+using System;
 
 namespace Common.DistributedLock
 {
     public class RedisLockHandle : IDisposable
     {
 
+        public IDatabase Database { get; set; }
+
+
         public string LockKey { get; set; }
+
 
         public void Dispose()
         {
             try
             {
-                RedisHelper.UnLock(LockKey, "123456");
+                Database.LockRelease(LockKey, "123456");
             }
             catch
             {

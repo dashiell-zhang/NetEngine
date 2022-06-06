@@ -6,6 +6,7 @@ using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Repository.Database;
 using System;
 using System.Collections.Generic;
@@ -23,15 +24,17 @@ namespace AdminApi.Controllers.v1
 
 
         private readonly DatabaseContext db;
+        private readonly IConfiguration configuration;
         private readonly SnowflakeHelper snowflakeHelper;
 
         private readonly long userId;
 
 
 
-        public ArticleController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IHttpContextAccessor httpContextAccessor)
+        public ArticleController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
+            this.configuration = configuration;
             this.snowflakeHelper = snowflakeHelper;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
@@ -407,7 +410,7 @@ namespace AdminApi.Controllers.v1
 
             data.Total = query.Count();
 
-            var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
+            var fileServerUrl = configuration["FileServerUrl"].ToString();
 
             data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
             {
@@ -444,7 +447,7 @@ namespace AdminApi.Controllers.v1
         [HttpGet("GetArticle")]
         public DtoArticle? GetArticle(long articleId)
         {
-            var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
+            var fileServerUrl = configuration["FileServerUrl"].ToString();
 
 
             var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == articleId).Select(t => new DtoArticle

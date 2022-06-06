@@ -36,7 +36,7 @@ namespace AdminApi.Libraries.Ueditor
             this.fileStorage = httpContext.RequestServices.GetRequiredService<IFileStorage>();
         }
 
-        public override string Process()
+        public override string Process(string fileServerUrl)
         {
 
             string value = "";

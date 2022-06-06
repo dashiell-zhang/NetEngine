@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace AdminApi.Controllers.v1
 {
@@ -13,10 +14,12 @@ namespace AdminApi.Controllers.v1
     {
 
         private readonly IWebHostEnvironment webHostEnvironment;
+        private readonly IConfiguration configuration;
 
-        public UeditorController(IWebHostEnvironment webHostEnvironment)
+        public UeditorController(IWebHostEnvironment webHostEnvironment, IConfiguration configuration)
         {
             this.webHostEnvironment = webHostEnvironment;
+            this.configuration = configuration;
         }
 
 
@@ -27,43 +30,45 @@ namespace AdminApi.Controllers.v1
         {
             string rootPath = webHostEnvironment.WebRootPath.Replace("\\", "/");
 
+            string fileServerUrl = configuration["FileServerUrl"].ToString(); 
+
             Handler action = (Request.Query["action"].Count != 0 ? Request.Query["action"].ToString() : "") switch
             {
                 "config" => new ConfigHandler(),
                 "uploadimage" => new UploadHandler(new UploadConfig()
                 {
-                    AllowExtensions = Config.GetStringList("imageAllowFiles"),
-                    PathFormat = Config.GetString("imagePathFormat"),
-                    SizeLimit = Config.GetInt("imageMaxSize"),
-                    UploadFieldName = Config.GetString("imageFieldName")
+                    AllowExtensions = Config.GetStringList("imageAllowFiles", fileServerUrl),
+                    PathFormat = Config.GetString("imagePathFormat", fileServerUrl),
+                    SizeLimit = Config.GetInt("imageMaxSize", fileServerUrl),
+                    UploadFieldName = Config.GetString("imageFieldName", fileServerUrl)
                 }, rootPath, HttpContext),
                 "uploadscrawl" => new UploadHandler(new UploadConfig()
                 {
                     AllowExtensions = new string[] { ".png" },
-                    PathFormat = Config.GetString("scrawlPathFormat"),
-                    SizeLimit = Config.GetInt("scrawlMaxSize"),
-                    UploadFieldName = Config.GetString("scrawlFieldName"),
+                    PathFormat = Config.GetString("scrawlPathFormat", fileServerUrl),
+                    SizeLimit = Config.GetInt("scrawlMaxSize", fileServerUrl),
+                    UploadFieldName = Config.GetString("scrawlFieldName", fileServerUrl),
                     Base64 = true,
                     Base64Filename = "scrawl.png"
                 }, rootPath, HttpContext),
                 "uploadvideo" => new UploadHandler(new UploadConfig()
                 {
-                    AllowExtensions = Config.GetStringList("videoAllowFiles"),
-                    PathFormat = Config.GetString("videoPathFormat"),
-                    SizeLimit = Config.GetInt("videoMaxSize"),
-                    UploadFieldName = Config.GetString("videoFieldName")
+                    AllowExtensions = Config.GetStringList("videoAllowFiles", fileServerUrl),
+                    PathFormat = Config.GetString("videoPathFormat", fileServerUrl),
+                    SizeLimit = Config.GetInt("videoMaxSize", fileServerUrl),
+                    UploadFieldName = Config.GetString("videoFieldName", fileServerUrl)
                 }, rootPath, HttpContext),
                 "uploadfile" => new UploadHandler(new UploadConfig()
                 {
-                    AllowExtensions = Config.GetStringList("fileAllowFiles"),
-                    PathFormat = Config.GetString("filePathFormat"),
-                    SizeLimit = Config.GetInt("fileMaxSize"),
-                    UploadFieldName = Config.GetString("fileFieldName")
+                    AllowExtensions = Config.GetStringList("fileAllowFiles", fileServerUrl),
+                    PathFormat = Config.GetString("filePathFormat", fileServerUrl),
+                    SizeLimit = Config.GetInt("fileMaxSize", fileServerUrl),
+                    UploadFieldName = Config.GetString("fileFieldName", fileServerUrl)
                 }, rootPath, HttpContext),
                 "catchimage" => new CrawlerHandler(rootPath, HttpContext),
                 _ => new NotSupportedHandler(),
             };
-            return action.Process();
+            return action.Process(fileServerUrl);
         }
 
 

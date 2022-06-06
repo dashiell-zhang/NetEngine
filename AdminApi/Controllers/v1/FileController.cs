@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Repository.Database;
 using SkiaSharp;
 using System;
@@ -30,6 +31,7 @@ namespace AdminApi.Controllers.v1
 
 
         private readonly DatabaseContext db;
+        private readonly IConfiguration configuration;
         private readonly SnowflakeHelper snowflakeHelper;
         private readonly IFileStorage fileStorage;
 
@@ -38,9 +40,10 @@ namespace AdminApi.Controllers.v1
         private readonly long userId;
 
 
-        public FileController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IFileStorage fileStorage, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
+        public FileController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IFileStorage fileStorage, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
+            this.configuration = configuration;
             this.snowflakeHelper = snowflakeHelper;
             this.fileStorage = fileStorage;
 
@@ -101,7 +104,7 @@ namespace AdminApi.Controllers.v1
 
                     if (upload)
                     {
-                        Common.IOHelper.DeleteFile(path);
+                        IOHelper.DeleteFile(path);
 
                         path = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
                         isSuccess = true;
@@ -268,7 +271,7 @@ namespace AdminApi.Controllers.v1
 
             if (file != null)
             {
-                var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
+                var fileServerUrl = configuration["FileServerUrl"].ToString();
 
                 string fileUrl = fileServerUrl + file.Path;
 

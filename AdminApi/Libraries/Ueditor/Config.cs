@@ -9,7 +9,7 @@ namespace AdminApi.Libraries.Ueditor
     {
         private readonly static bool noCache = true;
 
-        private static JsonDocument BuildItems()
+        private static JsonDocument BuildItems(string fileServerUrl)
         {
             var json = @"{
                               /* 上传图片配置项 */
@@ -63,7 +63,7 @@ namespace AdminApi.Libraries.Ueditor
                               ""fileAllowFiles"": [ "".png"", "".jpg"", "".jpeg"", "".gif"", "".bmp"", "".flv"", "".swf"", "".mkv"", "".avi"", "".rm"", "".rmvb"", "".mpeg"", "".mpg"", "".ogg"", "".ogv"", "".mov"", "".wmv"", "".mp4"", "".webm"", "".mp3"", "".wav"", "".mid"", "".rar"", "".zip"", "".tar"", "".gz"", "".7z"", "".bz2"", "".cab"", "".iso"", "".doc"", "".docx"", "".xls"", "".xlsx"", "".ppt"", "".pptx"", "".pdf"", "".txt"", "".md"", "".xml"" ] /* 上传文件格式显示 */
                             }";
 
-            var fileServerUrl = Common.IOHelper.GetConfig()["FileServerUrl"].ToString();
+
 
             json = json.Replace("FileServerUrl", fileServerUrl);
 
@@ -75,35 +75,33 @@ namespace AdminApi.Libraries.Ueditor
             return JsonDocument.Parse(json, options);
         }
 
-        public static JsonDocument Items
+        public static JsonDocument Items(string fileServerUrl)
         {
-            get
+            if (noCache || _Items == null)
             {
-                if (noCache || _Items == null)
-                {
-                    _Items = BuildItems();
-                }
-                return _Items;
+                _Items = BuildItems(fileServerUrl);
             }
+            return _Items;
         }
+
         private static JsonDocument? _Items;
 
 
 
 
-        public static string[] GetStringList(string key)
+        public static string[] GetStringList(string key,string fileServerUrl)
         {
-            return Items.RootElement.Clone().GetProperty(key).Deserialize<string[]>()!;
+            return Items(fileServerUrl).RootElement.Clone().GetProperty(key).Deserialize<string[]>()!;
         }
 
-        public static string GetString(string key)
+        public static string GetString(string key, string fileServerUrl)
         {
-            return Items.RootElement.Clone().GetProperty(key).GetString()!;
+            return Items(fileServerUrl).RootElement.Clone().GetProperty(key).GetString()!;
         }
 
-        public static int GetInt(string key)
+        public static int GetInt(string key, string fileServerUrl)
         {
-            return Items.RootElement.Clone().GetProperty(key).GetInt32();
+            return Items(fileServerUrl).RootElement.Clone().GetProperty(key).GetInt32();
         }
     }
 

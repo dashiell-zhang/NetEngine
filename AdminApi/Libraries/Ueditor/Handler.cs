@@ -10,7 +10,7 @@ namespace AdminApi.Libraries.Ueditor
     {
 
 
-        public abstract string Process();
+        public abstract string Process(string fileServerUrl);
 
         protected string WriteJson(object response)
         {

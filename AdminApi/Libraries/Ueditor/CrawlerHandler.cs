@@ -26,7 +26,7 @@ namespace AdminApi.Libraries.Ueditor
             this.httpContext = httpContext;
         }
 
-        public override string Process()
+        public override string Process(string fileServerUrl)
         {
             Sources = httpContext.Current().Request.Form["source[]"];
             if (Sources == null || Sources.Length == 0)
@@ -39,7 +39,7 @@ namespace AdminApi.Libraries.Ueditor
 
             var fileStorage = httpContext.RequestServices.GetRequiredService<IFileStorage>();
 
-            Crawlers = Sources.Select(x => new Crawler(x, rootPath).Fetch(fileStorage)).ToArray();
+            Crawlers = Sources.Select(x => new Crawler(x, rootPath, fileServerUrl).Fetch(fileStorage)).ToArray();
             return WriteJson(new
             {
                 state = "SUCCESS",
@@ -61,12 +61,15 @@ namespace AdminApi.Libraries.Ueditor
 
         private readonly string rootPath;
 
+        private readonly string fileServerUrl;
 
 
-        public Crawler(string sourceUrl, string rootPath)
+
+        public Crawler(string sourceUrl, string rootPath, string fileServerUrl)
         {
             SourceUrl = sourceUrl;
             this.rootPath = rootPath;
+            this.fileServerUrl = fileServerUrl;
         }
 
         public Crawler Fetch(IFileStorage fileStorage)
@@ -93,7 +96,7 @@ namespace AdminApi.Libraries.Ueditor
                 State = "Url is not an image";
                 return this;
             }
-            ServerUrl = PathFormatter.Format(Path.GetFileName(SourceUrl!), Config.GetString("catcherPathFormat"));
+            ServerUrl = PathFormatter.Format(Path.GetFileName(SourceUrl!), Config.GetString("catcherPathFormat", fileServerUrl));
             var savePath = rootPath + ServerUrl;
             if (!Directory.Exists(Path.GetDirectoryName(savePath)))
             {

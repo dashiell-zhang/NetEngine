@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -34,8 +33,6 @@ namespace Common
                 return false;
             }
         }
-
-
 
 
 
@@ -128,29 +125,7 @@ namespace Common
         public static string GetFileSize(string path)
         {
             var fileInfo = new FileInfo(path);
-
-            string m_strSize = "";
-
-            long FactSize = fileInfo.Length;
-
-            if (FactSize < 1024.00)
-            {
-                m_strSize = FactSize.ToString("F2") + " Byte";
-            }
-            else if (FactSize >= 1024.00 && FactSize < 1048576)
-            {
-                m_strSize = (FactSize / 1024.00).ToString("F2") + " K";
-            }
-            else if (FactSize >= 1048576 && FactSize < 1073741824)
-            {
-                m_strSize = (FactSize / 1024.00 / 1024.00).ToString("F2") + " M";
-            }
-            else if (FactSize >= 1073741824)
-            {
-                m_strSize = (FactSize / 1024.00 / 1024.00 / 1024.00).ToString("F2") + " G";
-            }
-
-            return m_strSize;
+            return FileLengthToString(fileInfo.Length);
         }
 
 
@@ -216,8 +191,6 @@ namespace Common
 
 
 
-
-
         /// <summary>
         /// 将指定目录下的文件压缩为Zip文件
         /// </summary>
@@ -259,28 +232,6 @@ namespace Common
             }
 
             ZipFile.ExtractToDirectory(filePath, folderPath);
-        }
-
-
-
-        /// <summary>
-        /// 读取项目配置文件(appsettings.json)
-        /// </summary>
-        /// <returns></returns>
-        public static IConfigurationRoot GetConfig()
-        {
-            var ev = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-            if (string.IsNullOrEmpty(ev))
-            {
-                ev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            }
-            IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
-            if (!string.IsNullOrEmpty(ev))
-            {
-                builder = new ConfigurationBuilder().AddJsonFile("appsettings." + ev + ".json");
-            }
-            IConfigurationRoot configuration = builder.Build();
-            return configuration;
         }
 
 

@@ -8,7 +8,7 @@
     {
 
 
-        public override string Process()
+        public override string Process(string fileServerUrl)
         {
             return WriteJson(new
             {

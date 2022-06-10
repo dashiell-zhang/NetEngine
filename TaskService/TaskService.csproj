@@ -17,6 +17,12 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <Compile Remove="Libraries\**" />
+	  <EmbeddedResource Remove="Libraries\**" />
+	  <None Remove="Libraries\**" />
+	</ItemGroup>
+
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.5">
@@ -37,10 +43,6 @@
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Libraries\" />
 	</ItemGroup>
 
 	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">

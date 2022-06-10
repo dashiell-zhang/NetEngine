@@ -1,14 +1,11 @@
 ﻿using Common;
 using Common.DistributedLock;
-using Common.FileStorage;
-using Common.SMS;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Net.Http;
-using TaskService.Models.AppSetting;
 
 namespace TaskService
 {
@@ -37,6 +34,7 @@ namespace TaskService
 
                     services.BatchRegisterServices();
 
+                    #region 注册短信服务
 
                     //注册腾讯云短信服务
                     //var tencentCloudSMSSetting = hostContext.Configuration.GetSection("TencentCloudSMS").Get<TencentCloudSMSSetting>();
@@ -58,11 +56,12 @@ namespace TaskService
                     //var aliCloudFileStorageSetting = hostContext.Configuration.GetSection("AliCloudFileStorage").Get<AliCloudFileStorageSetting>();
                     //services.AddSingleton<IFileStorage>(new AliCloudFileStorage(aliCloudFileStorageSetting.Endpoint, aliCloudFileStorageSetting.AccessKeyId, aliCloudFileStorageSetting.AccessKeySecret, aliCloudFileStorageSetting.BucketName));
 
+                    #endregion
 
-
-                    //注册雪花ID算法示例
+                    //注册雪花ID算法
                     services.AddSingleton(new SnowflakeHelper(0, 0));
 
+                    #region 注册分布式锁
 
                     //注册分布式锁 Redis模式
                     //services.AddSingleton<IDistributedLock>(new RedisLock(hostContext.Configuration.GetConnectionString("redisConnection")));
@@ -70,6 +69,9 @@ namespace TaskService
                     //注册分布式锁 数据库模式
                     services.AddScoped<IDistributedLock, DataBaseLock>();
 
+                    #endregion
+
+                    #region 注册缓存服务
 
                     //注册缓存服务 内存模式
                     services.AddDistributedMemoryCache();
@@ -91,6 +93,9 @@ namespace TaskService
                     //    options.InstanceName = "cache";
                     //});
 
+                    #endregion
+
+                    #region 注册HttpClient
 
                     services.AddHttpClient("", options =>
                     {
@@ -109,6 +114,8 @@ namespace TaskService
                         AllowAutoRedirect = false,
                         ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
                     });
+
+                    #endregion
 
 
                 });

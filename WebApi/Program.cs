@@ -1,7 +1,5 @@
 ﻿using Common;
 using Common.DistributedLock;
-using Common.FileStorage;
-using Common.SMS;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -43,7 +41,8 @@ namespace WebApi
 
             var builder = WebApplication.CreateBuilder(args);
 
-            //启用 Kestrel Https 并绑定证书
+            #region 启用 Kestrel Https 并绑定证书
+
             //builder.WebHost.UseKestrel(options =>
             //{
             //    options.ConfigureHttpsDefaults(options =>
@@ -53,12 +52,16 @@ namespace WebApi
             //});
             //builder.WebHost.UseUrls("https://*");
 
+            #endregion
+
 
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("dbConnection"), o => o.MigrationsHistoryTable("__efmigrationshistory"));
             }, 100);
 
+
+            #region 基础 Server 配置
 
             builder.Services.Configure<FormOptions>(options =>
             {
@@ -80,7 +83,6 @@ namespace WebApi
                 options.MaxAge = TimeSpan.FromDays(365);
             });
 
-
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -91,11 +93,13 @@ namespace WebApi
                 options.EnableForHttps = true;
             });
 
+            #endregion
 
             builder.Services.AddControllers();
 
 
-            //注册JWT认证机制
+            #region 注册 JWT 认证机制
+
             var jwtSetting = builder.Configuration.GetSection("JWT").Get<JWTSetting>();
             var issuerSigningKey = ECDsa.Create();
             issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
@@ -114,12 +118,12 @@ namespace WebApi
                 };
             });
 
-
             builder.Services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build();
             });
 
+            #endregion
 
             //注册HttpContext
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -142,6 +146,7 @@ namespace WebApi
             });
 
 
+            #region 注册 Json 序列化配置
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
@@ -151,8 +156,9 @@ namespace WebApi
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
             });
 
+            #endregion
 
-
+            #region 注册 api 版本控制
 
             builder.Services.AddApiVersioning(options =>
             {
@@ -171,18 +177,18 @@ namespace WebApi
                 options.ApiVersionReader = new HeaderApiVersionReader("api-version");
             });
 
-
             builder.Services.AddVersionedApiExplorer(options =>
             {
                 options.GroupNameFormat = "'v'VVV";
                 options.SubstituteApiVersionInUrl = true;
             });
 
+            #endregion
+
+            #region 注册 Swagger
 
             builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, SwaggerConfigureOptions>();
 
-
-            //注册Swagger生成器，定义一个和多个Swagger 文档
             builder.Services.AddSwaggerGen(options =>
             {
                 options.OperationFilter<SwaggerOperationFilter>();
@@ -219,6 +225,7 @@ namespace WebApi
                 });
             });
 
+            #endregion
 
 
             //注册统一模型验证
@@ -243,9 +250,10 @@ namespace WebApi
             });
 
 
-            //注册雪花ID算法示例
+            //注册雪花ID算法
             builder.Services.AddSingleton(new SnowflakeHelper(0, 0));
 
+            #region 注册分布式锁
 
             //注册分布式锁 Redis模式
             //builder.Services.AddSingleton<IDistributedLock>(new RedisLock(builder.Configuration.GetConnectionString("redisConnection")));
@@ -253,10 +261,12 @@ namespace WebApi
             //注册分布式锁 数据库模式
             builder.Services.AddScoped<IDistributedLock, DataBaseLock>();
 
+            #endregion
+
+            #region 注册缓存服务
 
             //注册缓存服务 内存模式
             builder.Services.AddDistributedMemoryCache();
-
 
             //注册缓存服务 SqlServer模式
             //builder.Services.AddDistributedSqlServerCache(options =>
@@ -266,7 +276,6 @@ namespace WebApi
             //    options.TableName = "t_cache";
             //});
 
-
             //注册缓存服务 Redis模式
             //builder.Services.AddStackExchangeRedisCache(options =>
             //{
@@ -274,7 +283,9 @@ namespace WebApi
             //    options.InstanceName = "cache";
             //});
 
+            #endregion
 
+            #region 注册HttpClient
             builder.Services.AddHttpClient("", options =>
             {
                 options.DefaultRequestVersion = new Version("2.0");
@@ -303,10 +314,11 @@ namespace WebApi
                 AllowAutoRedirect = false,
             }).AddHttpMessageHandler(t => t.GetRequiredService<HttpSignHandler>()); ;
 
-
+            #endregion
 
             builder.Services.BatchRegisterServices();
 
+            #region 注册短信服务
 
             //注册腾讯云短信服务
             //var tencentCloudSMSSetting = builder.Configuration.GetSection("TencentCloudSMS").Get<TencentCloudSMSSetting>();
@@ -317,6 +329,9 @@ namespace WebApi
             //var aliCloudSMSSetting = builder.Configuration.GetSection("AliCloudSMS").Get<AliCloudSMSSetting>();
             //builder.Services.AddSingleton<ISMS>(new AliCloudSMS(aliCloudSMSSetting.AccessKeyId, aliCloudSMSSetting.AccessKeySecret));
 
+            #endregion
+
+            #region 注册文件服务
 
             //注册腾讯云COS文件服务
             //var tencentCloudFileStorageSetting = builder.Configuration.GetSection("TencentCloudFileStorage").Get<TencentCloudFileStorageSetting>();
@@ -327,16 +342,15 @@ namespace WebApi
             //var aliCloudFileStorageSetting = builder.Configuration.GetSection("AliCloudFileStorage").Get<AliCloudFileStorageSetting>();
             //builder.Services.AddSingleton<IFileStorage>(new AliCloudFileStorage(aliCloudFileStorageSetting.Endpoint, aliCloudFileStorageSetting.AccessKeyId, aliCloudFileStorageSetting.AccessKeySecret, aliCloudFileStorageSetting.BucketName));
 
-
+            #endregion
 
             var app = builder.Build();
-
 
             app.UseForwardedHeaders();
 
             app.UseResponseCompression();
 
-            //开启倒带模式运行多次读取HttpContext.Body中的内容
+            //开启倒带模式允许多次读取 HttpContext.Body 中的内容
             app.Use(async (context, next) =>
             {
                 context.Request.EnableBuffering();
@@ -359,9 +373,7 @@ namespace WebApi
             //注册跨域信息
             app.UseCors("cors");
 
-            //强制重定向到Https
             app.UseHttpsRedirection();
-
 
             app.UseRouting();
 
@@ -371,6 +383,8 @@ namespace WebApi
 
             app.MapControllers();
 
+
+            #region 启用 Swagger
 
             //启用中间件服务生成Swagger作为JSON端点
             app.UseSwagger();
@@ -386,6 +400,8 @@ namespace WebApi
 
                 options.RoutePrefix = "swagger";
             });
+
+            #endregion
 
 
             app.Run();

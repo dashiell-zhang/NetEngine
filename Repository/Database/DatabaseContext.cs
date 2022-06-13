@@ -16,6 +16,7 @@ namespace Repository.Database
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
 
+        #region 表实体声明
 
         public DbSet<TAppSetting> TAppSetting => Set<TAppSetting>();
 
@@ -94,6 +95,8 @@ namespace Repository.Database
         public DbSet<TUserToken> TUserToken => Set<TUserToken>();
 
 
+        #endregion
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -123,19 +126,19 @@ namespace Repository.Database
 #if DEBUG
                     //设置表的备注
                     builder.HasComment(GetEntityComment(entity.Name));
+
+                    var baseTypeNames = new List<string>();
+                    var baseType = entity.ClrType.BaseType;
+                    while (baseType != null)
+                    {
+                        baseTypeNames.Add(baseType.FullName!);
+                        baseType = baseType.BaseType;
+                    }
 #endif
 
 
                     foreach (var property in entity.GetProperties())
                     {
-
-                        var baseTypeNames = new List<string>();
-                        var baseType = entity.ClrType.BaseType;
-                        while (baseType != null)
-                        {
-                            baseTypeNames.Add(baseType.FullName!);
-                            baseType = baseType.BaseType;
-                        }
 
 #if DEBUG
                         //设置字段的备注

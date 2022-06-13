@@ -115,9 +115,9 @@ namespace Repository.Database
                     //builder.UseXminAsConcurrencyToken();
 
 
-                    //设置生成数据库时的表名为小写格式并添加前缀 t_
-                    var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value?.ToString()).FirstOrDefault()).FirstOrDefault() ?? ("t_" + entity.ClrType.Name[1..]);
-                    builder.ToTable(tableName.ToLower());
+                    //设置生成数据库时的表名移除前缀T
+                    var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value?.ToString()).FirstOrDefault()).FirstOrDefault() ?? (entity.ClrType.Name[1..]);
+                    builder.ToTable(tableName);
 
 
 #if DEBUG
@@ -128,12 +128,6 @@ namespace Repository.Database
 
                     foreach (var property in entity.GetProperties())
                     {
-
-                        string columnName = property.GetColumnName(StoreObjectIdentifier.Create(property.DeclaringEntityType, StoreObjectType.Table)!.Value)!;
-
-
-                        //设置字段名为小写
-                        property.SetColumnName(columnName.ToLower());
 
                         var baseTypeNames = new List<string>();
                         var baseType = entity.ClrType.BaseType;

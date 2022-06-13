@@ -28,7 +28,7 @@ namespace TaskService
 
                     services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
                     {
-                        options.UseSqlServer(hostContext.Configuration.GetConnectionString("dbConnection"), o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                        options.UseSqlServer(hostContext.Configuration.GetConnectionString("dbConnection"));
                     }, 100);
 
 

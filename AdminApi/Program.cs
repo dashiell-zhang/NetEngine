@@ -54,7 +54,7 @@ namespace AdminApi
 
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("dbConnection"), o => o.MigrationsHistoryTable("__efmigrationshistory"));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("dbConnection"));
             }, 100);
 
 

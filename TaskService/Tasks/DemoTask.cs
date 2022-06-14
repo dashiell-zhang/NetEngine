@@ -1,5 +1,5 @@
 ﻿using Common;
-using Common.DistributedLock;
+using DistributedLock;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Database;

@@ -1,8 +1,9 @@
-﻿using StackExchange.Redis;
+﻿using Common;
+using StackExchange.Redis;
 using System;
 using System.Threading;
 
-namespace Common.DistributedLock
+namespace DistributedLock
 {
     public class RedisLock : IDistributedLock
     {

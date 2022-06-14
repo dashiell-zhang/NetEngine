@@ -1,6 +1,6 @@
 ﻿using Common;
-using Common.DistributedLock;
 using Common.SMS;
+using DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;

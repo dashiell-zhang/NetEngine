@@ -1,10 +1,11 @@
-﻿using Repository.Database;
+﻿using Common;
+using Repository.Database;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Timers;
 
-namespace Common.DistributedLock
+namespace DistributedLock
 {
     public class DataBaseLock : IDistributedLock
     {

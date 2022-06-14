@@ -1,5 +1,5 @@
 ﻿using Common;
-using Common.DistributedLock;
+using DistributedLock;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

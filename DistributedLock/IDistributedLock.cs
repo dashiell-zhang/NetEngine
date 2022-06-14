@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Common.DistributedLock
+namespace DistributedLock
 {
     public interface IDistributedLock
     {

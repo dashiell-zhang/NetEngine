@@ -1,6 +1,6 @@
 ﻿using AdminApi.Models.AppSetting;
 using Common;
-using Common.DistributedLock;
+using DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;

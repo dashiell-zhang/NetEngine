@@ -15,14 +15,7 @@ namespace TaskService
         {
             EnvironmentHelper.ChangeDirectory(args);
 
-            using IHost host = CreateHostBuilder(args).Build();
-
-            host.Run();
-        }
-
-
-        private static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+            IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
 
@@ -45,7 +38,9 @@ namespace TaskService
                     //var aliCloudSMSSetting = hostContext.Configuration.GetSection("AliCloudSMS").Get<AliCloudSMSSetting>();
                     //services.AddSingleton<ISMS>(new AliCloudSMS(aliCloudSMSSetting.AccessKeyId, aliCloudSMSSetting.AccessKeySecret));
 
+                    #endregion
 
+                    #region 注册文件服务
 
                     //注册腾讯云COS文件服务
                     //var tencentCloudFileStorageSetting = hostContext.Configuration.GetSection("TencentCloudFileStorage").Get<TencentCloudFileStorageSetting>();
@@ -118,7 +113,12 @@ namespace TaskService
                     #endregion
 
 
-                });
+                })
+                .Build();
+
+            host.Run();
+
+        }
 
 
 

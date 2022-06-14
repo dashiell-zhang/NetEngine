@@ -23,8 +23,8 @@
 	<ItemGroup>
 		<PackageReference Include="AntDesign" Version="0.10.7" />
 		<PackageReference Include="Blazored.LocalStorage" Version="4.2.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.5" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.5" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.6" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.6" PrivateAssets="all" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.19.0" />
 		<PackageReference Include="System.Net.Http.Json" Version="6.0.0" />
 	</ItemGroup>

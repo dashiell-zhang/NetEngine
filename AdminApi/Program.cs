@@ -1,6 +1,5 @@
 ﻿using AdminApi.Filters;
 using AdminApi.Libraries;
-using AdminApi.Libraries.Swagger;
 using AdminApi.Models.AppSetting;
 using Common;
 using DistributedLock;
@@ -12,19 +11,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
+using Swagger;
 using System;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -94,7 +89,7 @@ namespace AdminApi
 
             #region 注册 JWT 认证机制
 
-            var jwtSetting = builder.Configuration.GetSection("JWTSetting").Get<JWTSetting>();
+            var jwtSetting = builder.Configuration.GetSection("JWT").Get<JWTSetting>();
             var issuerSigningKey = ECDsa.Create();
             issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
             builder.Services.AddAuthentication(options =>
@@ -178,47 +173,9 @@ namespace AdminApi
 
             #endregion
 
-            #region 注册 Swagger
-
-            builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, SwaggerConfigureOptions>();
-
-            builder.Services.AddSwaggerGen(options =>
-            {
-                options.OperationFilter<SwaggerOperationFilter>();
-
-                options.MapType<long>(() => new OpenApiSchema { Type = "string", Format = "long" });
 
 
-                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml"), true);
-
-
-                //开启 Swagger JWT 鉴权模块
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-                {
-                    Description = "在下框中输入请求头中需要添加Jwt授权Token：Bearer Token",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    BearerFormat = "JWT",
-                    Scheme = "Bearer"
-                });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                            {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "Bearer"
-                                }
-                            },
-                        Array.Empty<string>()
-                    }
-                });
-            });
-
-            #endregion
+            builder.Services.AddMySwagger(true);
 
 
             //注册统一模型验证
@@ -389,24 +346,7 @@ namespace AdminApi
             app.MapControllers();
 
 
-            #region 启用 Swagger
-
-            //启用中间件服务生成Swagger作为JSON端点
-            app.UseSwagger();
-
-            //启用中间件服务对swagger-ui，指定Swagger JSON端点
-            app.UseSwaggerUI(options =>
-            {
-                var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
-                foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
-                {
-                    options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
-                }
-
-                options.RoutePrefix = "swagger";
-            });
-
-            #endregion
+            app.UseMySwagger();
 
             app.Run();
 

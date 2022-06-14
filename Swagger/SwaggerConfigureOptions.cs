@@ -3,15 +3,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
 
-namespace WebApi.Libraries.Swagger
+namespace Swagger
 {
     /// <summary>
     /// 配置swagger生成选项。
     /// </summary>
     public class SwaggerConfigureOptions : IConfigureOptions<SwaggerGenOptions>
     {
-        readonly IApiVersionDescriptionProvider provider;
+        private readonly IApiVersionDescriptionProvider provider;
 
 
         public SwaggerConfigureOptions(IApiVersionDescriptionProvider provider) => this.provider = provider;
@@ -24,7 +25,7 @@ namespace WebApi.Libraries.Swagger
             {
                 options.SwaggerDoc(description.GroupName, CreateInfoForApiVersion(description));
 
-                var modelPrefix = typeof(Program).Assembly.GetName().Name + ".Models.";
+                var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
                 var versionPrefix = description.GroupName + ".";
                 options.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => (type.ToString()[(type.ToString().IndexOf("Models.") + 7)..]).Replace(modelPrefix, "").Replace(versionPrefix, "").Replace("`1", "").Replace("+", ".") };
             }
@@ -34,10 +35,8 @@ namespace WebApi.Libraries.Swagger
         {
             var info = new OpenApiInfo()
             {
-                Title = "WebApi",
-                Version = "v" + description.ApiVersion.ToString(),
-                //Description = "",
-                //Contact = new OpenApiContact() { Name = "", Email = "" }
+                Title = Assembly.GetEntryAssembly()?.GetName().Name,
+                Version = "v " + description.ApiVersion
             };
 
             if (description.IsDeprecated)

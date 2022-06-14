@@ -1,9 +1,10 @@
 ﻿using Aliyun.Acs.Core;
 using Aliyun.Acs.Core.Http;
 using Aliyun.Acs.Core.Profile;
+using Common;
 using System.Collections.Generic;
 
-namespace Common.SMS
+namespace SMS
 {
     public class AliCloudSMS : ISMS
     {

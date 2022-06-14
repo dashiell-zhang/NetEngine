@@ -4,7 +4,7 @@ using TencentCloud.Common;
 using TencentCloud.Sms.V20190711;
 using TencentCloud.Sms.V20190711.Models;
 
-namespace Common.SMS
+namespace SMS
 {
     public class TencentCloudSMS : ISMS
     {

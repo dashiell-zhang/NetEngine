@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Common.SMS
+namespace SMS
 {
     public interface ISMS
     {

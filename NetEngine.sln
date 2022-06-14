@@ -19,9 +19,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminShared", "AdminShared\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock", "DistributedLock\DistributedLock.csproj", "{D9EC2DC5-8754-4D6C-8487-45B427992A3F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock", "DistributedLock\DistributedLock.csproj", "{D9EC2DC5-8754-4D6C-8487-45B427992A3F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileStorage", "FileStorage\FileStorage.csproj", "{2CFB8DF3-6103-4597-BAF0-AB722DB5F2B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorage", "FileStorage\FileStorage.csproj", "{2CFB8DF3-6103-4597-BAF0-AB722DB5F2B2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SMS", "SMS\SMS.csproj", "{8F2A76B6-F845-4D78-8CAF-31737F3DE6E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,6 +67,10 @@ Global
 		{2CFB8DF3-6103-4597-BAF0-AB722DB5F2B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2CFB8DF3-6103-4597-BAF0-AB722DB5F2B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2CFB8DF3-6103-4597-BAF0-AB722DB5F2B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F2A76B6-F845-4D78-8CAF-31737F3DE6E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F2A76B6-F845-4D78-8CAF-31737F3DE6E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F2A76B6-F845-4D78-8CAF-31737F3DE6E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F2A76B6-F845-4D78-8CAF-31737F3DE6E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +78,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{D9EC2DC5-8754-4D6C-8487-45B427992A3F} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 		{2CFB8DF3-6103-4597-BAF0-AB722DB5F2B2} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
+		{8F2A76B6-F845-4D78-8CAF-31737F3DE6E8} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AFC5F893-16A3-441E-9DC6-2E23DD53C158}

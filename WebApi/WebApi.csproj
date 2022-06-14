@@ -36,6 +36,7 @@
 		<ProjectReference Include="..\Common\Common.csproj" />
 		<ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
 		<ProjectReference Include="..\FileStorage\FileStorage.csproj" />
+		<ProjectReference Include="..\SMS\SMS.csproj" />
 	</ItemGroup>
 
 	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">

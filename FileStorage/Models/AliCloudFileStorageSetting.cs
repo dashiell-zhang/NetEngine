@@ -1,4 +1,4 @@
-﻿namespace WebApi.Models.AppSetting
+﻿namespace FileStorage.Models
 {
     public class AliCloudFileStorageSetting
     {

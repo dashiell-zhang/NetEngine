@@ -1,4 +1,4 @@
-﻿namespace AdminApi.Models.AppSetting
+﻿namespace FileStorage.Models
 {
     public class TencentCloudFileStorageSetting
     {

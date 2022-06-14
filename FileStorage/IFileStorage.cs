@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Common.FileStorage
+namespace FileStorage
 {
     public interface IFileStorage
     {

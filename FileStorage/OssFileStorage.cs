@@ -3,7 +3,7 @@ using Aliyun.OSS.Util;
 using System;
 using System.IO;
 
-namespace Common.FileStorage
+namespace FileStorage
 {
 
 

@@ -37,6 +37,7 @@
 		<ProjectReference Include="..\AdminShared\AdminShared.csproj" />
 		<ProjectReference Include="..\Common\Common.csproj" />
 		<ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+		<ProjectReference Include="..\FileStorage\FileStorage.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

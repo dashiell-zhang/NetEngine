@@ -8,7 +8,7 @@ using System.IO;
 using System.Text;
 using System.Web;
 
-namespace Common.FileStorage
+namespace FileStorage
 {
 
     /// <summary>

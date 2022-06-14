@@ -1,7 +1,7 @@
 ﻿using AdminApi.Filters;
 using AdminApi.Libraries;
 using Common;
-using Common.FileStorage;
+using FileStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;

@@ -1,4 +1,4 @@
-﻿using Common.FileStorage;
+﻿using FileStorage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System;

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<DebugType>embedded</DebugType>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<NoWarn>8618</NoWarn>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<NoWarn>8618</NoWarn>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.13.0" />
+		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.30" />
+	</ItemGroup>
+
+</Project>

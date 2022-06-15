@@ -59,10 +59,14 @@ namespace TaskService
                     #region 注册分布式锁
 
                     //注册分布式锁 Redis模式
-                    //services.AddSingleton<IDistributedLock>(new RedisLock(hostContext.Configuration.GetConnectionString("redisConnection")));
+                    //services.AddRedisLock(options =>
+                    //{
+                    //    options.RedisConnection = hostContext.Configuration.GetConnectionString("redisConnection");
+                    //});
+
 
                     //注册分布式锁 数据库模式
-                    services.AddScoped<IDistributedLock, DataBaseLock>();
+                    services.AddDataBaseLock();
 
                     #endregion
 

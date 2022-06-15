@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace DistributedLock
+namespace DistributedLock.DataBase
 {
     public class DataBaseLockHandle : IDisposable
     {

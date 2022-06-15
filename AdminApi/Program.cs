@@ -3,7 +3,7 @@ using AdminApi.Libraries;
 using AdminApi.Libraries.Swagger;
 using AdminApi.Models.AppSetting;
 using Common;
-using DistributedLock;
+using FileStorage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -247,15 +247,16 @@ namespace AdminApi
             builder.Services.AddSingleton(new Common.SnowflakeHelper(0, 0));
 
 
-            #region 注册分布式锁
-
             //注册分布式锁 Redis模式
-            //builder.Services.AddSingleton<IDistributedLock>(new RedisLock(builder.Configuration.GetConnectionString("redisConnection")));
+            //builder.Services.AddRedisLock(options =>
+            //{
+            //    options.RedisConnection = builder.Configuration.GetConnectionString("redisConnection");
+            //});
+
 
             //注册分布式锁 数据库模式
-            builder.Services.AddScoped<IDistributedLock, DataBaseLock>();
+            builder.Services.AddDataBaseLock();
 
-            #endregion
 
 
             #region 注册缓存服务
@@ -294,43 +295,30 @@ namespace AdminApi
             });
 
 
-            builder.Services.AddHttpClient("SkipSsl", options =>
-            {
-                options.DefaultRequestVersion = new Version("2.0");
-            }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-            {
-                AllowAutoRedirect = false,
-                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
-            });
-
             #endregion
 
             builder.Services.BatchRegisterServices();
 
 
-            #region 注册短信服务
-
-            //注册腾讯云短信服务
-            //var tencentCloudSMSSetting = builder.Configuration.GetSection("TencentCloudSMS").Get<TencentCloudSMSSetting>();
-            //builder.Services.AddSingleton<ISMS>(new TencentCloudSMS(tencentCloudSMSSetting.AppId, tencentCloudSMSSetting.SecretId, tencentCloudSMSSetting.SecretKey));
-
-
-            //注册阿里云短信服务
-            //var aliCloudSMSSetting = builder.Configuration.GetSection("AliCloudSMS").Get<AliCloudSMSSetting>();
-            //builder.Services.AddSingleton<ISMS>(new AliCloudSMS(aliCloudSMSSetting.AccessKeyId, aliCloudSMSSetting.AccessKeySecret));
-
-            #endregion
 
             #region 注册文件服务
 
+            //注册本地磁盘文件服务
+            builder.Services.AddLocalDiskStorage();
+
+
             //注册腾讯云COS文件服务
-            //var tencentCloudFileStorageSetting = builder.Configuration.GetSection("TencentCloudFileStorage").Get<TencentCloudFileStorageSetting>();
-            //builder.Services.AddSingleton<IFileStorage>(new TencentCloudFileStorage(tencentCloudFileStorageSetting.AppId, tencentCloudFileStorageSetting.Region, tencentCloudFileStorageSetting.SecretId, tencentCloudFileStorageSetting.SecretKey, tencentCloudFileStorageSetting.BucketName));
+            //builder.Services.AddTencentCloudStorage(options =>
+            //{
+            //    options = builder.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.StorageSetting>();
+            //});
 
 
-            //注册阿里云OSS文件服务
-            //var aliCloudFileStorageSetting = builder.Configuration.GetSection("AliCloudFileStorage").Get<AliCloudFileStorageSetting>();
-            //builder.Services.AddSingleton<IFileStorage>(new AliCloudFileStorage(aliCloudFileStorageSetting.Endpoint, aliCloudFileStorageSetting.AccessKeyId, aliCloudFileStorageSetting.AccessKeySecret, aliCloudFileStorageSetting.BucketName));
+            ////注册阿里云OSS文件服务
+            //builder.Services.AddAliCloudStorage(options =>
+            //{
+            //    options = builder.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.StorageSetting>();
+            //});
 
             #endregion
 

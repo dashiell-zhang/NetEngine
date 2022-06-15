@@ -3,14 +3,14 @@ using Aliyun.OSS.Util;
 using System;
 using System.IO;
 
-namespace FileStorage
+namespace FileStorage.AliCloud
 {
 
 
     /// <summary>
     /// 阿里云OSS文件存储
     /// </summary>
-    public class AliCloudFileStorage : IFileStorage
+    public class AliCloudStorage : IFileStorage
     {
 
         private readonly string endpoint;
@@ -20,7 +20,7 @@ namespace FileStorage
 
 
 
-        public AliCloudFileStorage(string endpoint, string accessKeyId, string accessKeySecret, string bucketName)
+        public AliCloudStorage(string endpoint, string accessKeyId, string accessKeySecret, string bucketName)
         {
             this.endpoint = endpoint;
             this.accessKeyId = accessKeyId;

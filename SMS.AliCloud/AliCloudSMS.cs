@@ -4,7 +4,7 @@ using Aliyun.Acs.Core.Profile;
 using Common;
 using System.Collections.Generic;
 
-namespace SMS
+namespace SMS.AliCloud
 {
     public class AliCloudSMS : ISMS
     {

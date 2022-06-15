@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Timers;
 
-namespace DistributedLock
+namespace DistributedLock.DataBase
 {
     public class DataBaseLock : IDistributedLock
     {

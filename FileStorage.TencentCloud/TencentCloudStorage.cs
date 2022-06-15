@@ -8,13 +8,13 @@ using System.IO;
 using System.Text;
 using System.Web;
 
-namespace FileStorage
+namespace FileStorage.TencentCloud
 {
 
     /// <summary>
     /// 腾讯云COS文件存储
     /// </summary>
-    public class TencentCloudFileStorage : IFileStorage
+    public class TencentCloudStorage : IFileStorage
     {
 
         private readonly string appId;
@@ -26,7 +26,7 @@ namespace FileStorage
 
 
 
-        public TencentCloudFileStorage(string appId, string region, string secretId, string secretKey, string bucketName)
+        public TencentCloudStorage(string appId, string region, string secretId, string secretKey, string bucketName)
         {
             this.appId = appId;
             this.region = region;

@@ -1,6 +1,6 @@
-﻿namespace FileStorage.Models
+﻿namespace FileStorage.AliCloud.Models
 {
-    public class AliCloudFileStorageSetting
+    public class StorageSetting
     {
 
         /// <summary>

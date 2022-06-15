@@ -1,7 +1,7 @@
 ﻿using StackExchange.Redis;
 using System;
 
-namespace DistributedLock
+namespace DistributedLock.Redis
 {
     public class RedisLockHandle : IDisposable
     {

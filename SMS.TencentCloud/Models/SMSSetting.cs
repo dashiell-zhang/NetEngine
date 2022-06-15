@@ -1,6 +1,6 @@
-﻿namespace SMS.Models
+﻿namespace SMS.TencentCloud.Models
 {
-    public class TencentCloudSMSSetting
+    public class SMSSetting
     {
 
 

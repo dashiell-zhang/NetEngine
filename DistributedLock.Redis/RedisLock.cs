@@ -3,7 +3,7 @@ using StackExchange.Redis;
 using System;
 using System.Threading;
 
-namespace DistributedLock
+namespace DistributedLock.Redis
 {
     public class RedisLock : IDistributedLock
     {

@@ -34,7 +34,14 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Common\Common.csproj" />
-		<ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+		<ProjectReference Include="..\DistributedLock.DataBase\DistributedLock.DataBase.csproj" />
+		<ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
+		<ProjectReference Include="..\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
+		<ProjectReference Include="..\FileStorage.LocalDisk\FileStorage.LocalDisk.csproj" />
+		<ProjectReference Include="..\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
+		<ProjectReference Include="..\Repository\Repository.csproj" />
+		<ProjectReference Include="..\SMS.AliCloud\SMS.AliCloud.csproj" />
+		<ProjectReference Include="..\SMS.TencentCloud\SMS.TencentCloud.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

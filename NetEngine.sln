@@ -25,19 +25,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorage", "FileStorage\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SMS", "SMS\SMS.csproj", "{8F2A76B6-F845-4D78-8CAF-31737F3DE6E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileStorage.TencentCloud", "FileStorage.TencentCloud\FileStorage.TencentCloud.csproj", "{D475C2D3-8C87-4DBD-8CF1-BCA3FA48C3B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorage.TencentCloud", "FileStorage.TencentCloud\FileStorage.TencentCloud.csproj", "{D475C2D3-8C87-4DBD-8CF1-BCA3FA48C3B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileStorage.AliCloud", "FileStorage.AliCloud\FileStorage.AliCloud.csproj", "{29F39764-B48E-48BE-BF98-EED50939779F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorage.AliCloud", "FileStorage.AliCloud\FileStorage.AliCloud.csproj", "{29F39764-B48E-48BE-BF98-EED50939779F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Redis", "DistributedLock.Redis\DistributedLock.Redis.csproj", "{B6958759-E864-476E-A31D-1BF327BE78CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Redis", "DistributedLock.Redis\DistributedLock.Redis.csproj", "{B6958759-E864-476E-A31D-1BF327BE78CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.DataBase", "DistributedLock.DataBase\DistributedLock.DataBase.csproj", "{5AF9C765-DC98-4342-9FA0-C0314795AA63}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.DataBase", "DistributedLock.DataBase\DistributedLock.DataBase.csproj", "{5AF9C765-DC98-4342-9FA0-C0314795AA63}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SMS.AliCloud", "SMS.AliCloud\SMS.AliCloud.csproj", "{8D795280-B39A-42CB-A132-F497AC917C7F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SMS.AliCloud", "SMS.AliCloud\SMS.AliCloud.csproj", "{8D795280-B39A-42CB-A132-F497AC917C7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SMS.TencentCloud", "SMS.TencentCloud\SMS.TencentCloud.csproj", "{902BB7C3-5CEE-496D-ADC0-155A5A61E609}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SMS.TencentCloud", "SMS.TencentCloud\SMS.TencentCloud.csproj", "{902BB7C3-5CEE-496D-ADC0-155A5A61E609}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileStorage.LocalDisk", "FileStorage.LocalDisk\FileStorage.LocalDisk.csproj", "{A4B6FD4D-9A9C-4B87-86E5-50F0BF99F5EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorage.LocalDisk", "FileStorage.LocalDisk\FileStorage.LocalDisk.csproj", "{A4B6FD4D-9A9C-4B87-86E5-50F0BF99F5EA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Logger.DataBase", "Logger.DataBase\Logger.DataBase.csproj", "{EA76F2F5-2576-4399-A21E-BD4C78B306B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -113,6 +115,10 @@ Global
 		{A4B6FD4D-9A9C-4B87-86E5-50F0BF99F5EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4B6FD4D-9A9C-4B87-86E5-50F0BF99F5EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4B6FD4D-9A9C-4B87-86E5-50F0BF99F5EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA76F2F5-2576-4399-A21E-BD4C78B306B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA76F2F5-2576-4399-A21E-BD4C78B306B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA76F2F5-2576-4399-A21E-BD4C78B306B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA76F2F5-2576-4399-A21E-BD4C78B306B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -129,6 +135,7 @@ Global
 		{8D795280-B39A-42CB-A132-F497AC917C7F} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 		{902BB7C3-5CEE-496D-ADC0-155A5A61E609} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 		{A4B6FD4D-9A9C-4B87-86E5-50F0BF99F5EA} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
+		{EA76F2F5-2576-4399-A21E-BD4C78B306B8} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AFC5F893-16A3-441E-9DC6-2E23DD53C158}

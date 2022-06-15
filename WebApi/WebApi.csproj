@@ -39,6 +39,7 @@
 		<ProjectReference Include="..\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
 		<ProjectReference Include="..\FileStorage.LocalDisk\FileStorage.LocalDisk.csproj" />
 		<ProjectReference Include="..\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
+		<ProjectReference Include="..\Logger.DataBase\Logger.DataBase.csproj" />
 		<ProjectReference Include="..\Repository\Repository.csproj" />
 		<ProjectReference Include="..\SMS.AliCloud\SMS.AliCloud.csproj" />
 		<ProjectReference Include="..\SMS.TencentCloud\SMS.TencentCloud.csproj" />

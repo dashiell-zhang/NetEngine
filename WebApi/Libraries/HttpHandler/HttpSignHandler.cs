@@ -77,8 +77,6 @@ namespace WebApi.Libraries.HttpHandler
             {
                 string dataSign = Convert.ToHexString(sha256.ComputeHash(Encoding.UTF8.GetBytes(dataStr)));
 
-                Console.WriteLine(dataStr);
-
                 request.Headers.Add("Authorization", "Bearer " + authorization);
                 request.Headers.Add("Token", dataSign);
                 request.Headers.Add("Time", timeStr);

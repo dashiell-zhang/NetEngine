@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using Repository.Database;
 using SMS;
 using System;
@@ -46,7 +47,10 @@ namespace WebApi.Controllers.v1
         private readonly long userId;
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
+        private readonly ILogger logger;
+
+
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor, ILogger<AuthorizeController> logger)
         {
             this.db = db;
             this.distLock = distLock;
@@ -56,12 +60,25 @@ namespace WebApi.Controllers.v1
 
             this.authorizeService = authorizeService;
 
+            this.logger = logger;
+
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
 
             if (userIdStr != null)
             {
                 userId = long.Parse(userIdStr);
             }
+        }
+
+
+
+        [HttpGet("ACeShi")]
+        public void ACeShi()
+        {
+            logger.LogInformation("About page visited at {DT}", DateTime.UtcNow.ToLongTimeString());
+            logger.LogWarning("About page visited at {DT}", DateTime.UtcNow.ToLongTimeString());
+            logger.LogError("About page visited at {DT}", DateTime.UtcNow.ToLongTimeString());
+            logger.LogCritical("About page visited at {DT}", DateTime.UtcNow.ToLongTimeString());
         }
 
 

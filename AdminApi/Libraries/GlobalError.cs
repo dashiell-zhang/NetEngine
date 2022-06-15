@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Repository.Database;
 using Repository.Extensions;
 using System.Threading.Tasks;
@@ -53,10 +54,9 @@ namespace AdminApi.Libraries
 
             string strContent = JsonHelper.ObjectToJson(content);
 
-            var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
-            var snowflakeHelper = httpContext.RequestServices.GetRequiredService<SnowflakeHelper>();
+            var logger = httpContext.RequestServices.GetRequiredService<ILogger<GlobalError>>();
 
-            db.CreateLog(snowflakeHelper.GetId(), "AdminApi", "errorlog", strContent);
+            logger.LogError(strContent);
 
             httpContext.Response.StatusCode = 400;
 

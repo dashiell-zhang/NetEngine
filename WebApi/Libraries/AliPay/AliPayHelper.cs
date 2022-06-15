@@ -208,7 +208,6 @@ namespace WebApi.Libraries.AliPay
             request.SetBizModel(model);
 
             var response = client.SdkExecute(request);
-            Console.WriteLine($"订单支付发起成功，订单号：{tradeNo}");
 
             //跳转支付宝支付
             string url = "https://openapi.alipay.com/gateway.do" + "?" + response.Body;

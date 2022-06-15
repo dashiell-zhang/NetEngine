@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
 
 namespace AdminApi.Libraries.Swagger
 {
@@ -35,7 +36,7 @@ namespace AdminApi.Libraries.Swagger
         {
             var info = new OpenApiInfo()
             {
-                Title = "AdminApi",
+                Title = Assembly.GetEntryAssembly()?.GetName().Name,
                 Version = "v" + description.ApiVersion.ToString(),
                 //Description = "",
                 //Contact = new OpenApiContact() { Name = "", Email = "" }

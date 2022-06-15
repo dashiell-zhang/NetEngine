@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Net.Http;
+using Microsoft.Extensions.Logging;
 
 namespace TaskService
 {
@@ -52,6 +53,7 @@ namespace TaskService
                     //services.AddSingleton<IFileStorage>(new AliCloudFileStorage(aliCloudFileStorageSetting.Endpoint, aliCloudFileStorageSetting.AccessKeyId, aliCloudFileStorageSetting.AccessKeySecret, aliCloudFileStorageSetting.BucketName));
 
                     #endregion
+
 
                     //注册雪花ID算法
                     services.AddSingleton(new SnowflakeHelper(0, 0));
@@ -116,7 +118,13 @@ namespace TaskService
 
                     #endregion
 
-
+                }).ConfigureLogging((hostContext, builder) =>
+                {
+                    //注册数据库日志服务
+                    builder.AddDataBaseLogger(options =>
+                    {
+                        options.DataBaseConnection = hostContext.Configuration.GetConnectionString("dbConnection");
+                    });
                 })
                 .Build();
 

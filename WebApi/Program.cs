@@ -1,5 +1,6 @@
 ﻿using Common;
 using DistributedLock;
+using Logger.DataBase;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -15,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -23,6 +25,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Security.Cryptography;
 using WebApi.Filters;
 using WebApi.Libraries;
@@ -358,6 +361,13 @@ namespace WebApi
             //});
 
             #endregion
+
+
+            //注册数据库日志服务
+            builder.Logging.AddDataBaseLogger(options =>
+            {
+                options.DataBaseConnection = builder.Configuration.GetConnectionString("dbConnection");
+            });
 
             var app = builder.Build();
 

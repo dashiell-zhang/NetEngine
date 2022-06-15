@@ -2,6 +2,7 @@
 using DistributedLock;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System;
 using System.Threading.Tasks;
@@ -40,14 +41,14 @@ namespace TaskService.Tasks
         private void Run()
         {
             var snowflakeHelper = serviceProvider.GetRequiredService<SnowflakeHelper>();
+            var logger = serviceProvider.GetRequiredService<ILogger<DemoTask>>();
 
             using var scope = serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
             var distLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
+            logger.LogInformation("HelloWord" + snowflakeHelper.GetId());
 
-            //周期性执行的方法
-            Console.WriteLine("HelloWord" + snowflakeHelper.GetId());
         }
 
     }

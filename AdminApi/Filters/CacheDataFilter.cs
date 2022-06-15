@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 
@@ -59,9 +60,10 @@ namespace AdminApi.Filters
                     context.Result = new ObjectResult(cacheInfo);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine("缓存模块异常");
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CacheDataFilter>>();
+                logger.LogError(ex, "缓存模块异常-In");
             }
         }
 
@@ -96,9 +98,10 @@ namespace AdminApi.Filters
                 }
 
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine("缓存模块异常");
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CacheDataFilter>>();
+                logger.LogError(ex, "缓存模块异常-Out");
             }
 
         }

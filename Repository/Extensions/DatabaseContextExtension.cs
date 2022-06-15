@@ -284,41 +284,6 @@ namespace Repository.Extensions
             return retValue;
         }
 
-
-
-
-        /// <summary>
-        /// 创建日志信息
-        /// </summary>
-        /// <param name="db"></param>
-        /// <param name="logId">日志id</param>
-        /// <param name="Sign">自定义标记</param>
-        /// <param name="Type">日志类型</param>
-        /// <param name="Content">日志内容</param>
-        /// <returns></returns>
-        public static bool CreateLog(this DatabaseContext db, long logId, string Sign, string Type, string Content)
-        {
-            try
-            {
-                TLog log = new()
-                {
-                    Id = logId,
-                    Sign = Sign,
-                    Type = Type,
-                    Content = Content,
-                    CreateTime = DateTime.UtcNow
-                };
-
-                db.TLog.Add(log);
-
-                db.SaveChanges();
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+      
     }
 }

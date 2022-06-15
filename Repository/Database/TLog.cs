@@ -7,22 +7,32 @@ namespace Repository.Database
     /// <summary>
     /// 日志表
     /// </summary>
-    [Index(nameof(Sign))]
     public class TLog : CD
     {
 
 
-        /// <summary>
-        /// 标记
-        /// </summary>
-        public string Sign { get; set; }
-
-
 
         /// <summary>
-        /// 类型
+        /// App标记
         /// </summary>
-        public string Type { get; set; }
+        public string AppSign { get; set; }
+
+
+
+
+        /// <summary>
+        /// 日志等级
+        /// </summary>
+        public string Level { get; set; }
+
+
+
+
+        /// <summary>
+        /// 类别
+        /// </summary>
+        public string Category { get; set; }
+
 
 
 
@@ -30,6 +40,8 @@ namespace Repository.Database
         /// 内容
         /// </summary>
         public string Content { get; set; }
+
+
 
     }
 }

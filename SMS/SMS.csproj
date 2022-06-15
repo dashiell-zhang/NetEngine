@@ -19,7 +19,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="aliyun-net-sdk-core" Version="1.5.11" />
-		<PackageReference Include="TencentCloudSDK" Version="3.0.535" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.536" />
 	</ItemGroup>
 
 

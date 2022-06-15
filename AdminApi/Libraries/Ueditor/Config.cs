@@ -89,7 +89,7 @@ namespace AdminApi.Libraries.Ueditor
 
 
 
-        public static string[] GetStringList(string key,string fileServerUrl)
+        public static string[] GetStringList(string key, string fileServerUrl)
         {
             return Items(fileServerUrl).RootElement.Clone().GetProperty(key).Deserialize<string[]>()!;
         }

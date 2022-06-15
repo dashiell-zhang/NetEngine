@@ -11,9 +11,8 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static void AddTencentCloudStorage(this IServiceCollection services, Action<StorageSetting> action)
         {
-            StorageSetting storageSetting = new();
-            action(storageSetting);
-            services.AddSingleton<IFileStorage>(new TencentCloudStorage(storageSetting.AppId, storageSetting.Region, storageSetting.SecretId, storageSetting.SecretKey, storageSetting.BucketName));
+            services.Configure(action);
+            services.AddTransient<IFileStorage, TencentCloudStorage>();
         }
     }
 }

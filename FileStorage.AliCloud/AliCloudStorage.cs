@@ -1,5 +1,7 @@
 ﻿using Aliyun.OSS;
 using Aliyun.OSS.Util;
+using FileStorage.AliCloud.Models;
+using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 
@@ -20,12 +22,12 @@ namespace FileStorage.AliCloud
 
 
 
-        public AliCloudStorage(string endpoint, string accessKeyId, string accessKeySecret, string bucketName)
+        public AliCloudStorage(IOptionsMonitor<StorageSetting> config)
         {
-            this.endpoint = endpoint;
-            this.accessKeyId = accessKeyId;
-            this.accessKeySecret = accessKeySecret;
-            this.bucketName = bucketName;
+            endpoint = config.CurrentValue.Endpoint;
+            accessKeyId = config.CurrentValue.AccessKeyId;
+            accessKeySecret = config.CurrentValue.AccessKeySecret;
+            bucketName = config.CurrentValue.BucketName;
         }
 
 

@@ -11,10 +11,9 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static void AddAliCloudSMS(this IServiceCollection services, Action<SMSSetting> action)
         {
-            SMSSetting setting = new();
-            action(setting);
+            services.Configure(action);
 
-            services.AddSingleton<ISMS>(new AliCloudSMS(setting.AccessKeyId, setting.AccessKeySecret));
+            services.AddTransient<ISMS, AliCloudSMS>();
 
         }
     }

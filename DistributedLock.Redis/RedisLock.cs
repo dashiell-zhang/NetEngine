@@ -1,4 +1,6 @@
 ﻿using Common;
+using DistributedLock.Redis.Models;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System;
 using System.Threading;
@@ -11,10 +13,9 @@ namespace DistributedLock.Redis
         private readonly ConnectionMultiplexer connectionMultiplexer;
 
 
-
-        public RedisLock(string connectionString)
+        public RedisLock(IOptionsMonitor<RedisSetting> config)
         {
-            connectionMultiplexer = ConnectionMultiplexer.Connect(connectionString);
+            connectionMultiplexer = ConnectionMultiplexer.Connect(config.CurrentValue.RedisConnection);
         }
 
 

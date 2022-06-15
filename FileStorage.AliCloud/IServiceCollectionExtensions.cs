@@ -11,9 +11,8 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static void AddAliCloudStorage(this IServiceCollection services, Action<StorageSetting> action)
         {
-            StorageSetting storageSetting = new();
-            action(storageSetting);
-            services.AddSingleton<IFileStorage>(new AliCloudStorage(storageSetting.Endpoint, storageSetting.AccessKeyId, storageSetting.AccessKeySecret, storageSetting.BucketName));
+            services.Configure(action);
+            services.AddTransient<IFileStorage, AliCloudStorage>();
         }
     }
 }

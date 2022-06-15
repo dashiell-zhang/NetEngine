@@ -3,6 +3,8 @@ using COSXML.Auth;
 using COSXML.Model.Object;
 using COSXML.Model.Tag;
 using COSXML.Transfer;
+using FileStorage.TencentCloud.Models;
+using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Text;
@@ -26,13 +28,13 @@ namespace FileStorage.TencentCloud
 
 
 
-        public TencentCloudStorage(string appId, string region, string secretId, string secretKey, string bucketName)
+        public TencentCloudStorage(IOptionsMonitor<StorageSetting> config)
         {
-            this.appId = appId;
-            this.region = region;
-            this.bucketName = bucketName;
+            appId = config.CurrentValue.AppId;
+            region = config.CurrentValue.Region;
+            bucketName = config.CurrentValue.BucketName;
 
-            CosXmlConfig config = new CosXmlConfig.Builder()
+            CosXmlConfig cosXmlConfig = new CosXmlConfig.Builder()
                         .SetConnectionTimeoutMs(60000)  //设置连接超时时间，单位毫秒，默认45000ms
                         .SetReadWriteTimeoutMs(40000)  //设置读写超时时间，单位毫秒，默认45000ms
                         .IsHttps(true)  //设置默认 HTTPS 请求
@@ -43,9 +45,9 @@ namespace FileStorage.TencentCloud
 
             long durationSecond = 600;          //每次请求签名有效时长，单位为秒
 
-            QCloudCredentialProvider qCloudCredentialProvider = new DefaultQCloudCredentialProvider(secretId, secretKey, durationSecond);
+            QCloudCredentialProvider qCloudCredentialProvider = new DefaultQCloudCredentialProvider(config.CurrentValue.SecretId, config.CurrentValue.SecretKey, durationSecond);
 
-            cosXml = new CosXmlServer(config, qCloudCredentialProvider);
+            cosXml = new CosXmlServer(cosXmlConfig, qCloudCredentialProvider);
         }
 
 

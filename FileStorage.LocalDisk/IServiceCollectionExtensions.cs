@@ -10,8 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static void AddLocalDiskStorage(this IServiceCollection services)
         {
-            services.AddSingleton<IFileStorage>(new LocalDiskStorage());
-
+            services.AddTransient<IFileStorage, LocalDiskStorage>();
         }
     }
 }

@@ -11,10 +11,9 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static void AddTencentCloudSMS(this IServiceCollection services, Action<SMSSetting> action)
         {
-            SMSSetting setting = new();
-            action(setting);
+            services.Configure(action);
 
-            services.AddSingleton<ISMS>(new TencentCloudSMS(setting.AppId, setting.SecretId, setting.SecretKey));
+            services.AddTransient<ISMS, TencentCloudSMS>();
         }
     }
 }

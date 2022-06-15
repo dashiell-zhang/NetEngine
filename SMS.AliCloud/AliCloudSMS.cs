@@ -2,6 +2,8 @@
 using Aliyun.Acs.Core.Http;
 using Aliyun.Acs.Core.Profile;
 using Common;
+using Microsoft.Extensions.Options;
+using SMS.AliCloud.Models;
 using System.Collections.Generic;
 
 namespace SMS.AliCloud
@@ -17,10 +19,10 @@ namespace SMS.AliCloud
 
 
 
-        public AliCloudSMS(string accessKeyId, string accessKeySecret)
+        public AliCloudSMS(IOptionsMonitor<SMSSetting> config)
         {
-            this.accessKeyId = accessKeyId;
-            this.accessKeySecret = accessKeySecret;
+            accessKeyId = config.CurrentValue.AccessKeyId;
+            accessKeySecret = config.CurrentValue.AccessKeySecret;
         }
 
 

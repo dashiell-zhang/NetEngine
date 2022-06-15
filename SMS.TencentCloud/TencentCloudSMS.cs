@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.Extensions.Options;
+using SMS.TencentCloud.Models;
+using System.Collections.Generic;
 using System.Linq;
 using TencentCloud.Common;
 using TencentCloud.Sms.V20190711;
@@ -28,11 +30,11 @@ namespace SMS.TencentCloud
 
 
 
-        public TencentCloudSMS(string appId, string secretId, string secretKey)
+        public TencentCloudSMS(IOptionsMonitor<SMSSetting> config)
         {
-            this.appId = appId;
-            this.secretId = secretId;
-            this.secretKey = secretKey;
+            appId = config.CurrentValue.AppId;
+            secretId = config.CurrentValue.SecretId;
+            secretKey = config.CurrentValue.SecretKey;
         }
 
 

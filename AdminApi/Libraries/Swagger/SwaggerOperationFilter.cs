@@ -2,8 +2,9 @@
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Linq;
 
-namespace Swagger
+namespace AdminApi.Libraries.Swagger
 {
 
     /// <summary>

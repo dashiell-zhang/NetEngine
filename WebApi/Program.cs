@@ -364,10 +364,16 @@ namespace WebApi
 
 
             //注册数据库日志服务
-            builder.Logging.AddDataBaseLogger(options =>
+            //builder.Logging.AddDataBaseLogger(options =>
+            //{
+            //    options.DataBaseConnection = builder.Configuration.GetConnectionString("dbConnection");
+            //});
+
+            builder.Logging.AddLocalFileLogger(options =>
             {
-                options.DataBaseConnection = builder.Configuration.GetConnectionString("dbConnection");
+                options.LogFolderPath = "d:/1/";
             });
+
 
             var app = builder.Build();
 

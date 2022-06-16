@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorage.LocalDisk", "Fi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Logger.DataBase", "Logger.DataBase\Logger.DataBase.csproj", "{EA76F2F5-2576-4399-A21E-BD4C78B306B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logger.LocalFile", "Logger.LocalFile\Logger.LocalFile.csproj", "{B1BF441F-D87C-4593-AEA6-62AFF8221BCE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -119,6 +121,10 @@ Global
 		{EA76F2F5-2576-4399-A21E-BD4C78B306B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA76F2F5-2576-4399-A21E-BD4C78B306B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA76F2F5-2576-4399-A21E-BD4C78B306B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1BF441F-D87C-4593-AEA6-62AFF8221BCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1BF441F-D87C-4593-AEA6-62AFF8221BCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1BF441F-D87C-4593-AEA6-62AFF8221BCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1BF441F-D87C-4593-AEA6-62AFF8221BCE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -136,6 +142,7 @@ Global
 		{902BB7C3-5CEE-496D-ADC0-155A5A61E609} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 		{A4B6FD4D-9A9C-4B87-86E5-50F0BF99F5EA} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 		{EA76F2F5-2576-4399-A21E-BD4C78B306B8} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
+		{B1BF441F-D87C-4593-AEA6-62AFF8221BCE} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AFC5F893-16A3-441E-9DC6-2E23DD53C158}

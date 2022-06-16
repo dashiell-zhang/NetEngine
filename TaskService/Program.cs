@@ -14,7 +14,7 @@ namespace TaskService
     {
         static void Main(string[] args)
         {
-            EnvironmentHelper.ChangeDirectory(args);
+            //EnvironmentHelper.ChangeDirectory(args);
 
             IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
@@ -125,6 +125,9 @@ namespace TaskService
                     {
                         options.DataBaseConnection = hostContext.Configuration.GetConnectionString("dbConnection");
                     });
+
+                    //注册本地文件日志服务
+                    builder.AddLocalFileLogger(options => { });
                 })
                 .Build();
 

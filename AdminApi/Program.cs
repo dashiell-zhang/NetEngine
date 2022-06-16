@@ -329,6 +329,9 @@ namespace AdminApi
                 options.DataBaseConnection = builder.Configuration.GetConnectionString("dbConnection");
             });
 
+            //注册本地文件日志服务
+            builder.Logging.AddLocalFileLogger(options => { });
+
             var app = builder.Build();
 
             app.UseForwardedHeaders();

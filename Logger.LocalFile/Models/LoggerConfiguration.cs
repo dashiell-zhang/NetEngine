@@ -18,10 +18,5 @@ namespace Logger.LocalFile.Models
         /// </summary>
         public LogLevel MinLogLevel { get; set; } = LogLevel.Information;
 
-
-        /// <summary>
-        /// 日志文件夹路径
-        /// </summary>
-        public string LogFolderPath { get; set; }
     }
 }

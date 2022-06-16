@@ -1,5 +1,6 @@
 ﻿using Common;
 using Logger.LocalFile.Models;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -16,11 +17,18 @@ namespace Logger.LocalFile
 
         private readonly LoggerConfiguration loggerConfiguration;
 
-        public LocalFileLogger(string categoryName, LoggerConfiguration loggerConfiguration, SnowflakeHelper snowflakeHelper)
+        public LocalFileLogger(string categoryName, LoggerConfiguration loggerConfiguration)
         {
             this.categoryName = categoryName;
 
-            logPath = loggerConfiguration.LogFolderPath + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".log";
+            string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Log/";
+
+            if (Directory.Exists(basePath) == false)
+            {
+                Directory.CreateDirectory(basePath);
+            }
+
+            logPath = basePath + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".log";
 
             this.loggerConfiguration = loggerConfiguration;
         }

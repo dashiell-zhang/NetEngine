@@ -42,6 +42,7 @@
 		<ProjectReference Include="..\FileStorage.LocalDisk\FileStorage.LocalDisk.csproj" />
 		<ProjectReference Include="..\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
 		<ProjectReference Include="..\Logger.DataBase\Logger.DataBase.csproj" />
+		<ProjectReference Include="..\Logger.LocalFile\Logger.LocalFile.csproj" />
 		<ProjectReference Include="..\Repository\Repository.csproj" />
 	</ItemGroup>
 

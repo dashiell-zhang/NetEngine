@@ -1,6 +1,5 @@
 ﻿using Common;
 using Logger.LocalFile.Models;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -15,9 +14,9 @@ namespace Logger.LocalFile
 
         private readonly string logPath;
 
-        private readonly LoggerConfiguration loggerConfiguration;
+        private readonly LoggerSetting loggerSetting;
 
-        public LocalFileLogger(string categoryName, LoggerConfiguration loggerConfiguration)
+        public LocalFileLogger(string categoryName, LoggerSetting loggerConfiguration)
         {
             this.categoryName = categoryName;
 
@@ -30,7 +29,7 @@ namespace Logger.LocalFile
 
             logPath = basePath + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".log";
 
-            this.loggerConfiguration = loggerConfiguration;
+            this.loggerSetting = loggerConfiguration;
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -41,7 +40,7 @@ namespace Logger.LocalFile
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            if (logLevel != LogLevel.None && logLevel >= loggerConfiguration.MinLogLevel)
+            if (logLevel != LogLevel.None && logLevel >= loggerSetting.MinLogLevel)
             {
                 return true;
             }
@@ -85,7 +84,7 @@ namespace Logger.LocalFile
                             var log = new
                             {
                                 CreateTime = DateTime.UtcNow,
-                                AppSign = loggerConfiguration.AppSign,
+                                AppSign = loggerSetting.AppSign,
                                 Category = categoryName,
                                 Level = logLevel.ToString(),
                                 Content = logContent

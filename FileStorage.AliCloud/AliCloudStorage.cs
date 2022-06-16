@@ -22,7 +22,7 @@ namespace FileStorage.AliCloud
 
 
 
-        public AliCloudStorage(IOptionsMonitor<StorageSetting> config)
+        public AliCloudStorage(IOptionsMonitor<FileStorageSetting> config)
         {
             endpoint = config.CurrentValue.Endpoint;
             accessKeyId = config.CurrentValue.AccessKeyId;

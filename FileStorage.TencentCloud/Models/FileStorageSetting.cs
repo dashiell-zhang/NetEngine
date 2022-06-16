@@ -1,6 +1,6 @@
 ﻿namespace FileStorage.TencentCloud.Models
 {
-    public class StorageSetting
+    public class FileStorageSetting
     {
 
         /// <summary>

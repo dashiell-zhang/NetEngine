@@ -17,15 +17,15 @@ namespace Logger.DataBase
 
         private readonly SnowflakeHelper snowflakeHelper;
 
-        private readonly LoggerConfiguration loggerConfiguration;
+        private readonly LoggerSetting loggerSetting;
 
 
-        public DataBaseLogger(string categoryName, LoggerConfiguration loggerConfiguration, SnowflakeHelper snowflakeHelper)
+        public DataBaseLogger(string categoryName, LoggerSetting loggerSetting, SnowflakeHelper snowflakeHelper)
         {
             this.categoryName = categoryName;
 
-            this.loggerConfiguration = loggerConfiguration;
-            var options = new DbContextOptionsBuilder<DatabaseContext>().UseSqlServer(loggerConfiguration.DataBaseConnection).Options;
+            this.loggerSetting = loggerSetting;
+            var options = new DbContextOptionsBuilder<DatabaseContext>().UseSqlServer(loggerSetting.DataBaseConnection).Options;
 
             dbContextFactory = new PooledDbContextFactory<DatabaseContext>(options, 100);
 
@@ -40,7 +40,7 @@ namespace Logger.DataBase
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            if (logLevel != LogLevel.None && logLevel >= loggerConfiguration.MinLogLevel)
+            if (logLevel != LogLevel.None && logLevel >= loggerSetting.MinLogLevel)
             {
                 return true;
             }
@@ -87,7 +87,7 @@ namespace Logger.DataBase
                                 TLog log = new();
                                 log.Id = snowflakeHelper.GetId();
                                 log.CreateTime = DateTime.UtcNow;
-                                log.AppSign = loggerConfiguration.AppSign;
+                                log.AppSign = loggerSetting.AppSign;
                                 log.Category = categoryName;
                                 log.Level = logLevel.ToString();
                                 log.Content = logContent;

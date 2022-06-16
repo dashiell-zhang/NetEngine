@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.Logging
     public static class ILoggingBuilderExtensions
     {
 
-        public static void AddLocalFileLogger(this ILoggingBuilder builder, Action<LoggerConfiguration> action)
+        public static void AddLocalFileLogger(this ILoggingBuilder builder, Action<LoggerSetting> action)
         {
             builder.Services.Configure(action);
             builder.Services.AddSingleton<ILoggerProvider, LocalFileLoggerProvider>();

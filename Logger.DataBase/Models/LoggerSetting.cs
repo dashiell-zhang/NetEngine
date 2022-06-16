@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Logger.DataBase.Models
 {
-    public class LoggerConfiguration
+    public class LoggerSetting
     {
 
 

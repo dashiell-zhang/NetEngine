@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Repository.Database;
-using Repository.Extensions;
 using System.Threading.Tasks;
 
 namespace WebApi.Libraries

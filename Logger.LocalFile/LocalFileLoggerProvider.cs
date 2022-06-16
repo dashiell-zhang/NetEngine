@@ -8,22 +8,22 @@ namespace Logger.LocalFile
     public class LocalFileLoggerProvider : ILoggerProvider
     {
 
-        private readonly LoggerConfiguration loggerConfiguration;
+        private readonly LoggerSetting loggerSetting;
 
 
-        private readonly ConcurrentDictionary<string, LocalFileLogger> loggers = new ();
+        private readonly ConcurrentDictionary<string, LocalFileLogger> loggers = new();
 
 
-        public LocalFileLoggerProvider(IOptionsMonitor<LoggerConfiguration> config)
+        public LocalFileLoggerProvider(IOptionsMonitor<LoggerSetting> config)
         {
-            loggerConfiguration = config.CurrentValue;
+            loggerSetting = config.CurrentValue;
         }
 
 
 
         public ILogger CreateLogger(string categoryName)
         {
-            return loggers.GetOrAdd(categoryName, new LocalFileLogger(categoryName, loggerConfiguration));
+            return loggers.GetOrAdd(categoryName, new LocalFileLogger(categoryName, loggerSetting));
         }
 
         public void Dispose()

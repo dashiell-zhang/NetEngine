@@ -9,14 +9,14 @@ namespace Logger.DataBase
     public class DataBaseLoggerProvider : ILoggerProvider
     {
 
-        private readonly LoggerConfiguration loggerConfiguration;
+        private readonly LoggerSetting loggerConfiguration;
 
         private readonly SnowflakeHelper snowflakeHelper;
 
-        private readonly ConcurrentDictionary<string, DataBaseLogger> loggers = new ();
+        private readonly ConcurrentDictionary<string, DataBaseLogger> loggers = new();
 
 
-        public DataBaseLoggerProvider(IOptionsMonitor<LoggerConfiguration> config, SnowflakeHelper snowflakeHelper)
+        public DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, SnowflakeHelper snowflakeHelper)
         {
             loggerConfiguration = config.CurrentValue;
             this.snowflakeHelper = snowflakeHelper;

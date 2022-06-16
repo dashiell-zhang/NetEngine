@@ -28,7 +28,7 @@ namespace FileStorage.TencentCloud
 
 
 
-        public TencentCloudStorage(IOptionsMonitor<StorageSetting> config)
+        public TencentCloudStorage(IOptionsMonitor<FileStorageSetting> config)
         {
             appId = config.CurrentValue.AppId;
             region = config.CurrentValue.Region;

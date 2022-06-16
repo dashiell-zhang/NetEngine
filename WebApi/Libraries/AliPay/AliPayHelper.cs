@@ -2,7 +2,6 @@
 using Aop.Api.Domain;
 using Aop.Api.Request;
 using Aop.Api.Response;
-using System;
 
 namespace WebApi.Libraries.AliPay
 {

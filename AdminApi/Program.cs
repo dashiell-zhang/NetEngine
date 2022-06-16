@@ -3,7 +3,6 @@ using AdminApi.Libraries;
 using AdminApi.Libraries.Swagger;
 using AdminApi.Models.AppSetting;
 using Common;
-using FileStorage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -311,17 +310,20 @@ namespace AdminApi
             //注册腾讯云COS文件服务
             //builder.Services.AddTencentCloudStorage(options =>
             //{
-            //    options = builder.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.StorageSetting>();
+            //    options = builder.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>();
             //});
 
 
             ////注册阿里云OSS文件服务
             //builder.Services.AddAliCloudStorage(options =>
             //{
-            //    options = builder.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.StorageSetting>();
+            //    options = builder.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>();
             //});
 
             #endregion
+
+
+            #region 注册日志服务
 
             //注册数据库日志服务
             builder.Logging.AddDataBaseLogger(options =>
@@ -331,6 +333,8 @@ namespace AdminApi
 
             //注册本地文件日志服务
             builder.Logging.AddLocalFileLogger(options => { });
+
+            #endregion
 
             var app = builder.Build();
 

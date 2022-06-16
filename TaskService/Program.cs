@@ -1,12 +1,11 @@
 ﻿using Common;
-using DistributedLock;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
-using Microsoft.Extensions.Logging;
 
 namespace TaskService
 {
@@ -43,14 +42,19 @@ namespace TaskService
 
                     #region 注册文件服务
 
-                    //注册腾讯云COS文件服务
-                    //var tencentCloudFileStorageSetting = hostContext.Configuration.GetSection("TencentCloudFileStorage").Get<TencentCloudFileStorageSetting>();
-                    //services.AddSingleton<IFileStorage>(new TencentCloudFileStorage(tencentCloudFileStorageSetting.AppId, tencentCloudFileStorageSetting.Region, tencentCloudFileStorageSetting.SecretId, tencentCloudFileStorageSetting.SecretKey, tencentCloudFileStorageSetting.BucketName));
+
+                    ////注册腾讯云COS文件服务
+                    //services.AddTencentCloudStorage(options =>
+                    //{
+                    //    options = hostContext.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>();
+                    //});
 
 
-                    //注册阿里云OSS文件服务
-                    //var aliCloudFileStorageSetting = hostContext.Configuration.GetSection("AliCloudFileStorage").Get<AliCloudFileStorageSetting>();
-                    //services.AddSingleton<IFileStorage>(new AliCloudFileStorage(aliCloudFileStorageSetting.Endpoint, aliCloudFileStorageSetting.AccessKeyId, aliCloudFileStorageSetting.AccessKeySecret, aliCloudFileStorageSetting.BucketName));
+                    ////注册阿里云OSS文件服务
+                    //services.AddAliCloudStorage(options =>
+                    //{
+                    //    options = hostContext.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>();
+                    //});
 
                     #endregion
 

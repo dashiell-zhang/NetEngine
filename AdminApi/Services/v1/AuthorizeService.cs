@@ -12,7 +12,7 @@ using System.Security.Cryptography;
 namespace AdminApi.Services.v1
 {
 
-    [Service(ServiceLifetime.Scoped)]
+    [Service(Lifetime = ServiceLifetime.Scoped)]
     public class AuthorizeService
     {
 

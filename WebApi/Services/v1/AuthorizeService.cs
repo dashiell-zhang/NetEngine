@@ -12,7 +12,7 @@ using WebApi.Models.AppSetting;
 namespace WebApi.Services.v1
 {
 
-    [Service(ServiceLifetime.Scoped)]
+    [Service(Lifetime = ServiceLifetime.Scoped)]
     public class AuthorizeService
     {
 

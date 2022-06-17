@@ -28,35 +28,42 @@ namespace Common
         /// <param name="serviceLifetime"></param>
         private static void RegisterServiceByAttribute(this IServiceCollection services, ServiceLifetime serviceLifetime)
         {
-            List<Type> types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(t => t.GetTypes()).Where(t => t.GetCustomAttributes(typeof(ServiceAttribute), false).Length > 0 && t.GetCustomAttribute<ServiceAttribute>()?.Lifetime == serviceLifetime && t.IsClass && !t.IsAbstract).ToList();
 
-            foreach (var type in types)
+            var assemblies = Assembly.GetEntryAssembly()?.GetReferencedAssemblies().Select(t => Assembly.Load(t)).ToArray();
+
+            if (assemblies != null)
             {
+                List<Type> types = assemblies.SelectMany(t => t.GetTypes()).Where(t => t.GetCustomAttributes(typeof(ServiceAttribute), false).Length > 0 && t.GetCustomAttribute<ServiceAttribute>()?.Lifetime == serviceLifetime && t.IsClass && !t.IsAbstract).ToList();
 
-                Type? typeInterface = type.GetInterfaces().FirstOrDefault();
-
-                if (typeInterface == null)
+                foreach (var type in types)
                 {
-                    //服务非继承自接口的直接注入
-                    switch (serviceLifetime)
-                    {
-                        case ServiceLifetime.Singleton: services.AddSingleton(type); break;
-                        case ServiceLifetime.Scoped: services.AddScoped(type); break;
-                        case ServiceLifetime.Transient: services.AddTransient(type); break;
-                    }
-                }
-                else
-                {
-                    //服务继承自接口的和接口一起注入
-                    switch (serviceLifetime)
-                    {
-                        case ServiceLifetime.Singleton: services.AddSingleton(typeInterface, type); break;
-                        case ServiceLifetime.Scoped: services.AddScoped(typeInterface, type); break;
-                        case ServiceLifetime.Transient: services.AddTransient(typeInterface, type); break;
-                    }
-                }
 
+                    Type? typeInterface = type.GetInterfaces().FirstOrDefault();
+
+                    if (typeInterface == null)
+                    {
+                        //服务非继承自接口的直接注入
+                        switch (serviceLifetime)
+                        {
+                            case ServiceLifetime.Singleton: services.AddSingleton(type); break;
+                            case ServiceLifetime.Scoped: services.AddScoped(type); break;
+                            case ServiceLifetime.Transient: services.AddTransient(type); break;
+                        }
+                    }
+                    else
+                    {
+                        //服务继承自接口的和接口一起注入
+                        switch (serviceLifetime)
+                        {
+                            case ServiceLifetime.Singleton: services.AddSingleton(typeInterface, type); break;
+                            case ServiceLifetime.Scoped: services.AddScoped(typeInterface, type); break;
+                            case ServiceLifetime.Transient: services.AddTransient(typeInterface, type); break;
+                        }
+                    }
+
+                }
             }
+
         }
 
 
@@ -69,11 +76,16 @@ namespace Common
         /// <param name="serviceLifetime"></param>
         private static void RegisterBackgroundService(this IServiceCollection services)
         {
-            List<Type> types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(t => t.GetTypes()).Where(t => typeof(BackgroundService).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract).ToList();
+            var assemblies = Assembly.GetEntryAssembly()?.GetReferencedAssemblies().Select(t => Assembly.Load(t)).ToArray();
 
-            foreach (var type in types)
+            if (assemblies != null)
             {
-                services.AddSingleton(typeof(IHostedService), type);
+                List<Type> types = assemblies.SelectMany(t => t.GetTypes()).Where(t => typeof(BackgroundService).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract).ToList();
+
+                foreach (var type in types)
+                {
+                    services.AddSingleton(typeof(IHostedService), type);
+                }
             }
         }
 
@@ -85,12 +97,7 @@ namespace Common
     [AttributeUsage(AttributeTargets.Class)]
     public class ServiceAttribute : Attribute
     {
-
         public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Transient;
 
-        public ServiceAttribute(ServiceLifetime lifetime)
-        {
-            Lifetime = lifetime;
-        }
     }
 }

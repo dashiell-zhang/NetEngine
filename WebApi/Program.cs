@@ -323,17 +323,20 @@ namespace WebApi
 
             #region 注册短信服务
 
-            ////注册腾讯云短信服务
             //builder.Services.AddTencentCloudSMS(options =>
             //{
-            //    options = builder.Configuration.GetSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>();
+            //    var settings = builder.Configuration.GetSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>();
+            //    options.AppId = settings.AppId;
+            //    options.SecretId = settings.SecretId;
+            //    options.SecretKey = settings.SecretKey;
             //});
 
 
-            ////注册阿里云短信服务
             //builder.Services.AddAliCloudSMS(options =>
             //{
-            //    options = builder.Configuration.GetSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>();
+            //    var settings = builder.Configuration.GetSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>();
+            //    options.AccessKeyId = settings.AccessKeyId;
+            //    options.AccessKeySecret = settings.AccessKeySecret;
             //});
 
             #endregion
@@ -344,17 +347,24 @@ namespace WebApi
             builder.Services.AddLocalDiskStorage();
 
 
-            ////注册腾讯云COS文件服务
             //builder.Services.AddTencentCloudStorage(options =>
             //{
-            //    options = builder.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>();
+            //    var settings = builder.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>();
+            //    options.AppId = settings.AppId;
+            //    options.Region = settings.Region;
+            //    options.SecretId = settings.SecretId;
+            //    options.SecretKey = settings.SecretKey;
+            //    options.BucketName = settings.BucketName;
             //});
 
 
-            ////注册阿里云OSS文件服务
             //builder.Services.AddAliCloudStorage(options =>
             //{
-            //    options = builder.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>();
+            //    var settings = builder.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>();
+            //    options.Endpoint = settings.Endpoint;
+            //    options.AccessKeyId = settings.AccessKeyId;
+            //    options.AccessKeySecret = settings.AccessKeySecret;
+            //    options.BucketName = settings.BucketName;
             //});
 
             #endregion

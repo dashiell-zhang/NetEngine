@@ -29,31 +29,44 @@ namespace TaskService
 
                     #region 注册短信服务
 
-                    //注册腾讯云短信服务
-                    //var tencentCloudSMSSetting = hostContext.Configuration.GetSection("TencentCloudSMS").Get<TencentCloudSMSSetting>();
-                    //services.AddSingleton<ISMS>(new TencentCloudSMS(tencentCloudSMSSetting.AppId, tencentCloudSMSSetting.SecretId, tencentCloudSMSSetting.SecretKey));
+                    //services.AddTencentCloudSMS(options =>
+                    //{
+                    //    var settings = hostContext.Configuration.GetSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>();
+                    //    options.AppId = settings.AppId;
+                    //    options.SecretId = settings.SecretId;
+                    //    options.SecretKey = settings.SecretKey;
+                    //});
 
 
-                    //注册阿里云短信服务
-                    //var aliCloudSMSSetting = hostContext.Configuration.GetSection("AliCloudSMS").Get<AliCloudSMSSetting>();
-                    //services.AddSingleton<ISMS>(new AliCloudSMS(aliCloudSMSSetting.AccessKeyId, aliCloudSMSSetting.AccessKeySecret));
-
+                    //services.AddAliCloudSMS(options =>
+                    //{
+                    //    var settings = hostContext.Configuration.GetSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>();
+                    //    options.AccessKeyId = settings.AccessKeyId;
+                    //    options.AccessKeySecret = settings.AccessKeySecret;
+                    //});
                     #endregion
 
                     #region 注册文件服务
 
 
-                    ////注册腾讯云COS文件服务
                     //services.AddTencentCloudStorage(options =>
                     //{
-                    //    options = hostContext.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>();
+                    //    var settings = hostContext.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>();
+                    //    options.AppId = settings.AppId;
+                    //    options.Region = settings.Region;
+                    //    options.SecretId = settings.SecretId;
+                    //    options.SecretKey = settings.SecretKey;
+                    //    options.BucketName = settings.BucketName;
                     //});
 
 
-                    ////注册阿里云OSS文件服务
                     //services.AddAliCloudStorage(options =>
                     //{
-                    //    options = hostContext.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>();
+                    //    var settings = hostContext.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>();
+                    //    options.Endpoint = settings.Endpoint;
+                    //    options.AccessKeyId = settings.AccessKeyId;
+                    //    options.AccessKeySecret = settings.AccessKeySecret;
+                    //    options.BucketName = settings.BucketName;
                     //});
 
                     #endregion

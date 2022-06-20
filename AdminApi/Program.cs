@@ -307,17 +307,20 @@ namespace AdminApi
             builder.Services.AddLocalDiskStorage();
 
 
-            //注册腾讯云COS文件服务
-            //builder.Services.AddTencentCloudStorage(options =>
+            //builder.Services.AddTencentCloudSMS(options =>
             //{
-            //    options = builder.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>();
+            //    var settings = builder.Configuration.GetSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>();
+            //    options.AppId = settings.AppId;
+            //    options.SecretId = settings.SecretId;
+            //    options.SecretKey = settings.SecretKey;
             //});
 
 
-            ////注册阿里云OSS文件服务
-            //builder.Services.AddAliCloudStorage(options =>
+            //builder.Services.AddAliCloudSMS(options =>
             //{
-            //    options = builder.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>();
+            //    var settings = builder.Configuration.GetSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>();
+            //    options.AccessKeyId = settings.AccessKeyId;
+            //    options.AccessKeySecret = settings.AccessKeySecret;
             //});
 
             #endregion

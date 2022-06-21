@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
@@ -28,11 +29,25 @@ namespace Common
         /// <param name="serviceLifetime"></param>
         private static void RegisterServiceByAttribute(this IServiceCollection services, ServiceLifetime serviceLifetime)
         {
+            List<Assembly> assemblies = new();
 
-            var assemblies = Assembly.GetEntryAssembly()?.GetReferencedAssemblies().Select(t => Assembly.Load(t)).ToArray();
+            var allNames = DependencyContext.Default.RuntimeLibraries.Select(o => o.Name).ToList();
+
+            foreach (var name in allNames)
+            {
+                try
+                {
+                    assemblies.Add(Assembly.Load(new AssemblyName(name)));
+                }
+                catch
+                {
+                }
+            }
 
             if (assemblies != null)
             {
+
+
                 List<Type> types = assemblies.SelectMany(t => t.GetTypes()).Where(t => t.GetCustomAttributes(typeof(ServiceAttribute), false).Length > 0 && t.GetCustomAttribute<ServiceAttribute>()?.Lifetime == serviceLifetime && t.IsClass && !t.IsAbstract).ToList();
 
                 foreach (var type in types)

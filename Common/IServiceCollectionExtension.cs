@@ -91,7 +91,20 @@ namespace Common
         /// <param name="serviceLifetime"></param>
         private static void RegisterBackgroundService(this IServiceCollection services)
         {
-            var assemblies = Assembly.GetEntryAssembly()?.GetReferencedAssemblies().Select(t => Assembly.Load(t)).ToArray();
+            List<Assembly> assemblies = new();
+
+            var allNames = DependencyContext.Default.RuntimeLibraries.Select(o => o.Name).ToList();
+
+            foreach (var name in allNames)
+            {
+                try
+                {
+                    assemblies.Add(Assembly.Load(new AssemblyName(name)));
+                }
+                catch
+                {
+                }
+            }
 
             if (assemblies != null)
             {

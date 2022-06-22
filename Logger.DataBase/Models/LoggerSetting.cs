@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace Logger.DataBase.Models
 {
@@ -18,7 +17,5 @@ namespace Logger.DataBase.Models
         /// </summary>
         public string AppSign { get; set; } = Assembly.GetEntryAssembly()?.GetName().Name!;
 
-
-        public LogLevel MinLogLevel { get; set; } = LogLevel.Information;
     }
 }

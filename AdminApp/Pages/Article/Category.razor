@@ -64,7 +64,7 @@
 
             <FormItem>
                 <Text>父级栏目</Text>
-                <Select DataSource="@selectCategoryList" DefaultValue="@(0)" ValueName="@nameof(DtoSelect.Value)" LabelName="@nameof(DtoSelect.Label)" DisabledName="@nameof(DtoSelect.IsDisabled)" @bind-Value="@context.ParentId"></Select>
+                <TreeSelect TItem="DtoTreeSelect" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
             </FormItem>
 
 
@@ -95,44 +95,57 @@
 
 @code {
 
+    private string parentId = "0";
+
+
     [Parameter]
     public string? channelId { get; set; }
 
-    List<DtoSelect>? selectCategoryList;
+    List<DtoTreeSelect>? selectCategoryList = new();
 
     override protected void OnInitialized()
     {
-        GetSelectCategoryList();
+        GetCategoryTreeList();
     }
 
     override protected void OnParametersSet()
     {
         GetCategoryList();
-        GetSelectCategoryList();
+        GetCategoryTreeList();
     }
 
 
-    async void GetSelectCategoryList()
+    async void GetCategoryTreeList()
     {
-        var parentKVList = new List<DtoKeyValue>();
+        var parentKVList = new List<DtoKeyValueChild>();
 
 
-        parentKVList.Add(new DtoKeyValue { Key = 0, Value = "无父级栏目" });
+        parentKVList.Add(new DtoKeyValueChild { Key = 0, Value = "无父级栏目" });
 
 
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
+        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList?channelId=" + channelId);
 
         if (kvList != null)
         {
             parentKVList.AddRange(kvList);
 
-            selectCategoryList = parentKVList.Select(t => new DtoSelect
-                {
-                    Label = t.Value!.ToString(),
-                    Value = long.Parse(t.Key!.ToString()!)
-                }).ToList();
+            selectCategoryList = CategoryTreeConvert(parentKVList)!.ToList();
+
+            Console.WriteLine(selectCategoryList);
         }
+
+    }
+
+    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoKeyValueChild>? keyValueChildren)
+    {
+        return keyValueChildren?.Select(t => new DtoTreeSelect
+            {
+                Key = t.Key!.ToString()!,
+                Title = t.Value!.ToString()!,
+                Children = CategoryTreeConvert(t.ChildList),
+                IsDisabled = (categoryId.ToString() == t.Key!.ToString() && categoryId.ToString() != "0")
+            }).ToList();
     }
 
     bool saveLoading = false;
@@ -180,12 +193,12 @@
     long categoryId;
 
 
-    void EditCategory(DtoCategory? category = null)
+    async void EditCategory(DtoCategory? category = null)
     {
         editCategory = new();
         categoryId = default;
 
-        GetSelectCategoryList();
+        GetCategoryTreeList();
 
         if (category != null)
         {
@@ -202,11 +215,15 @@
             {
                 editCategory.ParentId = category.ParentId;
             }
+
+            parentId = editCategory.ParentId.Value.ToString();
         }
         else
         {
             editCategory.Sort = 99;
         }
+
+        await Task.Delay(200);
 
         isShowEditCategory = true;
 
@@ -217,9 +234,13 @@
     {
         saveLoading = true;
 
-        if (editCategory.ParentId == 0)
+        if (parentId == "0")
         {
             editCategory.ParentId = null;
+        }
+        else
+        {
+            editCategory.ParentId = long.Parse(parentId);
         }
 
         if (categoryId == default)

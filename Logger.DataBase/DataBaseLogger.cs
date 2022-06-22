@@ -40,7 +40,7 @@ namespace Logger.DataBase
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            if (logLevel != LogLevel.None && logLevel >= loggerSetting.MinLogLevel)
+            if (logLevel != LogLevel.None)
             {
                 return true;
             }

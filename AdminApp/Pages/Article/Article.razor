@@ -67,8 +67,9 @@
         <Tabs Type="@TabType.Card">
 
             <TabPane Key="1" Tab="基本信息">
+
                 <FormItem Label="所属栏目">
-                    <Select DataSource="@selectCategoryList" DefaultValue="@(0)" ValueName="@nameof(DtoSelect.Value)" LabelName="@nameof(DtoSelect.Label)" DisabledName="@nameof(DtoSelect.IsDisabled)" @bind-Value="@context.CategoryId" style="width: 190px"></Select>
+                    <TreeSelect TItem="DtoTreeSelect"  Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@categoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
                 </FormItem>
 
                 <FormItem Label="标题">
@@ -134,6 +135,9 @@
 
 @code {
 
+    private string categoryId;
+
+
     private Form<DtoEditArticle>? _editArticleForm;
 
     Dictionary<string, string> headers = new();
@@ -147,11 +151,11 @@
     [Parameter]
     public string? channelId { get; set; }
 
-    List<DtoSelect>? selectCategoryList;
+    List<DtoTreeSelect>? selectCategoryList;
 
     override protected void OnInitialized()
     {
-        GetSelectCategoryList();
+        GetCategoryTreeList();
 
         var authorization = LocalStorage.GetItemAsString("Authorization");
 
@@ -161,25 +165,39 @@
     override protected void OnParametersSet()
     {
         GetArticleList();
-        GetSelectCategoryList();
+        GetCategoryTreeList();
     }
 
 
 
-    async void GetSelectCategoryList()
+    async void GetCategoryTreeList()
     {
-        var parentKVList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetCategoryKVList?channelId=" + channelId);
+        var parentKVList = new List<DtoKeyValueChild>();
 
-        if (parentKVList != null)
+
+        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList?channelId=" + channelId);
+
+        if (kvList != null)
         {
-            selectCategoryList = parentKVList.Select(t => new DtoSelect
-                {
-                    Label = t.Value!.ToString(),
-                    Value = long.Parse(t.Key!.ToString()!)
-                }).ToList();
+            parentKVList.AddRange(kvList);
+
+            selectCategoryList = CategoryTreeConvert(parentKVList)!.ToList();
+
+            Console.WriteLine(selectCategoryList);
         }
+
     }
 
+    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoKeyValueChild>? keyValueChildren)
+    {
+        return keyValueChildren?.Select(t => new DtoTreeSelect
+            {
+                Key = t.Key!.ToString()!,
+                Title = t.Value!.ToString()!,
+                Children = CategoryTreeConvert(t.ChildList),
+                IsDisabled = false
+            }).ToList();
+    }
 
     bool tableLoading = false;
     int pageNum = 1;
@@ -236,6 +254,9 @@
 
             articleId = article.Id;
             editArticle.CategoryId = article.CategoryId;
+
+            categoryId = editArticle.CategoryId.ToString();
+
             editArticle.Title = article.Title;
             editArticle.Sort = article.Sort;
             editArticle.ClickCount = article.ClickCount;
@@ -260,7 +281,8 @@
         }
 
 
-        GetSelectCategoryList();
+        GetCategoryTreeList();
+
 
         isShowEditArticle = true;
 
@@ -276,6 +298,7 @@
     async void SaveArticle()
     {
         editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
+        editArticle.CategoryId = long.Parse(categoryId);
 
         if (_editArticleForm!.Validate())
         {

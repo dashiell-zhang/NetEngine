@@ -1,5 +1,6 @@
 ﻿using AdminApi.Filters;
 using AdminApi.Libraries;
+using AdminApi.Services.v1;
 using AdminShared.Models;
 using AdminShared.Models.v1.Article;
 using Common;
@@ -27,11 +28,13 @@ namespace AdminApi.Controllers.v1
         private readonly IConfiguration configuration;
         private readonly SnowflakeHelper snowflakeHelper;
 
+        private readonly ArticleService articleService;
+
         private readonly long userId;
 
 
 
-        public ArticleController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IHttpContextAccessor httpContextAccessor)
+        public ArticleController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IHttpContextAccessor httpContextAccessor, ArticleService articleService)
         {
             this.db = db;
             this.configuration = configuration;
@@ -43,6 +46,8 @@ namespace AdminApi.Controllers.v1
             {
                 userId = long.Parse(userIdStr);
             }
+
+            this.articleService = articleService;
         }
 
 
@@ -254,17 +259,23 @@ namespace AdminApi.Controllers.v1
 
 
         /// <summary>
-        /// 获取栏目KV列表
+        /// 获取栏目树形列表
         /// </summary>
+        /// <param name="channelId">频道ID</param>
         /// <returns></returns>
-        [HttpGet("GetCategoryKVList")]
-        public List<DtoKeyValue> GetCategoryKVList(long channelId)
+        [HttpGet("GetCategoryTreeList")]
+        public List<DtoKeyValueChild> GetCategoryTreeList(long channelId)
         {
-            var list = db.TCategory.Where(t => t.IsDelete == false && t.ChannelId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoKeyValue
+            var list = db.TCategory.Where(t => t.IsDelete == false && t.ChannelId == channelId && t.ParentId == null).Select(t => new DtoKeyValueChild
             {
                 Key = t.Id,
                 Value = t.Name
             }).ToList();
+
+            foreach (var item in list)
+            {
+                item.ChildList = articleService.GetCategoryChildList(Convert.ToInt64(item.Key));
+            }
 
             return list;
         }

@@ -49,9 +49,6 @@ namespace Repository.Database
         public DbSet<TLink> TLink => Set<TLink>();
 
 
-        public DbSet<TLock> TLock => Set<TLock>();
-
-
         public DbSet<TLog> TLog => Set<TLog>();
 
 

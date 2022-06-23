@@ -75,20 +75,14 @@ namespace TaskService
                     //注册雪花ID算法
                     services.AddSingleton(new SnowflakeHelper(0, 0));
 
-                    #region 注册分布式锁
 
                     //注册分布式锁 Redis模式
-                    //services.AddRedisLock(options =>
-                    //{
-                    //    options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
-                    //    options.InstanceName = "lock";
-                    //});
+                    services.AddRedisLock(options =>
+                    {
+                        options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
+                        options.InstanceName = "lock";
+                    });
 
-
-                    //注册分布式锁 数据库模式
-                    services.AddDataBaseLock();
-
-                    #endregion
 
                     #region 注册缓存服务
 

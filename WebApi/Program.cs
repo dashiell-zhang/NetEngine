@@ -255,15 +255,11 @@ namespace WebApi
 
 
             //注册分布式锁 Redis模式
-            //builder.Services.AddRedisLock(options =>
-            //{
-            //    options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
-            //    options.InstanceName = "lock";
-            //});
-
-
-            //注册分布式锁 数据库模式
-            builder.Services.AddDataBaseLock();
+            builder.Services.AddRedisLock(options =>
+            {
+                options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
+                options.InstanceName = "lock";
+            });
 
 
 

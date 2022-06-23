@@ -261,15 +261,6 @@ namespace AdminApi
             builder.Services.AddDistributedMemoryCache();
 
 
-            //注册缓存服务 SqlServer模式
-            //builder.Services.AddDistributedSqlServerCache(options =>
-            //{
-            //    options.ConnectionString = builder.Configuration.GetConnectionString("dbConnection");
-            //    options.SchemaName = "dbo";
-            //    options.TableName = "t_cache";
-            //});
-
-
             //注册缓存服务 Redis模式
             //builder.Services.AddStackExchangeRedisCache(options =>
             //{

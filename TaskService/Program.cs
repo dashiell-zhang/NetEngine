@@ -90,14 +90,6 @@ namespace TaskService
                     services.AddDistributedMemoryCache();
 
 
-                    //注册缓存服务 SqlServer模式
-                    //services.AddDistributedSqlServerCache(options =>
-                    //{
-                    //    options.ConnectionString = hostContext.Configuration.GetConnectionString("dbConnection");
-                    //    options.SchemaName = "dbo";
-                    //    options.TableName = "t_cache";
-                    //});
-
 
                     //注册缓存服务 Redis模式
                     //services.AddStackExchangeRedisCache(options =>

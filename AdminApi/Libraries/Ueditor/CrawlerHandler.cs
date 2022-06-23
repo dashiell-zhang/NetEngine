@@ -37,7 +37,7 @@ namespace AdminApi.Libraries.Ueditor
                 });
             }
 
-            var fileStorage = httpContext.RequestServices.GetRequiredService<IFileStorage>();
+            var fileStorage = httpContext.RequestServices.GetService<IFileStorage>();
 
             Crawlers = Sources.Select(x => new Crawler(x, rootPath, fileServerUrl).Fetch(fileStorage)).ToArray();
             return WriteJson(new
@@ -72,7 +72,7 @@ namespace AdminApi.Libraries.Ueditor
             this.fileServerUrl = fileServerUrl;
         }
 
-        public Crawler Fetch(IFileStorage fileStorage)
+        public Crawler Fetch(IFileStorage? fileStorage)
         {
             if (!IsExternalIPAddress(SourceUrl!))
             {
@@ -107,9 +107,9 @@ namespace AdminApi.Libraries.Ueditor
 
                 File.WriteAllBytes(savePath, httpResponse.Content.ReadAsByteArrayAsync().Result);
 
-                var upRemote = false;
 
-                if (upRemote)
+
+                if (fileStorage != null)
                 {
 
                     var upload = fileStorage.FileUpload(savePath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(SourceUrl!));

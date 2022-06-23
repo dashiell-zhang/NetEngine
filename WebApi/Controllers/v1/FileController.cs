@@ -33,7 +33,7 @@ namespace WebApi.Controllers.v1
         private readonly DatabaseContext db;
         private readonly IConfiguration configuration;
         private readonly SnowflakeHelper snowflakeHelper;
-        private readonly IFileStorage fileStorage;
+        private readonly IFileStorage? fileStorage;
 
         private readonly string rootPath;
 
@@ -41,7 +41,7 @@ namespace WebApi.Controllers.v1
 
 
 
-        public FileController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IFileStorage fileStorage, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
+        public FileController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
         {
             this.db = db;
             this.configuration = configuration;
@@ -98,11 +98,9 @@ namespace WebApi.Controllers.v1
 
                 var isSuccess = true;
 
-                var upRemote = false;
-
                 string fileInfoName = fileInfo.Value.ToString()!;
 
-                if (upRemote == true)
+                if (fileStorage != null)
                 {
                     var upload = fileStorage.FileUpload(dlPath, basepath, fileInfoName);
 
@@ -153,6 +151,7 @@ namespace WebApi.Controllers.v1
         /// <param name="sign">自定义标记</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
+        [AllowAnonymous]
         [DisableRequestSizeLimit]
         [HttpPost("UploadFile")]
         public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, IFormFile file)
@@ -181,9 +180,8 @@ namespace WebApi.Controllers.v1
                     fs.Flush();
                 }
 
-                var upRemote = false;
 
-                if (upRemote)
+                if (fileStorage != null)
                 {
 
                     var upload = fileStorage.FileUpload(path, "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);

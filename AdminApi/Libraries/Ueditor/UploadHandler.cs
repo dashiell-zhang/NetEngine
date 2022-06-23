@@ -22,7 +22,7 @@ namespace AdminApi.Libraries.Ueditor
 
         private readonly HttpContext httpContext;
 
-        private readonly IFileStorage fileStorage;
+        private readonly IFileStorage? fileStorage;
 
 
         public UploadHandler(UploadConfig config, string rootPath, HttpContext httpContext) : base()
@@ -33,7 +33,7 @@ namespace AdminApi.Libraries.Ueditor
             this.rootPath = rootPath;
             this.httpContext = httpContext;
 
-            this.fileStorage = httpContext.RequestServices.GetRequiredService<IFileStorage>();
+            this.fileStorage = httpContext.RequestServices.GetService<IFileStorage>();
         }
 
         public override string Process(string fileServerUrl)
@@ -59,9 +59,9 @@ namespace AdminApi.Libraries.Ueditor
                     File.WriteAllBytes(localPath, uploadFileBytes);
 
 
-                    var upRemote = false;
 
-                    if (upRemote)
+
+                    if (fileStorage != null)
                     {
 
                         var upload = fileStorage.FileUpload(localPath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(localPath));
@@ -139,9 +139,7 @@ namespace AdminApi.Libraries.Ueditor
                         }
 
 
-                        var upRemote = false;
-
-                        if (upRemote)
+                        if (fileStorage != null)
                         {
 
                             var upload = fileStorage.FileUpload(localPath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);

@@ -290,9 +290,6 @@ namespace AdminApi
 
             #region 注册文件服务
 
-            //注册本地磁盘文件服务
-            builder.Services.AddLocalDiskStorage();
-
 
             //builder.Services.AddTencentCloudSMS(options =>
             //{

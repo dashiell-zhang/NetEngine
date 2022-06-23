@@ -33,14 +33,14 @@ namespace AdminApi.Controllers.v1
         private readonly DatabaseContext db;
         private readonly IConfiguration configuration;
         private readonly SnowflakeHelper snowflakeHelper;
-        private readonly IFileStorage fileStorage;
+        private readonly IFileStorage? fileStorage;
 
         private readonly string rootPath;
 
         private readonly long userId;
 
 
-        public FileController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IFileStorage fileStorage, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
+        public FileController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
         {
             this.db = db;
             this.configuration = configuration;
@@ -95,9 +95,7 @@ namespace AdminApi.Controllers.v1
                     fs.Flush();
                 }
 
-                var upRemote = false;
-
-                if (upRemote)
+                if (fileStorage != null)
                 {
 
                     var upload = fileStorage.FileUpload(path, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);

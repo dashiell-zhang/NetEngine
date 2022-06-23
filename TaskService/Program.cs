@@ -80,7 +80,8 @@ namespace TaskService
                     //注册分布式锁 Redis模式
                     //services.AddRedisLock(options =>
                     //{
-                    //    options.RedisConnection = hostContext.Configuration.GetConnectionString("redisConnection");
+                    //    options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
+                    //    options.InstanceName = "lock";
                     //});
 
 

@@ -13,9 +13,12 @@ namespace DistributedLock.Redis
         private readonly ConnectionMultiplexer connectionMultiplexer;
 
 
+        private readonly RedisSetting redisSetting;
+
         public RedisLock(IOptionsMonitor<RedisSetting> config)
         {
-            connectionMultiplexer = ConnectionMultiplexer.Connect(config.CurrentValue.RedisConnection);
+            connectionMultiplexer = ConnectionMultiplexer.Connect(config.CurrentValue.Configuration);
+            redisSetting = config.CurrentValue;
         }
 
 
@@ -43,7 +46,7 @@ namespace DistributedLock.Redis
             {
                 for (int i = 0; i < semaphore; i++)
                 {
-                    var keyMd5 = CryptoHelper.GetMD5(key + i);
+                    var keyMd5 = redisSetting.InstanceName + CryptoHelper.GetMD5(key + i);
 
                     try
                     {
@@ -95,7 +98,7 @@ namespace DistributedLock.Redis
 
             for (int i = 0; i < semaphore; i++)
             {
-                var keyMd5 = CryptoHelper.GetMD5(key + i);
+                var keyMd5 = redisSetting.InstanceName + CryptoHelper.GetMD5(key + i);
 
                 try
                 {

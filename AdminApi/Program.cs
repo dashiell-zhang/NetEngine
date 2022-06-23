@@ -250,7 +250,8 @@ namespace AdminApi
             //注册分布式锁 Redis模式
             //builder.Services.AddRedisLock(options =>
             //{
-            //    options.RedisConnection = builder.Configuration.GetConnectionString("redisConnection");
+            //    options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
+            //    options.InstanceName = "lock";
             //});
 
 

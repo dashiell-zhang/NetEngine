@@ -84,7 +84,7 @@ namespace Logger.LocalFile
                             var log = new
                             {
                                 CreateTime = DateTime.UtcNow,
-                                AppSign = loggerSetting.AppSign,
+                                loggerSetting.AppSign,
                                 Category = categoryName,
                                 Level = logLevel.ToString(),
                                 Content = logContent

@@ -13,9 +13,9 @@ namespace TaskService
     {
         static void Main(string[] args)
         {
-            //EnvironmentHelper.ChangeDirectory(args);
+            EnvironmentHelper.ChangeDirectory(args);
 
-            IHost host = Host.CreateDefaultBuilder(args)
+            IHost host = Host.CreateDefaultBuilder(args).UseWindowsService()
                 .ConfigureServices((hostContext, services) =>
                 {
 

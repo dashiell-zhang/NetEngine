@@ -2,6 +2,7 @@
 using Logger.DataBase.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Concurrent;
 
 namespace Logger.DataBase
@@ -32,6 +33,7 @@ namespace Logger.DataBase
         public void Dispose()
         {
             loggers.Clear();
+            GC.SuppressFinalize(this);
         }
     }
 }

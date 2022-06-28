@@ -47,7 +47,7 @@ namespace TaskService.Tasks
             var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
             var distLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-            logger.LogInformation("HelloWord" + snowflakeHelper.GetId());
+            logger.LogInformation("HelloWord{Id}", snowflakeHelper.GetId());
 
         }
 

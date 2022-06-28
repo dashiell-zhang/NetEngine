@@ -1,6 +1,7 @@
 ﻿using Logger.LocalFile.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Concurrent;
 
 namespace Logger.LocalFile
@@ -29,6 +30,7 @@ namespace Logger.LocalFile
         public void Dispose()
         {
             loggers.Clear();
+            GC.SuppressFinalize(this);
         }
     }
 }

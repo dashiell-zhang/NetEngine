@@ -50,11 +50,10 @@ namespace AdminApi.Libraries
                 }
             };
 
-            string strContent = JsonHelper.ObjectToJson(content);
 
             var logger = httpContext.RequestServices.GetRequiredService<ILogger<GlobalError>>();
 
-            logger.LogError(strContent);
+            logger.LogError("全局异常：{content}", content);
 
             httpContext.Response.StatusCode = 400;
 

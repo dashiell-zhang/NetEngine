@@ -82,19 +82,19 @@ namespace Logger.DataBase
                         try
                         {
 
-                            using (var db = dbContextFactory.CreateDbContext())
+                            using var db = dbContextFactory.CreateDbContext();
+                            TLog log = new()
                             {
-                                TLog log = new();
-                                log.Id = snowflakeHelper.GetId();
-                                log.CreateTime = DateTime.UtcNow;
-                                log.AppSign = loggerSetting.AppSign;
-                                log.Category = categoryName;
-                                log.Level = logLevel.ToString();
-                                log.Content = logContent;
+                                Id = snowflakeHelper.GetId(),
+                                CreateTime = DateTime.UtcNow,
+                                AppSign = loggerSetting.AppSign,
+                                Category = categoryName,
+                                Level = logLevel.ToString(),
+                                Content = logContent
+                            };
 
-                                db.TLog.Add(log);
-                                db.SaveChanges();
-                            }
+                            db.TLog.Add(log);
+                            db.SaveChanges();
                         }
                         catch
                         {

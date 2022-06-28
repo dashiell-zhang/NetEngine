@@ -39,6 +39,8 @@ namespace AdminApi
 
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Host.UseWindowsService();
+
             #region 启用 Kestrel Https 并绑定证书
 
             //builder.WebHost.UseKestrel(options =>

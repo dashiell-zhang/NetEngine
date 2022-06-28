@@ -1,0 +1,14 @@
+安装
+sc.exe create MyAPI binpath= 'c:\Publish\WebApi.exe --cd="true"' start= auto
+
+启动
+net start 服务名称
+如：net start MyAPI
+
+停止
+net stop 服务名称
+net stop MyAPI
+
+卸载
+sc.exe delete 服务名称
+如：sc.exe delete MyAPI

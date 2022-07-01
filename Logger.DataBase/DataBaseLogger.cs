@@ -1,7 +1,5 @@
 ﻿using Common;
 using Logger.DataBase.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System;
@@ -21,18 +19,12 @@ namespace Logger.DataBase
         private readonly LoggerSetting loggerSetting;
 
 
-        private readonly string ip;
 
-
-
-        public DataBaseLogger(string categoryName, LoggerSetting loggerSetting, SnowflakeHelper snowflakeHelper, string ip)
+        public DataBaseLogger(string categoryName, LoggerSetting loggerSetting, SnowflakeHelper snowflakeHelper)
         {
             this.categoryName = categoryName;
-
             this.loggerSetting = loggerSetting;
-
             this.snowflakeHelper = snowflakeHelper;
-            this.ip = ip;
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -84,13 +76,12 @@ namespace Logger.DataBase
 
 
 
-                        //using var db = dbContextFactory.CreateDbContext();
                         TLog log = new()
                         {
                             Id = snowflakeHelper.GetId(),
                             CreateTime = DateTime.UtcNow,
                             Project = loggerSetting.Project,
-                            IP = ip,
+                            MachineName = Environment.MachineName,
                             Category = categoryName,
                             Level = logLevel.ToString(),
                             Content = logContent
@@ -110,9 +101,6 @@ namespace Logger.DataBase
                         var logPath = basePath + log.Id + ".log";
 
                         File.WriteAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
-
-                        //db.TLog.Add(log);
-                        //db.SaveChanges();
 
                     }
                 }

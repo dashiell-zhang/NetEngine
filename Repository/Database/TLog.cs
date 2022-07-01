@@ -18,9 +18,9 @@ namespace Repository.Database
 
 
         /// <summary>
-        /// IP
+        /// 机器名称
         /// </summary>
-        public string IP { get; set; }
+        public string MachineName { get; set; }
 
 
 

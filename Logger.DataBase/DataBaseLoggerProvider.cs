@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
 
 namespace Logger.DataBase
 {
@@ -16,8 +15,6 @@ namespace Logger.DataBase
         private readonly SnowflakeHelper snowflakeHelper;
 
         private readonly ConcurrentDictionary<string, DataBaseLogger> loggers = new();
-
-        private readonly string ip = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.FirstOrDefault(address => address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.ToString()!;
 
 
 
@@ -31,7 +28,7 @@ namespace Logger.DataBase
 
         public ILogger CreateLogger(string categoryName)
         {
-            return loggers.GetOrAdd(categoryName, new DataBaseLogger(categoryName, loggerConfiguration, snowflakeHelper, ip));
+            return loggers.GetOrAdd(categoryName, new DataBaseLogger(categoryName, loggerConfiguration, snowflakeHelper));
         }
 
         public void Dispose()

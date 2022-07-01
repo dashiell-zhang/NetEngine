@@ -14,13 +14,12 @@ namespace Logger.LocalFile
 
         private readonly string logPath;
 
-        private readonly LoggerSetting loggerSetting;
 
         public LocalFileLogger(string categoryName, LoggerSetting loggerConfiguration)
         {
             this.categoryName = categoryName;
 
-            string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Log/";
+            string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
 
             if (Directory.Exists(basePath) == false)
             {
@@ -29,7 +28,6 @@ namespace Logger.LocalFile
 
             logPath = basePath + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".log";
 
-            this.loggerSetting = loggerConfiguration;
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -79,26 +77,20 @@ namespace Logger.LocalFile
                             logContent = JsonHelper.ObjectToJson(logMsg);
                         }
 
-                        try
+
+                        var log = new
                         {
-                            var log = new
-                            {
-                                CreateTime = DateTime.UtcNow,
-                                loggerSetting.AppSign,
-                                Category = categoryName,
-                                Level = logLevel.ToString(),
-                                Content = logContent
-                            };
+                            CreateTime = DateTime.UtcNow,
+                            Category = categoryName,
+                            Level = logLevel.ToString(),
+                            Content = logContent
+                        };
 
-                            string logStr = JsonHelper.ObjectToJson(log);
+                        string logStr = JsonHelper.ObjectToJson(log);
 
-                            File.AppendAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
+                        File.AppendAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
 
-                        }
-                        catch
-                        {
 
-                        }
                     }
                 }
 

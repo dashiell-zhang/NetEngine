@@ -125,13 +125,10 @@ namespace TaskService
                 }).ConfigureLogging((hostContext, builder) =>
                 {
                     //注册数据库日志服务
-                    builder.AddDataBaseLogger(options =>
-                    {
-                        options.DataBaseConnection = hostContext.Configuration.GetConnectionString("dbConnection");
-                    });
+                    builder.AddDataBaseLogger(options => { });
 
                     //注册本地文件日志服务
-                    builder.AddLocalFileLogger(options => { });
+                    //builder.AddLocalFileLogger(options => { });
                 })
                 .Build();
 

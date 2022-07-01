@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System;
+using System.IO;
+using System.Text;
 
 namespace Logger.DataBase
 {
@@ -13,23 +15,24 @@ namespace Logger.DataBase
 
         private readonly string categoryName;
 
-        private readonly PooledDbContextFactory<DatabaseContext> dbContextFactory;
 
         private readonly SnowflakeHelper snowflakeHelper;
 
         private readonly LoggerSetting loggerSetting;
 
 
-        public DataBaseLogger(string categoryName, LoggerSetting loggerSetting, SnowflakeHelper snowflakeHelper)
+        private readonly string ip;
+
+
+
+        public DataBaseLogger(string categoryName, LoggerSetting loggerSetting, SnowflakeHelper snowflakeHelper, string ip)
         {
             this.categoryName = categoryName;
 
             this.loggerSetting = loggerSetting;
-            var options = new DbContextOptionsBuilder<DatabaseContext>().UseSqlServer(loggerSetting.DataBaseConnection).Options;
-
-            dbContextFactory = new PooledDbContextFactory<DatabaseContext>(options, 100);
 
             this.snowflakeHelper = snowflakeHelper;
+            this.ip = ip;
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -79,27 +82,38 @@ namespace Logger.DataBase
                             logContent = JsonHelper.ObjectToJson(logMsg);
                         }
 
-                        try
+
+
+                        //using var db = dbContextFactory.CreateDbContext();
+                        TLog log = new()
                         {
+                            Id = snowflakeHelper.GetId(),
+                            CreateTime = DateTime.UtcNow,
+                            Project = loggerSetting.Project,
+                            IP = ip,
+                            Category = categoryName,
+                            Level = logLevel.ToString(),
+                            Content = logContent
+                        };
 
-                            using var db = dbContextFactory.CreateDbContext();
-                            TLog log = new()
-                            {
-                                Id = snowflakeHelper.GetId(),
-                                CreateTime = DateTime.UtcNow,
-                                AppSign = loggerSetting.AppSign,
-                                Category = categoryName,
-                                Level = logLevel.ToString(),
-                                Content = logContent
-                            };
 
-                            db.TLog.Add(log);
-                            db.SaveChanges();
-                        }
-                        catch
+                        string logStr = JsonHelper.ObjectToJson(log);
+
+
+                        string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
+
+                        if (Directory.Exists(basePath) == false)
                         {
-
+                            Directory.CreateDirectory(basePath);
                         }
+
+                        var logPath = basePath + log.Id + ".log";
+
+                        File.WriteAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
+
+                        //db.TLog.Add(log);
+                        //db.SaveChanges();
+
                     }
                 }
 

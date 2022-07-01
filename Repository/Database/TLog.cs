@@ -10,12 +10,17 @@ namespace Repository.Database
     {
 
 
+        /// <summary>
+        /// 项目
+        /// </summary>
+        public string Project { get; set; }
+
+
 
         /// <summary>
-        /// App标记
+        /// IP
         /// </summary>
-        public string AppSign { get; set; }
-
+        public string IP { get; set; }
 
 
 
@@ -26,7 +31,6 @@ namespace Repository.Database
 
 
 
-
         /// <summary>
         /// 类别
         /// </summary>
@@ -34,12 +38,10 @@ namespace Repository.Database
 
 
 
-
         /// <summary>
         /// 内容
         /// </summary>
         public string Content { get; set; }
-
 
 
     }

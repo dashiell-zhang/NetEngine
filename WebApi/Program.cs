@@ -362,13 +362,10 @@ namespace WebApi
             #region 注册日志服务
 
             //注册数据库日志服务
-            builder.Logging.AddDataBaseLogger(options =>
-            {
-                options.DataBaseConnection = builder.Configuration.GetConnectionString("dbConnection");
-            });
+            builder.Logging.AddDataBaseLogger(options => { });
 
             //注册本地文件日志服务
-            builder.Logging.AddLocalFileLogger(options => { });
+            //builder.Logging.AddLocalFileLogger(options => { });
 
             #endregion
 

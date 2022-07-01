@@ -7,9 +7,10 @@ namespace Logger.LocalFile.Models
 
 
         /// <summary>
-        /// App标记
+        /// 保存天数
         /// </summary>
-        public string AppSign { get; set; } = Assembly.GetEntryAssembly()?.GetName().Name!;
+        public int SaveDays { get; set; } = 7;
+
 
     }
 }

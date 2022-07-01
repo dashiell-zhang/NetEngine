@@ -307,7 +307,7 @@ namespace WebApi
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
-            }).AddHttpMessageHandler(t => t.GetRequiredService<HttpSignHandler>()); ;
+            }).AddHttpMessageHandler(t => t.GetRequiredService<HttpSignHandler>());
 
             #endregion
 

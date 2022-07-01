@@ -27,7 +27,6 @@
 		<PackageReference Include="SkiaSharp" Version="2.88.0" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.0" />
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.6.0" />
-		<PackageReference Include="StackExchange.Redis" Version="2.6.48" />
 	</ItemGroup>
 
 </Project>

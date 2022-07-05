@@ -15,7 +15,7 @@ namespace Logger.LocalFile
         private readonly string logPath;
 
 
-        public LocalFileLogger(string categoryName, LoggerSetting loggerConfiguration)
+        public LocalFileLogger(string categoryName)
         {
             this.categoryName = categoryName;
 

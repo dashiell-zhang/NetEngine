@@ -18,7 +18,7 @@ namespace Logger.DataBase.Tasks
         private readonly IServiceProvider serviceProvider;
 
 
-        private object locker = new();
+        private readonly object locker = new();
 
 
         public LogSaveTask(IServiceProvider serviceProvider)

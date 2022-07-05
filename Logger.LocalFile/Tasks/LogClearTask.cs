@@ -14,16 +14,14 @@ namespace Logger.LocalFile.Tasks
     public class LogClearTask : BackgroundService
     {
 
-        private readonly IServiceProvider serviceProvider;
         private readonly int saveDays;
 
 
-        private object locker = new();
+        private readonly object locker = new();
 
 
-        public LogClearTask(IServiceProvider serviceProvider, IOptionsMonitor<LoggerSetting> config)
+        public LogClearTask( IOptionsMonitor<LoggerSetting> config)
         {
-            this.serviceProvider = serviceProvider;
             saveDays = config.CurrentValue.SaveDays;
         }
 

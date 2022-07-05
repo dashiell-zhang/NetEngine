@@ -300,7 +300,7 @@ namespace WebApi
             });
 
 
-            builder.Services.AddScoped<HttpSignHandler>();
+            builder.Services.AddTransient<HttpSignHandler>();
             builder.Services.AddHttpClient("HttpSign", options =>
             {
                 options.DefaultRequestVersion = new Version("2.0");

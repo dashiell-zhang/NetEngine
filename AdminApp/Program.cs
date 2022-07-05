@@ -27,7 +27,7 @@ namespace AdminApp
 
             builder.RootComponents.Add<App>("#app");
 
-            builder.Services.AddScoped<HttpInterceptor>();
+            builder.Services.AddTransient<HttpInterceptor>();
 
 
 

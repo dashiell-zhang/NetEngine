@@ -51,11 +51,10 @@ namespace WebApi.Filters
             try
             {
                 var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-                var cacheInfo = distributedCache.GetString(key);
+                var cacheInfo = distributedCache.GetObject<object>(key);
 
-                if (!string.IsNullOrEmpty(cacheInfo))
+                if (cacheInfo != null)
                 {
-
                     context.Result = new ObjectResult(cacheInfo);
                 }
             }
@@ -71,31 +70,30 @@ namespace WebApi.Filters
         {
             try
             {
-                var value = JsonHelper.ObjectToJson(context.Result!);
-                value = JsonHelper.GetValueByKey(value, "value");
-
-
-                string key = "";
-
-                if (UseToken)
+                if (context.Result is ObjectResult objectResult && objectResult.Value != null)
                 {
-                    var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
+                    string key = "";
 
-                    key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString + "_" + token;
+                    if (UseToken)
+                    {
+                        var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
+
+                        key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString + "_" + token;
+                    }
+                    else
+                    {
+                        key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
+                    }
+
+                    key = "CacheData_" + CryptoHelper.GetMD5(key);
+
+                    if (objectResult.Value != null)
+                    {
+                        var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
+                        distributedCache.SetObject(key, objectResult.Value, TimeSpan.FromSeconds(TTL));
+                    }
+
                 }
-                else
-                {
-                    key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
-                }
-
-                key = "CacheData_" + CryptoHelper.GetMD5(key);
-
-                if (value != null)
-                {
-                    var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-                    distributedCache.SetString(key, value, TimeSpan.FromSeconds(TTL));
-                }
-
             }
             catch (Exception ex)
             {

@@ -12,22 +12,19 @@ namespace Logger.LocalFile
 
         private readonly string categoryName;
 
-        private readonly string logPath;
 
+        private readonly string basePath;
 
         public LocalFileLogger(string categoryName)
         {
             this.categoryName = categoryName;
 
-            string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
+            basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
 
             if (Directory.Exists(basePath) == false)
             {
                 Directory.CreateDirectory(basePath);
             }
-
-            logPath = basePath + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".log";
-
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -87,6 +84,8 @@ namespace Logger.LocalFile
                         };
 
                         string logStr = JsonHelper.ObjectToJson(log);
+
+                        var logPath = basePath + DateTime.UtcNow.ToString("yyyyMMddHH") + ".log";
 
                         File.AppendAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
 

@@ -96,9 +96,7 @@ namespace AdminApi
 
             #region 注册 JWT 认证机制
 
-            var jwtSetting = builder.Configuration.GetSection("JWT").Get<JWTSetting>();
-            var issuerSigningKey = ECDsa.Create();
-            issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -106,6 +104,10 @@ namespace AdminApi
             })
             .AddJwtBearer(options =>
             {
+                var jwtSetting = builder.Configuration.GetSection("JWT").Get<JWTSetting>();
+                var issuerSigningKey = ECDsa.Create();
+                issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidIssuer = jwtSetting.Issuer,

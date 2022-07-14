@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace SMS
+﻿namespace SMS
 {
     public interface ISMS
     {

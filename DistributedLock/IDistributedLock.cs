@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DistributedLock
+﻿namespace DistributedLock
 {
     public interface IDistributedLock
     {

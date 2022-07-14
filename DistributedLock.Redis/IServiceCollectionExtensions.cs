@@ -1,7 +1,6 @@
 ﻿using DistributedLock;
 using DistributedLock.Redis;
 using DistributedLock.Redis.Models;
-using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

@@ -1,7 +1,6 @@
 ﻿using Logger.DataBase;
 using Logger.DataBase.Models;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 namespace Microsoft.Extensions.Logging
 {

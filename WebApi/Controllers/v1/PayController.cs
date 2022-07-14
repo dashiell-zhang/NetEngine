@@ -1,14 +1,9 @@
 ﻿using Aop.Api.Util;
 using Common;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using WebApi.Libraries;
 using WebApi.Libraries.AliPay;
 using WebApi.Libraries.WeiXin.App.Models;

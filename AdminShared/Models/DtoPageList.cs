@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace AdminShared.Models
+﻿namespace AdminShared.Models
 {
 
 

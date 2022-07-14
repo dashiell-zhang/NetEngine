@@ -1,8 +1,5 @@
 ﻿using Common;
-using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using System;
-using System.Linq;
 
 namespace AdminApi.Services.v1
 {

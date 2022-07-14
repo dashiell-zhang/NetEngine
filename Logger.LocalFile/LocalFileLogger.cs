@@ -1,8 +1,5 @@
 ﻿using Common;
-using Logger.LocalFile.Models;
 using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
 using System.Text;
 
 namespace Logger.LocalFile

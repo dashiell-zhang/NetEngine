@@ -5,13 +5,9 @@ using AdminShared.Models;
 using AdminShared.Models.v1.Authorize;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Repository.Database;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace AdminApi.Controllers.v1

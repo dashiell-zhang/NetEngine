@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AdminShared.Models.v1.User
+﻿namespace AdminShared.Models.v1.User
 {
     public class DtoUser
     {

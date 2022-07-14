@@ -1,12 +1,9 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
-using System.Linq;
-using System.Net.Http;
 using WebApi.Filters;
 using WebApi.Libraries;
 using WebApi.Models.Shared;

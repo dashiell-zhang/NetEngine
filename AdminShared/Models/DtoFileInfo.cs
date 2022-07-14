@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AdminShared.Models
+﻿namespace AdminShared.Models
 {
 
 

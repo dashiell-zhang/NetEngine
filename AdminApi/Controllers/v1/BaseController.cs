@@ -3,8 +3,6 @@ using AdminShared.Models;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AdminApi.Controllers.v1
 {

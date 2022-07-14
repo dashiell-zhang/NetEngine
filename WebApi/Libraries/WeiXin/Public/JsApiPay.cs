@@ -1,6 +1,4 @@
 ﻿using Common;
-using System;
-using System.Net.Http;
 
 namespace WebApi.Libraries.WeiXin.Public
 {

@@ -1,10 +1,6 @@
 ﻿using AdminShared.Models;
-using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
 
 namespace AdminApi.Libraries

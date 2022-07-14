@@ -2,13 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Database;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace Logger.DataBase.Tasks
 {
@@ -26,7 +22,7 @@ namespace Logger.DataBase.Tasks
             this.serviceProvider = serviceProvider;
         }
 
-        protected override Task ExecuteAsync(System.Threading.CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             return Task.Run(() =>
             {

@@ -1,7 +1,6 @@
 ﻿using FileStorage;
 using FileStorage.TencentCloud;
 using FileStorage.TencentCloud.Models;
-using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

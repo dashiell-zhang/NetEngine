@@ -4,7 +4,6 @@ using Aliyun.Acs.Core.Profile;
 using Common;
 using Microsoft.Extensions.Options;
 using SMS.AliCloud.Models;
-using System.Collections.Generic;
 
 namespace SMS.AliCloud
 {

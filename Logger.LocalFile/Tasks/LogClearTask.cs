@@ -2,12 +2,8 @@
 using Logger.LocalFile.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace Logger.LocalFile.Tasks
 {
@@ -20,12 +16,12 @@ namespace Logger.LocalFile.Tasks
         private readonly object locker = new();
 
 
-        public LogClearTask( IOptionsMonitor<LoggerSetting> config)
+        public LogClearTask(IOptionsMonitor<LoggerSetting> config)
         {
             saveDays = config.CurrentValue.SaveDays;
         }
 
-        protected override Task ExecuteAsync(System.Threading.CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             return Task.Run(() =>
             {

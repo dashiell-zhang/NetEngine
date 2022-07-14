@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WebApi.Models.AppSetting
+﻿namespace WebApi.Models.AppSetting
 {
 
 

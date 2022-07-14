@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WebApi.Libraries.WeiXin.Public
+﻿namespace WebApi.Libraries.WeiXin.Public
 {
     public class WxPayException : Exception
     {

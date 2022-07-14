@@ -1,9 +1,5 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
 
 namespace AdminApi.Libraries
 {

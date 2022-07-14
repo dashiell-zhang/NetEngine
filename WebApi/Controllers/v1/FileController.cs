@@ -1,18 +1,11 @@
 ﻿using Common;
 using FileStorage;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Repository.Database;
 using SkiaSharp;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading;
 using WebApi.Libraries;
 using WebApi.Models.Shared;
 

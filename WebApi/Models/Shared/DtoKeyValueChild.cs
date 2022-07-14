@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace WebApi.Models.Shared
+﻿namespace WebApi.Models.Shared
 {
     public class DtoKeyValueChild
     {

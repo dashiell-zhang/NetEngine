@@ -1,12 +1,8 @@
 ﻿using Common;
 using DistributedLock;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Repository.Database;
-using System;
-using System.Threading.Tasks;
 using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace TaskService.Tasks
 {
@@ -20,7 +16,7 @@ namespace TaskService.Tasks
             this.serviceProvider = serviceProvider;
         }
 
-        protected override Task ExecuteAsync(System.Threading.CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             return Task.Run(() =>
             {

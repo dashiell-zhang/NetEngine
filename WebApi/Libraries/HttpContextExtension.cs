@@ -1,9 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
 using WebApi.Models.Shared;
 

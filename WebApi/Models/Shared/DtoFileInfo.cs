@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WebApi.Models.Shared
+﻿namespace WebApi.Models.Shared
 {
 
 

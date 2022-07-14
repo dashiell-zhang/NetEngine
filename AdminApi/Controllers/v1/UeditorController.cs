@@ -1,8 +1,6 @@
 ﻿using AdminApi.Libraries.Ueditor;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace AdminApi.Controllers.v1
 {

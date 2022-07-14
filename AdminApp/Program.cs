@@ -1,11 +1,7 @@
 using AdminApp.Libraries;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Globalization;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace AdminApp
 {

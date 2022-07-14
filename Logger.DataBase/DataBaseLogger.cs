@@ -2,8 +2,6 @@
 using Logger.DataBase.Models;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
-using System;
-using System.IO;
 using System.Text;
 
 namespace Logger.DataBase

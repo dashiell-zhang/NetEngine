@@ -2,8 +2,6 @@
 using DistributedLock.Redis.Models;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
-using System;
-using System.Threading;
 
 namespace DistributedLock.Redis
 {

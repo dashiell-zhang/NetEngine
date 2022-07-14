@@ -2,9 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using WebApi.Models.Shared;
 
 namespace WebApi.Controllers.v1

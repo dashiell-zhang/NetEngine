@@ -2,11 +2,6 @@
 using DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
-using System.Threading;
 using WebApi.Libraries;
 
 namespace WebApi.Filters

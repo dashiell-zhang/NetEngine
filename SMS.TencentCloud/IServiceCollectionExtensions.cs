@@ -1,7 +1,6 @@
 ﻿using SMS;
 using SMS.TencentCloud;
 using SMS.TencentCloud.Models;
-using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

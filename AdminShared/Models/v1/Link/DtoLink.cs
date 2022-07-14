@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AdminShared.Models.v1.Link
+﻿namespace AdminShared.Models.v1.Link
 {
 
     /// <summary>

@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Net.Http;
 using System.Xml;
 using WebApi.Libraries.WeiXin.App.Models;
 

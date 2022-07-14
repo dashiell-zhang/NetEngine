@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
 using SMS.TencentCloud.Models;
-using System.Collections.Generic;
-using System.Linq;
 using TencentCloud.Common;
 using TencentCloud.Sms.V20190711;
 using TencentCloud.Sms.V20190711.Models;

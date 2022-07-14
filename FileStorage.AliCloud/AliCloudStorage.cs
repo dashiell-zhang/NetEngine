@@ -2,8 +2,6 @@
 using Aliyun.OSS.Util;
 using FileStorage.AliCloud.Models;
 using Microsoft.Extensions.Options;
-using System;
-using System.IO;
 
 namespace FileStorage.AliCloud
 {

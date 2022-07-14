@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AdminApi.Models.AppSetting
+﻿namespace AdminApi.Models.AppSetting
 {
 
 

@@ -1,7 +1,5 @@
 ﻿using Common;
 using Microsoft.Extensions.Caching.Distributed;
-using System;
-using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using WebApi.Libraries.WeiXin.H5.Models;

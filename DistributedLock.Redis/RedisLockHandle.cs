@@ -1,5 +1,4 @@
 ﻿using StackExchange.Redis;
-using System;
 
 namespace DistributedLock.Redis
 {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WebApi.Libraries.WeiXin.MiniApp.Models
+﻿namespace WebApi.Libraries.WeiXin.MiniApp.Models
 {
 
     /// <summary>

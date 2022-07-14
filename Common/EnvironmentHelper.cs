@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration.CommandLine;
-using System;
-using System.IO;
 
 namespace Common
 {

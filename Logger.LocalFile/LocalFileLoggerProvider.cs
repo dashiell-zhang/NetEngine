@@ -1,7 +1,4 @@
-﻿using Logger.LocalFile.Models;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System;
+﻿using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace Logger.LocalFile

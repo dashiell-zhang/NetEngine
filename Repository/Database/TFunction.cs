@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repository.Bases;
-using System;
-using System.Collections.Generic;
 
 namespace Repository.Database
 {

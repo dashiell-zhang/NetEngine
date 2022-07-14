@@ -27,7 +27,7 @@ namespace WebApi.Controllers.v1
     /// 系统访问授权模块
     /// </summary>
     [ApiVersion("1")]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class AuthorizeController : ControllerBase
     {

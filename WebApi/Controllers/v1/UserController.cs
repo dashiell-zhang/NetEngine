@@ -20,7 +20,7 @@ namespace WebApi.Controllers.v1
     /// 用户数据操作控制器
     /// </summary>
     [ApiVersion("1")]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [Authorize]
     [ApiController]
     public class UserController : ControllerBase

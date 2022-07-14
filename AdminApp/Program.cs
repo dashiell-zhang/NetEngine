@@ -17,7 +17,7 @@ namespace AdminApp
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 
-            var appApiUrl = "https://localhost:9833/api/";
+            var appApiUrl = "https://localhost:9833/";
             //var appApiUrl = builder.HostEnvironment.BaseAddress.ToLower();
 
 

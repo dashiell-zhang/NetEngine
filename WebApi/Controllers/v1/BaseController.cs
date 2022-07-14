@@ -13,7 +13,7 @@ namespace WebApi.Controllers.v1
     /// 系统基础方法控制器
     /// </summary>
     [ApiVersion("1")]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class BaseController : ControllerBase
     {

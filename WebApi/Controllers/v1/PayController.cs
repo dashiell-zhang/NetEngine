@@ -22,7 +22,7 @@ namespace WebApi.Controllers.v1
     /// 第三方支付发起集合，依赖于订单号
     /// </summary>
     [ApiVersion("1")]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class PayController : ControllerBase
     {

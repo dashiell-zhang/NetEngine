@@ -13,7 +13,7 @@ namespace AdminApi.Controllers.v1
     /// </summary>
     [SignVerifyFilter]
     [ApiVersion("1")]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class BaseController : ControllerBase
     {

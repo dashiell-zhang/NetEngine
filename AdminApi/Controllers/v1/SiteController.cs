@@ -18,7 +18,7 @@ namespace AdminApi.Controllers.v1
     [SignVerifyFilter]
     [ApiVersion("1")]
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class SiteController : ControllerBase
     {

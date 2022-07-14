@@ -8,7 +8,7 @@ namespace AdminApi.Controllers.v1
 {
     [Authorize]
     [ApiVersion("1")]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class UeditorController : ControllerBase
     {

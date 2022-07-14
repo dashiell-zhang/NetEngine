@@ -21,7 +21,7 @@ namespace AdminApi.Controllers.v1
     /// </summary>
     [SignVerifyFilter]
     [ApiVersion("1")]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [Authorize]
     [ApiController]
     public class UserController : ControllerBase

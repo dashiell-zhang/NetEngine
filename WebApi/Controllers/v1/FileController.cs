@@ -24,7 +24,7 @@ namespace WebApi.Controllers.v1
     /// </summary>
     [ApiVersion("1")]
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class FileController : ControllerBase
     {

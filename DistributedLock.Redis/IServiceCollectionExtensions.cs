@@ -1,8 +1,7 @@
-﻿using DistributedLock;
-using DistributedLock.Redis;
-using DistributedLock.Redis.Models;
+﻿using DistributedLock.Redis.Models;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace DistributedLock.Redis
 {
 
     public static class ServiceCollectionExtensions

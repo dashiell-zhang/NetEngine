@@ -1,8 +1,8 @@
-﻿using Logger.LocalFile;
-using Logger.LocalFile.Models;
+﻿using Logger.LocalFile.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace Microsoft.Extensions.Logging
+namespace Logger.LocalFile
 {
 
     public static class ILoggingBuilderExtensions

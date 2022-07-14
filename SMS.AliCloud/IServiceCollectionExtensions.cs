@@ -1,8 +1,7 @@
-﻿using SMS;
-using SMS.AliCloud;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SMS.AliCloud.Models;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace SMS.AliCloud
 {
 
     public static class ServiceCollectionExtensions

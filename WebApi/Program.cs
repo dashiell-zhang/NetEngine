@@ -1,22 +1,21 @@
 ﻿using Common;
+using DistributedLock.Redis;
+using Logger.DataBase;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
 using System.Security.Cryptography;
 using WebApi.Filters;
 using WebApi.Libraries;
 using WebApi.Libraries.HttpHandler;
-using WebApi.Libraries.Swagger;
 using WebApi.Models.AppSetting;
 
 namespace WebApi
@@ -150,43 +149,16 @@ namespace WebApi
 
             #endregion
 
-            #region 注册 api 版本控制
-
-            builder.Services.AddApiVersioning(options =>
-            {
-                //通过Header向客户端通报支持的版本
-                options.ReportApiVersions = true;
-
-                //允许不加版本标记直接调用接口
-                options.AssumeDefaultVersionWhenUnspecified = true;
-
-                //接口默认版本
-                //options.DefaultApiVersion = new ApiVersion(1, 0);
-
-                //如果未加版本标记默认以当前最高版本进行处理
-                options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);
-
-                options.ApiVersionReader = new HeaderApiVersionReader("api-version");
-            });
-
-            builder.Services.AddVersionedApiExplorer(options =>
-            {
-                options.GroupNameFormat = "'v'VVV";
-                options.SubstituteApiVersionInUrl = true;
-            });
-
-            #endregion
 
             #region 注册 Swagger
-
-            builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, SwaggerConfigureOptions>();
-
             builder.Services.AddSwaggerGen(options =>
             {
-                options.OperationFilter<SwaggerOperationFilter>();
+                options.SwaggerDoc("v1", null);
+
+                var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
+                options.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => (type.ToString()[(type.ToString().IndexOf("Models.") + 7)..]).Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
 
                 options.MapType<long>(() => new OpenApiSchema { Type = "string", Format = "long" });
-
 
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml"), true);
 
@@ -216,7 +188,6 @@ namespace WebApi
                     }
                 });
             });
-
             #endregion
 
 
@@ -401,22 +372,12 @@ namespace WebApi
 
 
             #region 启用 Swagger
-
-            //启用中间件服务生成Swagger作为JSON端点
             app.UseSwagger();
 
-            //启用中间件服务对swagger-ui，指定Swagger JSON端点
             app.UseSwaggerUI(options =>
             {
-                var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
-                foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
-                {
-                    options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
-                }
-
-                options.RoutePrefix = "swagger";
+                options.SwaggerEndpoint($"/swagger/v1/swagger.json", null);
             });
-
             #endregion
 
 

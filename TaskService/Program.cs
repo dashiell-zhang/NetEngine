@@ -1,4 +1,6 @@
 ﻿using Common;
+using DistributedLock.Redis;
+using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 
 namespace TaskService

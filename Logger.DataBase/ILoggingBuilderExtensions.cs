@@ -1,8 +1,8 @@
-﻿using Logger.DataBase;
-using Logger.DataBase.Models;
+﻿using Logger.DataBase.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace Microsoft.Extensions.Logging
+namespace Logger.DataBase
 {
 
     public static class ILoggingBuilderExtensions

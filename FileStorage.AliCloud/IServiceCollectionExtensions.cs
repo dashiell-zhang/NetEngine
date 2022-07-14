@@ -1,8 +1,7 @@
-﻿using FileStorage;
-using FileStorage.AliCloud;
-using FileStorage.AliCloud.Models;
+﻿using FileStorage.AliCloud.Models;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace FileStorage.AliCloud
 {
 
     public static class ServiceCollectionExtensions

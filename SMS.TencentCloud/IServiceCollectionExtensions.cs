@@ -1,8 +1,7 @@
-﻿using SMS;
-using SMS.TencentCloud;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SMS.TencentCloud.Models;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace SMS.TencentCloud
 {
 
     public static class ServiceCollectionExtensions

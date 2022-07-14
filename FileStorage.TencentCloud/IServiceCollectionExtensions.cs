@@ -1,8 +1,7 @@
-﻿using FileStorage;
-using FileStorage.TencentCloud;
-using FileStorage.TencentCloud.Models;
+﻿using FileStorage.TencentCloud.Models;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace FileStorage.TencentCloud
 {
 
     public static class ServiceCollectionExtensions

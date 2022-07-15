@@ -31,20 +31,20 @@
 4. Logger 实现了 数据库日志记录和本地文件日志两种逻辑
 5. SMS 短信模块目前整合实现 阿里云和腾讯云两家的短信服务
 
-# 数据库层
+## 数据库层
 1. Repository 用于存放数据库模型，整体采用 EF Core 最新版
 2. Repository.Tool 用于操作数据库的 Add-Migration 和 Update-Database
 
-# 定时应用项目
+## 定时应用项目
 TaskService 采用了微软的Timer来实现周期性任务的执行
 
-# Admin管理后台项目
+## Admin管理后台项目
 管理后台模块 前端使用了 Blazor 技术开发，采用的是 wasm 模式，该模式可以直接将项目编译为 dll 文件运行在客户端的浏览器中，性能相对来说要高一点，并且对于服务器的压力要小很多。
 1. AdminApp 采用 Blazor 搭建的管理后台
 2. AdminApi 为AdminApp 提供后端服务
 3. AdminShared 是AdminApp和AdminApi公用模型存放类库，主要存放前后端交互的DTO模型
 
-# WebApi项目
+## WebApi项目
 该项目是一个 webapi 的基础项目，主要整合了如下内容：
 1. 身份认证模块，
 2. 支付宝支付模块，包含 PC支付  H5支付

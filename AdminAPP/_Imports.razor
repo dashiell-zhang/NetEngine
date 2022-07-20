@@ -1,0 +1,23 @@
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.JSInterop
+@using AdminAPP
+@using AdminAPP.Shared
+@using AntDesign
+
+@using Libraries
+@using Libraries.Json
+@using Models
+@using AdminShared.Models
+
+@inject Blazored.LocalStorage.ISyncLocalStorageService LocalStorage
+@inject NavigationManager NavigationManager
+@inject NotificationService Notice
+@inject MessageService Message
+@inject HttpClient Http
+@inject IJSRuntime JS

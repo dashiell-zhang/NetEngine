@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>数据综合管理系统</title>
+    <base href="/" />
+
+    <link href="AdminApp.styles.css" rel="stylesheet" />
+
+    <link href="_content/AntDesign/css/ant-design-blazor.css" rel="stylesheet" />
+    <script src="_content/AntDesign/js/ant-design-blazor.js"></script>
+
+    <script src="js/ueditor/ueditor.config.js"></script>
+    <script src="js/ueditor/ueditor.all.js"></script>
+
+
+    <style>
+        .site-layout-background {
+            padding: 24px;
+            margin: 0;
+            min-height: 580px !important;
+            background-color: #FFF;
+        }
+
+        .rule-action {
+            margin: 0;
+            min-height: 580px !important;
+            background-color: #FFF;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script type="module">
+        import { BrotliDecode } from './js/brotli.decode.js';
+
+        var targetProtocol = "https:";
+        if (window.location.protocol != targetProtocol) {
+            window.location.href = targetProtocol + window.location.href.substring(window.location.protocol.length);
+        }
+        else {
+            Blazor.start({
+                applicationCulture: 'zh-CN',
+                loadBootResource: function (type, name, defaultUri, integrity) {
+
+                    if (type !== 'dotnetjs' && location.hostname !== 'localhost') {
+                        return (async function () {
+
+                            const response = await fetch(defaultUri + '.br', {
+                                headers: { 'sec-fetch-mode': 'cors' }
+                            });
+                            if (!response.ok) {
+                                throw new Error(response.statusText);
+                            }
+                            const originalResponseBuffer = await response.arrayBuffer();
+                            const originalResponseArray = new Int8Array(originalResponseBuffer);
+                            const decompressedResponseArray = BrotliDecode(originalResponseArray);
+                            const contentType = type ===
+                                'dotnetwasm' ? 'application/wasm' : 'application/octet-stream';
+                            return new Response(decompressedResponseArray,
+                                { headers: { 'content-type': contentType } });
+                        })();
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

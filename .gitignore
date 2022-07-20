@@ -361,4 +361,4 @@ MigrationBackup/
 FodyWeavers.xsd
 
 /WebAPI/files
-/AdminApi/wwwroot/uploads
+/AdminAPI/wwwroot/uploads

@@ -154,15 +154,12 @@ namespace AdminApi
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml"), true);
 
 
-                //开启 Swagger JWT 鉴权模块
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                #region 开启 Swagger JWT 鉴权模块
+                options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
                 {
-                    Description = "在下框中输入请求头中需要添加Jwt授权Token：Bearer Token",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    BearerFormat = "JWT",
-                    Scheme = "Bearer"
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
                 });
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
@@ -172,12 +169,13 @@ namespace AdminApi
                                 Reference = new OpenApiReference
                                 {
                                     Type = ReferenceType.SecurityScheme,
-                                    Id = "Bearer"
+                                    Id = "bearerAuth"
                                 }
                             },
-                        Array.Empty<string>()
+                        new string[] {}
                     }
                 });
+                #endregion
             });
             #endregion
 

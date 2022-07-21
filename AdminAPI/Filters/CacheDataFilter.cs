@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace AdminAPI.Filters
 {
@@ -51,7 +52,14 @@ namespace AdminAPI.Filters
 
                 if (cacheInfo != null)
                 {
-                    context.Result = new ObjectResult(cacheInfo);
+                    if (((JsonElement)cacheInfo).ValueKind == JsonValueKind.String)
+                    {
+                        context.Result = new ObjectResult(cacheInfo.ToString());
+                    }
+                    else
+                    {
+                        context.Result = new ObjectResult(cacheInfo);
+                    }
                 }
             }
             catch (Exception ex)

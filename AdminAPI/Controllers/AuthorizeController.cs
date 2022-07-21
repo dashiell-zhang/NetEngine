@@ -85,7 +85,7 @@ namespace AdminAPI.Controllers
         /// <returns></returns>
         [SignVerifyFilter]
         [Authorize]
-        [CacheDataFilter(TTL = 60, UseToken = true)]
+        [CacheDataFilter(TTL = 60, IsUseToken = true)]
         [HttpGet("GetFunctionList")]
         public List<DtoKeyValue> GetFunctionList(string sign)
         {

@@ -232,7 +232,7 @@ namespace WebAPI.Controllers
         /// <param name="sign">模块标记</param>
         /// <returns></returns>
         [Authorize]
-        [CacheDataFilter(TTL = 60, UseToken = true)]
+        [CacheDataFilter(TTL = 60, IsUseToken = true)]
         [HttpGet("GetFunctionList")]
         public List<DtoKeyValue> GetFunctionList(string sign)
         {
@@ -377,7 +377,7 @@ namespace WebAPI.Controllers
         /// <param name="updatePassWordByOldPassWord"></param>
         /// <returns></returns>
         [Authorize]
-        [QueueLimitFilter(IsBlock = true, UseParameter = false, UseToken = true)]
+        [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost("UpdatePassWordByOldPassWord")]
         public bool UpdatePassWordByOldPassWord(DtoUpdatePassWordByOldPassWord updatePassWordByOldPassWord)
         {
@@ -420,7 +420,7 @@ namespace WebAPI.Controllers
         /// <param name="updatePassWordBySms"></param>
         /// <returns></returns>
         [Authorize]
-        [QueueLimitFilter(IsBlock = true, UseParameter = false, UseToken = true)]
+        [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost("UpdatePassWordBySms")]
         public bool UpdatePassWordBySms(DtoUpdatePassWordBySms updatePassWordBySms)
         {

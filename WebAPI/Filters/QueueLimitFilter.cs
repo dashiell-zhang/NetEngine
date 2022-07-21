@@ -19,13 +19,13 @@ namespace WebAPI.Filters
         /// <summary>
         /// 是否使用 参数
         /// </summary>
-        public bool UseParameter { get; set; }
+        public bool IsUseParameter { get; set; }
 
 
         /// <summary>
         /// 是否使用 Token
         /// </summary>
-        public bool UseToken { get; set; }
+        public bool IsUseToken { get; set; }
 
 
         /// <summary>
@@ -43,13 +43,13 @@ namespace WebAPI.Filters
         {
             string key = context.ActionDescriptor.DisplayName!;
 
-            if (UseToken)
+            if (IsUseToken)
             {
                 var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
                 key = key + "_" + token;
             }
 
-            if (UseParameter)
+            if (IsUseParameter)
             {
                 var parameter = JsonHelper.ObjectToJson(context.HttpContext.GetParameter());
                 key = key + "_" + parameter;

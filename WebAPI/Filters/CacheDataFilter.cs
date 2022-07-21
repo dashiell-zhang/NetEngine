@@ -24,14 +24,14 @@ namespace WebAPI.Filters
         /// <summary>
         /// 是否使用 Token
         /// </summary>
-        public bool UseToken { get; set; }
+        public bool IsUseToken { get; set; }
 
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
             string key = "";
 
-            if (UseToken)
+            if (IsUseToken)
             {
                 var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
 
@@ -70,7 +70,7 @@ namespace WebAPI.Filters
                 {
                     string key = "";
 
-                    if (UseToken)
+                    if (IsUseToken)
                     {
                         var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
 

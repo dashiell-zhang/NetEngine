@@ -140,7 +140,7 @@ namespace WebAPI.Controllers
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet("GetUser")]
-        [CacheDataFilter(TTL = 60, UseToken = true)]
+        [CacheDataFilter(TTL = 60, IsUseToken = true)]
         public DtoUser? GetUser(long? userId)
         {
 

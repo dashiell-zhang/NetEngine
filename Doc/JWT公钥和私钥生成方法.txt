@@ -1,4 +1,0 @@
-            var keyInfo = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-
-            var privateKey = Convert.ToBase64String(keyInfo.ExportECPrivateKey());
-            var publicKey = Convert.ToBase64String(keyInfo.ExportSubjectPublicKeyInfo());

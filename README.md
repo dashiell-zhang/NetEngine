@@ -7,7 +7,7 @@
 
 # 项目介绍
 项目主要整合了如下一些常用的技术点
-- api 的授权认证采用 JWT 认证方式（jwt自动续期逻辑实现，到期前15分钟会签发新的token）
+- API 的授权认证采用 JWT 认证方式（JWT自动续期逻辑实现，到期前15分钟会签发新的token）
 - 全局异常记录实现
 - Redis分布式缓存实现
 - Redis分布式锁实现，支持并发所，信号量锁
@@ -40,11 +40,11 @@ TaskService 采用了微软的Timer来实现周期性任务的执行
 
 ## Admin管理后台项目
 管理后台模块 前端使用了 Blazor 技术开发，采用的是 wasm 模式，该模式可以直接将项目编译为 dll 文件运行在客户端的浏览器中，性能相对来说要高一点，并且对于服务器的压力要小很多。
-1. AdminApp 采用 Blazor 搭建的管理后台
-2. AdminApi 为AdminApp 提供后端服务
-3. AdminShared 是AdminApp和AdminApi公用模型存放类库，主要存放前后端交互的DTO模型
+1. AdminAPP 采用 Blazor 搭建的管理后台
+2. AdminAPI 为AdminAPP 提供后端服务
+3. AdminShared 是AdminAPP和AdminAPI公用模型存放类库，主要存放前后端交互的DTO模型
 
-## WebApi项目
+## WebAPI项目
 该项目是一个 webapi 的基础项目，主要整合了如下内容：
 1. 身份认证模块，
 2. 支付宝支付模块，包含 PC支付  H5支付
@@ -54,4 +54,69 @@ TaskService 采用了微软的Timer来实现周期性任务的执行
 6. 微信 短信 用户名登录API
 7. 缓存过滤器，并发队列限制过滤器，自定义签名算法过滤器
 
+# 笔记
+## Windows服务部署方式说明
+    安装
+    sc.exe create MyAPI binpath= 'c:\Publish\WebAPI.exe --cd="true"' start= auto
 
+    启动
+    net start 服务名称
+    如：net start MyAPI
+
+    停止
+    net stop 服务名称
+    net stop MyAPI
+
+    卸载
+    sc.exe delete 服务名称
+    如：sc.exe delete MyAPI
+    
+## 数据库层说明
+    All
+    Microsoft.EntityFrameworkCore.Tool
+    Microsoft.EntityFrameworkCore.Relational
+
+    延迟加载
+    Microsoft.EntityFrameworkCore.Proxies
+    options.UseLazyLoadingProxies();
+
+    SQL Server
+    驱动：Microsoft.EntityFrameworkCore.SqlServer 和 Microsoft.Data.SqlClient
+    数据库生成模型指令：Scaffold-DbContext "ConnectionString" Microsoft.EntityFrameworkCore.SqlServer -OutputDir WebCore -Force
+    字符串：Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100;Encrypt=True
+    EF 配置：optionsBuilder.UseSqlServer(, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+
+    PostgreSql
+    驱动：Npgsql.EntityFrameworkCore.PostgreSQL
+    数据库生成模型指令：Scaffold-DbContext "ConnectionString"  Npgsql.EntityFrameworkCore.PostgreSQL -OutputDir webcore -Force
+    字符串：Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=30;SSL Mode=VerifyFull
+    EF 配置：optionsBuilder.UseNpgsql("ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+
+
+    MySql
+    Pomelo.EntityFrameworkCore.MySql
+    数据库生成模型指令：Scaffold-DbContext "ConnectionString" MySql.EntityFrameworkCore -OutputDir webcore -Force
+    字符串：server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100
+    EF 配置：optionsBuilder.UseMySql("ConnectionString, new MySqlServerVersion(new Version(8, 0, 29)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
+
+## JWT公钥和私钥生成方法
+    var keyInfo = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+    var privateKey = Convert.ToBase64String(keyInfo.ExportECPrivateKey());
+    var publicKey = Convert.ToBase64String(keyInfo.ExportSubjectPublicKeyInfo());
+
+## 行政区划数据
+数据存放在 **InitData** 文件夹的 Excel 中，excel中的数据是清洗好的，需要使用的自行导入
+行政区划数据来源于百度平台，地址及清洗代码如下
+
+目前数据截至：202104
+
+https://lbsyun.baidu.com/index.php?title=open/dev-res
+
+
+    insert into RegionArea SELECT CAST(CODE_PROV as int) AS ID, NAME_PROV AS province, '2021-04-01' AS createtime, '0' AS isdelete FROM ditu GROUP BY CODE_PROV, NAME_PROV;
+
+    insert into RegionCity SELECT CAST(CODE_CITY as int) as id,NAME_CITY as city,CAST(CODE_PROV as int) as provinceid, '2021-04-01' AS createtime, '0' AS isdelete FROM ditu GROUP BY CODE_CITY,NAME_CITY,CODE_PROV;
+
+    insert into RegionProvince SELECT CAST(CODE_COUN as int) as id,NAME_COUN as area,CAST(CODE_CITY as int) as cityid, '2021-04-01' AS createtime, '0' AS isdelete FROM ditu GROUP BY CODE_COUN,NAME_COUN,CODE_CITY;
+
+    insert into RegionTown SELECT CAST(CODE_TOWN as int) as id,NAME_TOWN as town,CAST(CODE_COUN as int) as areaid, '2021-04-01' AS createtime, '0' AS isdelete FROM ditu GROUP BY CODE_TOWN,NAME_TOWN,CODE_COUN;

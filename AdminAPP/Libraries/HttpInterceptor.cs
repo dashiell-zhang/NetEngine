@@ -31,7 +31,7 @@ namespace AdminAPP.Libraries
         {
             var authorization = LocalStorage.GetItemAsString("Authorization");
 
-            var isGetToken = request.RequestUri!.AbsolutePath.Contains("/api/Authorize/GetToken", System.StringComparison.OrdinalIgnoreCase);
+            var isGetToken = request.RequestUri!.AbsolutePath.Contains("/Authorize/GetToken", System.StringComparison.OrdinalIgnoreCase);
 
             if (!string.IsNullOrEmpty(authorization) || isGetToken)
             {

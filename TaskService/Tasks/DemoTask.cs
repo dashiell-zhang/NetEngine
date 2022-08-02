@@ -1,8 +1,6 @@
 ﻿using Common;
 using DistributedLock;
 using Repository.Database;
-using System.Timers;
-using Timer = System.Timers.Timer;
 
 namespace TaskService.Tasks
 {
@@ -16,25 +14,16 @@ namespace TaskService.Tasks
             this.serviceProvider = serviceProvider;
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            return Task.Run(() =>
-            {
-                var timer = new Timer(1000 * 1);
-                timer.Elapsed += TimerElapsed;
-                timer.Start();
-            }, stoppingToken);
+            using Timer timer = new(Run, null, 0, 1000);
+            await Task.Delay(-1, stoppingToken);
         }
 
 
 
-        private void TimerElapsed(object? sender, ElapsedEventArgs e)
-        {
-            Run();
-        }
-
-
-        private void Run()
+        private void Run(object? state)
         {
             var snowflakeHelper = serviceProvider.GetRequiredService<SnowflakeHelper>();
             var logger = serviceProvider.GetRequiredService<ILogger<DemoTask>>();
@@ -46,6 +35,7 @@ namespace TaskService.Tasks
             logger.LogInformation("HelloWord{Id}", snowflakeHelper.GetId());
 
         }
+
 
     }
 }

@@ -18,7 +18,7 @@ using WebAPI.Libraries;
 using WebAPI.Libraries.HttpHandler;
 using WebAPI.Models.AppSetting;
 
-namespace WebApi
+namespace WebAPI
 {
     public class Program
     {

@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "AdminApi": {
+    "AdminAPI": {
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "swagger/index.html",

@@ -3,8 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Database;
 using System.Text;
-using System.Timers;
-using Timer = System.Timers.Timer;
 
 namespace Logger.DataBase.Tasks
 {
@@ -14,77 +12,54 @@ namespace Logger.DataBase.Tasks
         private readonly IServiceProvider serviceProvider;
 
 
-        private readonly object locker = new();
-
-
         public LogSaveTask(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            return Task.Run(() =>
+            while (!stoppingToken.IsCancellationRequested)
             {
-                var timer = new Timer(1000 * 5);
-                timer.Elapsed += TimerElapsed;
-                timer.Start();
-            }, stoppingToken);
-        }
-
-
-
-        private void TimerElapsed(object? sender, ElapsedEventArgs e)
-        {
-            try
-            {
-                lock (locker)
+                try
                 {
-                    Run();
-                }
-            }
-            catch
-            {
+                    string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
 
-            }
-        }
-
-
-        private void Run()
-        {
-
-
-            string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
-
-            if (Directory.Exists(basePath))
-            {
-                List<string> logPaths = IOHelper.GetFolderAllFiles(basePath).Take(10).ToList();
-
-                if (logPaths.Count != 0)
-                {
-                    using var scope = serviceProvider.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-                    foreach (var logPath in logPaths)
+                    if (Directory.Exists(basePath))
                     {
-                        var logStr = File.ReadAllText(logPath, Encoding.UTF8);
-                        var log = JsonHelper.JsonToObject<TLog>(logStr);
+                        List<string> logPaths = IOHelper.GetFolderAllFiles(basePath).Take(10).ToList();
 
-
-                        var isHave = db.TLog.Where(t => t.IsDelete == false && t.Id == log.Id).Any();
-
-                        if (!isHave)
+                        if (logPaths.Count != 0)
                         {
-                            db.TLog.Add(log);
-                            db.SaveChanges();
+                            using var scope = serviceProvider.CreateScope();
+                            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+
+                            foreach (var logPath in logPaths)
+                            {
+                                var logStr = File.ReadAllText(logPath, Encoding.UTF8);
+                                var log = JsonHelper.JsonToObject<TLog>(logStr);
+
+
+                                var isHave = db.TLog.Where(t => t.IsDelete == false && t.Id == log.Id).Any();
+
+                                if (!isHave)
+                                {
+                                    db.TLog.Add(log);
+                                    db.SaveChanges();
+                                }
+
+                                File.Delete(logPath);
+
+                            }
                         }
-
-                        File.Delete(logPath);
-
                     }
                 }
-            }
+                catch
+                {
+                }
 
+                await Task.Delay(1000 * 5, stoppingToken);
+            }
         }
 
     }

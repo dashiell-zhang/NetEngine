@@ -11,23 +11,23 @@ namespace Logger.DataBase
 
         private readonly LoggerSetting loggerConfiguration;
 
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
 
         private readonly ConcurrentDictionary<string, DataBaseLogger> loggers = new();
 
 
 
-        public DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, SnowflakeHelper snowflakeHelper)
+        public DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, IDHelper idHelper)
         {
             loggerConfiguration = config.CurrentValue;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
         }
 
 
 
         public ILogger CreateLogger(string categoryName)
         {
-            return loggers.GetOrAdd(categoryName, new DataBaseLogger(categoryName, loggerConfiguration, snowflakeHelper));
+            return loggers.GetOrAdd(categoryName, new DataBaseLogger(categoryName, loggerConfiguration, idHelper));
         }
 
         public void Dispose()

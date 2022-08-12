@@ -10,12 +10,12 @@ namespace AdminAPI.Services
 
 
         private readonly DatabaseContext db;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
 
-        public SiteService(DatabaseContext db, SnowflakeHelper snowflakeHelper)
+        public SiteService(DatabaseContext db, IDHelper idHelper)
         {
             this.db = db;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
         }
 
 
@@ -31,7 +31,7 @@ namespace AdminAPI.Services
                 {
                     appSetting = new()
                     {
-                        Id = snowflakeHelper.GetId(),
+                        Id = idHelper.GetId(),
                         Module = "Site",
                         Key = key,
                         Value = value,

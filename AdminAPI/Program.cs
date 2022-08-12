@@ -203,7 +203,7 @@ namespace AdminAPI
 
 
             //注册雪花ID算法
-            builder.Services.AddSingleton(new Common.SnowflakeHelper(0, 0));
+            builder.Services.AddSingleton(new Common.IDHelper(0, 0));
 
 
             //注册分布式锁 Redis模式

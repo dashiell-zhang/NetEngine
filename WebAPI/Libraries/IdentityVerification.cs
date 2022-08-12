@@ -90,7 +90,7 @@ namespace WebAPI.Libraries
         private static void IssueNewToken(HttpContext httpContext)
         {
 
-            var snowflakeHelper = httpContext.RequestServices.GetRequiredService<SnowflakeHelper>();
+            var idHelper = httpContext.RequestServices.GetRequiredService<IDHelper>();
 
             var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
@@ -123,7 +123,7 @@ namespace WebAPI.Libraries
 
                             TUserToken userToken = new()
                             {
-                                Id = snowflakeHelper.GetId(),
+                                Id = idHelper.GetId(),
                                 UserId = userId,
                                 LastId = tokenId,
                                 CreateTime = DateTime.UtcNow

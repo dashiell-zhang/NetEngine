@@ -69,7 +69,7 @@ namespace TaskService
 
 
                     //注册雪花ID算法
-                    services.AddSingleton(new SnowflakeHelper(0, 0));
+                    services.AddSingleton(new IDHelper(0, 0));
 
 
                     //注册分布式锁 Redis模式

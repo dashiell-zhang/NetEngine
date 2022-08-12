@@ -17,16 +17,16 @@ namespace AdminAPI.Controllers
     {
 
         private readonly DatabaseContext db;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
 
         private readonly long userId;
 
 
 
-        public LinkController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IHttpContextAccessor httpContextAccessor)
+        public LinkController(DatabaseContext db, IDHelper idHelper, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)
@@ -107,7 +107,7 @@ namespace AdminAPI.Controllers
         {
             TLink link = new()
             {
-                Id = snowflakeHelper.GetId(),
+                Id = idHelper.GetId(),
                 Name = createLink.Name,
                 Url = createLink.Url,
                 CreateTime = DateTime.UtcNow,

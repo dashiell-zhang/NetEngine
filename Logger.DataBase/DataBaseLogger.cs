@@ -12,17 +12,17 @@ namespace Logger.DataBase
         private readonly string categoryName;
 
 
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
 
         private readonly LoggerSetting loggerSetting;
 
 
 
-        public DataBaseLogger(string categoryName, LoggerSetting loggerSetting, SnowflakeHelper snowflakeHelper)
+        public DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IDHelper idHelper)
         {
             this.categoryName = categoryName;
             this.loggerSetting = loggerSetting;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -76,7 +76,7 @@ namespace Logger.DataBase
 
                         TLog log = new()
                         {
-                            Id = snowflakeHelper.GetId(),
+                            Id = idHelper.GetId(),
                             CreateTime = DateTime.UtcNow,
                             Project = loggerSetting.Project,
                             MachineName = Environment.MachineName,

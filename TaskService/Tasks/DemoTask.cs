@@ -25,14 +25,14 @@ namespace TaskService.Tasks
 
         private void Run(object? state)
         {
-            var snowflakeHelper = serviceProvider.GetRequiredService<SnowflakeHelper>();
+            var idHelper = serviceProvider.GetRequiredService<IDHelper>();
             var logger = serviceProvider.GetRequiredService<ILogger<DemoTask>>();
 
             using var scope = serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
             var distLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-            logger.LogInformation("HelloWord{Id}", snowflakeHelper.GetId());
+            logger.LogInformation("HelloWord{Id}", idHelper.GetId());
 
         }
 

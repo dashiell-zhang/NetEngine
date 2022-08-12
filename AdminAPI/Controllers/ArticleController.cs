@@ -20,7 +20,7 @@ namespace AdminAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IConfiguration configuration;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
 
         private readonly ArticleService articleService;
 
@@ -28,11 +28,11 @@ namespace AdminAPI.Controllers
 
 
 
-        public ArticleController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IHttpContextAccessor httpContextAccessor, ArticleService articleService)
+        public ArticleController(DatabaseContext db, IConfiguration configuration, IDHelper idHelper, IHttpContextAccessor httpContextAccessor, ArticleService articleService)
         {
             this.db = db;
             this.configuration = configuration;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
 
@@ -134,7 +134,7 @@ namespace AdminAPI.Controllers
         {
             TChannel channel = new()
             {
-                Id = snowflakeHelper.GetId(),
+                Id = idHelper.GetId(),
                 Name = createChannel.Name,
                 CreateTime = DateTime.UtcNow,
                 CreateUserId = userId,
@@ -311,7 +311,7 @@ namespace AdminAPI.Controllers
         {
             TCategory category = new()
             {
-                Id = snowflakeHelper.GetId(),
+                Id = idHelper.GetId(),
                 CreateTime = DateTime.UtcNow,
                 CreateUserId = userId,
                 Name = createCategory.Name,
@@ -492,7 +492,7 @@ namespace AdminAPI.Controllers
         {
             TArticle article = new()
             {
-                Id = snowflakeHelper.GetId(),
+                Id = idHelper.GetId(),
                 CreateTime = DateTime.UtcNow,
                 CreateUserId = userId,
                 Title = createArticle.Title,

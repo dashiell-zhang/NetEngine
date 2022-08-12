@@ -14,14 +14,14 @@ namespace WebAPI.Services
     {
 
         private readonly DatabaseContext db;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
         private readonly IConfiguration configuration;
 
 
-        public AuthorizeService(DatabaseContext db, SnowflakeHelper snowflakeHelper, IConfiguration configuration)
+        public AuthorizeService(DatabaseContext db, IDHelper idHelper, IConfiguration configuration)
         {
             this.db = db;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
             this.configuration = configuration;
         }
 
@@ -35,7 +35,7 @@ namespace WebAPI.Services
         {
             TUserToken userToken = new()
             {
-                Id = snowflakeHelper.GetId(),
+                Id = idHelper.GetId(),
                 UserId = userId,
                 CreateTime = DateTime.UtcNow
             };

@@ -2,29 +2,30 @@
 {
 
     /// <summary>
-    /// 利用雪花算法动态生成有序的ID
+    /// ID生成Helper类
     /// </summary>
-    public class SnowflakeHelper
+    public class IDHelper
     {
 
 
-        private static long machineId;//机器ID
-        private static long datacenterId = 0L;//数据ID
-        private static long sequence = 0L;//计数从零开始
-        private static long lastTimestamp = -1L;//最后时间戳
+        private readonly long machineId;//机器ID
+        private readonly long datacenterId = 0L;//数据ID
+        private long sequence = 0L;//计数从零开始
+        private long lastTimestamp = -1L;//最后时间戳
 
         //twepoch 1640995200000L 为 UTC 2022-01-01 00:00 , sequenceBits 调整为11位，所以时间戳可用 42位，未来139年 可用
-        private readonly static long twepoch = 1640995200000L; //唯一时间随机量，这是一个避免重复的随机量，自行设定不要大于当前时间戳
-        private readonly static long machineIdBits = 5L; //机器码字节数
-        private readonly static long datacenterIdBits = 5L;//数据字节数
-        private readonly static long maxMachineId = -1L ^ -1L << (int)machineIdBits; //最大机器ID
-        private readonly static long maxDatacenterId = -1L ^ (-1L << (int)datacenterIdBits);//最大数据ID
-        private readonly static long sequenceBits = 11L; //计数器字节数，11个字节用来保存计数码，每毫秒可以生成2047个ID
-        private readonly static long machineIdShift = sequenceBits; //机器码数据左移位数，就是后面计数器占用的位数
-        private readonly static long datacenterIdShift = sequenceBits + machineIdBits;
-        private readonly static long timestampLeftShift = sequenceBits + machineIdBits + datacenterIdBits; //时间戳左移动位数就是机器码+计数器总字节数+数据字节数
-        private readonly static long sequenceMask = -1L ^ -1L << (int)sequenceBits; //一微秒内可以产生计数，如果达到该值则等到下一微妙在进行生成
-        private readonly static object syncRoot = new();//加锁对象
+        private readonly long twepoch = 1640995200000L; //唯一时间随机量，这是一个避免重复的随机量，自行设定不要大于当前时间戳
+
+        private readonly long machineIdBits = 5L; //机器码字节数
+        private readonly long datacenterIdBits = 5L;//数据字节数
+        private readonly long maxMachineId; //最大机器ID
+        private readonly long maxDatacenterId;//最大数据ID
+        private readonly long sequenceBits = 11L; //计数器字节数，11个字节用来保存计数码，每毫秒可以生成2047个ID
+        private readonly long machineIdShift; //机器码数据左移位数，就是后面计数器占用的位数
+        private readonly long datacenterIdShift;
+        private readonly long timestampLeftShift;//时间戳左移动位数就是机器码+计数器总字节数+数据字节数
+        private readonly long sequenceMask; //一微秒内可以产生计数，如果达到该值则等到下一微妙在进行生成
+        private readonly object syncRoot = new();//加锁对象
 
 
 
@@ -33,22 +34,23 @@
         /// </summary>
         /// <param name="machineId">机器ID,最大为31</param>
         /// <param name="datacenterId">数据ID,最大为31</param>
-        public SnowflakeHelper(long machineId, long datacenterId)
+        public IDHelper(long machineId, long datacenterId)
         {
-            Snowflakes(machineId, datacenterId);
-        }
+            maxMachineId = -1L ^ -1L << (int)machineIdBits;
+            maxDatacenterId = -1L ^ (-1L << (int)datacenterIdBits);
+            machineIdShift = sequenceBits;
+            datacenterIdShift = sequenceBits + machineIdBits;
+            timestampLeftShift = sequenceBits + machineIdBits + datacenterIdBits;
+            sequenceMask = -1L ^ -1L << (int)sequenceBits;
 
 
-
-        private static void Snowflakes(long machineId, long datacenterId)
-        {
             if (machineId < 0 || machineId > maxMachineId)
             {
                 throw new Exception("机器码ID非法");
             }
             else
             {
-                SnowflakeHelper.machineId = machineId;
+                this.machineId = machineId;
             }
 
             if (datacenterId < 0 || datacenterId > maxDatacenterId)
@@ -57,10 +59,9 @@
             }
             else
             {
-                SnowflakeHelper.datacenterId = datacenterId;
+                this.datacenterId = datacenterId;
             }
         }
-
 
 
 
@@ -84,12 +85,10 @@
 
 
         /// <summary>
-        /// 获取一个雪花ID
+        /// 获取一个ID
         /// </summary>
         /// <returns></returns>
-#pragma warning disable CA1822 // 将成员标记为 static
         public long GetId()
-#pragma warning restore CA1822 // 将成员标记为 static
         {
             lock (syncRoot)
             {
@@ -128,7 +127,7 @@
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public static DateTimeOffset GetTimeById(long id)
+        public DateTimeOffset GetTimeById(long id)
         {
             var idStr2 = Convert.ToString(id, 2);
 

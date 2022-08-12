@@ -29,7 +29,7 @@ namespace WebAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IDistributedLock distLock;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
 
         private readonly IDistributedCache distributedCache;
 
@@ -42,11 +42,11 @@ namespace WebAPI.Controllers
 
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, SnowflakeHelper snowflakeHelper, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, IDHelper idHelper, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distLock = distLock;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
             this.distributedCache = distributedCache;
             this.httpClientFactory = httpClientFactory;
 
@@ -133,7 +133,7 @@ namespace WebAPI.Controllers
                         //注册一个只有基本信息的账户出来
                         user = new()
                         {
-                            Id = snowflakeHelper.GetId(),
+                            Id = idHelper.GetId(),
                             CreateTime = DateTime.UtcNow,
                             Name = userName,
                             NickName = userName,
@@ -147,7 +147,7 @@ namespace WebAPI.Controllers
 
                         TUserBindExternal userBind = new()
                         {
-                            Id = snowflakeHelper.GetId(),
+                            Id = idHelper.GetId(),
                             CreateTime = DateTime.UtcNow,
                             UserId = user.Id,
                             AppName = "WeiXinMiniApp",
@@ -198,7 +198,7 @@ namespace WebAPI.Controllers
 
                     user = new()
                     {
-                        Id = snowflakeHelper.GetId(),
+                        Id = idHelper.GetId(),
                         CreateTime = DateTime.UtcNow,
                         Name = userName,
                         NickName = userName,
@@ -328,7 +328,7 @@ namespace WebAPI.Controllers
 
                     user = new()
                     {
-                        Id = snowflakeHelper.GetId(),
+                        Id = idHelper.GetId(),
                         IsDelete = false,
                         CreateTime = DateTime.UtcNow,
                         Name = userInfo.NickName,
@@ -342,7 +342,7 @@ namespace WebAPI.Controllers
 
                     TUserBindExternal bind = new()
                     {
-                        Id = snowflakeHelper.GetId(),
+                        Id = idHelper.GetId(),
                         CreateTime = DateTime.UtcNow,
                         AppName = "WeiXinApp",
                         AppId = appid!,

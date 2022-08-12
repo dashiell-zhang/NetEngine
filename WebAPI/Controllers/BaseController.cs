@@ -16,15 +16,15 @@ namespace WebAPI.Controllers
 
 
         private readonly DatabaseContext db;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
         private readonly IDistributedCache distributedCache;
 
 
 
-        public BaseController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IDistributedCache distributedCache)
+        public BaseController(DatabaseContext db, IDHelper idHelper, IDistributedCache distributedCache)
         {
             this.db = db;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
             this.distributedCache = distributedCache;
         }
 
@@ -155,7 +155,7 @@ namespace WebAPI.Controllers
         [HttpGet("GetSnowflakeId")]
         public long GetSnowflakeId()
         {
-            return snowflakeHelper.GetId();
+            return idHelper.GetId();
         }
 
 

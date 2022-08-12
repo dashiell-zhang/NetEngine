@@ -16,14 +16,14 @@ namespace AdminAPI.Controllers
     {
 
         private readonly DatabaseContext db;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
 
 
 
-        public BaseController(DatabaseContext db, SnowflakeHelper snowflakeHelper)
+        public BaseController(DatabaseContext db, IDHelper idHelper)
         {
             this.db = db;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
         }
 
 
@@ -130,7 +130,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetSnowflakeId")]
         public long GetSnowflakeId()
         {
-            return snowflakeHelper.GetId();
+            return idHelper.GetId();
         }
 
     }

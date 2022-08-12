@@ -24,15 +24,15 @@ namespace AdminAPI.Controllers
     {
 
         private readonly DatabaseContext db;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
 
         private readonly long userId;
 
 
-        public UserController(DatabaseContext db, SnowflakeHelper snowflakeHelper, IHttpContextAccessor httpContextAccessor)
+        public UserController(DatabaseContext db, IDHelper idHelper, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)
@@ -125,7 +125,7 @@ namespace AdminAPI.Controllers
         {
             TUser user = new()
             {
-                Id = snowflakeHelper.GetId(),
+                Id = idHelper.GetId(),
                 Name = createUser.Name,
                 NickName = createUser.NickName,
                 Phone = createUser.Phone

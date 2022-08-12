@@ -24,7 +24,7 @@ namespace WebAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IConfiguration configuration;
-        private readonly SnowflakeHelper snowflakeHelper;
+        private readonly IDHelper idHelper;
         private readonly IFileStorage? fileStorage;
 
         private readonly string rootPath;
@@ -33,11 +33,11 @@ namespace WebAPI.Controllers
 
 
 
-        public FileController(DatabaseContext db, IConfiguration configuration, SnowflakeHelper snowflakeHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
+        public FileController(DatabaseContext db, IConfiguration configuration, IDHelper idHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
         {
             this.db = db;
             this.configuration = configuration;
-            this.snowflakeHelper = snowflakeHelper;
+            this.idHelper = idHelper;
             this.fileStorage = fileStorage;
 
             rootPath = webHostEnvironment.ContentRootPath.Replace("\\", "/");
@@ -111,7 +111,7 @@ namespace WebAPI.Controllers
 
                     TFile f = new()
                     {
-                        Id = snowflakeHelper.GetId(),
+                        Id = idHelper.GetId(),
                         Name = fileInfoName,
                         Path = filePath,
                         Table = business,
@@ -154,7 +154,7 @@ namespace WebAPI.Controllers
 
             Directory.CreateDirectory(filepath);
 
-            var fileName = snowflakeHelper.GetId();
+            var fileName = idHelper.GetId();
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
             var fullFileName = string.Format("{0}{1}", fileName, fileExtension);
 

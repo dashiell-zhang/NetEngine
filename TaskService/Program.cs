@@ -80,21 +80,13 @@ namespace TaskService
                     });
 
 
-                    #region 注册缓存服务
-
-                    //注册缓存服务 内存模式
-                    services.AddDistributedMemoryCache();
-
-
-
                     //注册缓存服务 Redis模式
-                    //services.AddStackExchangeRedisCache(options =>
-                    //{
-                    //    options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
-                    //    options.InstanceName = "cache";
-                    //});
+                    services.AddStackExchangeRedisCache(options =>
+                    {
+                        options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
+                        options.InstanceName = "cache";
+                    });
 
-                    #endregion
 
                     #region 注册HttpClient
 

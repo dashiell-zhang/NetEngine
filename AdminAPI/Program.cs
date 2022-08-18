@@ -214,20 +214,12 @@ namespace AdminAPI
             });
 
 
-            #region 注册缓存服务
-
-            //注册缓存服务 内存模式
-            builder.Services.AddDistributedMemoryCache();
-
-
             //注册缓存服务 Redis模式
-            //builder.Services.AddStackExchangeRedisCache(options =>
-            //{
-            //    options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
-            //    options.InstanceName = "cache";
-            //});
-
-            #endregion
+            builder.Services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
+                options.InstanceName = "cache";
+            });
 
 
             #region 注册HttpClient
@@ -244,7 +236,6 @@ namespace AdminAPI
             #endregion
 
             builder.Services.BatchRegisterServices();
-
 
 
             #region 注册文件服务

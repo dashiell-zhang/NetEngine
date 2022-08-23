@@ -24,43 +24,43 @@ namespace Common
 
         private const int AllSpecInt = 99;
 
-        private const int NoSpecInt = 98; 
+        private const int NoSpecInt = 98;
 
         private const int AllSpec = AllSpecInt;
 
         private const int NoSpec = NoSpecInt;
 
+        private SortedSet<int> seconds = null!;
+
+        private SortedSet<int> minutes = null!;
+
+        private SortedSet<int> hours = null!;
+
+        private SortedSet<int> daysOfMonth = null!;
+
+        private SortedSet<int> months = null!;
+
+        private SortedSet<int> daysOfWeek = null!;
+
+        private SortedSet<int> years = null!;
+
+        private bool lastdayOfWeek;
+
+        private int everyNthWeek;
+
+        private int nthdayOfWeek;
+
+        private bool lastdayOfMonth;
+
+        private bool nearestWeekday;
+
+        private int lastdayOffset;
+
         private static readonly Dictionary<string, int> monthMap = new Dictionary<string, int>(20);
 
         private static readonly Dictionary<string, int> dayMap = new Dictionary<string, int>(60);
 
-        private static SortedSet<int> seconds = null!;
-
-        private static SortedSet<int> minutes = null!;
-
-        private static SortedSet<int> hours = null!;
-
-        private static SortedSet<int> daysOfMonth = null!;
-
-        private static SortedSet<int> months = null!;
-
-        private static SortedSet<int> daysOfWeek = null!;
-
-        private static SortedSet<int> years = null!;
-
-        private static bool lastdayOfWeek;
-
-        private static int everyNthWeek;
-
-        private static int nthdayOfWeek;
-
-        private static bool lastdayOfMonth;
-
-        private static bool nearestWeekday;
-
-        private static int lastdayOffset;
-
-        public static readonly int MaxYear = DateTime.Now.Year + 100;
+        private static readonly int MaxYear = DateTime.Now.Year + 100;
 
         private static readonly char[] splitSeparators = { ' ', '\t', '\r', '\n' };
 
@@ -68,8 +68,45 @@ namespace Common
 
         private static readonly Regex regex = new Regex("^L-[0-9]*[W]?", RegexOptions.Compiled);
 
-        private static TimeZoneInfo TimeZone = TimeZoneInfo.Local;
+        private static readonly TimeZoneInfo timeZoneInfo = TimeZoneInfo.Local;
 
+
+
+
+        private CronHelper(string cronExpression)
+        {
+            if (monthMap.Count == 0)
+            {
+                monthMap.Add("JAN", 0);
+                monthMap.Add("FEB", 1);
+                monthMap.Add("MAR", 2);
+                monthMap.Add("APR", 3);
+                monthMap.Add("MAY", 4);
+                monthMap.Add("JUN", 5);
+                monthMap.Add("JUL", 6);
+                monthMap.Add("AUG", 7);
+                monthMap.Add("SEP", 8);
+                monthMap.Add("OCT", 9);
+                monthMap.Add("NOV", 10);
+                monthMap.Add("DEC", 11);
+
+                dayMap.Add("SUN", 1);
+                dayMap.Add("MON", 2);
+                dayMap.Add("TUE", 3);
+                dayMap.Add("WED", 4);
+                dayMap.Add("THU", 5);
+                dayMap.Add("FRI", 6);
+                dayMap.Add("SAT", 7);
+            }
+
+            if (cronExpression == null)
+            {
+                throw new ArgumentException("cronExpression 不能为空");
+            }
+
+            CronExpressionString = CultureInfo.InvariantCulture.TextInfo.ToUpper(cronExpression);
+            BuildExpression(CronExpressionString);
+        }
 
 
         /// <summary>
@@ -77,7 +114,7 @@ namespace Common
         /// </summary>
         /// <param name="expression"></param>
         /// <exception cref="FormatException"></exception>
-        private static void BuildExpression(string expression)
+        private void BuildExpression(string expression)
         {
             try
             {
@@ -175,7 +212,7 @@ namespace Common
         /// <param name="s">The string to traverse.</param>
         /// <param name="type">The type of value.</param>
         /// <returns></returns>
-        private static int StoreExpressionVals(int pos, string s, int type)
+        private int StoreExpressionVals(int pos, string s, int type)
         {
             int incr = 0;
             int i = SkipWhiteSpace(pos, s);
@@ -463,7 +500,7 @@ namespace Common
         /// <param name="val">The value.</param>
         /// <param name="type">The type to search.</param>
         /// <returns></returns>
-        private static int CheckNext(int pos, string s, int val, int type)
+        private int CheckNext(int pos, string s, int val, int type)
         {
             int end = -1;
             int i = pos;
@@ -697,7 +734,7 @@ namespace Common
         /// <param name="end">The end.</param>
         /// <param name="incr">The incr.</param>
         /// <param name="type">The type.</param>
-        private static void AddToSet(int val, int end, int incr, int type)
+        private void AddToSet(int val, int end, int incr, int type)
         {
             var data = GetSet(type);
 
@@ -885,7 +922,7 @@ namespace Common
         /// </summary>
         /// <param name="type">The type of set to get.</param>
         /// <returns></returns>
-        private static SortedSet<int> GetSet(int type)
+        private SortedSet<int> GetSet(int type)
         {
             switch (type)
             {
@@ -1000,39 +1037,8 @@ namespace Common
         /// </summary>
         /// <param name="afterTimeUtc">开始搜索的 UTC 时间。</param>
         /// <returns></returns>
-        public static DateTimeOffset? GetNextValidTimeAfter(string cronExpression, DateTimeOffset afterTimeUtc)
+        private DateTimeOffset? GetTimeAfter(DateTimeOffset afterTimeUtc)
         {
-
-
-            monthMap.Add("JAN", 0);
-            monthMap.Add("FEB", 1);
-            monthMap.Add("MAR", 2);
-            monthMap.Add("APR", 3);
-            monthMap.Add("MAY", 4);
-            monthMap.Add("JUN", 5);
-            monthMap.Add("JUL", 6);
-            monthMap.Add("AUG", 7);
-            monthMap.Add("SEP", 8);
-            monthMap.Add("OCT", 9);
-            monthMap.Add("NOV", 10);
-            monthMap.Add("DEC", 11);
-
-            dayMap.Add("SUN", 1);
-            dayMap.Add("MON", 2);
-            dayMap.Add("TUE", 3);
-            dayMap.Add("WED", 4);
-            dayMap.Add("THU", 5);
-            dayMap.Add("FRI", 6);
-            dayMap.Add("SAT", 7);
-
-            if (cronExpression == null)
-            {
-                throw new ArgumentException("cronExpression 不能为空");
-            }
-
-            CronExpressionString = CultureInfo.InvariantCulture.TextInfo.ToUpper(cronExpression);
-            BuildExpression(CronExpressionString);
-
 
             // 向前移动一秒钟，因为我们正在计算时间*之后*
             afterTimeUtc = afterTimeUtc.AddSeconds(1);
@@ -1041,7 +1047,7 @@ namespace Common
             DateTimeOffset d = CreateDateTimeWithoutMillis(afterTimeUtc);
 
             // 更改为指定时区
-            d = TimeZoneInfo.ConvertTime(d, TimeZone);
+            d = TimeZoneInfo.ConvertTime(d, timeZoneInfo);
 
             bool gotOne = false;
             //循环直到我们计算出下一次，或者我们已经过了 endTime
@@ -1487,12 +1493,36 @@ namespace Common
                 d = new DateTimeOffset(year, d.Month, d.Day, d.Hour, d.Minute, d.Second, d.Offset);
 
                 //为此日期应用适当的偏移量
-                d = new DateTimeOffset(d.DateTime, TimeZone.BaseUtcOffset);
+                d = new DateTimeOffset(d.DateTime, timeZoneInfo.BaseUtcOffset);
 
                 gotOne = true;
             }
 
             return d.ToUniversalTime();
+        }
+
+
+
+        /// <summary>
+        /// 获取下一次触发时间
+        /// </summary>
+        /// <param name="cronExpression"></param>
+        /// <returns></returns>
+        public static DateTimeOffset GetNextOccurrence(string cronExpression)
+        {
+            return new CronHelper(cronExpression).GetTimeAfter(DateTimeOffset.UtcNow)!.Value;
+        }
+
+
+        /// <summary>
+        /// 获取给定时间的下一次触发时间
+        /// </summary>
+        /// <param name="cronExpression"></param>
+        /// <param name="afterTimeUtc"></param>
+        /// <returns></returns>
+        public static DateTimeOffset GetNextOccurrence(string cronExpression, DateTimeOffset afterTimeUtc)
+        {
+            return new CronHelper(cronExpression).GetTimeAfter(afterTimeUtc)!.Value;
         }
 
 

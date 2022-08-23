@@ -7,165 +7,78 @@ namespace Common
 
     public class CronHelper
     {
-        /// <summary>
-        /// Field specification for second.
-        /// </summary>
-        protected const int Second = 0;
 
-        /// <summary>
-        /// Field specification for minute.
-        /// </summary>
-        protected const int Minute = 1;
+        private const int Second = 0;
 
-        /// <summary>
-        /// Field specification for hour.
-        /// </summary>
-        protected const int Hour = 2;
+        private const int Minute = 1;
 
-        /// <summary>
-        /// Field specification for day of month.
-        /// </summary>
-        protected const int DayOfMonth = 3;
+        private const int Hour = 2;
 
-        /// <summary>
-        /// Field specification for month.
-        /// </summary>
-        protected const int Month = 4;
+        private const int DayOfMonth = 3;
 
-        /// <summary>
-        /// Field specification for day of week.
-        /// </summary>
-        protected const int DayOfWeek = 5;
+        private const int Month = 4;
 
-        /// <summary>
-        /// Field specification for year.
-        /// </summary>
-        protected const int Year = 6;
+        private const int DayOfWeek = 5;
 
-        /// <summary>
-        /// Field specification for all wildcard value '*'.
-        /// </summary>
-        protected const int AllSpecInt = 99; // '*'
+        private const int Year = 6;
 
-        /// <summary>
-        /// Field specification for not specified value '?'.
-        /// </summary>
-        protected const int NoSpecInt = 98; // '?'
+        private const int AllSpecInt = 99;
 
-        /// <summary>
-        /// Field specification for wildcard '*'.
-        /// </summary>
-        protected const int AllSpec = AllSpecInt;
+        private const int NoSpecInt = 98; 
 
-        /// <summary>
-        /// Field specification for no specification at all '?'.
-        /// </summary>
-        protected const int NoSpec = NoSpecInt;
+        private const int AllSpec = AllSpecInt;
+
+        private const int NoSpec = NoSpecInt;
 
         private static readonly Dictionary<string, int> monthMap = new Dictionary<string, int>(20);
+
         private static readonly Dictionary<string, int> dayMap = new Dictionary<string, int>(60);
 
+        private static SortedSet<int> seconds = null!;
 
+        private static SortedSet<int> minutes = null!;
 
-        /// <summary>
-        /// Seconds.
-        /// </summary>
-        protected static SortedSet<int> seconds = null!;
+        private static SortedSet<int> hours = null!;
 
-        /// <summary>
-        /// minutes.
-        /// </summary>
-        protected static SortedSet<int> minutes = null!;
+        private static SortedSet<int> daysOfMonth = null!;
 
-        /// <summary>
-        /// Hours.
-        /// </summary>
-        protected static SortedSet<int> hours = null!;
+        private static SortedSet<int> months = null!;
 
-        /// <summary>
-        /// Days of month.
-        /// </summary>
-        protected static SortedSet<int> daysOfMonth = null!;
+        private static SortedSet<int> daysOfWeek = null!;
 
-        /// <summary>
-        /// Months.
-        /// </summary>
-        protected static SortedSet<int> months = null!;
+        private static SortedSet<int> years = null!;
 
-        /// <summary>
-        /// Days of week.
-        /// </summary>
-        protected static SortedSet<int> daysOfWeek = null!;
+        private static bool lastdayOfWeek;
 
-        /// <summary>
-        /// Years.
-        /// </summary>
-        protected static SortedSet<int> years = null!;
+        private static int everyNthWeek;
 
-        /// <summary>
-        /// Last day of week.
-        /// </summary>
-        protected static bool lastdayOfWeek;
+        private static int nthdayOfWeek;
 
-        /// <summary>
-        /// N number of weeks.
-        /// </summary>
-        protected static int everyNthWeek;
+        private static bool lastdayOfMonth;
 
-        /// <summary>
-        /// Nth day of week.
-        /// </summary>
-        protected static int nthdayOfWeek;
+        private static bool nearestWeekday;
 
-        /// <summary>
-        /// Last day of month.
-        /// </summary>
-        protected static bool lastdayOfMonth;
-
-        /// <summary>
-        /// Nearest weekday.
-        /// </summary>
-        protected static bool nearestWeekday;
-
-        protected static int lastdayOffset;
-
-        /// <summary>
-        /// Calendar day of week.
-        /// </summary>
-        protected static bool calendardayOfWeek;
-
-        /// <summary>
-        /// Calendar day of month.
-        /// </summary>
-        protected static bool calendardayOfMonth;
-
-        /// <summary>
-        /// Expression parsed.
-        /// </summary>
-        protected static bool expressionParsed;
+        private static int lastdayOffset;
 
         public static readonly int MaxYear = DateTime.Now.Year + 100;
 
         private static readonly char[] splitSeparators = { ' ', '\t', '\r', '\n' };
+
         private static readonly char[] commaSeparator = { ',' };
+
         private static readonly Regex regex = new Regex("^L-[0-9]*[W]?", RegexOptions.Compiled);
-
-
-
 
         private static TimeZoneInfo TimeZone = TimeZoneInfo.Local;
 
 
 
-
         /// <summary>
-        /// Builds the expression.
+        /// 构建表达式
         /// </summary>
-        /// <param name="expression">The expression.</param>
-        protected static void BuildExpression(string expression)
+        /// <param name="expression"></param>
+        /// <exception cref="FormatException"></exception>
+        private static void BuildExpression(string expression)
         {
-            expressionParsed = true;
-
             try
             {
                 seconds ??= new SortedSet<int>();
@@ -192,19 +105,17 @@ namespace Common
                         break;
                     }
 
-                    // throw an exception if L is used with other days of the month
                     if (exprOn == DayOfMonth && expr.IndexOf('L') != -1 && expr.Length > 1 && expr.IndexOf(",", StringComparison.Ordinal) >= 0)
                     {
-                        throw new FormatException("Support for specifying 'L' and 'LW' with other days of the month is not implemented");
+                        throw new FormatException("不支持在月份的其他日期指定“L”和“LW”");
                     }
-                    // throw an exception if L is used with other days of the week
                     if (exprOn == DayOfWeek && expr.IndexOf('L') != -1 && expr.Length > 1 && expr.IndexOf(",", StringComparison.Ordinal) >= 0)
                     {
-                        throw new FormatException("Support for specifying 'L' with other days of the week is not implemented");
+                        throw new FormatException("不支持在一周的其他日期指定“L”");
                     }
                     if (exprOn == DayOfWeek && expr.IndexOf('#') != -1 && expr.IndexOf('#', expr.IndexOf('#') + 1) != -1)
                     {
-                        throw new FormatException("Support for specifying multiple \"nth\" days is not implemented.");
+                        throw new FormatException("不支持指定多个“第N”天。");
                     }
 
                     string[] vTok = expr.Split(commaSeparator);
@@ -218,7 +129,7 @@ namespace Common
 
                 if (exprOn <= DayOfWeek)
                 {
-                    throw new FormatException("Unexpected end of expression.");
+                    throw new FormatException("表达意料之外的结束。");
                 }
 
                 if (exprOn <= Year)
@@ -229,7 +140,6 @@ namespace Common
                 var dow = GetSet(DayOfWeek);
                 var dom = GetSet(DayOfMonth);
 
-                // Copying the logic from the UnsupportedOperationException below
                 bool dayOfMSpec = !dom.Contains(NoSpec);
                 bool dayOfWSpec = !dow.Contains(NoSpec);
 
@@ -243,7 +153,7 @@ namespace Common
                 }
                 else
                 {
-                    throw new FormatException("Support for specifying both a day-of-week AND a day-of-month parameter is not implemented.");
+                    throw new FormatException("不支持同时指定星期和日参数。");
                 }
             }
             catch (FormatException)
@@ -252,7 +162,7 @@ namespace Common
             }
             catch (Exception e)
             {
-                throw new FormatException($"Illegal cron expression format ({e.Message})", e);
+                throw new FormatException($"非法的 cron 表达式格式 ({e.Message})", e);
             }
         }
 
@@ -265,7 +175,7 @@ namespace Common
         /// <param name="s">The string to traverse.</param>
         /// <param name="type">The type of value.</param>
         /// <returns></returns>
-        protected static int StoreExpressionVals(int pos, string s, int type)
+        private static int StoreExpressionVals(int pos, string s, int type)
         {
             int incr = 0;
             int i = SkipWhiteSpace(pos, s);
@@ -284,7 +194,7 @@ namespace Common
                     sval = GetMonthNumber(sub) + 1;
                     if (sval <= 0)
                     {
-                        throw new FormatException($"Invalid Month value: '{sub}'");
+                        throw new FormatException($"无效的月份值：'{sub}'");
                     }
                     if (s.Length > i + 3)
                     {
@@ -297,7 +207,7 @@ namespace Common
                             if (eval <= 0)
                             {
                                 throw new FormatException(
-                                    $"Invalid Month value: '{sub}'");
+                                    $"无效的月份值： '{sub}'");
                             }
                         }
                     }
@@ -307,7 +217,7 @@ namespace Common
                     sval = GetDayOfWeekNumber(sub);
                     if (sval < 0)
                     {
-                        throw new FormatException($"Invalid Day-of-Week value: '{sub}'");
+                        throw new FormatException($"无效的星期几值： '{sub}'");
                     }
                     if (s.Length > i + 3)
                     {
@@ -320,7 +230,7 @@ namespace Common
                             if (eval < 0)
                             {
                                 throw new FormatException(
-                                    $"Invalid Day-of-Week value: '{sub}'");
+                                    $"无效的星期几值： '{sub}'");
                             }
                         }
                         else if (c == '#')
@@ -331,12 +241,12 @@ namespace Common
                                 nthdayOfWeek = Convert.ToInt32(s.Substring(i), CultureInfo.InvariantCulture);
                                 if (nthdayOfWeek is < 1 or > 5)
                                 {
-                                    throw new FormatException("nthdayOfWeek is < 1 or > 5");
+                                    throw new FormatException("周的第n天小于1或大于5");
                                 }
                             }
                             catch (Exception)
                             {
-                                throw new FormatException("A numeric value between 1 and 5 must follow the '#' option");
+                                throw new FormatException("1 到 5 之间的数值必须跟在“#”选项后面");
                             }
                         }
                         else if (c == '/')
@@ -347,12 +257,12 @@ namespace Common
                                 everyNthWeek = Convert.ToInt32(s.Substring(i), CultureInfo.InvariantCulture);
                                 if (everyNthWeek is < 1 or > 5)
                                 {
-                                    throw new FormatException("everyNthWeek is < 1 or > 5");
+                                    throw new FormatException("每个星期<1或>5");
                                 }
                             }
                             catch (Exception)
                             {
-                                throw new FormatException("A numeric value between 1 and 5 must follow the '/' option");
+                                throw new FormatException("1 到 5 之间的数值必须跟在 '/' 选项后面");
                             }
                         }
                         else if (c == 'L')
@@ -362,13 +272,13 @@ namespace Common
                         }
                         else
                         {
-                            throw new FormatException($"Illegal characters for this position: '{sub}'");
+                            throw new FormatException($"此位置的非法字符：'{sub}'");
                         }
                     }
                 }
                 else
                 {
-                    throw new FormatException($"Illegal characters for this position: '{sub}'");
+                    throw new FormatException($"此位置的非法字符：'{sub}'");
                 }
                 if (eval != -1)
                 {
@@ -383,12 +293,12 @@ namespace Common
                 i++;
                 if (i + 1 < s.Length && s[i] != ' ' && s[i + 1] != '\t')
                 {
-                    throw new FormatException("Illegal character after '?': " + s[i]);
+                    throw new FormatException("'?' 后的非法字符: " + s[i]);
                 }
                 if (type != DayOfWeek && type != DayOfMonth)
                 {
                     throw new FormatException(
-                        "'?' can only be specified for Day-of-Month or Day-of-Week.");
+                        "'?' 只能为月日或周日指定。");
                 }
                 if (type == DayOfWeek && !lastdayOfMonth)
                 {
@@ -396,7 +306,7 @@ namespace Common
                     if (val == NoSpecInt)
                     {
                         throw new FormatException(
-                            "'?' can only be specified for Day-of-Month -OR- Day-of-Week.");
+                            "'?' 只能为月日或周日指定。");
                     }
                 }
 
@@ -414,7 +324,7 @@ namespace Common
                 }
                 if (c == '/' && (i + 1 >= s.Length || s[i + 1] == ' ' || s[i + 1] == '\t'))
                 {
-                    throw new FormatException("'/' must be followed by an integer.");
+                    throw new FormatException("'/' 后面必须跟一个整数。");
                 }
                 if (startsWithAsterisk)
                 {
@@ -427,7 +337,7 @@ namespace Common
                     i++;
                     if (i >= s.Length)
                     {
-                        throw new FormatException("Unexpected end of string.");
+                        throw new FormatException("字符串意外结束。");
                     }
 
                     incr = GetNumericValue(s, i);
@@ -443,8 +353,7 @@ namespace Common
                 {
                     if (startsWithAsterisk)
                     {
-                        // invalid value s
-                        throw new FormatException("Illegal characters after asterisk: " + s);
+                        throw new FormatException("星号后的非法字符：" + s);
                     }
                     incr = 1;
                 }
@@ -472,7 +381,7 @@ namespace Common
                         lastdayOffset = vs.theValue;
                         if (lastdayOffset > 30)
                         {
-                            throw new FormatException("Offset from last day must be <= 30");
+                            throw new FormatException("与最后一天的偏移量必须 <= 30");
                         }
                         i = vs.pos;
                     }
@@ -511,7 +420,7 @@ namespace Common
             }
             else
             {
-                throw new FormatException($"Unexpected character: {c}");
+                throw new FormatException($"意外字符：{c}");
             }
 
             return i;
@@ -524,23 +433,23 @@ namespace Common
         {
             if (incr > 59 && (type == Second || type == Minute))
             {
-                throw new FormatException($"Increment > 60 : {incr}");
+                throw new FormatException($"增量 > 60 : {incr}");
             }
             if (incr > 23 && type == Hour)
             {
-                throw new FormatException($"Increment > 24 : {incr}");
+                throw new FormatException($"增量 > 24 : {incr}");
             }
             if (incr > 31 && type == DayOfMonth)
             {
-                throw new FormatException($"Increment > 31 : {incr}");
+                throw new FormatException($"增量 > 31 : {incr}");
             }
             if (incr > 7 && type == DayOfWeek)
             {
-                throw new FormatException($"Increment > 7 : {incr}");
+                throw new FormatException($"增量 > 7 : {incr}");
             }
             if (incr > 12 && type == Month)
             {
-                throw new FormatException($"Increment > 12 : {incr}");
+                throw new FormatException($"增量 > 12 : {incr}");
             }
         }
 
@@ -554,7 +463,7 @@ namespace Common
         /// <param name="val">The value.</param>
         /// <param name="type">The type to search.</param>
         /// <returns></returns>
-        protected static int CheckNext(int pos, string s, int val, int type)
+        private static int CheckNext(int pos, string s, int val, int type)
         {
             int end = -1;
             int i = pos;
@@ -573,13 +482,13 @@ namespace Common
                 {
                     if (val < 1 || val > 7)
                     {
-                        throw new FormatException("Day-of-Week values must be between 1 and 7");
+                        throw new FormatException("星期日值必须介于1和7之间");
                     }
                     lastdayOfWeek = true;
                 }
                 else
                 {
-                    throw new FormatException($"'L' option is not valid here. (pos={i})");
+                    throw new FormatException($"'L' 选项在这里无效。(位置={i})");
                 }
                 var data = GetSet(type);
                 data.Add(val);
@@ -595,11 +504,11 @@ namespace Common
                 }
                 else
                 {
-                    throw new FormatException($"'W' option is not valid here. (pos={i})");
+                    throw new FormatException($"'W' 选项在这里无效。 (位置={i})");
                 }
                 if (val > 31)
                 {
-                    throw new FormatException("The 'W' option does not make sense with values larger than 31 (max number of days in a month)");
+                    throw new FormatException("'W' 选项对于大于 31 的值（一个月中的最大天数）没有意义");
                 }
 
                 var data = GetSet(type);
@@ -612,7 +521,7 @@ namespace Common
             {
                 if (type != DayOfWeek)
                 {
-                    throw new FormatException($"'#' option is not valid here. (pos={i})");
+                    throw new FormatException($"'#' 选项在这里无效。 (位置={i})");
                 }
                 i++;
                 try
@@ -620,12 +529,12 @@ namespace Common
                     nthdayOfWeek = Convert.ToInt32(s.Substring(i), CultureInfo.InvariantCulture);
                     if (nthdayOfWeek is < 1 or > 5)
                     {
-                        throw new FormatException("nthdayOfWeek is < 1 or > 5");
+                        throw new FormatException("周的第n天小于1或大于5");
                     }
                 }
                 catch (Exception)
                 {
-                    throw new FormatException("A numeric value between 1 and 5 must follow the '#' option");
+                    throw new FormatException("1 到 5 之间的数值必须跟在“#”选项后面");
                 }
 
                 var data = GetSet(type);
@@ -638,15 +547,15 @@ namespace Common
             {
                 if (type == DayOfWeek)
                 {
-                    calendardayOfWeek = true;
+
                 }
                 else if (type == DayOfMonth)
                 {
-                    calendardayOfMonth = true;
+
                 }
                 else
                 {
-                    throw new FormatException($"'C' option is not valid here. (pos={i})");
+                    throw new FormatException($"'C' 选项在这里无效。(位置={i})");
                 }
                 var data = GetSet(type);
                 data.Add(val);
@@ -705,7 +614,7 @@ namespace Common
             {
                 if (i + 1 >= s.Length || s[i + 1] == ' ' || s[i + 1] == '\t')
                 {
-                    throw new FormatException("\'/\' must be followed by an integer.");
+                    throw new FormatException("\'/\' 后面必须跟一个整数。");
                 }
 
                 i++;
@@ -728,7 +637,7 @@ namespace Common
                     i = vs.pos;
                     return i;
                 }
-                throw new FormatException($"Unexpected character '{c}' after '/'");
+                throw new FormatException($"意外的字符 '{c}' 后 '/'");
             }
 
             AddToSet(val, end, 0, type);
@@ -753,7 +662,7 @@ namespace Common
         /// <param name="i">The i.</param>
         /// <param name="s">The s.</param>
         /// <returns></returns>
-        protected static int SkipWhiteSpace(int i, string s)
+        private static int SkipWhiteSpace(int i, string s)
         {
             for (; i < s.Length && (s[i] == ' ' || s[i] == '\t'); i++)
             {
@@ -770,7 +679,7 @@ namespace Common
         /// <param name="i">The i.</param>
         /// <param name="s">The s.</param>
         /// <returns></returns>
-        protected static int FindNextWhiteSpace(int i, string s)
+        private static int FindNextWhiteSpace(int i, string s)
         {
             for (; i < s.Length && (s[i] != ' ' || s[i] != '\t'); i++)
             {
@@ -788,7 +697,7 @@ namespace Common
         /// <param name="end">The end.</param>
         /// <param name="incr">The incr.</param>
         /// <param name="type">The type.</param>
-        protected static void AddToSet(int val, int end, int incr, int type)
+        private static void AddToSet(int val, int end, int incr, int type)
         {
             var data = GetSet(type);
 
@@ -796,14 +705,14 @@ namespace Common
             {
                 if ((val < 0 || val > 59 || end > 59) && val != AllSpecInt)
                 {
-                    throw new FormatException("Minute and Second values must be between 0 and 59");
+                    throw new FormatException("分钟和秒值必须介于0和59之间");
                 }
             }
             else if (type == Hour)
             {
                 if ((val < 0 || val > 23 || end > 23) && val != AllSpecInt)
                 {
-                    throw new FormatException("Hour values must be between 0 and 23");
+                    throw new FormatException("小时值必须介于0和23之间");
                 }
             }
             else if (type == DayOfMonth)
@@ -811,14 +720,14 @@ namespace Common
                 if ((val < 1 || val > 31 || end > 31) && val != AllSpecInt
                     && val != NoSpecInt)
                 {
-                    throw new FormatException("Day of month values must be between 1 and 31");
+                    throw new FormatException("月日值必须介于1和31之间");
                 }
             }
             else if (type == Month)
             {
                 if ((val < 1 || val > 12 || end > 12) && val != AllSpecInt)
                 {
-                    throw new FormatException("Month values must be between 1 and 12");
+                    throw new FormatException("月份值必须介于1和12之间");
                 }
             }
             else if (type == DayOfWeek)
@@ -826,7 +735,7 @@ namespace Common
                 if ((val == 0 || val > 7 || end > 7) && val != AllSpecInt
                     && val != NoSpecInt)
                 {
-                    throw new FormatException("Day-of-Week values must be between 1 and 7");
+                    throw new FormatException("星期日值必须介于1和7之间");
                 }
             }
 
@@ -849,7 +758,7 @@ namespace Common
             if (val == AllSpecInt && incr <= 0)
             {
                 incr = 1;
-                data.Add(AllSpec); // put in a marker, but also fill values
+                data.Add(AllSpec);
             }
 
             if (type == Second || type == Minute)
@@ -919,9 +828,6 @@ namespace Common
                 }
             }
 
-            // if the end of the range is before the start, then we need to overflow into
-            // the next day, month etc. This is done by adding the maximum amount for that
-            // type, and using modulus max to determine the value being added.
             int max = -1;
             if (stopAt < startAt)
             {
@@ -946,9 +852,9 @@ namespace Common
                         max = 31;
                         break;
                     case Year:
-                        throw new ArgumentException("Start year must be less than stop year");
+                        throw new ArgumentException("开始年份必须小于停止年份");
                     default:
-                        throw new ArgumentException("Unexpected type encountered");
+                        throw new ArgumentException("遇到意外的类型");
                 }
                 stopAt += max;
             }
@@ -957,15 +863,11 @@ namespace Common
             {
                 if (max == -1)
                 {
-                    // ie: there's no max to overflow over
                     data.Add(i);
                 }
                 else
                 {
-                    // take the modulus to get the real value
                     int i2 = i % max;
-
-                    // 1-indexed ranges should not include 0, and should include their max
                     if (i2 == 0 && (type == Month || type == DayOfWeek || type == DayOfMonth))
                     {
                         i2 = max;
@@ -983,7 +885,7 @@ namespace Common
         /// </summary>
         /// <param name="type">The type of set to get.</param>
         /// <returns></returns>
-        protected static SortedSet<int> GetSet(int type)
+        private static SortedSet<int> GetSet(int type)
         {
             switch (type)
             {
@@ -1015,7 +917,7 @@ namespace Common
         /// <param name="s">The s.</param>
         /// <param name="i">The i.</param>
         /// <returns></returns>
-        protected static ValueSet GetValue(int v, string s, int i)
+        private static ValueSet GetValue(int v, string s, int i)
         {
             char c = s[i];
             StringBuilder s1 = new StringBuilder(v.ToString(CultureInfo.InvariantCulture));
@@ -1050,7 +952,7 @@ namespace Common
         /// <param name="s">The string to parse from.</param>
         /// <param name="i">The i.</param>
         /// <returns></returns>
-        protected static int GetNumericValue(string s, int i)
+        private static int GetNumericValue(string s, int i)
         {
             int endOfVal = FindNextWhiteSpace(i, s);
             string val = s.Substring(i, endOfVal - i);
@@ -1064,7 +966,7 @@ namespace Common
         /// </summary>
         /// <param name="s">The string to map with.</param>
         /// <returns></returns>
-        protected static int GetMonthNumber(string s)
+        private static int GetMonthNumber(string s)
         {
             if (monthMap.ContainsKey(s))
             {
@@ -1081,7 +983,7 @@ namespace Common
         /// </summary>
         /// <param name="s">The s.</param>
         /// <returns></returns>
-        protected static int GetDayOfWeekNumber(string s)
+        private static int GetDayOfWeekNumber(string s)
         {
             if (dayMap.ContainsKey(s))
             {
@@ -1094,9 +996,9 @@ namespace Common
 
 
         /// <summary>
-        /// Gets the next fire time after the given time.
+        /// 在给定时间之后获取下一个触发时间。
         /// </summary>
-        /// <param name="afterTimeUtc">The UTC time to start searching from.</param>
+        /// <param name="afterTimeUtc">开始搜索的 UTC 时间。</param>
         /// <returns></returns>
         public static DateTimeOffset? GetNextValidTimeAfter(string cronExpression, DateTimeOffset afterTimeUtc)
         {
@@ -1125,32 +1027,30 @@ namespace Common
 
             if (cronExpression == null)
             {
-                throw new ArgumentException("cronExpression cannot be null");
+                throw new ArgumentException("cronExpression 不能为空");
             }
 
             CronExpressionString = CultureInfo.InvariantCulture.TextInfo.ToUpper(cronExpression);
             BuildExpression(CronExpressionString);
 
 
-            // move ahead one second, since we're computing the time *after* the
-            // given time
+            // 向前移动一秒钟，因为我们正在计算时间*之后*
             afterTimeUtc = afterTimeUtc.AddSeconds(1);
 
-            // CronTrigger does not deal with milliseconds
+            // CronTrigger 不处理毫秒
             DateTimeOffset d = CreateDateTimeWithoutMillis(afterTimeUtc);
 
-            // change to specified time zone
+            // 更改为指定时区
             d = TimeZoneInfo.ConvertTime(d, TimeZone);
 
             bool gotOne = false;
-            // loop until we've computed the next time, or we've past the endTime
+            //循环直到我们计算出下一次，或者我们已经过了 endTime
             while (!gotOne)
             {
                 SortedSet<int> st;
                 int t;
                 int sec = d.Second;
 
-                // get second.................................................
                 st = seconds.GetViewBetween(sec, 9999999);
                 if (st.Count > 0)
                 {
@@ -1167,7 +1067,6 @@ namespace Common
                 int hr = d.Hour;
                 t = -1;
 
-                // get minute.................................................
                 st = minutes.GetViewBetween(min, 9999999);
                 if (st.Count > 0)
                 {
@@ -1191,7 +1090,6 @@ namespace Common
                 int day = d.Day;
                 t = -1;
 
-                // get hour...................................................
                 st = hours.GetViewBetween(hr, 9999999);
                 if (st.Count > 0)
                 {
@@ -1224,12 +1122,11 @@ namespace Common
                 t = -1;
                 int tmon = mon;
 
-                // get day...................................................
                 bool dayOfMSpec = !daysOfMonth.Contains(NoSpec);
                 bool dayOfWSpec = !daysOfWeek.Contains(NoSpec);
                 if (dayOfMSpec && !dayOfWSpec)
                 {
-                    // get day by day of month rule
+                    // 逐月获取规则
                     st = daysOfMonth.GetViewBetween(day, 9999999);
                     bool found = st.Any();
                     if (lastdayOfMonth)
@@ -1246,7 +1143,7 @@ namespace Common
                                 if (mon > 12)
                                 {
                                     mon = 1;
-                                    tmon = 3333; // ensure test of mon != tmon further below fails
+                                    tmon = 3333; // 确保下面的 mon != tmon 测试失败
                                     d = d.AddYears(1);
                                 }
                                 day = 1;
@@ -1327,7 +1224,7 @@ namespace Common
                         t = day;
                         day = st.First();
 
-                        // make sure we don't over-run a short month, such as february
+                        //确保我们不会在短时间内跑得过快，比如二月
                         int lastDay = GetLastDayOfMonth(mon, d.Year);
                         if (day > lastDay)
                         {
@@ -1349,9 +1246,8 @@ namespace Common
                         }
                         else
                         {
-                            // This is to avoid a bug when moving from a month
-                            //with 30 or 31 days to a month with less. Causes an invalid datetime to be instantiated.
-                            // ex. 0 29 0 30 1 ? 2009 with clock set to 1/30/2009
+                            //这是为了避免从一个月移动时出现错误
+                            //有 30 或 31 天到一个月更少。 导致实例化无效的日期时间。
                             int lDay = DateTime.DaysInMonth(d.Year, mon);
                             if (day <= lDay)
                             {
@@ -1367,14 +1263,13 @@ namespace Common
                 }
                 else if (dayOfWSpec && !dayOfMSpec)
                 {
-                    // get day by day of week rule
+                    // 获取星期几规则
                     if (lastdayOfWeek)
                     {
-                        // are we looking for the last XXX day of
-                        // the month?
-                        int dow = daysOfWeek.First(); // desired
-                        // d-o-w
-                        int cDow = (int)d.DayOfWeek + 1; // current d-o-w
+
+                        int dow = daysOfWeek.First();
+
+                        int cDow = (int)d.DayOfWeek + 1;
                         int daysToAdd = 0;
                         if (cDow < dow)
                         {
@@ -1389,22 +1284,21 @@ namespace Common
 
                         if (day + daysToAdd > lDay)
                         {
-                            // did we already miss the
-                            // last one?
+
                             if (mon == 12)
                             {
-                                //will we pass the end of the year?
+
                                 d = new DateTimeOffset(d.Year, mon - 11, 1, 0, 0, 0, d.Offset).AddYears(1);
                             }
                             else
                             {
                                 d = new DateTimeOffset(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
                             }
-                            // we are promoting the month
+
                             continue;
                         }
 
-                        // find date of last occurrence of this day in this month...
+                        // 查找本月这一天最后一次出现的日期...
                         while (day + daysToAdd + 7 <= lDay)
                         {
                             daysToAdd += 7;
@@ -1415,16 +1309,16 @@ namespace Common
                         if (daysToAdd > 0)
                         {
                             d = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
-                            // we are not promoting the month
+
                             continue;
                         }
                     }
                     else if (nthdayOfWeek != 0)
                     {
-                        // are we looking for the Nth XXX day in the month?
-                        int dow = daysOfWeek.First(); // desired
-                        // d-o-w
-                        int cDow = (int)d.DayOfWeek + 1; // current d-o-w
+
+                        int dow = daysOfWeek.First();
+
+                        int cDow = (int)d.DayOfWeek + 1;
                         int daysToAdd = 0;
                         if (cDow < dow)
                         {
@@ -1457,21 +1351,20 @@ namespace Common
                                 d = new DateTimeOffset(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
                             }
 
-                            // we are promoting the month
                             continue;
                         }
                         if (daysToAdd > 0 || dayShifted)
                         {
                             d = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
-                            // we are NOT promoting the month
+
                             continue;
                         }
                     }
                     else if (everyNthWeek != 0)
                     {
-                        int cDow = (int)d.DayOfWeek + 1; // current d-o-w
-                        int dow = daysOfWeek.First(); // desired
-                        // d-o-w
+                        int cDow = (int)d.DayOfWeek + 1;
+                        int dow = daysOfWeek.First();
+
                         st = daysOfWeek.GetViewBetween(cDow, 9999999);
                         if (st.Count > 0)
                         {
@@ -1488,27 +1381,9 @@ namespace Common
                             daysToAdd = (dow + (7 - cDow)) + (7 * (everyNthWeek - 1));
                         }
 
-                        int lDay = GetLastDayOfMonth(mon, d.Year);
 
-                        //if (day + daysToAdd > lDay)
-                        //{
-                        //    // will we pass the end of the month?
-
-                        //    if (mon == 12)
-                        //    {
-                        //        //will we pass the end of the year?
-                        //        d = new DateTimeOffset(d.Year, mon - 11, 1, 0, 0, 0, d.Offset).AddYears(1);
-                        //    }
-                        //    else
-                        //    {
-                        //        d = new DateTimeOffset(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
-                        //    }
-                        //    // we are promoting the month
-                        //    continue;
-                        //}
                         if (daysToAdd > 0)
                         {
-                            // are we switching days?
                             d = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
                             d = d.AddDays(daysToAdd);
                             continue;
@@ -1516,9 +1391,9 @@ namespace Common
                     }
                     else
                     {
-                        int cDow = (int)d.DayOfWeek + 1; // current d-o-w
-                        int dow = daysOfWeek.First(); // desired
-                        // d-o-w
+                        int cDow = (int)d.DayOfWeek + 1;
+                        int dow = daysOfWeek.First();
+
                         st = daysOfWeek.GetViewBetween(cDow, 9999999);
                         if (st.Count > 0)
                         {
@@ -1539,23 +1414,19 @@ namespace Common
 
                         if (day + daysToAdd > lDay)
                         {
-                            // will we pass the end of the month?
 
                             if (mon == 12)
                             {
-                                //will we pass the end of the year?
                                 d = new DateTimeOffset(d.Year, mon - 11, 1, 0, 0, 0, d.Offset).AddYears(1);
                             }
                             else
                             {
                                 d = new DateTimeOffset(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
                             }
-                            // we are promoting the month
                             continue;
                         }
                         if (daysToAdd > 0)
                         {
-                            // are we switching days?
                             d = new DateTimeOffset(d.Year, mon, day + daysToAdd, 0, 0, 0, d.Offset);
                             continue;
                         }
@@ -1563,8 +1434,7 @@ namespace Common
                 }
                 else
                 {
-                    // dayOfWSpec && !dayOfMSpec
-                    throw new FormatException("Support for specifying both a day-of-week AND a day-of-month parameter is not implemented.");
+                    throw new FormatException("不支持同时指定星期日和月日参数。");
                 }
 
                 d = new DateTimeOffset(d.Year, d.Month, day, d.Hour, d.Minute, d.Second, d.Offset);
@@ -1572,14 +1442,12 @@ namespace Common
                 int year = d.Year;
                 t = -1;
 
-                // test for expressions that never generate a valid fire date,
-                // but keep looping...
+
                 if (year > MaxYear)
                 {
                     return null;
                 }
 
-                // get month...................................................
                 st = months.GetViewBetween(mon, 9999999);
                 if (st.Count > 0)
                 {
@@ -1600,7 +1468,6 @@ namespace Common
                 year = d.Year;
                 t = -1;
 
-                // get year...................................................
                 st = years.GetViewBetween(year, 9999999);
                 if (st.Count > 0)
                 {
@@ -1610,7 +1477,7 @@ namespace Common
                 else
                 {
                     return null;
-                } // ran out of years...
+                }
 
                 if (year != t)
                 {
@@ -1619,24 +1486,28 @@ namespace Common
                 }
                 d = new DateTimeOffset(year, d.Month, d.Day, d.Hour, d.Minute, d.Second, d.Offset);
 
-                //apply the proper offset for this date
+                //为此日期应用适当的偏移量
                 d = new DateTimeOffset(d.DateTime, TimeZone.BaseUtcOffset);
 
                 gotOne = true;
-            } // while( !done )
+            }
 
             return d.ToUniversalTime();
         }
+
+
 
         /// <summary>
         /// Creates the date time without milliseconds.
         /// </summary>
         /// <param name="time">The time.</param>
         /// <returns></returns>
-        protected static DateTimeOffset CreateDateTimeWithoutMillis(DateTimeOffset time)
+        private static DateTimeOffset CreateDateTimeWithoutMillis(DateTimeOffset time)
         {
             return new DateTimeOffset(time.Year, time.Month, time.Day, time.Hour, time.Minute, time.Second, time.Offset);
         }
+
+
 
         /// <summary>
         /// Advance the calendar to the particular hour paying particular attention
@@ -1645,10 +1516,9 @@ namespace Common
         /// <param name="date">The date.</param>
         /// <param name="hour">The hour.</param>
         /// <returns></returns>
-        protected static DateTimeOffset SetCalendarHour(DateTimeOffset date, int hour)
+        private static DateTimeOffset SetCalendarHour(DateTimeOffset date, int hour)
         {
-            // Java version of Quartz uses lenient calendar
-            // so hour 24 creates day increment and zeroes hour
+
             int hourToSet = hour;
             if (hourToSet == 24)
             {
@@ -1657,7 +1527,6 @@ namespace Common
             DateTimeOffset d = new DateTimeOffset(date.Year, date.Month, date.Day, hourToSet, date.Minute, date.Second, date.Millisecond, date.Offset);
             if (hour == 24)
             {
-                // increment day
                 d = d.AddDays(1);
             }
             return d;
@@ -1671,7 +1540,7 @@ namespace Common
         /// <param name="monthNum">The month num.</param>
         /// <param name="year">The year.</param>
         /// <returns></returns>
-        protected static int GetLastDayOfMonth(int monthNum, int year)
+        private static int GetLastDayOfMonth(int monthNum, int year)
         {
             return DateTime.DaysInMonth(year, monthNum);
         }
@@ -1679,19 +1548,13 @@ namespace Common
 
     }
 
-    /// <summary>
-    /// Helper class for cron expression handling.
-    /// </summary>
+
     public class ValueSet
     {
-        /// <summary>
-        /// The value.
-        /// </summary>
+
         public int theValue;
 
-        /// <summary>
-        /// The position.
-        /// </summary>
+
         public int pos;
     }
 }

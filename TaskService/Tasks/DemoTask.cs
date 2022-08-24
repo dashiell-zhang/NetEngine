@@ -41,10 +41,6 @@ namespace TaskService.Tasks
 
                 logger.LogInformation("HelloWord{Id}", idHelper.GetId());
 
-                Console.WriteLine(DateTime.Now);
-
-                GC.Collect();
-
             }
             catch (Exception ex)
             {

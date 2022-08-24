@@ -9,9 +9,7 @@ namespace TaskService.Tasks
     {
 
         private readonly IServiceProvider serviceProvider;
-
         private readonly ILogger logger;
-
         private readonly IDHelper idHelper;
 
 
@@ -25,14 +23,15 @@ namespace TaskService.Tasks
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            CronSchedule.Builder(stoppingToken, "0/5 * * * * ?", Run);
+            CronSchedule.BatchBuilder(stoppingToken, this);
 
             await Task.Delay(-1, stoppingToken);
         }
 
 
 
-        private void Run()
+        [CronSchedule(Cron = "0/1 * * * * ?")]
+        public void Run()
         {
             try
             {
@@ -42,6 +41,10 @@ namespace TaskService.Tasks
 
                 logger.LogInformation("HelloWord{Id}", idHelper.GetId());
 
+                Console.WriteLine(DateTime.Now);
+
+                GC.Collect();
+
             }
             catch (Exception ex)
             {
@@ -49,5 +52,7 @@ namespace TaskService.Tasks
             }
 
         }
+
+
     }
 }

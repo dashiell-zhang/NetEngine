@@ -36,7 +36,7 @@
 2. Repository.Tool 用于操作数据库的 Add-Migration 和 Update-Database
 
 ## 定时应用项目
-TaskService 采用了微软的Timer来实现周期性任务的执行
+TaskService 支持 Cron 表达式配置周期性执行方法，未依赖任何第三方组件，原生实现的 Cron 解析方法和服务注册逻辑实现。
 
 ## Admin管理后台项目
 管理后台模块 前端使用了 Blazor 技术开发，采用的是 wasm 模式，该模式可以直接将项目编译为 dll 文件运行在客户端的浏览器中，性能相对来说要高一点，并且对于服务器的压力要小很多。

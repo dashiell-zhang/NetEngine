@@ -13,8 +13,8 @@ namespace AdminAPP
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 
-            var appApiUrl = "https://localhost:9833/";
-            //var appApiUrl = builder.HostEnvironment.BaseAddress.ToLower();
+            var appAPIURL = "https://localhost:9833/";
+            //var appAPIURL = builder.HostEnvironment.BaseAddress.ToLower();
 
 
 
@@ -29,7 +29,7 @@ namespace AdminAPP
 
             builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<HttpInterceptor>())
             {
-                BaseAddress = new Uri(appApiUrl)
+                BaseAddress = new Uri(appAPIURL)
             });
 
 
@@ -41,7 +41,7 @@ namespace AdminAPP
 
 
             var localStorage = host.Services.GetRequiredService<ISyncLocalStorageService>();
-            localStorage.SetItemAsString("AppApiUrl", appApiUrl);
+            localStorage.SetItemAsString("appAPIURL", appAPIURL);
 
             await host.RunAsync();
 

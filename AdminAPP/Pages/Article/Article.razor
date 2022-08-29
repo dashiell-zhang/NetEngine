@@ -93,7 +93,7 @@
                 </FormItem>
 
                 <FormItem Label="封面图">
-                    <Upload Action="@(LocalStorage.GetItemAsString("AppApiUrl")+"File/UploadFile?business=TArticle&key="+fileKey+"&sign=cover")"
+                    <Upload Action="@(LocalStorage.GetItemAsString("appAPIURL")+"File/UploadFile?business=TArticle&key="+fileKey+"&sign=cover")"
                             Name="file"
                             Headers=headers
                             DefaultFileList="fileList"

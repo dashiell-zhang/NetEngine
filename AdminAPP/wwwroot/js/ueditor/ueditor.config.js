@@ -21,7 +21,7 @@
      */
     var URL = window.UEDITOR_HOME_URL || getUEBasePath();
 
-    var baseUrl = localStorage.getItem('AppApiUrl');
+    var baseUrl = localStorage.getItem('appAPIURL');
 
 
     /**

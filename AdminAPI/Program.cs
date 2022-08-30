@@ -43,8 +43,8 @@ namespace AdminAPI
 
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("dbConnection"));
-            }, 100);
+                options.UseNpgsql(builder.Configuration.GetConnectionString("dbConnection"));
+            }, 30);
 
 
             #region 基础 Server 配置

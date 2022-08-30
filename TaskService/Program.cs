@@ -17,8 +17,8 @@ namespace TaskService
 
                     services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
                     {
-                        options.UseSqlServer(hostContext.Configuration.GetConnectionString("dbConnection"));
-                    }, 100);
+                        options.UseNpgsql(hostContext.Configuration.GetConnectionString("dbConnection"));
+                    }, 30);
 
 
                     services.BatchRegisterServices();

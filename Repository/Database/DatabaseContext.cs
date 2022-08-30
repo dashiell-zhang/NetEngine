@@ -108,7 +108,7 @@ namespace Repository.Database
                 {
 
                     //开启 PostgreSQL 全库行并发乐观锁
-                    //builder.UseXminAsConcurrencyToken();
+                    builder.UseXminAsConcurrencyToken();
 
 
                     //设置生成数据库时的表名移除前缀T
@@ -237,24 +237,6 @@ namespace Repository.Database
                 return fieldList.FirstOrDefault(t => t.Key.ToLower() == fieldName.ToLower()).Value ?? fieldName;
             }
         }
-
-
-
-
-        ///// <summary>
-        ///// 通用的RowVersion重写保存方法
-        ///// </summary>
-        ///// <returns></returns>
-        //public override int SaveChanges()
-        //{
-        //    DatabaseContext db = this;
-        //    var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
-        //    foreach (var item in list)
-        //    {
-        //        item.Entity.GetType().GetProperty("RowVersion")?.SetValue(item.Entity, Guid.NewGuid());
-        //    }
-        //    return base.SaveChanges();
-        //}
 
 
     }

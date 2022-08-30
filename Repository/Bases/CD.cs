@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Bases
@@ -40,34 +39,13 @@ namespace Repository.Bases
 
 
 
-
-        ///// <summary>
-        ///// 行版本标记
-        ///// </summary>
-        ///// <remarks>通用的RowVersion</remarks>
-        ////[ConcurrencyCheck]
-        //public Guid? RowVersion { get; set; }
-
-
-
-
-        //        /// <summary>
-        //        /// 行版本标记
-        //        /// </summary>
-        //        /// <remarks>PostgreSql的RowVersion</remarks>
-
-        //#pragma warning disable IDE1006 // 命名样式
-        //        public uint xmin { get; set; }
-        //#pragma warning restore IDE1006 // 命名样式
-
-
-
         /// <summary>
         /// 行版本标记
         /// </summary>
-        /// <remarks>SqlServer的RowVersion</remarks>
-        [Timestamp]
-        public byte[] RowVersion { get; set; }
+#pragma warning disable IDE1006 // 命名样式
+        public uint xmin { get; set; }
+#pragma warning restore IDE1006 // 命名样式
+
 
     }
 }

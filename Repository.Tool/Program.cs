@@ -13,7 +13,7 @@ namespace Repository.Tool
                     {
                         services.AddDbContext<Database.DatabaseContext>(options =>
                         {
-                            options.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=30", x => x.MigrationsAssembly("Repository.Tool"));
+                            options.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456", x => x.MigrationsAssembly("Repository.Tool"));
                         });
                     }).Build();
 

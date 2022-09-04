@@ -1,5 +1,5 @@
 # 背景介绍
-这是一个以 最新版 .NET 框架为基础搭建的一个基础项目，之所以要做这样一个项目主要是为了在开发一个新项目时能够快速的进入业务逻辑的开发，而不需要每次去重新构建一些项目基础的内容。该项目始于2019年，从.net core 2.2 时代一路迭代过来。
+这是一个以 最新版 .NET 框架为基础搭建的一个基础项目，之所以要做这样一个项目主要是为了在开发一个新项目时能够快速的进入业务逻辑的开发，而不需要每次去重新构建一些项目基础的内容。该项目始于2019年，从.NET Core 2.2 时代一路迭代过来。
 
 框架的整体技术都是以微软官方的指导进行，个人喜好大道至简的风格，所以并没有对框架进行太多复杂的自定义封装，我不喜欢去吹嘘所谓的百万并发，超高性能等等，个人认为我们日常开发的大部分系统，并不需要考虑百万并发，毕竟不是所有的公司都有这种体量的性能要求，本项目主要的代码风格接近于微软官方的教程编码风格。
 
@@ -84,20 +84,20 @@ TaskService 支持 Cron 表达式配置周期性执行方法，未依赖任何�
     驱动：Microsoft.EntityFrameworkCore.SqlServer 和 Microsoft.Data.SqlClient
     数据库生成模型指令：Scaffold-DbContext "ConnectionString" Microsoft.EntityFrameworkCore.SqlServer -OutputDir WebCore -Force
     字符串：Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100;Encrypt=True
-    EF 配置：optionsBuilder.UseSqlServer(, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+    EF 配置：optionsBuilder.UseSqlServer("ConnectionString", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
     PostgreSql
     驱动：Npgsql.EntityFrameworkCore.PostgreSQL
     数据库生成模型指令：Scaffold-DbContext "ConnectionString"  Npgsql.EntityFrameworkCore.PostgreSQL -OutputDir webcore -Force
     字符串：Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=30;SSL Mode=VerifyFull
-    EF 配置：optionsBuilder.UseNpgsql("ConnectionString, o => o.MigrationsHistoryTable("__efmigrationshistory"));
+    EF 配置：optionsBuilder.UseNpgsql("ConnectionString", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
     MySql
     Pomelo.EntityFrameworkCore.MySql
     数据库生成模型指令：Scaffold-DbContext "ConnectionString" MySql.EntityFrameworkCore -OutputDir webcore -Force
     字符串：server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100
-    EF 配置：optionsBuilder.UseMySql("ConnectionString, new MySqlServerVersion(new Version(8, 0, 29)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
+    EF 配置：optionsBuilder.UseMySql("ConnectionString", new MySqlServerVersion(new Version(8, 0, 29)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 ## JWT公钥和私钥生成方法
     var keyInfo = ECDsa.Create(ECCurve.NamedCurves.nistP256);

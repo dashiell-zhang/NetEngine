@@ -23,7 +23,7 @@ namespace TaskService.Tasks
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            CronSchedule.BatchBuilder(stoppingToken, this);
+            CronSchedule.Builder(this);
 
             await Task.Delay(-1, stoppingToken);
         }

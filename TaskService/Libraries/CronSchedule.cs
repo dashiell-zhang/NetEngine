@@ -5,79 +5,70 @@ namespace TaskService.Libraries
 {
     public class CronSchedule
     {
+        private static List<ScheduleInfo> scheduleList = new();
+        private static Timer mainTimer;
 
-
-        public static async void Builder(CancellationToken stoppingToken, string cronExpression, Action action)
-        {
-            var nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(cronExpression).ToString("yyyy-MM-dd HH:mm:ss"));
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-
-                var nowTime = DateTime.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-
-                if (nextTime == nowTime)
-                {
-                    _ = Task.Run(() =>
-                    {
-                        action();
-                    });
-
-                    nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(cronExpression).ToString("yyyy-MM-dd HH:mm:ss"));
-                }
-                else if (nextTime < nowTime)
-                {
-                    nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(cronExpression).ToString("yyyy-MM-dd HH:mm:ss"));
-                }
-
-
-                await Task.Delay(1000, stoppingToken);
-            }
-        }
-
-
-
-        public static void BatchBuilder(CancellationToken stoppingToken, object context)
+        public static void Builder(object context)
         {
             var taskList = context.GetType().GetMethods().Where(t => t.GetCustomAttributes(typeof(CronScheduleAttribute), false).Length > 0).ToList();
 
-            foreach (var t in taskList)
+            foreach (var action in taskList)
             {
-                string cron = t.CustomAttributes.Where(t => t.AttributeType == typeof(CronScheduleAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Cron" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
+                string cron = action.CustomAttributes.Where(t => t.AttributeType == typeof(CronScheduleAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Cron" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
 
-                Builder(stoppingToken, cron, t, context);
+                scheduleList.Add(new ScheduleInfo
+                {
+                    CronExpression = cron,
+                    Action = action,
+                    Context = context
+                });
+            }
+
+            if (mainTimer == default)
+            {
+                mainTimer = new(Run, null, 0, 1000);
             }
         }
 
 
-
-        private static async void Builder(CancellationToken stoppingToken, string cronExpression, MethodInfo action, object context)
+        private static void Run(object? state)
         {
-            var nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(cronExpression).ToString("yyyy-MM-dd HH:mm:ss"));
+            var nowTime = DateTime.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
 
-            while (!stoppingToken.IsCancellationRequested)
+            foreach (var item in scheduleList)
             {
-                var nowTime = DateTime.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-
-                if (nextTime == nowTime)
+                if (item.LastTime != null)
                 {
-                    _ = Task.Run(() =>
+                    var nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(item.CronExpression, item.LastTime.Value).ToString("yyyy-MM-dd HH:mm:ss"));
+
+                    if (nextTime == nowTime)
                     {
-                        action.Invoke(context, null);
+                        item.LastTime = DateTimeOffset.Now;
 
-                    });
-
-                    nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(cronExpression).ToString("yyyy-MM-dd HH:mm:ss"));
+                        _ = Task.Run(() =>
+                        {
+                            item.Action.Invoke(item.Context, null);
+                        });
+                    }
                 }
-                else if (nextTime < nowTime)
+                else
                 {
-                    nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(cronExpression).ToString("yyyy-MM-dd HH:mm:ss"));
+                    item.LastTime = DateTimeOffset.Now.AddSeconds(5);
                 }
-
-                await Task.Delay(1000, stoppingToken);
             }
         }
 
+
+        private class ScheduleInfo
+        {
+            public string CronExpression { get; set; }
+
+            public MethodInfo Action { get; set; }
+
+            public object Context { get; set; }
+
+            public DateTimeOffset? LastTime { get; set; }
+        }
     }
 
 
@@ -85,6 +76,5 @@ namespace TaskService.Libraries
     public class CronScheduleAttribute : Attribute
     {
         public string Cron { get; set; }
-
     }
 }

@@ -31,7 +31,7 @@ namespace TaskService.Tasks
 
 
         [CronSchedule(Cron = "0/1 * * * * ?")]
-        public void Run()
+        public void WriteHello()
         {
             try
             {

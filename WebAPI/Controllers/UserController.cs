@@ -144,10 +144,7 @@ namespace WebAPI.Controllers
         public DtoUser? GetUser(long? userId)
         {
 
-            if (userId == null)
-            {
-                userId = this.userId;
-            }
+            userId ??= this.userId;
 
             var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
             {

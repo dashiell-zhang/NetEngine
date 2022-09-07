@@ -181,7 +181,7 @@ namespace WebAPI
                                     Id = "bearerAuth"
                                 }
                             },
-                        new string[] {}
+                        Array.Empty<string>()
                     }
                 });
                 #endregion

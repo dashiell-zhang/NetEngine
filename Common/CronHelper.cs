@@ -122,9 +122,9 @@ namespace Common
 
             private int lastdayOffset;
 
-            private static readonly Dictionary<string, int> monthMap = new Dictionary<string, int>(20);
+            private static readonly Dictionary<string, int> monthMap = new(20);
 
-            private static readonly Dictionary<string, int> dayMap = new Dictionary<string, int>(60);
+            private static readonly Dictionary<string, int> dayMap = new(60);
 
             private static readonly int MaxYear = DateTime.Now.Year + 100;
 
@@ -132,7 +132,7 @@ namespace Common
 
             private static readonly char[] commaSeparator = { ',' };
 
-            private static readonly Regex regex = new Regex("^L-[0-9]*[W]?", RegexOptions.Compiled);
+            private static readonly Regex regex = new("^L-[0-9]*[W]?", RegexOptions.Compiled);
 
             private static readonly TimeZoneInfo timeZoneInfo = TimeZoneInfo.Local;
 
@@ -209,11 +209,11 @@ namespace Common
                             break;
                         }
 
-                        if (exprOn == DayOfMonth && expr.IndexOf('L') != -1 && expr.Length > 1 && expr.IndexOf(",", StringComparison.Ordinal) >= 0)
+                        if (exprOn == DayOfMonth && expr.IndexOf('L') != -1 && expr.Length > 1 && expr.Contains(','))
                         {
                             throw new FormatException("不支持在月份的其他日期指定“L”和“LW”");
                         }
-                        if (exprOn == DayOfWeek && expr.IndexOf('L') != -1 && expr.Length > 1 && expr.IndexOf(",", StringComparison.Ordinal) >= 0)
+                        if (exprOn == DayOfWeek && expr.IndexOf('L') != -1 && expr.Length > 1 && expr.Contains(','))
                         {
                             throw new FormatException("不支持在一周的其他日期指定“L”");
                         }
@@ -342,7 +342,7 @@ namespace Common
                                 try
                                 {
                                     i += 4;
-                                    nthdayOfWeek = Convert.ToInt32(s.Substring(i), CultureInfo.InvariantCulture);
+                                    nthdayOfWeek = Convert.ToInt32(s[i..], CultureInfo.InvariantCulture);
                                     if (nthdayOfWeek is < 1 or > 5)
                                     {
                                         throw new FormatException("周的第n天小于1或大于5");
@@ -358,7 +358,7 @@ namespace Common
                                 try
                                 {
                                     i += 4;
-                                    everyNthWeek = Convert.ToInt32(s.Substring(i), CultureInfo.InvariantCulture);
+                                    everyNthWeek = Convert.ToInt32(s[i..], CultureInfo.InvariantCulture);
                                     if (everyNthWeek is < 1 or > 5)
                                     {
                                         throw new FormatException("每个星期<1或>5");
@@ -630,7 +630,7 @@ namespace Common
                     i++;
                     try
                     {
-                        nthdayOfWeek = Convert.ToInt32(s.Substring(i), CultureInfo.InvariantCulture);
+                        nthdayOfWeek = Convert.ToInt32(s[i..], CultureInfo.InvariantCulture);
                         if (nthdayOfWeek is < 1 or > 5)
                         {
                             throw new FormatException("周的第n天小于1或大于5");
@@ -935,31 +935,17 @@ namespace Common
                 int max = -1;
                 if (stopAt < startAt)
                 {
-                    switch (type)
+                    max = type switch
                     {
-                        case Second:
-                            max = 60;
-                            break;
-                        case Minute:
-                            max = 60;
-                            break;
-                        case Hour:
-                            max = 24;
-                            break;
-                        case Month:
-                            max = 12;
-                            break;
-                        case DayOfWeek:
-                            max = 7;
-                            break;
-                        case DayOfMonth:
-                            max = 31;
-                            break;
-                        case Year:
-                            throw new ArgumentException("开始年份必须小于停止年份");
-                        default:
-                            throw new ArgumentException("遇到意外的类型");
-                    }
+                        Second => 60,
+                        Minute => 60,
+                        Hour => 24,
+                        Month => 12,
+                        DayOfWeek => 7,
+                        DayOfMonth => 31,
+                        Year => throw new ArgumentException("开始年份必须小于停止年份"),
+                        _ => throw new ArgumentException("遇到意外的类型"),
+                    };
                     stopAt += max;
                 }
 
@@ -991,25 +977,17 @@ namespace Common
             /// <returns></returns>
             private SortedSet<int> GetSet(int type)
             {
-                switch (type)
+                return type switch
                 {
-                    case Second:
-                        return seconds;
-                    case Minute:
-                        return minutes;
-                    case Hour:
-                        return hours;
-                    case DayOfMonth:
-                        return daysOfMonth;
-                    case Month:
-                        return months;
-                    case DayOfWeek:
-                        return daysOfWeek;
-                    case Year:
-                        return years;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                    Second => seconds,
+                    Minute => minutes,
+                    Hour => hours,
+                    DayOfMonth => daysOfMonth,
+                    Month => months,
+                    DayOfWeek => daysOfWeek,
+                    Year => years,
+                    _ => throw new ArgumentOutOfRangeException(),
+                };
             }
 
 
@@ -1024,7 +1002,7 @@ namespace Common
             private static ValueSet GetValue(int v, string s, int i)
             {
                 char c = s[i];
-                StringBuilder s1 = new StringBuilder(v.ToString(CultureInfo.InvariantCulture));
+                StringBuilder s1 = new(v.ToString(CultureInfo.InvariantCulture));
                 while (c >= '0' && c <= '9')
                 {
                     s1.Append(c);
@@ -1035,7 +1013,7 @@ namespace Common
                     }
                     c = s[i];
                 }
-                ValueSet val = new ValueSet();
+                ValueSet val = new();
                 if (i < s.Length)
                 {
                     val.pos = i;
@@ -1059,7 +1037,7 @@ namespace Common
             private static int GetNumericValue(string s, int i)
             {
                 int endOfVal = FindNextWhiteSpace(i, s);
-                string val = s.Substring(i, endOfVal - i);
+                string val = s[i..endOfVal];
                 return Convert.ToInt32(val, CultureInfo.InvariantCulture);
             }
 
@@ -1228,7 +1206,7 @@ namespace Common
                                 day = GetLastDayOfMonth(mon, d.Year);
                                 day -= lastdayOffset;
 
-                                DateTimeOffset tcal = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
+                                DateTimeOffset tcal = new(d.Year, mon, day, 0, 0, 0, d.Offset);
 
                                 int ldom = GetLastDayOfMonth(mon, d.Year);
                                 DayOfWeek dow = tcal.DayOfWeek;
@@ -1250,7 +1228,7 @@ namespace Common
                                     day += 1;
                                 }
 
-                                DateTimeOffset nTime = new DateTimeOffset(tcal.Year, mon, day, hr, min, sec, d.Millisecond, d.Offset);
+                                DateTimeOffset nTime = new(tcal.Year, mon, day, hr, min, sec, d.Millisecond, d.Offset);
                                 if (nTime.ToUniversalTime() < afterTimeUtc)
                                 {
                                     day = 1;
@@ -1263,7 +1241,7 @@ namespace Common
                             t = day;
                             day = daysOfMonth.First();
 
-                            DateTimeOffset tcal = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
+                            DateTimeOffset tcal = new(d.Year, mon, day, 0, 0, 0, d.Offset);
 
                             int ldom = GetLastDayOfMonth(mon, d.Year);
                             DayOfWeek dow = tcal.DayOfWeek;
@@ -1539,7 +1517,6 @@ namespace Common
                     }
                     d = new DateTimeOffset(d.Year, mon, d.Day, d.Hour, d.Minute, d.Second, d.Offset);
                     year = d.Year;
-                    t = -1;
 
                     st = years.GetViewBetween(year, 9999999);
                     if (st.Count > 0)
@@ -1597,7 +1574,7 @@ namespace Common
                 {
                     hourToSet = 0;
                 }
-                DateTimeOffset d = new DateTimeOffset(date.Year, date.Month, date.Day, hourToSet, date.Minute, date.Second, date.Millisecond, date.Offset);
+                DateTimeOffset d = new(date.Year, date.Month, date.Day, hourToSet, date.Minute, date.Second, date.Millisecond, date.Offset);
                 if (hour == 24)
                 {
                     d = d.AddDays(1);

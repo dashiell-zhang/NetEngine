@@ -146,10 +146,7 @@ namespace Repository.Extensions
 
                         if (httpContextType != null)
                         {
-                            if (ipAddress == null)
-                            {
-                                ipAddress = httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!.ToString()!;
-                            }
+                            ipAddress ??= httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!.ToString()!;
 
                             if (deviceMark == null)
                             {

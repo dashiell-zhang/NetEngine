@@ -172,7 +172,7 @@ namespace AdminAPI
                                     Id = "bearerAuth"
                                 }
                             },
-                        new string[] {}
+                        Array.Empty<string>()
                     }
                 });
                 #endregion

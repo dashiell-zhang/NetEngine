@@ -71,10 +71,7 @@ namespace Common
         {
             try
             {
-                if (fileName == null)
-                {
-                    fileName = System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
-                }
+                fileName ??= System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
 
                 //检查目标路径文件夹是否存在不存在则创建
                 if (!Directory.Exists(filePath))

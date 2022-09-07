@@ -1,4 +1,5 @@
 ﻿using Common;
+using System.Collections;
 using System.Reflection;
 
 namespace TaskService.Libraries
@@ -7,6 +8,10 @@ namespace TaskService.Libraries
     {
         private static readonly List<ScheduleInfo> scheduleList = new();
         private static Timer mainTimer;
+
+        private static readonly Hashtable historyList = new();
+        private static readonly List<string> historyKeyList = new();
+
 
         public static void Builder(object context)
         {
@@ -26,7 +31,7 @@ namespace TaskService.Libraries
 
             if (mainTimer == default)
             {
-                mainTimer = new(Run, null, 0, 1000);
+                mainTimer = new(Run, null, 0, 900);
             }
         }
 
@@ -34,6 +39,17 @@ namespace TaskService.Libraries
         private static void Run(object? state)
         {
             var nowTime = DateTime.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            foreach (var key in historyKeyList)
+            {
+                var keyTime = DateTime.Parse(key[..16]);
+
+                if (keyTime! <= nowTime.AddSeconds(5))
+                {
+                    Console.WriteLine(key);
+                    historyList.Remove(key);
+                }
+            }
 
             foreach (var item in scheduleList)
             {
@@ -43,12 +59,22 @@ namespace TaskService.Libraries
 
                     if (nextTime == nowTime)
                     {
-                        item.LastTime = DateTimeOffset.Now;
-
-                        _ = Task.Run(() =>
+                        try
                         {
-                            item.Action.Invoke(item.Context, null);
-                        });
+                            string key = nextTime.ToString() + " " + item.Action.DeclaringType?.FullName + "." + item.Action.Name;
+                            historyList.Add(key, null);
+                            historyKeyList.Add(key);
+
+                            item.LastTime = DateTimeOffset.Now;
+
+                            _ = Task.Run(() =>
+                            {
+                                item.Action.Invoke(item.Context, null);
+                            });
+                        }
+                        catch
+                        {
+                        }
                     }
                 }
                 else

@@ -986,7 +986,7 @@ namespace Common
                     Month => months,
                     DayOfWeek => daysOfWeek,
                     Year => years,
-                    _ => throw new ArgumentOutOfRangeException(),
+                    _ => throw new ArgumentOutOfRangeException("CronHelper.GetSet:" + type),
                 };
             }
 

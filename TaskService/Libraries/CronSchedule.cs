@@ -5,7 +5,7 @@ namespace TaskService.Libraries
 {
     public class CronSchedule
     {
-        private static List<ScheduleInfo> scheduleList = new();
+        private static readonly List<ScheduleInfo> scheduleList = new();
         private static Timer mainTimer;
 
         public static void Builder(object context)

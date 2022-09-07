@@ -44,9 +44,8 @@ namespace TaskService.Libraries
             {
                 var keyTime = DateTime.Parse(key[..16]);
 
-                if (keyTime! <= nowTime.AddSeconds(5))
+                if (keyTime! <= nowTime.AddSeconds(-5))
                 {
-                    Console.WriteLine(key);
                     historyList.Remove(key);
                 }
             }

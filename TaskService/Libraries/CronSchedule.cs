@@ -42,7 +42,7 @@ namespace TaskService.Libraries
 
             foreach (var key in historyKeyList)
             {
-                var keyTime = DateTime.Parse(key[..16]);
+                var keyTime = DateTime.Parse(key[..19]);
 
                 if (keyTime! <= nowTime.AddSeconds(-5))
                 {
@@ -60,7 +60,7 @@ namespace TaskService.Libraries
                     {
                         try
                         {
-                            string key = nextTime.ToString() + " " + item.Action.DeclaringType?.FullName + "." + item.Action.Name;
+                            string key = nextTime.ToString("yyyy-MM-dd HH:mm:ss") + " " + item.Action.DeclaringType?.FullName + "." + item.Action.Name;
                             historyList.Add(key, null);
                             historyKeyList.Add(key);
 

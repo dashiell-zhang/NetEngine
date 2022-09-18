@@ -468,5 +468,25 @@ namespace WebAPI.Controllers
 
         }
 
+
+
+
+        /// <summary>
+        /// 生成密码
+        /// </summary>
+        /// <param name="passWord"></param>
+        /// <returns></returns>
+        [HttpGet("GeneratePassWord")]
+        public DtoKeyValue GeneratePassWord(string passWord)
+        {
+            DtoKeyValue keyValue = new();
+
+            keyValue.Key = idHelper.GetId();
+
+            keyValue.Value = Convert.ToBase64String(KeyDerivation.Pbkdf2(passWord, Encoding.UTF8.GetBytes(keyValue.Key.ToString()!), KeyDerivationPrf.HMACSHA256, 1000, 32));
+
+            return keyValue;
+        }
+
     }
 }

@@ -1,13 +1,9 @@
 ﻿@page "/article/{channelId}"
 @using AdminShared.Models.Article
+@attribute [ReuseTabsPageTitle("文章管理")]
 
 <Layout Style=" padding: 0 24px 24px;">
-    <Breadcrumb Style="margin: 16px 0;">
-        <BreadcrumbItem>返回上一页</BreadcrumbItem>
-        <BreadcrumbItem>首页</BreadcrumbItem>
-        <BreadcrumbItem>文章管理</BreadcrumbItem>
-        <BreadcrumbItem>所有文章</BreadcrumbItem>
-    </Breadcrumb>
+
     <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
@@ -69,7 +65,7 @@
             <TabPane Key="1" Tab="基本信息">
 
                 <FormItem Label="所属栏目">
-                    <TreeSelect TItem="DtoTreeSelect"  Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@categoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
+                    <TreeSelect TItem="DtoTreeSelect" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@categoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
                 </FormItem>
 
                 <FormItem Label="标题">

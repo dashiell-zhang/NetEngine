@@ -1,14 +1,9 @@
 ﻿@page "/user"
 @using AdminShared.Models.User
-
+@attribute [ReuseTabsPageTitle("用户管理")]
 
 <Layout Style=" padding: 0 24px 24px;">
-    <Breadcrumb Style="margin: 16px 0;">
-        <BreadcrumbItem>返回上一页</BreadcrumbItem>
-        <BreadcrumbItem>首页</BreadcrumbItem>
-        <BreadcrumbItem>用户管理</BreadcrumbItem>
-        <BreadcrumbItem>所有用户</BreadcrumbItem>
-    </Breadcrumb>
+
     <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
@@ -48,8 +43,6 @@
             </PaginationTemplate>
 
         </Table>
-
-
 
     </Content>
 </Layout>
@@ -99,7 +92,6 @@
         </Form>
     </Template>
 </Drawer>
-
 
 
 @code {

@@ -1,13 +1,9 @@
 ﻿@page "/link"
 @using AdminShared.Models.Link
+@attribute [ReuseTabsPageTitle("友链管理")]
 
 <Layout Style=" padding: 0 24px 24px;">
-    <Breadcrumb Style="margin: 16px 0;">
-        <BreadcrumbItem>返回上一页</BreadcrumbItem>
-        <BreadcrumbItem>首页</BreadcrumbItem>
-        <BreadcrumbItem>友链管理</BreadcrumbItem>
-        <BreadcrumbItem>所有友链</BreadcrumbItem>
-    </Breadcrumb>
+
     <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
@@ -46,8 +42,6 @@
             </PaginationTemplate>
 
         </Table>
-
-
 
     </Content>
 </Layout>

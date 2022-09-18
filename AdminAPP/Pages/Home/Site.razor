@@ -1,12 +1,9 @@
 ﻿@page "/site"
 @using AdminShared.Models.Site;
+@attribute [ReuseTabsPageTitle("信息维护")]
 
 <Layout Style=" padding: 0 24px 24px;">
-    <Breadcrumb Style="margin: 16px 0;">
-        <BreadcrumbItem>首页</BreadcrumbItem>
-        <BreadcrumbItem>管理中心</BreadcrumbItem>
-        <BreadcrumbItem>站点信息</BreadcrumbItem>
-    </Breadcrumb>
+
     <Content Class="site-layout-background">
 
         <Form Model="@editSite" LabelColSpan="2" WrapperColSpan="22">

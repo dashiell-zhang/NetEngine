@@ -46,188 +46,22 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 获取频道列表
-        /// </summary>
-        /// <param name="pageNum">页码</param>
-        /// <param name="pageSize">单页数量</param>
-        /// <param name="searchKey">搜索关键词</param>
-        /// <returns></returns>
-        [HttpGet("GetChannelList")]
-        public DtoPageList<DtoChannel> GetChannelList(int pageNum, int pageSize, string? searchKey)
-        {
-            var data = new DtoPageList<DtoChannel>();
-
-            int skip = (pageNum - 1) * pageSize;
-
-            var query = db.TChannel.Where(t => t.IsDelete == false);
-
-            if (!string.IsNullOrEmpty(searchKey))
-            {
-                query = query.Where(t => t.Name.Contains(searchKey));
-            }
-
-            data.Total = query.Count();
-
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoChannel
-            {
-                Id = t.Id,
-                Name = t.Name,
-                Remarks = t.Remarks,
-                Sort = t.Sort,
-                CreateTime = t.CreateTime
-            }).Skip(skip).Take(pageSize).ToList();
-
-            return data;
-        }
-
-
-
-        /// <summary>
-        /// 获取频道KV列表
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("GetChannelKVList")]
-        public List<DtoKeyValue> GetChannelKVList()
-        {
-            var list = db.TChannel.Where(t => t.IsDelete == false).OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoKeyValue
-            {
-                Key = t.Id,
-                Value = t.Name
-            }).ToList();
-
-            return list;
-        }
-
-
-
-        /// <summary>
-        /// 通过频道Id 获取频道信息 
-        /// </summary>
-        /// <param name="channelId">频道ID</param>
-        /// <returns></returns>
-        [HttpGet("GetChannel")]
-        public DtoChannel? GetChannel(long channelId)
-        {
-            var channel = db.TChannel.Where(t => t.IsDelete == false && t.Id == channelId).Select(t => new DtoChannel
-            {
-                Id = t.Id,
-                Name = t.Name,
-                Remarks = t.Remarks,
-                Sort = t.Sort,
-                CreateTime = t.CreateTime
-            }).FirstOrDefault();
-
-            return channel;
-        }
-
-
-
-
-        /// <summary>
-        /// 创建频道
-        /// </summary>
-        /// <param name="createChannel"></param>
-        /// <returns></returns>
-        [HttpPost("CreateChannel")]
-        public long CreateChannel(DtoEditChannel createChannel)
-        {
-            TChannel channel = new()
-            {
-                Id = idHelper.GetId(),
-                Name = createChannel.Name,
-                CreateTime = DateTime.UtcNow,
-                CreateUserId = userId,
-
-                Remarks = createChannel.Remarks,
-                Sort = createChannel.Sort
-            };
-
-            db.TChannel.Add(channel);
-
-            db.SaveChanges();
-
-            return channel.Id;
-        }
-
-
-
-
-        /// <summary>
-        /// 更新频道信息
-        /// </summary>
-        /// <param name="channelId"></param>
-        /// <param name="updateChannel"></param>
-        /// <returns></returns>
-        [HttpPost("UpdateChannel")]
-        public bool UpdateChannel(long channelId, DtoEditChannel updateChannel)
-        {
-            var channel = db.TChannel.Where(t => t.IsDelete == false && t.Id == channelId).FirstOrDefault();
-
-            if (channel != null)
-            {
-                channel.Name = updateChannel.Name;
-                channel.Remarks = updateChannel.Remarks;
-                channel.Sort = updateChannel.Sort;
-
-                db.SaveChanges();
-
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-
-        }
-
-
-
-        /// <summary>
-        /// 删除频道
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpDelete("DeleteChannel")]
-        public bool DeleteChannel(long id)
-        {
-            var channel = db.TChannel.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
-
-            if (channel != null)
-            {
-                channel.IsDelete = true;
-                channel.DeleteTime = DateTime.UtcNow;
-                channel.DeleteUserId = userId;
-
-                db.SaveChanges();
-
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-
-
 
         /// <summary>
         /// 获取栏目列表
         /// </summary>
-        /// <param name="channelId">频道ID</param>
         /// <param name="pageNum">页码</param>
         /// <param name="pageSize">单页数量</param>
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetCategoryList")]
-        public DtoPageList<DtoCategory> GetCategoryList(long channelId, int pageNum, int pageSize, string? searchKey)
+        public DtoPageList<DtoCategory> GetCategoryList(int pageNum, int pageSize, string? searchKey)
         {
-            var data = new DtoPageList<DtoCategory>();
+            DtoPageList<DtoCategory> data = new();
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TCategory.Where(t => t.IsDelete == false && t.ChannelId == channelId);
+            var query = db.TCategory.Where(t => t.IsDelete == false);
 
             if (!string.IsNullOrEmpty(searchKey))
             {
@@ -255,12 +89,11 @@ namespace AdminAPI.Controllers
         /// <summary>
         /// 获取栏目树形列表
         /// </summary>
-        /// <param name="channelId">频道ID</param>
         /// <returns></returns>
         [HttpGet("GetCategoryTreeList")]
-        public List<DtoKeyValueChild> GetCategoryTreeList(long channelId)
+        public List<DtoKeyValueChild> GetCategoryTreeList()
         {
-            var list = db.TCategory.Where(t => t.IsDelete == false && t.ChannelId == channelId && t.ParentId == null).Select(t => new DtoKeyValueChild
+            var list = db.TCategory.Where(t => t.IsDelete == false && t.ParentId == null).Select(t => new DtoKeyValueChild
             {
                 Key = t.Id,
                 Value = t.Name
@@ -315,7 +148,6 @@ namespace AdminAPI.Controllers
                 CreateTime = DateTime.UtcNow,
                 CreateUserId = userId,
                 Name = createCategory.Name,
-                ChannelId = createCategory.ChannelId,
                 ParentId = createCategory.ParentId,
                 Remarks = createCategory.Remarks,
                 Sort = createCategory.Sort
@@ -394,19 +226,18 @@ namespace AdminAPI.Controllers
         /// <summary>
         /// 获取文章列表
         /// </summary>
-        /// <param name="channelId">频道ID</param>
         /// <param name="pageNum">页码</param>
         /// <param name="pageSize">单页数量</param>
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetArticleList")]
-        public DtoPageList<DtoArticle> GetArticleList(long channelId, int pageNum, int pageSize, string? searchKey)
+        public DtoPageList<DtoArticle> GetArticleList( int pageNum, int pageSize, string? searchKey)
         {
             var data = new DtoPageList<DtoArticle>();
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TArticle.Where(t => t.IsDelete == false && t.Category.ChannelId == channelId);
+            var query = db.TArticle.Where(t => t.IsDelete == false );
 
             if (!string.IsNullOrEmpty(searchKey))
             {

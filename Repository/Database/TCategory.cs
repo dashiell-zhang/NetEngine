@@ -13,13 +13,6 @@ namespace Repository.Database
 
 
         /// <summary>
-        /// 频道ID
-        /// </summary>
-        public long ChannelId { get; set; }
-        public virtual TChannel Channel { get; set; }
-
-
-        /// <summary>
         /// 栏目名目
         /// </summary>
         public string Name { get; set; }
@@ -42,8 +35,6 @@ namespace Repository.Database
         /// 备注
         /// </summary>
         public string? Remarks { get; set; }
-
-
 
 
         public virtual List<TArticle>? TArticle { get; set; }

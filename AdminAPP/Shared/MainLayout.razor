@@ -2,7 +2,7 @@
 @using System.IdentityModel.Tokens.Jwt;
 @using AdminShared.Models.User
 
-<Layout Style="min-height: 100vh; ">
+<Layout Style="min-height: 100vh;">
 
     <Sider Collapsible Collapsed=@collapsed OnCollapse=@onCollapse Style="overflow: auto;height: 100vh;position: fixed;left: 0;z-index:3">
         <div class="logo" style="height: 32px;margin: 16px;display:flex">
@@ -13,18 +13,12 @@
         <Menu Theme="MenuTheme.Dark" DefaultSelectedKeys=@(new[]{"1"}) Mode="MenuMode.Inline">
 
             <SubMenu TitleTemplate=subArticle>
-                @foreach (var channel in channelKVList)
-                {
-                    <SubMenu Key=@("channel"+ channelKVList.IndexOf(channel)) Title="@channel.Value!.ToString()">
-                        <MenuItem><a href="article/@channel.Key">文章管理</a></MenuItem>
-                        <MenuItem> <a href="category/@channel.Key">栏目管理</a></MenuItem>
-                    </SubMenu>
-                }
+                <MenuItem><a href="article">文章管理</a></MenuItem>
+                <MenuItem> <a href="category">栏目管理</a></MenuItem>
             </SubMenu>
 
             <SubMenu TitleTemplate=subSystemSet>
                 <MenuItem><a href="user">用户管理</a></MenuItem>
-                <MenuItem><a href="channel">频道管理</a></MenuItem>
                 <MenuItem><a href="link">友链管理</a></MenuItem>
                 <MenuItem><a href="site">信息维护</a></MenuItem>
             </SubMenu>
@@ -62,8 +56,8 @@
     .MainTab > :first-child {
         width: 90%;
         padding-left: 5px;
-        position:fixed;
-        z-index:2;
+        position: fixed;
+        z-index: 2;
     }
 </style>
 
@@ -72,14 +66,14 @@
 
     RenderFragment subSystemSet =
     @<span>
-                <Icon Type="control" Theme="outline" />
-                <span>系统设置</span>
+        <Icon Type="control" Theme="outline" />
+        <span>系统设置</span>
     </span>;
 
     RenderFragment subArticle =
     @<span>
-                <Icon Type="read" Theme="outline" />
-                <span>文章管理</span>
+        <Icon Type="read" Theme="outline" />
+        <span>文章管理</span>
     </span>
     ;
 
@@ -109,21 +103,9 @@
     override protected void OnInitialized()
     {
         Authentication();
-        GetChannelList();
     }
 
-    private List<DtoKeyValue> channelKVList = new();
-    async void GetChannelList()
-    {
-        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Article/GetChannelKVList");
 
-        if (retData != null)
-        {
-            channelKVList = retData;
-        }
-
-        StateHasChanged();
-    }
 
     private async void Authentication()
     {

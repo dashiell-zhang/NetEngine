@@ -10,7 +10,6 @@ namespace AdminShared.Models.Article
     {
 
 
-
         /// <summary>
         /// 名称
         /// </summary>
@@ -20,17 +19,9 @@ namespace AdminShared.Models.Article
 
 
         /// <summary>
-        /// 频道ID
-        /// </summary>
-        public long ChannelId { get; set; }
-
-
-
-        /// <summary>
         /// 父级ID
         /// </summary>
         public long? ParentId { get; set; }
-
 
 
 

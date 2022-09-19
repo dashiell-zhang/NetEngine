@@ -1,4 +1,4 @@
-﻿@page "/category/{channelId}"
+﻿@page "/category"
 @using AdminShared.Models.Article
 @attribute [ReuseTabsPageTitle("栏目管理")]
 
@@ -94,9 +94,6 @@
     private string parentId = "0";
 
 
-    [Parameter]
-    public string? channelId { get; set; }
-
     List<DtoTreeSelect>? selectCategoryList = new();
 
     override protected void OnInitialized()
@@ -120,7 +117,7 @@
 
 
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList?channelId=" + channelId);
+        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList");
 
         if (kvList != null)
         {
@@ -155,7 +152,7 @@
     async void GetCategoryList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?pageNum=" + pageNum + "&pageSize=" + pageSize);
 
         if (retData != null)
         {
@@ -241,7 +238,6 @@
 
         if (categoryId == default)
         {
-            editCategory.ChannelId = long.Parse(channelId!);
 
             using (var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory))
             {

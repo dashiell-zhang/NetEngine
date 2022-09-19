@@ -23,9 +23,6 @@ namespace Repository.Database
         public DbSet<TCategory> TCategory => Set<TCategory>();
 
 
-        public DbSet<TChannel> TChannel => Set<TChannel>();
-
-
 
         public DbSet<TDataUpdateLog> TDataUpdateLog => Set<TDataUpdateLog>();
 

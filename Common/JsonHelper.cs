@@ -15,10 +15,17 @@ namespace Common
         /// <returns></returns>
         public static string? GetValueByKey(string json, string key)
         {
-            using JsonDocument doc = JsonDocument.Parse(json);
-            var jsonElement = doc.RootElement.Clone();
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(json);
+                var jsonElement = doc.RootElement.Clone();
 
-            return jsonElement.GetProperty(key).GetString();
+                return jsonElement.GetProperty(key).GetString();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
 

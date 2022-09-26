@@ -10,7 +10,7 @@ namespace AdminAPP.Libraries
 
         public static Task<TValue?> GetFromJsonAsync<TValue>(this HttpClient client, string requestUri)
         {
-            var jsonSerializerOptions = new JsonSerializerOptions();
+            JsonSerializerOptions jsonSerializerOptions = new();
 
             jsonSerializerOptions.Converters.Add(new Json.DateTimeConverter());
             jsonSerializerOptions.Converters.Add(new Json.DateTimeNullConverter());
@@ -24,7 +24,7 @@ namespace AdminAPP.Libraries
 
         public static TValue? ReadAsEntityAsync<TValue>(this HttpContent httpContent)
         {
-            var jsonSerializerOptions = new JsonSerializerOptions();
+            JsonSerializerOptions jsonSerializerOptions = new();
 
             jsonSerializerOptions.Converters.Add(new Json.DateTimeConverter());
             jsonSerializerOptions.Converters.Add(new Json.DateTimeNullConverter());

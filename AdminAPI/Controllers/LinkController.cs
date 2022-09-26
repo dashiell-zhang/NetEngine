@@ -47,7 +47,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetLinkList")]
         public DtoPageList<DtoLink> GetLinkList(int pageNum, int pageSize, string? searchKey)
         {
-            var data = new DtoPageList<DtoLink>();
+            DtoPageList<DtoLink> data = new();
 
             int skip = (pageNum - 1) * pageSize;
 

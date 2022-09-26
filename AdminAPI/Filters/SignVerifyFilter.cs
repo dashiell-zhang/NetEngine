@@ -40,7 +40,7 @@ namespace AdminAPI.Filters
                     {
 
                         var authorizationStr = context.HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-                        var securityToken = new JwtSecurityToken(authorizationStr);
+                        JwtSecurityToken securityToken = new(authorizationStr);
 
                         string privateKey = securityToken.RawSignature;
 

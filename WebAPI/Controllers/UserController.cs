@@ -68,7 +68,7 @@ namespace WebAPI.Controllers
 
             if (appid != null && appSecret != null)
             {
-                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid, appSecret);
+                Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appid, appSecret);
 
                 var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);
 
@@ -103,7 +103,7 @@ namespace WebAPI.Controllers
 
             if (appId != null && appSecret != null)
             {
-                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appId, appSecret);
+                Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appId, appSecret);
 
 
                 var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);

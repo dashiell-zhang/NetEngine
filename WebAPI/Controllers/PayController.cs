@@ -68,7 +68,7 @@ namespace WebAPI.Controllers
                 var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
                 var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
 
-                var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appId, appSecret, mchId, mchKey, url);
+                Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appId, appSecret, mchId, mchKey, url);
 
                 int price = Convert.ToInt32(order.Price * 100);
 
@@ -111,7 +111,7 @@ namespace WebAPI.Controllers
 
             if (appId != null && mchId != null && order != null)
             {
-                var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(appId, mchId, mchKey, url);
+                Libraries.WeiXin.App.WeiXinHelper weiXinHelper = new(appId, mchId, mchKey, url);
 
                 int price = Convert.ToInt32(order.Price * 100);
 
@@ -157,7 +157,7 @@ namespace WebAPI.Controllers
 
                 if (appId != null && appSecret != null && mchId != null && mchKey != null && order != null)
                 {
-                    var weiXinHelper = new Libraries.WeiXin.Web.WeiXinHelper(appId, mchId, mchKey, url);
+                    Libraries.WeiXin.Web.WeiXinHelper weiXinHelper = new(appId, mchId, mchKey, url);
 
                     int price = Convert.ToInt32(order.Price * 100);
 
@@ -355,7 +355,7 @@ namespace WebAPI.Controllers
                         HttpContext.Items.Add("errMsg", "支付宝交易订单创建失败");
                     }
 
-                    var keyValue = new DtoKeyValue
+                    DtoKeyValue keyValue = new()
                     {
                         Key = "TradeNo",
                         Value = TradeNo
@@ -469,7 +469,7 @@ namespace WebAPI.Controllers
             string retValue = "";
 
             //获取当前请求中的post参数
-            var dict = new Dictionary<string, string>();
+            Dictionary<string, string> dict = new();
 
             var keys = Request.Form.Keys;
 

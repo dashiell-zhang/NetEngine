@@ -53,7 +53,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetUserList")]
         public DtoPageList<DtoUser> GetUserList(int pageNum, int pageSize, string? searchKey)
         {
-            var data = new DtoPageList<DtoUser>();
+            DtoPageList<DtoUser> data = new();
 
             int skip = (pageNum - 1) * pageSize;
 

@@ -38,7 +38,7 @@ namespace WebAPI.Libraries
             {
                 var authorization = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-                var securityToken = new JwtSecurityToken(authorization);
+                JwtSecurityToken securityToken = new(authorization);
 
                 var value = securityToken.Claims.ToList().Where(t => t.Type == key).FirstOrDefault()?.Value;
 
@@ -110,7 +110,7 @@ namespace WebAPI.Libraries
 
                 requestBody.Position = 0;
 
-                using var requestReader = new StreamReader(requestBody);
+                using StreamReader requestReader = new(requestBody);
                 requestContent = requestReader.ReadToEnd();
             }
 
@@ -127,7 +127,7 @@ namespace WebAPI.Libraries
 
             var context = httpContext;
 
-            var parameters = new List<DtoKeyValue>();
+            List<DtoKeyValue> parameters = new();
 
             if (context.Request.Method == "POST")
             {

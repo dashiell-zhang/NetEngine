@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using System.Security.Cryptography;
 using WebAPI.Filters;
@@ -101,7 +100,7 @@ namespace WebAPI
                 var issuerSigningKey = ECDsa.Create();
                 issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
 
-                options.TokenValidationParameters = new TokenValidationParameters
+                options.TokenValidationParameters = new()
                 {
                     ValidIssuer = jwtSetting.Issuer,
                     ValidAudience = jwtSetting.Audience,
@@ -164,7 +163,7 @@ namespace WebAPI
                 options.SwaggerDoc("v1", null);
 
                 var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
-                options.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => (type.ToString()[(type.ToString().IndexOf("Models.") + 7)..]).Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
+                options.SchemaGeneratorOptions = new() { SchemaIdSelector = type => (type.ToString()[(type.ToString().IndexOf("Models.") + 7)..]).Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
 
                 options.MapType<long>(() => new OpenApiSchema { Type = "string", Format = "long" });
 
@@ -242,7 +241,7 @@ namespace WebAPI
             #region 注册HttpClient
             builder.Services.AddHttpClient("", options =>
             {
-                options.DefaultRequestVersion = new Version("2.0");
+                options.DefaultRequestVersion = new("2.0");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false
@@ -251,7 +250,7 @@ namespace WebAPI
 
             builder.Services.AddHttpClient("SkipSsl", options =>
             {
-                options.DefaultRequestVersion = new Version("2.0");
+                options.DefaultRequestVersion = new("2.0");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
@@ -262,7 +261,7 @@ namespace WebAPI
             builder.Services.AddTransient<HttpSignHandler>();
             builder.Services.AddHttpClient("HttpSign", options =>
             {
-                options.DefaultRequestVersion = new Version("2.0");
+                options.DefaultRequestVersion = new("2.0");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,

@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Headers;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text;
 using System.Web;
 
@@ -22,7 +21,7 @@ namespace AdminAPP.Libraries
         {
             using HttpClientHandler handler = new();
             using HttpClient client = new(handler);
-            client.DefaultRequestVersion = new Version("2.0");
+            client.DefaultRequestVersion = new("2.0");
 
             if (headers != default)
             {
@@ -84,7 +83,7 @@ namespace AdminAPP.Libraries
             using HttpClientHandler handler = new();
 
             using HttpClient client = new(handler);
-            client.DefaultRequestVersion = new Version("2.0");
+            client.DefaultRequestVersion = new("2.0");
 
             if (headers != default)
             {
@@ -100,11 +99,11 @@ namespace AdminAPP.Libraries
 
             if (type == "json")
             {
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                content.Headers.ContentType = new("application/json");
             }
             else if (type == "xml")
             {
-                content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
+                content.Headers.ContentType = new("text/xml");
             }
 
             content.Headers.ContentType!.CharSet = "utf-8";
@@ -148,7 +147,7 @@ namespace AdminAPP.Libraries
             using HttpClientHandler handler = new();
 
             using HttpClient client = new(handler);
-            client.DefaultRequestVersion = new Version("2.0");
+            client.DefaultRequestVersion = new("2.0");
 
             if (headers != default)
             {
@@ -181,7 +180,7 @@ namespace AdminAPP.Libraries
             using HttpClientHandler handler = new();
 
             using HttpClient client = new(handler);
-            client.DefaultRequestVersion = new Version("2.0");
+            client.DefaultRequestVersion = new("2.0");
 
             if (headers != default)
             {

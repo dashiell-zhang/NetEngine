@@ -18,8 +18,8 @@ namespace AdminAPP
 
 
 
-            CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("zh-CN");
-            CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("zh-CN");
+            CultureInfo.DefaultThreadCurrentCulture = new("zh-CN");
+            CultureInfo.DefaultThreadCurrentUICulture = new("zh-CN");
 
             builder.RootComponents.Add<App>("#app");
 

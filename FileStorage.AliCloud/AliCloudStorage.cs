@@ -93,7 +93,7 @@ namespace FileStorage.AliCloud
 
                 if (fileName != null)
                 {
-                    var metaData = new ObjectMetadata()
+                    ObjectMetadata metaData = new()
                     {
                         ContentDisposition = string.Format("attachment;filename*=utf-8''{0}", HttpUtils.EncodeUri(fileName, "utf-8"))
                     };

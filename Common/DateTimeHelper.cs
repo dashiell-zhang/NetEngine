@@ -141,8 +141,8 @@ namespace Common
 
             var addresses = Dns.GetHostEntry(ntpServer).AddressList;
 
-            var ipEndPoint = new IPEndPoint(addresses[0], 123);
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            IPEndPoint ipEndPoint = new(addresses[0], 123);
+            Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
             socket.Connect(ipEndPoint);
 

@@ -147,7 +147,7 @@
 
             var twepochTime = DateTimeOffset.FromUnixTimeMilliseconds(twepoch);
 
-            var startTime = new DateTime(twepochTime.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime startTime = new(twepochTime.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return startTime.AddMilliseconds(timeJsStamp);
         }
 

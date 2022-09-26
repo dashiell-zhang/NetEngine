@@ -76,7 +76,7 @@ namespace AdminAPI.Libraries.Ueditor
 
 
             using HttpClient client = new();
-            client.DefaultRequestVersion = new Version("2.0");
+            client.DefaultRequestVersion = new("2.0");
             using var httpResponse = client.GetAsync(SourceUrl).Result;
             if (httpResponse.StatusCode != HttpStatusCode.OK)
             {
@@ -136,7 +136,7 @@ namespace AdminAPI.Libraries.Ueditor
 
         private static bool IsExternalIPAddress(string url)
         {
-            var uri = new Uri(url);
+            Uri uri = new(url);
             switch (uri.HostNameType)
             {
                 case UriHostNameType.Dns:

@@ -108,7 +108,7 @@ namespace WebAPI.Libraries.WeiXin.H5
         /// <returns></returns>
         public DtoWeiXinJsSdkSign GetJsSDKSign(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, string url)
         {
-            var sdkSign = new DtoWeiXinJsSdkSign
+            DtoWeiXinJsSdkSign sdkSign = new()
             {
                 AppId = appid,
                 TimeStamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),

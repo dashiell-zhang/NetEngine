@@ -31,7 +31,7 @@ namespace Common
             xmlSerializer.Serialize(xmlWriter, obj);
 
             memoryStream.Position = 0;
-            using var sr = new StreamReader(memoryStream);
+            using StreamReader sr = new(memoryStream);
             var xmlString = sr.ReadToEnd();
 
             return xmlString;

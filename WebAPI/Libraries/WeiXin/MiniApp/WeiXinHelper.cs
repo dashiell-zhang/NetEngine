@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -166,9 +165,6 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
         public static string DecryptionData(string encryptedDataStr, string key, string iv)
         {
             var rijalg = Aes.Create();
-            // RijndaelManaged rijalg = new RijndaelManaged();
-            //----------------- 
-            //设置 cipher 格式 AES-128-CBC 
 
             rijalg.KeySize = 128;
 
@@ -214,12 +210,12 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
 
             using HttpClient client = new(handler);
 
-            client.DefaultRequestVersion = new Version("2.0");
+            client.DefaultRequestVersion = new("2.0");
 
             using Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data));
             using HttpContent content = new StreamContent(dataStream);
 
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+            content.Headers.ContentType = new("application/x-www-form-urlencoded");
 
             using var httpResponse = client.PostAsync(url, content);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
@@ -273,7 +269,7 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
 
             var getdata = UseCretPost(url, zhi);
 
-            var wxPayData = new WxPayData();
+            WxPayData wxPayData = new();
 
             wxPayData.FromXml(getdata, mchkey!);
 

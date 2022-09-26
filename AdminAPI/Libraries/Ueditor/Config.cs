@@ -67,7 +67,7 @@ namespace AdminAPI.Libraries.Ueditor
 
             json = json.Replace("FileServerUrl", fileServerUrl);
 
-            var options = new JsonDocumentOptions
+            JsonDocumentOptions options = new()
             {
                 CommentHandling = JsonCommentHandling.Skip,
             };

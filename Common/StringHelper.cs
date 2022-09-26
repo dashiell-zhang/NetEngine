@@ -340,7 +340,7 @@ namespace Common
                 {
                     byte[] base64 = Convert.FromBase64String(encoded);
 
-                    result = new Guid(base64);
+                    result = new(base64);
                 }
                 catch (FormatException)
                 {

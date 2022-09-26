@@ -231,13 +231,13 @@ namespace AdminAPI.Controllers
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
         [HttpGet("GetArticleList")]
-        public DtoPageList<DtoArticle> GetArticleList( int pageNum, int pageSize, string? searchKey)
+        public DtoPageList<DtoArticle> GetArticleList(int pageNum, int pageSize, string? searchKey)
         {
-            var data = new DtoPageList<DtoArticle>();
+            DtoPageList<DtoArticle> data = new();
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TArticle.Where(t => t.IsDelete == false );
+            var query = db.TArticle.Where(t => t.IsDelete == false);
 
             if (!string.IsNullOrEmpty(searchKey))
             {

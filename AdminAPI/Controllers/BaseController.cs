@@ -38,7 +38,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetRegion")]
         public List<DtoKeyValue> GetRegion(int provinceId, int cityId)
         {
-            var list = new List<DtoKeyValue>();
+            List<DtoKeyValue> list = new();
 
             if (provinceId == 0 && cityId == 0)
             {

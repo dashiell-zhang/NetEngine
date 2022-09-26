@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Headers;
-using System.Text;
+﻿using System.Text;
 
 namespace Common
 {
@@ -66,11 +65,11 @@ namespace Common
 
             if (type == "json")
             {
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                content.Headers.ContentType = new("application/json");
             }
             else if (type == "xml")
             {
-                content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
+                content.Headers.ContentType = new("text/xml");
             }
 
             content.Headers.ContentType!.CharSet = "utf-8";

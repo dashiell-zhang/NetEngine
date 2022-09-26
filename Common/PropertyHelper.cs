@@ -46,7 +46,7 @@ namespace Common
         /// <returns></returns>  
         public static Dictionary<object, object?> GetPropertiesDisplayName<T>(T t) where T : notnull
         {
-            var ret = new Dictionary<object, object?>();
+            Dictionary<object, object?> ret = new();
 
             PropertyInfo[] properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
@@ -140,11 +140,11 @@ namespace Common
         /// <param name="right"></param>
         public static List<L> Assignment<L, R>(List<R> right) where L : notnull, new() where R : notnull, new()
         {
-            var lift = new List<L>();
+            List<L> lift = new();
 
             foreach (var r in right)
             {
-                var l = new L();
+                L l = new();
 
                 Assignment<L, R>(l, r);
 

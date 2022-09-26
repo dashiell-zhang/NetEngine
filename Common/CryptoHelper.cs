@@ -148,10 +148,10 @@ namespace Common
         {
             //转换成适用于.Net的秘钥
             var netKey = RSAPrivateKeyJava2DotNet(privateKey);
-            var rsa = new RSACryptoServiceProvider();
+            RSACryptoServiceProvider rsa = new();
             rsa.FromXmlString(netKey);
             //创建一个空对象
-            var rsaClear = new RSACryptoServiceProvider();
+            RSACryptoServiceProvider rsaClear = new();
             var paras = rsa.ExportParameters(true);
             rsaClear.ImportParameters(paras);
             //签名返回

@@ -92,7 +92,7 @@ namespace TaskService
 
                     services.AddHttpClient("", options =>
                     {
-                        options.DefaultRequestVersion = new Version("2.0");
+                        options.DefaultRequestVersion = new("2.0");
                     }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
                     {
                         AllowAutoRedirect = false
@@ -101,7 +101,7 @@ namespace TaskService
 
                     services.AddHttpClient("SkipSsl", options =>
                     {
-                        options.DefaultRequestVersion = new Version("2.0");
+                        options.DefaultRequestVersion = new("2.0");
                     }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
                     {
                         AllowAutoRedirect = false,

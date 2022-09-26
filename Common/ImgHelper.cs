@@ -10,9 +10,9 @@ namespace Common
 
         public static byte[] GetQrCode(string text)
         {
-            using var generator = new QRCodeGenerator();
+            using QRCodeGenerator generator = new();
             using var qr = generator.CreateQrCode(text, ECCLevel.L);
-            var info = new SKImageInfo(500, 500);
+            SKImageInfo info = new(500, 500);
 
             using var surface = SKSurface.Create(info);
             using var canvas = surface.Canvas;
@@ -38,10 +38,10 @@ namespace Common
         public static byte[] Screenshot(string fromImagePath, int offsetX, int offsetY, int width, int height)
         {
             using var original = SKBitmap.Decode(fromImagePath);
-            using var bitmap = new SKBitmap(width, height);
-            using var canvas = new SKCanvas(bitmap);
-            var sourceRect = new SKRect(offsetX, offsetY, offsetX + width, offsetY + height);
-            var destRect = new SKRect(0, 0, width, height);
+            using SKBitmap bitmap = new(width, height);
+            using SKCanvas canvas = new(bitmap);
+            SKRect sourceRect = new(offsetX, offsetY, offsetX + width, offsetY + height);
+            SKRect destRect = new(0, 0, width, height);
 
             canvas.DrawBitmap(original, sourceRect, destRect);
 
@@ -68,9 +68,9 @@ namespace Common
             Random random = new();
 
             //创建bitmap位图
-            using var image = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+            using SKBitmap image = new(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
             //创建画笔
-            using var canvas = new SKCanvas(image);
+            using SKCanvas canvas = new(image);
             //填充背景颜色为白色
             canvas.DrawColor(SKColors.White);
 
@@ -78,7 +78,7 @@ namespace Common
             for (int i = 0; i < (width * height * 0.015); i++)
             {
                 using SKPaint drawStyle = new();
-                drawStyle.Color = new SKColor(Convert.ToUInt32(random.Next(Int32.MaxValue)));
+                drawStyle.Color = new(Convert.ToUInt32(random.Next(Int32.MaxValue)));
 
                 canvas.DrawLine(random.Next(0, width), random.Next(0, height), random.Next(0, width), random.Next(0, height), drawStyle);
             }

@@ -168,8 +168,7 @@
 
     async void GetCategoryTreeList()
     {
-        var parentKVList = new List<DtoKeyValueChild>();
-
+        List<DtoKeyValueChild> parentKVList = new ();
 
         var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList?channelId=" + channelId);
 

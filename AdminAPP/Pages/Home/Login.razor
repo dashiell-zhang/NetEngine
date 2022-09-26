@@ -43,7 +43,7 @@
 
         if (!string.IsNullOrEmpty(authorization))
         {
-            var securityToken = new JwtSecurityToken(authorization);
+            JwtSecurityToken securityToken = new(authorization);
 
             var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault()!.Value);
 

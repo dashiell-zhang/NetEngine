@@ -108,7 +108,7 @@ namespace WebAPI.Controllers
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.MiniApp.WeiXinHelper(appid!, appSecret!);
+            Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appid!, appSecret!);
 
 
             var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);
@@ -268,7 +268,7 @@ namespace WebAPI.Controllers
             if (distributedCache.IsContainKey(key) == false)
             {
 
-                var ran = new Random();
+                Random ran = new();
                 string code = ran.Next(100000, 999999).ToString();
 
                 Dictionary<string, string> templateParams = new()
@@ -311,7 +311,7 @@ namespace WebAPI.Controllers
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var weiXinHelper = new Libraries.WeiXin.App.WeiXinHelper(appid!, appSecret!);
+            Libraries.WeiXin.App.WeiXinHelper weiXinHelper = new(appid!, appSecret!);
 
             var accseetoken = weiXinHelper.GetAccessToken(distributedCache, httpClientFactory, code).accessToken;
 

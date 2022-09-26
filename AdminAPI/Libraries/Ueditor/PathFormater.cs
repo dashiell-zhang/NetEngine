@@ -16,7 +16,7 @@ namespace AdminAPI.Libraries.Ueditor
                 pathFormat = "{filename}{rand:6}";
             }
 
-            var invalidPattern = new Regex(@"[\\\/\:\*\?\042\<\>\|]");
+            Regex invalidPattern = new(@"[\\\/\:\*\?\042\<\>\|]");
             originFileName = invalidPattern.Replace(originFileName, "");
 
             string extension = Path.GetExtension(originFileName);
@@ -30,7 +30,7 @@ namespace AdminAPI.Libraries.Ueditor
                 {
                     digit = Convert.ToInt32(match.Groups[2].Value);
                 }
-                var rand = new Random();
+                Random rand = new();
                 return rand.Next((int)Math.Pow(10, digit), (int)Math.Pow(10, digit + 1)).ToString();
             }));
 

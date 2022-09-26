@@ -35,7 +35,7 @@ namespace Logger.LocalFile.Tasks
                         {
                             foreach (var logPath in logPaths)
                             {
-                                var fileInfo = new FileInfo(logPath);
+                                FileInfo fileInfo = new(logPath);
 
                                 if (fileInfo.CreationTimeUtc < deleteTime)
                                 {

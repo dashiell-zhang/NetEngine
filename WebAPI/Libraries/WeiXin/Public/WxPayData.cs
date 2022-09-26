@@ -262,7 +262,7 @@ namespace WebAPI.Libraries.WeiXin.Public
             //MD5加密
             var md5 = MD5.Create();
             var bs = md5.ComputeHash(Encoding.UTF8.GetBytes(str));
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (byte b in bs)
             {
                 sb.Append(b.ToString("x2"));

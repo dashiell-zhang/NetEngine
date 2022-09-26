@@ -110,7 +110,7 @@
 
     async void GetCategoryTreeList()
     {
-        var parentKVList = new List<DtoKeyValueChild>();
+        List<DtoKeyValueChild> parentKVList = new();
 
 
         parentKVList.Add(new DtoKeyValueChild { Key = 0, Value = "无父级栏目" });

@@ -198,7 +198,7 @@ namespace Repository.Extensions
 
             var fields = typeof(T).GetProperties();
 
-            var baseTypeNames = new List<string>();
+            List<string> baseTypeNames = new();
             var baseType = original?.GetType().BaseType;
             while (baseType != null)
             {

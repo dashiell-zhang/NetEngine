@@ -248,7 +248,7 @@ namespace WebAPI.Controllers
                 string fileExt = Path.GetExtension(path);
 
                 //获取系统常规全部mime类型
-                var provider = new FileExtensionContentTypeProvider();
+                FileExtensionContentTypeProvider provider = new();
 
                 //通过文件后缀寻找对呀的mime类型
                 var memi = provider.Mappings.ContainsKey(fileExt) ? provider.Mappings[fileExt] : provider.Mappings[".zip"];
@@ -284,7 +284,7 @@ namespace WebAPI.Controllers
                 var path = rootPath + file.Path;
 
                 string fileExt = Path.GetExtension(path);
-                var provider = new FileExtensionContentTypeProvider();
+                FileExtensionContentTypeProvider provider = new();
                 var memi = provider.Mappings[fileExt];
 
                 using var fileStream = System.IO.File.OpenRead(path);

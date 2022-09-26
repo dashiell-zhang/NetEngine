@@ -174,7 +174,7 @@ namespace Common
                     string name = pi.Name;
                     if (createColumn)
                     {
-                        column = new DataColumn(name, pi.PropertyType);
+                        column = new(name, pi.PropertyType);
                         dt.Columns.Add(column);
                     }
 
@@ -221,7 +221,7 @@ namespace Common
                     if (workbook != null)
                     {
                         sheet = workbook.GetSheetAt(0);//读取第一个sheet，当然也可以循环读取每个sheet  
-                        dataTable = new DataTable();
+                        dataTable = new();
                         if (sheet != null)
                         {
                             int rowCount = sheet.LastRowNum;//总行数  
@@ -243,7 +243,7 @@ namespace Common
                                         {
                                             if (cell.StringCellValue != null)
                                             {
-                                                column = new DataColumn(cell.StringCellValue);
+                                                column = new(cell.StringCellValue);
                                                 dataTable.Columns.Add(column);
                                             }
                                         }
@@ -253,7 +253,7 @@ namespace Common
                                 {
                                     for (int i = firstRow.FirstCellNum; i < cellCount; ++i)
                                     {
-                                        column = new DataColumn("column" + (i + 1));
+                                        column = new("column" + (i + 1));
                                         dataTable.Columns.Add(column);
                                     }
                                 }

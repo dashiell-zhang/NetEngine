@@ -185,13 +185,13 @@ namespace Common
             {
                 try
                 {
-                    seconds ??= new SortedSet<int>();
-                    minutes ??= new SortedSet<int>();
-                    hours ??= new SortedSet<int>();
-                    daysOfMonth ??= new SortedSet<int>();
-                    months ??= new SortedSet<int>();
-                    daysOfWeek ??= new SortedSet<int>();
-                    years ??= new SortedSet<int>();
+                    seconds ??= new();
+                    minutes ??= new();
+                    hours ??= new();
+                    daysOfMonth ??= new();
+                    months ??= new();
+                    daysOfWeek ??= new();
+                    years ??= new();
 
                     int exprOn = Second;
 
@@ -1112,7 +1112,7 @@ namespace Common
                         sec = seconds.First();
                         d = d.AddMinutes(1);
                     }
-                    d = new DateTimeOffset(d.Year, d.Month, d.Day, d.Hour, d.Minute, sec, d.Millisecond, d.Offset);
+                    d = new(d.Year, d.Month, d.Day, d.Hour, d.Minute, sec, d.Millisecond, d.Offset);
 
                     int min = d.Minute;
                     int hr = d.Hour;
@@ -1131,11 +1131,11 @@ namespace Common
                     }
                     if (min != t)
                     {
-                        d = new DateTimeOffset(d.Year, d.Month, d.Day, d.Hour, min, 0, d.Millisecond, d.Offset);
+                        d = new(d.Year, d.Month, d.Day, d.Hour, min, 0, d.Millisecond, d.Offset);
                         d = SetCalendarHour(d, hr);
                         continue;
                     }
-                    d = new DateTimeOffset(d.Year, d.Month, d.Day, d.Hour, min, d.Second, d.Millisecond, d.Offset);
+                    d = new(d.Year, d.Month, d.Day, d.Hour, min, d.Second, d.Millisecond, d.Offset);
 
                     hr = d.Hour;
                     int day = d.Day;
@@ -1161,12 +1161,12 @@ namespace Common
                         }
                         else
                         {
-                            d = new DateTimeOffset(d.Year, d.Month, day, d.Hour, 0, 0, d.Millisecond, d.Offset);
+                            d = new(d.Year, d.Month, day, d.Hour, 0, 0, d.Millisecond, d.Offset);
                         }
                         d = SetCalendarHour(d, hr);
                         continue;
                     }
-                    d = new DateTimeOffset(d.Year, d.Month, d.Day, hr, d.Minute, d.Second, d.Millisecond, d.Offset);
+                    d = new(d.Year, d.Month, d.Day, hr, d.Minute, d.Second, d.Millisecond, d.Offset);
 
                     day = d.Day;
                     int mon = d.Month;
@@ -1263,7 +1263,7 @@ namespace Common
                                 day += 1;
                             }
 
-                            tcal = new DateTimeOffset(tcal.Year, mon, day, hr, min, sec, d.Offset);
+                            tcal = new(tcal.Year, mon, day, hr, min, sec, d.Offset);
                             if (tcal.ToUniversalTime() < afterTimeUtc)
                             {
                                 day = daysOfMonth.First();
@@ -1302,7 +1302,7 @@ namespace Common
                                 int lDay = DateTime.DaysInMonth(d.Year, mon);
                                 if (day <= lDay)
                                 {
-                                    d = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
+                                    d = new(d.Year, mon, day, 0, 0, 0, d.Offset);
                                 }
                                 else
                                 {
@@ -1343,7 +1343,7 @@ namespace Common
                                 }
                                 else
                                 {
-                                    d = new DateTimeOffset(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
+                                    d = new(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
                                 }
 
                                 continue;
@@ -1359,7 +1359,7 @@ namespace Common
 
                             if (daysToAdd > 0)
                             {
-                                d = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
+                                d = new(d.Year, mon, day, 0, 0, 0, d.Offset);
 
                                 continue;
                             }
@@ -1399,14 +1399,14 @@ namespace Common
                                 }
                                 else
                                 {
-                                    d = new DateTimeOffset(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
+                                    d = new(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
                                 }
 
                                 continue;
                             }
                             if (daysToAdd > 0 || dayShifted)
                             {
-                                d = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
+                                d = new(d.Year, mon, day, 0, 0, 0, d.Offset);
 
                                 continue;
                             }
@@ -1435,7 +1435,7 @@ namespace Common
 
                             if (daysToAdd > 0)
                             {
-                                d = new DateTimeOffset(d.Year, mon, day, 0, 0, 0, d.Offset);
+                                d = new(d.Year, mon, day, 0, 0, 0, d.Offset);
                                 d = d.AddDays(daysToAdd);
                                 continue;
                             }
@@ -1472,13 +1472,13 @@ namespace Common
                                 }
                                 else
                                 {
-                                    d = new DateTimeOffset(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
+                                    d = new(d.Year, mon + 1, 1, 0, 0, 0, d.Offset);
                                 }
                                 continue;
                             }
                             if (daysToAdd > 0)
                             {
-                                d = new DateTimeOffset(d.Year, mon, day + daysToAdd, 0, 0, 0, d.Offset);
+                                d = new(d.Year, mon, day + daysToAdd, 0, 0, 0, d.Offset);
                                 continue;
                             }
                         }
@@ -1488,7 +1488,7 @@ namespace Common
                         throw new FormatException("不支持同时指定星期日和月日参数。");
                     }
 
-                    d = new DateTimeOffset(d.Year, d.Month, day, d.Hour, d.Minute, d.Second, d.Offset);
+                    d = new(d.Year, d.Month, day, d.Hour, d.Minute, d.Second, d.Offset);
                     mon = d.Month;
                     int year = d.Year;
                     t = -1;
@@ -1512,10 +1512,10 @@ namespace Common
                     }
                     if (mon != t)
                     {
-                        d = new DateTimeOffset(year, mon, 1, 0, 0, 0, d.Offset);
+                        d = new(year, mon, 1, 0, 0, 0, d.Offset);
                         continue;
                     }
-                    d = new DateTimeOffset(d.Year, mon, d.Day, d.Hour, d.Minute, d.Second, d.Offset);
+                    d = new(d.Year, mon, d.Day, d.Hour, d.Minute, d.Second, d.Offset);
                     year = d.Year;
 
                     st = years.GetViewBetween(year, 9999999);
@@ -1531,13 +1531,13 @@ namespace Common
 
                     if (year != t)
                     {
-                        d = new DateTimeOffset(year, 1, 1, 0, 0, 0, d.Offset);
+                        d = new(year, 1, 1, 0, 0, 0, d.Offset);
                         continue;
                     }
-                    d = new DateTimeOffset(year, d.Month, d.Day, d.Hour, d.Minute, d.Second, d.Offset);
+                    d = new(year, d.Month, d.Day, d.Hour, d.Minute, d.Second, d.Offset);
 
                     //为此日期应用适当的偏移量
-                    d = new DateTimeOffset(d.DateTime, timeZoneInfo.BaseUtcOffset);
+                    d = new(d.DateTime, timeZoneInfo.BaseUtcOffset);
 
                     gotOne = true;
                 }

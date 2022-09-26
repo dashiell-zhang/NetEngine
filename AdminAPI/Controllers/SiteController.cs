@@ -101,7 +101,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetServerInfo")]
         public List<DtoKeyValue> GetServerInfo()
         {
-            var list = new List<DtoKeyValue>
+            List<DtoKeyValue> list = new()
             {
                 new DtoKeyValue
                 {

@@ -13,7 +13,7 @@ namespace Common
         {
             try
             {
-                var file = new FileInfo(path);
+                FileInfo file = new(path);
                 if (file.Exists)
                 {
                     //将文件属性设置为普通,如：只读文件设置为普通
@@ -41,7 +41,7 @@ namespace Common
         {
             try
             {
-                var directory = new DirectoryInfo(path);
+                DirectoryInfo directory = new(path);
                 if (directory.Exists)
                 {
                     //将文件夹属性设置为普通,如：只读文件夹设置为普通
@@ -92,8 +92,8 @@ namespace Common
                     }
                 }
 
-                using var client = new HttpClient();
-                client.DefaultRequestVersion = new Version("2.0");
+                using HttpClient client = new();
+                client.DefaultRequestVersion = new("2.0");
 
                 using var httpResponse = client.GetAsync(url).Result;
                 string fullpath = filePath + fileName;
@@ -117,7 +117,7 @@ namespace Common
         /// <returns></returns>
         public static string GetFileSize(string path)
         {
-            var fileInfo = new FileInfo(path);
+            FileInfo fileInfo = new(path);
             return FileLengthToString(fileInfo.Length);
         }
 
@@ -161,9 +161,9 @@ namespace Common
         /// <param name="folderPath">文件夹路径</param>
         public static List<string> GetFolderAllFiles(string folderPath)
         {
-            var list = new List<string>();
+            List<string> list = new();
 
-            var directoryInfo = new DirectoryInfo(folderPath);
+            DirectoryInfo directoryInfo = new(folderPath);
             foreach (FileInfo info in directoryInfo.GetFiles())
             {
                 list.Add(info.FullName);

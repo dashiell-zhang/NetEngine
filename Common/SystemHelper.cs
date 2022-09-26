@@ -56,7 +56,7 @@ namespace Common
             string output = "";
 
             //创建一个ProcessStartInfo对象 使用系统shell 指定命令和参数 设置标准输出
-            var psi = new ProcessStartInfo("/bin/bash", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
+            ProcessStartInfo psi = new("/bin/bash", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
 
 
             //启动
@@ -101,7 +101,7 @@ namespace Common
             string output = "";
 
             //创建一个ProcessStartInfo对象 使用系统shell 指定命令和参数 设置标准输出
-            var psi = new ProcessStartInfo("powershell", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
+            ProcessStartInfo psi = new("powershell", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
 
 
             //启动

@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Security.Cryptography;
 
 namespace AdminAPI
@@ -95,7 +94,7 @@ namespace AdminAPI
                 var issuerSigningKey = ECDsa.Create();
                 issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
 
-                options.TokenValidationParameters = new TokenValidationParameters
+                options.TokenValidationParameters = new()
                 {
                     ValidIssuer = jwtSetting.Issuer,
                     ValidAudience = jwtSetting.Audience,
@@ -147,7 +146,7 @@ namespace AdminAPI
                 options.SwaggerDoc("v1", null);
 
                 var modelPrefix = "AdminShared.Models.";
-                options.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => (type.ToString()[(type.ToString().IndexOf("Models.") + 7)..]).Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
+                options.SchemaGeneratorOptions = new() { SchemaIdSelector = type => (type.ToString()[(type.ToString().IndexOf("Models.") + 7)..]).Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
 
                 options.MapType<long>(() => new OpenApiSchema { Type = "string", Format = "long" });
 
@@ -166,7 +165,7 @@ namespace AdminAPI
                     {
                         new OpenApiSecurityScheme
                             {
-                                Reference = new OpenApiReference
+                                Reference = new ()
                                 {
                                     Type = ReferenceType.SecurityScheme,
                                     Id = "bearerAuth"
@@ -226,7 +225,7 @@ namespace AdminAPI
 
             builder.Services.AddHttpClient("", options =>
             {
-                options.DefaultRequestVersion = new Version("2.0");
+                options.DefaultRequestVersion = new("2.0");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false

@@ -117,7 +117,7 @@ namespace Repository.Database
                     //设置表的备注
                     builder.HasComment(GetEntityComment(entity.Name));
 
-                    var baseTypeNames = new List<string>();
+                    List<string> baseTypeNames = new();
                     var baseType = entity.ClrType.BaseType;
                     while (baseType != null)
                     {
@@ -160,12 +160,11 @@ namespace Repository.Database
         public static string GetEntityComment(string typeName, string? fieldName = null, List<string>? baseTypeNames = null)
         {
             var path = AppContext.BaseDirectory + "/Repository.xml";
-            var xml = new XmlDocument();
+            XmlDocument xml = new();
             xml.Load(path);
             XmlNodeList memebers = xml.SelectNodes("/doc/members/member")!;
 
-            var fieldList = new Dictionary<string, string>();
-
+            Dictionary<string, string> fieldList = new();
 
             if (fieldName == null)
             {

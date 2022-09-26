@@ -35,15 +35,14 @@ namespace FileStorage.AliCloud
         {
             try
             {
-                var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
+                OssClient client = new(endpoint, accessKeyId, accessKeySecret);
 
                 client.DeleteObject(bucketName, remotePath);
 
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine("Delete object failed. {0}", ex.Message);
                 return false;
             }
         }
@@ -52,19 +51,16 @@ namespace FileStorage.AliCloud
 
         public bool FileDownload(string remotePath, string localPath)
         {
-            var objectName = remotePath;
-
-            var downloadFilename = localPath;
-            // 创建OssClient实例。
-            var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
             try
             {
+                OssClient client = new(endpoint, accessKeyId, accessKeySecret);
+
                 // 下载文件到流。OssObject 包含了文件的各种信息，如文件所在的存储空间、文件名、元信息以及一个输入流。
-                var obj = client.GetObject(bucketName, objectName);
+                var obj = client.GetObject(bucketName, remotePath);
                 using (var requestStream = obj.Content)
                 {
                     byte[] buf = new byte[1024];
-                    var fs = File.Open(downloadFilename, FileMode.OpenOrCreate);
+                    var fs = File.Open(localPath, FileMode.OpenOrCreate);
                     var len = 0;
                     // 通过输入流将文件的内容读取到文件或者内存中。
                     while ((len = requestStream.Read(buf, 0, 1024)) != 0)
@@ -73,13 +69,11 @@ namespace FileStorage.AliCloud
                     }
                     fs.Close();
                 }
-                Console.WriteLine("Get object succeeded");
 
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine("Get object failed. {0}", ex.Message);
                 return false;
             }
         }
@@ -92,16 +86,10 @@ namespace FileStorage.AliCloud
             {
                 var objectName = Path.GetFileName(localPath);
 
-                if (remotePath != null)
-                {
-                    objectName = remotePath + "/" + objectName;
-                }
-
-                var localFilename = localPath;
-
+                objectName = remotePath + "/" + objectName;
 
                 // 创建OssClient实例。
-                var client = new OssClient(endpoint, accessKeyId, accessKeySecret);
+                OssClient client = new(endpoint, accessKeyId, accessKeySecret);
 
                 if (fileName != null)
                 {
@@ -110,13 +98,11 @@ namespace FileStorage.AliCloud
                         ContentDisposition = string.Format("attachment;filename*=utf-8''{0}", HttpUtils.EncodeUri(fileName, "utf-8"))
                     };
 
-                    // 上传文件。
-                    client.PutObject(bucketName, objectName, localFilename, metaData);
+                    client.PutObject(bucketName, objectName, localPath, metaData);
                 }
                 else
                 {
-                    // 上传文件。
-                    client.PutObject(bucketName, objectName, localFilename);
+                    client.PutObject(bucketName, objectName, localPath);
                 }
 
                 return true;

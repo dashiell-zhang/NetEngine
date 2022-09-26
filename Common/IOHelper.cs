@@ -185,14 +185,41 @@ namespace Common
 
 
         /// <summary>
-        /// 将指定目录下的文件压缩为Zip文件
+        /// 将指定文件压缩为Zip文件
         /// </summary>
-        /// <param name="folderPath">文件夹地址 D:/1/ </param>
-        /// <param name="filePath">文件地址 D:/1.zip </param>
-        public static void CompressZipFile(string folderPath, string filePath)
+        /// <param name="folderPath">文件地址 D:/1.txt </param>
+        /// <param name="zipPath">zip地址 D:/1.zip </param>
+        public static void CompressFileZip(string filePath, string zipPath)
         {
 
-            DirectoryInfo directoryInfo = new(filePath);
+            FileInfo fileInfo = new FileInfo(filePath);
+
+            string dirPath = fileInfo.DirectoryName?.Replace("\\", "/") + "/";
+
+            string tempPath = dirPath + Guid.NewGuid() + "_temp/";
+
+            if (!Directory.Exists(tempPath))
+            {
+                Directory.CreateDirectory(tempPath);
+            }
+
+            fileInfo.CopyTo(tempPath + fileInfo.Name);
+
+            CompressDirectoryZip(tempPath, zipPath);
+
+            DeleteDirectory(tempPath);
+        }
+
+
+        /// <summary>
+        /// 将指定目录压缩为Zip文件
+        /// </summary>
+        /// <param name="folderPath">文件夹地址 D:/1/ </param>
+        /// <param name="zipPath">zip地址 D:/1.zip </param>
+        public static void CompressDirectoryZip(string folderPath, string zipPath)
+        {
+
+            DirectoryInfo directoryInfo = new(zipPath);
 
             if (directoryInfo.Parent != null)
             {
@@ -204,7 +231,7 @@ namespace Common
                 directoryInfo.Create();
             }
 
-            ZipFile.CreateFromDirectory(folderPath, filePath, CompressionLevel.Optimal, false);
+            ZipFile.CreateFromDirectory(folderPath, zipPath, CompressionLevel.Optimal, false);
         }
 
 
@@ -212,11 +239,10 @@ namespace Common
         /// <summary>
         /// 解压Zip文件到指定目录
         /// </summary>
-        /// <param name="filePath">文件地址 D:/1.zip</param>
+        /// <param name="zipPath">zip地址 D:/1.zip</param>
         /// <param name="folderPath">文件夹地址 D:/1/</param>
-        public static void DecompressZipFile(string filePath, string folderPath)
+        public static void DecompressZip(string zipPath, string folderPath)
         {
-
             DirectoryInfo directoryInfo = new(folderPath);
 
             if (!directoryInfo.Exists)
@@ -224,7 +250,7 @@ namespace Common
                 directoryInfo.Create();
             }
 
-            ZipFile.ExtractToDirectory(filePath, folderPath);
+            ZipFile.ExtractToDirectory(zipPath, folderPath);
         }
 
 

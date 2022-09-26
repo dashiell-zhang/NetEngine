@@ -187,7 +187,7 @@ namespace Common
         /// <summary>
         /// 将指定文件压缩为Zip文件
         /// </summary>
-        /// <param name="folderPath">文件地址 D:/1.txt </param>
+        /// <param name="filePath">文件地址 D:/1.txt </param>
         /// <param name="zipPath">zip地址 D:/1.zip </param>
         public static void CompressFileZip(string filePath, string zipPath)
         {

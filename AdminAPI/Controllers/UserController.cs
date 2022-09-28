@@ -1,5 +1,6 @@
 ﻿using AdminAPI.Filters;
 using AdminAPI.Libraries;
+using AdminAPI.Services;
 using AdminShared.Models;
 using AdminShared.Models.User;
 using Common;
@@ -26,13 +27,15 @@ namespace AdminAPI.Controllers
         private readonly DatabaseContext db;
         private readonly IDHelper idHelper;
 
+        private readonly UserService userService;
         private readonly long userId;
 
 
-        public UserController(DatabaseContext db, IDHelper idHelper, IHttpContextAccessor httpContextAccessor)
+        public UserController(DatabaseContext db, IDHelper idHelper, UserService userService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.idHelper = idHelper;
+            this.userService = userService;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)
@@ -205,6 +208,173 @@ namespace AdminAPI.Controllers
             {
                 return false;
             }
+
+        }
+
+
+
+        /// <summary>
+        /// 获取某个用户的功能权限
+        /// </summary>
+        /// <param name="userId">用户ID</param>
+        /// <returns></returns>
+        [HttpGet("GetUserFunction")]
+        public List<DtoUserFunction> GetUserFunction(long userId)
+        {
+            var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
+
+            var functionList = db.TFunction.Where(t => t.IsDelete == false && t.ParentId == null).Select(t => new DtoUserFunction
+            {
+                Id = t.Id,
+                Name = t.Name.Replace(t.Parent!.Name + "-", ""),
+                Type = t.Type.ToString(),
+                Sign = t.Sign,
+                IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
+            }).ToList();
+
+            foreach (var function in functionList)
+            {
+                function.ChildList = userService.GetUserFunctionChildList(userId, function.Id, roleIds);
+            }
+
+            return functionList;
+        }
+
+
+
+
+        /// <summary>
+        /// 设置用户的功能
+        /// </summary>
+        /// <param name="setUserFunction"></param>
+        /// <returns></returns>
+        [QueueLimitFilter()]
+        [HttpPost("SetUserFunction")]
+        public bool SetUserFunction(DtoSetUserFunction setUserFunction)
+        {
+
+            var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == setUserFunction.UserId).Select(t => t.RoleId).ToList();
+
+            var functionAuthorize = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == setUserFunction.UserId)).FirstOrDefault() ?? new TFunctionAuthorize();
+
+            if (setUserFunction.IsCheck)
+            {
+                if (functionAuthorize.Id == default)
+                {
+                    functionAuthorize.Id = idHelper.GetId();
+                    functionAuthorize.CreateTime = DateTime.UtcNow;
+                    functionAuthorize.CreateUserId = userId;
+
+                    functionAuthorize.FunctionId = setUserFunction.FunctionId;
+                    functionAuthorize.UserId = setUserFunction.UserId;
+
+                    db.TFunctionAuthorize.Add(functionAuthorize);
+
+                    db.SaveChanges();
+
+
+                }
+            }
+            else
+            {
+                if (functionAuthorize.Id != default)
+                {
+                    if (functionAuthorize.RoleId == null)
+                    {
+                        var userFunctionList = db.TFunctionAuthorize.Where(t => t.IsDelete == false && t.UserId == setUserFunction.UserId).ToList();
+
+                        foreach (var userFunction in userFunctionList)
+                        {
+                            userFunction.IsDelete = true;
+                            userFunction.DeleteTime = DateTime.UtcNow;
+                            userFunction.DeleteUserId = userId;
+                        }
+
+                        db.SaveChanges();
+
+                        return true;
+                    }
+                    else
+                    {
+                        HttpContext.Response.StatusCode = 400;
+                        HttpContext.Items.Add("errMsg", "该权限继承与用户角色，无法独立删除！");
+
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+
+        }
+
+
+
+
+        /// <summary>
+        /// 获取用户角色列表
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        [HttpGet("GetUserRoleList")]
+        public List<DtoUserRole> GetUserRoleList(long userId)
+        {
+            var list = db.TRole.Where(t => t.IsDelete == false).Select(t => new DtoUserRole
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Remarks = t.Remarks,
+                IsCheck = db.TUserRole.Where(r => r.IsDelete == false && r.RoleId == t.Id && r.UserId == userId).FirstOrDefault() != null
+            }).ToList();
+
+            return list;
+        }
+
+
+
+
+        /// <summary>
+        /// 设置用户角色
+        /// </summary>
+        /// <param name="setUserRole"></param>
+        /// <returns></returns>
+        [QueueLimitFilter()]
+        [HttpPost("SetUserRole")]
+        public bool SetUserRole(DtoSetUserRole setUserRole)
+        {
+            var userRole = db.TUserRole.Where(t => t.IsDelete == false && t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefault();
+
+            if (setUserRole.IsCheck)
+            {
+                if (userRole == null)
+                {
+                    userRole = new TUserRole
+                    {
+                        Id = idHelper.GetId(),
+                        CreateTime = DateTime.UtcNow,
+                        CreateUserId = userId,
+                        UserId = setUserRole.UserId,
+                        RoleId = setUserRole.RoleId
+                    };
+
+                    db.TUserRole.Add(userRole);
+
+                    db.SaveChanges();
+                }
+            }
+            else
+            {
+                if (userRole != null)
+                {
+                    userRole.IsDelete = true;
+                    userRole.DeleteTime = DateTime.UtcNow;
+                    userRole.DeleteUserId = userId;
+
+                    db.SaveChanges();
+                }
+            }
+
+            return true;
 
         }
 

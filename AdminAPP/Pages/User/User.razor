@@ -16,6 +16,7 @@
                 <Column @bind-Field="@context.NickName" Title="昵称"></Column>
                 <Column @bind-Field="@context.Phone" Title="电话"></Column>
                 <Column @bind-Field="@context.Email" Title="邮箱"></Column>
+                <Column @bind-Field="@context.Roles" Title="角色"></Column>
                 <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间">
                 </Column>
                 <ActionColumn Title="操作">
@@ -55,7 +56,7 @@
 
             <FormItem>
                 <Text>用户名</Text>
-                <Input Placeholder="请输入用户名" @bind-Value="@context.Name" />
+                <Input Placeholder="请输入用户名" @bind-Value="@context.Name" AutoComplete=false />
             </FormItem>
 
             <FormItem>
@@ -63,6 +64,17 @@
                 <Input Placeholder="请输入昵称" @bind-Value="@context.NickName" />
             </FormItem>
 
+            <FormItem>
+                <Text>角色</Text>
+                <CheckboxGroup Style="width:100%" @bind-Value="@context.RoleIds">
+                    <Row>
+                        @foreach (var item in roleList)
+                        {
+                            <AntDesign.Col Span="8"><Checkbox on Label="@item.Key!.ToString()">@item.Value</Checkbox></AntDesign.Col>
+                        }
+                    </Row>
+                </CheckboxGroup>
+            </FormItem>
 
             <FormItem>
                 <Text>手机</Text>
@@ -74,12 +86,10 @@
                 <Input Placeholder="请输入邮箱" Type="email" @bind-Value="@context.Email" />
             </FormItem>
 
-
             <FormItem>
                 <Text>密码</Text>
                 <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.PassWord" VisibilityToggle="false" />
             </FormItem>
-
 
             <Row Gutter="24">
                 <AntDesign.Col Span="24">
@@ -99,13 +109,33 @@
     override protected void OnInitialized()
     {
         GetUserList();
+        GetRoleKV();
     }
+
 
     bool saveLoading = false;
     bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
     DtoPageList<DtoUser> pageList = new();
+
+
+    List<DtoKeyValue> roleList = new();
+
+
+    async void GetRoleKV()
+    {
+        tableLoading = true;
+        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Role/GetRoleKV");
+
+        if (retData != null)
+        {
+            roleList = retData;
+        }
+
+        tableLoading = false;
+        StateHasChanged();
+    }
 
     async void GetUserList()
     {
@@ -189,6 +219,10 @@
             editUser.Phone = user.Phone;
             editUser.Email = user.Email;
             editUser.PassWord = "default";
+            if (user.RoleIds != null)
+            {
+                editUser.RoleIds = user.RoleIds;
+            }
         }
 
         isShowEditUser = true;

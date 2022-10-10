@@ -7,6 +7,7 @@ using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Logging;
 using Repository.Database;
 using System.Text;
 
@@ -77,13 +78,13 @@ namespace AdminAPI.Controllers
                 NickName = t.NickName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                Roles = string.Join("、", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                RoleIds = db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
                 CreateTime = t.CreateTime
             }).Skip(skip).Take(pageSize).ToList();
 
             return data;
         }
-
 
 
 
@@ -114,7 +115,6 @@ namespace AdminAPI.Controllers
 
 
 
-
         /// <summary>
         /// 创建用户
         /// </summary>
@@ -123,6 +123,8 @@ namespace AdminAPI.Controllers
         [HttpPost("CreateUser")]
         public long CreateUser(DtoEditUser createUser)
         {
+            var roleIds = createUser.RoleIds.Select(t => long.Parse(t)).ToList();
+
             TUser user = new()
             {
                 Id = idHelper.GetId(),
@@ -137,6 +139,19 @@ namespace AdminAPI.Controllers
             user.Email = createUser.Email;
 
             db.TUser.Add(user);
+
+
+            foreach (var item in roleIds)
+            {
+                TUserRole userRole = new();
+                userRole.Id = idHelper.GetId();
+                userRole.CreateTime = DateTime.UtcNow;
+                userRole.UserId = user.Id;
+                userRole.CreateUserId = this.userId;
+                userRole.RoleId = item;
+
+                db.TUserRole.Add(userRole);
+            }
 
             db.SaveChanges();
 
@@ -155,6 +170,9 @@ namespace AdminAPI.Controllers
         [HttpPost("UpdateUser")]
         public bool UpdateUser(long userId, DtoEditUser updateUser)
         {
+
+            var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
+
             var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
 
             if (user != null)
@@ -171,6 +189,35 @@ namespace AdminAPI.Controllers
                 {
                     user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                 }
+
+                var roleList = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == user.Id).ToList();
+
+                foreach (var item in roleList)
+                {
+                    if (roleIds.Contains(item.RoleId))
+                    {
+                        roleIds.Remove(item.RoleId);
+                    }
+                    else
+                    {
+                        item.IsDelete = true;
+                        item.DeleteTime = DateTime.UtcNow;
+                        item.DeleteUserId = this.userId;
+                    }
+                }
+
+                foreach (var item in roleIds)
+                {
+                    TUserRole userRole = new();
+                    userRole.Id = idHelper.GetId();
+                    userRole.CreateTime = DateTime.UtcNow;
+                    userRole.UserId = userId;
+                    userRole.CreateUserId = this.userId;
+                    userRole.RoleId = item;
+
+                    db.TUserRole.Add(userRole);
+                }
+
 
                 db.SaveChanges();
 

@@ -272,5 +272,21 @@ namespace AdminAPI.Controllers
         }
 
 
+
+        /// <summary>
+        /// 获取角色键值对
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetRoleKV")]
+        public List<DtoKeyValue> GetRoleKV()
+        {
+            var list = db.TRole.Where(t => t.IsDelete == false).Select(t => new DtoKeyValue
+            {
+                Key = t.Id,
+                Value = t.Name
+            }).ToList();
+
+            return list;
+        }
     }
 }

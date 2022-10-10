@@ -43,5 +43,12 @@ namespace AdminShared.Models.User
         [Required(ErrorMessage = "密码不可以为空")]
         public string PassWord { get; set; }
 
+
+
+        /// <summary>
+        /// 角色ID集合
+        /// </summary>
+        public string[] RoleIds { get; set; }
+
     }
 }

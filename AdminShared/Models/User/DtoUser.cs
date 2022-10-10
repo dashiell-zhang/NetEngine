@@ -40,6 +40,13 @@
         public string? Roles { get; set; }
 
 
+
+        /// <summary>
+        /// 角色ID集合
+        /// </summary>
+        public string[]? RoleIds { get; set; }
+
+
         /// <summary>
         /// 创建时间
         /// </summary>

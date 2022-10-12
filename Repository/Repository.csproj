@@ -20,7 +20,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.9" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.10" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.7" />
 	</ItemGroup>
 

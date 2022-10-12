@@ -3,11 +3,14 @@ using SkiaSharp.QrCode;
 
 namespace Common
 {
-
     public class ImgHelper
     {
 
-
+        /// <summary>
+        /// 生成二维码
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
         public static byte[] GetQrCode(string text)
         {
             using QRCodeGenerator generator = new();
@@ -22,8 +25,6 @@ namespace Common
             using var data = image.Encode(SKEncodedImageFormat.Png, 100);
             return data.ToArray();
         }
-
-
 
 
         /// <summary>
@@ -49,8 +50,6 @@ namespace Common
             using SKData p = img.Encode(SKEncodedImageFormat.Png, 100);
             return p.ToArray();
         }
-
-
 
 
         /// <summary>
@@ -106,6 +105,7 @@ namespace Common
             using SKData p = img.Encode(SKEncodedImageFormat.Png, 100);
             return p.ToArray();
         }
+
     }
 
 }

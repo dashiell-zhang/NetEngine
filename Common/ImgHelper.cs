@@ -9,7 +9,7 @@ namespace Common
         /// <summary>
         /// 生成二维码
         /// </summary>
-        /// <param name="text"></param>
+        /// <param name="text">二维码内容</param>
         /// <returns></returns>
         public static byte[] GetQrCode(string text)
         {
@@ -55,8 +55,7 @@ namespace Common
         /// <summary>
         /// 获取图像数字验证码
         /// </summary>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
+        /// <param name="text">验证码内容，如4为数字</param>
         /// <returns></returns>
         public static byte[] GetVerifyCode(string text)
         {

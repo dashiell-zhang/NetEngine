@@ -13,15 +13,15 @@
         <Menu Theme="MenuTheme.Dark" DefaultSelectedKeys=@(new[]{"1"}) Mode="MenuMode.Inline">
 
             <SubMenu TitleTemplate=subArticle>
-                <MenuItem><a href="article">文章管理</a></MenuItem>
-                <MenuItem> <a href="category">栏目管理</a></MenuItem>
+                <MenuItem><a href="/information/article">文章管理</a></MenuItem>
+                <MenuItem> <a href="/information/category">栏目管理</a></MenuItem>
             </SubMenu>
 
             <SubMenu TitleTemplate=subSystemSet>
-                <MenuItem><a href="user">用户管理</a></MenuItem>
-                <MenuItem><a href="role">角色管理</a></MenuItem>
-                <MenuItem><a href="link">友链管理</a></MenuItem>
-                <MenuItem><a href="site">信息维护</a></MenuItem>
+                <MenuItem><a href="/systemset/user">用户管理</a></MenuItem>
+                <MenuItem><a href="/systemset/role">角色管理</a></MenuItem>
+                <MenuItem><a href="/systemset/link">友链管理</a></MenuItem>
+                <MenuItem><a href="/systemset/site">信息维护</a></MenuItem>
             </SubMenu>
 
         </Menu>
@@ -74,7 +74,7 @@
     RenderFragment subArticle =
     @<span>
         <Icon Type="read" Theme="outline" />
-        <span>文章管理</span>
+        <span>资讯管理</span>
     </span>
     ;
 

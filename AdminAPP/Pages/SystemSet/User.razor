@@ -1,4 +1,4 @@
-﻿@page "/user"
+﻿@page "/systemset/user"
 @using AdminShared.Models.User
 @attribute [ReuseTabsPageTitle("用户管理")]
 
@@ -110,14 +110,14 @@
     <Table DataSource="userFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" @bind-Checked="@context.IsCheck" OnChange="isCheck=>SetUserFunction(context.Id,isCheck)">@context.Name</Checkbox>
+            <Checkbox Label="@context.Id.ToString()" @bind-Checked="@context.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,context)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Checked="@item.IsCheck" OnChange="isCheck=>SetUserFunction(item.Id,isCheck)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" @bind-Checked="@item.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,item)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>
@@ -132,7 +132,7 @@
     override protected void OnInitialized()
     {
         GetUserList();
-
+        GetRoleKV();
     }
 
 
@@ -150,16 +150,12 @@
 
     async void GetRoleKV()
     {
-        tableLoading = true;
         var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Role/GetRoleKV");
 
         if (retData != null)
         {
             roleList = retData;
         }
-
-        tableLoading = false;
-        StateHasChanged();
     }
 
     async void GetUserList()
@@ -234,7 +230,6 @@
 
     void EditUser(DtoUser? user = null)
     {
-        GetRoleKV();
         editUser = new DtoEditUser();
         userId = default;
         if (user != null)
@@ -290,12 +285,12 @@
     }
 
 
-    async void SetUserFunction(long functionId, bool isCheck)
+    async void SetUserFunction(bool isCheck, DtoUserFunction userFunction)
     {
         DtoSetUserFunction setUserFunction = new()
             {
                 UserId = userId,
-                FunctionId = functionId,
+                FunctionId = userFunction.Id,
                 IsCheck = isCheck
             };
 
@@ -303,10 +298,19 @@
         {
             var ret = httpResponse.Content.ReadAsStringAsync().Result;
 
-            if (bool.Parse(ret))
+            try
             {
-                Message.Success("设置成功");
+                if (bool.Parse(ret))
+                {
+                    Message.Success("设置成功");
+                }
             }
+            catch
+            {
+                userFunction.IsCheck = true;
+                StateHasChanged();
+            }
+
         }
     }
 

@@ -1,4 +1,6 @@
-﻿namespace AdminShared.Models.User
+﻿using AdminShared.Models.Role;
+
+namespace AdminShared.Models.User
 {
 
 
@@ -23,13 +25,6 @@
 
 
         /// <summary>
-        /// 类型,["模块","功能"]
-        /// </summary>
-        public string Type { get; set; }
-
-
-
-        /// <summary>
         /// 是否选中
         /// </summary>
         public bool IsCheck { get; set; }
@@ -49,5 +44,10 @@
         public List<DtoUserFunction> ChildList { get; set; }
 
 
+
+        /// <summary>
+        /// 功能集合
+        /// </summary>
+        public List<DtoUserFunction> FunctionList { get; set; }
     }
 }

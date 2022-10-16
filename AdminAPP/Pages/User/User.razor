@@ -25,6 +25,9 @@
                             <a @onclick="()=>EditUser(context)">编辑</a>
                         </SpaceItem>
                         <SpaceItem>
+                            <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
+                        </SpaceItem>
+                        <SpaceItem>
                             <Popconfirm Title="确认要删除吗？"
                                         OnConfirm="_=>DeleteUser(context.Id)"
                                         OkText="Yes"
@@ -70,7 +73,7 @@
                     <Row>
                         @foreach (var item in roleList)
                         {
-                            <AntDesign.Col Span="8"><Checkbox on Label="@item.Key!.ToString()">@item.Value</Checkbox></AntDesign.Col>
+                            <AntDesign.Col Span="8"><Checkbox Label="@item.Key!.ToString()">@item.Value</Checkbox></AntDesign.Col>
                         }
                     </Row>
                 </CheckboxGroup>
@@ -103,13 +106,33 @@
     </Template>
 </Drawer>
 
+<Modal Title="权限范围" Style="width:1160px;" Visible="@isShowEditAuthority" OnCancel="()=>isShowEditAuthority=false" Footer="null" MaxBodyHeight="@("70vh")">
+    <Table DataSource="userFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
+
+        <Column Title="菜单模块" TData="string">
+            <Checkbox Label="@context.Id.ToString()" @bind-Checked="@context.IsCheck" OnChange="isCheck=>SetUserFunction(context.Id,isCheck)">@context.Name</Checkbox>
+        </Column>
+
+        <Column Title="功能操作" TData="string">
+            <Row>
+                @foreach (var item in context.FunctionList)
+                {
+                    <Checkbox Label="@item.Id.ToString()" @bind-Checked="@item.IsCheck" OnChange="isCheck=>SetUserFunction(item.Id,isCheck)">@item.Name</Checkbox>
+                }
+            </Row>
+        </Column>
+
+    </Table>
+
+</Modal>
+
 
 @code {
 
     override protected void OnInitialized()
     {
         GetUserList();
-        GetRoleKV();
+
     }
 
 
@@ -119,9 +142,11 @@
     int pageSize = 10;
     DtoPageList<DtoUser> pageList = new();
 
+    bool isShowEditAuthority = false;
 
     List<DtoKeyValue> roleList = new();
 
+    List<DtoUserFunction> userFunctionList = new();
 
     async void GetRoleKV()
     {
@@ -209,6 +234,7 @@
 
     void EditUser(DtoUser? user = null)
     {
+        GetRoleKV();
         editUser = new DtoEditUser();
         userId = default;
         if (user != null)
@@ -242,6 +268,44 @@
             {
                 GetUserList();
                 Message.Success("删除成功");
+            }
+        }
+    }
+
+
+    async void EditAuthority(long roleId)
+    {
+        this.userId = roleId;
+
+        var retData = await Http.GetFromJsonAsync<List<DtoUserFunction>>("User/GetUserFunction?userId=" + userId);
+
+        if (retData != null)
+        {
+            userFunctionList = retData;
+        }
+
+        isShowEditAuthority = true;
+
+        StateHasChanged();
+    }
+
+
+    async void SetUserFunction(long functionId, bool isCheck)
+    {
+        DtoSetUserFunction setUserFunction = new()
+            {
+                UserId = userId,
+                FunctionId = functionId,
+                IsCheck = isCheck
+            };
+
+        using (var httpResponse = await Http.PostAsJsonAsync<DtoSetUserFunction>("User/SetUserFunction", setUserFunction))
+        {
+            var ret = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (bool.Parse(ret))
+            {
+                Message.Success("设置成功");
             }
         }
     }

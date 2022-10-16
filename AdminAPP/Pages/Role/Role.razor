@@ -1,5 +1,6 @@
 ﻿@page "/role"
 @using AdminShared.Models.Role
+@using System.ComponentModel
 @attribute [ReuseTabsPageTitle("角色管理")]
 
 <Layout Style="padding-top:30px;">
@@ -20,6 +21,9 @@
                     <Space>
                         <SpaceItem>
                             <a @onclick="()=>EditRole(context)">编辑</a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
                         </SpaceItem>
                         <SpaceItem>
                             <Popconfirm Title="确认要删除吗？"
@@ -76,6 +80,27 @@
 </Drawer>
 
 
+<Modal Title="权限范围" Style="width:1160px;" Visible="@isShowEditAuthority" OnCancel="()=>isShowEditAuthority=false" Footer="null" MaxBodyHeight="@("70vh")">
+    <Table DataSource="roleFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
+
+        <Column Title="菜单模块" TData="string">
+            <Checkbox Label="@context.Id.ToString()" @bind-Checked="@context.IsCheck" OnChange="isCheck=>SetRoleFunction(context.Id,isCheck)">@context.Name</Checkbox>
+        </Column>
+
+        <Column Title="功能操作" TData="string">
+            <Row>
+                @foreach (var item in context.FunctionList)
+                {
+                    <Checkbox Label="@item.Id.ToString()" @bind-Checked="@item.IsCheck" OnChange="isCheck=>SetRoleFunction(item.Id,isCheck)">@item.Name</Checkbox>
+                }
+            </Row>
+        </Column>
+
+    </Table>
+
+</Modal>
+
+
 @code {
 
     override protected void OnInitialized()
@@ -88,7 +113,13 @@
     int pageNum = 1;
     int pageSize = 10;
 
+
+    bool isShowEditAuthority = false;
+
+
     DtoPageList<DtoRole> pageList = new();
+
+    List<DtoRoleFunction> roleFunctionList = new();
 
     async void GetRoleList()
     {
@@ -189,5 +220,44 @@
             }
         }
     }
+
+
+    async void EditAuthority(long roleId)
+    {
+        this.roleId = roleId;
+
+        var retData = await Http.GetFromJsonAsync<List<DtoRoleFunction>>("Role/GetRoleFunction?roleId=" + roleId);
+
+        if (retData != null)
+        {
+            roleFunctionList = retData;
+        }
+
+        isShowEditAuthority = true;
+
+        StateHasChanged();
+    }
+
+
+    async void SetRoleFunction(long functionId, bool isCheck)
+    {
+        DtoSetRoleFunction setRoleFunction = new()
+            {
+                RoleId = roleId,
+                FunctionId = functionId,
+                IsCheck = isCheck
+            };
+
+        using (var httpResponse = await Http.PostAsJsonAsync<DtoSetRoleFunction>("Role/SetRoleFunction", setRoleFunction))
+        {
+            var ret = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (bool.Parse(ret))
+            {
+                Message.Success("设置成功");
+            }
+        }
+    }
+
 
 }

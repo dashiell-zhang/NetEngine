@@ -1,5 +1,6 @@
 ﻿using AdminShared.Models.Role;
 using Common;
+using NPOI.SS.Formula.Functions;
 using Repository.Database;
 
 namespace AdminAPI.Services
@@ -29,13 +30,19 @@ namespace AdminAPI.Services
         public List<DtoRoleFunction> GetRoleFunctionChildList(long roleId, long parentId)
         {
 
-            var functionList = db.TFunction.Where(t => t.IsDelete == false && t.ParentId == parentId).Select(t => new DtoRoleFunction
+            var functionList = db.TFunction.Where(t => t.IsDelete == false && t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
-                Type = t.Type.ToString(),
                 Sign = t.Sign,
                 IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
+                FunctionList = db.TFunction.Where(f => f.IsDelete == false && f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoRoleFunction
+                {
+                    Id = f.Id,
+                    Name = f.Name.Replace(f.Parent!.Name + "-", ""),
+                    Sign = f.Sign,
+                    IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
+                }).ToList()
             }).ToList();
 
             foreach (var function in functionList)

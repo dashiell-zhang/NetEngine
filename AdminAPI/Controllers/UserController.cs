@@ -2,6 +2,7 @@
 using AdminAPI.Libraries;
 using AdminAPI.Services;
 using AdminShared.Models;
+using AdminShared.Models.Role;
 using AdminShared.Models.User;
 using Common;
 using Microsoft.AspNetCore.Authorization;
@@ -270,13 +271,19 @@ namespace AdminAPI.Controllers
         {
             var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var functionList = db.TFunction.Where(t => t.IsDelete == false && t.ParentId == null).Select(t => new DtoUserFunction
+            var functionList = db.TFunction.Where(t => t.IsDelete == false && t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
-                Type = t.Type.ToString(),
                 Sign = t.Sign,
                 IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
+                FunctionList = db.TFunction.Where(f => f.IsDelete == false && f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoUserFunction
+                {
+                    Id = f.Id,
+                    Name = f.Name.Replace(f.Parent!.Name + "-", ""),
+                    Sign = f.Sign,
+                    IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == f.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
+                }).ToList()
             }).ToList();
 
             foreach (var function in functionList)
@@ -300,9 +307,9 @@ namespace AdminAPI.Controllers
         public bool SetUserFunction(DtoSetUserFunction setUserFunction)
         {
 
-            var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == setUserFunction.UserId).Select(t => t.RoleId).ToList();
+            var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == setUserFunction.UserId && t.Role.IsDelete == false).Select(t => t.RoleId).ToList();
 
-            var functionAuthorize = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == setUserFunction.UserId)).FirstOrDefault() ?? new TFunctionAuthorize();
+            var functionAuthorize = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == setUserFunction.UserId) && t.FunctionId == setUserFunction.FunctionId).FirstOrDefault() ?? new TFunctionAuthorize();
 
             if (setUserFunction.IsCheck)
             {
@@ -318,8 +325,6 @@ namespace AdminAPI.Controllers
                     db.TFunctionAuthorize.Add(functionAuthorize);
 
                     db.SaveChanges();
-
-
                 }
             }
             else
@@ -344,7 +349,7 @@ namespace AdminAPI.Controllers
                     else
                     {
                         HttpContext.Response.StatusCode = 400;
-                        HttpContext.Items.Add("errMsg", "该权限继承与用户角色，无法独立删除！");
+                        HttpContext.Items.Add("errMsg", "该权限继承自角色，无法单独删除！");
 
                         return false;
                     }

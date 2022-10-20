@@ -7,7 +7,12 @@
     <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
-            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditUser()">添加</Button>
+
+            @if (MainLayout.functionList.Contains("user-add"))
+            {
+                <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditUser()">添加</Button>
+            }
+
         </div>
         <Table TItem="DtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -21,21 +26,34 @@
                 </Column>
                 <ActionColumn Title="操作">
                     <Space>
-                        <SpaceItem>
-                            <a @onclick="()=>EditUser(context)">编辑</a>
-                        </SpaceItem>
-                        <SpaceItem>
-                            <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
-                        </SpaceItem>
-                        <SpaceItem>
-                            <Popconfirm Title="确认要删除吗？"
+
+                        @if (MainLayout.functionList.Contains("user-edit"))
+                        {
+                            <SpaceItem>
+                                <a @onclick="()=>EditUser(context)">编辑</a>
+                            </SpaceItem>
+                        }
+
+                        @if (MainLayout.functionList.Contains("user-function"))
+                        {
+                            <SpaceItem>
+                                <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
+                            </SpaceItem>
+                        }
+
+                        @if (MainLayout.functionList.Contains("user-delete"))
+                        {
+                            <SpaceItem>
+                                <Popconfirm Title="确认要删除吗？"
                                         OnConfirm="_=>DeleteUser(context.Id)"
                                         OkText="Yes"
                                         CancelText="No">
-                                <a style="color:red">删除</a>
-                            </Popconfirm>
+                                    <a style="color:red">删除</a>
+                                </Popconfirm>
 
-                        </SpaceItem>
+                            </SpaceItem>
+                        }
+
                     </Space>
                 </ActionColumn>
             </RowTemplate>

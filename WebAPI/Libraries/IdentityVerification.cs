@@ -35,7 +35,7 @@ namespace WebAPI.Libraries
 
                     IssueNewToken(httpContext);
 
-                    var module = "webapi";
+                    var module = "WebAPI";
 
                     Endpoint endpoint = httpContext.GetEndpoint()!;
 

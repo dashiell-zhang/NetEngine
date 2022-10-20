@@ -7,7 +7,12 @@
     <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
-            <Button Icon="plus" Type="@ButtonType.Primary" OnClick="()=>EditArticle()">添加</Button>
+
+            @if (MainLayout.functionList.Contains("article-add"))
+            {
+                <Button Icon="plus" Type="@ButtonType.Primary" OnClick="()=>EditArticle()">添加</Button>
+            }
+
         </div>
         <Table TItem="DtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -20,18 +25,28 @@
                 <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></Column>
                 <ActionColumn Title="操作">
                     <Space>
-                        <SpaceItem>
-                            <a @onclick="()=>EditArticle(context)">编辑</a>
-                        </SpaceItem>
-                        <SpaceItem>
-                            <Popconfirm Title="确认要删除吗？"
+
+                        @if (MainLayout.functionList.Contains("article-edit"))
+                        {
+
+                            <SpaceItem>
+                                <a @onclick="()=>EditArticle(context)">编辑</a>
+                            </SpaceItem>
+                        }
+
+                        @if (MainLayout.functionList.Contains("article-delete"))
+                        {
+                            <SpaceItem>
+                                <Popconfirm Title="确认要删除吗？"
                                         OnConfirm="_=>DeleteArticle(context.Id)"
                                         OkText="Yes"
                                         CancelText="No">
-                                <a style="color:red">删除</a>
-                            </Popconfirm>
+                                    <a style="color:red">删除</a>
+                                </Popconfirm>
 
-                        </SpaceItem>
+                            </SpaceItem>
+                        }
+
                     </Space>
                 </ActionColumn>
             </RowTemplate>
@@ -168,7 +183,7 @@
 
     async void GetCategoryTreeList()
     {
-        List<DtoKeyValueChild> parentKVList = new ();
+        List<DtoKeyValueChild> parentKVList = new();
 
         var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList?channelId=" + channelId);
 

@@ -35,7 +35,7 @@ namespace AdminAPI.Libraries
 
                     IssueNewToken(httpContext);
 
-                    var module = "webapi";
+                    var module = "AdminAPI";
 
                     Endpoint endpoint = httpContext.GetEndpoint()!;
 

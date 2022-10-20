@@ -7,7 +7,12 @@
     <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
-            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditCategory()">添加</Button>
+
+            @if (MainLayout.functionList.Contains("category-add"))
+            {
+                <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditCategory()">添加</Button>
+            }
+
         </div>
         <Table TItem="DtoCategory" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -19,18 +24,27 @@
                 <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></Column>
                 <ActionColumn Title="操作">
                     <Space>
-                        <SpaceItem>
-                            <a @onclick="()=>EditCategory(context)">编辑</a>
-                        </SpaceItem>
-                        <SpaceItem>
-                            <Popconfirm Title="确认要删除吗？"
+
+                        @if (MainLayout.functionList.Contains("category-edit"))
+                        {
+                            <SpaceItem>
+                                <a @onclick="()=>EditCategory(context)">编辑</a>
+                            </SpaceItem>
+                        }
+
+                        @if (MainLayout.functionList.Contains("category-delete"))
+                        {
+                            <SpaceItem>
+                                <Popconfirm Title="确认要删除吗？"
                                         OnConfirm="_=>DeleteCategory(context.Id)"
                                         OkText="Yes"
                                         CancelText="No">
-                                <a style="color:red">删除</a>
-                            </Popconfirm>
+                                    <a style="color:red">删除</a>
+                                </Popconfirm>
 
-                        </SpaceItem>
+                            </SpaceItem>
+                        }
+
                     </Space>
                 </ActionColumn>
             </RowTemplate>

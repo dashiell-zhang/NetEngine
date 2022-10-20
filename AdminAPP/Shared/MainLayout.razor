@@ -12,17 +12,49 @@
 
         <Menu Theme="MenuTheme.Dark" DefaultSelectedKeys=@(new[]{"1"}) Mode="MenuMode.Inline">
 
-            <SubMenu TitleTemplate=subArticle>
-                <MenuItem><a href="/information/article">文章管理</a></MenuItem>
-                <MenuItem> <a href="/information/category">栏目管理</a></MenuItem>
-            </SubMenu>
+            @{
+                Console.WriteLine(functionList.Count());
+            }
 
-            <SubMenu TitleTemplate=subSystemSet>
-                <MenuItem><a href="/systemset/user">用户管理</a></MenuItem>
-                <MenuItem><a href="/systemset/role">角色管理</a></MenuItem>
-                <MenuItem><a href="/systemset/link">友链管理</a></MenuItem>
-                <MenuItem><a href="/systemset/site">信息维护</a></MenuItem>
-            </SubMenu>
+            @if (functionList.Contains("information"))
+            {
+                <SubMenu TitleTemplate=subArticle>
+                    @if (functionList.Contains("article"))
+                    {
+                        <MenuItem><a href="/information/article">文章管理</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("category"))
+                    {
+                        <MenuItem> <a href="/information/category">栏目管理</a></MenuItem>
+                    }
+                </SubMenu>
+            }
+
+            @if (functionList.Contains("systemset"))
+            {
+                <SubMenu TitleTemplate=subSystemSet>
+                    @if (functionList.Contains("user"))
+                    {
+                        <MenuItem><a href="/systemset/user">用户管理</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("role"))
+                    {
+                        <MenuItem><a href="/systemset/role">角色管理</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("link"))
+                    {
+                        <MenuItem><a href="/systemset/link">友链管理</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("info"))
+                    {
+                        <MenuItem><a href="/systemset/site">信息维护</a></MenuItem>
+                    }
+                </SubMenu>
+            }
 
         </Menu>
     </Sider>
@@ -104,7 +136,24 @@
     override protected void OnInitialized()
     {
         Authentication();
+        GetFunctionList();
     }
+
+    public static List<string> functionList = new();
+
+
+    async void GetFunctionList()
+    {
+        var retList = await Http.GetFromJsonAsync<List<string>>("Authorize/GetFunctionList");
+
+        if (retList != null)
+        {
+            functionList = retList;
+
+            StateHasChanged();
+        }
+    }
+
 
 
 

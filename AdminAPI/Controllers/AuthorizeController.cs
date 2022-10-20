@@ -1,7 +1,6 @@
 ﻿using AdminAPI.Filters;
 using AdminAPI.Libraries;
 using AdminAPI.Services;
-using AdminShared.Models;
 using AdminShared.Models.Authorize;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
@@ -77,26 +76,20 @@ namespace AdminAPI.Controllers
 
 
 
-
         /// <summary>
         /// 获取授权功能列表
         /// </summary>
-        /// <param name="sign">模块标记</param>
         /// <returns></returns>
         [SignVerifyFilter]
         [Authorize]
-        [CacheDataFilter(TTL = 60, IsUseToken = true)]
         [HttpGet("GetFunctionList")]
-        public List<DtoKeyValue> GetFunctionList(string sign)
+        public List<string> GetFunctionList()
         {
-
             var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId) && t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
-            {
-                Key = t.Function.Sign,
-                Value = t.Function.Name
-            }).ToList();
+            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t =>
+                t.Function.Sign
+            ).ToList();
 
             return kvList;
         }

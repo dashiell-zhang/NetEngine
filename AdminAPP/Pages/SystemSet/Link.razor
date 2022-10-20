@@ -7,7 +7,12 @@
     <Content Class="site-layout-background">
 
         <div style="margin-bottom:10px">
-            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditLink()">添加</Button>
+
+            @if (MainLayout.functionList.Contains("link-add"))
+            {
+                <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditLink()">添加</Button>
+            }
+
         </div>
         <Table TItem="DtoLink" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -19,18 +24,27 @@
                 </Column>
                 <ActionColumn Title="操作">
                     <Space>
-                        <SpaceItem>
-                            <a @onclick="()=>EditLink(context)">编辑</a>
-                        </SpaceItem>
-                        <SpaceItem>
-                            <Popconfirm Title="确认要删除吗？"
+
+                        @if (MainLayout.functionList.Contains("link-edit"))
+                        {
+                            <SpaceItem>
+                                <a @onclick="()=>EditLink(context)">编辑</a>
+                            </SpaceItem>
+                        }
+
+                        @if (MainLayout.functionList.Contains("link-delete"))
+                        {
+                            <SpaceItem>
+                                <Popconfirm Title="确认要删除吗？"
                                         OnConfirm="_=>DeleteLink(context.Id)"
                                         OkText="Yes"
                                         CancelText="No">
-                                <a style="color:red">删除</a>
-                            </Popconfirm>
+                                    <a style="color:red">删除</a>
+                                </Popconfirm>
 
-                        </SpaceItem>
+                            </SpaceItem>
+                        }
+
                     </Space>
                 </ActionColumn>
             </RowTemplate>

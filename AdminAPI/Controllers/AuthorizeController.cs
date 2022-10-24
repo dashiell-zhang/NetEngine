@@ -164,7 +164,7 @@ namespace AdminAPI.Controllers
             }
 
 
-            actionList = actionList.Where(t => t.IsAuthorize == true).ToList();
+            actionList = actionList.Where(t => t.IsAuthorize == true).Distinct().ToList();
 
 
             var functionRoutes = db.TFunctionRoute.Where(t => t.IsDelete == false && t.Module == projectName).ToList();

@@ -54,10 +54,7 @@ namespace Repository.Database
 
 
 
-        /// <summary>
-        /// 该功能动作集合
-        /// </summary>
-        public virtual List<TFunctionAction>? TFunctionAction { get; set; }
+        public virtual List<TFunctionRoute>? TFunctionRoute { get; set; }
 
 
     }

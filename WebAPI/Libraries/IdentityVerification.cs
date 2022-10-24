@@ -35,21 +35,20 @@ namespace WebAPI.Libraries
 
                     IssueNewToken(httpContext);
 
-                    var module = "WebAPI";
+                    var module = typeof(Program).Assembly.GetName().Name!;
 
                     Endpoint endpoint = httpContext.GetEndpoint()!;
 
                     ControllerActionDescriptor actionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>()!;
 
-                    var controller = actionDescriptor.ControllerName.ToLower();
-                    var action = actionDescriptor.ActionName.ToLower();
+                    var route = actionDescriptor.AttributeRouteInfo?.Template;
 
                     using var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
                     var userId = long.Parse(httpContext.GetClaimByAuthorization("userId")!);
                     var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
 
-                    var functionId = db.TFunctionAction.Where(t => t.IsDelete == false && t.Module.ToLower() == module && t.Controller.ToLower() == controller && t.Action.ToLower() == action).Select(t => t.FunctionId).FirstOrDefault();
+                    var functionId = db.TFunctionRoute.Where(t => t.IsDelete == false && t.Module.ToLower() == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefault();
 
                     if (functionId != default)
                     {

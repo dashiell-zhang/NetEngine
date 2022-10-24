@@ -34,10 +34,10 @@ namespace Repository.Database
         public DbSet<TFunction> TFunction => Set<TFunction>();
 
 
-        public DbSet<TFunctionAction> TFunctionAction => Set<TFunctionAction>();
-
-
         public DbSet<TFunctionAuthorize> TFunctionAuthorize => Set<TFunctionAuthorize>();
+
+
+        public DbSet<TFunctionRoute> TFunctionRoute => Set<TFunctionRoute>();
 
 
         public DbSet<TLink> TLink => Set<TLink>();

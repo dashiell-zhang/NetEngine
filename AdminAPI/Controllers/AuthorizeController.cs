@@ -2,12 +2,16 @@
 using AdminAPI.Libraries;
 using AdminAPI.Services;
 using AdminShared.Models.Authorize;
+using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System.Text;
+using System.Xml;
 
 namespace AdminAPI.Controllers
 {
@@ -28,9 +32,12 @@ namespace AdminAPI.Controllers
 
         private readonly long userId;
 
+        private readonly IDHelper idHelper;
 
 
-        public AuthorizeController(DatabaseContext db, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
+
+
+        public AuthorizeController(DatabaseContext db, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor, IDHelper idHelper)
         {
             this.db = db;
 
@@ -41,6 +48,8 @@ namespace AdminAPI.Controllers
             {
                 userId = long.Parse(userIdStr);
             }
+
+            this.idHelper = idHelper;
         }
 
 
@@ -94,6 +103,106 @@ namespace AdminAPI.Controllers
             return kvList;
         }
 
+
+
+
+        /// <summary>
+        /// 更新路由信息表
+        /// </summary>
+        /// <param name="actionDescriptorCollectionProvider"></param>
+        [HttpGet("UpdateRoute")]
+        public void UpdateRoute([FromServices] IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
+        {
+            var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new
+            {
+                Name = x.DisplayName!.Substring(0, x.DisplayName.IndexOf("(") - 1),
+                Route = x.AttributeRouteInfo!.Template,
+                IsAuthorize = (x.EndpointMetadata.Where(t => t.GetType().FullName == "Microsoft.AspNetCore.Authorization.AuthorizeAttribute").Any() == true && x.EndpointMetadata.Where(t => t.GetType().FullName == "Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute").Any() == false),
+            }).ToList();
+
+            string projectName = typeof(Program).Assembly.GetName().Name!;
+
+            XmlDocument xml = new();
+            xml.Load(AppContext.BaseDirectory + projectName + ".xml");
+            XmlNodeList memebers = xml.SelectNodes("/doc/members/member")!;
+
+            Dictionary<string, string> remarksDict = new();
+
+
+            for (int c = 0; c < memebers.Count; c++)
+            {
+                var xmlNode = memebers[c];
+
+                if (xmlNode != null)
+                {
+                    if (xmlNode.Attributes!["name"]!.Value.StartsWith("M:" + projectName + ".Controllers."))
+                    {
+                        for (int s = 0; s < xmlNode.ChildNodes.Count; s++)
+                        {
+                            var childNode = xmlNode.ChildNodes[s];
+
+                            if (childNode != null && childNode.Name == "summary")
+                            {
+                                string name = xmlNode.Attributes!["name"]!.Value;
+
+                                string summary = childNode.InnerText;
+
+                                name = name!.Substring(2);
+
+                                if (name.IndexOf("(") >= 0)
+                                {
+                                    name = name.Substring(0, name.IndexOf("("));
+                                }
+
+                                summary = summary.Replace("\n", "").Trim();
+
+                                remarksDict.Add(name, summary);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            actionList = actionList.Where(t => t.IsAuthorize == true).ToList();
+
+
+            var functionRoutes = db.TFunctionRoute.Where(t => t.IsDelete == false && t.Module == projectName).ToList();
+
+            var delList = functionRoutes.Where(t => actionList.Select(t => t.Route).ToList().Contains(t.Route) == false).ToList();
+
+            foreach (var item in delList)
+            {
+                item.IsDelete = true;
+                item.DeleteTime = DateTime.UtcNow;
+            }
+
+            foreach (var item in actionList)
+            {
+                var info = functionRoutes.Where(t => t.Route == item.Route).FirstOrDefault();
+
+                string? remarks = remarksDict.Where(a => a.Key == item.Name).Select(a => a.Value).FirstOrDefault();
+
+                if (info != null)
+                {
+                    info.Remarks = remarks;
+                }
+                else
+                {
+                    TFunctionRoute functionRoute = new();
+                    functionRoute.Id = idHelper.GetId();
+                    functionRoute.CreateTime = DateTime.UtcNow;
+                    functionRoute.Module = projectName;
+                    functionRoute.Route = item.Route!;
+                    functionRoute.Remarks = remarks;
+
+                    db.TFunctionRoute.Add(functionRoute);
+                }
+            }
+
+            db.SaveChanges();
+
+        }
 
 
     }

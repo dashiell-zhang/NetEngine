@@ -45,13 +45,13 @@ namespace AdminAPI.Libraries
 
                     var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-                    var userId = long.Parse(httpContext.GetClaimByAuthorization("userId")!);
-                    var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
-
-                    var functionId = db.TFunctionRoute.Where(t => t.IsDelete == false && t.Module.ToLower() == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefault();
+                    var functionId = db.TFunctionRoute.Where(t => t.IsDelete == false && t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefault();
 
                     if (functionId != default)
                     {
+                        var userId = long.Parse(httpContext.GetClaimByAuthorization("userId")!);
+                        var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
+
                         var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false && t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
 
                         if (functionAuthorizeId != default)
@@ -75,7 +75,6 @@ namespace AdminAPI.Libraries
             {
                 return false;
             }
-
 
         }
 

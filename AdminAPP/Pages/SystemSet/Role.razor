@@ -42,9 +42,6 @@
                         @if (MainLayout.functionList.Contains("role-delete"))
                         {
                             <SpaceItem>
-                                <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
-                            </SpaceItem>
-                            <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
                                         OnConfirm="_=>DeleteRole(context.Id)"
                                         OkText="Yes"

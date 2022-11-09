@@ -1,9 +1,10 @@
 using AdminAPP.Libraries;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using System.Globalization;
 
-namespace AdminAPP
+namespace AdminAPP.Client
 {
     public class Program
     {
@@ -22,16 +23,14 @@ namespace AdminAPP
             CultureInfo.DefaultThreadCurrentUICulture = new("zh-CN");
 
             builder.RootComponents.Add<App>("#app");
+            builder.RootComponents.Add<HeadOutlet>("head::after");
 
             builder.Services.AddTransient<HttpInterceptor>();
-
-
 
             builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<HttpInterceptor>())
             {
                 BaseAddress = new Uri(appAPIURL)
             });
-
 
             builder.Services.AddBlazoredLocalStorage();
 
@@ -39,12 +38,10 @@ namespace AdminAPP
 
             await using WebAssemblyHost host = builder.Build();
 
-
             var localStorage = host.Services.GetRequiredService<ISyncLocalStorageService>();
             localStorage.SetItemAsString("appAPIURL", appAPIURL);
 
             await host.RunAsync();
-
         }
     }
 }

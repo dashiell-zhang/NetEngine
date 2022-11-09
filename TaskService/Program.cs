@@ -17,7 +17,7 @@ namespace TaskService
 
                     services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
                     {
-                        options.UseNpgsql(hostContext.Configuration.GetConnectionString("dbConnection"));
+                        options.UseNpgsql(hostContext.Configuration.GetConnectionString("dbConnection")!);
                     }, 30);
 
 
@@ -75,7 +75,7 @@ namespace TaskService
                     //注册分布式锁 Redis模式
                     services.AddRedisLock(options =>
                     {
-                        options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
+                        options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection")!;
                         options.InstanceName = "lock";
                     });
 

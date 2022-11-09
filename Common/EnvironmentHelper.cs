@@ -20,7 +20,7 @@ namespace Common
             CommandLineConfigurationProvider cmdConf = new(args);
             cmdConf.Load();
 
-            if (cmdConf.TryGet("cd", out string cdStr) && bool.TryParse(cdStr, out bool cd) && cd)
+            if (cmdConf.TryGet("cd", out string? cdStr) && bool.TryParse(cdStr, out bool cd) && cd)
             {
                 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
             }

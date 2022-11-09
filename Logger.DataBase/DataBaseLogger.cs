@@ -25,10 +25,12 @@ namespace Logger.DataBase
             this.idHelper = idHelper;
         }
 
-        public IDisposable BeginScope<TState>(TState state)
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
-            return default!;
+            return default;
         }
+
 
 
         public bool IsEnabled(LogLevel logLevel)

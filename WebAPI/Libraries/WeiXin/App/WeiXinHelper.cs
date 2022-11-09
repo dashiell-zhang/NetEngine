@@ -124,8 +124,8 @@ namespace WebAPI.Libraries.WeiXin.App
         /// <returns></returns>
         public (string accessToken, string openId) GetAccessToken(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, string code)
         {
-            string token = distributedCache.GetString("wxappaccesstoken" + code);
-            string openid = distributedCache.GetString("wxappopenid" + code);
+            string? token = distributedCache.GetString("wxappaccesstoken" + code);
+            string? openid = distributedCache.GetString("wxappopenid" + code);
 
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(openid))
             {
@@ -142,15 +142,21 @@ namespace WebAPI.Libraries.WeiXin.App
                     token = retToken;
                     openid = retOpenId;
                 }
-
-                if (!string.IsNullOrEmpty(token))
-                {
-                    distributedCache.SetString("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
-                    distributedCache.SetString("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
-                }
             }
 
-            return (token, openid);
+            if (token != null && openid != null)
+            {
+
+                distributedCache.SetString("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
+                distributedCache.SetString("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
+
+                return (token, openid);
+            }
+            else
+            {
+                throw new Exception("获取 AccessToken 失败");
+            }
+
         }
 
 

@@ -24,9 +24,11 @@ namespace Logger.LocalFile
             }
         }
 
-        public IDisposable BeginScope<TState>(TState state)
+
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
-            return default!;
+            return default;
         }
 
 

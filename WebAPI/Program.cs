@@ -46,7 +46,7 @@ namespace WebAPI
 
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
-                options.UseNpgsql(builder.Configuration.GetConnectionString("dbConnection"));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("dbConnection")!);
             }, 30);
 
 
@@ -96,7 +96,7 @@ namespace WebAPI
             })
             .AddJwtBearer(options =>
             {
-                var jwtSetting = builder.Configuration.GetSection("JWT").Get<JWTSetting>();
+                var jwtSetting = builder.Configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
                 var issuerSigningKey = ECDsa.Create();
                 issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
 
@@ -225,7 +225,7 @@ namespace WebAPI
             //注册分布式锁 Redis模式
             builder.Services.AddRedisLock(options =>
             {
-                options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
+                options.Configuration = builder.Configuration.GetConnectionString("redisConnection")!;
                 options.InstanceName = "lock";
             });
 

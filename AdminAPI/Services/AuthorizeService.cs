@@ -50,7 +50,7 @@ namespace AdminAPI.Services
                 new Claim("userId",userId.ToString())
             };
 
-            var jwtSetting = configuration.GetSection("JWT").Get<JWTSetting>();
+            var jwtSetting = configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
 
             var jwtPrivateKey = ECDsa.Create();
             jwtPrivateKey.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);

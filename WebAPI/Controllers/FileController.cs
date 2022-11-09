@@ -348,7 +348,7 @@ namespace WebAPI.Controllers
 
             if (file != null)
             {
-                var fileServerUrl = configuration["FileServerUrl"].ToString();
+                string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
 
                 string fileUrl = fileServerUrl + file.Path;
 

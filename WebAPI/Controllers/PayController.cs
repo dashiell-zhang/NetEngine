@@ -140,7 +140,7 @@ namespace WebAPI.Controllers
         {
             string key = "wxpayPCUrl" + orderNo;
 
-            string codeUrl = distributedCache.GetString(key);
+            string? codeUrl = distributedCache.GetString(key);
 
             if (string.IsNullOrEmpty(codeUrl))
             {
@@ -469,7 +469,7 @@ namespace WebAPI.Controllers
             string retValue = "";
 
             //获取当前请求中的post参数
-            Dictionary<string, string> dict = new();
+            Dictionary<string, string?> dict = new();
 
             var keys = Request.Form.Keys;
 

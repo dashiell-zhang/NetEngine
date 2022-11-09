@@ -39,7 +39,7 @@ namespace AdminAPI.Libraries.Ueditor
             if (UploadConfig.Base64)
             {
                 uploadFileName = UploadConfig.Base64Filename!;
-                byte[] uploadFileBytes = Convert.FromBase64String(httpContext.Current().Request.Form[UploadConfig.UploadFieldName!]);
+                byte[] uploadFileBytes = Convert.FromBase64String(httpContext.Current().Request.Form[UploadConfig.UploadFieldName!]!);
 
                 var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
                 var localPath = rootPath + savePath;

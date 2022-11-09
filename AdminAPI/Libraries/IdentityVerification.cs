@@ -134,7 +134,7 @@ namespace AdminAPI.Libraries
 
 
                             var configuration = httpContext.RequestServices.GetRequiredService<IConfiguration>();
-                            var jwtSetting = configuration.GetSection("JWT").Get<JWTSetting>();
+                            var jwtSetting = configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
                             var jwtPrivateKey = ECDsa.Create();
                             jwtPrivateKey.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);
                             SigningCredentials creds = new(new ECDsaSecurityKey(jwtPrivateKey), SecurityAlgorithms.EcdsaSha256);

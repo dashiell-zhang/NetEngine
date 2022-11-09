@@ -115,7 +115,7 @@ namespace Repository.Database
 
 #if DEBUG
                     //设置表的备注
-                    builder.HasComment(GetEntityComment(entity.Name));
+                    builder.ToTable(t => t.HasComment(GetEntityComment(entity.Name)));
 
                     List<string> baseTypeNames = new();
                     var baseType = entity.ClrType.BaseType;

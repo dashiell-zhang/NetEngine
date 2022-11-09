@@ -109,8 +109,16 @@ namespace Common
             try
             {
                 var valueStr = distributedCache.GetString(key);
-                var value = JsonHelper.JsonToObject<T>(valueStr);
-                return value;
+
+                if (valueStr != null)
+                {
+                    var value = JsonHelper.JsonToObject<T>(valueStr);
+                    return value;
+                }
+                else
+                {
+                    return default!;
+                }
             }
             catch
             {

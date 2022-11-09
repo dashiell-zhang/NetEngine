@@ -27,7 +27,7 @@ namespace AdminAPI.Controllers
         {
             string rootPath = webHostEnvironment.WebRootPath.Replace("\\", "/");
 
-            string fileServerUrl = configuration["FileServerUrl"].ToString();
+            string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
 
             Handler action = (Request.Query["action"].Count != 0 ? Request.Query["action"].ToString() : "") switch
             {

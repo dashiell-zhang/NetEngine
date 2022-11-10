@@ -44,7 +44,7 @@ namespace Repository.Bases
         /// 行版本标记
         /// </summary>
         [Timestamp]
-        public uint Version { get; set; }
+        public uint RowVersion { get; set; }
 
 
     }

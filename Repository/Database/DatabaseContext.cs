@@ -14,75 +14,75 @@ namespace Repository.Database
 
         #region 表实体声明
 
-        public DbSet<TAppSetting> TAppSetting => Set<TAppSetting>();
+        public DbSet<TAppSetting> TAppSetting { get; set; }
 
 
-        public DbSet<TArticle> TArticle => Set<TArticle>();
+        public DbSet<TArticle> TArticle { get; set; }
 
 
-        public DbSet<TCategory> TCategory => Set<TCategory>();
-
-
-
-        public DbSet<TDataUpdateLog> TDataUpdateLog => Set<TDataUpdateLog>();
+        public DbSet<TCategory> TCategory { get; set; }
 
 
 
-        public DbSet<TFile> TFile => Set<TFile>();
+        public DbSet<TDataUpdateLog> TDataUpdateLog { get; set; }
 
 
-        public DbSet<TFunction> TFunction => Set<TFunction>();
+
+        public DbSet<TFile> TFile { get; set; }
 
 
-        public DbSet<TFunctionAuthorize> TFunctionAuthorize => Set<TFunctionAuthorize>();
+        public DbSet<TFunction> TFunction { get; set; }
 
 
-        public DbSet<TFunctionRoute> TFunctionRoute => Set<TFunctionRoute>();
+        public DbSet<TFunctionAuthorize> TFunctionAuthorize { get; set; }
 
 
-        public DbSet<TLink> TLink => Set<TLink>();
+        public DbSet<TFunctionRoute> TFunctionRoute { get; set; }
 
 
-        public DbSet<TLog> TLog => Set<TLog>();
+        public DbSet<TLink> TLink { get; set; }
 
 
-        public DbSet<TOrder> TOrder => Set<TOrder>();
+        public DbSet<TLog> TLog { get; set; }
 
 
-        public DbSet<TOrderDetail> TOrderDetail => Set<TOrderDetail>();
+        public DbSet<TOrder> TOrder { get; set; }
 
 
-        public DbSet<TProduct> TProduct => Set<TProduct>();
+        public DbSet<TOrderDetail> TOrderDetail { get; set; }
 
 
-        public DbSet<TRegionArea> TRegionArea => Set<TRegionArea>();
+        public DbSet<TProduct> TProduct { get; set; }
 
 
-        public DbSet<TRegionCity> TRegionCity => Set<TRegionCity>();
+        public DbSet<TRegionArea> TRegionArea { get; set; }
 
 
-        public DbSet<TRegionProvince> TRegionProvince => Set<TRegionProvince>();
+        public DbSet<TRegionCity> TRegionCity { get; set; }
 
 
-        public DbSet<TRegionTown> TRegionTown => Set<TRegionTown>();
+        public DbSet<TRegionProvince> TRegionProvince { get; set; }
 
 
-        public DbSet<TRole> TRole => Set<TRole>();
+        public DbSet<TRegionTown> TRegionTown { get; set; }
 
 
-        public DbSet<TUser> TUser => Set<TUser>();
+        public DbSet<TRole> TRole { get; set; }
 
 
-        public DbSet<TUserBindExternal> TUserBindExternal => Set<TUserBindExternal>();
+        public DbSet<TUser> TUser { get; set; }
 
 
-        public DbSet<TUserInfo> TUserInfo => Set<TUserInfo>();
+        public DbSet<TUserBindExternal> TUserBindExternal { get; set; }
 
 
-        public DbSet<TUserRole> TUserRole => Set<TUserRole>();
+        public DbSet<TUserInfo> TUserInfo { get; set; }
 
 
-        public DbSet<TUserToken> TUserToken => Set<TUserToken>();
+        public DbSet<TUserRole> TUserRole { get; set; }
+
+
+        public DbSet<TUserToken> TUserToken { get; set; }
 
 
         #endregion
@@ -103,10 +103,6 @@ namespace Repository.Database
             {
                 modelBuilder.Entity(entity.Name, builder =>
                 {
-
-                    //开启 PostgreSQL 全库行并发乐观锁
-                    builder.UseXminAsConcurrencyToken();
-
 
                     //设置生成数据库时的表名移除前缀T
                     var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value?.ToString()).FirstOrDefault()).FirstOrDefault() ?? (entity.ClrType.Name[1..]);

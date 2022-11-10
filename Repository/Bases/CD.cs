@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Bases
@@ -42,9 +43,8 @@ namespace Repository.Bases
         /// <summary>
         /// 行版本标记
         /// </summary>
-#pragma warning disable IDE1006 // 命名样式
-        public uint xmin { get; set; }
-#pragma warning restore IDE1006 // 命名样式
+        [Timestamp]
+        public uint Version { get; set; }
 
 
     }

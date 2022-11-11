@@ -131,7 +131,8 @@ namespace WebAPI
                     policy.SetIsOriginAllowed(origin => true)
                        .AllowAnyHeader()
                        .AllowAnyMethod()
-                       .AllowCredentials();
+                       .AllowCredentials()
+                       .SetPreflightMaxAge(TimeSpan.FromSeconds(7200));
                 });
             });
 

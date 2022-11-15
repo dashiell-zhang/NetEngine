@@ -6,35 +6,45 @@
 
 
 <body>
-    <div style="width: 100vw;height: 100vh;text-align: center;background-image: url('img/bg.svg');">
-        <div style="min-width: 360px;display: inline-block;padding-top: calc(50vh - 170px);">
-            <h1>管理系统登录</h1>
+    <div style="width: 100vw;height: 100vh;text-align: center;position: relative;background-image: url('img/login.jpg');">
 
-            <Form Model="@loginData" OnFinish="OnFinish">
+        <div style="position:absolute; left:200px;top:40%;color:#fff">
+            <div style=" color: #fff;font-size: 45px;line-height: 60px;width: 100%;font-weight:700">
+                Welcome
+            </div>
+            <div style="font-size: 20px;margin-top: 10px;font-family: ui-monospace;display:flex">
+                Hi，你来啦！
+            </div>
+        </div>
+
+        <div style="min-width: 400px;display: inline-block;background-color: white;border-radius: 10px;position: absolute;right:18%;top:30%; padding: 35px;">
+            <h1>管理系统</h1>
+
+            <Form Model="@loginData" OnFinish="LoginAction">
 
                 <FormItem>
-                    <Input @bind-Value="@context.Name" Placeholder="用户名" />
+                    <Input @bind-Value="@context.Name" Style="padding: 10px;" Placeholder="用户名" />
                 </FormItem>
 
                 <FormItem>
-                    <InputPassword @bind-Value="@context.PassWord" Placeholder="密码" />
+                    <InputPassword @bind-Value="@context.PassWord" Style="padding: 6px;" Placeholder="密码" />
                 </FormItem>
 
-                <FormItem>
-                    <Button Type="@ButtonType.Primary" HtmlType="submit" Block Loading="@loginLoading">
+                <FormItem Style="margin-top:10px">
+                    <Button Type="@ButtonType.Primary" HtmlType="submit" Block Loading="@submitLoading" Style="padding: 10px 0; height: 40px;">
                         登录
                     </Button>
                 </FormItem>
             </Form>
-
         </div>
+
     </div>
 </body>
 
 
 @code
 {
-    bool loginLoading = false;
+    bool submitLoading = false;
 
 
     override protected void OnInitialized()
@@ -59,10 +69,10 @@
 
     private DtoLogin loginData = new();
 
-    private async void OnFinish()
+    private async void LoginAction()
     {
 
-        loginLoading = true;
+        submitLoading = true;
 
         using (var httpResponse = await Http.PostAsJsonAsync<DtoLogin>("Authorize/GetToken", loginData))
         {
@@ -74,7 +84,7 @@
             }
         }
 
-        loginLoading = false;
+        submitLoading = false;
 
         StateHasChanged();
 

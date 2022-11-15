@@ -246,7 +246,7 @@ namespace AdminAPI.Controllers
 
             data.Total = query.Count();
 
-            string fileServerUrl = configuration["FileServerUrl"]?.ToString()??"";
+            string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
 
             data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
             {

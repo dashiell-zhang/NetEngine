@@ -276,7 +276,7 @@ namespace WebAPI
 
             //builder.Services.AddTencentCloudSMS(options =>
             //{
-            //    var settings = builder.Configuration.GetSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>();
+            //    var settings = builder.Configuration.GetRequiredSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>()!;
             //    options.AppId = settings.AppId;
             //    options.SecretId = settings.SecretId;
             //    options.SecretKey = settings.SecretKey;
@@ -285,7 +285,7 @@ namespace WebAPI
 
             //builder.Services.AddAliCloudSMS(options =>
             //{
-            //    var settings = builder.Configuration.GetSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>();
+            //    var settings = builder.Configuration.GetRequiredSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>()!;
             //    options.AccessKeyId = settings.AccessKeyId;
             //    options.AccessKeySecret = settings.AccessKeySecret;
             //});
@@ -297,7 +297,7 @@ namespace WebAPI
 
             //builder.Services.AddTencentCloudStorage(options =>
             //{
-            //    var settings = builder.Configuration.GetSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>();
+            //    var settings = builder.Configuration.GetRequiredSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>()!;
             //    options.AppId = settings.AppId;
             //    options.Region = settings.Region;
             //    options.SecretId = settings.SecretId;
@@ -308,7 +308,7 @@ namespace WebAPI
 
             //builder.Services.AddAliCloudStorage(options =>
             //{
-            //    var settings = builder.Configuration.GetSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>();
+            //    var settings = builder.Configuration.GetRequiredSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>()!;
             //    options.Endpoint = settings.Endpoint;
             //    options.AccessKeyId = settings.AccessKeyId;
             //    options.AccessKeySecret = settings.AccessKeySecret;

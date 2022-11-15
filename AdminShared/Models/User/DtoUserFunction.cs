@@ -1,6 +1,4 @@
-﻿using AdminShared.Models.Role;
-
-namespace AdminShared.Models.User
+﻿namespace AdminShared.Models.User
 {
 
 

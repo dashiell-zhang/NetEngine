@@ -243,7 +243,7 @@ namespace AdminAPI
 
             //builder.Services.AddTencentCloudSMS(options =>
             //{
-            //    var settings = builder.Configuration.GetSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>();
+            //    var settings = builder.Configuration.GetRequiredSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>()!;
             //    options.AppId = settings.AppId;
             //    options.SecretId = settings.SecretId;
             //    options.SecretKey = settings.SecretKey;
@@ -252,7 +252,7 @@ namespace AdminAPI
 
             //builder.Services.AddAliCloudSMS(options =>
             //{
-            //    var settings = builder.Configuration.GetSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>();
+            //    var settings = builder.Configuration.GetRequiredSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>()!;
             //    options.AccessKeyId = settings.AccessKeyId;
             //    options.AccessKeySecret = settings.AccessKeySecret;
             //});

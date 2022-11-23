@@ -21,6 +21,7 @@ namespace AdminAPI
     {
         public static void Main(string[] args)
         {
+
             EnvironmentHelper.ChangeDirectory(args);
 
             var builder = WebApplication.CreateBuilder(args);

@@ -23,7 +23,7 @@ namespace Logger.DataBase.Tasks
             {
                 try
                 {
-                    string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
+                    string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
 
                     if (Directory.Exists(basePath))
                     {

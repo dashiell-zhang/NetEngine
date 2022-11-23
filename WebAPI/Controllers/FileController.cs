@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using NPOI.HPSF;
 using Repository.Database;
 using SkiaSharp;
 using WebAPI.Libraries;
@@ -40,7 +41,7 @@ namespace WebAPI.Controllers
             this.idHelper = idHelper;
             this.fileStorage = fileStorage;
 
-            rootPath = webHostEnvironment.ContentRootPath.Replace("\\", "/");
+            rootPath = webHostEnvironment.ContentRootPath;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
 
@@ -68,25 +69,18 @@ namespace WebAPI.Controllers
             string remoteFileUrl = fileInfo.Key!.ToString()!;
 
             var fileExtension = Path.GetExtension(fileInfo.Value!.ToString()!).ToLower();
-            var fileName = Guid.NewGuid().ToString() + fileExtension;
+            var fileName = idHelper.GetId() + fileExtension;
 
-            string basepath = "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
+            var utcNow = DateTime.UtcNow;
 
-            var filePath = rootPath + "/" + basepath + "/";
+            string basePath = Path.Combine("files", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-            //下载文件
-            var dlPath = IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
+            var folderPath = Path.Combine(rootPath, basePath);
 
-            if (dlPath == null)
-            {
-                Thread.Sleep(5000);
-                dlPath = IOHelper.DownloadFile(remoteFileUrl, filePath, fileName);
-            }
-
+            var dlPath = IOHelper.DownloadFile(remoteFileUrl, folderPath, fileName);
 
             if (dlPath != null)
             {
-                filePath = dlPath.Replace(rootPath, "");
 
                 var isSuccess = true;
 
@@ -94,7 +88,7 @@ namespace WebAPI.Controllers
 
                 if (fileStorage != null)
                 {
-                    var upload = fileStorage.FileUpload(dlPath, basepath, fileInfoName);
+                    var upload = fileStorage.FileUpload(dlPath, basePath, fileInfoName);
 
                     if (upload)
                     {
@@ -108,6 +102,8 @@ namespace WebAPI.Controllers
 
                 if (isSuccess)
                 {
+
+                    var filePath = Path.Combine(basePath, fileName).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
                     TFile f = new()
                     {
@@ -143,30 +139,31 @@ namespace WebAPI.Controllers
         /// <param name="sign">自定义标记</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
-        [AllowAnonymous]
         [DisableRequestSizeLimit]
         [HttpPost("UploadFile")]
         public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, IFormFile file)
         {
+            var utcNow = DateTime.UtcNow;
 
-            string basepath = "/files/" + DateTime.UtcNow.ToString("yyyy/MM/dd");
-            string filepath = rootPath + basepath;
+            string basePath = Path.Combine("files", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-            Directory.CreateDirectory(filepath);
+            string folderPath = Path.Combine(rootPath, basePath);
 
-            var fileName = idHelper.GetId();
-            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var fullFileName = string.Format("{0}{1}", fileName, fileExtension);
-
-            string path;
-
-            var isSuccess = false;
-
-            if (file != null && file.Length > 0)
+            if (!Directory.Exists(folderPath))
             {
-                path = filepath + "/" + fullFileName;
+                Directory.CreateDirectory(folderPath);
+            }
 
-                using (FileStream fs = System.IO.File.Create(path))
+            var fileName = idHelper.GetId() + Path.GetExtension(file.FileName).ToLower();
+
+            var filePath = Path.Combine(folderPath, fileName);
+
+            var isSuccess = true;
+
+            if (file.Length > 0)
+            {
+
+                using (FileStream fs = System.IO.File.Create(filePath))
                 {
                     file.CopyTo(fs);
                     fs.Flush();
@@ -175,31 +172,25 @@ namespace WebAPI.Controllers
 
                 if (fileStorage != null)
                 {
+                    isSuccess = fileStorage.FileUpload(filePath, basePath, file.FileName);
 
-                    var upload = fileStorage.FileUpload(path, "files/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
-
-                    if (upload)
+                    if (isSuccess)
                     {
-                        IOHelper.DeleteFile(path);
-
-                        path = "/files/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + fullFileName;
-                        isSuccess = true;
+                        IOHelper.DeleteFile(filePath);
                     }
                 }
-                else
-                {
-                    path = basepath + "/" + fullFileName;
-                    isSuccess = true;
-                }
+
 
                 if (isSuccess)
                 {
 
+                    filePath = Path.Combine(basePath, fileName).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
                     TFile f = new()
                     {
-                        Id = fileName,
+                        Id = idHelper.GetId(),
                         Name = file.FileName,
-                        Path = path,
+                        Path = filePath,
                         Table = business,
                         TableId = key,
                         Sign = sign,
@@ -209,7 +200,7 @@ namespace WebAPI.Controllers
                     db.TFile.Add(f);
                     db.SaveChanges();
 
-                    return fileName;
+                    return f.Id;
                 }
 
             }
@@ -233,33 +224,27 @@ namespace WebAPI.Controllers
         [HttpGet("GetFile")]
         public FileResult? GetFile(long fileid)
         {
-
             var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
 
             if (file != null)
             {
-                string path = rootPath + file.Path;
+                string physicalPath = Path.Combine(rootPath, file.Path); ;
 
+                string fileExt = Path.GetExtension(file.Path);
 
-                //读取文件入流
-                var stream = System.IO.File.OpenRead(path);
-
-                //获取文件后缀
-                string fileExt = Path.GetExtension(path);
-
-                //获取系统常规全部mime类型
                 FileExtensionContentTypeProvider provider = new();
 
-                //通过文件后缀寻找对呀的mime类型
                 var memi = provider.Mappings.ContainsKey(fileExt) ? provider.Mappings[fileExt] : provider.Mappings[".zip"];
 
-                return File(stream, memi, file.Name);
+                return PhysicalFile(physicalPath, memi, file.Name);
             }
             else
             {
+                HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件");
+
                 return null;
             }
-
         }
 
 
@@ -281,25 +266,25 @@ namespace WebAPI.Controllers
 
             if (file != null)
             {
-                var path = rootPath + file.Path;
+                var physicalPath = Path.Combine(rootPath, file.Path);
 
-                string fileExt = Path.GetExtension(path);
+                string fileExt = Path.GetExtension(file.Path);
                 FileExtensionContentTypeProvider provider = new();
                 var memi = provider.Mappings[fileExt];
 
-                using var fileStream = System.IO.File.OpenRead(path);
+         
 
                 if (width == 0 && height == 0)
                 {
-                    return File(fileStream, memi, file.Name);
+                    return PhysicalFile(physicalPath, memi, file.Name);
                 }
                 else
                 {
 
-                    using var original = SKBitmap.Decode(path);
+                    using var original = SKBitmap.Decode(physicalPath);
                     if (original.Width < width || original.Height < height)
                     {
-                        return File(fileStream, memi, file.Name);
+                        return PhysicalFile(physicalPath, memi, file.Name);
                     }
                     else
                     {
@@ -329,6 +314,9 @@ namespace WebAPI.Controllers
             }
             else
             {
+                HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件");
+
                 return null;
             }
         }
@@ -338,13 +326,13 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 通过文件ID获取文件静态访问路径
         /// </summary>
-        /// <param name="fileid">文件ID</param>
+        /// <param name="fileId">文件ID</param>
         /// <returns></returns>
         [HttpGet("GetFilePath")]
-        public string? GetFilePath(long fileid)
+        public string? GetFilePath(long fileId)
         {
 
-            var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false && t.Id == fileid).FirstOrDefault();
+            var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false && t.Id == fileId).FirstOrDefault();
 
             if (file != null)
             {

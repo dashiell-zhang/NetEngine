@@ -16,7 +16,7 @@ namespace Logger.LocalFile
         {
             this.categoryName = categoryName;
 
-            basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
+            basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
 
             if (Directory.Exists(basePath) == false)
             {
@@ -84,7 +84,7 @@ namespace Logger.LocalFile
 
                         string logStr = JsonHelper.ObjectToJson(log);
 
-                        var logPath = basePath + DateTime.UtcNow.ToString("yyyyMMddHH") + ".log";
+                        var logPath = Path.Combine(basePath, DateTime.UtcNow.ToString("yyyyMMddHH") + ".log");
 
                         File.AppendAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
 

@@ -91,14 +91,14 @@ namespace Logger.DataBase
                         string logStr = JsonHelper.ObjectToJson(log);
 
 
-                        string basePath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/Logs/";
+                        string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
 
                         if (Directory.Exists(basePath) == false)
                         {
                             Directory.CreateDirectory(basePath);
                         }
 
-                        var logPath = basePath + log.Id + ".log";
+                        var logPath = Path.Combine(basePath, log.Id + ".log");
 
                         File.WriteAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
 

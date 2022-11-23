@@ -25,7 +25,7 @@ namespace AdminAPI.Controllers
         [HttpPost("ProcessRequest")]
         public string ProcessRequest()
         {
-            string rootPath = webHostEnvironment.WebRootPath.Replace("\\", "/");
+            string rootPath = webHostEnvironment.WebRootPath;
 
             string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
 

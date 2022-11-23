@@ -201,7 +201,7 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
         /// <returns></returns>
         private string UseCretPost(string url, string data)
         {
-            var sslPath = Directory.GetCurrentDirectory().Replace("\\", "/") + "/ssl/apiclient_cert.p12";
+            var sslPath = Path.Combine(Directory.GetCurrentDirectory(), "ssl", "apiclient_cert.p12");
 
             using HttpClientHandler handler = new();
             X509Certificate2 cert = new(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
@@ -250,7 +250,7 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
                 , out_refund_no, refund_fee, total_fee, transaction_id, mchkey);
 
 
-            var unifiedorderSign = Common.CryptoHelper.GetMD5(unifiedorderSignParam).ToUpper();
+            var unifiedorderSign = CryptoHelper.GetMD5(unifiedorderSignParam).ToUpper();
 
             //构造退款的请求参数
             var zhi = string.Format(@"<xml>

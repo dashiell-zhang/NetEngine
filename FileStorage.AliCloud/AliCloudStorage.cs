@@ -35,6 +35,8 @@ namespace FileStorage.AliCloud
         {
             try
             {
+                remotePath = remotePath.Replace("\\", "/");
+
                 OssClient client = new(endpoint, accessKeyId, accessKeySecret);
 
                 client.DeleteObject(bucketName, remotePath);
@@ -53,6 +55,8 @@ namespace FileStorage.AliCloud
         {
             try
             {
+                remotePath = remotePath.Replace("\\", "/");
+
                 OssClient client = new(endpoint, accessKeyId, accessKeySecret);
 
                 // 下载文件到流。OssObject 包含了文件的各种信息，如文件所在的存储空间、文件名、元信息以及一个输入流。
@@ -84,6 +88,8 @@ namespace FileStorage.AliCloud
         {
             try
             {
+                remotePath = remotePath.Replace("\\", "/");
+
                 var objectName = Path.GetFileName(localPath);
 
                 objectName = remotePath + "/" + objectName;
@@ -120,6 +126,8 @@ namespace FileStorage.AliCloud
 
             try
             {
+                remotePath = remotePath.Replace("\\", "/");
+
                 OssClient client = new(endpoint, accessKeyId, accessKeySecret);
 
                 GeneratePresignedUriRequest req = new(bucketName, remotePath);

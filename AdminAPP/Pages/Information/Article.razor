@@ -113,7 +113,9 @@
                             OnPreview="(file)=> PreviewImg(file)"
                             OnRemove=" (file)=> DeleteImg(file)"
                             OnChange="StateHasChanged"
-                            BeforeAllUploadAsync="((fileList) =>  BeforeUpload(fileList))">
+                            BeforeAllUploadAsync="((fileList) =>  BeforeUpload(fileList))"
+                            OnSingleCompleted=" (file)=> OnSingleCompleted(file)">
+
                         <div>
                             <Icon Type="plus"></Icon>
                             <div className="ant-upload-text">上传</div>
@@ -383,6 +385,12 @@
                 return false;
             }
         }
+    }
+
+
+    void OnSingleCompleted(UploadInfo file)
+    {
+        file.File.Id = JsonHelper.JsonToObject<string>(file.File.Response);
     }
 
 

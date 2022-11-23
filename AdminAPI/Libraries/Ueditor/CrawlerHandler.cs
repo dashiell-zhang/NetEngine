@@ -91,7 +91,7 @@ namespace AdminAPI.Libraries.Ueditor
                 return this;
             }
             ServerUrl = PathFormatter.Format(Path.GetFileName(SourceUrl!), Config.GetString("catcherPathFormat", fileServerUrl));
-            var savePath = rootPath + ServerUrl;
+            var savePath = Path.Combine(rootPath, ServerUrl);
             if (!Directory.Exists(Path.GetDirectoryName(savePath)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
@@ -105,14 +105,17 @@ namespace AdminAPI.Libraries.Ueditor
 
                 if (fileStorage != null)
                 {
+                    var utcNow = DateTime.UtcNow;
 
-                    var upload = fileStorage.FileUpload(savePath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(SourceUrl!));
+                    string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
+
+                    var upload = fileStorage.FileUpload(savePath, basePath, Path.GetFileName(SourceUrl!));
 
                     if (upload)
                     {
                         Common.IOHelper.DeleteFile(savePath);
 
-                        ServerUrl = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(savePath);
+                        ServerUrl = Path.Combine(basePath, Path.GetFileName(savePath)).Replace("\\", "/");
                         State = "SUCCESS";
                     }
                     else

@@ -64,43 +64,30 @@ namespace Common
         /// 下载远程文件保存到本地
         /// </summary>
         /// <param name="url">文件URL</param>
-        /// <param name="filePath">保存路径，以 / 结束，否则将取最后一个 / 之前的路径, / 之后的当作自定义文件名前缀</param>
+        /// <param name="folderPath">保存文件夹路径</param>
         /// <param name="fileName">保存文件名称,不传则自动通过 url 获取名称</param>
         /// <returns></returns>
-        public static string? DownloadFile(string url, string filePath, string? fileName = null)
+        public static string? DownloadFile(string url, string folderPath, string? fileName = null)
         {
             try
             {
                 fileName ??= System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
 
                 //检查目标路径文件夹是否存在不存在则创建
-                if (!Directory.Exists(filePath))
+                if (!Directory.Exists(folderPath))
                 {
-                    //如果路径结尾不是 / 则说明尾端可能是自定义的文件名前缀
-
-                    var lastindex = filePath.Length - filePath.LastIndexOf("/");
-
-                    if (lastindex == 1)
-                    {
-                        Directory.CreateDirectory(filePath);
-                    }
-                    else
-                    {
-                        string temp = filePath[..filePath.LastIndexOf("/")];
-                        Directory.CreateDirectory(temp);
-
-                    }
+                    Directory.CreateDirectory(folderPath);
                 }
 
                 using HttpClient client = new();
                 client.DefaultRequestVersion = new("2.0");
 
                 using var httpResponse = client.GetAsync(url).Result;
-                string fullpath = filePath + fileName;
+                string filePath = Path.Combine(folderPath, fileName);
 
-                File.WriteAllBytes(fullpath, httpResponse.Content.ReadAsByteArrayAsync().Result);
+                File.WriteAllBytes(filePath, httpResponse.Content.ReadAsByteArrayAsync().Result);
 
-                return fullpath;
+                return filePath;
             }
             catch
             {
@@ -173,12 +160,6 @@ namespace Common
                 list.AddRange(GetFolderAllFiles(info.FullName));
             }
 
-
-            for (int i = 0; i < list.Count; i++)
-            {
-                list[i] = list[i].Replace(@"\", "/");
-            }
-
             return list;
         }
 
@@ -194,16 +175,14 @@ namespace Common
 
             FileInfo fileInfo = new FileInfo(filePath);
 
-            string dirPath = fileInfo.DirectoryName?.Replace("\\", "/") + "/";
-
-            string tempPath = dirPath + Guid.NewGuid() + "_temp/";
+            string tempPath = Path.Combine(fileInfo.DirectoryName!, Guid.NewGuid() + "_temp");
 
             if (!Directory.Exists(tempPath))
             {
                 Directory.CreateDirectory(tempPath);
             }
 
-            fileInfo.CopyTo(tempPath + fileInfo.Name);
+            fileInfo.CopyTo(Path.Combine(tempPath, fileInfo.Name));
 
             CompressDirectoryZip(tempPath, zipPath);
 

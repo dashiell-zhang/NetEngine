@@ -22,13 +22,13 @@ namespace AdminAPI.Libraries.Ueditor
 
         public UploadHandler(UploadConfig config, string rootPath, HttpContext httpContext) : base()
         {
-            this.UploadConfig = config;
-            this.Result = new UploadResult() { State = UploadState.Unknown };
+            UploadConfig = config;
+            Result = new UploadResult() { State = UploadState.Unknown };
 
             this.rootPath = rootPath;
             this.httpContext = httpContext;
 
-            this.fileStorage = httpContext.RequestServices.GetService<IFileStorage>();
+            fileStorage = httpContext.RequestServices.GetService<IFileStorage>();
         }
 
         public override string Process(string fileServerUrl)
@@ -42,7 +42,7 @@ namespace AdminAPI.Libraries.Ueditor
                 byte[] uploadFileBytes = Convert.FromBase64String(httpContext.Current().Request.Form[UploadConfig.UploadFieldName!]!);
 
                 var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
-                var localPath = rootPath + savePath;
+                var localPath = Path.Combine(rootPath, savePath);
 
                 try
                 {
@@ -54,18 +54,20 @@ namespace AdminAPI.Libraries.Ueditor
                     File.WriteAllBytes(localPath, uploadFileBytes);
 
 
+                    var utcNow = DateTime.UtcNow;
 
 
                     if (fileStorage != null)
                     {
+                        string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                        var upload = fileStorage.FileUpload(localPath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), Path.GetFileName(localPath));
+                        var upload = fileStorage.FileUpload(localPath, basePath, Path.GetFileName(localPath));
 
                         if (upload)
                         {
                             Common.IOHelper.DeleteFile(localPath);
 
-                            Result.Url = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
+                            Result.Url = Path.Combine(basePath, Path.GetFileName(localPath)).Replace("\\", "/");
                             Result.State = UploadState.Success;
                         }
                         else
@@ -116,7 +118,7 @@ namespace AdminAPI.Libraries.Ueditor
                     file.OpenReadStream();
 
                     string savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
-                    string localPath = rootPath + savePath;
+                    string localPath = Path.Combine(rootPath, savePath);
 
                     try
                     {
@@ -136,14 +138,17 @@ namespace AdminAPI.Libraries.Ueditor
 
                         if (fileStorage != null)
                         {
+                            var utcNow = DateTime.UtcNow;
 
-                            var upload = fileStorage.FileUpload(localPath, "uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd"), file.FileName);
+                            string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
+
+                            var upload = fileStorage.FileUpload(localPath, basePath, file.FileName);
 
                             if (upload)
                             {
                                 Common.IOHelper.DeleteFile(localPath);
 
-                                Result.Url = "/uploads/" + DateTime.UtcNow.ToString("yyyy/MM/dd") + "/" + Path.GetFileName(localPath);
+                                Result.Url = Path.Combine(basePath, Path.GetFileName(localPath)).Replace("\\", "/");
                                 Result.State = UploadState.Success;
                             }
                             else

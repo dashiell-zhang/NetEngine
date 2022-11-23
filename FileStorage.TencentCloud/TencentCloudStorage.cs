@@ -55,6 +55,8 @@ namespace FileStorage.TencentCloud
         {
             try
             {
+                remotePath = remotePath.Replace("\\", "/");
+
                 DeleteObjectRequest request = new(bucketName, remotePath);
                 DeleteObjectResult result = cosXml.DeleteObject(request);
 
@@ -72,6 +74,8 @@ namespace FileStorage.TencentCloud
         {
             try
             {
+                remotePath = remotePath.Replace("\\", "/");
+
                 TransferConfig transferConfig = new();
 
                 TransferManager transferManager = new(cosXml, transferConfig);
@@ -100,6 +104,8 @@ namespace FileStorage.TencentCloud
         {
             try
             {
+                remotePath = remotePath.Replace("\\", "/");
+
                 TransferConfig transferConfig = new();
 
                 TransferManager transferManager = new(cosXml, transferConfig);
@@ -131,6 +137,8 @@ namespace FileStorage.TencentCloud
         {
             try
             {
+                remotePath = remotePath.Replace("\\", "/");
+
                 PreSignatureStruct preSignatureStruct = new()
                 {
                     appid = appId,//腾讯云账号 APPID

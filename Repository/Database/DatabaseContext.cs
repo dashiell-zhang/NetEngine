@@ -155,7 +155,7 @@ namespace Repository.Database
 
         public static string GetEntityComment(string typeName, string? fieldName = null, List<string>? baseTypeNames = null)
         {
-            var path = AppContext.BaseDirectory + "/Repository.xml";
+            var path = Path.Combine(AppContext.BaseDirectory, "Repository.xml");
             XmlDocument xml = new();
             xml.Load(path);
             XmlNodeList memebers = xml.SelectNodes("/doc/members/member")!;

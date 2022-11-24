@@ -88,11 +88,9 @@ namespace FileStorage.AliCloud
         {
             try
             {
-                remotePath = remotePath.Replace("\\", "/");
-
                 var objectName = Path.GetFileName(localPath);
 
-                objectName = remotePath + "/" + objectName;
+                objectName = Path.Combine(remotePath, objectName).Replace("\\", "/");
 
                 // 创建OssClient实例。
                 OssClient client = new(endpoint, accessKeyId, accessKeySecret);

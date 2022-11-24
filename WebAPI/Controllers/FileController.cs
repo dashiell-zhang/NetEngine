@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
-using NPOI.HPSF;
 using Repository.Database;
 using SkiaSharp;
 using WebAPI.Libraries;
@@ -272,7 +271,7 @@ namespace WebAPI.Controllers
                 FileExtensionContentTypeProvider provider = new();
                 var memi = provider.Mappings[fileExt];
 
-         
+
 
                 if (width == 0 && height == 0)
                 {

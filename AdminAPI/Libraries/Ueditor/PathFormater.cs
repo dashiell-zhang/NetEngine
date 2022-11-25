@@ -7,11 +7,12 @@ namespace AdminAPI.Libraries.Ueditor
     /// <summary>
     /// PathFormater 的摘要说明
     /// </summary>
+    #pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     public static class PathFormatter
     {
         public static string Format(string originFileName, string pathFormat)
         {
-            if (String.IsNullOrWhiteSpace(pathFormat))
+            if (string.IsNullOrWhiteSpace(pathFormat))
             {
                 pathFormat = "{filename}{rand:6}";
             }

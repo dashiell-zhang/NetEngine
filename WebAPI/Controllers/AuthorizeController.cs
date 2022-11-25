@@ -482,9 +482,10 @@ namespace WebAPI.Controllers
         [HttpGet("GeneratePassWord")]
         public DtoKeyValue GeneratePassWord(string passWord)
         {
-            DtoKeyValue keyValue = new();
-
-            keyValue.Key = idHelper.GetId();
+            DtoKeyValue keyValue = new()
+            {
+                Key = idHelper.GetId()
+            };
 
             keyValue.Value = Convert.ToBase64String(KeyDerivation.Pbkdf2(passWord, Encoding.UTF8.GetBytes(keyValue.Key.ToString()!), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
@@ -503,7 +504,7 @@ namespace WebAPI.Controllers
         {
             var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new
             {
-                Name = x.DisplayName!.Substring(0, x.DisplayName.IndexOf("(") - 1),
+                Name = x.DisplayName![..(x.DisplayName!.IndexOf("(") - 1)],
                 Route = x.AttributeRouteInfo!.Template,
                 IsAuthorize = (x.EndpointMetadata.Where(t => t.GetType().FullName == "Microsoft.AspNetCore.Authorization.AuthorizeAttribute").Any() == true && x.EndpointMetadata.Where(t => t.GetType().FullName == "Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute").Any() == false),
             }).ToList();
@@ -535,11 +536,11 @@ namespace WebAPI.Controllers
 
                                 string summary = childNode.InnerText;
 
-                                name = name!.Substring(2);
+                                name = name![2..];
 
-                                if (name.IndexOf("(") >= 0)
+                                if (name.Contains('(', StringComparison.CurrentCulture))
                                 {
-                                    name = name.Substring(0, name.IndexOf("("));
+                                    name = name[..name.IndexOf("(")];
                                 }
 
                                 summary = summary.Replace("\n", "").Trim();
@@ -577,12 +578,14 @@ namespace WebAPI.Controllers
                 }
                 else
                 {
-                    TFunctionRoute functionRoute = new();
-                    functionRoute.Id = idHelper.GetId();
-                    functionRoute.CreateTime = DateTime.UtcNow;
-                    functionRoute.Module = projectName;
-                    functionRoute.Route = item.Route!;
-                    functionRoute.Remarks = remarks;
+                    TFunctionRoute functionRoute = new()
+                    {
+                        Id = idHelper.GetId(),
+                        CreateTime = DateTime.UtcNow,
+                        Module = projectName,
+                        Route = item.Route!,
+                        Remarks = remarks
+                    };
 
                     db.TFunctionRoute.Add(functionRoute);
                 }

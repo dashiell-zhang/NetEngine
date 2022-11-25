@@ -155,7 +155,7 @@ namespace AdminAPI.Controllers
 
                 FileExtensionContentTypeProvider provider = new();
 
-                var memi = provider.Mappings.ContainsKey(fileExt) ? provider.Mappings[fileExt] : provider.Mappings[".zip"];
+                var memi = provider.Mappings.TryGetValue(fileExt, out string? value) ? value : provider.Mappings[".zip"];
 
                 return PhysicalFile(physicalPath, memi, file.Name);
             }

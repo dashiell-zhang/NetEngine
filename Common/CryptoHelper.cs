@@ -59,8 +59,7 @@ namespace Common
         /// <returns></returns>
         public static string GetMD5(string text)
         {
-            using var md5 = MD5.Create();
-            return Convert.ToHexString(md5.ComputeHash(Encoding.UTF8.GetBytes(text)));
+            return Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(text)));
         }
 
 
@@ -96,8 +95,7 @@ namespace Common
         /// <returns></returns>
         public static string GetSHA256(string text)
         {
-            using SHA256 sha256 = SHA256.Create();
-            return Convert.ToHexString(sha256.ComputeHash(Encoding.UTF8.GetBytes(text)));
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
         }
 
 
@@ -109,8 +107,7 @@ namespace Common
         /// <returns></returns>
         public static string GetSHA512(string text)
         {
-            using SHA512 sha512 = SHA512.Create();
-            return Convert.ToHexString(sha512.ComputeHash(Encoding.UTF8.GetBytes(text)));
+            return Convert.ToHexString(SHA512.HashData(Encoding.UTF8.GetBytes(text)));
         }
 
 

@@ -173,7 +173,7 @@ namespace Common
         public static void CompressFileZip(string filePath, string zipPath)
         {
 
-            FileInfo fileInfo = new FileInfo(filePath);
+            FileInfo fileInfo = new(filePath);
 
             string tempPath = Path.Combine(fileInfo.DirectoryName!, Guid.NewGuid() + "_temp");
 

@@ -66,16 +66,11 @@ namespace WebAPI.Libraries.HttpHandler
                     }
                 }
             }
+            string dataSign = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(dataStr)));
 
-
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                string dataSign = Convert.ToHexString(sha256.ComputeHash(Encoding.UTF8.GetBytes(dataStr)));
-
-                request.Headers.Add("Authorization", "Bearer " + authorization);
-                request.Headers.Add("Token", dataSign);
-                request.Headers.Add("Time", timeStr);
-            }
+            request.Headers.Add("Authorization", "Bearer " + authorization);
+            request.Headers.Add("Token", dataSign);
+            request.Headers.Add("Time", timeStr);
 
 
             var response = await base.SendAsync(request, cancellationToken);

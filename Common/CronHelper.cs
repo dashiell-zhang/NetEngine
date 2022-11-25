@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Common
 {
-
+    #pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     public class CronHelper
     {
 
@@ -132,7 +132,9 @@ namespace Common
 
             private static readonly char[] commaSeparator = { ',' };
 
+
             private static readonly Regex regex = new("^L-[0-9]*[W]?", RegexOptions.Compiled);
+
 
             private static readonly TimeZoneInfo timeZoneInfo = TimeZoneInfo.Local;
 
@@ -1050,12 +1052,7 @@ namespace Common
             /// <returns></returns>
             private static int GetMonthNumber(string s)
             {
-                if (monthMap.ContainsKey(s))
-                {
-                    return monthMap[s];
-                }
-
-                return -1;
+                return monthMap.TryGetValue(s, out int value) ? value : -1;
             }
 
 
@@ -1067,9 +1064,9 @@ namespace Common
             /// <returns></returns>
             private static int GetDayOfWeekNumber(string s)
             {
-                if (dayMap.ContainsKey(s))
+                if (dayMap.TryGetValue(s, out int value))
                 {
-                    return dayMap[s];
+                    return value;
                 }
 
                 return -1;

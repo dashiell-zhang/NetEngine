@@ -12,10 +12,6 @@
 
         <Menu Theme="MenuTheme.Dark" DefaultSelectedKeys=@(new[]{"1"}) Mode="MenuMode.Inline">
 
-            @{
-                Console.WriteLine(functionList.Count());
-            }
-
             @if (functionList.Contains("information"))
             {
                 <SubMenu TitleTemplate=subArticle>
@@ -114,8 +110,6 @@
 
     void onCollapse(bool collapsed)
     {
-        Console.WriteLine(collapsed);
-
         if (collapsed)
         {
             leftLayoutStyle = "margin-left:80px";

@@ -199,10 +199,7 @@ namespace Repository.Database
                         {
                             name = name.Replace(matchKey, "");
 
-                            if (fieldList.ContainsKey(name))
-                            {
-                                fieldList.Remove(name);
-                            }
+                            fieldList.Remove(name);
 
                             fieldList.Add(name, summary);
                         }

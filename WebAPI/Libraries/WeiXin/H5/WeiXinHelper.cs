@@ -117,15 +117,11 @@ namespace WebAPI.Libraries.WeiXin.H5
 
             string jsapi_ticket = GetTicketID(distributedCache, httpClientFactory);
             string strYW = "jsapi_ticket=" + jsapi_ticket + "&noncestr=" + sdkSign.NonceStr + "&timestamp=" + sdkSign.TimeStamp + "&url=" + url;
+            byte[] bytes_sha1_in = Encoding.Default.GetBytes(strYW);
+            byte[] bytes_sha1_out = SHA1.HashData(bytes_sha1_in);
+            string str_sha1_out = Convert.ToHexString(bytes_sha1_out).ToLower();
 
-            using (var sha1 = SHA1.Create())
-            {
-                byte[] bytes_sha1_in = Encoding.Default.GetBytes(strYW);
-                byte[] bytes_sha1_out = sha1.ComputeHash(bytes_sha1_in);
-                string str_sha1_out = Convert.ToHexString(bytes_sha1_out).ToLower();
-
-                sdkSign.Signature = str_sha1_out;
-            }
+            sdkSign.Signature = str_sha1_out;
 
             return sdkSign;
         }

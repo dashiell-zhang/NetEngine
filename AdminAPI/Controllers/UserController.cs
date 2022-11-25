@@ -142,12 +142,14 @@ namespace AdminAPI.Controllers
 
             foreach (var item in roleIds)
             {
-                TUserRole userRole = new();
-                userRole.Id = idHelper.GetId();
-                userRole.CreateTime = DateTime.UtcNow;
-                userRole.UserId = user.Id;
-                userRole.CreateUserId = this.userId;
-                userRole.RoleId = item;
+                TUserRole userRole = new()
+                {
+                    Id = idHelper.GetId(),
+                    CreateTime = DateTime.UtcNow,
+                    UserId = user.Id,
+                    CreateUserId = this.userId,
+                    RoleId = item
+                };
 
                 db.TUserRole.Add(userRole);
             }
@@ -207,12 +209,14 @@ namespace AdminAPI.Controllers
 
                 foreach (var item in roleIds)
                 {
-                    TUserRole userRole = new();
-                    userRole.Id = idHelper.GetId();
-                    userRole.CreateTime = DateTime.UtcNow;
-                    userRole.UserId = userId;
-                    userRole.CreateUserId = this.userId;
-                    userRole.RoleId = item;
+                    TUserRole userRole = new()
+                    {
+                        Id = idHelper.GetId(),
+                        CreateTime = DateTime.UtcNow,
+                        UserId = userId,
+                        CreateUserId = this.userId,
+                        RoleId = item
+                    };
 
                     db.TUserRole.Add(userRole);
                 }

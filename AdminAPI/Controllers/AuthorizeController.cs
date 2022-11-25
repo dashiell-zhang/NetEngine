@@ -115,7 +115,7 @@ namespace AdminAPI.Controllers
         {
             var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new
             {
-                Name = x.DisplayName!.Substring(0, x.DisplayName.IndexOf("(") - 1),
+                Name = x.DisplayName![..(x.DisplayName!.IndexOf("(") - 1)],
                 Route = x.AttributeRouteInfo!.Template,
                 IsAuthorize = (x.EndpointMetadata.Where(t => t.GetType().FullName == "Microsoft.AspNetCore.Authorization.AuthorizeAttribute").Any() == true && x.EndpointMetadata.Where(t => t.GetType().FullName == "Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute").Any() == false),
             }).ToList();
@@ -147,11 +147,11 @@ namespace AdminAPI.Controllers
 
                                 string summary = childNode.InnerText;
 
-                                name = name!.Substring(2);
+                                name = name![2..];
 
-                                if (name.IndexOf("(") >= 0)
+                                if (name.Contains('(', StringComparison.CurrentCulture))
                                 {
-                                    name = name.Substring(0, name.IndexOf("("));
+                                    name = name[..name.IndexOf("(")];
                                 }
 
                                 summary = summary.Replace("\n", "").Trim();
@@ -189,12 +189,14 @@ namespace AdminAPI.Controllers
                 }
                 else
                 {
-                    TFunctionRoute functionRoute = new();
-                    functionRoute.Id = idHelper.GetId();
-                    functionRoute.CreateTime = DateTime.UtcNow;
-                    functionRoute.Module = projectName;
-                    functionRoute.Route = item.Route!;
-                    functionRoute.Remarks = remarks;
+                    TFunctionRoute functionRoute = new()
+                    {
+                        Id = idHelper.GetId(),
+                        CreateTime = DateTime.UtcNow,
+                        Module = projectName,
+                        Route = item.Route!,
+                        Remarks = remarks
+                    };
 
                     db.TFunctionRoute.Add(functionRoute);
                 }

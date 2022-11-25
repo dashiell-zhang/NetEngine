@@ -49,9 +49,7 @@ namespace AdminAPP.Libraries
                     {
                         dataStr += requestBody;
                     }
-
-                    using SHA256 sha256 = SHA256.Create();
-                    string dataSign = Convert.ToHexString(sha256.ComputeHash(Encoding.UTF8.GetBytes(dataStr)));
+                    string dataSign = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(dataStr)));
 
                     request.Headers.Add("Authorization", "Bearer " + authorization);
                     request.Headers.Add("Token", dataSign);

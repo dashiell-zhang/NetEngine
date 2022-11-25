@@ -307,10 +307,7 @@ namespace Common
             }
             catch (Exception)
             {
-                if (fs != null)
-                {
-                    fs.Close();
-                }
+                fs?.Close();
                 return null;
             }
         }

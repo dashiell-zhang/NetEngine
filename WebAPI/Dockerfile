@@ -3,10 +3,15 @@
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 WORKDIR /app
 
-#°²×° libfontconfig1 ÒÔ½â¾ö SkiaSharp ÔÚ linux µÄÒÀÀµÎÊÌâ
+#ä¿®æ”¹é•œåƒå†…éƒ¨è½¯ä»¶æºé‡‡ç”¨é˜¿é‡Œé•œåƒ
+RUN echo "deb https://mirrors.aliyun.com/debian bullseye main" > /etc/apt/sources.list
+RUN echo "deb https://mirrors.aliyun.com/debian-security bullseye-security main" >> /etc/apt/sources.list
+RUN echo "deb https://mirrors.aliyun.com/debian bullseye-updates main" >> /etc/apt/sources.list
+
+#å®‰è£… libfontconfig1 ä»¥è§£å†³ SkiaSharp åœ¨ linux çš„ä¾èµ–é—®é¢˜
 RUN apt-get update && apt-get -y install libfontconfig1
 
-#ÉèÖÃÊ±ÇøÎªÖĞ¹úÉÏº£
+#è®¾ç½®æ—¶åŒºä¸ºä¸­å›½ä¸Šæµ·
 ENV TZ=Asia/Shanghai
 
 EXPOSE 80

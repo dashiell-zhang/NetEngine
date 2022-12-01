@@ -3,7 +3,12 @@
 FROM mcr.microsoft.com/dotnet/runtime:7.0 AS base
 WORKDIR /app
 
-#����ʱ��Ϊ�й��Ϻ�
+#修改镜像内部软件源采用阿里镜像
+RUN echo "deb https://mirrors.aliyun.com/debian bullseye main" > /etc/apt/sources.list
+RUN echo "deb https://mirrors.aliyun.com/debian-security bullseye-security main" >> /etc/apt/sources.list
+RUN echo "deb https://mirrors.aliyun.com/debian bullseye-updates main" >> /etc/apt/sources.list
+
+#设置时区为中国上海
 ENV TZ=Asia/Shanghai
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build

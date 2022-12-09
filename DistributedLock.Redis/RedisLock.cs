@@ -1,7 +1,8 @@
-﻿using Common;
-using DistributedLock.Redis.Models;
+﻿using DistributedLock.Redis.Models;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace DistributedLock.Redis
 {
@@ -44,7 +45,7 @@ namespace DistributedLock.Redis
             {
                 for (int i = 0; i < semaphore; i++)
                 {
-                    var keyMd5 = redisSetting.InstanceName + CryptoHelper.GetMD5(key + i);
+                    var keyMd5 = redisSetting.InstanceName + Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(key + i)));
 
                     try
                     {
@@ -96,7 +97,7 @@ namespace DistributedLock.Redis
 
             for (int i = 0; i < semaphore; i++)
             {
-                var keyMd5 = redisSetting.InstanceName + CryptoHelper.GetMD5(key + i);
+                var keyMd5 = redisSetting.InstanceName + Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(key + i)));
 
                 try
                 {

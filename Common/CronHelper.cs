@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Common
 {
-    #pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     public class CronHelper
     {
 

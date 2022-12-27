@@ -22,10 +22,10 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="7.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="7.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.1" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.25.1" />

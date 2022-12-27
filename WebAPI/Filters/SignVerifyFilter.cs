@@ -36,7 +36,7 @@ namespace WebAPI.Filters
                     var timeStr = context.HttpContext.Request.Headers["Time"].ToString();
                     var time = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timeStr));
 
-                    if (time.AddSeconds(10) > DateTime.UtcNow)
+                    if (time.AddMinutes(3) > DateTime.UtcNow)
                     {
 
                         var authorizationStr = context.HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");

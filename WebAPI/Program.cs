@@ -245,7 +245,8 @@ namespace WebAPI
                 options.DefaultRequestVersion = new("2.0");
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
-                AllowAutoRedirect = false
+                AllowAutoRedirect = false,
+                AutomaticDecompression = System.Net.DecompressionMethods.All
             });
 
 
@@ -255,6 +256,7 @@ namespace WebAPI
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
+                AutomaticDecompression = System.Net.DecompressionMethods.All,
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
             });
 

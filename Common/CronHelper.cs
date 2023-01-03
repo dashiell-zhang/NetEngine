@@ -138,31 +138,38 @@ namespace Common
 
             private static readonly TimeZoneInfo timeZoneInfo = TimeZoneInfo.Local;
 
+            private static object monthMapLock = new object();
 
             public CronExpression(string cronExpression)
             {
                 if (monthMap.Count == 0)
                 {
-                    monthMap.Add("JAN", 0);
-                    monthMap.Add("FEB", 1);
-                    monthMap.Add("MAR", 2);
-                    monthMap.Add("APR", 3);
-                    monthMap.Add("MAY", 4);
-                    monthMap.Add("JUN", 5);
-                    monthMap.Add("JUL", 6);
-                    monthMap.Add("AUG", 7);
-                    monthMap.Add("SEP", 8);
-                    monthMap.Add("OCT", 9);
-                    monthMap.Add("NOV", 10);
-                    monthMap.Add("DEC", 11);
+                    lock (monthMapLock)
+                    {
+                        if (monthMap.Count == 0)
+                        {
+                            monthMap.Add("JAN", 0);
+                            monthMap.Add("FEB", 1);
+                            monthMap.Add("MAR", 2);
+                            monthMap.Add("APR", 3);
+                            monthMap.Add("MAY", 4);
+                            monthMap.Add("JUN", 5);
+                            monthMap.Add("JUL", 6);
+                            monthMap.Add("AUG", 7);
+                            monthMap.Add("SEP", 8);
+                            monthMap.Add("OCT", 9);
+                            monthMap.Add("NOV", 10);
+                            monthMap.Add("DEC", 11);
 
-                    dayMap.Add("SUN", 1);
-                    dayMap.Add("MON", 2);
-                    dayMap.Add("TUE", 3);
-                    dayMap.Add("WED", 4);
-                    dayMap.Add("THU", 5);
-                    dayMap.Add("FRI", 6);
-                    dayMap.Add("SAT", 7);
+                            dayMap.Add("SUN", 1);
+                            dayMap.Add("MON", 2);
+                            dayMap.Add("TUE", 3);
+                            dayMap.Add("WED", 4);
+                            dayMap.Add("THU", 5);
+                            dayMap.Add("FRI", 6);
+                            dayMap.Add("SAT", 7);
+                        }
+                    }
                 }
 
                 if (cronExpression == null)

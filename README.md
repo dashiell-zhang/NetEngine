@@ -80,22 +80,22 @@ TaskService 支持 Cron 表达式配置周期性执行方法，未依赖任何�
     Microsoft.EntityFrameworkCore.Proxies
     options.UseLazyLoadingProxies();
 
-    SQL Server
-    驱动：Microsoft.EntityFrameworkCore.SqlServer 和 Microsoft.Data.SqlClient
+    SQLServer
+    驱动：Microsoft.EntityFrameworkCore.SqlServer
     数据库生成模型指令：Scaffold-DbContext "ConnectionString" Microsoft.EntityFrameworkCore.SqlServer -OutputDir WebCore -Force
     字符串：Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100;Encrypt=True
     EF 配置：optionsBuilder.UseSqlServer("ConnectionString", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
-    PostgreSql
+    PostgreSQL
     驱动：Npgsql.EntityFrameworkCore.PostgreSQL
     数据库生成模型指令：Scaffold-DbContext "ConnectionString"  Npgsql.EntityFrameworkCore.PostgreSQL -OutputDir webcore -Force
     字符串：Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=30;SSL Mode=VerifyFull
     EF 配置：optionsBuilder.UseNpgsql("ConnectionString", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
 
-    MySql
+    MySQL
     Pomelo.EntityFrameworkCore.MySql
-    数据库生成模型指令：Scaffold-DbContext "ConnectionString" MySql.EntityFrameworkCore -OutputDir webcore -Force
+    数据库生成模型指令：Scaffold-DbContext "ConnectionString" Pomelo.EntityFrameworkCore.MySql -OutputDir webcore -Force
     字符串：server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100
     EF 配置：optionsBuilder.UseMySql("ConnectionString", new MySqlServerVersion(new Version(8, 0, 29)), o => o.MigrationsHistoryTable("__efmigrationshistory"));
 

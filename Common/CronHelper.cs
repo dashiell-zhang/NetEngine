@@ -138,7 +138,7 @@ namespace Common
 
             private static readonly TimeZoneInfo timeZoneInfo = TimeZoneInfo.Local;
 
-            private static object monthMapLock = new object();
+            private static object monthMapLock = new();
 
             public CronExpression(string cronExpression)
             {

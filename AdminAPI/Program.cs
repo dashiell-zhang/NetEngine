@@ -286,7 +286,6 @@ namespace AdminAPI
 
             app.UseForwardedHeaders();
 
-            app.UseResponseCompression();
 
             //开启倒带模式允许多次读取 HttpContext.Body 中的内容
             app.Use(async (context, next) =>
@@ -301,6 +300,8 @@ namespace AdminAPI
             }
             else
             {
+                app.UseResponseCompression();
+
                 //注册全局异常处理机制
                 app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
             }

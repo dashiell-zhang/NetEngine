@@ -16,7 +16,7 @@
         </div>
         <Table TItem="DtoLink" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
-            <RowTemplate>
+            <ColumnDefinitions>
                 <Column @bind-Field="@context.Name" Title="名称"></Column>
                 <Column @bind-Field="@context.Url" Title="Url"></Column>
                 <Column @bind-Field="@context.Sort" Title="排序"></Column>
@@ -47,7 +47,7 @@
 
                     </Space>
                 </ActionColumn>
-            </RowTemplate>
+            </ColumnDefinitions>
 
             <PaginationTemplate>
                 <div style="margin:15px 0;float:right">

@@ -16,7 +16,7 @@
         </div>
         <Table TItem="DtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
-            <RowTemplate>
+            <ColumnDefinitions>
                 <Column @bind-Field="@context.Name" Title="用户名"></Column>
                 <Column @bind-Field="@context.NickName" Title="昵称"></Column>
                 <Column @bind-Field="@context.Phone" Title="电话"></Column>
@@ -56,7 +56,7 @@
 
                     </Space>
                 </ActionColumn>
-            </RowTemplate>
+            </ColumnDefinitions>
 
             <PaginationTemplate>
                 <div style="margin:15px 0;float:right">

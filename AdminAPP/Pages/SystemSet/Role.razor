@@ -17,7 +17,7 @@
         </div>
         <Table TItem="DtoRole" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
-            <RowTemplate>
+            <ColumnDefinitions>
                 <Column @bind-Field="@context.Name" Title="名称"></Column>
                 <Column @bind-Field="@context.Remarks" Title="备注"></Column>
                 <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间">
@@ -54,7 +54,7 @@
 
                     </Space>
                 </ActionColumn>
-            </RowTemplate>
+            </ColumnDefinitions>
 
             <PaginationTemplate>
                 <div style="margin:15px 0;float:right">

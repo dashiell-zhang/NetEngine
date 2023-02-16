@@ -10,13 +10,11 @@ namespace AdminShared.Models.Authorize
     {
 
 
-
         /// <summary>
         /// 用户名
         /// </summary>
         [Required(ErrorMessage = "用户名不可以空")]
-        public string Name { get; set; }
-
+        public string UserName { get; set; }
 
 
 

@@ -5,15 +5,15 @@
 
 
         /// <summary>
-        /// 用户名
+        /// 名称
         /// </summary>
         public string Name { get; set; }
 
 
         /// <summary>
-        /// 昵称
+        /// 用户名
         /// </summary>
-        public string NickName { get; set; }
+        public string UserName { get; set; }
 
 
         /// <summary>

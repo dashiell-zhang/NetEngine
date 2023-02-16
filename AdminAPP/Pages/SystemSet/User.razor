@@ -17,8 +17,8 @@
         <Table TItem="DtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
-                <Column @bind-Field="@context.Name" Title="用户名"></Column>
-                <Column @bind-Field="@context.NickName" Title="昵称"></Column>
+                <Column @bind-Field="@context.Name" Title="名称"></Column>
+                <Column @bind-Field="@context.UserName" Title="用户名"></Column>
                 <Column @bind-Field="@context.Phone" Title="电话"></Column>
                 <Column @bind-Field="@context.Email" Title="邮箱"></Column>
                 <Column @bind-Field="@context.Roles" Title="角色"></Column>
@@ -76,13 +76,13 @@
         <Form Model="@editUser" OnFinish="SaveUser">
 
             <FormItem>
-                <Text>用户名</Text>
-                <Input Placeholder="请输入用户名" @bind-Value="@context.Name" AutoComplete=false />
+                <Text>名称</Text>
+                <Input Placeholder="请输入名称" @bind-Value="@context.Name" AutoComplete=false />
             </FormItem>
 
             <FormItem>
-                <Text>昵称</Text>
-                <Input Placeholder="请输入昵称" @bind-Value="@context.NickName" />
+                <Text>用户名</Text>
+                <Input Placeholder="请输入用户名" @bind-Value="@context.UserName" />
             </FormItem>
 
             <FormItem>
@@ -254,7 +254,7 @@
         {
             userId = user.Id;
             editUser.Name = user.Name;
-            editUser.NickName = user.NickName;
+            editUser.UserName = user.UserName;
             editUser.Phone = user.Phone;
             editUser.Email = user.Email;
             editUser.PassWord = "default";

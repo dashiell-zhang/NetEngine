@@ -149,7 +149,7 @@ namespace WebAPI.Controllers
             var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
             {
                 Name = t.Name,
-                NickName = t.NickName,
+                UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
                 Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),

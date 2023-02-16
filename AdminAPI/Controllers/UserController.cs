@@ -4,6 +4,7 @@ using AdminAPI.Services;
 using AdminShared.Models;
 using AdminShared.Models.User;
 using Common;
+using DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
@@ -64,7 +65,7 @@ namespace AdminAPI.Controllers
 
             if (!string.IsNullOrEmpty(searchKey))
             {
-                query = query.Where(t => t.Name.Contains(searchKey) || t.NickName.Contains(searchKey) || t.Phone.Contains(searchKey));
+                query = query.Where(t => t.Name.Contains(searchKey) || t.UserName.Contains(searchKey) || t.Phone.Contains(searchKey));
             }
 
 
@@ -74,7 +75,7 @@ namespace AdminAPI.Controllers
             {
                 Id = t.Id,
                 Name = t.Name,
-                NickName = t.NickName,
+                UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
                 Roles = string.Join("、", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
@@ -102,7 +103,7 @@ namespace AdminAPI.Controllers
             {
                 Id = t.Id,
                 Name = t.Name,
-                NickName = t.NickName,
+                UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
                 Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
@@ -120,43 +121,56 @@ namespace AdminAPI.Controllers
         /// <param name="createUser"></param>
         /// <returns></returns>
         [HttpPost("CreateUser")]
-        public long CreateUser(DtoEditUser createUser)
+        public long? CreateUser(DtoEditUser createUser)
         {
-            var roleIds = createUser.RoleIds.Select(t => long.Parse(t)).ToList();
 
-            TUser user = new()
+            var isHaveUserName = db.TUser.Where(t => t.IsDelete == false && t.UserName.ToLower() == createUser.UserName.ToLower()).Any();
+
+            if (isHaveUserName == false)
             {
-                Id = idHelper.GetId(),
-                Name = createUser.Name,
-                NickName = createUser.NickName,
-                Phone = createUser.Phone
-            };
-            user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-            user.CreateTime = DateTime.UtcNow;
-            user.CreateUserId = userId;
+                var roleIds = createUser.RoleIds.Select(t => long.Parse(t)).ToList();
 
-            user.Email = createUser.Email;
-
-            db.TUser.Add(user);
-
-
-            foreach (var item in roleIds)
-            {
-                TUserRole userRole = new()
+                TUser user = new()
                 {
                     Id = idHelper.GetId(),
-                    CreateTime = DateTime.UtcNow,
-                    UserId = user.Id,
-                    CreateUserId = this.userId,
-                    RoleId = item
+                    Name = createUser.Name,
+                    UserName = createUser.UserName,
+                    Phone = createUser.Phone
                 };
+                user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                user.CreateTime = DateTime.UtcNow;
+                user.CreateUserId = userId;
 
-                db.TUserRole.Add(userRole);
+                user.Email = createUser.Email;
+
+                db.TUser.Add(user);
+
+                foreach (var item in roleIds)
+                {
+                    TUserRole userRole = new()
+                    {
+                        Id = idHelper.GetId(),
+                        CreateTime = DateTime.UtcNow,
+                        UserId = user.Id,
+                        CreateUserId = this.userId,
+                        RoleId = item
+                    };
+
+                    db.TUserRole.Add(userRole);
+                }
+
+                db.SaveChanges();
+
+                return user.Id;
             }
+            else
+            {
 
-            db.SaveChanges();
+                HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "用户名已存在，无法创建");
 
-            return user.Id;
+                return default;
+            }
         }
 
 
@@ -172,62 +186,74 @@ namespace AdminAPI.Controllers
         public bool UpdateUser(long userId, DtoEditUser updateUser)
         {
 
-            var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
+            var isHaveUserName = db.TUser.Where(t => t.IsDelete == false && t.Id != userId && t.UserName == updateUser.UserName).Any();
 
-            var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
-
-            if (user != null)
+            if (isHaveUserName)
             {
-                user.UpdateTime = DateTime.UtcNow;
-                user.UpdateUserId = this.userId;
+                var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
 
-                user.Name = updateUser.Name;
-                user.NickName = updateUser.NickName;
-                user.Phone = updateUser.Phone;
-                user.Email = updateUser.Email;
+                var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
 
-                if (updateUser.PassWord != "default")
+                if (user != null)
                 {
-                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                }
+                    user.UpdateTime = DateTime.UtcNow;
+                    user.UpdateUserId = this.userId;
 
-                var roleList = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == user.Id).ToList();
+                    user.Name = updateUser.Name;
+                    user.UserName = updateUser.UserName;
+                    user.Phone = updateUser.Phone;
+                    user.Email = updateUser.Email;
 
-                foreach (var item in roleList)
-                {
-                    if (roleIds.Contains(item.RoleId))
+                    if (updateUser.PassWord != "default")
                     {
-                        roleIds.Remove(item.RoleId);
+                        user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                     }
-                    else
+
+                    var roleList = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == user.Id).ToList();
+
+                    foreach (var item in roleList)
                     {
-                        item.IsDelete = true;
-                        item.DeleteTime = DateTime.UtcNow;
-                        item.DeleteUserId = this.userId;
+                        if (roleIds.Contains(item.RoleId))
+                        {
+                            roleIds.Remove(item.RoleId);
+                        }
+                        else
+                        {
+                            item.IsDelete = true;
+                            item.DeleteTime = DateTime.UtcNow;
+                            item.DeleteUserId = this.userId;
+                        }
                     }
-                }
 
-                foreach (var item in roleIds)
-                {
-                    TUserRole userRole = new()
+                    foreach (var item in roleIds)
                     {
-                        Id = idHelper.GetId(),
-                        CreateTime = DateTime.UtcNow,
-                        UserId = userId,
-                        CreateUserId = this.userId,
-                        RoleId = item
-                    };
+                        TUserRole userRole = new()
+                        {
+                            Id = idHelper.GetId(),
+                            CreateTime = DateTime.UtcNow,
+                            UserId = userId,
+                            CreateUserId = this.userId,
+                            RoleId = item
+                        };
 
-                    db.TUserRole.Add(userRole);
+                        db.TUserRole.Add(userRole);
+                    }
+
+
+                    db.SaveChanges();
+
+                    return true;
                 }
-
-
-                db.SaveChanges();
-
-                return true;
+                else
+                {
+                    return false;
+                }
             }
             else
             {
+                HttpContext.Response.StatusCode = 400;
+                HttpContext.Items.Add("errMsg", "用户名已存在，无法保存");
+
                 return false;
             }
         }

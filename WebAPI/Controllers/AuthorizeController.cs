@@ -74,7 +74,7 @@ namespace WebAPI.Controllers
         public string? GetToken(DtoLogin login)
         {
 
-            var userList = db.TUser.Where(t => t.IsDelete == false && (t.Name == login.Name || t.Phone == login.Name || t.Email == login.Name)).Select(t => new { t.Id, t.PassWord }).ToList();
+            var userList = db.TUser.Where(t => t.IsDelete == false && t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
 
             var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
@@ -139,7 +139,7 @@ namespace WebAPI.Controllers
                             Id = idHelper.GetId(),
                             CreateTime = DateTime.UtcNow,
                             Name = userName,
-                            NickName = userName,
+                            UserName = Guid.NewGuid().ToString(),
                             Phone = ""
                         };
                         user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
@@ -204,7 +204,7 @@ namespace WebAPI.Controllers
                         Id = idHelper.GetId(),
                         CreateTime = DateTime.UtcNow,
                         Name = userName,
-                        NickName = userName,
+                        UserName = Guid.NewGuid().ToString(),
                         Phone = phone
                     };
                     user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
@@ -335,7 +335,7 @@ namespace WebAPI.Controllers
                         IsDelete = false,
                         CreateTime = DateTime.UtcNow,
                         Name = userInfo.NickName,
-                        NickName = userInfo.NickName,
+                        UserName = Guid.NewGuid().ToString(),
                         Phone = ""
                     };
                     user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repository.Database.Bases;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
@@ -9,7 +8,7 @@ namespace Repository.Database
     /// <summary>
     /// 用户表
     /// </summary>
-    [Index(nameof(Name))]
+    [Index(nameof(UserName))]
     [Index(nameof(Phone))]
     [Index(nameof(Email))]
     public class TUser : CUD_User
@@ -17,16 +16,15 @@ namespace Repository.Database
 
 
         /// <summary>
-        /// 用户名
+        /// 名称
         /// </summary>
-        [DisplayName("用户名")]
         public string Name { get; set; }
 
 
         /// <summary>
-        /// 昵称
+        /// 用户名
         /// </summary>
-        public string NickName { get; set; }
+        public string UserName { get; set; }
 
 
         /// <summary>
@@ -47,13 +45,11 @@ namespace Repository.Database
         public string PassWord { get; set; }
 
 
-
         /// <summary>
         /// 用户信息
         /// </summary>
         [InverseProperty("User")]
         public virtual TUserInfo? UserInfo { get; set; }
-
 
 
         [InverseProperty("CreateUser")]
@@ -66,8 +62,6 @@ namespace Repository.Database
 
         [InverseProperty("UpdateUser")]
         public virtual List<TUser>? InverseUpdateUserList { get; set; }
-
-
 
     }
 }

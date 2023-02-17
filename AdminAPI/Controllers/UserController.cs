@@ -26,15 +26,17 @@ namespace AdminAPI.Controllers
     {
 
         private readonly DatabaseContext db;
+        private readonly IDistributedLock distLock;
         private readonly IDHelper idHelper;
 
         private readonly UserService userService;
         private readonly long userId;
 
 
-        public UserController(DatabaseContext db, IDHelper idHelper, UserService userService, IHttpContextAccessor httpContextAccessor)
+        public UserController(DatabaseContext db, IDistributedLock distLock, IDHelper idHelper, UserService userService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
+            this.distLock = distLock;
             this.idHelper = idHelper;
             this.userService = userService;
 
@@ -123,54 +125,58 @@ namespace AdminAPI.Controllers
         [HttpPost("CreateUser")]
         public long? CreateUser(DtoEditUser createUser)
         {
+            string key = "userName:" + createUser.UserName.ToLower();
 
-            var isHaveUserName = db.TUser.Where(t => t.IsDelete == false && t.UserName.ToLower() == createUser.UserName.ToLower()).Any();
-
-            if (isHaveUserName == false)
+            using (var handle = distLock.TryLock(key))
             {
-                var roleIds = createUser.RoleIds.Select(t => long.Parse(t)).ToList();
-
-                TUser user = new()
+                if (handle != null)
                 {
-                    Id = idHelper.GetId(),
-                    Name = createUser.Name,
-                    UserName = createUser.UserName,
-                    Phone = createUser.Phone
-                };
-                user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                user.CreateTime = DateTime.UtcNow;
-                user.CreateUserId = userId;
+                    var isHaveUserName = db.TUser.Where(t => t.IsDelete == false && t.UserName.ToLower() == createUser.UserName.ToLower()).Any();
 
-                user.Email = createUser.Email;
-
-                db.TUser.Add(user);
-
-                foreach (var item in roleIds)
-                {
-                    TUserRole userRole = new()
+                    if (isHaveUserName == false)
                     {
-                        Id = idHelper.GetId(),
-                        CreateTime = DateTime.UtcNow,
-                        UserId = user.Id,
-                        CreateUserId = this.userId,
-                        RoleId = item
-                    };
+                        var roleIds = createUser.RoleIds.Select(t => long.Parse(t)).ToList();
 
-                    db.TUserRole.Add(userRole);
+                        TUser user = new()
+                        {
+                            Id = idHelper.GetId(),
+                            Name = createUser.Name,
+                            UserName = createUser.UserName,
+                            Phone = createUser.Phone
+                        };
+                        user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                        user.CreateTime = DateTime.UtcNow;
+                        user.CreateUserId = userId;
+
+                        user.Email = createUser.Email;
+
+                        db.TUser.Add(user);
+
+                        foreach (var item in roleIds)
+                        {
+                            TUserRole userRole = new()
+                            {
+                                Id = idHelper.GetId(),
+                                CreateTime = DateTime.UtcNow,
+                                UserId = user.Id,
+                                CreateUserId = this.userId,
+                                RoleId = item
+                            };
+
+                            db.TUserRole.Add(userRole);
+                        }
+
+                        db.SaveChanges();
+
+                        return user.Id;
+                    }
                 }
-
-                db.SaveChanges();
-
-                return user.Id;
             }
-            else
-            {
 
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "用户名已存在，无法创建");
+            HttpContext.Response.StatusCode = 400;
+            HttpContext.Items.Add("errMsg", "用户名已被占用,无法保存");
 
-                return default;
-            }
+            return default;
         }
 
 
@@ -185,77 +191,82 @@ namespace AdminAPI.Controllers
         [HttpPost("UpdateUser")]
         public bool UpdateUser(long userId, DtoEditUser updateUser)
         {
+            string key = "userName:" + updateUser.UserName.ToLower();
 
-            var isHaveUserName = db.TUser.Where(t => t.IsDelete == false && t.Id != userId && t.UserName == updateUser.UserName).Any();
-
-            if (isHaveUserName)
+            using (var handle = distLock.TryLock(key))
             {
-                var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
-
-                var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
-
-                if (user != null)
+                if (handle != null)
                 {
-                    user.UpdateTime = DateTime.UtcNow;
-                    user.UpdateUserId = this.userId;
+                    var isHaveUserName = db.TUser.Where(t => t.IsDelete == false && t.Id != userId && t.UserName == updateUser.UserName).Any();
 
-                    user.Name = updateUser.Name;
-                    user.UserName = updateUser.UserName;
-                    user.Phone = updateUser.Phone;
-                    user.Email = updateUser.Email;
-
-                    if (updateUser.PassWord != "default")
+                    if (isHaveUserName)
                     {
-                        user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                    }
+                        var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
 
-                    var roleList = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == user.Id).ToList();
+                        var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
 
-                    foreach (var item in roleList)
-                    {
-                        if (roleIds.Contains(item.RoleId))
+                        if (user != null)
                         {
-                            roleIds.Remove(item.RoleId);
+                            user.UpdateTime = DateTime.UtcNow;
+                            user.UpdateUserId = this.userId;
+
+                            user.Name = updateUser.Name;
+                            user.UserName = updateUser.UserName;
+                            user.Phone = updateUser.Phone;
+                            user.Email = updateUser.Email;
+
+                            if (updateUser.PassWord != "default")
+                            {
+                                user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                            }
+
+                            var roleList = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == user.Id).ToList();
+
+                            foreach (var item in roleList)
+                            {
+                                if (roleIds.Contains(item.RoleId))
+                                {
+                                    roleIds.Remove(item.RoleId);
+                                }
+                                else
+                                {
+                                    item.IsDelete = true;
+                                    item.DeleteTime = DateTime.UtcNow;
+                                    item.DeleteUserId = this.userId;
+                                }
+                            }
+
+                            foreach (var item in roleIds)
+                            {
+                                TUserRole userRole = new()
+                                {
+                                    Id = idHelper.GetId(),
+                                    CreateTime = DateTime.UtcNow,
+                                    UserId = userId,
+                                    CreateUserId = this.userId,
+                                    RoleId = item
+                                };
+
+                                db.TUserRole.Add(userRole);
+                            }
+
+
+                            db.SaveChanges();
+
+                            return true;
                         }
                         else
                         {
-                            item.IsDelete = true;
-                            item.DeleteTime = DateTime.UtcNow;
-                            item.DeleteUserId = this.userId;
+                            return false;
                         }
                     }
-
-                    foreach (var item in roleIds)
-                    {
-                        TUserRole userRole = new()
-                        {
-                            Id = idHelper.GetId(),
-                            CreateTime = DateTime.UtcNow,
-                            UserId = userId,
-                            CreateUserId = this.userId,
-                            RoleId = item
-                        };
-
-                        db.TUserRole.Add(userRole);
-                    }
-
-
-                    db.SaveChanges();
-
-                    return true;
-                }
-                else
-                {
-                    return false;
                 }
             }
-            else
-            {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "用户名已存在，无法保存");
 
-                return false;
-            }
+            HttpContext.Response.StatusCode = 400;
+            HttpContext.Items.Add("errMsg", "用户名已被占用,无法保存");
+
+            return false;
         }
 
 

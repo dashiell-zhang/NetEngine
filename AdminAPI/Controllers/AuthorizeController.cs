@@ -64,7 +64,7 @@ namespace AdminAPI.Controllers
         [HttpPost("GetToken")]
         public string? GetToken(DtoLogin login)
         {
-            var userList = db.TUser.Where(t => t.IsDelete == false && t.UserName == login.UserName ).Select(t => new { t.Id, t.PassWord }).ToList();
+            var userList = db.TUser.Where(t => t.IsDelete == false && t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
 
             var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 

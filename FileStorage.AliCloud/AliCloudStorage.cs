@@ -61,18 +61,16 @@ namespace FileStorage.AliCloud
 
                 // 下载文件到流。OssObject 包含了文件的各种信息，如文件所在的存储空间、文件名、元信息以及一个输入流。
                 var obj = client.GetObject(bucketName, remotePath);
-                using (var requestStream = obj.Content)
+                using var requestStream = obj.Content;
+                byte[] buf = new byte[1024];
+                var fs = File.Open(localPath, FileMode.OpenOrCreate);
+                var len = 0;
+                // 通过输入流将文件的内容读取到文件或者内存中。
+                while ((len = requestStream.Read(buf, 0, 1024)) != 0)
                 {
-                    byte[] buf = new byte[1024];
-                    var fs = File.Open(localPath, FileMode.OpenOrCreate);
-                    var len = 0;
-                    // 通过输入流将文件的内容读取到文件或者内存中。
-                    while ((len = requestStream.Read(buf, 0, 1024)) != 0)
-                    {
-                        fs.Write(buf, 0, len);
-                    }
-                    fs.Close();
+                    fs.Write(buf, 0, len);
                 }
+                fs.Close();
 
                 return true;
             }

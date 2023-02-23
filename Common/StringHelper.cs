@@ -68,6 +68,30 @@ namespace Common
 
 
         /// <summary>
+        /// 判断字符串中是否全部为中文
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static bool IsAllCN(string text)
+        {
+            for (int i = 0; i < text.Length; i++)
+            {
+                string t = text.Substring(i, 1);
+
+                var isCN = IsContainsCN(t);
+
+                if (isCN == false)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+
+        /// <summary>
         /// 过滤删除掉字符串中的 HTML 标签
         /// </summary>
         /// <param name="htmlText"></param>

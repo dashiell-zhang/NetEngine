@@ -68,7 +68,7 @@ namespace AdminAPI.Controllers
 
             retList.Total = query.Count();
 
-            retList.List = query.Select(t => new DtoRole
+            retList.List = query.OrderBy(t => t.CreateTime).Select(t => new DtoRole
             {
                 Id = t.Id,
                 CreateTime = t.CreateTime,

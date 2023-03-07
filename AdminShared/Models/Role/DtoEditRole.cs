@@ -1,4 +1,6 @@
-﻿namespace AdminShared.Models.Role
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AdminShared.Models.Role
 {
     public class DtoEditRole
     {
@@ -7,6 +9,7 @@
         /// <summary>
         /// 角色名称
         /// </summary>
+        [Required(ErrorMessage = "角色名称不可以空")]
         public string Name { get; set; }
 
 

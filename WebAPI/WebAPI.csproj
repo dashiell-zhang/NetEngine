@@ -21,10 +21,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AlipaySDKNet.Standard" Version="4.7.166" />
-		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.3" />
+		<PackageReference Include="AlipaySDKNet.Standard" Version="4.7.186" />
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.4" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.27.0" />

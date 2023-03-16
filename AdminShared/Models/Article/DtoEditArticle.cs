@@ -14,7 +14,8 @@ namespace AdminShared.Models.Article
         /// <summary>
         /// 类别ID
         /// </summary>
-        public long CategoryId { get; set; }
+        [Required(ErrorMessage = "所属栏目不可以空")]
+        public string CategoryId { get; set; }
 
 
 

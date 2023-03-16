@@ -57,13 +57,13 @@
                 </div>
             </PaginationTemplate>
 
-        </Table>
+            </Table>
 
-    </Content>
-</Layout>
+            </Content>
+            </Layout>
 
 
-@{
+            @{
     RenderFragment editFooter = @<Template>
         <Button OnClick="SaveArticle" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
         <Button OnClick="()=>isShowEditArticle=false" @key="@("back")">取消</Button>
@@ -80,30 +80,30 @@
             <TabPane Key="1" Tab="基本信息">
 
                 <FormItem Label="所属栏目">
-                    <TreeSelect TItem="DtoTreeSelect" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@categoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
-                </FormItem>
+                    <TreeSelect TItem="DtoTreeSelect" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
+                    </FormItem>
 
-                <FormItem Label="标题">
+                    <FormItem Label="标题">
                     <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
-                </FormItem>
+                    </FormItem>
 
-                <FormItem Label="是否显示">
+                    <FormItem Label="是否显示">
                     <Switch @bind-Value="@context.IsDisplay" CheckedChildren="是" UnCheckedChildren="否" />
-                </FormItem>
+                    </FormItem>
 
-                <FormItem Label="是否推荐">
+                    <FormItem Label="是否推荐">
                     <Switch @bind-Value="@context.IsRecommend" CheckedChildren="是" UnCheckedChildren="否" />
-                </FormItem>
+                    </FormItem>
 
-                <FormItem Label="排序">
+                    <FormItem Label="排序">
                     <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" style="width: 190px" />
-                </FormItem>
+                    </FormItem>
 
-                <FormItem Label="点击量">
+                    <FormItem Label="点击量">
                     <Input Placeholder="请输入点击量" Type="number" @bind-Value="@context.ClickCount" style="width: 190px" />
-                </FormItem>
+                    </FormItem>
 
-                <FormItem Label="封面图">
+                    <FormItem Label="封面图">
                     <Upload Action="@(LocalStorage.GetItemAsString("appAPIURL")+"File/UploadFile?business=TArticle&key="+fileKey+"&sign=cover")"
                             Name="file"
                             Headers=headers
@@ -126,30 +126,27 @@
                     <Modal Visible="isPreviewImg" Title="预览" OnCancel="()=> isPreviewImg=false" Footer="null" Style="width:55%">
                         <Image Src="@previewImgUrl" />
                     </Modal>
-                </FormItem>
+                    </FormItem>
 
-            </TabPane>
+                    </TabPane>
 
-            <TabPane Key="2" Tab="详细内容" ForceRender="true">
-                <FormItem Label="摘要">
+                    <TabPane Key="2" Tab="详细内容" ForceRender="true">
+                    <FormItem Label="摘要">
                     <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Digest" MinRows="4" MaxRows="6" style="width:50em;min-height:80px" />
-                </FormItem>
+                    </FormItem>
 
-                <FormItem Label="内容">
+                    <FormItem Label="内容">
                     <TextArea Id="Content" @bind-Value="@context.Content" />
-                </FormItem>
-            </TabPane>
+                    </FormItem>
+                    </TabPane>
 
-        </Tabs>
+                    </Tabs>
 
-    </Form>
-</Modal>
+                    </Form>
+                    </Modal>
 
 
-@code {
-
-    private string categoryId;
-
+                    @code {
 
     private Form<DtoEditArticle>? _editArticleForm;
 
@@ -263,9 +260,7 @@
             fileKey = article.Id;
 
             articleId = article.Id;
-            editArticle.CategoryId = article.CategoryId;
-
-            categoryId = editArticle.CategoryId.ToString();
+            editArticle.CategoryId = article.CategoryId.ToString();
 
             editArticle.Title = article.Title;
             editArticle.Sort = article.Sort;
@@ -308,10 +303,10 @@
     async void SaveArticle()
     {
         editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
-        editArticle.CategoryId = long.Parse(categoryId);
 
         if (_editArticleForm!.Validate())
         {
+
             saveLoading = true;
 
             if (articleId == default)

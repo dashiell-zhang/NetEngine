@@ -327,7 +327,7 @@ namespace AdminAPI.Controllers
                 CreateUserId = userId,
                 Title = createArticle.Title,
                 Content = createArticle.Content,
-                CategoryId = createArticle.CategoryId,
+                CategoryId = long.Parse(createArticle.CategoryId),
                 IsRecommend = createArticle.IsRecommend,
                 IsDisplay = createArticle.IsDisplay,
                 Sort = createArticle.Sort,
@@ -375,7 +375,7 @@ namespace AdminAPI.Controllers
 
             if (article != null)
             {
-                article.CategoryId = updateArticle.CategoryId;
+                article.CategoryId = long.Parse(updateArticle.CategoryId);
                 article.Title = updateArticle.Title;
                 article.Content = updateArticle.Content;
                 article.IsRecommend = updateArticle.IsRecommend;

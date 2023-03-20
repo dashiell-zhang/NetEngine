@@ -10,5 +10,13 @@ namespace Logger.DataBase.Models
         /// </summary>
         public string Project { get; set; } = Assembly.GetEntryAssembly()?.GetName().Name!;
 
+
+
+        /// <summary>
+        /// 保存天数
+        /// </summary>
+        /// <remarks>永久保存：-1</remarks>
+        public int SaveDays { get; set; } = 14;
+
     }
 }

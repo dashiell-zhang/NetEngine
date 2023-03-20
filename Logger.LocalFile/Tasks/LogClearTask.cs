@@ -18,41 +18,46 @@ namespace Logger.LocalFile.Tasks
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            if (saveDays != -1)
             {
-                try
+                while (!stoppingToken.IsCancellationRequested)
                 {
-
-                    string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
-
-                    if (Directory.Exists(basePath))
+                    try
                     {
-                        List<string> logPaths = IOHelper.GetFolderAllFiles(basePath).ToList();
 
-                        var deleteTime = DateTime.UtcNow.AddDays(-1 * saveDays);
+                        string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
 
-                        if (logPaths.Count != 0)
+                        if (Directory.Exists(basePath))
                         {
-                            foreach (var logPath in logPaths)
+                            List<string> logPaths = IOHelper.GetFolderAllFiles(basePath).ToList();
+
+                            var deleteTime = DateTime.UtcNow.AddDays(-1 * saveDays);
+
+                            if (logPaths.Count != 0)
                             {
-                                FileInfo fileInfo = new(logPath);
-
-                                if (fileInfo.CreationTimeUtc < deleteTime)
+                                foreach (var logPath in logPaths)
                                 {
-                                    File.Delete(logPath);
-                                }
+                                    FileInfo fileInfo = new(logPath);
 
+                                    if (fileInfo.CreationTimeUtc < deleteTime)
+                                    {
+                                        File.Delete(logPath);
+                                    }
+
+                                }
                             }
                         }
+
+                    }
+                    catch
+                    {
                     }
 
+                    await Task.Delay(1000 * 60 * 60 * 24, stoppingToken);
                 }
-                catch
-                {
-                }
-
-                await Task.Delay(1000 * 60 * 60 * 24, stoppingToken);
             }
+
+            
         }
 
     }

@@ -42,15 +42,7 @@ namespace Common
             options.Converters.Add(new DateTimeOffsetConverter());
             options.Converters.Add(new LongConverter());
 
-            options.Converters.Add(new NullableConverter<DateTime>());
-            options.Converters.Add(new NullableConverter<DateTimeOffset>());
-            options.Converters.Add(new NullableConverter<long>());
-            options.Converters.Add(new NullableConverter<int>());
-            options.Converters.Add(new NullableConverter<double>());
-            options.Converters.Add(new NullableConverter<decimal>());
-            options.Converters.Add(new NullableConverter<float>());
-            options.Converters.Add(new NullableConverter<Guid>());
-            options.Converters.Add(new NullableConverter<bool>());
+            options.Converters.Add(new NullableConverterFactory());
 
             //关闭默认转义
             options.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
@@ -80,15 +72,7 @@ namespace Common
             options.Converters.Add(new DateTimeOffsetConverter());
             options.Converters.Add(new LongConverter());
 
-            options.Converters.Add(new NullableConverter<DateTime>());
-            options.Converters.Add(new NullableConverter<DateTimeOffset>());
-            options.Converters.Add(new NullableConverter<long>());
-            options.Converters.Add(new NullableConverter<int>());
-            options.Converters.Add(new NullableConverter<double>());
-            options.Converters.Add(new NullableConverter<decimal>());
-            options.Converters.Add(new NullableConverter<float>());
-            options.Converters.Add(new NullableConverter<Guid>());
-            options.Converters.Add(new NullableConverter<bool>());
+            options.Converters.Add(new NullableConverterFactory());
 
             //启用大小写不敏感
             options.PropertyNameCaseInsensitive = true;

@@ -144,15 +144,7 @@ namespace WebAPI
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
 
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<DateTime>());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<DateTimeOffset>());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<long>());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<int>());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<double>());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<decimal>());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<float>());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<Guid>());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverter<bool>());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableConverterFactory());
             });
 
             #endregion

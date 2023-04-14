@@ -42,8 +42,6 @@ namespace Common
             options.Converters.Add(new DateTimeOffsetConverter());
             options.Converters.Add(new LongConverter());
 
-            options.Converters.Add(new NullableStructConverterFactory());
-
             //关闭默认转义
             options.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
 

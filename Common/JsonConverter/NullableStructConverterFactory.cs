@@ -40,7 +40,12 @@ namespace Common.JsonConverter
 
             public override void Write(Utf8JsonWriter writer, T? value, JsonSerializerOptions options)
             {
-                JsonSerializer.Serialize(writer, value, options);
+                var tempOptions = new JsonSerializerOptions(options);
+
+                var thisFactory = new NullableStructConverterFactory().ToString();
+                tempOptions.Converters.Remove(options.Converters.FirstOrDefault(t => t.ToString() == thisFactory)!);
+
+                JsonSerializer.Serialize(writer, value, tempOptions);
             }
 
         }

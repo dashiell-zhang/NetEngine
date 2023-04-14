@@ -26,6 +26,9 @@ namespace Common.JsonConverter
                 var thisFactory = new NullableClassConverterFactory().ToString();
                 tempOptions.Converters.Remove(options.Converters.FirstOrDefault(t => t.ToString() == thisFactory)!);
 
+                var thisConverter = ((System.Text.Json.Serialization.JsonConverter)Activator.CreateInstance(typeof(NullableClassConverter<>).MakeGenericType(typeToConvert))!).ToString();
+                tempOptions.Converters.Remove(options.Converters.FirstOrDefault(t => t.ToString() == thisConverter)!);
+
                 using (var jsonDoc = JsonDocument.ParseValue(ref reader))
                 {
                     var jsonText = jsonDoc.RootElement.GetRawText().Replace(" ", "").Replace("\n", "");

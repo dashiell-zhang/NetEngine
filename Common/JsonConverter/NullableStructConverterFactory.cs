@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Common.JsonConverter
 {
 
-    public class NullableConverterFactory : JsonConverterFactory
+    public class NullableStructConverterFactory : JsonConverterFactory
     {
         public override bool CanConvert(Type typeToConvert)
         {

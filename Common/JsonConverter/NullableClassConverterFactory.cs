@@ -38,7 +38,7 @@ namespace Common.JsonConverter
                     {
                         foreach (var item in typeToConvert.GetProperties())
                         {
-                            if (item.PropertyType.IsClass && item.PropertyType.Namespace != "System" && item.CustomAttributes.Any(t => t.AttributeType.Name == "NullableAttribute"))
+                            if (item.PropertyType.IsClass && item.PropertyType.Namespace != "System")
                             {
                                 tempOptions.Converters.Add((System.Text.Json.Serialization.JsonConverter)Activator.CreateInstance(typeof(NullableClassConverter<>).MakeGenericType(item.PropertyType))!);
                             }

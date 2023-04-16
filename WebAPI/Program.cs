@@ -143,9 +143,8 @@ namespace WebAPI
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
-
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableStructConverterFactory());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableClassConverterFactory());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableStructConverterFactory());
             });
 
             #endregion

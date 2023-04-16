@@ -66,10 +66,11 @@ namespace Common
         public static T JsonToObject<T>(string json)
         {
             JsonSerializerOptions options = new();
+
             options.Converters.Add(new DateTimeConverter());
             options.Converters.Add(new DateTimeOffsetConverter());
             options.Converters.Add(new LongConverter());
-
+            options.Converters.Add(new NullableClassConverterFactory());
             options.Converters.Add(new NullableStructConverterFactory());
 
             //启用大小写不敏感

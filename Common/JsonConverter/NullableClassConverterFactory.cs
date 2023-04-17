@@ -31,7 +31,7 @@ namespace Common.JsonConverter
 
                 using (var jsonDoc = JsonDocument.ParseValue(ref reader))
                 {
-                    var jsonText = jsonDoc.RootElement.GetRawText().Replace(" ", "").Replace("\n", "");
+                    var jsonText = jsonDoc.RootElement.GetRawText();
 
                     if (jsonText == "{}" || jsonText == "[]")
                     {

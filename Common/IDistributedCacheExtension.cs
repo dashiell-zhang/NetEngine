@@ -4,14 +4,15 @@ namespace Common
 {
 
     /// <summary>
-    /// 扩展分布式缓存接口,集成常用方法
+    /// 扩展分布式缓存接口
+    /// </summary>
     /// </summary>
     public static class IDistributedCacheExtension
     {
 
 
         /// <summary>
-        /// 删除指定key
+        /// 删除缓存
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
@@ -29,41 +30,42 @@ namespace Common
         }
 
 
-
         /// <summary>
-        /// 设置object类型的key
+        /// 删除缓存（异步）
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="value"></param>
         /// <returns></returns>
-        public static bool SetObject(this IDistributedCache distributedCache, string key, object value)
+        public static void RemoveAsync(this IDistributedCache distributedCache, string key)
         {
-            try
+            Task.Run(() =>
             {
-                var valueStr = JsonHelper.ObjectToJson(value);
-                distributedCache.SetString(key, valueStr);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+                distributedCache.Remove(key);
+            });
         }
 
 
 
+
         /// <summary>
-        /// 设置string类型key,包含有效时间
+        /// 设置 string 类型的缓存
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static bool SetString(this IDistributedCache distributedCache, string key, string value, TimeSpan timeOut)
+        public static bool SetString(this IDistributedCache distributedCache, string key, string value, TimeSpan? timeOut)
         {
             try
             {
-                distributedCache.SetString(key, value, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
+                if (timeOut == null)
+                {
+                    distributedCache.SetString(key, value, timeOut);
+                }
+                else
+                {
+                    distributedCache.SetString(key, value, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
+                }
+
                 return true;
             }
             catch
@@ -75,18 +77,46 @@ namespace Common
 
 
         /// <summary>
-        /// 设置object类型key,包含有效时间
+        /// 设置 string 类型的缓存（异步）
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static bool SetObject(this IDistributedCache distributedCache, string key, object value, TimeSpan timeOut)
+        public static void SetStringAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan timeOut)
+        {
+            Task.Run(() =>
+            {
+                distributedCache.SetString(key, value, timeOut);
+            });
+        }
+
+
+
+
+
+        /// <summary>
+        /// 设置 object 类型的缓存
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="timeOut"></param>
+        /// <returns></returns>
+        public static bool SetObject(this IDistributedCache distributedCache, string key, object value, TimeSpan? timeOut)
         {
             try
             {
                 var valueStr = JsonHelper.ObjectToJson(value);
-                distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
+
+                if (timeOut == null)
+                {
+                    distributedCache.SetString(key, valueStr);
+                }
+                else
+                {
+                    distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOut });
+                }
+
                 return true;
             }
             catch
@@ -97,9 +127,26 @@ namespace Common
 
 
 
+        /// <summary>
+        /// 设置 object 类型的缓存（异步）
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="timeOut"></param>
+        /// <returns></returns>
+        public static void SetObjectAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan? timeOut)
+        {
+            Task.Run(() =>
+            {
+                distributedCache.SetObject(key, value, timeOut);
+            });
+        }
+
+
+
 
         /// <summary>
-        /// 读取 Object 类型的key
+        /// 获取 Object 类型的缓存
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="key"></param>
@@ -129,7 +176,7 @@ namespace Common
 
 
         /// <summary>
-        /// 判断是否存在指定key
+        /// 判断缓存是否存在
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>

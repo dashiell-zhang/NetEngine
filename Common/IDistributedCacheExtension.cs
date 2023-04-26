@@ -38,7 +38,7 @@ namespace Common
         /// <param name="value"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static bool SetString(this IDistributedCache distributedCache, string key, string value, TimeSpan? timeOut)
+        public static bool SetString(this IDistributedCache distributedCache, string key, string value, TimeSpan? timeOut = null)
         {
             try
             {
@@ -68,7 +68,7 @@ namespace Common
         /// <param name="value"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static void SetStringAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan timeOut)
+        public static void SetStringAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan? timeOut = null)
         {
             Task.Run(() =>
             {
@@ -87,7 +87,7 @@ namespace Common
         /// <param name="value"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static bool SetObject(this IDistributedCache distributedCache, string key, object value, TimeSpan? timeOut)
+        public static bool SetObject(this IDistributedCache distributedCache, string key, object value, TimeSpan? timeOut = null)
         {
             try
             {
@@ -119,7 +119,7 @@ namespace Common
         /// <param name="value"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static void SetObjectAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan? timeOut)
+        public static void SetObjectAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan? timeOut = null)
         {
             Task.Run(() =>
             {

@@ -30,21 +30,6 @@ namespace Common
         }
 
 
-        /// <summary>
-        /// 删除缓存（异步）
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public static void RemoveAsync(this IDistributedCache distributedCache, string key)
-        {
-            Task.Run(() =>
-            {
-                distributedCache.Remove(key);
-            });
-        }
-
-
-
 
         /// <summary>
         /// 设置 string 类型的缓存

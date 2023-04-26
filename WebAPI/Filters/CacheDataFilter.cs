@@ -48,7 +48,7 @@ namespace WebAPI.Filters
             try
             {
                 var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-                var cacheInfo = distributedCache.GetObject<object>(key);
+                var cacheInfo = distributedCache.Get<object>(key);
 
                 if (cacheInfo != null)
                 {

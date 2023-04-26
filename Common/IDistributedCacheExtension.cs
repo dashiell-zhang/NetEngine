@@ -12,6 +12,8 @@ namespace Common
     public static class IDistributedCacheExtension
     {
 
+        private readonly static JsonSerializerOptions objectToJsonOptions = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+
 
         /// <summary>
         /// 删除缓存
@@ -161,7 +163,7 @@ namespace Common
         {
             try
             {
-                var valueStr = JsonSerializer.Serialize(value, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+                var valueStr = JsonSerializer.Serialize(value, objectToJsonOptions);
                 distributedCache.SetString(key, valueStr);
                 return true;
             }
@@ -200,7 +202,7 @@ namespace Common
         {
             try
             {
-                var valueStr = JsonSerializer.Serialize(value, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+                var valueStr = JsonSerializer.Serialize(value, objectToJsonOptions);
                 distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = absoluteExpirationRelativeToNow });
                 return true;
             }
@@ -240,7 +242,7 @@ namespace Common
         {
             try
             {
-                var valueStr = JsonSerializer.Serialize(value, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+                var valueStr = JsonSerializer.Serialize(value, objectToJsonOptions);
                 distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
                 return true;
             }
@@ -276,7 +278,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static T? GetObject<T>(this IDistributedCache distributedCache, string key)
+        public static T? Get<T>(this IDistributedCache distributedCache, string key)
         {
             try
             {
@@ -284,7 +286,7 @@ namespace Common
 
                 if (valueStr != null)
                 {
-                    var value = JsonSerializer.Deserialize<T>(valueStr, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+                    var value = JsonSerializer.Deserialize<T>(valueStr);
                     return value;
                 }
                 else

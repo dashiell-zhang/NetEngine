@@ -4,22 +4,19 @@ using System.Text.Json;
 
 namespace AdminAPP.Libraries
 {
-    public static class HttpCore
+    public static class HttpClientExtension
     {
 
         private static JsonSerializerOptions jsonToObjectOptions;
 
-        static HttpCore()
+        static HttpClientExtension()
         {
             jsonToObjectOptions = new()
             {
                 //启用大小写不敏感
                 PropertyNameCaseInsensitive = true
             };
-            jsonToObjectOptions.Converters.Add(new DateTimeConverter());
-            jsonToObjectOptions.Converters.Add(new DateTimeOffsetConverter());
             jsonToObjectOptions.Converters.Add(new LongConverter());
-            jsonToObjectOptions.Converters.Add(new NullableStructConverterFactory());
         }
 
 

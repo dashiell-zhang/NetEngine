@@ -123,9 +123,9 @@ namespace AdminAPP.Libraries
         /// <param name="type">json,xml</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public async static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default)
+        public static void PostAsync(string url, string data, string type, Dictionary<string, string>? headers = default)
         {
-            await Task.Run(() =>
+            Task.Run(() =>
             {
                 Post(url, data, type, headers);
             });

@@ -36,7 +36,6 @@ namespace AdminAPP.Libraries
             jsonToObjectOptions.Converters.Add(new DateTimeConverter());
             jsonToObjectOptions.Converters.Add(new DateTimeOffsetConverter());
             jsonToObjectOptions.Converters.Add(new LongConverter());
-            jsonToObjectOptions.Converters.Add(new NullableStructConverterFactory());
         }
 
 

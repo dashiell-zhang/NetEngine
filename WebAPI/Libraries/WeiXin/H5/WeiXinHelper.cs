@@ -51,7 +51,7 @@ namespace WebAPI.Libraries.WeiXin.H5
 
                 if (token != null)
                 {
-                    distributedCache.SetString(key, token, TimeSpan.FromSeconds(6000));
+                    distributedCache.Set(key, token, TimeSpan.FromSeconds(6000));
                 }
             }
 
@@ -82,7 +82,7 @@ namespace WebAPI.Libraries.WeiXin.H5
 
                 if (ticketid != null)
                 {
-                    distributedCache.SetString(key, ticketid, TimeSpan.FromSeconds(6000));
+                    distributedCache.Set(key, ticketid, TimeSpan.FromSeconds(6000));
                 }
             }
 

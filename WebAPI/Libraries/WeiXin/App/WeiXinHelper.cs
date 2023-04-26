@@ -147,8 +147,8 @@ namespace WebAPI.Libraries.WeiXin.App
             if (token != null && openid != null)
             {
 
-                distributedCache.SetString("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
-                distributedCache.SetString("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
+                distributedCache.Set("wxappaccesstoken" + code, token, TimeSpan.FromSeconds(7100));
+                distributedCache.Set("wxappopenid" + code, openid, TimeSpan.FromSeconds(7100));
 
                 return (token, openid);
             }

@@ -52,7 +52,7 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
                 string openid = JsonHelper.GetValueByKey(httpret, "openid")!;
                 string sessionkey = JsonHelper.GetValueByKey(httpret, "session_key")!;
 
-                distributedCache.SetString(code, httpret, new TimeSpan(0, 0, 10));
+                distributedCache.Set(code, httpret, new TimeSpan(0, 0, 10));
 
                 return (openid, sessionkey);
             }

@@ -94,7 +94,7 @@ namespace WebAPI.Filters
                     if (objectResult.Value != null)
                     {
                         var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-                        distributedCache.SetObject(key, objectResult.Value, TimeSpan.FromSeconds(TTL));
+                        distributedCache.Set(key, objectResult.Value, TimeSpan.FromSeconds(TTL));
                     }
 
                 }

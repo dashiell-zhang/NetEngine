@@ -167,7 +167,7 @@ namespace WebAPI.Controllers
                     {
                         codeUrl = retCodeUrl;
 
-                        distributedCache.SetString(key, codeUrl, TimeSpan.FromMinutes(115));
+                        distributedCache.Set(key, codeUrl, TimeSpan.FromMinutes(115));
 
                         var image = ImgHelper.GetQrCode(codeUrl);
 

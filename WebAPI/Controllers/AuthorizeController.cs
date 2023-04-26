@@ -281,7 +281,7 @@ namespace WebAPI.Controllers
 
                 sms.SendSMS("短信签名", phone, "短信模板编号", templateParams);
 
-                distributedCache.SetString(key, code, new TimeSpan(0, 0, 5, 0));
+                distributedCache.Set(key, code, new TimeSpan(0, 0, 5, 0));
 
                 return true;
             }

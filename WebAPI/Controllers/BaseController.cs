@@ -120,7 +120,7 @@ namespace WebAPI.Controllers
 
             var image = ImgHelper.GetVerifyCode(text);
 
-            distributedCache.SetString(cacheKey, text, TimeSpan.FromMinutes(5));
+            distributedCache.Set(cacheKey, text, TimeSpan.FromMinutes(5));
 
             return File(image, "image/png");
         }

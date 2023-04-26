@@ -69,7 +69,7 @@ namespace AdminAPP.Libraries
                     Notice.Open(new NotificationConfig()
                     {
                         Message = "异常",
-                        Description = Json.JsonHelper.GetValueByKey(ret, "errMsg"),
+                        Description = JsonHelper.GetValueByKey(ret, "errMsg"),
                         NotificationType = NotificationType.Warning
                     });
                 }

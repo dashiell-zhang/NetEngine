@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace AdminAPP.Libraries.Json
+namespace AdminAPP.Libraries.JsonConverter
 {
     public class LongConverter : JsonConverter<long>
     {

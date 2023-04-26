@@ -1,17 +1,22 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace AdminAPP.Libraries.Json
+namespace AdminAPP.Libraries.JsonConverter
 {
     public class DateTimeConverter : JsonConverter<DateTime>
     {
 
 
+        private readonly string formatString;
         public DateTimeConverter()
         {
-
+            formatString = "yyyy/MM/dd HH:mm:ss";
         }
 
+        public DateTimeConverter(string inFormatString)
+        {
+            formatString = inFormatString;
+        }
 
         public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
@@ -28,7 +33,7 @@ namespace AdminAPP.Libraries.Json
 
         public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
         {
-            writer.WriteStringValue(value.ToString());
+            writer.WriteStringValue(value.ToString(formatString));
         }
     }
 

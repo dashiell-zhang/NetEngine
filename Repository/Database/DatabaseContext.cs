@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Repository.Bases;
 using System.ComponentModel;
 using System.Reflection;
 using System.Xml;
@@ -88,6 +89,13 @@ namespace Repository.Database
         #endregion
 
 
+        private static void GlobalHasQueryFilter<T>(ModelBuilder builder) where T : CD
+        {
+            builder.Entity<T>().HasQueryFilter(e => e.IsDelete == false);
+        }
+
+
+        private static readonly MethodInfo globalHasQueryFilter = typeof(DatabaseContext).GetMethod("GlobalHasQueryFilter", BindingFlags.Static | BindingFlags.NonPublic)!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -98,12 +106,14 @@ namespace Repository.Database
                 foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
             }
 
-
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
+
+                //添加全局过滤器
+                globalHasQueryFilter.MakeGenericMethod(entity.ClrType).Invoke(null, new object[] { modelBuilder });
+
                 modelBuilder.Entity(entity.Name, builder =>
                 {
-
                     //设置生成数据库时的表名移除前缀T
                     var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value?.ToString()).FirstOrDefault()).FirstOrDefault() ?? (entity.ClrType.Name[1..]);
                     builder.ToTable(tableName);

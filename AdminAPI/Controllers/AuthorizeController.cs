@@ -74,8 +74,7 @@ namespace AdminAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "用户名或密码错误");
+                HttpContext.SetErrMsg("用户名或密码错误");
 
                 return default;
             }

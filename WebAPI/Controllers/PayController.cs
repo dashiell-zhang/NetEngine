@@ -351,8 +351,7 @@ namespace WebAPI.Controllers
 
                     if (string.IsNullOrEmpty(TradeNo))
                     {
-                        HttpContext.Response.StatusCode = 400;
-                        HttpContext.Items.Add("errMsg", "支付宝交易订单创建失败");
+                        HttpContext.SetErrMsg("支付宝交易订单创建失败");
                     }
 
                     DtoKeyValue keyValue = new()

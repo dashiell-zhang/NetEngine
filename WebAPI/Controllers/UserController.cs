@@ -196,24 +196,21 @@ namespace WebAPI.Controllers
                     }
                     else
                     {
-                        HttpContext.Response.StatusCode = 400;
-                        HttpContext.Items.Add("errMsg", "手机号已被其他账户绑定");
+                        HttpContext.SetErrMsg("手机号已被其他账户绑定");
 
                         return false;
                     }
                 }
                 else
                 {
-                    HttpContext.Response.StatusCode = 400;
-                    HttpContext.Items.Add("errMsg", "账户不存在");
+                    HttpContext.SetErrMsg("账户不存在");
 
                     return false;
                 }
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "短信验证码错误");
+                HttpContext.SetErrMsg("短信验证码错误");
 
                 return false;
             }

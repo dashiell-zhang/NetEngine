@@ -123,8 +123,7 @@ namespace WebAPI.Controllers
 
             }
 
-            HttpContext.Response.StatusCode = 400;
-            HttpContext.Items.Add("errMsg", "文件上传失败");
+            HttpContext.SetErrMsg("文件上传失败");
             return default;
         }
 
@@ -205,8 +204,7 @@ namespace WebAPI.Controllers
             }
 
 
-            HttpContext.Response.StatusCode = 400;
-            HttpContext.Items.Add("errMsg", "文件上传失败");
+            HttpContext.SetErrMsg("文件上传失败");
             return default;
 
         }
@@ -239,8 +237,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件");
+                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
 
                 return null;
             }
@@ -313,8 +310,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件");
+                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
 
                 return null;
             }
@@ -343,8 +339,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "通过指定的文件ID未找到任何文件");
+                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
 
                 return null;
             }

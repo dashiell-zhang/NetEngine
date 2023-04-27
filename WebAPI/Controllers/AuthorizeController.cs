@@ -84,9 +84,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "用户名或密码错误");
-
+                HttpContext.SetErrMsg("用户名或密码错误");
                 return default;
             }
 
@@ -218,8 +216,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "短信验证码错误");
+                HttpContext.SetErrMsg("短信验证码错误");
 
                 return default;
             }
@@ -287,8 +284,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "请勿频繁获取验证码！");
+                HttpContext.SetErrMsg("请勿频繁获取验证码！");
 
                 return false;
             }
@@ -363,8 +359,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "微信授权失败");
+                HttpContext.SetErrMsg("微信授权失败");
 
                 return default;
             }
@@ -400,16 +395,14 @@ namespace WebAPI.Controllers
                 }
                 else
                 {
-                    HttpContext.Response.StatusCode = 400;
-                    HttpContext.Items.Add("errMsg", "原始密码验证失败");
+                    HttpContext.SetErrMsg("原始密码验证失败");
 
                     return false;
                 }
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "账户异常，请联系后台工作人员");
+                HttpContext.SetErrMsg("账户异常，请联系后台工作人员");
 
                 return false;
             }
@@ -455,16 +448,14 @@ namespace WebAPI.Controllers
                 }
                 else
                 {
-                    HttpContext.Response.StatusCode = 400;
-                    HttpContext.Items.Add("errMsg", "账户不存在");
+                    HttpContext.SetErrMsg("账户不存在");
 
                     return false;
                 }
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "短信验证码错误");
+                HttpContext.SetErrMsg("短信验证码错误");
 
                 return false;
             }

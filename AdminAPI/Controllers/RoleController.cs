@@ -175,8 +175,7 @@ namespace AdminAPI.Controllers
 
             if (isHaveUser != null)
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "当前角色下存在人员信息，无法删除！");
+                HttpContext.SetErrMsg("当前角色下存在人员信息，无法删除！");
 
                 return false;
             }
@@ -192,8 +191,7 @@ namespace AdminAPI.Controllers
             }
             else
             {
-                HttpContext.Response.StatusCode = 400;
-                HttpContext.Items.Add("errMsg", "角色不存在或已被删除！");
+                HttpContext.SetErrMsg("角色不存在或已被删除！");
 
                 return false;
             }

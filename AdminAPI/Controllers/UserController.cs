@@ -172,9 +172,7 @@ namespace AdminAPI.Controllers
                     }
                 }
             }
-
-            HttpContext.Response.StatusCode = 400;
-            HttpContext.Items.Add("errMsg", "用户名已被占用,无法保存");
+            HttpContext.SetErrMsg("用户名已被占用,无法保存");
 
             return default;
         }
@@ -263,8 +261,7 @@ namespace AdminAPI.Controllers
                 }
             }
 
-            HttpContext.Response.StatusCode = 400;
-            HttpContext.Items.Add("errMsg", "用户名已被占用,无法保存");
+            HttpContext.SetErrMsg("用户名已被占用,无法保存");
 
             return false;
         }
@@ -387,8 +384,7 @@ namespace AdminAPI.Controllers
                     }
                     else
                     {
-                        HttpContext.Response.StatusCode = 400;
-                        HttpContext.Items.Add("errMsg", "该权限继承自角色，无法单独删除！");
+                        HttpContext.SetErrMsg("该权限继承自角色，无法单独删除！");
 
                         return false;
                     }

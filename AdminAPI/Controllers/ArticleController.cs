@@ -61,7 +61,7 @@ namespace AdminAPI.Controllers
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TCategory.Where(t => t.IsDelete == false);
+            var query = db.TCategory.AsQueryable();
 
             if (!string.IsNullOrEmpty(searchKey))
             {
@@ -93,7 +93,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetCategoryTreeList")]
         public List<DtoKeyValueChild> GetCategoryTreeList()
         {
-            var list = db.TCategory.Where(t => t.IsDelete == false && t.ParentId == null).Select(t => new DtoKeyValueChild
+            var list = db.TCategory.Where(t => t.ParentId == null).Select(t => new DtoKeyValueChild
             {
                 Key = t.Id,
                 Value = t.Name
@@ -117,7 +117,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetCategory")]
         public DtoCategory? GetCategory(long categoryId)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false && t.Id == categoryId).Select(t => new DtoCategory
+            var category = db.TCategory.Where(t => t.Id == categoryId).Select(t => new DtoCategory
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -172,7 +172,7 @@ namespace AdminAPI.Controllers
         [HttpPost("UpdateCategory")]
         public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false && t.Id == categoryId).FirstOrDefault();
+            var category = db.TCategory.Where(t => t.Id == categoryId).FirstOrDefault();
 
             if (category != null)
             {
@@ -201,7 +201,7 @@ namespace AdminAPI.Controllers
         [HttpDelete("DeleteCategory")]
         public bool DeleteCategory(long id)
         {
-            var category = db.TCategory.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
+            var category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
 
             if (category != null)
             {
@@ -237,7 +237,7 @@ namespace AdminAPI.Controllers
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TArticle.Where(t => t.IsDelete == false);
+            var query = db.TArticle.AsQueryable();
 
             if (!string.IsNullOrEmpty(searchKey))
             {
@@ -261,7 +261,7 @@ namespace AdminAPI.Controllers
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
+                CoverImageList = db.TFile.Where(f =>  f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
                     Value = fileServerUrl + f.Path
@@ -285,7 +285,7 @@ namespace AdminAPI.Controllers
         {
             string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
 
-            var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == articleId).Select(t => new DtoArticle
+            var article = db.TArticle.Where(t => t.Id == articleId).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
@@ -298,7 +298,7 @@ namespace AdminAPI.Controllers
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f => f.IsDelete == false && f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
+                CoverImageList = db.TFile.Where(f =>  f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
                     Value = fileServerUrl + f.Path
@@ -347,7 +347,7 @@ namespace AdminAPI.Controllers
             db.TArticle.Add(article);
 
 
-            var fileList = db.TFile.Where(t => t.IsDelete == false && t.Table == "TArticle" && t.TableId == fileKey).ToList();
+            var fileList = db.TFile.Where(t => t.Table == "TArticle" && t.TableId == fileKey).ToList();
 
             foreach (var file in fileList)
             {
@@ -371,7 +371,7 @@ namespace AdminAPI.Controllers
         [HttpPost("UpdateArticle")]
         public bool UpdateArticle(long articleId, DtoEditArticle updateArticle)
         {
-            var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == articleId).FirstOrDefault();
+            var article = db.TArticle.Where(t => t.Id == articleId).FirstOrDefault();
 
             if (article != null)
             {
@@ -413,7 +413,7 @@ namespace AdminAPI.Controllers
         [HttpDelete("DeleteArticle")]
         public bool DeleteArticle(long id)
         {
-            var article = db.TArticle.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
+            var article = db.TArticle.Where(t => t.Id == id).FirstOrDefault();
 
             if (article != null)
             {

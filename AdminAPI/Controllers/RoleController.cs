@@ -58,7 +58,7 @@ namespace AdminAPI.Controllers
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TRole.Where(t => t.IsDelete == false);
+            var query = db.TRole.AsQueryable();
 
 
             if (!string.IsNullOrEmpty(searchKey))
@@ -90,7 +90,7 @@ namespace AdminAPI.Controllers
         public DtoRole? GetRole(long roleId)
         {
 
-            var role = db.TRole.Where(t => t.IsDelete == false && t.Id == roleId).Select(t => new DtoRole
+            var role = db.TRole.Where(t => t.Id == roleId).Select(t => new DtoRole
             {
                 Id = t.Id,
                 CreateTime = t.CreateTime,
@@ -140,7 +140,7 @@ namespace AdminAPI.Controllers
         [HttpPost("UpdateRole")]
         public bool UpdateRole(long roleId, DtoEditRole role)
         {
-            var dbRole = db.TRole.Where(t => t.IsDelete == false && t.Id == roleId).FirstOrDefault();
+            var dbRole = db.TRole.Where(t => t.Id == roleId).FirstOrDefault();
 
             if (dbRole != null)
             {
@@ -169,9 +169,9 @@ namespace AdminAPI.Controllers
         public bool DeleteRole(long id)
         {
 
-            var role = db.TRole.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
+            var role = db.TRole.Where(t => t.Id == id).FirstOrDefault();
 
-            var isHaveUser = db.TUserRole.Where(t => t.IsDelete == false && t.RoleId == id).FirstOrDefault();
+            var isHaveUser = db.TUserRole.Where(t => t.RoleId == id).FirstOrDefault();
 
             if (isHaveUser != null)
             {
@@ -208,18 +208,18 @@ namespace AdminAPI.Controllers
         [HttpGet("GetRoleFunction")]
         public List<DtoRoleFunction> GetRoleFunction(long roleId)
         {
-            var functionList = db.TFunction.Where(t => t.IsDelete == false && t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
+            var functionList = db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
                 Sign = t.Sign,
-                IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-                FunctionList = db.TFunction.Where(f => f.IsDelete == false && f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoRoleFunction
+                IsCheck = db.TFunctionAuthorize.Where(r =>  r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
+                FunctionList = db.TFunction.Where(f =>  f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoRoleFunction
                 {
                     Id = f.Id,
                     Name = f.Name.Replace(f.Parent!.Name + "-", ""),
                     Sign = f.Sign,
-                    IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
+                    IsCheck = db.TFunctionAuthorize.Where(r =>  r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
                 }).ToList()
             }).ToList();
 
@@ -243,7 +243,7 @@ namespace AdminAPI.Controllers
         public bool SetRoleFunction(DtoSetRoleFunction setRoleFunction)
         {
 
-            var functionAuthorize = db.TFunctionAuthorize.Where(t => t.IsDelete == false && t.RoleId == setRoleFunction.RoleId && t.FunctionId == setRoleFunction.FunctionId).FirstOrDefault() ?? new TFunctionAuthorize();
+            var functionAuthorize = db.TFunctionAuthorize.Where(t => t.RoleId == setRoleFunction.RoleId && t.FunctionId == setRoleFunction.FunctionId).FirstOrDefault() ?? new TFunctionAuthorize();
 
             functionAuthorize.FunctionId = setRoleFunction.FunctionId;
             functionAuthorize.RoleId = setRoleFunction.RoleId;
@@ -283,7 +283,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetRoleKV")]
         public List<DtoKeyValue> GetRoleKV()
         {
-            var list = db.TRole.Where(t => t.IsDelete == false).Select(t => new DtoKeyValue
+            var list = db.TRole.Select(t => new DtoKeyValue
             {
                 Key = t.Id,
                 Value = t.Name

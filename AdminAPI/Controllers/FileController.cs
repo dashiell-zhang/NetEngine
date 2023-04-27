@@ -249,7 +249,7 @@ namespace AdminAPI.Controllers
         public string? GetFilePath(long fileId)
         {
 
-            var file = db.TFile.AsNoTracking().Where(t => t.IsDelete == false && t.Id == fileId).FirstOrDefault();
+            var file = db.TFile.AsNoTracking().Where(t => t.Id == fileId).FirstOrDefault();
 
             if (file != null)
             {
@@ -280,7 +280,7 @@ namespace AdminAPI.Controllers
         public bool DeleteFile(long id)
         {
 
-            var file = db.TFile.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
+            var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
 
             if (file != null)
             {

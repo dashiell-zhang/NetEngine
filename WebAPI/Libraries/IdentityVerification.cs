@@ -45,14 +45,14 @@ namespace WebAPI.Libraries
 
                     using var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-                    var functionId = db.TFunctionRoute.Where(t => t.IsDelete == false && t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefault();
+                    var functionId = db.TFunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefault();
 
                     if (functionId != default)
                     {
                         var userId = long.Parse(httpContext.GetClaimByAuthorization("userId")!);
-                        var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
+                        var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
 
-                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.IsDelete == false && t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
 
                         if (functionAuthorizeId != default)
                         {
@@ -110,7 +110,7 @@ namespace WebAPI.Libraries
                 var distLock = httpContext.RequestServices.GetRequiredService<IDistributedLock>();
                 if (distLock.TryLock(key) != null)
                 {
-                    var newToken = db.TUserToken.Where(t => t.IsDelete == false && t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefault();
+                    var newToken = db.TUserToken.Where(t => t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefault();
 
                     if (newToken == null)
                     {

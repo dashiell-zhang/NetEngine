@@ -60,7 +60,7 @@ namespace WebAPI.Controllers
         public string? GetWeiXinMiniAppOpenId(long weiXinKeyId, string code)
         {
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -95,7 +95,7 @@ namespace WebAPI.Controllers
         public string? GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, long weiXinKeyId)
         {
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -113,7 +113,7 @@ namespace WebAPI.Controllers
 
                 var strJson = Libraries.WeiXin.MiniApp.WeiXinHelper.DecryptionData(encryptedData, sessionkey, iv);
 
-                var user = db.TUserBindExternal.Where(t => t.IsDelete == false && t.OpenId == openid && t.AppName == "WeiXinMiniApp" && t.AppId == appId).Select(t => t.User).FirstOrDefault();
+                var user = db.TUserBindExternal.Where(t => t.OpenId == openid && t.AppName == "WeiXinMiniApp" && t.AppId == appId).Select(t => t.User).FirstOrDefault();
 
                 if (user != null)
                 {
@@ -146,13 +146,13 @@ namespace WebAPI.Controllers
 
             userId ??= this.userId;
 
-            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
+            var user = db.TUser.Where(t => t.Id == userId ).Select(t => new DtoUser
             {
                 Name = t.Name,
                 UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                Roles = string.Join(",", db.TUserRole.Where(r =>  r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
             }).FirstOrDefault();
 

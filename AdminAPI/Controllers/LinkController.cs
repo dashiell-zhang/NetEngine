@@ -51,7 +51,7 @@ namespace AdminAPI.Controllers
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TLink.Where(t => t.IsDelete == false);
+            var query = db.TLink.AsQueryable();
 
             if (!string.IsNullOrEmpty(searchKey))
             {
@@ -82,7 +82,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetLink")]
         public DtoLink? GetLink(long linkId)
         {
-            var link = db.TLink.Where(t => t.IsDelete == false && t.Id == linkId).Select(t => new DtoLink
+            var link = db.TLink.Where(t => t.Id == linkId).Select(t => new DtoLink
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -135,7 +135,7 @@ namespace AdminAPI.Controllers
         [HttpPost("UpdateLink")]
         public bool UpdateLink(long linkId, DtoEditLink updateLink)
         {
-            var link = db.TLink.Where(t => t.IsDelete == false && t.Id == linkId).FirstOrDefault();
+            var link = db.TLink.Where(t => t.Id == linkId).FirstOrDefault();
 
             if (link != null)
             {
@@ -159,7 +159,7 @@ namespace AdminAPI.Controllers
         [HttpDelete("DeleteLink")]
         public bool DeleteLink(long id)
         {
-            var link = db.TLink.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
+            var link = db.TLink.Where(t => t.Id == id).FirstOrDefault();
 
             if (link != null)
             {

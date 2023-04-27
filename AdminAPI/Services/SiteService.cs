@@ -25,7 +25,7 @@ namespace AdminAPI.Services
             if (value != null)
             {
 
-                var appSetting = db.TAppSetting.Where(t => t.IsDelete == false && t.Module == "Site" && t.Key == key).FirstOrDefault();
+                var appSetting = db.TAppSetting.Where(t => t.Module == "Site" && t.Key == key).FirstOrDefault();
 
                 if (appSetting == null)
                 {

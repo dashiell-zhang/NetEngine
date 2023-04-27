@@ -64,7 +64,7 @@ namespace AdminAPI.Controllers
         [HttpPost("GetToken")]
         public string? GetToken(DtoLogin login)
         {
-            var userList = db.TUser.Where(t => t.IsDelete == false && t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
+            var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
 
             var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
@@ -93,9 +93,9 @@ namespace AdminAPI.Controllers
         [HttpGet("GetFunctionList")]
         public List<string> GetFunctionList()
         {
-            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
+            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t =>
+            var kvList = db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t =>
                 t.Function.Sign
             ).ToList();
 
@@ -166,7 +166,7 @@ namespace AdminAPI.Controllers
             actionList = actionList.Where(t => t.IsAuthorize == true).Distinct().ToList();
 
 
-            var functionRoutes = db.TFunctionRoute.Where(t => t.IsDelete == false && t.Module == projectName).ToList();
+            var functionRoutes = db.TFunctionRoute.Where(t => t.Module == projectName).ToList();
 
             var delList = functionRoutes.Where(t => actionList.Select(t => t.Route).ToList().Contains(t.Route) == false).ToList();
 

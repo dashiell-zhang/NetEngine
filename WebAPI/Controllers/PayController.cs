@@ -46,7 +46,7 @@ namespace WebAPI.Controllers
         [HttpGet("CreateWeiXinMiniAppPay")]
         public DtoCreatePayMiniApp? CreateWeiXinMiniAppPay(string orderno, long weiXinKeyId)
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -57,7 +57,7 @@ namespace WebAPI.Controllers
                 t.Price,
                 ProductName = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
                 t.CreateUserId,
-                UserOpenId = db.TUserBindExternal.Where(w => w.IsDelete == false && w.UserId == t.CreateUserId && w.AppName == "WeiXinMiniApp" && w.AppId == appId).Select(w => w.OpenId).FirstOrDefault()
+                UserOpenId = db.TUserBindExternal.Where(w =>  w.UserId == t.CreateUserId && w.AppName == "WeiXinMiniApp" && w.AppId == appId).Select(w => w.OpenId).FirstOrDefault()
             }).FirstOrDefault();
 
 
@@ -98,9 +98,9 @@ namespace WebAPI.Controllers
         {
 
 
-            var order = db.TOrder.AsNoTracking().Where(t => t.IsDelete == false && t.OrderNo == orderno).FirstOrDefault();
+            var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderno).FirstOrDefault();
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinApp" && t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == weiXinKeyId).ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
 
@@ -144,9 +144,9 @@ namespace WebAPI.Controllers
 
             if (string.IsNullOrEmpty(codeUrl))
             {
-                var order = db.TOrder.AsNoTracking().Where(t => t.IsDelete == false && t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
+                var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
-                var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinPC").ToList();
+                var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPC").ToList();
 
                 var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                 var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -218,8 +218,8 @@ namespace WebAPI.Controllers
                 WxPayData req = new();
                 req.SetValue("transaction_id", transaction_id);
 
-                var appIdSettingGroupId = db.TAppSetting.Where(t => t.IsDelete == false && t.Module.StartsWith("WeiXin") && t.Key == "AppId" && t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
-                var settings = db.TAppSetting.Where(t => t.IsDelete == false && t.GroupId == appIdSettingGroupId).ToList();
+                var appIdSettingGroupId = db.TAppSetting.Where(t => t.Module.StartsWith("WeiXin") && t.Key == "AppId" && t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
+                var settings = db.TAppSetting.Where(t => t.GroupId == appIdSettingGroupId).ToList();
 
                 var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                 var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -242,7 +242,7 @@ namespace WebAPI.Controllers
                     else
                     {
 
-                        var order = db.TOrder.AsNoTracking().Where(t => t.IsDelete == false && t.OrderNo == order_no).FirstOrDefault();
+                        var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == order_no).FirstOrDefault();
 
                         if (order == null)
                         {
@@ -323,7 +323,7 @@ namespace WebAPI.Controllers
         public DtoKeyValue? CreateAliPayMiniApp(string orderno, long aliPayKeyId)
         {
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "AliPayMiniApp" && t.GroupId == aliPayKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp" && t.GroupId == aliPayKeyId).ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -331,11 +331,11 @@ namespace WebAPI.Controllers
 
             if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
             {
-                var order = db.TOrder.Where(t => t.IsDelete == false && t.OrderNo == orderno).Select(t => new
+                var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
                 {
                     t.OrderNo,
                     t.Price,
-                    AliPayUserId = db.TUserBindExternal.Where(a => a.IsDelete == false && a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
+                    AliPayUserId = db.TUserBindExternal.Where(a =>  a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
                     t.CreateTime
                 }).FirstOrDefault();
 
@@ -379,7 +379,7 @@ namespace WebAPI.Controllers
         public string? GetAliPayWebUrl(string orderNo)
         {
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "AliPayPC").ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayPC").ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -427,7 +427,7 @@ namespace WebAPI.Controllers
         public string? GetAliPayH5Url(string orderNo)
         {
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "AliPayH5").ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayH5").ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -484,9 +484,9 @@ namespace WebAPI.Controllers
             {
                 var appid = Request.Form["auth_app_id"].ToString();
 
-                var appIdSettingGroupId = db.TAppSetting.Where(t => t.IsDelete == false && t.Module.StartsWith("AliPay") && t.Key == "AppId" && t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
+                var appIdSettingGroupId = db.TAppSetting.Where(t => t.Module.StartsWith("AliPay") && t.Key == "AppId" && t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
 
-                var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.GroupId == appIdSettingGroupId).ToList();
+                var settings = db.TAppSetting.AsNoTracking().Where(t => t.GroupId == appIdSettingGroupId).ToList();
 
                 var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                 var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();

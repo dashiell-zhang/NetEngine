@@ -74,7 +74,7 @@ namespace WebAPI.Controllers
         public string? GetToken(DtoLogin login)
         {
 
-            var userList = db.TUser.Where(t => t.IsDelete == false && t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
+            var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
 
             var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
@@ -104,7 +104,7 @@ namespace WebAPI.Controllers
             var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
             string code = keyValue.Value!.ToString()!;
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -117,14 +117,14 @@ namespace WebAPI.Controllers
             string openid = wxinfo.openid;
             string sessionkey = wxinfo.sessionkey;
 
-            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
+            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 
             if (user == null)
             {
 
                 using (distLock.Lock("GetTokenByWeiXinMiniAppCode" + openid))
                 {
-                    user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
+                    user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
 
                     if (user == null)
                     {
@@ -189,7 +189,7 @@ namespace WebAPI.Controllers
 
             if (string.IsNullOrEmpty(code) == false && code == keyValue.Value!.ToString())
             {
-                var user = db.TUser.AsNoTracking().Where(t => t.IsDelete == false && (t.Name == phone || t.Phone == phone)).FirstOrDefault();
+                var user = db.TUser.AsNoTracking().Where(t => (t.Name == phone || t.Phone == phone)).FirstOrDefault();
 
                 if (user == null)
                 {
@@ -237,9 +237,9 @@ namespace WebAPI.Controllers
         public List<DtoKeyValue> GetFunctionList(string sign)
         {
 
-            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
+            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId) && t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
+            var kvList = db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId) && t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name
@@ -305,7 +305,7 @@ namespace WebAPI.Controllers
             var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
             string code = keyValue.Value!.ToString()!;
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.IsDelete == false && t.Module == "WeiXinApp" && t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == weiXinKeyId).ToList();
 
             var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
@@ -320,7 +320,7 @@ namespace WebAPI.Controllers
 
             if (userInfo.NickName != null)
             {
-                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.IsDelete == false && t.AppName == "WeiXinApp" && t.AppId == appid && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
+                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == appid && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
 
                 if (user == null)
                 {
@@ -380,7 +380,7 @@ namespace WebAPI.Controllers
         public bool UpdatePassWordByOldPassWord(DtoUpdatePassWordByOldPassWord updatePassWordByOldPassWord)
         {
 
-            var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
+            var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
             if (user != null)
             {
@@ -430,7 +430,7 @@ namespace WebAPI.Controllers
 
             if (string.IsNullOrEmpty(code) == false && code == updatePassWordBySms.SmsCode)
             {
-                var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
+                var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
                 if (user != null)
                 {
@@ -438,7 +438,7 @@ namespace WebAPI.Controllers
                     user.UpdateTime = DateTime.UtcNow;
                     user.UpdateUserId = userId;
 
-                    var tokenList = db.TUserToken.Where(t => t.IsDelete == false && t.UserId == userId).ToList();
+                    var tokenList = db.TUserToken.Where(t => t.UserId == userId).ToList();
 
                     db.TUserToken.RemoveRange(tokenList);
 
@@ -547,7 +547,7 @@ namespace WebAPI.Controllers
             actionList = actionList.Where(t => t.IsAuthorize == true).Distinct().ToList();
 
 
-            var functionRoutes = db.TFunctionRoute.Where(t => t.IsDelete == false && t.Module == projectName).ToList();
+            var functionRoutes = db.TFunctionRoute.Where(t => t.Module == projectName).ToList();
 
             var delList = functionRoutes.Where(t => actionList.Select(t => t.Route).ToList().Contains(t.Route) == false).ToList();
 

@@ -42,7 +42,7 @@ namespace AdminAPI.Controllers
         [HttpGet("GetSite")]
         public DtoSite GetSite()
         {
-            var kvList = db.TAppSetting.Where(t => t.IsDelete == false && t.Module == "Site").Select(t => new
+            var kvList = db.TAppSetting.Where(t => t.Module == "Site").Select(t => new
             {
                 t.Key,
                 t.Value
@@ -76,7 +76,7 @@ namespace AdminAPI.Controllers
         [HttpPost("EditSite")]
         public bool EditSite(DtoSite editSite)
         {
-            var query = db.TAppSetting.Where(t => t.IsDelete == false && t.Module == "Site");
+            var query = db.TAppSetting.Where(t => t.Module == "Site");
 
             siteService.SetSiteInfo("WebUrl", editSite.WebUrl);
             siteService.SetSiteInfo("ManagerName", editSite.ManagerName);

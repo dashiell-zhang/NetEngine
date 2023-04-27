@@ -40,7 +40,7 @@ namespace Logger.DataBase.Tasks
                                 var log = JsonHelper.JsonToObject<TLog>(logStr);
 
 
-                                var isHave = db.TLog.Where(t => t.IsDelete == false && t.Id == log.Id).Any();
+                                var isHave = db.TLog.Where(t => t.Id == log.Id).Any();
 
                                 if (!isHave)
                                 {

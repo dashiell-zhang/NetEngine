@@ -20,7 +20,7 @@ namespace AdminAPI.Services
 
         public List<DtoKeyValueChild>? GetCategoryChildList(long categoryId)
         {
-            var list = db.TCategory.Where(t => t.IsDelete == false && t.ParentId == categoryId).Select(t => new DtoKeyValueChild
+            var list = db.TCategory.Where(t => t.ParentId == categoryId).Select(t => new DtoKeyValueChild
             {
                 Key = t.Id,
                 Value = t.Name,

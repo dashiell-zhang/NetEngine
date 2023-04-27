@@ -63,7 +63,7 @@ namespace AdminAPI.Controllers
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TUser.Where(t => t.IsDelete == false);
+            var query = db.TUser.Where(t => 1 == 1);
 
             if (!string.IsNullOrEmpty(searchKey))
             {
@@ -80,8 +80,8 @@ namespace AdminAPI.Controllers
                 UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join("、", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
-                RoleIds = db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
+                Roles = string.Join("、", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                RoleIds = db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
                 CreateTime = t.CreateTime
             }).Skip(skip).Take(pageSize).ToList();
 
@@ -101,14 +101,14 @@ namespace AdminAPI.Controllers
 
             userId ??= this.userId;
 
-            var user = db.TUser.Where(t => t.Id == userId && t.IsDelete == false).Select(t => new DtoUser
+            var user = db.TUser.Where(t => t.Id == userId).Select(t => new DtoUser
             {
                 Id = t.Id,
                 Name = t.Name,
                 UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join(",", db.TUserRole.Where(r => r.IsDelete == false && r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                Roles = string.Join(",", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
             }).FirstOrDefault();
 
@@ -131,7 +131,7 @@ namespace AdminAPI.Controllers
             {
                 if (handle != null)
                 {
-                    var isHaveUserName = db.TUser.Where(t => t.IsDelete == false && t.UserName.ToLower() == createUser.UserName.ToLower()).Any();
+                    var isHaveUserName = db.TUser.Where(t => t.UserName.ToLower() == createUser.UserName.ToLower()).Any();
 
                     if (isHaveUserName == false)
                     {
@@ -195,13 +195,13 @@ namespace AdminAPI.Controllers
             {
                 if (handle != null)
                 {
-                    var isHaveUserName = db.TUser.Where(t => t.IsDelete == false && t.Id != userId && t.UserName == updateUser.UserName).Any();
+                    var isHaveUserName = db.TUser.Where(t => t.Id != userId && t.UserName == updateUser.UserName).Any();
 
                     if (isHaveUserName)
                     {
                         var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
 
-                        var user = db.TUser.Where(t => t.IsDelete == false && t.Id == userId).FirstOrDefault();
+                        var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
                         if (user != null)
                         {
@@ -218,7 +218,7 @@ namespace AdminAPI.Controllers
                                 user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                             }
 
-                            var roleList = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == user.Id).ToList();
+                            var roleList = db.TUserRole.Where(t => t.UserId == user.Id).ToList();
 
                             foreach (var item in roleList)
                             {
@@ -276,7 +276,7 @@ namespace AdminAPI.Controllers
         [HttpDelete("DeleteUser")]
         public bool DeleteUser(long id)
         {
-            var user = db.TUser.Where(t => t.IsDelete == false && t.Id == id).FirstOrDefault();
+            var user = db.TUser.Where(t => t.Id == id).FirstOrDefault();
 
             if (user != null)
             {
@@ -305,20 +305,20 @@ namespace AdminAPI.Controllers
         [HttpGet("GetUserFunction")]
         public List<DtoUserFunction> GetUserFunction(long userId)
         {
-            var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == userId).Select(t => t.RoleId).ToList();
+            var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var functionList = db.TFunction.Where(t => t.IsDelete == false && t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
+            var functionList = db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
                 Sign = t.Sign,
-                IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-                FunctionList = db.TFunction.Where(f => f.IsDelete == false && f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoUserFunction
+                IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
+                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoUserFunction
                 {
                     Id = f.Id,
                     Name = f.Name.Replace(f.Parent!.Name + "-", ""),
                     Sign = f.Sign,
-                    IsCheck = db.TFunctionAuthorize.Where(r => r.IsDelete == false && r.FunctionId == f.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
+                    IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == f.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
                 }).ToList()
             }).ToList();
 
@@ -343,9 +343,9 @@ namespace AdminAPI.Controllers
         public bool SetUserFunction(DtoSetUserFunction setUserFunction)
         {
 
-            var roleIds = db.TUserRole.Where(t => t.IsDelete == false && t.UserId == setUserFunction.UserId && t.Role.IsDelete == false).Select(t => t.RoleId).ToList();
+            var roleIds = db.TUserRole.Where(t => t.UserId == setUserFunction.UserId).Select(t => t.RoleId).ToList();
 
-            var functionAuthorize = db.TFunctionAuthorize.Where(t => t.IsDelete == false && (roleIds.Contains(t.RoleId!.Value) || t.UserId == setUserFunction.UserId) && t.FunctionId == setUserFunction.FunctionId).FirstOrDefault() ?? new TFunctionAuthorize();
+            var functionAuthorize = db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == setUserFunction.UserId) && t.FunctionId == setUserFunction.FunctionId).FirstOrDefault() ?? new TFunctionAuthorize();
 
             if (setUserFunction.IsCheck)
             {
@@ -369,7 +369,7 @@ namespace AdminAPI.Controllers
                 {
                     if (functionAuthorize.RoleId == null)
                     {
-                        var userFunctionList = db.TFunctionAuthorize.Where(t => t.IsDelete == false && t.UserId == setUserFunction.UserId).ToList();
+                        var userFunctionList = db.TFunctionAuthorize.Where(t => t.UserId == setUserFunction.UserId).ToList();
 
                         foreach (var userFunction in userFunctionList)
                         {
@@ -406,12 +406,12 @@ namespace AdminAPI.Controllers
         [HttpGet("GetUserRoleList")]
         public List<DtoUserRole> GetUserRoleList(long userId)
         {
-            var list = db.TRole.Where(t => t.IsDelete == false).Select(t => new DtoUserRole
+            var list = db.TRole.Select(t => new DtoUserRole
             {
                 Id = t.Id,
                 Name = t.Name,
                 Remarks = t.Remarks,
-                IsCheck = db.TUserRole.Where(r => r.IsDelete == false && r.RoleId == t.Id && r.UserId == userId).FirstOrDefault() != null
+                IsCheck = db.TUserRole.Where(r => r.RoleId == t.Id && r.UserId == userId).FirstOrDefault() != null
             }).ToList();
 
             return list;
@@ -429,7 +429,7 @@ namespace AdminAPI.Controllers
         [HttpPost("SetUserRole")]
         public bool SetUserRole(DtoSetUserRole setUserRole)
         {
-            var userRole = db.TUserRole.Where(t => t.IsDelete == false && t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefault();
+            var userRole = db.TUserRole.Where(t => t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefault();
 
             if (setUserRole.IsCheck)
             {

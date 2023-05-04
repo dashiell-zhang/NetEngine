@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Encodings.Web;
-using System.Text.Json;
 
 namespace Common
 {
@@ -11,8 +9,6 @@ namespace Common
     /// </summary>
     public static class IDistributedCacheExtension
     {
-
-        private readonly static JsonSerializerOptions objectToJsonOptions = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
 
         /// <summary>
@@ -163,8 +159,13 @@ namespace Common
         {
             try
             {
-                var valueStr = JsonSerializer.Serialize(value, objectToJsonOptions);
-                distributedCache.SetString(key, valueStr);
+                var valueStr = JsonHelper.ObjectToJson(value);
+
+                if (valueStr != "[]")
+                {
+                    distributedCache.SetString(key, valueStr);
+                }
+
                 return true;
             }
             catch
@@ -202,8 +203,13 @@ namespace Common
         {
             try
             {
-                var valueStr = JsonSerializer.Serialize(value, objectToJsonOptions);
-                distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = absoluteExpirationRelativeToNow });
+                var valueStr = JsonHelper.ObjectToJson(value);
+
+                if (valueStr != "[]")
+                {
+                    distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = absoluteExpirationRelativeToNow });
+                }
+
                 return true;
             }
             catch
@@ -242,8 +248,13 @@ namespace Common
         {
             try
             {
-                var valueStr = JsonSerializer.Serialize(value, objectToJsonOptions);
-                distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
+                var valueStr = JsonHelper.ObjectToJson(value);
+
+                if (valueStr != "[]")
+                {
+                    distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
+                }
+
                 return true;
             }
             catch
@@ -286,7 +297,7 @@ namespace Common
 
                 if (valueStr != null)
                 {
-                    var value = JsonSerializer.Deserialize<T>(valueStr);
+                    var value = JsonHelper.JsonToObject<T>(valueStr);
                     return value;
                 }
                 else

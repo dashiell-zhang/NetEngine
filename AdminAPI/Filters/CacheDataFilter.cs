@@ -94,7 +94,7 @@ namespace AdminAPI.Filters
                     if (objectResult.Value != null)
                     {
                         var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-                        distributedCache.Set(key, objectResult.Value, TimeSpan.FromSeconds(TTL));
+                        distributedCache.SetAsync(key, objectResult.Value, TimeSpan.FromSeconds(TTL));
                     }
 
                 }

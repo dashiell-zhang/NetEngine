@@ -296,6 +296,16 @@ namespace AdminAPI
             if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+
+                #region 启用 Swagger
+                app.UseSwagger();
+
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint($"/swagger/v1/swagger.json", null);
+                });
+                #endregion
             }
             else
             {
@@ -337,16 +347,13 @@ namespace AdminAPI
             app.MapControllers();
 
 
-            #region 启用 Swagger
-            app.UseSwagger();
+  
 
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint($"/swagger/v1/swagger.json", null);
-            });
-            #endregion
-
-            app.Run();
+            app.Start();
+#if DEBUG
+            Console.WriteLine(string.Join(Environment.NewLine, app.Urls.Select(t => Environment.NewLine + "Swagger Doc: " + t + "/swagger/" + Environment.NewLine).ToList()));
+#endif
+            app.WaitForShutdown();
 
         }
 

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
 
@@ -85,17 +86,17 @@ namespace Common
         /// <summary>
         /// 获取全部 Assembly
         /// </summary>
+        /// <remarks>注意：单文件发布模式下会存在缺失</remarks>
         /// <returns></returns>
         private static List<Assembly> GetAllAssembly()
         {
-
             var allAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
 
             HashSet<string> loadedAssemblies = new();
 
             foreach (var item in allAssemblies)
             {
-                loadedAssemblies.Add(item.FullName!);
+                loadedAssemblies.Add(item.GetName().Name!);
             }
 
             Queue<Assembly> assembliesToCheck = new();
@@ -106,15 +107,37 @@ namespace Common
                 var assemblyToCheck = assembliesToCheck.Dequeue();
                 foreach (var reference in assemblyToCheck!.GetReferencedAssemblies())
                 {
-                    if (!loadedAssemblies.Contains(reference.FullName))
+                    if (!loadedAssemblies.Contains(reference.Name!))
                     {
                         var assembly = Assembly.Load(reference);
 
                         assembliesToCheck.Enqueue(assembly);
 
-                        loadedAssemblies.Add(reference.FullName);
+                        loadedAssemblies.Add(reference.Name!);
 
                         allAssemblies.Add(assembly);
+                    }
+                }
+            }
+
+            var runtimeLibraryNameList = DependencyContext.Default?.RuntimeLibraries.Select(o => o.Name).ToList();
+            if (runtimeLibraryNameList != null)
+            {
+                foreach (var runtimeLibraryName in runtimeLibraryNameList)
+                {
+                    try
+                    {
+                        if (!loadedAssemblies.Contains(runtimeLibraryName))
+                        {
+                            var assembly = Assembly.Load(runtimeLibraryName);
+
+                            loadedAssemblies.Add(runtimeLibraryName);
+
+                            allAssemblies.Add(assembly);
+                        }
+                    }
+                    catch
+                    {
                     }
                 }
             }

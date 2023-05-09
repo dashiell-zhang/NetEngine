@@ -56,6 +56,9 @@ namespace Repository.Database
         public DbSet<TProduct> TProduct { get; set; }
 
 
+        public DbSet<TQueueTask> TQueueTask { get; set; }
+
+
         public DbSet<TRegionArea> TRegionArea { get; set; }
 
 

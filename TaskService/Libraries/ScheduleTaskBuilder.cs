@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace TaskService.Libraries
 {
-    public class CronSchedule
+    public class ScheduleTaskBuilder
     {
         private static readonly List<ScheduleInfo> scheduleList = new();
         private static Timer mainTimer;
@@ -15,11 +15,11 @@ namespace TaskService.Libraries
 
         public static void Builder(object context)
         {
-            var taskList = context.GetType().GetMethods().Where(t => t.GetCustomAttributes(typeof(CronScheduleAttribute), false).Length > 0).ToList();
+            var taskList = context.GetType().GetMethods().Where(t => t.GetCustomAttributes(typeof(ScheduleTaskAttribute), false).Length > 0).ToList();
 
             foreach (var action in taskList)
             {
-                string cron = action.CustomAttributes.Where(t => t.AttributeType == typeof(CronScheduleAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Cron" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
+                string cron = action.CustomAttributes.Where(t => t.AttributeType == typeof(ScheduleTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Cron" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
 
                 scheduleList.Add(new ScheduleInfo
                 {

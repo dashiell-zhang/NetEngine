@@ -1,8 +1,11 @@
 ﻿namespace TaskService.Libraries
 {
+
     [AttributeUsage(AttributeTargets.Method)]
-    public class CronScheduleAttribute : Attribute
+    public class QueueTaskAttribute : Attribute
     {
-        public string Cron { get; set; }
+
+        public string Action { get; set; }
+
     }
 }

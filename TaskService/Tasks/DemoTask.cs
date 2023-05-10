@@ -52,7 +52,7 @@ namespace TaskService.Tasks
 
 
 
-        [QueueTask(Action = "ShowName",Semaphore =1)]
+        [QueueTask(Name = "ShowName", Semaphore = 1)]
         public void ShowName(string name)
         {
             Console.WriteLine(DateTime.Now + "姓名：" + name);

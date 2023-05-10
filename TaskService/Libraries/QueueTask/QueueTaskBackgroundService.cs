@@ -30,13 +30,13 @@ namespace TaskService.Libraries.QueueTask
             using var scope = serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-            if (queueActionList.Any())
+            if (queueMethodList.Any())
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     try
                     {
-                        foreach (var item in queueActionList.Values)
+                        foreach (var item in queueMethodList.Values)
                         {
                             var runingTaskIdList = runingTaskList.Where(t => t.Value == item.Name).Select(t => t.Key).ToList();
 
@@ -105,7 +105,7 @@ namespace TaskService.Libraries.QueueTask
                             try
                             {
 
-                                var parameterType = queueInfo.Action.GetParameters().FirstOrDefault()?.ParameterType;
+                                var parameterType = queueInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
                                 if (parameterType != null)
                                 {
                                     if (queueTask.Parameter != null)
@@ -113,16 +113,16 @@ namespace TaskService.Libraries.QueueTask
 
                                         var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
 
-                                        queueInfo.Action.Invoke(queueInfo.Context, new object[] { parameter });
+                                        queueInfo.Method.Invoke(queueInfo.Context, new object[] { parameter });
                                     }
                                     else
                                     {
-                                        logger.LogError(queueInfo.Action + "方法要求有参数，但队列任务记录缺少参数");
+                                        logger.LogError(queueInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
                                     }
                                 }
                                 else
                                 {
-                                    queueInfo.Action.Invoke(queueInfo.Context, null)?.ToString();
+                                    queueInfo.Method.Invoke(queueInfo.Context, null)?.ToString();
                                 }
 
                                 queueTask.SuccessTime = DateTime.UtcNow;
@@ -141,7 +141,7 @@ namespace TaskService.Libraries.QueueTask
             }
             catch (Exception ex)
             {
-                logger.LogError($"Action:{queueInfo.Name};Error: {ex.Message}");
+                logger.LogError($"Method:{queueInfo.Name};Error: {ex.Message}");
 
                 runingTaskList.Remove(queueTaskId);
             }

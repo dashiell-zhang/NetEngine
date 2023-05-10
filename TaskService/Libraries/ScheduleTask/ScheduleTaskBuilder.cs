@@ -1,93 +1,36 @@
-﻿using System.Collections;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace TaskService.Libraries.ScheduleTask
 {
     public class ScheduleTaskBuilder
     {
-        private static readonly List<ScheduleInfo> scheduleList = new();
-        private static Timer mainTimer;
 
-        private static readonly Hashtable historyList = new();
-        private static readonly List<string> historyKeyList = new();
+        public static List<ScheduleInfo> scheduleMethodList = new();
 
 
         public static void Builder(object context)
         {
             var taskList = context.GetType().GetMethods().Where(t => t.GetCustomAttributes(typeof(ScheduleTaskAttribute), false).Length > 0).ToList();
 
-            foreach (var action in taskList)
+            foreach (var method in taskList)
             {
-                string cron = action.CustomAttributes.Where(t => t.AttributeType == typeof(ScheduleTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Cron" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
+                string cron = method.CustomAttributes.Where(t => t.AttributeType == typeof(ScheduleTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Cron" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
 
-                scheduleList.Add(new ScheduleInfo
+                scheduleMethodList.Add(new ScheduleInfo
                 {
-                    CronExpression = cron,
-                    Action = action,
+                    Cron = cron,
+                    Method = method,
                     Context = context
                 });
             }
-
-            if (mainTimer == default)
-            {
-                mainTimer = new(Run, null, 0, 900);
-            }
         }
 
 
-        private static void Run(object? state)
+        public class ScheduleInfo
         {
-            var nowTime = DateTime.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+            public string Cron { get; set; }
 
-            foreach (var key in historyKeyList)
-            {
-                var keyTime = DateTime.Parse(key[..19]);
-
-                if (keyTime! <= nowTime.AddSeconds(-5))
-                {
-                    historyList.Remove(key);
-                }
-            }
-
-            foreach (var item in scheduleList)
-            {
-                if (item.LastTime != null)
-                {
-                    var nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(item.CronExpression, item.LastTime.Value).ToString("yyyy-MM-dd HH:mm:ss"));
-
-                    if (nextTime == nowTime)
-                    {
-                        try
-                        {
-                            string key = nextTime.ToString("yyyy-MM-dd HH:mm:ss") + " " + item.Action.DeclaringType?.FullName + "." + item.Action.Name;
-                            historyList.Add(key, null);
-                            historyKeyList.Add(key);
-
-                            item.LastTime = DateTimeOffset.Now;
-
-                            _ = Task.Run(() =>
-                            {
-                                item.Action.Invoke(item.Context, null);
-                            });
-                        }
-                        catch
-                        {
-                        }
-                    }
-                }
-                else
-                {
-                    item.LastTime = DateTimeOffset.Now.AddSeconds(5);
-                }
-            }
-        }
-
-
-        private class ScheduleInfo
-        {
-            public string CronExpression { get; set; }
-
-            public MethodInfo Action { get; set; }
+            public MethodInfo Method { get; set; }
 
             public object Context { get; set; }
 

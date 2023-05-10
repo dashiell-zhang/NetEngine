@@ -18,13 +18,13 @@ namespace QueueTask
         }
 
 
-        public bool Create(string action, object? parameter)
+        public bool Create(string name, object? parameter)
         {
             TQueueTask queueTask = new()
             {
                 Id = idHelper.GetId(),
                 CreateTime = DateTime.UtcNow,
-                Action = action
+                Name = name
             };
 
             if (parameter != null)

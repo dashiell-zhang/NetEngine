@@ -48,7 +48,7 @@ namespace TaskService.Libraries.QueueTask
                             {
                                 var nowTime = DateTime.UtcNow;
 
-                                var queueTaskIdList = db.TQueueTask.Where(t => t.Action == item.Name && t.SuccessTime == null && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || (t.LastTime < nowTime.AddMinutes(-5 * t.Count)))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
+                                var queueTaskIdList = db.TQueueTask.Where(t => t.Name == item.Name && t.SuccessTime == null && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || (t.LastTime < nowTime.AddMinutes(-5 * t.Count)))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
 
                                 foreach (var queueTaskId in queueTaskIdList)
                                 {

@@ -10,9 +10,9 @@ namespace Repository.Database
     {
 
         /// <summary>
-        /// 方法名称
+        /// 任务名称
         /// </summary>
-        public string Action { get; set; }
+        public string Name { get; set; }
 
 
 

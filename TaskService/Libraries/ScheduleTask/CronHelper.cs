@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Common
+namespace TaskService.Libraries.ScheduleTask
 {
 #pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     public class CronHelper
@@ -1429,11 +1429,11 @@ namespace Common
                             int daysToAdd = 0;
                             if (cDow < dow)
                             {
-                                daysToAdd = (dow - cDow) + (7 * (everyNthWeek - 1));
+                                daysToAdd = dow - cDow + 7 * (everyNthWeek - 1);
                             }
                             if (cDow > dow)
                             {
-                                daysToAdd = (dow + (7 - cDow)) + (7 * (everyNthWeek - 1));
+                                daysToAdd = dow + (7 - cDow) + 7 * (everyNthWeek - 1);
                             }
 
 

@@ -1,11 +1,10 @@
-﻿using DistributedLock;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using Common;
+using DistributedLock;
 using Repository.Database;
-using static QueueTask.QueueTaskBuilder;
+using System.Reflection;
+using static TaskService.Libraries.QueueTask.QueueTaskBuilder;
 
-namespace QueueTask
+namespace TaskService.Libraries.QueueTask
 {
     public class QueueTaskBackgroundService : BackgroundService
     {
@@ -31,15 +30,14 @@ namespace QueueTask
             using var scope = serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-            if (QueueTaskBuilder.queueActionList.Any())
+            if (queueActionList.Any())
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     try
                     {
-                        foreach (var item in QueueTaskBuilder.queueActionList.Values)
+                        foreach (var item in queueActionList.Values)
                         {
-
                             var runingTaskIdList = runingTaskList.Where(t => t.Value == item.Name).Select(t => t.Key).ToList();
 
                             int skipSize = runingTaskIdList.Count;
@@ -48,7 +46,9 @@ namespace QueueTask
 
                             if (taskSize > 0)
                             {
-                                var queueTaskIdList = db.TQueueTask.Where(t => t.Action == item.Name && t.SuccessTime == null && runingTaskIdList.Contains(t.Id) == false && t.Count < 3).OrderBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
+                                var nowTime = DateTime.UtcNow;
+
+                                var queueTaskIdList = db.TQueueTask.Where(t => t.Action == item.Name && t.SuccessTime == null && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || (t.LastTime < nowTime.AddMinutes(-5 * t.Count)))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
 
                                 foreach (var queueTaskId in queueTaskIdList)
                                 {
@@ -70,6 +70,8 @@ namespace QueueTask
             }
         }
 
+
+        private readonly MethodInfo jsonToParameter = typeof(JsonHelper).GetMethod("JsonToObject", BindingFlags.Static | BindingFlags.Public)!;
 
 
 
@@ -109,7 +111,7 @@ namespace QueueTask
                                     if (queueTask.Parameter != null)
                                     {
 
-                                        var parameter = QueueTaskBuilder.jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
+                                        var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
 
                                         queueInfo.Action.Invoke(queueInfo.Context, new object[] { parameter });
                                     }

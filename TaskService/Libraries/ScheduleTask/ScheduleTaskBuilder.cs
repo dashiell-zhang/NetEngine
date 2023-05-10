@@ -1,8 +1,7 @@
-﻿using Common;
-using System.Collections;
+﻿using System.Collections;
 using System.Reflection;
 
-namespace TaskService.Libraries
+namespace TaskService.Libraries.ScheduleTask
 {
     public class ScheduleTaskBuilder
     {

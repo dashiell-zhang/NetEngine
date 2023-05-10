@@ -1,8 +1,8 @@
 ﻿using Common;
 using DistributedLock;
-using QueueTask;
 using Repository.Database;
-using TaskService.Libraries;
+using TaskService.Libraries.QueueTask;
+using TaskService.Libraries.ScheduleTask;
 
 namespace TaskService.Tasks
 {
@@ -32,7 +32,7 @@ namespace TaskService.Tasks
 
 
 
-        //[ScheduleTask(Cron = "0/1 * * * * ?")]
+        [ScheduleTask(Cron = "0/1 * * * * ?")]
         public void WriteHello()
         {
             try

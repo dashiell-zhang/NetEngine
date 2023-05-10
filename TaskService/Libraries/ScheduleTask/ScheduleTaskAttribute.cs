@@ -1,4 +1,4 @@
-﻿namespace TaskService.Libraries
+﻿namespace TaskService.Libraries.ScheduleTask
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class ScheduleTaskAttribute : Attribute

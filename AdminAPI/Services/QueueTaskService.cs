@@ -1,5 +1,4 @@
 ﻿using Common;
-using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 
 namespace QueueTask

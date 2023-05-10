@@ -1,11 +1,10 @@
-﻿using Common;
-using System.Reflection;
+﻿using System.Reflection;
 
-namespace QueueTask
+namespace TaskService.Libraries.QueueTask
 {
     public class QueueTaskBuilder
     {
-        public static readonly Dictionary<string,QueueInfo> queueActionList = new();
+        public static readonly Dictionary<string, QueueInfo> queueActionList = new();
 
 
         public static void Builder(object context)
@@ -34,10 +33,6 @@ namespace QueueTask
                 });
             }
         }
-
-
-        public static readonly MethodInfo jsonToParameter = typeof(JsonHelper).GetMethod("JsonToObject", BindingFlags.Static | BindingFlags.Public)!;
-
 
 
         public class QueueInfo

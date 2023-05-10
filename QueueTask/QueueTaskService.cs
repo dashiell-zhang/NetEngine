@@ -1,30 +1,32 @@
 ﻿using Common;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 
-namespace TaskService.Libraries
+namespace QueueTask
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class QueuePublish
+    public class QueueTaskService
     {
 
         private readonly DatabaseContext db;
         private readonly IDHelper idHelper;
 
-        public QueuePublish(DatabaseContext db, IDHelper idHelper)
+        public QueueTaskService(DatabaseContext db, IDHelper idHelper)
         {
             this.db = db;
             this.idHelper = idHelper;
         }
 
 
-        public bool Publish(string action, object? parameter)
+        public bool Create(string action, object? parameter)
         {
-
-            TQueueTask queueTask = new();
-            queueTask.Id = idHelper.GetId();
-            queueTask.CreateTime = DateTime.UtcNow;
-            queueTask.Action = action;
+            TQueueTask queueTask = new()
+            {
+                Id = idHelper.GetId(),
+                CreateTime = DateTime.UtcNow,
+                Action = action
+            };
 
             if (parameter != null)
             {

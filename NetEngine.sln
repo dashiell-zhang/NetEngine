@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminAPI", "AdminAPI\AdminA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminAPP", "AdminAPP\AdminAPP.csproj", "{C762B2E3-FA01-42B4-BAF9-296919C94317}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueueTask", "QueueTask\QueueTask.csproj", "{DA9239D9-4201-4E84-A13A-9947D5F36E7F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -119,6 +121,10 @@ Global
 		{C762B2E3-FA01-42B4-BAF9-296919C94317}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C762B2E3-FA01-42B4-BAF9-296919C94317}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C762B2E3-FA01-42B4-BAF9-296919C94317}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA9239D9-4201-4E84-A13A-9947D5F36E7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA9239D9-4201-4E84-A13A-9947D5F36E7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA9239D9-4201-4E84-A13A-9947D5F36E7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA9239D9-4201-4E84-A13A-9947D5F36E7F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

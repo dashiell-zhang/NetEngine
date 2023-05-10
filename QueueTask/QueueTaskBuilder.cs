@@ -1,11 +1,11 @@
 ﻿using Common;
 using System.Reflection;
 
-namespace TaskService.Libraries
+namespace QueueTask
 {
     public class QueueTaskBuilder
     {
-        public static readonly List<QueueInfo> scheduleList = new();
+        public static readonly Dictionary<string,QueueInfo> queueActionList = new();
 
 
         public static void Builder(object context)
@@ -16,14 +16,23 @@ namespace TaskService.Libraries
             {
                 string name = action.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Action" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
 
-                scheduleList.Add(new()
+                int semaphore = 1;
+
+                var semaphoreStr = action.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Semaphore" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault();
+
+                if (semaphoreStr != null)
+                {
+                    semaphore = int.Parse(semaphoreStr);
+                }
+
+                queueActionList.Add(name, new()
                 {
                     Name = name,
+                    Semaphore = semaphore,
                     Action = action,
                     Context = context
                 });
             }
-
         }
 
 
@@ -31,18 +40,15 @@ namespace TaskService.Libraries
 
 
 
-
-
         public class QueueInfo
         {
-
             public string Name { get; set; }
+
+            public int Semaphore { get; set; }
 
             public MethodInfo Action { get; set; }
 
             public object Context { get; set; }
-
-            public DateTimeOffset? LastTime { get; set; }
         }
     }
 }

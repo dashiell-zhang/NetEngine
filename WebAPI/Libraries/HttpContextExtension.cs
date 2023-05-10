@@ -34,17 +34,17 @@ namespace WebAPI.Libraries
         /// <returns></returns>
         public static string? GetClaimByAuthorization(this HttpContext httpContext, string key)
         {
-            try
-            {
-                var authorization = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var authorization = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Replace("Bearer ", "");
 
+            if (authorization != null)
+            {
                 JwtSecurityToken securityToken = new(authorization);
 
                 var value = securityToken.Claims.ToList().Where(t => t.Type == key).FirstOrDefault()?.Value;
 
                 return value;
             }
-            catch
+            else
             {
                 return null;
             }

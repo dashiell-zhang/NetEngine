@@ -9,6 +9,8 @@ namespace TaskService
     {
         static void Main(string[] args)
         {
+            ThreadPool.SetMinThreads(128, 1);
+
             EnvironmentHelper.ChangeDirectory(args);
 
             IHost host = Host.CreateDefaultBuilder(args).UseWindowsService()

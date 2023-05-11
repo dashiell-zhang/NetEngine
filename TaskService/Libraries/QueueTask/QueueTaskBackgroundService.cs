@@ -135,6 +135,7 @@ namespace TaskService.Libraries.QueueTask
                 catch (Exception ex)
                 {
                     logger.LogError($"RunAction-{queueInfo.Name};{queueTaskId};{ex.Message}");
+                    runingTaskList.TryRemove(queueTaskId, out _);
                 }
             });
         }

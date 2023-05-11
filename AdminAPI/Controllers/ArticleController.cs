@@ -261,7 +261,7 @@ namespace AdminAPI.Controllers
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f =>  f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
+                CoverImageList = db.TFile.Where(f => f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
                     Value = fileServerUrl + f.Path
@@ -298,7 +298,7 @@ namespace AdminAPI.Controllers
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f =>  f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
+                CoverImageList = db.TFile.Where(f => f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
                 {
                     Key = f.Id,
                     Value = fileServerUrl + f.Path

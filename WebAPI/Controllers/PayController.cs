@@ -57,7 +57,7 @@ namespace WebAPI.Controllers
                 t.Price,
                 ProductName = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
                 t.CreateUserId,
-                UserOpenId = db.TUserBindExternal.Where(w =>  w.UserId == t.CreateUserId && w.AppName == "WeiXinMiniApp" && w.AppId == appId).Select(w => w.OpenId).FirstOrDefault()
+                UserOpenId = db.TUserBindExternal.Where(w => w.UserId == t.CreateUserId && w.AppName == "WeiXinMiniApp" && w.AppId == appId).Select(w => w.OpenId).FirstOrDefault()
             }).FirstOrDefault();
 
 
@@ -335,7 +335,7 @@ namespace WebAPI.Controllers
                 {
                     t.OrderNo,
                     t.Price,
-                    AliPayUserId = db.TUserBindExternal.Where(a =>  a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
+                    AliPayUserId = db.TUserBindExternal.Where(a => a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
                     t.CreateTime
                 }).FirstOrDefault();
 

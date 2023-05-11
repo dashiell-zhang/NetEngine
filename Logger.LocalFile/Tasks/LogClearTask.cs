@@ -57,7 +57,7 @@ namespace Logger.LocalFile.Tasks
                 }
             }
 
-            
+
         }
 
     }

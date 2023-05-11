@@ -213,13 +213,13 @@ namespace AdminAPI.Controllers
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
                 Sign = t.Sign,
-                IsCheck = db.TFunctionAuthorize.Where(r =>  r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-                FunctionList = db.TFunction.Where(f =>  f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoRoleFunction
+                IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
+                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoRoleFunction
                 {
                     Id = f.Id,
                     Name = f.Name.Replace(f.Parent!.Name + "-", ""),
                     Sign = f.Sign,
-                    IsCheck = db.TFunctionAuthorize.Where(r =>  r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
+                    IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
                 }).ToList()
             }).ToList();
 

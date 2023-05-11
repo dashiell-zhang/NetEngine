@@ -1,5 +1,4 @@
-﻿using DistributedLock;
-using System.Collections;
+﻿using System.Collections.Concurrent;
 using TaskService.Libraries.ScheduleTask;
 using static TaskService.Libraries.ScheduleTask.ScheduleTaskBuilder;
 
@@ -8,9 +7,14 @@ namespace TaskService.Libraries.QueueTask
     public class ScheduleTaskBackgroundService : BackgroundService
     {
 
-        private static readonly Hashtable historyList = new();
-        private static readonly List<string> historyKeyList = new();
+        private readonly ConcurrentDictionary<string, string?> historyList = new();
 
+        private readonly ILogger logger;
+
+        public ScheduleTaskBackgroundService(ILogger<ScheduleTaskBackgroundService> logger)
+        {
+            this.logger = logger;
+        }
 
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -24,47 +28,41 @@ namespace TaskService.Libraries.QueueTask
                     {
                         var nowTime = DateTime.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
 
-                        foreach (var key in historyKeyList)
+                        foreach (var key in historyList.Keys)
                         {
                             var keyTime = DateTime.Parse(key[..19]);
 
-                            if (keyTime! <= nowTime.AddSeconds(-5))
+                            if (keyTime! <= nowTime.AddSeconds(-3))
                             {
-                                historyList.Remove(key);
+                                historyList.TryRemove(key, out _);
                             }
                         }
 
                         foreach (var item in scheduleMethodList)
                         {
-                            if (item.LastTime != null)
-                            {
-                                var nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(item.Cron, item.LastTime.Value).ToString("yyyy-MM-dd HH:mm:ss"));
-
-                                if (nextTime == nowTime)
-                                {
-                                    try
-                                    {
-                                        string key = nextTime.ToString("yyyy-MM-dd HH:mm:ss") + " " + item.Method.DeclaringType?.FullName + "." + item.Method.Name;
-                                        historyList.Add(key, null);
-                                        historyKeyList.Add(key);
-
-                                        item.LastTime = DateTimeOffset.Now;
-
-                                        RunAction(item);
-                                    }
-                                    catch
-                                    {
-                                    }
-                                }
-                            }
-                            else
+                            if (item.LastTime == null)
                             {
                                 item.LastTime = DateTimeOffset.Now.AddSeconds(5);
                             }
+
+                            var nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(item.Cron, item.LastTime.Value).ToString("yyyy-MM-dd HH:mm:ss"));
+
+                            if (nextTime == nowTime)
+                            {
+                                string key = nextTime.ToString("yyyy-MM-dd HH:mm:ss") + " " + item.Method.DeclaringType?.FullName + "." + item.Method.Name;
+
+                                if (historyList.TryAdd(key, null))
+                                {
+                                    item.LastTime = DateTimeOffset.Now;
+
+                                    RunAction(item);
+                                }
+                            }
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        logger.LogError($"ExecuteAsync：{ex.Message}");
                     }
 
                     await Task.Delay(900, stoppingToken);
@@ -76,17 +74,17 @@ namespace TaskService.Libraries.QueueTask
 
         private void RunAction(ScheduleInfo scheduleInfo)
         {
-            try
+            Task.Run(() =>
             {
-                Task.Run(() =>
+                try
                 {
                     scheduleInfo.Method.Invoke(scheduleInfo.Context, null);
-                });
-
-            }
-            catch
-            {
-            }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"RunAction-{scheduleInfo.Method.Name};{ex.Message}");
+                }
+            });
         }
     }
 }

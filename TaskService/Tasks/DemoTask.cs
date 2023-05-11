@@ -33,7 +33,7 @@ namespace TaskService.Tasks
 
 
         [ScheduleTask(Cron = "0/1 * * * * ?")]
-        public void WriteHello()
+        public void ShowTime()
         {
             try
             {
@@ -41,15 +41,13 @@ namespace TaskService.Tasks
                 var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
                 var distLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-                logger.LogInformation("HelloWord{Id}", idHelper.GetId());
+                Console.WriteLine(DateTime.Now);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "DemoTask.WriteHello");
             }
         }
-
-
 
 
         [QueueTask(Name = "ShowName", Semaphore = 1)]

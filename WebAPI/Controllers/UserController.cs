@@ -146,13 +146,13 @@ namespace WebAPI.Controllers
 
             userId ??= this.userId;
 
-            var user = db.TUser.Where(t => t.Id == userId ).Select(t => new DtoUser
+            var user = db.TUser.Where(t => t.Id == userId).Select(t => new DtoUser
             {
                 Name = t.Name,
                 UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join(",", db.TUserRole.Where(r =>  r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                Roles = string.Join(",", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
             }).FirstOrDefault();
 

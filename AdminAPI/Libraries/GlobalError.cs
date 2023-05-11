@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.Diagnostics;
 namespace AdminAPI.Libraries
 {
 
-
     public class GlobalError
     {
-
 
         public static Task ErrorEvent(HttpContext httpContext)
         {
@@ -49,7 +47,7 @@ namespace AdminAPI.Libraries
 
             var logger = httpContext.RequestServices.GetRequiredService<ILogger<GlobalError>>();
 
-            logger.LogError("全局异常：{content}", content);
+            logger.LogError("全局异常：{content}", JsonHelper.ObjectToJson(content));
 
             httpContext.Response.StatusCode = 400;
 

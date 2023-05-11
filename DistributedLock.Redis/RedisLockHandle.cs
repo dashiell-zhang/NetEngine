@@ -13,17 +13,8 @@ namespace DistributedLock.Redis
 
         public void Dispose()
         {
-            try
-            {
-                Database.LockRelease(LockKey, "123456");
-            }
-            catch
-            {
-
-            }
-
+            Database.LockReleaseAsync(LockKey, "123456");
             GC.SuppressFinalize(this);
-
         }
     }
 }

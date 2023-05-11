@@ -1,6 +1,7 @@
 ﻿using Common;
 using DistributedLock;
 using Repository.Database;
+using System.Collections.Concurrent;
 using System.Reflection;
 using static TaskService.Libraries.QueueTask.QueueTaskBuilder;
 
@@ -14,7 +15,7 @@ namespace TaskService.Libraries.QueueTask
         private readonly IDistributedLock distLock;
 
 
-        private readonly Dictionary<long, string> runingTaskList = new();
+        private readonly ConcurrentDictionary<long, string> runingTaskList = new();
 
 
         public QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock)
@@ -38,6 +39,7 @@ namespace TaskService.Libraries.QueueTask
                     {
                         foreach (var item in queueMethodList.Values)
                         {
+
                             var runingTaskIdList = runingTaskList.Where(t => t.Value == item.Name).Select(t => t.Key).ToList();
 
                             int skipSize = runingTaskIdList.Count;
@@ -48,21 +50,21 @@ namespace TaskService.Libraries.QueueTask
                             {
                                 var nowTime = DateTime.UtcNow;
 
-                                var queueTaskIdList = db.TQueueTask.Where(t => t.Name == item.Name && t.SuccessTime == null && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || (t.LastTime < nowTime.AddMinutes(-5 * t.Count)))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
+                                var queueTaskIdList = db.TQueueTask.Where(t => t.Name == item.Name && t.SuccessTime == null && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || (t.LastTime < nowTime.AddMinutes(-5 * t.Count)))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
 
                                 foreach (var queueTaskId in queueTaskIdList)
                                 {
-                                    if (runingTaskIdList.Contains(queueTaskId) == false)
+                                    if (runingTaskList.TryAdd(queueTaskId, item.Name))
                                     {
-                                        runingTaskList.Add(queueTaskId, item.Name);
                                         RunAction(item, queueTaskId);
                                     }
                                 }
                             }
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        logger.LogError($"ExecuteAsync：{ex.Message}");
                     }
 
                     await Task.Delay(1000, stoppingToken);
@@ -77,9 +79,9 @@ namespace TaskService.Libraries.QueueTask
 
         private void RunAction(QueueInfo queueInfo, long queueTaskId)
         {
-            try
+            Task.Run(() =>
             {
-                Task.Run(() =>
+                try
                 {
                     using var scope = serviceProvider.CreateScope();
 
@@ -102,49 +104,39 @@ namespace TaskService.Libraries.QueueTask
 
                             queueTask.Count++;
 
-                            try
+                            var parameterType = queueInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
+                            if (parameterType != null)
                             {
-
-                                var parameterType = queueInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
-                                if (parameterType != null)
+                                if (queueTask.Parameter != null)
                                 {
-                                    if (queueTask.Parameter != null)
-                                    {
+                                    var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
 
-                                        var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
-
-                                        queueInfo.Method.Invoke(queueInfo.Context, new object[] { parameter });
-                                    }
-                                    else
-                                    {
-                                        logger.LogError(queueInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
-                                    }
+                                    queueInfo.Method.Invoke(queueInfo.Context, new object[] { parameter });
                                 }
                                 else
                                 {
-                                    queueInfo.Method.Invoke(queueInfo.Context, null)?.ToString();
+                                    logger.LogError(queueInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
                                 }
-
-                                queueTask.SuccessTime = DateTime.UtcNow;
                             }
-                            catch
+                            else
                             {
+                                queueInfo.Method.Invoke(queueInfo.Context, null)?.ToString();
                             }
 
-                            runingTaskList.Remove(queueTaskId);
+                            queueTask.SuccessTime = DateTime.UtcNow;
 
                             db.SaveChanges();
+
+                            runingTaskList.TryRemove(queueTaskId, out _);
                         }
                     }
-                });
 
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Method:{queueInfo.Name};Error: {ex.Message}");
-
-                runingTaskList.Remove(queueTaskId);
-            }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"RunAction-{queueInfo.Name};{queueTaskId};{ex.Message}");
+                }
+            });
         }
 
     }

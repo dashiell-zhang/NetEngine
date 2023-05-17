@@ -77,7 +77,7 @@ namespace TaskService.Libraries.QueueTask
 
 
 
-        private void RunAction(QueueInfo queueInfo, long queueTaskId)
+        private void RunAction(QueueTaskInfo queueTaskInfo, long queueTaskId)
         {
             Task.Run(() =>
             {
@@ -87,54 +87,52 @@ namespace TaskService.Libraries.QueueTask
 
                     var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-                    using (var lockActionState = distLock.TryLock(queueInfo.Name, TimeSpan.FromMinutes(5), queueInfo.Semaphore))
+                    using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(5), queueTaskInfo.Semaphore);
+                    if (lockActionState != null)
                     {
-                        if (lockActionState != null)
+                        var queueTask = db.TQueueTask.FirstOrDefault(t => t.Id == queueTaskId)!;
+
+                        if (queueTask.FirstTime == null)
                         {
-                            var queueTask = db.TQueueTask.FirstOrDefault(t => t.Id == queueTaskId)!;
+                            queueTask.FirstTime = DateTime.UtcNow;
+                        }
 
-                            if (queueTask.FirstTime == null)
+                        queueTask.LastTime = DateTime.UtcNow;
+
+                        db.SaveChanges();
+
+                        queueTask.Count++;
+
+                        var parameterType = queueTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
+                        if (parameterType != null)
+                        {
+                            if (queueTask.Parameter != null)
                             {
-                                queueTask.FirstTime = DateTime.UtcNow;
-                            }
+                                var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
 
-                            queueTask.LastTime = DateTime.UtcNow;
-
-                            db.SaveChanges();
-
-                            queueTask.Count++;
-
-                            var parameterType = queueInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
-                            if (parameterType != null)
-                            {
-                                if (queueTask.Parameter != null)
-                                {
-                                    var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
-
-                                    queueInfo.Method.Invoke(queueInfo.Context, new object[] { parameter });
-                                }
-                                else
-                                {
-                                    logger.LogError(queueInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
-                                }
+                                queueTaskInfo.Method.Invoke(queueTaskInfo.Context, new object[] { parameter });
                             }
                             else
                             {
-                                queueInfo.Method.Invoke(queueInfo.Context, null)?.ToString();
+                                logger.LogError(queueTaskInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
                             }
-
-                            queueTask.SuccessTime = DateTime.UtcNow;
-
-                            db.SaveChanges();
-
-                            runingTaskList.TryRemove(queueTaskId, out _);
                         }
+                        else
+                        {
+                            queueTaskInfo.Method.Invoke(queueTaskInfo.Context, null)?.ToString();
+                        }
+
+                        queueTask.SuccessTime = DateTime.UtcNow;
+
+                        db.SaveChanges();
+
+                        runingTaskList.TryRemove(queueTaskId, out _);
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"RunAction-{queueInfo.Name};{queueTaskId};{ex.Message}");
+                    logger.LogError($"RunAction-{queueTaskInfo.Name};{queueTaskId};{ex.Message}");
                     runingTaskList.TryRemove(queueTaskId, out _);
                 }
             });

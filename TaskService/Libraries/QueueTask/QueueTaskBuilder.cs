@@ -1,10 +1,8 @@
-﻿using System.Reflection;
-
-namespace TaskService.Libraries.QueueTask
+﻿namespace TaskService.Libraries.QueueTask
 {
     public class QueueTaskBuilder
     {
-        public static readonly Dictionary<string, QueueInfo> queueMethodList = new();
+        public static readonly Dictionary<string, QueueTaskInfo> queueMethodList = new();
 
 
         public static void Builder(object context)
@@ -34,16 +32,5 @@ namespace TaskService.Libraries.QueueTask
             }
         }
 
-
-        public class QueueInfo
-        {
-            public string Name { get; set; }
-
-            public int Semaphore { get; set; }
-
-            public MethodInfo Method { get; set; }
-
-            public object Context { get; set; }
-        }
     }
 }

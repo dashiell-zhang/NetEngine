@@ -72,17 +72,17 @@ namespace TaskService.Libraries.QueueTask
 
 
 
-        private void RunAction(ScheduleInfo scheduleInfo)
+        private void RunAction(ScheduleTaskInfo scheduleTaskInfo)
         {
             Task.Run(() =>
             {
                 try
                 {
-                    scheduleInfo.Method.Invoke(scheduleInfo.Context, null);
+                    scheduleTaskInfo.Method.Invoke(scheduleTaskInfo.Context, null);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"RunAction-{scheduleInfo.Method.Name};{ex.Message}");
+                    logger.LogError($"RunAction-{scheduleTaskInfo.Method.Name};{ex.Message}");
                 }
             });
         }

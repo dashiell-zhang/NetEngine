@@ -8,12 +8,14 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Security.Cryptography;
 using WebAPI.Filters;
 using WebAPI.Libraries;
+using WebAPI.Libraries.HealthCheck;
 using WebAPI.Libraries.HttpHandler;
 using WebAPI.Libraries.Swagger;
 using WebAPI.Models.AppSetting;
@@ -295,7 +297,6 @@ namespace WebAPI
 
             #endregion
 
-
             #region 注册日志服务
 
             //注册数据库日志服务
@@ -306,6 +307,20 @@ namespace WebAPI
 
             #endregion
 
+            #region 注册健康检测服务
+            builder.Services.AddHealthChecks()
+                .AddCheck<CacheHealthCheck>("CacheHealthCheck")
+                .AddDbContextCheck<Repository.Database.DatabaseContext>("DatabaseHealthCheck");
+
+
+            builder.Services.Configure<HealthCheckPublisherOptions>(options =>
+            {
+                options.Delay = TimeSpan.FromSeconds(10);
+                options.Period = TimeSpan.FromSeconds(60);
+            });
+
+            builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
+            #endregion
 
             var app = builder.Build();
 
@@ -355,6 +370,8 @@ namespace WebAPI
 
             app.MapControllers();
 
+
+            app.MapHealthChecks("/healthz");
 
             app.Start();
 #if DEBUG

@@ -1,5 +1,6 @@
 ﻿using AdminAPI.Filters;
 using AdminAPI.Libraries;
+using AdminAPI.Libraries.HealthCheck;
 using AdminAPI.Libraries.Swagger;
 using AdminAPI.Models.AppSetting;
 using Common;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Cryptography;
@@ -234,7 +236,6 @@ namespace AdminAPI
 
             builder.Services.BatchRegisterServices();
 
-
             #region 注册文件服务
 
 
@@ -256,7 +257,6 @@ namespace AdminAPI
 
             #endregion
 
-
             #region 注册日志服务
 
             //注册数据库日志服务
@@ -266,6 +266,22 @@ namespace AdminAPI
             //builder.Logging.AddLocalFileLogger(options => { });
 
             #endregion
+
+            #region 注册健康检测服务
+            builder.Services.AddHealthChecks()
+                .AddCheck<CacheHealthCheck>("CacheHealthCheck")
+                .AddDbContextCheck<Repository.Database.DatabaseContext>("DatabaseHealthCheck");
+
+
+            builder.Services.Configure<HealthCheckPublisherOptions>(options =>
+            {
+                options.Delay = TimeSpan.FromSeconds(10);
+                options.Period = TimeSpan.FromSeconds(60);
+            });
+
+            builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
+            #endregion
+
 
             var app = builder.Build();
 
@@ -332,7 +348,7 @@ namespace AdminAPI
 
             app.MapControllers();
 
-
+            app.MapHealthChecks("/healthz");
 
 
             app.Start();

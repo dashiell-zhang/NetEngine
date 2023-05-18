@@ -1,7 +1,7 @@
 ﻿using Common;
 using Repository.Database;
 
-namespace QueueTask
+namespace AdminAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]

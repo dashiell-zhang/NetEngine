@@ -15,6 +15,7 @@ using System.Security.Cryptography;
 using WebAPI.Filters;
 using WebAPI.Libraries;
 using WebAPI.Libraries.HttpHandler;
+using WebAPI.Libraries.Swagger;
 using WebAPI.Models.AppSetting;
 
 namespace WebAPI
@@ -162,29 +163,13 @@ namespace WebAPI
 
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml"), true);
 
-
-                #region 开启 Swagger JWT 鉴权模块
                 options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
                 {
                     Type = SecuritySchemeType.Http,
                     Scheme = "bearer",
                     BearerFormat = "JWT"
                 });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                            {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "bearerAuth"
-                                }
-                            },
-                        Array.Empty<string>()
-                    }
-                });
-                #endregion
+                options.OperationFilter<SecurityRequirementsOperationFilter>();
             });
             #endregion
 

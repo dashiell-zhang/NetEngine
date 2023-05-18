@@ -1,5 +1,6 @@
 ﻿using AdminAPI.Filters;
 using AdminAPI.Libraries;
+using AdminAPI.Libraries.Swagger;
 using AdminAPI.Models.AppSetting;
 using Common;
 using DistributedLock.Redis;
@@ -155,29 +156,13 @@ namespace AdminAPI
 
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml"), true);
 
-
-                #region 开启 Swagger JWT 鉴权模块
                 options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
                 {
                     Type = SecuritySchemeType.Http,
                     Scheme = "bearer",
                     BearerFormat = "JWT"
                 });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                            {
-                                Reference = new ()
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "bearerAuth"
-                                }
-                            },
-                        Array.Empty<string>()
-                    }
-                });
-                #endregion
+                options.OperationFilter<SecurityRequirementsOperationFilter>();
             });
             #endregion
 

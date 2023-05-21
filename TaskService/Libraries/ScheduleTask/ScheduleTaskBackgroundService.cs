@@ -38,7 +38,7 @@ namespace TaskService.Libraries.QueueTask
                             }
                         }
 
-                        foreach (var item in scheduleMethodList)
+                        foreach (var item in scheduleMethodList.Where(t => t.IsEnable).ToList())
                         {
                             if (item.LastTime == null)
                             {
@@ -46,6 +46,11 @@ namespace TaskService.Libraries.QueueTask
                             }
 
                             var nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(item.Cron, item.LastTime.Value).ToString("yyyy-MM-dd HH:mm:ss"));
+
+                            if (nextTime < nowTime)
+                            {
+                                item.LastTime = null;
+                            }
 
                             if (nextTime == nowTime)
                             {

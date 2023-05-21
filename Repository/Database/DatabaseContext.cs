@@ -74,6 +74,9 @@ namespace Repository.Database
         public DbSet<TRole> TRole { get; set; }
 
 
+        public DbSet<TTask> TTask { get; set; }
+
+
         public DbSet<TUser> TUser { get; set; }
 
 

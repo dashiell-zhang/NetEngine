@@ -37,7 +37,7 @@ namespace TaskService.Libraries.QueueTask
                 {
                     try
                     {
-                        foreach (var item in queueMethodList.Values)
+                        foreach (var item in queueMethodList.Values.Where(t => t.IsEnable).ToList())
                         {
 
                             var runingTaskIdList = runingTaskList.Where(t => t.Value == item.Name).Select(t => t.Key).ToList();

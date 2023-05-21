@@ -34,5 +34,12 @@ namespace TaskService.Libraries.QueueTask
         /// 方法执行的上下文环境
         /// </summary>
         public object Context { get; set; }
+
+
+
+        /// <summary>
+        /// 是否启用
+        /// </summary>
+        public bool IsEnable { get; set; }
     }
 }

@@ -27,7 +27,8 @@
                     Name = name,
                     Semaphore = semaphore,
                     Method = method,
-                    Context = context
+                    Context = context,
+                    IsEnable = true
                 });
             }
         }

@@ -18,7 +18,8 @@
                 {
                     Cron = cron,
                     Method = method,
-                    Context = context
+                    Context = context,
+                    IsEnable = true
                 });
             }
         }

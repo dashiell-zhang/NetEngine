@@ -2,6 +2,7 @@
 using DistributedLock.Redis;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace TaskService
 {
@@ -88,6 +89,13 @@ namespace TaskService
                         options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
                         options.InstanceName = "cache";
                     });
+
+
+                    //注册 Redis 驱动
+                    services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")!));
+
+                    //注册 Redis Database 接口
+                    services.AddScoped<IDatabase>(serviceProvider => { return serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase(); });
 
 
                     #region 注册HttpClient

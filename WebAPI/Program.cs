@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 using System.Reflection;
 using System.Security.Cryptography;
 using WebAPI.Filters;
@@ -215,6 +216,13 @@ namespace WebAPI
                 options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
                 options.InstanceName = "cache";
             });
+
+
+            //注册 Redis 驱动
+            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")!));
+
+            //注册 Redis Database 接口
+            builder.Services.AddScoped<IDatabase>(serviceProvider => { return serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase(); });
 
 
             #region 注册HttpClient

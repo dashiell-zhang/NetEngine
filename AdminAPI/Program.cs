@@ -214,9 +214,6 @@ namespace AdminAPI
             //注册 Redis 驱动
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")!));
 
-            //注册 Redis Database 接口
-            builder.Services.AddScoped<IDatabase>(serviceProvider => { return serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase(); });
-
 
             #region 注册HttpClient
 

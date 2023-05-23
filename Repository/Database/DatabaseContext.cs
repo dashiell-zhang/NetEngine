@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repository.Bases;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Xml;
 
@@ -95,22 +96,17 @@ namespace Repository.Database
         #endregion
 
 
-        private static void GlobalHasQueryFilter<T>(ModelBuilder builder) where T : CD
-        {
-            builder.Entity<T>().HasQueryFilter(e => e.IsDelete == false);
-        }
-
-
-        private static readonly MethodInfo globalHasQueryFilter = typeof(DatabaseContext).GetMethod("GlobalHasQueryFilter", BindingFlags.Static | BindingFlags.NonPublic)!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
+#if DEBUG
             //循环关闭所有表的级联删除功能
             foreach (var foreignKey in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
                 foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
             }
+#endif
 
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
@@ -121,9 +117,8 @@ namespace Repository.Database
                 modelBuilder.Entity(entity.Name, builder =>
                 {
                     //设置生成数据库时的表名移除前缀T
-                    var tableName = builder.Metadata.ClrType.CustomAttributes.Where(t => t.AttributeType.Name == "TableAttribute").Select(t => t.ConstructorArguments.Select(c => c.Value?.ToString()).FirstOrDefault()).FirstOrDefault() ?? (entity.ClrType.Name[1..]);
+                    var tableName = builder.Metadata.ClrType.GetCustomAttribute<TableAttribute>()?.Name ?? (entity.ClrType.Name[1..]);
                     builder.ToTable(tableName);
-
 
 #if DEBUG
                     //设置表的备注
@@ -136,16 +131,11 @@ namespace Repository.Database
                         baseTypeNames.Add(baseType.FullName!);
                         baseType = baseType.BaseType;
                     }
-#endif
-
 
                     foreach (var property in entity.GetProperties())
                     {
-
-#if DEBUG
                         //设置字段的备注
                         property.SetComment(GetEntityComment(entity.Name, property.Name, baseTypeNames));
-#endif
 
                         //设置字段的默认值 
                         var defaultValueAttribute = property.PropertyInfo?.GetCustomAttribute<DefaultValueAttribute>();
@@ -154,18 +144,26 @@ namespace Repository.Database
                             property.SetDefaultValue(defaultValueAttribute.Value);
                         }
 
-
                         //为所有 tableid 列添加索引
                         if (property.Name.ToLower() == "tableid")
                         {
                             builder.HasIndex(property.Name);
                         }
-
                     }
+#endif
+
                 });
             }
         }
 
+
+        private static void GlobalHasQueryFilter<T>(ModelBuilder builder) where T : CD
+        {
+            builder.Entity<T>().HasQueryFilter(e => e.IsDelete == false);
+        }
+
+
+        private static readonly MethodInfo globalHasQueryFilter = typeof(DatabaseContext).GetMethod("GlobalHasQueryFilter", BindingFlags.Static | BindingFlags.NonPublic)!;
 
 
 

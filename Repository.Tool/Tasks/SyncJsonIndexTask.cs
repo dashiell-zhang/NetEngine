@@ -190,7 +190,7 @@ namespace Repository.Tool.Tasks
 
                     if (indexColumnSQLList.Any())
                     {
-                        string indexName = "jsonbIX_" + tableName + "_" + CryptoHelper.GetMD5(string.Join("_", columnNameList));
+                        string indexName = "jsonbIX_" + CryptoHelper.GetMD5(tableName + "_" + string.Join("_", columnNameList));
 
                         string columnSQLStr = string.Join(", ", indexColumnSQLList);
 
@@ -240,7 +240,7 @@ namespace Repository.Tool.Tasks
             }
 
             Console.ResetColor();
-            Console.WriteLine("---------------------------------------Json同步任务执行完成--------------------------------------------------");
+            Console.WriteLine("---------------------------------------Json索引同步任务执行完成--------------------------------------------------");
         }
 
 

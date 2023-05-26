@@ -20,23 +20,37 @@ namespace AdminAPI.Services
 
         public bool Create(string name, object? parameter)
         {
-            TQueueTask queueTask = new()
+            if (db.Database.CurrentTransaction != null)
             {
-                Id = idHelper.GetId(),
-                CreateTime = DateTime.UtcNow,
-                Name = name
-            };
+                try
+                {
+                    TQueueTask queueTask = new()
+                    {
+                        Id = idHelper.GetId(),
+                        CreateTime = DateTime.UtcNow,
+                        Name = name
+                    };
 
-            if (parameter != null)
-            {
-                queueTask.Parameter = JsonHelper.ObjectToJson(parameter);
+                    if (parameter != null)
+                    {
+                        queueTask.Parameter = JsonHelper.ObjectToJson(parameter);
+                    }
+
+                    db.TQueueTask.Add(queueTask);
+
+                    db.SaveChanges();
+
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
-
-            db.TQueueTask.Add(queueTask);
-
-            db.SaveChanges();
-
-            return false;
+            else
+            {
+                throw new Exception("请开启一个显式的事务");
+            }
         }
     }
 }

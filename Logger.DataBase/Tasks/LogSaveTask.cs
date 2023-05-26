@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Logger.DataBase.Tasks
 {
-    public class LogSaveTask : BackgroundService
+    internal class LogSaveTask : BackgroundService
     {
 
         private readonly IServiceProvider serviceProvider;

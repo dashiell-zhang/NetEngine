@@ -1,4 +1,5 @@
 ﻿using Logger.DataBase.Models;
+using Logger.DataBase.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -12,6 +13,8 @@ namespace Logger.DataBase
         {
             builder.Services.Configure(action);
             builder.Services.AddSingleton<ILoggerProvider, DataBaseLoggerProvider>();
+            builder.Services.AddHostedService<LogClearTask>();
+            builder.Services.AddHostedService<LogSaveTask>();
         }
     }
 }

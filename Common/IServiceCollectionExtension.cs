@@ -73,7 +73,7 @@ namespace Common
         private static void RegisterBackgroundService(this IServiceCollection services, List<Assembly> allAssembly)
         {
 
-            List<Type> types = allAssembly.SelectMany(t => t.GetTypes()).Where(t => typeof(BackgroundService).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract).ToList();
+            List<Type> types = allAssembly.SelectMany(t => t.GetTypes()).Where(t => typeof(BackgroundService).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && t.IsPublic).ToList();
 
             foreach (var type in types)
             {

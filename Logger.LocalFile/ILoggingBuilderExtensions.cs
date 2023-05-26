@@ -1,4 +1,5 @@
 ﻿using Logger.LocalFile.Models;
+using Logger.LocalFile.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -12,6 +13,7 @@ namespace Logger.LocalFile
         {
             builder.Services.Configure(action);
             builder.Services.AddSingleton<ILoggerProvider, LocalFileLoggerProvider>();
+            builder.Services.AddHostedService<LogClearTask>();
         }
     }
 }

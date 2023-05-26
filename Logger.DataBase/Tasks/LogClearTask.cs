@@ -7,7 +7,7 @@ using Repository.Database;
 
 namespace Logger.DataBase.Tasks
 {
-    public class LogClearTask : BackgroundService
+    internal class LogClearTask : BackgroundService
     {
 
         private readonly int saveDays;

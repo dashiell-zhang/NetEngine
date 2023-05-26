@@ -23,7 +23,7 @@ namespace Repository.Tool.Tasks
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await Task.Delay(2000);
+            await Task.Delay(500);
 
             Console.WriteLine();
 
@@ -190,7 +190,7 @@ namespace Repository.Tool.Tasks
 
                     if (indexColumnSQLList.Any())
                     {
-                        string indexName = "jsonbIX_" + tableName + "_" + string.Join("_", columnNameList);
+                        string indexName = "jsonbIX_" + tableName + "_" + CryptoHelper.GetMD5(string.Join("_", columnNameList));
 
                         string columnSQLStr = string.Join(", ", indexColumnSQLList);
 
@@ -220,6 +220,7 @@ namespace Repository.Tool.Tasks
                 {
                     string sql = $"DROP INDEX \"public\".\"{item.indexname}\";";
                     Console.WriteLine(sql);
+                    Console.WriteLine();
                     //db.ExecuteSql(sql);
                 }
             }
@@ -233,6 +234,7 @@ namespace Repository.Tool.Tasks
                 if (isHave == false)
                 {
                     Console.WriteLine(item.indexdef + ";");
+                    Console.WriteLine();
                     //db.ExecuteSql(item.indexdef);
                 }
             }
@@ -247,9 +249,7 @@ namespace Repository.Tool.Tasks
         {
             public string tablename { get; set; }
 
-
             public string indexname { get; set; }
-
 
             public string indexdef { get; set; }
         }

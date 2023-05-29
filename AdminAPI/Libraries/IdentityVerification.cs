@@ -3,6 +3,7 @@ using Common;
 using DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.IdentityModel.Tokens.Jwt;
@@ -108,6 +109,8 @@ namespace AdminAPI.Libraries
                 string key = "IssueNewToken" + tokenId;
 
                 var distLock = httpContext.RequestServices.GetRequiredService<IDistributedLock>();
+                var cache = httpContext.RequestServices.GetRequiredService<IDistributedCache>();
+
                 if (distLock.TryLock(key) != null)
                 {
                     var newToken = db.TUserToken.Where(t => t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefault();
@@ -142,8 +145,6 @@ namespace AdminAPI.Libraries
 
                             var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
 
-                            userToken.Token = token;
-
                             db.TUserToken.Add(userToken);
 
                             if (distLock.TryLock("ClearExpireToken") != null)
@@ -155,15 +156,17 @@ namespace AdminAPI.Libraries
 
                             db.SaveChanges();
 
+                            cache.Set(userToken.Id + "token", token, TimeSpan.FromMinutes(10));
 
                             httpContext.Response.Headers.Add("NewToken", token);
-                            httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
+                            httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");
                         }
                     }
                     else
                     {
-                        httpContext.Response.Headers.Add("NewToken", newToken.Token);
-                        httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
+                        var token = cache.GetString(newToken.Id + "token");
+                        httpContext.Response.Headers.Add("NewToken", token);
+                        httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");
                     }
                 }
             }

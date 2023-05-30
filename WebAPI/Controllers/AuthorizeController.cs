@@ -24,7 +24,7 @@ namespace WebAPI.Controllers
     /// <summary>
     /// 系统访问授权模块
     /// </summary>
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class AuthorizeController : ControllerBase
     {
@@ -70,7 +70,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
-        [HttpPost("GetToken")]
+        [HttpPost]
         public string? GetToken(DtoLogin login)
         {
 
@@ -97,7 +97,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
         /// <returns></returns>
-        [HttpPost("GetTokenByWeiXinMiniAppCode")]
+        [HttpPost]
         public string GetTokenByWeiXinMiniAppCode([FromBody] DtoKeyValue keyValue)
         {
 
@@ -177,7 +177,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="keyValue">key 为手机号，value 为验证码</param>
         /// <returns></returns>
-        [HttpPost("GetTokenBySms")]
+        [HttpPost]
         public string? GetTokenBySms(DtoKeyValue keyValue)
         {
 
@@ -233,7 +233,7 @@ namespace WebAPI.Controllers
         /// <returns></returns>
         [Authorize]
         [CacheDataFilter(TTL = 60, IsUseToken = true)]
-        [HttpGet("GetFunctionList")]
+        [HttpGet]
         public List<DtoKeyValue> GetFunctionList(string sign)
         {
 
@@ -257,7 +257,7 @@ namespace WebAPI.Controllers
         /// <param name="sms"></param>
         /// <param name="keyValue">key 为手机号，value 可为空</param>
         /// <returns></returns>
-        [HttpPost("SendSmsVerifyPhone")]
+        [HttpPost]
         public bool SendSmsVerifyPhone([FromServices] ISMS sms, DtoKeyValue keyValue)
         {
 
@@ -298,7 +298,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
         /// <returns></returns>
-        [HttpPost("GetTokenByWeiXinAppCode")]
+        [HttpPost]
         public string? GetTokenByWeiXinAppCode(DtoKeyValue keyValue)
         {
 
@@ -376,7 +376,7 @@ namespace WebAPI.Controllers
         /// <returns></returns>
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
-        [HttpPost("UpdatePassWordByOldPassWord")]
+        [HttpPost]
         public bool UpdatePassWordByOldPassWord(DtoUpdatePassWordByOldPassWord updatePassWordByOldPassWord)
         {
 
@@ -417,7 +417,7 @@ namespace WebAPI.Controllers
         /// <returns></returns>
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
-        [HttpPost("UpdatePassWordBySms")]
+        [HttpPost]
         public bool UpdatePassWordBySms(DtoUpdatePassWordBySms updatePassWordBySms)
         {
 
@@ -470,7 +470,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="passWord"></param>
         /// <returns></returns>
-        [HttpGet("GeneratePassWord")]
+        [HttpGet]
         public DtoKeyValue GeneratePassWord(string passWord)
         {
             DtoKeyValue keyValue = new()
@@ -490,7 +490,7 @@ namespace WebAPI.Controllers
         /// 更新路由信息表
         /// </summary>
         /// <param name="actionDescriptorCollectionProvider"></param>
-        [HttpGet("UpdateRoute")]
+        [HttpGet]
         public void UpdateRoute([FromServices] IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
         {
             var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new

@@ -13,7 +13,7 @@ namespace AdminAPI.Controllers
 
 
     [SignVerifyFilter]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
     public class RoleController : ControllerBase
@@ -50,7 +50,7 @@ namespace AdminAPI.Controllers
         /// <param name="pageSize">单页数量</param>
         /// <param name="searchKey">搜索关键字</param>
         /// <returns></returns>
-        [HttpGet("GetRoleList")]
+        [HttpGet]
         public DtoPageList<DtoRole> GetRoleList(int pageNum, int pageSize, string? searchKey)
         {
 
@@ -86,7 +86,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="roleId">角色ID</param>
         /// <returns></returns>
-        [HttpGet("GetRole")]
+        [HttpGet]
         public DtoRole? GetRole(long roleId)
         {
 
@@ -109,7 +109,7 @@ namespace AdminAPI.Controllers
         /// <param name="role"></param>
         /// <returns></returns>
         [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
-        [HttpPost("CreateRole")]
+        [HttpPost]
         public long CreateRole(DtoEditRole role)
         {
             var dbRole = new TRole
@@ -137,7 +137,7 @@ namespace AdminAPI.Controllers
         /// <param name="role"></param>
         /// <returns></returns>
         [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
-        [HttpPost("UpdateRole")]
+        [HttpPost]
         public bool UpdateRole(long roleId, DtoEditRole role)
         {
             var dbRole = db.TRole.Where(t => t.Id == roleId).FirstOrDefault();
@@ -165,7 +165,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpDelete("DeleteRole")]
+        [HttpDelete]
         public bool DeleteRole(long id)
         {
 
@@ -205,7 +205,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="roleId">角色ID</param>
         /// <returns></returns>
-        [HttpGet("GetRoleFunction")]
+        [HttpGet]
         public List<DtoRoleFunction> GetRoleFunction(long roleId)
         {
             var functionList = db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
@@ -239,7 +239,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="setRoleFunction"></param>
         /// <returns></returns>
-        [HttpPost("SetRoleFunction")]
+        [HttpPost]
         public bool SetRoleFunction(DtoSetRoleFunction setRoleFunction)
         {
 
@@ -280,7 +280,7 @@ namespace AdminAPI.Controllers
         /// 获取角色键值对
         /// </summary>
         /// <returns></returns>
-        [HttpGet("GetRoleKV")]
+        [HttpGet]
         public List<DtoKeyValue> GetRoleKV()
         {
             var list = db.TRole.Select(t => new DtoKeyValue

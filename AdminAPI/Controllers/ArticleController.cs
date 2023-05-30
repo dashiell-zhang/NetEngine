@@ -11,7 +11,7 @@ using Repository.Database;
 namespace AdminAPI.Controllers
 {
     [SignVerifyFilter]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
     public class ArticleController : ControllerBase
@@ -54,7 +54,7 @@ namespace AdminAPI.Controllers
         /// <param name="pageSize">单页数量</param>
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
-        [HttpGet("GetCategoryList")]
+        [HttpGet]
         public DtoPageList<DtoCategory> GetCategoryList(int pageNum, int pageSize, string? searchKey)
         {
             DtoPageList<DtoCategory> data = new();
@@ -90,7 +90,7 @@ namespace AdminAPI.Controllers
         /// 获取栏目树形列表
         /// </summary>
         /// <returns></returns>
-        [HttpGet("GetCategoryTreeList")]
+        [HttpGet]
         public List<DtoKeyValueChild> GetCategoryTreeList()
         {
             var list = db.TCategory.Where(t => t.ParentId == null).Select(t => new DtoKeyValueChild
@@ -114,7 +114,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="categoryId">栏目ID</param>
         /// <returns></returns>
-        [HttpGet("GetCategory")]
+        [HttpGet]
         public DtoCategory? GetCategory(long categoryId)
         {
             var category = db.TCategory.Where(t => t.Id == categoryId).Select(t => new DtoCategory
@@ -139,7 +139,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="createCategory"></param>
         /// <returns></returns>
-        [HttpPost("CreateCategory")]
+        [HttpPost]
         public long CreateCategory(DtoEditCategory createCategory)
         {
             TCategory category = new()
@@ -169,7 +169,7 @@ namespace AdminAPI.Controllers
         /// <param name="categoryId"></param>
         /// <param name="updateCategory"></param>
         /// <returns></returns>
-        [HttpPost("UpdateCategory")]
+        [HttpPost]
         public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory)
         {
             var category = db.TCategory.Where(t => t.Id == categoryId).FirstOrDefault();
@@ -198,7 +198,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpDelete("DeleteCategory")]
+        [HttpDelete]
         public bool DeleteCategory(long id)
         {
             var category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
@@ -230,7 +230,7 @@ namespace AdminAPI.Controllers
         /// <param name="pageSize">单页数量</param>
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
-        [HttpGet("GetArticleList")]
+        [HttpGet]
         public DtoPageList<DtoArticle> GetArticleList(int pageNum, int pageSize, string? searchKey)
         {
             DtoPageList<DtoArticle> data = new();
@@ -280,7 +280,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="articleId">文章ID</param>
         /// <returns></returns>
-        [HttpGet("GetArticle")]
+        [HttpGet]
         public DtoArticle? GetArticle(long articleId)
         {
             string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
@@ -317,7 +317,7 @@ namespace AdminAPI.Controllers
         /// <param name="createArticle"></param>
         /// <param name="fileKey">文件key</param>
         /// <returns></returns>
-        [HttpPost("CreateArticle")]
+        [HttpPost]
         public long CreateArticle(DtoEditArticle createArticle, long fileKey)
         {
             TArticle article = new()
@@ -368,7 +368,7 @@ namespace AdminAPI.Controllers
         /// <param name="articleId"></param>
         /// <param name="updateArticle"></param>
         /// <returns></returns>
-        [HttpPost("UpdateArticle")]
+        [HttpPost]
         public bool UpdateArticle(long articleId, DtoEditArticle updateArticle)
         {
             var article = db.TArticle.Where(t => t.Id == articleId).FirstOrDefault();
@@ -410,7 +410,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpDelete("DeleteArticle")]
+        [HttpDelete]
         public bool DeleteArticle(long id)
         {
             var article = db.TArticle.Where(t => t.Id == id).FirstOrDefault();

@@ -14,7 +14,7 @@ namespace AdminAPI.Controllers
     /// </summary>
     [SignVerifyFilter]
     [Authorize]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class SiteController : ControllerBase
     {
@@ -39,7 +39,7 @@ namespace AdminAPI.Controllers
         /// 获取站点信息
         /// </summary>
         /// <returns></returns>
-        [HttpGet("GetSite")]
+        [HttpGet]
         public DtoSite GetSite()
         {
             var kvList = db.TAppSetting.Where(t => t.Module == "Site").Select(t => new
@@ -73,7 +73,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="editSite"></param>
         /// <returns></returns>
-        [HttpPost("EditSite")]
+        [HttpPost]
         public bool EditSite(DtoSite editSite)
         {
             var query = db.TAppSetting.Where(t => t.Module == "Site");
@@ -98,7 +98,7 @@ namespace AdminAPI.Controllers
         /// 获取服务器信息
         /// </summary>
         /// <returns></returns>
-        [HttpGet("GetServerInfo")]
+        [HttpGet]
         public List<DtoKeyValue> GetServerInfo()
         {
             List<DtoKeyValue> list = new()

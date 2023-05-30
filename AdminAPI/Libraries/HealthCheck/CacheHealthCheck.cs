@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using Common;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Common;
 
 namespace AdminAPI.Libraries.HealthCheck
 {

@@ -19,7 +19,7 @@ namespace AdminAPI.Controllers
     /// 用户数据操作控制器
     /// </summary>
     [SignVerifyFilter]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
     public class UserController : ControllerBase
@@ -56,7 +56,7 @@ namespace AdminAPI.Controllers
         /// <param name="pageSize"></param>
         /// <param name="searchKey"></param>
         /// <returns></returns>
-        [HttpGet("GetUserList")]
+        [HttpGet]
         public DtoPageList<DtoUser> GetUserList(int pageNum, int pageSize, string? searchKey)
         {
             DtoPageList<DtoUser> data = new();
@@ -95,7 +95,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
-        [HttpGet("GetUser")]
+        [HttpGet]
         public DtoUser? GetUser(long? userId)
         {
 
@@ -122,7 +122,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="createUser"></param>
         /// <returns></returns>
-        [HttpPost("CreateUser")]
+        [HttpPost]
         public long? CreateUser(DtoEditUser createUser)
         {
             string key = "userName:" + createUser.UserName.ToLower();
@@ -186,7 +186,7 @@ namespace AdminAPI.Controllers
         /// <param name="userId"></param>
         /// <param name="updateUser"></param>
         /// <returns></returns>
-        [HttpPost("UpdateUser")]
+        [HttpPost]
         public bool UpdateUser(long userId, DtoEditUser updateUser)
         {
             string key = "userName:" + updateUser.UserName.ToLower();
@@ -273,7 +273,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpDelete("DeleteUser")]
+        [HttpDelete]
         public bool DeleteUser(long id)
         {
             var user = db.TUser.Where(t => t.Id == id).FirstOrDefault();
@@ -302,7 +302,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
-        [HttpGet("GetUserFunction")]
+        [HttpGet]
         public List<DtoUserFunction> GetUserFunction(long userId)
         {
             var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
@@ -339,7 +339,7 @@ namespace AdminAPI.Controllers
         /// <param name="setUserFunction"></param>
         /// <returns></returns>
         [QueueLimitFilter()]
-        [HttpPost("SetUserFunction")]
+        [HttpPost]
         public bool SetUserFunction(DtoSetUserFunction setUserFunction)
         {
 
@@ -403,7 +403,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        [HttpGet("GetUserRoleList")]
+        [HttpGet]
         public List<DtoUserRole> GetUserRoleList(long userId)
         {
             var list = db.TRole.Select(t => new DtoUserRole
@@ -426,7 +426,7 @@ namespace AdminAPI.Controllers
         /// <param name="setUserRole"></param>
         /// <returns></returns>
         [QueueLimitFilter()]
-        [HttpPost("SetUserRole")]
+        [HttpPost]
         public bool SetUserRole(DtoSetUserRole setUserRole)
         {
             var userRole = db.TUserRole.Where(t => t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefault();

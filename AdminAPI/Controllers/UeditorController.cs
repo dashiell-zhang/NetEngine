@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AdminAPI.Controllers
 {
     [Authorize]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class UeditorController : ControllerBase
     {
@@ -21,8 +21,8 @@ namespace AdminAPI.Controllers
 
 
         [DisableRequestSizeLimit]
-        [HttpGet("ProcessRequest")]
-        [HttpPost("ProcessRequest")]
+        [HttpGet]
+        [HttpPost]
         public string ProcessRequest()
         {
             string rootPath = webHostEnvironment.WebRootPath;

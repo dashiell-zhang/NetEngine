@@ -16,7 +16,7 @@ namespace WebAPI.Controllers
     /// <summary>
     /// 用户数据操作控制器
     /// </summary>
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
     public class UserController : ControllerBase
@@ -56,7 +56,7 @@ namespace WebAPI.Controllers
         /// <param name="code">微信临时code</param>
         /// <returns>openid,userid</returns>
         /// <remarks>传入租户ID和微信临时 code 获取 openid，如果 openid 在系统有中对应用户，则一并返回用户的ID值，否则用户ID值为空</remarks>
-        [HttpGet("GetWeiXinMiniAppOpenId")]
+        [HttpGet]
         public string? GetWeiXinMiniAppOpenId(long weiXinKeyId, string code)
         {
 
@@ -91,7 +91,7 @@ namespace WebAPI.Controllers
         /// <param name="encryptedData">包括敏感数据在内的完整用户信息的加密数据</param>
         /// <param name="code">微信临时code</param>
         /// <param name="weiXinKeyId">微信配置密钥ID</param>
-        [HttpGet("GetWeiXinMiniAppPhone")]
+        [HttpGet]
         public string? GetWeiXinMiniAppPhone(string iv, string encryptedData, string code, long weiXinKeyId)
         {
 
@@ -139,7 +139,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
-        [HttpGet("GetUser")]
+        [HttpGet]
         [CacheDataFilter(TTL = 60, IsUseToken = true)]
         public DtoUser? GetUser(long? userId)
         {
@@ -166,7 +166,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
         /// <returns></returns>
-        [HttpPost("EditUserPhoneBySms")]
+        [HttpPost]
         public bool EditUserPhoneBySms([FromBody] DtoKeyValue keyValue)
         {
 

@@ -20,7 +20,7 @@ namespace AdminAPI.Controllers
     /// <summary>
     /// 系统访问授权模块
     /// </summary>
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class AuthorizeController : ControllerBase
     {
@@ -61,7 +61,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
-        [HttpPost("GetToken")]
+        [HttpPost]
         public string? GetToken(DtoLogin login)
         {
             var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
@@ -90,7 +90,7 @@ namespace AdminAPI.Controllers
         /// <returns></returns>
         [SignVerifyFilter]
         [Authorize]
-        [HttpGet("GetFunctionList")]
+        [HttpGet]
         public List<string> GetFunctionList()
         {
             var roleIds = db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
@@ -109,7 +109,7 @@ namespace AdminAPI.Controllers
         /// 更新路由信息表
         /// </summary>
         /// <param name="actionDescriptorCollectionProvider"></param>
-        [HttpGet("UpdateRoute")]
+        [HttpGet]
         public void UpdateRoute([FromServices] IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
         {
             var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new

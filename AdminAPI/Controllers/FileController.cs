@@ -17,7 +17,7 @@ namespace AdminAPI.Controllers
     /// </summary>
     [SignVerifyFilter]
     [Authorize]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class FileController : ControllerBase
     {
@@ -61,7 +61,7 @@ namespace AdminAPI.Controllers
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
-        [HttpPost("UploadFile")]
+        [HttpPost]
         public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, IFormFile file)
         {
             var utcNow = DateTime.UtcNow;
@@ -140,7 +140,7 @@ namespace AdminAPI.Controllers
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
         [AllowAnonymous]
-        [HttpGet("GetFile")]
+        [HttpGet]
         public FileResult? GetFile(long fileid)
         {
             var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
@@ -176,7 +176,7 @@ namespace AdminAPI.Controllers
         /// <returns></returns>
         /// <remarks>不指定宽高参数,返回原图</remarks>
         [AllowAnonymous]
-        [HttpGet("GetImage")]
+        [HttpGet]
         public FileResult? GetImage(long fileId, int width, int height)
         {
 
@@ -245,7 +245,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="fileId">文件ID</param>
         /// <returns></returns>
-        [HttpGet("GetFilePath")]
+        [HttpGet]
         public string? GetFilePath(long fileId)
         {
 
@@ -276,7 +276,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="id">文件ID</param>
         /// <returns></returns>
-        [HttpDelete("DeleteFile")]
+        [HttpDelete]
         public bool DeleteFile(long id)
         {
 

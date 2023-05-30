@@ -16,7 +16,7 @@ namespace WebAPI.Controllers
     /// 文件上传控制器
     /// </summary>
     [Authorize]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class FileController : ControllerBase
     {
@@ -61,7 +61,7 @@ namespace WebAPI.Controllers
         /// <param name="sign">自定义标记</param>
         /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
         /// <returns>文件ID</returns>
-        [HttpPost("RemoteUploadFile")]
+        [HttpPost]
         public long RemoteUploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, [FromBody] DtoKeyValue fileInfo)
         {
 
@@ -138,7 +138,7 @@ namespace WebAPI.Controllers
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
-        [HttpPost("UploadFile")]
+        [HttpPost]
         public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, IFormFile file)
         {
             var utcNow = DateTime.UtcNow;
@@ -218,7 +218,7 @@ namespace WebAPI.Controllers
         /// <param name="fileid">文件ID</param>
         /// <returns></returns>
         [AllowAnonymous]
-        [HttpGet("GetFile")]
+        [HttpGet]
         public FileResult? GetFile(long fileid)
         {
             var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
@@ -254,7 +254,7 @@ namespace WebAPI.Controllers
         /// <returns></returns>
         /// <remarks>不指定宽高参数,返回原图</remarks>
         [AllowAnonymous]
-        [HttpGet("GetImage")]
+        [HttpGet]
         public FileResult? GetImage(long fileId, int width, int height)
         {
 
@@ -323,7 +323,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="fileId">文件ID</param>
         /// <returns></returns>
-        [HttpGet("GetFilePath")]
+        [HttpGet]
         public string? GetFilePath(long fileId)
         {
 
@@ -353,7 +353,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="id">文件ID</param>
         /// <returns></returns>
-        [HttpDelete("DeleteFile")]
+        [HttpDelete]
         public bool DeleteFile(long id)
         {
             var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();

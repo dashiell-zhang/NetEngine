@@ -19,7 +19,7 @@ namespace WebAPI.Controllers
     /// <summary>
     /// 第三方支付发起集合，依赖于订单号
     /// </summary>
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class PayController : ControllerBase
     {
@@ -46,7 +46,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
-        [HttpGet("CreateWeiXinMiniAppPay")]
+        [HttpGet]
         public DtoCreatePayMiniApp? CreateWeiXinMiniAppPay(string orderno, long weiXinKeyId)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
@@ -96,7 +96,7 @@ namespace WebAPI.Controllers
         /// <param name="weiXinKeyId"></param>
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
-        [HttpGet("CreateWeiXinAppPay")]
+        [HttpGet]
         public DtoCreatePayApp? CreateWeiXinAppPay(string orderno, long weiXinKeyId)
         {
 
@@ -138,7 +138,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="orderNo"></param>
         /// <returns></returns>
-        [HttpGet("GetWeiXinPayPCUrl")]
+        [HttpGet]
         public FileResult? GetWeiXinPayPCUrl(string orderNo)
         {
             string key = "wxpayPCUrl" + orderNo;
@@ -188,7 +188,7 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 微信支付异步通知接口
         /// </summary>
-        [HttpPost("WeiXinPayNotify")]
+        [HttpPost]
         public string WeiXinPayNotify()
         {
             try
@@ -322,7 +322,7 @@ namespace WebAPI.Controllers
         /// <param name="aliPayKeyId"></param>
         /// <remarks>用于在支付宝商户平台创建订单</remarks>
         /// <returns></returns>
-        [HttpGet("CreateAliPayMiniApp")]
+        [HttpGet]
         public DtoKeyValue? CreateAliPayMiniApp(string orderno, long aliPayKeyId)
         {
 
@@ -350,7 +350,7 @@ namespace WebAPI.Controllers
                     string price = Convert.ToString(order.Price);
 
 
-                    DefaultAopClient client = new ("https://openapi.alipay.com/gateway.do", appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "utf-8", false);
+                    DefaultAopClient client = new("https://openapi.alipay.com/gateway.do", appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "utf-8", false);
 
                     AlipayTradeCreateRequest request = new();
 
@@ -400,7 +400,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="orderNo"></param>
         /// <returns></returns>
-        [HttpGet("GetAliPayWebUrl")]
+        [HttpGet]
         public string? GetAliPayWebUrl(string orderNo)
         {
 
@@ -474,7 +474,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="orderNo"></param>
         /// <returns></returns>
-        [HttpGet("GetAliPayH5Url")]
+        [HttpGet]
         public string? GetAliPayH5Url(string orderNo)
         {
 
@@ -517,11 +517,11 @@ namespace WebAPI.Controllers
                     };
 
                     AlipayTradeWapPayRequest request = new();
-                    
+
                     request.SetReturnUrl(returnURL);// 设置支付完成同步回调地址
 
                     request.SetNotifyUrl(notifyURL);// 设置支付完成异步通知接收地址
-                    
+
                     request.SetBizModel(model);// 将业务model载入到request
 
 
@@ -542,7 +542,7 @@ namespace WebAPI.Controllers
         /// 支付宝异步通知接口
         /// </summary>
         /// <returns></returns>
-        [HttpPost("AliPayNotify")]
+        [HttpPost]
         public string AliPayNotify()
         {
             string retValue = "";

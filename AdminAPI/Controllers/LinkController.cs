@@ -10,7 +10,7 @@ using Repository.Database;
 namespace AdminAPI.Controllers
 {
     [SignVerifyFilter]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
     public class LinkController : ControllerBase
@@ -44,7 +44,7 @@ namespace AdminAPI.Controllers
         /// <param name="pageSize">单页数量</param>
         /// <param name="searchKey">搜索关键词</param>
         /// <returns></returns>
-        [HttpGet("GetLinkList")]
+        [HttpGet]
         public DtoPageList<DtoLink> GetLinkList(int pageNum, int pageSize, string? searchKey)
         {
             DtoPageList<DtoLink> data = new();
@@ -79,7 +79,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="linkId">链接ID</param>
         /// <returns></returns>
-        [HttpGet("GetLink")]
+        [HttpGet]
         public DtoLink? GetLink(long linkId)
         {
             var link = db.TLink.Where(t => t.Id == linkId).Select(t => new DtoLink
@@ -102,7 +102,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="createLink"></param>
         /// <returns></returns>
-        [HttpPost("CreateLink")]
+        [HttpPost]
         public long CreateLink(DtoEditLink createLink)
         {
             TLink link = new()
@@ -132,7 +132,7 @@ namespace AdminAPI.Controllers
         /// <param name="linkId"></param>
         /// <param name="updateLink"></param>
         /// <returns></returns>
-        [HttpPost("UpdateLink")]
+        [HttpPost]
         public bool UpdateLink(long linkId, DtoEditLink updateLink)
         {
             var link = db.TLink.Where(t => t.Id == linkId).FirstOrDefault();
@@ -156,7 +156,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpDelete("DeleteLink")]
+        [HttpDelete]
         public bool DeleteLink(long id)
         {
             var link = db.TLink.Where(t => t.Id == id).FirstOrDefault();

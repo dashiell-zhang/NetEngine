@@ -10,7 +10,7 @@ namespace AdminAPI.Controllers
     /// 系统基础方法控制器
     /// </summary>
     [SignVerifyFilter]
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class BaseController : ControllerBase
     {
@@ -35,7 +35,7 @@ namespace AdminAPI.Controllers
         /// <param name="cityId">城市ID</param>
         /// <returns></returns>
         /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
-        [HttpGet("GetRegion")]
+        [HttpGet]
         public List<DtoKeyValue> GetRegion(int provinceId, int cityId)
         {
             List<DtoKeyValue> list = new();
@@ -64,7 +64,7 @@ namespace AdminAPI.Controllers
         /// 获取全部省市级联地址数据
         /// </summary>
         /// <returns></returns>
-        [HttpGet("GetRegionAll")]
+        [HttpGet]
         public List<DtoKeyValueChild> GetRegionAll()
         {
 
@@ -94,7 +94,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="text">数据内容</param>
         /// <returns></returns>
-        [HttpGet("GetQrCode")]
+        [HttpGet]
         public FileResult GetQrCode(string text)
         {
             var image = ImgHelper.GetQrCode(text);
@@ -108,7 +108,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="groupId"></param>
         /// <returns></returns>
-        [HttpGet("GetValueList")]
+        [HttpGet]
         public List<DtoKeyValue> GetValueList(long groupId)
         {
 
@@ -127,7 +127,7 @@ namespace AdminAPI.Controllers
         /// 获取一个雪花ID
         /// </summary>
         /// <returns></returns>
-        [HttpGet("GetSnowflakeId")]
+        [HttpGet]
         public long GetSnowflakeId()
         {
             return idHelper.GetId();

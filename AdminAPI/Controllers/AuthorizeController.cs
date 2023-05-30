@@ -110,7 +110,7 @@ namespace AdminAPI.Controllers
         /// </summary>
         /// <param name="actionDescriptorCollectionProvider"></param>
         [HttpGet]
-        public void UpdateRoute([FromServices] IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
+        public void UpdateRoute(IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
         {
             var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new
             {

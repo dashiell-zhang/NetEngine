@@ -302,17 +302,12 @@ namespace AdminAPI
 
             if (app.Environment.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
-
-
-                #region 启用 Swagger
                 app.UseSwagger();
 
                 app.UseSwaggerUI(options =>
                 {
                     options.SwaggerEndpoint($"/swagger/v1/swagger.json", null);
                 });
-                #endregion
             }
             else
             {

@@ -1,11 +1,14 @@
-﻿using Aop.Api.Util;
+﻿using Aop.Api;
+using Aop.Api.Domain;
+using Aop.Api.Request;
+using Aop.Api.Response;
+using Aop.Api.Util;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using WebAPI.Libraries;
-using WebAPI.Libraries.AliPay;
 using WebAPI.Libraries.WeiXin.App.Models;
 using WebAPI.Libraries.WeiXin.MiniApp.Models;
 using WebAPI.Libraries.WeiXin.Public;
@@ -341,26 +344,48 @@ namespace WebAPI.Controllers
 
                 if (order != null && order.AliPayUserId != null)
                 {
-                    var url = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+                    var notifyURL = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                    AliPayHelper aliPayHelper = new(appId, appPrivateKey, aliPayPublicKey, url);
 
                     string price = Convert.ToString(order.Price);
 
-                    var TradeNo = aliPayHelper.AlipayTradeCreate(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, order.AliPayUserId);
 
-                    if (string.IsNullOrEmpty(TradeNo))
+                    DefaultAopClient client = new ("https://openapi.alipay.com/gateway.do", appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "utf-8", false);
+
+                    AlipayTradeCreateRequest request = new();
+
+                    string orderTitle = order.CreateTime.ToString("yyyyMMddHHmm") + "交易";
+
+                    AlipayTradeCreateModel model = new()
+                    {
+                        TotalAmount = price,
+                        Subject = orderTitle,
+                        OutTradeNo = order.OrderNo,
+                        BuyerId = order.AliPayUserId
+                    };
+
+                    request.SetBizModel(model);
+
+                    request.SetNotifyUrl(notifyURL);
+
+                    AlipayTradeCreateResponse response = client.Execute(request);
+
+                    string tradeNo = response.TradeNo;
+
+                    if (string.IsNullOrEmpty(tradeNo))
                     {
                         HttpContext.SetErrMsg("支付宝交易订单创建失败");
                     }
-
-                    DtoKeyValue keyValue = new()
+                    else
                     {
-                        Key = "TradeNo",
-                        Value = TradeNo
-                    };
+                        DtoKeyValue keyValue = new()
+                        {
+                            Key = "TradeNo",
+                            Value = tradeNo
+                        };
 
-                    return keyValue;
+                        return keyValue;
+                    }
                 }
 
             }
@@ -399,14 +424,40 @@ namespace WebAPI.Controllers
                 if (order != null && order.State == "待支付")
                 {
 
-                    var returnUrl = HttpContext.GetBaseUrl();
-                    var notifyUrl = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+                    var returnURL = HttpContext.GetBaseUrl();
+                    var notifyURL = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-                    AliPayHelper helper = new(appId, appPrivateKey, aliPayPublicKey, notifyUrl, returnUrl);
 
                     string price = order.Price.ToString();
 
-                    string url = helper.CreatePayPC(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, order.OrderNo);
+
+                    DefaultAopClient client = new("https://openapi.alipay.com/gateway.do", appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
+
+                    string orderTitle = order.CreateTime.ToString("yyyyMMddHHmm") + "交易";
+                    string orderDescription = "商品描述";
+
+                    // 组装业务参数model
+                    AlipayTradePagePayModel model = new()
+                    {
+                        Body = orderDescription,
+                        Subject = orderTitle,
+                        TotalAmount = price,
+                        OutTradeNo = orderNo,
+                        ProductCode = "FAST_INSTANT_TRADE_PAY"
+                    };
+
+                    AlipayTradePagePayRequest request = new();
+
+                    request.SetReturnUrl(returnURL);// 设置支付完成同步回调地址
+
+                    request.SetNotifyUrl(notifyURL);// 设置支付完成异步通知接收地址
+
+                    request.SetBizModel(model);// 将业务model载入到request
+
+                    var response = client.SdkExecute(request);
+
+                    //跳转支付宝支付
+                    string url = "https://openapi.alipay.com/gateway.do" + "?" + response.Body;
 
                     return url;
                 }
@@ -440,16 +491,45 @@ namespace WebAPI.Controllers
                 if (order != null && order.State == "待支付")
                 {
 
-                    var returnUrl = HttpContext.GetBaseUrl();
-                    var notifyUrl = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
-
-                    AliPayHelper helper = new(appId, appPrivateKey, aliPayPublicKey, notifyUrl, returnUrl, "");
+                    var returnURL = HttpContext.GetBaseUrl();
+                    var notifyURL = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+                    var quitURL = HttpContext.GetBaseUrl();
 
                     string price = order.Price.ToString();
 
-                    string html = helper.CreatePayH5(order.OrderNo, order.CreateTime.ToString("yyyyMMddHHmm") + "交易", price, "");
 
-                    return html;
+                    string gatewayUrl = "https://openapi.alipay.com/gateway.do";
+
+                    DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
+
+                    string orderTitle = order.CreateTime.ToString("yyyyMMddHHmm") + "交易";
+                    string orderDescription = "商品描述";
+
+                    // 组装业务参数model
+                    AlipayTradeWapPayModel model = new()
+                    {
+                        OutTradeNo = orderNo,
+                        Subject = orderTitle,
+                        TotalAmount = price,
+                        Body = orderDescription,
+                        ProductCode = "QUICK_WAP_WAY",
+                        QuitUrl = quitURL
+                    };
+
+                    AlipayTradeWapPayRequest request = new();
+                    
+                    request.SetReturnUrl(returnURL);// 设置支付完成同步回调地址
+
+                    request.SetNotifyUrl(notifyURL);// 设置支付完成异步通知接收地址
+                    
+                    request.SetBizModel(model);// 将业务model载入到request
+
+
+                    //调用 SDK 集成方法构造HTML表单代码
+                    var response = client.pageExecute(request, null, "post");
+                    var htmlCode = response.Body;
+
+                    return htmlCode;
                 }
             }
 

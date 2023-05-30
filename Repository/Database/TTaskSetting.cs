@@ -4,9 +4,9 @@ namespace Repository.Database
 {
 
     /// <summary>
-    /// 任务编排记录
+    /// 任务配置
     /// </summary>
-    public class TTask : CUD_User
+    public class TTaskSetting : CUD_User
     {
 
 

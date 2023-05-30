@@ -51,7 +51,7 @@ namespace WebAPI.Filters
 
             if (IsUseParameter)
             {
-                var parameter = JsonHelper.ObjectToJson(context.HttpContext.GetParameter());
+                var parameter = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
                 key = key + "_" + parameter;
             }
 

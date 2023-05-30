@@ -5,7 +5,7 @@ using static TaskService.Libraries.ScheduleTask.ScheduleTaskBuilder;
 
 namespace TaskService.Libraries
 {
-    public class TaskSyncBackgroundService : BackgroundService
+    public class TaskSettingSyncBackgroundService : BackgroundService
     {
 
         private readonly IServiceProvider serviceProvider;
@@ -13,7 +13,7 @@ namespace TaskService.Libraries
         private readonly IDHelper idHelper;
 
 
-        public TaskSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSyncBackgroundService> logger, IDHelper idHelper)
+        public TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IDHelper idHelper)
         {
             this.serviceProvider = serviceProvider;
             this.logger = logger;
@@ -32,12 +32,12 @@ namespace TaskService.Libraries
                     {
                         if (queueMethodList.Any())
                         {
-                            QueueTask();
+                            SyncQueueTaskSetting();
                         }
 
                         if (scheduleMethodList.Any())
                         {
-                            SyncScheduleTask();
+                            SyncScheduleTaskSetting();
                         }
                     }
                     catch (Exception ex)
@@ -50,7 +50,7 @@ namespace TaskService.Libraries
             }
         }
 
-        private void QueueTask()
+        private void SyncQueueTaskSetting()
         {
             Task.Run(() =>
             {
@@ -61,7 +61,7 @@ namespace TaskService.Libraries
 
                     foreach (var item in queueMethodList)
                     {
-                        var task = db.TTask.Where(t => t.Name == item.Key).FirstOrDefault();
+                        var task = db.TTaskSetting.Where(t => t.Name == item.Key).FirstOrDefault();
 
                         if (task == null)
                         {
@@ -92,14 +92,14 @@ namespace TaskService.Libraries
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"QueueTask：{ex.Message}");
+                    logger.LogError($"SyncQueueTaskSetting：{ex.Message}");
                 }
             });
         }
 
 
 
-        private void SyncScheduleTask()
+        private void SyncScheduleTaskSetting()
         {
             Task.Run(() =>
             {
@@ -113,11 +113,11 @@ namespace TaskService.Libraries
 
                         var taskName = item.Method.Name;
 
-                        var task = db.TTask.Where(t => t.Name == taskName).FirstOrDefault();
+                        var taskSetting = db.TTaskSetting.Where(t => t.Name == taskName).FirstOrDefault();
 
-                        if (task == null)
+                        if (taskSetting == null)
                         {
-                            task = new()
+                            taskSetting = new()
                             {
                                 Id = idHelper.GetId(),
                                 CreateTime = DateTime.UtcNow,
@@ -127,24 +127,24 @@ namespace TaskService.Libraries
                                 Cron = item.Cron
                             };
 
-                            db.Add(task);
+                            db.Add(taskSetting);
 
                             db.SaveChanges();
                         }
                         else
                         {
-                            if (task.Cron != null && task.Cron != item.Cron)
+                            if (taskSetting.Cron != null && taskSetting.Cron != item.Cron)
                             {
-                                item.Cron = task.Cron;
+                                item.Cron = taskSetting.Cron;
                             }
-                            item.IsEnable = task.IsEnable;
+                            item.IsEnable = taskSetting.IsEnable;
                         }
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"SyncScheduleTask：{ex.Message}");
+                    logger.LogError($"SyncScheduleTaskSetting：{ex.Message}");
                 }
             });
         }

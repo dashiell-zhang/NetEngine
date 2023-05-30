@@ -54,9 +54,9 @@ namespace AdminAPI.Libraries
         /// 获取完整Url信息
         /// </summary>
         /// <returns></returns>
-        public static string GetUrl(this HttpContext httpContext)
+        public static string GetURL(this HttpContext httpContext)
         {
-            return httpContext.GetBaseUrl() + $"{httpContext.Request.Path}{httpContext.Request.QueryString}";
+            return httpContext.GetBaseURL() + $"{httpContext.Request.Path}{httpContext.Request.QueryString}";
         }
 
 
@@ -64,7 +64,7 @@ namespace AdminAPI.Libraries
         /// 获取基础Url信息
         /// </summary>
         /// <returns></returns>
-        public static string GetBaseUrl(this HttpContext httpContext)
+        public static string GetBaseURL(this HttpContext httpContext)
         {
             var url = $"{httpContext.Request.Scheme}://{httpContext.Request.Host.Host}";
 
@@ -121,7 +121,7 @@ namespace AdminAPI.Libraries
         /// <summary>
         /// 获取Http请求中的全部参数
         /// </summary>
-        public static List<DtoKeyValue> GetParameter(this HttpContext httpContext)
+        public static List<DtoKeyValue> GetParameters(this HttpContext httpContext)
         {
 
             var context = httpContext;

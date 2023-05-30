@@ -20,9 +20,9 @@ namespace WebAPI.Libraries
             };
 
 
-            string path = httpContext.GetUrl();
+            string path = httpContext.GetURL();
 
-            var parameter = httpContext.GetParameter();
+            var parameter = httpContext.GetParameters();
 
             var parameterStr = JsonHelper.ObjectToJson(parameter);
 

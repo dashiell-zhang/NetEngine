@@ -66,7 +66,7 @@ namespace WebAPI.Controllers
 
             if (appId != null && appSecret != null && order != null)
             {
-                var url = HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+                var url = HttpContext.GetBaseURL() + "/api/Pay/WeiXinPayNotify";
 
                 var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
                 var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
@@ -110,7 +110,7 @@ namespace WebAPI.Controllers
             var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
             var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
 
-            var url = HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+            var url = HttpContext.GetBaseURL() + "/api/Pay/WeiXinPayNotify";
 
             if (appId != null && mchId != null && order != null)
             {
@@ -156,7 +156,7 @@ namespace WebAPI.Controllers
                 var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
                 var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
 
-                var url = HttpContext.GetBaseUrl() + "/api/Pay/WeiXinPayNotify";
+                var url = HttpContext.GetBaseURL() + "/api/Pay/WeiXinPayNotify";
 
                 if (appId != null && appSecret != null && mchId != null && mchKey != null && order != null)
                 {
@@ -344,7 +344,7 @@ namespace WebAPI.Controllers
 
                 if (order != null && order.AliPayUserId != null)
                 {
-                    var notifyURL = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+                    var notifyURL = HttpContext.GetBaseURL() + "/api/Pay/AliPayNotify";
 
 
                     string price = Convert.ToString(order.Price);
@@ -424,8 +424,8 @@ namespace WebAPI.Controllers
                 if (order != null && order.State == "待支付")
                 {
 
-                    var returnURL = HttpContext.GetBaseUrl();
-                    var notifyURL = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
+                    var returnURL = HttpContext.GetBaseURL();
+                    var notifyURL = HttpContext.GetBaseURL() + "/api/Pay/AliPayNotify";
 
 
                     string price = order.Price.ToString();
@@ -491,9 +491,9 @@ namespace WebAPI.Controllers
                 if (order != null && order.State == "待支付")
                 {
 
-                    var returnURL = HttpContext.GetBaseUrl();
-                    var notifyURL = HttpContext.GetBaseUrl() + "/api/Pay/AliPayNotify";
-                    var quitURL = HttpContext.GetBaseUrl();
+                    var returnURL = HttpContext.GetBaseURL();
+                    var notifyURL = HttpContext.GetBaseURL() + "/api/Pay/AliPayNotify";
+                    var quitURL = HttpContext.GetBaseURL();
 
                     string price = order.Price.ToString();
 

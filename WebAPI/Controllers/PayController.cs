@@ -401,10 +401,9 @@ namespace WebAPI.Controllers
         /// <param name="orderNo"></param>
         /// <returns></returns>
         [HttpGet]
-        public string? GetAliPayWebUrl(string orderNo)
+        public string? GetAliPayWebURL(string orderNo)
         {
-
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayPC").ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -425,26 +424,29 @@ namespace WebAPI.Controllers
                 {
 
                     var returnURL = HttpContext.GetBaseURL();
-                    var notifyURL = HttpContext.GetBaseURL() + "/api/Pay/AliPayNotify";
-
+                    var notifyURL = HttpContext.GetBaseURL() + "/Pay/AliPayNotify";
 
                     string price = order.Price.ToString();
 
+                    //string gatewayUrl = "https://openapi.alipay.com/gateway.do";
+                    string gatewayUrl = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";
 
-                    DefaultAopClient client = new("https://openapi.alipay.com/gateway.do", appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
+                    DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
 
                     string orderTitle = order.CreateTime.ToString("yyyyMMddHHmm") + "交易";
                     string orderDescription = "商品描述";
 
-                    // 组装业务参数model
                     AlipayTradePagePayModel model = new()
                     {
                         Body = orderDescription,
                         Subject = orderTitle,
                         TotalAmount = price,
                         OutTradeNo = orderNo,
-                        ProductCode = "FAST_INSTANT_TRADE_PAY"
+                        ProductCode = "FAST_INSTANT_TRADE_PAY",
                     };
+
+                    //采用订单码模式会返回一个支付宝二维码
+                    model.QrPayMode = "4";
 
                     AlipayTradePagePayRequest request = new();
 
@@ -456,13 +458,11 @@ namespace WebAPI.Controllers
 
                     var response = client.SdkExecute(request);
 
-                    //跳转支付宝支付
-                    string url = "https://openapi.alipay.com/gateway.do" + "?" + response.Body;
+                    string url = gatewayUrl + "?" + response.Body;
 
                     return url;
                 }
             }
-
 
             return null;
         }
@@ -475,10 +475,9 @@ namespace WebAPI.Controllers
         /// <param name="orderNo"></param>
         /// <returns></returns>
         [HttpGet]
-        public string? GetAliPayH5Url(string orderNo)
+        public string? GetAliPayH5URL(string orderNo)
         {
-
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayH5").ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -492,20 +491,20 @@ namespace WebAPI.Controllers
                 {
 
                     var returnURL = HttpContext.GetBaseURL();
-                    var notifyURL = HttpContext.GetBaseURL() + "/api/Pay/AliPayNotify";
+                    var notifyURL = HttpContext.GetBaseURL() + "/Pay/AliPayNotify";
+
                     var quitURL = HttpContext.GetBaseURL();
 
                     string price = order.Price.ToString();
 
-
-                    string gatewayUrl = "https://openapi.alipay.com/gateway.do";
+                    //string gatewayUrl = "https://openapi.alipay.com/gateway.do";
+                    string gatewayUrl = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";
 
                     DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
 
                     string orderTitle = order.CreateTime.ToString("yyyyMMddHHmm") + "交易";
                     string orderDescription = "商品描述";
 
-                    // 组装业务参数model
                     AlipayTradeWapPayModel model = new()
                     {
                         OutTradeNo = orderNo,
@@ -525,11 +524,11 @@ namespace WebAPI.Controllers
                     request.SetBizModel(model);// 将业务model载入到request
 
 
-                    //调用 SDK 集成方法构造HTML表单代码
-                    var response = client.pageExecute(request, null, "post");
-                    var htmlCode = response.Body;
+                    var response = client.SdkExecute(request);
 
-                    return htmlCode;
+                    string url = gatewayUrl + "?" + response.Body;
+
+                    return url;
                 }
             }
 
@@ -548,45 +547,34 @@ namespace WebAPI.Controllers
             string retValue = "";
 
             //获取当前请求中的post参数
-            Dictionary<string, string?> dict = new();
+            var parameters = Request.Form.ToDictionary(t => t.Key, t => t.Value.ToString());
 
-            var keys = Request.Form.Keys;
-
-            if (keys != null)
+            if (parameters.Count > 0)
             {
-                foreach (string key in keys)
-                {
-                    dict.Add(key, Request.Form[key]);
-                }
-            }
+                var appId = parameters.GetValueOrDefault("app_id");
 
-            if (dict.Count > 0)
-            {
-                var appid = Request.Form["auth_app_id"].ToString();
-
-                var appIdSettingGroupId = db.TAppSetting.Where(t => t.Module.StartsWith("AliPay") && t.Key == "AppId" && t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
+                var appIdSettingGroupId = db.TAppSetting.Where(t => t.Module.StartsWith("AliPay") && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefault();
 
                 var settings = db.TAppSetting.AsNoTracking().Where(t => t.GroupId == appIdSettingGroupId).ToList();
 
-                var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                 var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
                 var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
 
 
-                bool flag = AlipaySignature.RSACheckV1(dict, aliPayPublicKey, "utf-8", "RSA2", false);
+                bool flag = AlipaySignature.RSACheckV1(parameters, aliPayPublicKey, "utf-8", "RSA2", false);
 
                 if (flag)
                 {
-                    var orderno = Request.Form["out_trade_no"].ToString();
+                    var orderno = parameters.GetValueOrDefault("out_trade_no");
 
                     var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
 
                     if (order != null)
                     {
-                        order.PayPrice = decimal.Parse(Request.Form["total_amount"].ToString());
-                        order.SerialNo = Request.Form["trade_no"].ToString();
+                        order.PayPrice = decimal.Parse(parameters.GetValueOrDefault("total_amount")!);
+                        order.SerialNo = parameters.GetValueOrDefault("trade_no");
                         order.PayState = true;
-                        order.PayTime = Convert.ToDateTime(Request.Form["gmt_payment"].ToString());
+                        order.PayTime = Convert.ToDateTime(parameters.GetValueOrDefault("gmt_payment")).ToUniversalTime();
                         order.PayType = "支付宝";
                         order.State = "已支付";
 
@@ -601,7 +589,6 @@ namespace WebAPI.Controllers
 
                                     break;
                                 }
-
                         }
                     }
 
@@ -610,6 +597,48 @@ namespace WebAPI.Controllers
             }
 
             return retValue;
+        }
+
+
+
+
+        /// <summary>
+        /// 支付宝退款
+        /// </summary>
+        /// <returns></returns>
+        private void AliPayRefund()
+        {
+
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
+            var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
+
+            string gatewayUrl = "https://openapi.alipay.com/gateway.do";
+            //string gatewayUrl = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";
+
+            DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
+            AlipayTradeRefundRequest request = new();
+
+            AlipayTradeRefundModel model = new()
+            {
+                TradeNo = "支付宝交易流水号",
+                RefundAmount = "退款金额 05.00",
+                OutRequestNo = "退款单识别号"
+            };
+
+            request.SetBizModel(model);
+
+            AlipayTradeRefundResponse response = client.Execute(request);
+
+            bool isError = response.IsError;
+
+            if (isError)
+            {
+                string errMsg = response.SubMsg;
+            }
+
         }
 
     }

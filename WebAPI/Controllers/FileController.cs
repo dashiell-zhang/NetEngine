@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using SkiaSharp;
+using System.Text;
 using WebAPI.Libraries;
 using WebAPI.Models.Shared;
 
@@ -178,7 +179,6 @@ namespace WebAPI.Controllers
                     }
                 }
 
-
                 if (isSuccess)
                 {
 
@@ -206,7 +206,6 @@ namespace WebAPI.Controllers
 
             HttpContext.SetErrMsg("文件上传失败");
             return default;
-
         }
 
 
@@ -239,7 +238,7 @@ namespace WebAPI.Controllers
             {
                 HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
 
-                return null;
+                return File(Encoding.UTF8.GetBytes(""), "text/plain");
             }
         }
 
@@ -267,8 +266,6 @@ namespace WebAPI.Controllers
                 string fileExt = Path.GetExtension(file.Path);
                 FileExtensionContentTypeProvider provider = new();
                 var memi = provider.Mappings[fileExt];
-
-
 
                 if (width == 0 && height == 0)
                 {
@@ -312,7 +309,7 @@ namespace WebAPI.Controllers
             {
                 HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
 
-                return null;
+                return File(Encoding.UTF8.GetBytes(""), "text/plain");
             }
         }
 
@@ -343,7 +340,6 @@ namespace WebAPI.Controllers
 
                 return null;
             }
-
         }
 
 
@@ -361,6 +357,7 @@ namespace WebAPI.Controllers
             if (file != null)
             {
                 file.IsDelete = true;
+                file.DeleteUserId = userId;
                 file.DeleteTime = DateTime.UtcNow;
 
                 db.SaveChanges();
@@ -371,7 +368,6 @@ namespace WebAPI.Controllers
             {
                 return false;
             }
-
         }
 
 

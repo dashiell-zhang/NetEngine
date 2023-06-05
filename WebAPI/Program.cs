@@ -225,7 +225,7 @@ namespace WebAPI
             #region 注册HttpClient
             builder.Services.AddHttpClient("", options =>
             {
-                options.DefaultRequestVersion = new("2.0");
+                options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
@@ -235,7 +235,7 @@ namespace WebAPI
 
             builder.Services.AddHttpClient("SkipSsl", options =>
             {
-                options.DefaultRequestVersion = new("2.0");
+                options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
@@ -247,10 +247,11 @@ namespace WebAPI
             builder.Services.AddTransient<HttpSignHandler>();
             builder.Services.AddHttpClient("HttpSign", options =>
             {
-                options.DefaultRequestVersion = new("2.0");
+                options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
+                AutomaticDecompression = System.Net.DecompressionMethods.All,
             }).AddHttpMessageHandler(t => t.GetRequiredService<HttpSignHandler>());
 
             #endregion
@@ -376,7 +377,8 @@ namespace WebAPI
 
             app.Start();
 #if DEBUG
-            Console.WriteLine(string.Join(Environment.NewLine, app.Urls.Select(t => Environment.NewLine + "Swagger Doc: " + t + "/swagger/" + Environment.NewLine).ToList()));
+            string url = app.Urls.First().Replace("http://[::]", "http://127.0.0.1");
+            Console.WriteLine(Environment.NewLine + "Swagger Doc: " + url + "/swagger/" + Environment.NewLine);
 #endif
             app.WaitForShutdown();
         }

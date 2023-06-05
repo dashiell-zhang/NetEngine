@@ -133,7 +133,7 @@ namespace Common
         public static DateTimeOffset GetNetworkTime()
         {
 
-            string ntpServer = "ntp.onekib.com";
+            string ntpServer = "ntp.tencent.com";
 
             var ntpData = new byte[48];
 

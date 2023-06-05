@@ -219,7 +219,7 @@ namespace AdminAPI
 
             builder.Services.AddHttpClient("", options =>
             {
-                options.DefaultRequestVersion = new("2.0");
+                options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
@@ -229,7 +229,7 @@ namespace AdminAPI
 
             builder.Services.AddHttpClient("SkipSsl", options =>
             {
-                options.DefaultRequestVersion = new("2.0");
+                options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
@@ -353,7 +353,8 @@ namespace AdminAPI
 
             app.Start();
 #if DEBUG
-            Console.WriteLine(string.Join(Environment.NewLine, app.Urls.Select(t => Environment.NewLine + "Swagger Doc: " + t + "/swagger/" + Environment.NewLine).ToList()));
+            string url = app.Urls.First().Replace("http://[::]", "http://127.0.0.1");
+            Console.WriteLine(Environment.NewLine + "Swagger Doc: " + url + "/swagger/" + Environment.NewLine);
 #endif
             app.WaitForShutdown();
 

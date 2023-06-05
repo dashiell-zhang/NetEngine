@@ -51,8 +51,28 @@ namespace WebAPI.Libraries
         }
 
 
+
         /// <summary>
-        /// 获取完整Url信息
+        /// 获取 IP 信息
+        /// </summary>
+        /// <param name="httpContext"></param>
+        /// <returns></returns>
+        public static string GetRemoteIP(this HttpContext httpContext)
+        {
+            var ip = httpContext.Connection.RemoteIpAddress!.ToString();
+
+            if (httpContext.Connection.RemoteIpAddress.IsIPv4MappedToIPv6)
+            {
+                ip = httpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+            }
+
+            return ip;
+        }
+
+
+
+        /// <summary>
+        /// 获取完整URL信息
         /// </summary>
         /// <returns></returns>
         public static string GetURL(this HttpContext httpContext)
@@ -61,8 +81,9 @@ namespace WebAPI.Libraries
         }
 
 
+
         /// <summary>
-        /// 获取基础Url信息
+        /// 获取基础URL信息
         /// </summary>
         /// <returns></returns>
         public static string GetBaseURL(this HttpContext httpContext)

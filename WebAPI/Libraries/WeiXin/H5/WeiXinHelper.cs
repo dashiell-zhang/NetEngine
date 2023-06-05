@@ -34,7 +34,7 @@ namespace WebAPI.Libraries.WeiXin.H5
         /// 获取 AccessToken
         /// </summary>
         /// <returns></returns>
-        public string? GetAccessToken(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory)
+        public string? GetAccessToken(IDistributedCache distributedCache, HttpClient httpClient)
         {
 
             string key = appid + appsecret + "accesstoken";
@@ -45,7 +45,7 @@ namespace WebAPI.Libraries.WeiXin.H5
             {
                 string url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + appsecret;
 
-                var returnJson = httpClientFactory.Post(url, "", "form");
+                var returnJson = httpClient.Post(url, "", "form");
 
                 token = JsonHelper.GetValueByKey(returnJson, "access_token");
 
@@ -64,7 +64,7 @@ namespace WebAPI.Libraries.WeiXin.H5
         /// 获取 TicketID
         /// </summary>
         /// <returns></returns>
-        private string GetTicketID(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory)
+        private string GetTicketID(IDistributedCache distributedCache, HttpClient httpClient)
         {
 
             string key = appid + appsecret + "ticketid";
@@ -74,9 +74,9 @@ namespace WebAPI.Libraries.WeiXin.H5
             if (string.IsNullOrEmpty(ticketid))
             {
 
-                string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken(distributedCache, httpClientFactory) + "&type=jsapi";
+                string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken(distributedCache, httpClient) + "&type=jsapi";
 
-                string returnJson = httpClientFactory.Post(getUrl, "", "form");
+                string returnJson = httpClient.Post(getUrl, "", "form");
 
                 ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
 
@@ -103,10 +103,10 @@ namespace WebAPI.Libraries.WeiXin.H5
         /// 获取 JsSDK 签名信息
         /// </summary>
         /// <param name="distributedCache"></param>
-        /// <param name="httpClientFactory"></param>
+        /// <param name="httpClient"></param>
         /// <param name="url">HttpContext.GetUrl()</param>
         /// <returns></returns>
-        public DtoWeiXinJsSdkSign GetJsSDKSign(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, string url)
+        public DtoWeiXinJsSdkSign GetJsSDKSign(IDistributedCache distributedCache, HttpClient httpClient, string url)
         {
             DtoWeiXinJsSdkSign sdkSign = new()
             {
@@ -115,7 +115,7 @@ namespace WebAPI.Libraries.WeiXin.H5
                 NonceStr = Guid.NewGuid().ToString().Replace("-", "")
             };
 
-            string jsapi_ticket = GetTicketID(distributedCache, httpClientFactory);
+            string jsapi_ticket = GetTicketID(distributedCache, httpClient);
             string strYW = "jsapi_ticket=" + jsapi_ticket + "&noncestr=" + sdkSign.NonceStr + "&timestamp=" + sdkSign.TimeStamp + "&url=" + url;
             byte[] bytes_sha1_in = Encoding.Default.GetBytes(strYW);
             byte[] bytes_sha1_out = SHA1.HashData(bytes_sha1_in);

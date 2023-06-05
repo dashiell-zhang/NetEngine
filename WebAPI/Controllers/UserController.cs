@@ -27,7 +27,7 @@ namespace WebAPI.Controllers
 
         private readonly IDistributedCache distributedCache;
 
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly HttpClient httpClient;
 
 
         private readonly long userId;
@@ -38,7 +38,7 @@ namespace WebAPI.Controllers
         {
             this.db = db;
             this.distributedCache = distributedCache;
-            this.httpClientFactory = httpClientFactory;
+            httpClient = httpClientFactory.CreateClient();
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)
@@ -70,7 +70,7 @@ namespace WebAPI.Controllers
             {
                 Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appid, appSecret);
 
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);
+                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClient, code);
 
                 string openid = wxinfo.openid;
 
@@ -106,7 +106,7 @@ namespace WebAPI.Controllers
                 Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appId, appSecret);
 
 
-                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);
+                var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClient, code);
 
                 string openid = wxinfo.openid;
                 string sessionkey = wxinfo.sessionkey;

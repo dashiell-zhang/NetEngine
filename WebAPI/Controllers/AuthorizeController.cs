@@ -36,7 +36,7 @@ namespace WebAPI.Controllers
 
         private readonly IDistributedCache distributedCache;
 
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly HttpClient httpClient;
 
         private readonly AuthorizeService authorizeService;
 
@@ -51,7 +51,7 @@ namespace WebAPI.Controllers
             this.distLock = distLock;
             this.idHelper = idHelper;
             this.distributedCache = distributedCache;
-            this.httpClientFactory = httpClientFactory;
+            httpClient = httpClientFactory.CreateClient();
 
             this.authorizeService = authorizeService;
 
@@ -112,7 +112,7 @@ namespace WebAPI.Controllers
             Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appid!, appSecret!);
 
 
-            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClientFactory, code);
+            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClient, code);
 
             string openid = wxinfo.openid;
             string sessionkey = wxinfo.sessionkey;
@@ -312,11 +312,11 @@ namespace WebAPI.Controllers
 
             Libraries.WeiXin.App.WeiXinHelper weiXinHelper = new(appid!, appSecret!);
 
-            var accseetoken = weiXinHelper.GetAccessToken(distributedCache, httpClientFactory, code).accessToken;
+            var accseetoken = weiXinHelper.GetAccessToken(distributedCache, httpClient, code).accessToken;
 
-            var openid = weiXinHelper.GetAccessToken(distributedCache, httpClientFactory, code).openId;
+            var openid = weiXinHelper.GetAccessToken(distributedCache, httpClient, code).openId;
 
-            var userInfo = weiXinHelper.GetUserInfo(httpClientFactory, accseetoken, openid);
+            var userInfo = weiXinHelper.GetUserInfo(httpClient, accseetoken, openid);
 
             if (userInfo.NickName != null)
             {

@@ -4,11 +4,10 @@ namespace Common
 {
 
     /// <summary>
-    /// 扩展 Http客户端工厂接口,集成常用方法
+    /// 扩展 HttpClient 集成常用方法
     /// </summary>
-    public static class IHttpClientFactoryExtension
+    public static class HttpClientExtension
     {
-
 
 
         /// <summary>
@@ -16,22 +15,19 @@ namespace Common
         /// </summary>
         /// <param name="url">请求地址</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string Get(this IHttpClientFactory httpClientFactory, string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string Get(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default)
         {
-
-            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
             }
 
-            using var httpResponse = client.GetStringAsync(url);
+            using var httpResponse = httpClient.GetStringAsync(url);
             return httpResponse.Result;
         }
 
@@ -39,24 +35,21 @@ namespace Common
 
 
         /// <summary>
-        /// Post Json或XML 数据到指定url
+        /// Post json或xml 数据到指定url
         /// </summary>
         /// <param name="url">Url</param>
         /// <param name="data">数据</param>
         /// <param name="type">json,xml</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string Post(this IHttpClientFactory httpClientFactory, string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string Post(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default)
         {
-
-            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
             }
 
@@ -74,10 +67,28 @@ namespace Common
 
             content.Headers.ContentType!.CharSet = "utf-8";
 
-            using var httpResponse = client.PostAsync(url, content);
+            using var httpResponse = httpClient.PostAsync(url, content);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
+
+
+        /// <summary>
+        /// Post json或xml 数据到指定url,异步执行
+        /// </summary>
+        /// <param name="url">Url</param>
+        /// <param name="data">数据</param>
+        /// <param name="type">json,xml</param>
+        /// <param name="headers">自定义Header集合</param>
+        /// <param name="httpClientName">httpClient名称</param>
+        /// <returns></returns>
+        public static void PostAsync(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default)
+        {
+            Task.Run(() =>
+            {
+                Post(httpClient, url, data, type, headers);
+            });
+        }
 
 
 
@@ -88,41 +99,18 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string Delete(this IHttpClientFactory httpClientFactory, string url, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string Delete(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default)
         {
-
-            var client = httpClientFactory.CreateClient(httpClientName!);
-
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
             }
 
-            using var httpResponse = client.DeleteAsync(url);
+            using var httpResponse = httpClient.DeleteAsync(url);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
-        }
-
-
-
-
-        /// <summary>
-        /// Post Json或XML 数据到指定url,异步执行
-        /// </summary>
-        /// <param name="url">Url</param>
-        /// <param name="data">数据</param>
-        /// <param name="type">json,xml</param>
-        /// <param name="headers">自定义Header集合</param>
-        /// <param name="httpClientName">httpClient名称</param>
-        /// <returns></returns>
-        public static void PostAsync(this IHttpClientFactory httpClientFactory, string url, string data, string type, Dictionary<string, string>? headers = default, string? httpClientName = "")
-        {
-            Task.Run(() =>
-            {
-                Post(httpClientFactory, url, data, type, headers, httpClientName);
-            });
         }
 
 
@@ -134,25 +122,22 @@ namespace Common
         /// <param name="url"></param>
         /// <param name="formItems">Post表单内容</param>
         /// <param name="headers">自定义Header集合</param>
-        /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string PostForm(this IHttpClientFactory httpClientFactory, string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string PostForm(this HttpClient httpClient, string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default)
         {
-
-            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
             }
 
             using FormUrlEncodedContent formContent = new(formItems);
             formContent.Headers.ContentType!.CharSet = "utf-8";
 
-            using var httpResponse = client.PostAsync(url, formContent);
+            using var httpResponse = httpClient.PostAsync(url, formContent);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
@@ -167,16 +152,14 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static string PostFormData(this IHttpClientFactory httpClientFactory, string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, string? httpClientName = "")
+        public static string PostFormData(this HttpClient httpClient, string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default)
         {
-
-            var client = httpClientFactory.CreateClient(httpClientName!);
 
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
                 }
             }
 
@@ -197,7 +180,7 @@ namespace Common
                 }
             }
 
-            using var httpResponse = client.PostAsync(url, formDataContent);
+            using var httpResponse = httpClient.PostAsync(url, formDataContent);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 

@@ -27,10 +27,10 @@ namespace WebAPI.Libraries.WeiXin.Public
         /// 查询订单
         /// </summary>
         /// <param name="inputObj">提交给查询订单API的参数</param>
-        /// <param name="httpClientFactory"></param>
+        /// <param name="httpClient"></param>
         /// <returns>成功时返回订单查询结果，其他抛异常</returns>
         /// <exception cref="WxPayException"></exception>
-        public WxPayData OrderQuery(WxPayData inputObj, IHttpClientFactory httpClientFactory)
+        public WxPayData OrderQuery(WxPayData inputObj, HttpClient httpClient)
         {
             string sendUrl = "https://api.mch.weixin.qq.com/pay/orderquery";
             //检测必填参数
@@ -43,7 +43,7 @@ namespace WebAPI.Libraries.WeiXin.Public
             inputObj.SetValue("nonce_str", Guid.NewGuid().ToString().Replace("-", ""));//随机字符串
             inputObj.SetValue("sign", inputObj.MakeSign(mchkey));//签名
             string xml = inputObj.ToXml();
-            string response = httpClientFactory.Post(sendUrl, xml, "xml");//调用HTTP通信接口提交数据
+            string response = httpClient.Post(sendUrl, xml, "xml");//调用HTTP通信接口提交数据
             //将xml格式的数据转化为对象以返回
             WxPayData result = new();
             result.FromXml(response, mchkey);

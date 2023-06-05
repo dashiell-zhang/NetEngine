@@ -34,13 +34,13 @@ namespace WebAPI.Libraries.WeiXin.App
         /// <summary>
         /// 微信APP支付商户平台下单方法
         /// </summary>
-        /// <param name="httpClientFactory"></param>
+        /// <param name="httpClient"></param>
         /// <param name="orderno">订单号</param>
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <param name="ip">服务器IP</param>
         /// <returns></returns>
-        public DtoCreatePayApp? CreatePay(IHttpClientFactory httpClientFactory, string orderno, string body, int price, string ip)
+        public DtoCreatePayApp? CreatePay(HttpClient httpClient, string orderno, string body, int price, string ip)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -78,7 +78,7 @@ namespace WebAPI.Libraries.WeiXin.App
 
 
 
-            var getdata = httpClientFactory.Post(url, zhi, "form");
+            var getdata = httpClient.Post(url, zhi, "form");
 
             //获取xml数据
             XmlDocument doc = new();
@@ -122,7 +122,7 @@ namespace WebAPI.Libraries.WeiXin.App
         /// 获取 AccessToken
         /// </summary>
         /// <returns></returns>
-        public (string accessToken, string openId) GetAccessToken(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, string code)
+        public (string accessToken, string openId) GetAccessToken(IDistributedCache distributedCache, HttpClient httpClient, string code)
         {
             string? token = distributedCache.GetString("wxappaccesstoken" + code);
             string? openid = distributedCache.GetString("wxappopenid" + code);
@@ -132,7 +132,7 @@ namespace WebAPI.Libraries.WeiXin.App
 
                 string url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + appid + "&secret=" + appsecret + "&code=" + code + "&grant_type=authorization_code";
 
-                var returnJson = httpClientFactory.Post(url, "", "form");
+                var returnJson = httpClient.Post(url, "", "form");
 
                 var retToken = JsonHelper.GetValueByKey(returnJson, "access_token");
                 var retOpenId = JsonHelper.GetValueByKey(returnJson, "openid");
@@ -164,15 +164,15 @@ namespace WebAPI.Libraries.WeiXin.App
         /// <summary>
         /// 获取用户信息
         /// </summary>
-        /// <param name="httpClientFactory"></param>
+        /// <param name="httpClient"></param>
         /// <param name="accessToken"></param>
         /// <param name="openId"></param>
         /// <returns></returns>
-        public DtoGetUserInfo GetUserInfo(IHttpClientFactory httpClientFactory, string accessToken, string openId)
+        public DtoGetUserInfo GetUserInfo(HttpClient httpClient, string accessToken, string openId)
         {
             string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
 
-            var returnJson = httpClientFactory.Post(url, "", "form");
+            var returnJson = httpClient.Post(url, "", "form");
 
             var userInfo = JsonHelper.JsonToObject<DtoGetUserInfo>(returnJson);
 

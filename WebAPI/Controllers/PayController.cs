@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
+using System.Text;
 using WebAPI.Libraries;
 using WebAPI.Libraries.WeiXin.App.Models;
 using WebAPI.Libraries.WeiXin.MiniApp.Models;
@@ -16,6 +17,7 @@ using WebAPI.Models.Shared;
 
 namespace WebAPI.Controllers
 {
+
     /// <summary>
     /// 第三方支付发起集合，依赖于订单号
     /// </summary>
@@ -27,8 +29,7 @@ namespace WebAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IDistributedCache distributedCache;
-        private readonly IHttpClientFactory httpClientFactory;
-
+        private readonly HttpClient httpClient;
 
 
 
@@ -36,18 +37,18 @@ namespace WebAPI.Controllers
         {
             this.db = db;
             this.distributedCache = distributedCache;
-            this.httpClientFactory = httpClientFactory;
+            httpClient = httpClientFactory.CreateClient();
         }
 
 
 
         /// <summary>
-        /// 微信小程序商户平台下单接口
+        /// 微信支付-小程序模式
         /// </summary>
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet]
-        public DtoCreatePayMiniApp? CreateWeiXinMiniAppPay(string orderno, long weiXinKeyId)
+        public DtoCreatePayMiniApp? CreateWeiXinPayMiniAPP(string orderno, long weiXinKeyId)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
 
@@ -75,7 +76,7 @@ namespace WebAPI.Controllers
 
                 int price = Convert.ToInt32(order.Price * 100);
 
-                var pay = weiXinHelper.CreatePay(httpClientFactory, order.UserOpenId!, order.OrderNo, order.ProductName, price);
+                var pay = weiXinHelper.CreatePay(httpClient, order.UserOpenId!, order.OrderNo, order.ProductName, price);
 
                 return pay;
             }
@@ -90,18 +91,17 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// 微信APP商户平台下单接口
+        /// 微信支付-APP模式
         /// </summary>
-        /// <param name="orderno"></param>
+        /// <param name="orderNo"></param>
         /// <param name="weiXinKeyId"></param>
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet]
-        public DtoCreatePayApp? CreateWeiXinAppPay(string orderno, long weiXinKeyId)
+        public DtoCreatePayApp? CreateWeiXinPayAPP(string orderNo, long weiXinKeyId)
         {
 
-
-            var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderno).FirstOrDefault();
+            var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).FirstOrDefault();
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == weiXinKeyId).ToList();
 
@@ -110,7 +110,7 @@ namespace WebAPI.Controllers
             var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
             var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
 
-            var url = HttpContext.GetBaseURL() + "/api/Pay/WeiXinPayNotify";
+            var url = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
 
             if (appId != null && mchId != null && order != null)
             {
@@ -118,7 +118,7 @@ namespace WebAPI.Controllers
 
                 int price = Convert.ToInt32(order.Price * 100);
 
-                var pay = weiXinHelper.CreatePay(httpClientFactory, order.OrderNo, "订单号：" + orderno, price, "119.29.29.29");
+                var pay = weiXinHelper.CreatePay(httpClient, order.OrderNo, "订单号：" + orderNo, price, "119.29.29.29");
 
                 return pay;
             }
@@ -126,58 +126,94 @@ namespace WebAPI.Controllers
             {
                 return null;
             }
-
-
-
         }
 
 
 
         /// <summary>
-        /// 获取微信支付PC版URL
+        /// 微信支付-PC模式
         /// </summary>
         /// <param name="orderNo"></param>
         /// <returns></returns>
         [HttpGet]
-        public FileResult? GetWeiXinPayPCUrl(string orderNo)
+        public FileResult? CreateWeiXinPayPC(string orderNo)
         {
-            string key = "wxpayPCUrl" + orderNo;
+            string key = "wxpayPCURL" + orderNo;
 
-            string? codeUrl = distributedCache.GetString(key);
+            string? codeURL = distributedCache.GetString(key);
 
-            if (string.IsNullOrEmpty(codeUrl))
+            if (string.IsNullOrEmpty(codeURL))
             {
                 var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
-                var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPC").ToList();
-
-                var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
-                var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
-                var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
-                var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
-
-                var url = HttpContext.GetBaseURL() + "/api/Pay/WeiXinPayNotify";
-
-                if (appId != null && appSecret != null && mchId != null && mchKey != null && order != null)
+                if (order != null)
                 {
-                    Libraries.WeiXin.Web.WeiXinHelper weiXinHelper = new(appId, mchId, mchKey, url);
+                    var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPC").ToList();
 
-                    int price = Convert.ToInt32(order.Price * 100);
+                    var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+                    var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
+                    var mchApiClientId = settings.Where(t => t.Key == "MchApiClientId").Select(t => t.Value).FirstOrDefault();
+                    var mchApiClientKey = settings.Where(t => t.Key == "MchApiClientKey").Select(t => t.Value).FirstOrDefault();
 
-                    var retCodeUrl = weiXinHelper.CreatePay(httpClientFactory, order.Id, order.OrderNo, DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易", price, "119.29.29.29");
 
-                    if (retCodeUrl != null)
+                    if (appId != null && mchId != null && mchApiClientId != null && mchApiClientKey != null && order != null)
                     {
-                        codeUrl = retCodeUrl;
 
-                        distributedCache.Set(key, codeUrl, TimeSpan.FromMinutes(115));
+                        int price = Convert.ToInt32(order.Price * 100);
 
-                        var image = ImgHelper.GetQrCode(codeUrl);
+                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
 
-                        return File(image, "image/png");
+                        var reqData = new
+                        {
+                            mchid = mchId,
+                            out_trade_no = order.OrderNo,
+                            appid = appId,
+                            description = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
+                            notify_url = notifyURL,
+                            amount = new
+                            {
+                                total = price,
+                                currency = "CNY"
+                            }
+                        };
+
+                        var reqDataJson = JsonHelper.ObjectToJson(reqData);
+
+                        string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/native";
+
+                        string method = "POST";
+                        long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                        string nonceStr = Path.GetRandomFileName();
+                        string message = $"{method}\n{wxURL.Substring(29)}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
+                        string signature = CryptoHelper.SHA256withRSAToBase64(message, mchApiClientKey);
+                        string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiClientId}\",signature=\"{signature}\"";
+
+                        Dictionary<string, string> headers = new() { { "Authorization", authorization } };
+
+                        var resultJson = httpClient.Post(wxURL, reqDataJson, "json", headers);
+
+                        codeURL = JsonHelper.GetValueByKey(resultJson, "code_url");
+
+                        if (codeURL != null)
+                        {
+
+                            var image = ImgHelper.GetQrCode(codeURL);
+                            return File(image, "image/png");
+                        }
+                        else
+                        {
+                            string? errCode = JsonHelper.GetValueByKey(resultJson, "code_url");
+                            string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
+
+                            HttpContext.SetErrMsg($"{errCode}:{errMessage}");
+                        }
                     }
-
                 }
+            }
+            else
+            {
+                var image = ImgHelper.GetQrCode(codeURL);
+                return File(image, "image/png");
             }
 
             return null;
@@ -234,7 +270,7 @@ namespace WebAPI.Controllers
                 {
                     JsApiPay jsApiPay = new(appId, mchId, mchKey);
 
-                    WxPayData send = jsApiPay.OrderQuery(req, httpClientFactory);
+                    WxPayData send = jsApiPay.OrderQuery(req, httpClient);
                     if (!(send.GetValue("return_code")!.ToString() == "SUCCESS" && send.GetValue("result_code")!.ToString() == "SUCCESS"))
                     {
                         //如果订单信息在微信后台不存在,立即返回失败
@@ -316,14 +352,13 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// 支付宝小程序商户平台下单接口
+        /// 支付宝支付-小程序模式
         /// </summary>
-        /// <param name="orderno"></param>
+        /// <param name="orderNo">订单号</param>
         /// <param name="aliPayKeyId"></param>
-        /// <remarks>用于在支付宝商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet]
-        public DtoKeyValue? CreateAliPayMiniApp(string orderno, long aliPayKeyId)
+        public DtoKeyValue? CreateAliPayMiniAPP(string orderNo, long aliPayKeyId)
         {
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp" && t.GroupId == aliPayKeyId).ToList();
@@ -334,7 +369,7 @@ namespace WebAPI.Controllers
 
             if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
             {
-                var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
+                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
                 {
                     t.OrderNo,
                     t.Price,
@@ -396,12 +431,12 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// 通过订单号获取支付宝电脑网页付款URL
+        /// 支付宝支付-PC模式
         /// </summary>
-        /// <param name="orderNo"></param>
-        /// <returns></returns>
+        /// <param name="orderNo">订单号</param>
+        /// <returns>支付宝支付URL</returns>
         [HttpGet]
-        public string? GetAliPayWebURL(string orderNo)
+        public string? CreateAliPayPC(string orderNo)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
 
@@ -470,12 +505,12 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// 通过订单号获取支付宝H5网页付款URL
+        /// 支付宝支付-H5模式
         /// </summary>
-        /// <param name="orderNo"></param>
-        /// <returns></returns>
+        /// <param name="orderNo">订单号</param>
+        /// <returns>支付宝支付URL</returns>
         [HttpGet]
-        public string? GetAliPayH5URL(string orderNo)
+        public string? CreateAliPayH5(string orderNo)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
 

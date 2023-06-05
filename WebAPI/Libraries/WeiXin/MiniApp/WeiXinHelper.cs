@@ -38,14 +38,14 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
         /// 获取用户OpenId 和 SessionKey
         /// </summary>
         /// <param name="distributedCache"></param>
-        /// <param name="httpClientFactory"></param>
+        /// <param name="httpClient"></param>
         /// <param name="code"></param>
         /// <returns></returns>
-        public (string openid, string sessionkey) GetOpenIdAndSessionKey(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, string code)
+        public (string openid, string sessionkey) GetOpenIdAndSessionKey(IDistributedCache distributedCache, HttpClient httpClient, string code)
         {
             string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appid + "&secret=" + secret + "&js_code=" + code + "&grant_type=authorization_code";
 
-            string httpret = httpClientFactory.Get(url);
+            string httpret = httpClient.Get(url);
 
             try
             {
@@ -81,13 +81,13 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
         /// <summary>
         /// 微信小程序支付商户平台下单方法
         /// </summary>
-        /// <param name="httpClientFactory"></param>
+        /// <param name="httpClient"></param>
         /// <param name="openid">用户 OpenId</param>
         /// <param name="orderno">订单号</param>
         /// <param name="body">商品描述</param>
         /// <param name="price">价格，单位为分</param>
         /// <returns></returns>
-        public DtoCreatePayMiniApp? CreatePay(IHttpClientFactory httpClientFactory, string openid, string orderno, string body, int price)
+        public DtoCreatePayMiniApp? CreatePay(HttpClient httpClient, string openid, string orderno, string body, int price)
         {
 
             string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
@@ -118,7 +118,7 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
                               , orderno, price, "JSAPI", unifiedorderSign);
 
 
-            var getdata = httpClientFactory.Post(url, zhi, "form");
+            var getdata = httpClient.Post(url, zhi, "form");
 
             //获取xml数据
             XmlDocument doc = new();

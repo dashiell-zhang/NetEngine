@@ -8,9 +8,9 @@ namespace Common
     public class JsonHelper
     {
 
-        private static JsonSerializerOptions objectToJsonOptions;
+        private static readonly JsonSerializerOptions objectToJsonOptions;
 
-        private static JsonSerializerOptions jsonToObjectOptions;
+        private static readonly JsonSerializerOptions jsonToObjectOptions;
 
 
         static JsonHelper()
@@ -49,9 +49,7 @@ namespace Common
             try
             {
                 using JsonDocument doc = JsonDocument.Parse(json);
-                var jsonElement = doc.RootElement.Clone();
-
-                return jsonElement.GetProperty(key).GetString();
+                return doc.RootElement.GetProperty(key).ToString();
             }
             catch
             {

@@ -7,7 +7,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml;
 using WebAPI.Libraries.WeiXin.MiniApp.Models;
-using WebAPI.Libraries.WeiXin.Public;
 
 namespace WebAPI.Libraries.WeiXin.MiniApp
 {
@@ -222,91 +221,6 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
 
         }
 
-
-
-
-
-        /// <summary>
-        /// 微信小程序支付创建退款申请方法
-        /// </summary>
-        /// <param name="out_refund_no">商户退款单号</param>
-        /// <param name="refund_fee">退款金额</param>
-        /// <param name="total_fee">支付单总金额</param>
-        /// <param name="transaction_id">微信支付订单号</param>
-        /// <returns></returns>
-        public DtoCreatePayRefundMiniApp CreateRefund(string out_refund_no, int refund_fee, int total_fee, string transaction_id)
-        {
-
-            string nonceStr = Guid.NewGuid().ToString().Replace("-", "");
-
-
-            //微信退款接口地址
-            var url = "https://api.mch.weixin.qq.com/secapi/pay/refund";
-
-
-            //参与退款接口的参数，除最后的key外，已经按参数名ASCII码从小到大排序
-            var unifiedorderSignParam = string.Format("appid={0}&mch_id={1}&nonce_str={2}&notify_url={3}&out_refund_no={4}&refund_fee={5}&total_fee={6}&transaction_id={7}&key={8}"
-                , appid, mchid, nonceStr, notifyurl
-                , out_refund_no, refund_fee, total_fee, transaction_id, mchkey);
-
-
-            var unifiedorderSign = CryptoHelper.GetMD5(unifiedorderSignParam).ToUpper();
-
-            //构造退款的请求参数
-            var zhi = string.Format(@"<xml>
-                                <appid>{0}</appid>                                              
-                                <mch_id>{1}</mch_id>   
-                                <nonce_str>{2}</nonce_str>
-                                <sign>{3}</sign>
-                                <transaction_id>{4}</transaction_id>
-                                <out_refund_no>{5}</out_refund_no>
-                                <total_fee>{6}</total_fee>
-                                <refund_fee>{7}</refund_fee>
-                                <notify_url>{8}</notify_url>
-                               </xml>
-                    ", appid, mchid, nonceStr, unifiedorderSign, transaction_id, out_refund_no, total_fee, refund_fee, notifyurl);
-
-
-            var getdata = UseCretPost(url, zhi);
-
-            WxPayData wxPayData = new();
-
-            wxPayData.FromXml(getdata, mchkey!);
-
-
-            DtoCreatePayRefundMiniApp retInfo = new()
-            {
-                Return_code = wxPayData.GetValue("return_code")!.ToString(),
-                Return_msg = wxPayData.GetValue("return_msg")!.ToString(),
-
-                AppId = wxPayData.GetValue("appid")!.ToString(),
-                Mch_id = wxPayData.GetValue("mch_id")!.ToString(),
-                Nonce_str = wxPayData.GetValue("nonce_str")!.ToString(),
-                Sign = wxPayData.GetValue("sign")!.ToString(),
-
-                Result_code = wxPayData.GetValue("result_code")!.ToString()
-            };
-
-
-            if (retInfo.Result_code == "SUCCESS")
-            {
-                retInfo.Transaction_Id = wxPayData.GetValue("transaction_id")!.ToString();
-                retInfo.Out_trade_no = wxPayData.GetValue("out_trade_no")!.ToString();
-                retInfo.Out_refund_no = wxPayData.GetValue("out_refund_no")!.ToString();
-                retInfo.Refund_id = wxPayData.GetValue("refund_id")!.ToString();
-                retInfo.Refund_fee = Convert.ToInt32(wxPayData.GetValue("refund_fee"));
-                retInfo.Total_fee = Convert.ToInt32(wxPayData.GetValue("total_fee"));
-                retInfo.Cash_fee = Convert.ToInt32(wxPayData.GetValue("cash_fee"));
-                retInfo.Cash_refund_fee = Convert.ToInt32(wxPayData.GetValue("cash_refund_fee"));
-            }
-            else
-            {
-                retInfo.Err_code = wxPayData.GetValue("err_code")!.ToString();
-                retInfo.Err_code_des = wxPayData.GetValue("err_code_des")!.ToString();
-            }
-
-            return retInfo;
-        }
 
 
     }

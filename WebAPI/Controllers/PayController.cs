@@ -11,7 +11,6 @@ using Repository.Database;
 using System.Text;
 using WebAPI.Libraries;
 using WebAPI.Libraries.WeiXin.MiniApp.Models;
-using WebAPI.Libraries.WeiXin.Public;
 using WebAPI.Models.Pay;
 using WebAPI.Models.Shared;
 
@@ -30,14 +29,16 @@ namespace WebAPI.Controllers
         private readonly DatabaseContext db;
         private readonly IDistributedCache distributedCache;
         private readonly HttpClient httpClient;
+        private readonly ILogger logger;
 
 
 
-        public PayController(DatabaseContext db, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory)
+        public PayController(DatabaseContext db, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, ILogger<PayController> logger)
         {
             this.db = db;
             this.distributedCache = distributedCache;
             httpClient = httpClientFactory.CreateClient();
+            this.logger = logger;
         }
 
 
@@ -48,14 +49,14 @@ namespace WebAPI.Controllers
         /// <remarks>用于在微信商户平台创建订单</remarks>
         /// <returns></returns>
         [HttpGet]
-        public DtoCreatePayMiniApp? CreateWeiXinPayMiniAPP(string orderno, long weiXinKeyId)
+        public DtoCreatePayMiniApp? CreateWeiXinPayMiniAPP(string orderNo)
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
-            var order = db.TOrder.Where(t => t.OrderNo == orderno).Select(t => new
+            var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
             {
                 t.OrderNo,
                 t.Price,
@@ -67,7 +68,7 @@ namespace WebAPI.Controllers
 
             if (appId != null && appSecret != null && order != null)
             {
-                var url = HttpContext.GetBaseURL() + "/api/Pay/WeiXinPayNotify";
+                var url = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
 
                 var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
                 var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
@@ -145,7 +146,7 @@ namespace WebAPI.Controllers
                         long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
                         string nonceStr = Path.GetRandomFileName();
                         string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
-                        string signature = CryptoHelper.SHA256withRSAToBase64(message, mchApiCertKey);
+                        string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
                         string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
 
                         Dictionary<string, string> headers = new()
@@ -171,7 +172,7 @@ namespace WebAPI.Controllers
                             timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
                             nonceStr = Path.GetRandomFileName();
                             message = $"{appId}\n{timeStamp}\n{nonceStr}\n{prepayId}\n";
-                            signature = CryptoHelper.SHA256withRSAToBase64(message, mchApiCertKey);
+                            signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
 
                             ret = new()
                             {
@@ -256,7 +257,7 @@ namespace WebAPI.Controllers
                         long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
                         string nonceStr = Path.GetRandomFileName();
                         string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
-                        string signature = CryptoHelper.SHA256withRSAToBase64(message, mchApiCertKey);
+                        string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
                         string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
 
                         Dictionary<string, string> headers = new()
@@ -343,7 +344,7 @@ namespace WebAPI.Controllers
                         long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
                         string nonceStr = Path.GetRandomFileName();
                         string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
-                        string signature = CryptoHelper.SHA256withRSAToBase64(message, mchApiCertKey);
+                        string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
                         string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
 
                         Dictionary<string, string> headers = new()
@@ -381,129 +382,70 @@ namespace WebAPI.Controllers
         /// 微信支付异步通知接口
         /// </summary>
         [HttpPost]
-        public string WeiXinPayNotify()
+        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(DtoWeiXinPayNotify weiXinPayNotify)
         {
+            int statusCode = 501;
+
             try
             {
-                WxPayData notifyData = new();
-                notifyData.FromXml(HttpContext.GetRequestBody());
-
-                //构造对微信的应答信息
-                WxPayData res = new();
-
-                if (!notifyData.IsSet("transaction_id"))
+                if (weiXinPayNotify.event_type == "TRANSACTION.SUCCESS")
                 {
-                    //若transaction_id不存在，则立即返回结果给微信支付后台
-                    res.SetValue("return_code", "FAIL");
-                    res.SetValue("return_msg", "支付结果中微信订单号不存在");
-                    return res.ToXml();
-                }
+                    var ss = HttpContext.Current();
+                    var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
 
-                //获取订单信息
-                string transaction_id = notifyData.GetValue("transaction_id")!.ToString()!; //微信流水号
-                string order_no = notifyData.GetValue("out_trade_no")!.ToString()!.ToUpper(); //商户订单号
-                string total_fee = notifyData.GetValue("total_fee")!.ToString()!; //获取总金额
+                    var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, "transaction", "base64");
 
-                string appid = notifyData.GetValue("appid")!.ToString()!;
+                    var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyResource>(resourceJson);
 
-                string paytimeStr = notifyData.GetValue("time_end")!.ToString()!;
-                var payTime = DateTime.ParseExact(paytimeStr, "yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture);
-
-                //从微信验证信息真实性
-                WxPayData req = new();
-                req.SetValue("transaction_id", transaction_id);
-
-                var appIdSettingGroupId = db.TAppSetting.Where(t => t.Module.StartsWith("WeiXin") && t.Key == "AppId" && t.Value == appid).Select(t => t.GroupId).FirstOrDefault();
-                var settings = db.TAppSetting.Where(t => t.GroupId == appIdSettingGroupId).ToList();
-
-                var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
-                var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
-                var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
-                var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
-
-
-                if (appId != null && appSecret != null && mchId != null && mchKey != null)
-                {
-                    JsApiPay jsApiPay = new(appId, mchId, mchKey);
-
-                    WxPayData send = jsApiPay.OrderQuery(req, httpClient);
-                    if (!(send.GetValue("return_code")!.ToString() == "SUCCESS" && send.GetValue("result_code")!.ToString() == "SUCCESS"))
+                    if (resource.trade_state == "SUCCESS")
                     {
-                        //如果订单信息在微信后台不存在,立即返回失败
-                        res.SetValue("return_code", "FAIL");
-                        res.SetValue("return_msg", "订单查询失败");
-                        return res.ToXml();
-                    }
-                    else
-                    {
+                        var order = db.TOrder.Where(t => t.OrderNo == resource.out_trade_no).FirstOrDefault();
 
-                        var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == order_no).FirstOrDefault();
-
-                        if (order == null)
+                        if (order != null)
                         {
-                            res.SetValue("return_code", "FAIL");
-                            res.SetValue("return_msg", "订单不存在或已删除");
-                            return res.ToXml();
-                        }
-
-                        if (!string.IsNullOrEmpty(order.SerialNo)) //已付款
-                        {
-                            res.SetValue("return_code", "SUCCESS");
-                            res.SetValue("return_msg", "OK");
-                            return res.ToXml();
-                        }
-
-                        try
-                        {
-                            order.PayPrice = decimal.Parse(total_fee) / 100;
-                            order.SerialNo = transaction_id;
-                            order.PayState = true;
-                            order.PayTime = payTime;
-                            order.PayType = "微信支付";
-                            order.State = "已支付";
-
-                            db.SaveChanges();
-
-                            if (order.Type == "")
+                            if (order.PayState == false)
                             {
-                                //执行业务处理逻辑
+                                order.PayPrice = Convert.ToDecimal(resource.amount.total) / 100;
+                                order.SerialNo = resource.transaction_id;
+                                order.PayState = true;
+                                order.PayTime = resource.success_time.ToUniversalTime();
+                                order.PayType = "微信支付";
+                                order.State = "已支付";
+                                order.UpdateTime = DateTime.UtcNow;
+
+                                db.SaveChanges();
+
+                                if (order.Type == "")
+                                {
+                                    //执行业务处理逻辑
+                                }
                             }
 
-
-                            //返回成功通知
-                            res.SetValue("return_code", "SUCCESS");
-                            res.SetValue("return_msg", "OK");
-                            return res.ToXml();
+                            statusCode = 204;
                         }
-                        catch
-                        {
-                            res.SetValue("return_code", "FAIL");
-                            res.SetValue("return_msg", "修改订单状态失败");
-                            return res.ToXml();
-                        }
-
                     }
                 }
-                else
-                {
-                    res.SetValue("return_code", "FAIL");
-                    res.SetValue("return_msg", "修改订单状态失败,内部配置丢失");
-                    return res.ToXml();
-                }
-
             }
-            catch (WxPayException ex)
+            catch (Exception ex)
             {
-                //若有错误，则立即返回结果给微信支付后台
-                WxPayData res = new();
-                res.SetValue("return_code", "FAIL");
-                res.SetValue("return_msg", ex.Message);
-
-                return res.ToXml();
+                logger.LogError(ex, "WeiXinPayNotify");
             }
 
-        }
+            if (statusCode != 204)
+            {
+                HttpContext.Response.StatusCode = statusCode;
 
+                DtoWeiXinPayNotifyRet retValue = new()
+                {
+                    code = "FAIL",
+                    message = "失败"
+                };
+
+                return retValue;
+            }
+
+            return null;
+        }
 
 
 

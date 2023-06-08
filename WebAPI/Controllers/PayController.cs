@@ -611,8 +611,6 @@ namespace WebAPI.Controllers
 
                 var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
 
-                notifyURL = "https://test-pay.dm-air.com/Pay/WeiXinPayNotify";
-
                 var reqData = new
                 {
                     out_refund_no = "", //退款单号

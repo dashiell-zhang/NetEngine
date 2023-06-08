@@ -1,6 +1,6 @@
 ﻿namespace WebAPI.Models.Pay
 {
-    public class DtoCreateWeiXinPayAPPRet
+    public class DtoCreateWeiXinPayJSAPIRet
     {
 
 
@@ -10,17 +10,11 @@
         public string AppId { get; set; }
 
 
-        /// <summary>
-        /// 商户号
-        /// </summary>
-        public string PartnerId { get; set; }
-
-
 
         /// <summary>
-        /// 预支付交易会话ID
+        /// 订单详情扩展字符串
         /// </summary>
-        public string PrepayId { get; set; }
+        public string Package { get; set; }
 
 
 

@@ -5,7 +5,7 @@
     /// <summary>
     /// 微信支付异步通知密文解码后的资源模型
     /// </summary>
-    public class DtoWeiXinPayNotifyResource
+    public class DtoWeiXinPayNotifyTransaction
     {
         public string mchid { get; set; }
         public string appid { get; set; }

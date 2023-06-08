@@ -10,7 +10,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System.Text;
 using WebAPI.Libraries;
-using WebAPI.Libraries.WeiXin.MiniApp.Models;
 using WebAPI.Models.Pay;
 using WebAPI.Models.Shared;
 
@@ -43,50 +42,113 @@ namespace WebAPI.Controllers
 
 
 
+
+
         /// <summary>
-        /// 微信支付-小程序模式
+        /// 微信支付-JSAPI模式
         /// </summary>
-        /// <remarks>用于在微信商户平台创建订单</remarks>
+        /// <param name="orderNo">订单号</param>
+        /// <param name="openId">用户OpenId</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoCreatePayMiniApp? CreateWeiXinPayMiniAPP(string orderNo)
+        public DtoCreateWeiXinPayJSAPIRet? CreateWeiXinPayJSAPI(string orderNo, string openId)
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+            string key = "wxpayJSAPI" + orderNo;
 
-            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
-            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
+            var ret = distributedCache.Get<DtoCreateWeiXinPayJSAPIRet>(key);
 
-            var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
+            if (ret == null)
             {
-                t.OrderNo,
-                t.Price,
-                ProductName = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
-                t.CreateUserId,
-                UserOpenId = db.TUserBindExternal.Where(w => w.UserId == t.CreateUserId && w.AppName == "WeiXinMiniApp" && w.AppId == appId).Select(w => w.OpenId).FirstOrDefault()
-            }).FirstOrDefault();
+                var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
+                if (order != null)
+                {
+                    var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
 
-            if (appId != null && appSecret != null && order != null)
-            {
-                var url = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
+                    var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+                    var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
+                    var mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).FirstOrDefault();
+                    var mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).FirstOrDefault();
 
-                var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
-                var mchKey = settings.Where(t => t.Key == "MchKey").Select(t => t.Value).FirstOrDefault();
+                    if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null && order != null)
+                    {
+                        int price = Convert.ToInt32(order.Price * 100);
 
-                Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appId, appSecret, mchId, mchKey, url);
+                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
 
-                int price = Convert.ToInt32(order.Price * 100);
+                        var reqData = new
+                        {
+                            mchid = mchId,
+                            out_trade_no = order.OrderNo,
+                            appid = appId,
+                            description = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
+                            notify_url = notifyURL,
+                            amount = new
+                            {
+                                total = price,
+                                currency = "CNY"
+                            },
+                            payer = new
+                            {
+                                openid = openId
+                            }
+                        };
 
-                var pay = weiXinHelper.CreatePay(httpClient, order.UserOpenId!, order.OrderNo, order.ProductName, price);
+                        var reqDataJson = JsonHelper.ObjectToJson(reqData);
 
-                return pay;
+                        string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi";
+
+                        string method = "POST";
+                        long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                        string nonceStr = Path.GetRandomFileName();
+                        string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
+                        string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
+                        string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
+
+                        Dictionary<string, string> headers = new()
+                        {
+                            { "Accept", "*/*" },
+                            { "User-Agent", ".NET HttpClient" },
+                            { "Authorization", authorization }
+                        };
+
+                        var resultJson = httpClient.Post(wxURL, reqDataJson, "json", headers);
+
+                        var prepayId = JsonHelper.GetValueByKey(resultJson, "prepay_id");
+
+                        if (prepayId == null)
+                        {
+                            string? errCode = JsonHelper.GetValueByKey(resultJson, "code");
+                            string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
+
+                            HttpContext.SetErrMsg($"{errCode}:{errMessage}");
+                        }
+                        else
+                        {
+
+                            string package = "prepay_id=" + prepayId;
+
+                            timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                            nonceStr = Path.GetRandomFileName();
+                            message = $"{appId}\n{timeStamp}\n{nonceStr}\n{package}\n";
+                            signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
+
+                            ret = new()
+                            {
+                                AppId = appId,
+                                Package = package,
+                                NonceStr = nonceStr,
+                                TimeStamp = timeStamp,
+                                Sign = signature
+                            };
+
+                            distributedCache.Set(key, ret, TimeSpan.FromHours(1.8));
+                        }
+                    }
+                }
             }
-            else
-            {
-                return null; ;
-            }
 
-
+            return ret;
         }
 
 
@@ -94,8 +156,7 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 微信支付-APP模式
         /// </summary>
-        /// <param name="orderNo"></param>
-        /// <remarks>用于在微信商户平台创建订单</remarks>
+        /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
         public DtoCreateWeiXinPayAPPRet? CreateWeiXinPayAPP(string orderNo)
@@ -198,7 +259,7 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 微信支付-H5模式
         /// </summary>
-        /// <param name="orderNo"></param>
+        /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
         public string? CreateWeiXinPayH5(string orderNo)
@@ -294,7 +355,7 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 微信支付-PC模式
         /// </summary>
-        /// <param name="orderNo"></param>
+        /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
         public string? CreateWeiXinPayPC(string orderNo)
@@ -388,14 +449,14 @@ namespace WebAPI.Controllers
 
             try
             {
+                //支付成功异步回调
                 if (weiXinPayNotify.event_type == "TRANSACTION.SUCCESS")
                 {
-                    var ss = HttpContext.Current();
                     var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
 
-                    var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, "transaction", "base64");
+                    var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
 
-                    var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyResource>(resourceJson);
+                    var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyTransaction>(resourceJson);
 
                     if (resource.trade_state == "SUCCESS")
                     {
@@ -418,12 +479,36 @@ namespace WebAPI.Controllers
                                 if (order.Type == "")
                                 {
                                     //执行业务处理逻辑
+
                                 }
                             }
 
-                            statusCode = 204;
+                            statusCode = 200;
                         }
                     }
+                }
+
+                //退款异步回调
+                if (weiXinPayNotify.resource.original_type == "refund")
+                {
+                    var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
+
+                    var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
+
+                    var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyRefund>(resourceJson);
+
+                    if (resource.refund_status == "SUCCESS")
+                    {
+                        //退款成功
+
+                    }
+                    else
+                    {
+                        //退款失败
+
+                    }
+
+                    statusCode = 200;
                 }
             }
             catch (Exception ex)
@@ -431,7 +516,8 @@ namespace WebAPI.Controllers
                 logger.LogError(ex, "WeiXinPayNotify");
             }
 
-            if (statusCode != 204)
+
+            if (statusCode != 200)
             {
                 HttpContext.Response.StatusCode = statusCode;
 
@@ -443,8 +529,142 @@ namespace WebAPI.Controllers
 
                 return retValue;
             }
+            else
+            {
+                DtoWeiXinPayNotifyRet retValue = new()
+                {
+                    code = "SUCCESS"
+                };
 
-            return null;
+                return retValue;
+            }
+        }
+
+
+
+
+        /// <summary>
+        /// 微信支付退款状态查询
+        /// </summary>
+        private void WeiXinPayRefundSelect()
+        {
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
+            var mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).FirstOrDefault();
+            var mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).FirstOrDefault();
+
+            if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null)
+            {
+
+                string outRefundNo = "";    //商户退款单号
+
+                string wxURL = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds/" + outRefundNo;
+
+                string method = "GET";
+                long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                string nonceStr = Path.GetRandomFileName();
+                string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n\n";
+                string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
+                string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
+
+                Dictionary<string, string> headers = new()
+                        {
+                            { "Accept", "*/*" },
+                            { "User-Agent", ".NET HttpClient" },
+                            { "Authorization", authorization }
+                        };
+
+                var resultJson = httpClient.Get(wxURL, headers);
+
+                var result = JsonHelper.JsonToObject<DtoWeiXinPayRefundRet>(resultJson);
+
+                if (result.status == "SUCCESS")
+                {
+                    //退款成功
+                }
+                else
+                {
+                    //退款失败
+                }
+
+            }
+        }
+
+
+
+        /// <summary>
+        /// 微信支付退款
+        /// </summary>
+        private void WeiXinPayRefund()
+        {
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
+            var mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).FirstOrDefault();
+            var mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).FirstOrDefault();
+
+            if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null)
+            {
+
+                var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
+
+                notifyURL = "https://test-pay.dm-air.com/Pay/WeiXinPayNotify";
+
+                var reqData = new
+                {
+                    out_refund_no = "", //退款单号
+                    transaction_id = "",    //微信交易流水号
+                    notify_url = notifyURL,
+                    amount = new
+                    {
+                        refund = 1, //退款金额
+                        total = 2, //原订单金额
+                        currency = "CNY"
+                    }
+                };
+
+                var reqDataJson = JsonHelper.ObjectToJson(reqData);
+
+                string wxURL = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds";
+
+                string method = "POST";
+                long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                string nonceStr = Path.GetRandomFileName();
+                string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
+                string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
+                string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
+
+                Dictionary<string, string> headers = new()
+                        {
+                            { "Accept", "*/*" },
+                            { "User-Agent", ".NET HttpClient" },
+                            { "Authorization", authorization }
+                        };
+
+                var resultJson = httpClient.Post(wxURL, reqDataJson, "json", headers);
+
+
+                var refundId = JsonHelper.GetValueByKey(resultJson, "refund_id");
+
+                if (!string.IsNullOrEmpty(refundId))
+                {
+                    //refundId 有值则说明退款请求发起成功，至于退款结果交由异步通知接口或者主动查询退款方法处理
+
+                    var result = JsonHelper.JsonToObject<DtoWeiXinPayRefundRet>(resultJson);
+
+                }
+                else
+                {
+                    string? errCode = JsonHelper.GetValueByKey(resultJson, "code");
+                    string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
+
+                    HttpContext.SetErrMsg($"{errCode}:{errMessage}");
+                }
+
+            }
         }
 
 
@@ -525,6 +745,7 @@ namespace WebAPI.Controllers
 
             return null;
         }
+
 
 
 
@@ -763,11 +984,21 @@ namespace WebAPI.Controllers
 
             AlipayTradeRefundResponse response = client.Execute(request);
 
-            bool isError = response.IsError;
 
-            if (isError)
+            if (response.IsError)
             {
                 string errMsg = response.SubMsg;
+            }
+            else
+            {
+                if (response.FundChange == "Y")
+                {
+                    //则说明退款成功
+                }
+                else
+                {
+                    //为N的情况，退款不一定失败，同一个请求第一次是Y第二次是N，该标记只标识本次请求是否有金额变动，为N时请主动调用退款查询接口
+                }
             }
 
         }

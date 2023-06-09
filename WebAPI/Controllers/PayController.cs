@@ -12,6 +12,7 @@ using System.Text;
 using WebAPI.Libraries;
 using WebAPI.Models.Pay;
 using WebAPI.Models.Shared;
+using WebAPI.Services;
 
 namespace WebAPI.Controllers
 {
@@ -29,15 +30,17 @@ namespace WebAPI.Controllers
         private readonly IDistributedCache distributedCache;
         private readonly HttpClient httpClient;
         private readonly ILogger logger;
+        private readonly PayService payService;
 
 
 
-        public PayController(DatabaseContext db, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, ILogger<PayController> logger)
+        public PayController(DatabaseContext db, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, ILogger<PayController> logger, PayService payService)
         {
             this.db = db;
             this.distributedCache = distributedCache;
             httpClient = httpClientFactory.CreateClient();
             this.logger = logger;
+            this.payService = payService;
         }
 
 
@@ -67,10 +70,9 @@ namespace WebAPI.Controllers
 
                     var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                     var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
-                    var mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).FirstOrDefault();
                     var mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).FirstOrDefault();
 
-                    if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null && order != null)
+                    if (appId != null && mchId != null && order != null && mchApiCertKey != null)
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
@@ -94,25 +96,9 @@ namespace WebAPI.Controllers
                             }
                         };
 
-                        var reqDataJson = JsonHelper.ObjectToJson(reqData);
-
                         string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi";
 
-                        string method = "POST";
-                        long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                        string nonceStr = Path.GetRandomFileName();
-                        string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
-                        string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
-                        string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
-
-                        Dictionary<string, string> headers = new()
-                        {
-                            { "Accept", "*/*" },
-                            { "User-Agent", ".NET HttpClient" },
-                            { "Authorization", authorization }
-                        };
-
-                        var resultJson = httpClient.Post(wxURL, reqDataJson, "json", headers);
+                        var resultJson = payService.WeiXinPayHttp(mchId, wxURL, reqData);
 
                         var prepayId = JsonHelper.GetValueByKey(resultJson, "prepay_id");
 
@@ -128,10 +114,10 @@ namespace WebAPI.Controllers
 
                             string package = "prepay_id=" + prepayId;
 
-                            timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                            nonceStr = Path.GetRandomFileName();
-                            message = $"{appId}\n{timeStamp}\n{nonceStr}\n{package}\n";
-                            signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
+                            var timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                            var nonceStr = Path.GetRandomFileName();
+                            var message = $"{appId}\n{timeStamp}\n{nonceStr}\n{package}\n";
+                            var signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
 
                             ret = new()
                             {
@@ -175,15 +161,13 @@ namespace WebAPI.Controllers
 
                     var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                     var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
-                    var mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).FirstOrDefault();
                     var mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).FirstOrDefault();
 
-                    if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null && order != null)
+                    if (appId != null && mchId != null && mchApiCertKey != null && order != null)
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
                         var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
-
 
                         var reqData = new
                         {
@@ -199,25 +183,10 @@ namespace WebAPI.Controllers
                             }
                         };
 
-                        var reqDataJson = JsonHelper.ObjectToJson(reqData);
 
                         string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/app";
 
-                        string method = "POST";
-                        long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                        string nonceStr = Path.GetRandomFileName();
-                        string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
-                        string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
-                        string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
-
-                        Dictionary<string, string> headers = new()
-                        {
-                            { "Accept", "*/*" },
-                            { "User-Agent", ".NET HttpClient" },
-                            { "Authorization", authorization }
-                        };
-
-                        var resultJson = httpClient.Post(wxURL, reqDataJson, "json", headers);
+                        var resultJson = payService.WeiXinPayHttp(mchId, wxURL, reqData);
 
                         var prepayId = JsonHelper.GetValueByKey(resultJson, "prepay_id");
 
@@ -230,10 +199,10 @@ namespace WebAPI.Controllers
                         }
                         else
                         {
-                            timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                            nonceStr = Path.GetRandomFileName();
-                            message = $"{appId}\n{timeStamp}\n{nonceStr}\n{prepayId}\n";
-                            signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
+                            var timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                            var nonceStr = Path.GetRandomFileName();
+                            var message = $"{appId}\n{timeStamp}\n{nonceStr}\n{prepayId}\n";
+                            var signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
 
                             ret = new()
                             {
@@ -278,10 +247,8 @@ namespace WebAPI.Controllers
 
                     var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                     var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
-                    var mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).FirstOrDefault();
-                    var mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).FirstOrDefault();
 
-                    if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null && order != null)
+                    if (appId != null && mchId != null && order != null)
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
@@ -310,25 +277,9 @@ namespace WebAPI.Controllers
                             }
                         };
 
-                        var reqDataJson = JsonHelper.ObjectToJson(reqData);
-
                         string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/h5";
 
-                        string method = "POST";
-                        long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                        string nonceStr = Path.GetRandomFileName();
-                        string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
-                        string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
-                        string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
-
-                        Dictionary<string, string> headers = new()
-                        {
-                            { "Accept", "*/*" },
-                            { "User-Agent", ".NET HttpClient" },
-                            { "Authorization", authorization }
-                        };
-
-                        var resultJson = httpClient.Post(wxURL, reqDataJson, "json", headers);
+                        var resultJson = payService.WeiXinPayHttp(mchId, wxURL, reqData);
 
                         h5URL = JsonHelper.GetValueByKey(resultJson, "h5_url");
 
@@ -374,10 +325,8 @@ namespace WebAPI.Controllers
 
                     var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                     var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
-                    var mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).FirstOrDefault();
-                    var mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).FirstOrDefault();
 
-                    if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null && order != null)
+                    if (appId != null && mchId != null && order != null)
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
@@ -397,25 +346,9 @@ namespace WebAPI.Controllers
                             }
                         };
 
-                        var reqDataJson = JsonHelper.ObjectToJson(reqData);
-
                         string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/native";
 
-                        string method = "POST";
-                        long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                        string nonceStr = Path.GetRandomFileName();
-                        string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n{reqDataJson}\n";
-                        string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
-                        string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
-
-                        Dictionary<string, string> headers = new()
-                        {
-                            { "Accept", "*/*" },
-                            { "User-Agent", ".NET HttpClient" },
-                            { "Authorization", authorization }
-                        };
-
-                        var resultJson = httpClient.Post(wxURL, reqDataJson, "json", headers);
+                        var resultJson = payService.WeiXinPayHttp(mchId, wxURL, reqData);
 
                         codeURL = JsonHelper.GetValueByKey(resultJson, "code_url");
 
@@ -550,33 +483,16 @@ namespace WebAPI.Controllers
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
 
-            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
-            var mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).FirstOrDefault();
-            var mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).FirstOrDefault();
 
-            if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null)
+            if (mchId != null)
             {
 
                 string outRefundNo = "";    //商户退款单号
 
                 string wxURL = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds/" + outRefundNo;
 
-                string method = "GET";
-                long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                string nonceStr = Path.GetRandomFileName();
-                string message = $"{method}\n{wxURL[29..]}\n{timeStamp}\n{nonceStr}\n\n";
-                string signature = CryptoHelper.GetSHA256withRSA(message, mchApiCertKey, "base64");
-                string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
-
-                Dictionary<string, string> headers = new()
-                        {
-                            { "Accept", "*/*" },
-                            { "User-Agent", ".NET HttpClient" },
-                            { "Authorization", authorization }
-                        };
-
-                var resultJson = httpClient.Get(wxURL, headers);
+                var resultJson = payService.WeiXinPayHttp(mchId, wxURL);
 
                 var result = JsonHelper.JsonToObject<DtoWeiXinPayRefundRet>(resultJson);
 

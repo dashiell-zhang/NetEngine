@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace Common
@@ -12,7 +13,7 @@ namespace Common
         /// </summary>
         /// <param name="text">待加密文本</param>
         /// <param name="privateKey">密钥 16位采用Aes128、24位采用Aes192、32位采用Aes256</param>
-        /// <param name="stringType">返回的字符串编码类型 base64 或 hex </param>
+        /// <param name="stringType">返回的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
         public static string AesEncrypt(string text, string privateKey, string stringType)
         {
@@ -48,7 +49,7 @@ namespace Common
         /// </summary>
         /// <param name="cipherText">加密文本</param>
         /// <param name="privateKey">密钥 16位采用Aes128、24位采用Aes192、32位采用Aes256</param>
-        /// <param name="stringType">加密文本的字符串编码类型 base64 或 hex </param>
+        /// <param name="stringType">加密文本的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
         public static string AesDecrypt(string cipherText, string privateKey, string stringType)
         {
@@ -90,7 +91,7 @@ namespace Common
         /// <param name="privateKey">密钥 16位采用Aes128、24位采用Aes192、32位采用Aes256</param>
         /// <param name="nonce">随机值 长度必须是12</param>
         /// <param name="associatedText">相关文本</param>
-        /// <param name="stringType">字符串编码类型 base64 或 hex </param>
+        /// <param name="stringType">加密文本的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
         public static string AesGcmDecrypt(string cipherText, string privateKey, string nonce, string? associatedText, string stringType)
         {
@@ -135,7 +136,7 @@ namespace Common
         /// <param name="privateKey">密钥 16位采用Aes128、24位采用Aes192、32位采用Aes256</param>
         /// <param name="nonce">随机值 长度必须是12</param>
         /// <param name="associatedText">附加数据</param>
-        /// <param name="stringType">返回字符串编码类型 base64 或 hex </param>
+        /// <param name="stringType">返回字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
         public static string AesGcmEncrypt(string text, string privateKey, string nonce, string? associatedText, string stringType)
         {
@@ -176,7 +177,7 @@ namespace Common
         /// <summary>
         /// 获取字符串的 Base64 编码
         /// </summary>
-        /// <param name="text">要加密的字符串</param>
+        /// <param name="text">待编码的字符串</param>
         /// <returns></returns>
         public static string Base64Encode(string text)
         {
@@ -188,7 +189,7 @@ namespace Common
         /// <summary>
         /// 解码 Base64 字符串
         /// </summary>
-        /// <param name="text">被加密的字符串</param>
+        /// <param name="text">待解码的字符串</param>
         /// <returns></returns>
         public static string Base64Decode(string text)
         {
@@ -238,9 +239,9 @@ namespace Common
         /// </summary>
         /// <param name="content"></param>
         /// <param name="privateKey"></param>      
-        /// <param name="stringType">返回字符串编码类型 base64 或 hex </param>
+        /// <param name="stringType">返回字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string GetSHA256withRSA(string content, string privateKey, string stringType)
+        public static string GetSHA256withRSASignData(string content, string privateKey, string stringType)
         {
             byte[] keyData = Convert.FromBase64String(privateKey);
 
@@ -267,6 +268,58 @@ namespace Common
                         throw new ArgumentException("stringType 无效，只能是 base64 或 hex");
                     }
             }
+        }
+
+
+
+        /// <summary>
+        /// SHA256withRSA 签名验证
+        /// </summary>
+        /// <param name="certText">证书文本内容</param>
+        /// <param name="content">内容</param>
+        /// <param name="signature">签名</param>
+        /// <param name="stringType">签名编码类型 base64 或 hex</param>
+        /// <returns></returns>
+        public static bool GetSHA256withRSAVerifyData(string certText, string content, string signature, string stringType)
+        {
+
+            using X509Certificate2 x509Certificate2 = new(Encoding.UTF8.GetBytes(certText));
+            using var rsa = x509Certificate2.GetRSAPublicKey();
+
+            var data = Encoding.UTF8.GetBytes(content);
+
+            if (rsa != null)
+            {
+
+                byte[] signData;
+
+                switch (stringType)
+                {
+                    case "base64":
+                        {
+                            signData = Convert.FromBase64String(signature);
+                            break;
+                        }
+                    case "hex":
+                        {
+                            signData = Convert.FromHexString(signature);
+                            break;
+                        }
+                    default:
+                        {
+                            throw new ArgumentException("stringType 无效，只能是 base64 或 hex");
+                        }
+                }
+
+                var isOk = rsa.VerifyData(data, signData, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                return isOk;
+            }
+            else
+            {
+                throw new Exception("RSA 初始化失败");
+            }
+
+
         }
 
 

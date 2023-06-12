@@ -76,7 +76,7 @@ namespace WebAPI.Controllers
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
+                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
 
                         var reqData = new
                         {
@@ -167,7 +167,7 @@ namespace WebAPI.Controllers
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
+                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
 
                         var reqData = new
                         {
@@ -252,8 +252,7 @@ namespace WebAPI.Controllers
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
-
+                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
 
                         var reqData = new
                         {
@@ -330,7 +329,7 @@ namespace WebAPI.Controllers
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
+                        var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
 
                         var reqData = new
                         {
@@ -375,84 +374,113 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 微信支付异步通知接口
         /// </summary>
-        [HttpPost]
-        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(DtoWeiXinPayNotify weiXinPayNotify)
+        [HttpPost("{mchid}")]
+        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify)
         {
-            int statusCode = 501;
+
+            bool isSuccess = false;
+
+            string requestBody = HttpContext.GetRequestBody();
 
             try
             {
-                //支付成功异步回调
-                if (weiXinPayNotify.event_type == "TRANSACTION.SUCCESS")
+                var headers = HttpContext.Request.Headers.ToDictionary(t => t.Key, t => t.Value.ToString());
+
+                var weiXinPayCertificates = payService.GetWeiXinPayCertificates(mchId);
+
+                if (payService.VerifySign(headers, requestBody, weiXinPayCertificates))
                 {
-                    var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
 
-                    var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
-
-                    var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyTransaction>(resourceJson);
-
-                    if (resource.trade_state == "SUCCESS")
+                    //支付成功异步回调
+                    if (weiXinPayNotify.event_type == "TRANSACTION.SUCCESS")
                     {
-                        var order = db.TOrder.Where(t => t.OrderNo == resource.out_trade_no).FirstOrDefault();
+                        var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
 
-                        if (order != null)
+                        var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
+
+                        var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyTransaction>(resourceJson);
+
+                        if (resource.trade_state == "SUCCESS")
                         {
-                            if (order.PayState == false)
+                            var order = db.TOrder.Where(t => t.OrderNo == resource.out_trade_no).FirstOrDefault();
+
+                            if (order != null)
                             {
-                                order.PayPrice = Convert.ToDecimal(resource.amount.total) / 100;
-                                order.SerialNo = resource.transaction_id;
-                                order.PayState = true;
-                                order.PayTime = resource.success_time.ToUniversalTime();
-                                order.PayType = "微信支付";
-                                order.State = "已支付";
-                                order.UpdateTime = DateTime.UtcNow;
-
-                                db.SaveChanges();
-
-                                if (order.Type == "")
+                                if (order.PayState == false)
                                 {
-                                    //执行业务处理逻辑
+                                    order.PayPrice = Convert.ToDecimal(resource.amount.total) / 100;
+                                    order.SerialNo = resource.transaction_id;
+                                    order.PayState = true;
+                                    order.PayTime = resource.success_time.ToUniversalTime();
+                                    order.PayType = "微信支付";
+                                    order.State = "已支付";
+                                    order.UpdateTime = DateTime.UtcNow;
 
+                                    db.SaveChanges();
+
+                                    if (order.Type == "")
+                                    {
+                                        //执行业务处理逻辑
+
+                                    }
                                 }
-                            }
 
-                            statusCode = 200;
+                                isSuccess = true;
+                            }
                         }
                     }
+
+
+                    //退款异步回调
+                    if (weiXinPayNotify.resource.original_type == "refund")
+                    {
+                        var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
+
+                        var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
+
+                        var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyRefund>(resourceJson);
+
+                        if (resource.refund_status == "SUCCESS")
+                        {
+                            //退款成功
+
+                        }
+                        else
+                        {
+                            //退款失败
+
+                        }
+
+                        isSuccess = true;
+                    }
+
                 }
-
-                //退款异步回调
-                if (weiXinPayNotify.resource.original_type == "refund")
+                else
                 {
-                    var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
-
-                    var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
-
-                    var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyRefund>(resourceJson);
-
-                    if (resource.refund_status == "SUCCESS")
-                    {
-                        //退款成功
-
-                    }
-                    else
-                    {
-                        //退款失败
-
-                    }
-
-                    statusCode = 200;
+                    throw new Exception("签名计算失败");
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "WeiXinPayNotify");
+                var content = new
+                {
+                    mchId,
+                    requestBody,
+                    error = new
+                    {
+                        ex?.Source,
+                        ex?.Message,
+                        ex?.StackTrace
+                    }
+                };
+
+                logger.LogError("WeiXinPayNotify：{content}", JsonHelper.ObjectToJson(content));
             }
 
 
-            if (statusCode != 200)
+            if (!isSuccess)
             {
-                HttpContext.Response.StatusCode = statusCode;
+                HttpContext.Response.StatusCode = 501;
 
                 DtoWeiXinPayNotifyRet retValue = new()
                 {
@@ -525,7 +553,7 @@ namespace WebAPI.Controllers
             if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null)
             {
 
-                var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify";
+                var notifyURL = HttpContext.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
 
                 var reqData = new
                 {

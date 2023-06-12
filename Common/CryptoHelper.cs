@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using NPOI.Util;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -243,11 +244,44 @@ namespace Common
         /// <returns></returns>
         public static string GetSHA256withRSASignData(string content, string privateKey, string stringType)
         {
-            byte[] keyData = Convert.FromBase64String(privateKey);
+            privateKey = privateKey.Replace("\n", "").Replace("\r", "");
 
             using var rsa = RSA.Create();
 
-            rsa.ImportPkcs8PrivateKey(keyData, out _);
+        ImportInfo:
+            if (privateKey.StartsWith("-") && privateKey.EndsWith("-"))
+            {
+                try
+                {
+                    rsa.ImportFromPem(privateKey);
+                }
+                catch
+                {
+                    privateKey = privateKey.Split("-").ToList().OrderByDescending(t => t.Length).First();
+
+                    goto ImportInfo;
+                }
+            }
+            else
+            {
+                byte[] keyData = Convert.FromBase64String(privateKey);
+
+                try
+                {
+                    rsa.ImportRSAPrivateKey(keyData, out _);
+                }
+                catch
+                {
+                    try
+                    {
+                        rsa.ImportPkcs8PrivateKey(keyData, out _);
+                    }
+                    catch
+                    {
+                        throw new Exception("私钥导入初始化RSA失败");
+                    }
+                }
+            }
 
             byte[] data = Encoding.UTF8.GetBytes(content);
 

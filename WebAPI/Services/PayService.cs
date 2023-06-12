@@ -80,13 +80,6 @@ namespace WebAPI.Services
 
             string responseBody = responseMessage.Content.ReadAsStringAsync().Result;
 
-            string wechatPayNonce = responseMessage.Headers.GetValues("Wechatpay-Nonce").First();
-            string wechatpaySignature = responseMessage.Headers.GetValues("Wechatpay-Signature").First();
-            string wechatpaySerial = responseMessage.Headers.GetValues("Wechatpay-Serial").First();
-            string wechatpayTimestamp = responseMessage.Headers.GetValues("Wechatpay-Timestamp").First();
-
-            message = $"{wechatpayTimestamp}\n{wechatPayNonce}\n{responseBody}\n";
-
 
             DtoWeiXinPayCertificates weiXinPayCertificates = new();
 
@@ -105,36 +98,27 @@ namespace WebAPI.Services
             }
 
 
-            var certificate = weiXinPayCertificates.data.Where(t => t.serial_no == wechatpaySerial).Select(t => t.certificate).First();
+            var headers = responseMessage.Headers.ToDictionary(t => t.Key, t => t.Value.First());
 
-            if (certificate != null)
+            if (VerifySign(headers, responseBody, weiXinPayCertificates))
             {
-                var isOk = CryptoHelper.GetSHA256withRSAVerifyData(certificate, message, wechatpaySignature, "base64");
-
-                if (isOk)
+                if (url == "https://api.mch.weixin.qq.com/v3/certificates")
                 {
-                    if (url == "https://api.mch.weixin.qq.com/v3/certificates")
-                    {
-                        distributedCache.Set(mchId + "GetWeiXinPayCertificates", weiXinPayCertificates, TimeSpan.FromHours(1));
-                    }
+                    distributedCache.Set(mchId + "GetWeiXinPayCertificates", weiXinPayCertificates, TimeSpan.FromHours(1));
+                }
 
-                    return responseBody;
-                }
-                else
-                {
-                    throw new Exception("签名验证异常");
-                }
+                return responseBody;
             }
             else
             {
                 throw new Exception("签名验证异常");
             }
+
         }
 
 
 
-
-        private DtoWeiXinPayCertificates GetWeiXinPayCertificates(string mchId)
+        public DtoWeiXinPayCertificates GetWeiXinPayCertificates(string mchId)
         {
             var cacheKey = mchId + "GetWeiXinPayCertificates";
 
@@ -177,6 +161,30 @@ namespace WebAPI.Services
             }
         }
 
+
+
+        public bool VerifySign(Dictionary<string, string> headers, string body, DtoWeiXinPayCertificates weiXinPayCertificates)
+        {
+            string wechatPayNonce = headers.First(t => t.Key == "Wechatpay-Nonce").Value.ToString();
+            string wechatpaySignature = headers.First(t => t.Key == "Wechatpay-Signature").Value.ToString();
+            string wechatpaySerial = headers.First(t => t.Key == "Wechatpay-Serial").Value.ToString();
+            string wechatpayTimestamp = headers.First(t => t.Key == "Wechatpay-Timestamp").Value.ToString();
+
+            var certificate = weiXinPayCertificates.data.Where(t => t.serial_no == wechatpaySerial).Select(t => t.certificate).First();
+
+            if (certificate != null)
+            {
+                string message = $"{wechatpayTimestamp}\n{wechatPayNonce}\n{body}\n";
+
+                var isPass = CryptoHelper.GetSHA256withRSAVerifyData(certificate, message, wechatpaySignature, "base64");
+
+                return isPass;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
     }
 }

@@ -18,17 +18,24 @@ namespace Common
         /// <returns></returns>
         public static string Get(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default)
         {
+            HttpRequestMessage request = new()
+            {
+                RequestUri = new Uri(url),
+                Method = HttpMethod.Get,
+                Version = httpClient.DefaultRequestVersion,
+                VersionPolicy = httpClient.DefaultVersionPolicy
+            };
 
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    request.Headers.Add(header.Key, header.Value);
                 }
             }
 
-            using var httpResponse = httpClient.GetStringAsync(url);
-            return httpResponse.Result;
+            using var httpResponse = httpClient.SendAsync(request);
+            return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
 
@@ -44,50 +51,37 @@ namespace Common
         /// <returns></returns>
         public static string Post(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default)
         {
+            HttpRequestMessage request = new()
+            {
+                RequestUri = new Uri(url),
+                Method = HttpMethod.Post,
+                Version = httpClient.DefaultRequestVersion,
+                VersionPolicy = httpClient.DefaultVersionPolicy
+            };
 
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    request.Headers.Add(header.Key, header.Value);
                 }
             }
 
-            using Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data));
-            using HttpContent content = new StreamContent(dataStream);
+            string mediaType = "";
 
             if (type == "json")
             {
-                content.Headers.ContentType = new("application/json");
+                mediaType = "application/json";
             }
             else if (type == "xml")
             {
-                content.Headers.ContentType = new("text/xml");
+                mediaType = "text/xml";
             }
 
-            content.Headers.ContentType!.CharSet = "utf-8";
+            request.Content = new StringContent(data, Encoding.UTF8, mediaType);
 
-            using var httpResponse = httpClient.PostAsync(url, content);
+            using var httpResponse = httpClient.SendAsync(request);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
-        }
-
-
-
-        /// <summary>
-        /// Post json或xml 数据到指定url,异步执行
-        /// </summary>
-        /// <param name="url">Url</param>
-        /// <param name="data">数据</param>
-        /// <param name="type">json,xml</param>
-        /// <param name="headers">自定义Header集合</param>
-        /// <param name="httpClientName">httpClient名称</param>
-        /// <returns></returns>
-        public static void PostAsync(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default)
-        {
-            Task.Run(() =>
-            {
-                Post(httpClient, url, data, type, headers);
-            });
         }
 
 
@@ -101,15 +95,23 @@ namespace Common
         /// <returns></returns>
         public static string Delete(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default)
         {
+            HttpRequestMessage request = new()
+            {
+                RequestUri = new Uri(url),
+                Method = HttpMethod.Delete,
+                Version = httpClient.DefaultRequestVersion,
+                VersionPolicy = httpClient.DefaultVersionPolicy
+            };
+
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    request.Headers.Add(header.Key, header.Value);
                 }
             }
 
-            using var httpResponse = httpClient.DeleteAsync(url);
+            using var httpResponse = httpClient.SendAsync(request);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
@@ -125,19 +127,28 @@ namespace Common
         /// <returns></returns>
         public static string PostForm(this HttpClient httpClient, string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default)
         {
+            HttpRequestMessage request = new()
+            {
+                RequestUri = new Uri(url),
+                Method = HttpMethod.Post,
+                Version = httpClient.DefaultRequestVersion,
+                VersionPolicy = httpClient.DefaultVersionPolicy
+            };
 
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    request.Headers.Add(header.Key, header.Value);
                 }
             }
 
-            using FormUrlEncodedContent formContent = new(formItems);
-            formContent.Headers.ContentType!.CharSet = "utf-8";
+            using FormUrlEncodedContent content = new(formItems);
+            content.Headers.ContentType!.CharSet = "utf-8";
 
-            using var httpResponse = httpClient.PostAsync(url, formContent);
+            request.Content = content;
+
+            using var httpResponse = httpClient.SendAsync(request);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
@@ -154,33 +165,42 @@ namespace Common
         /// <returns></returns>
         public static string PostFormData(this HttpClient httpClient, string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default)
         {
+            HttpRequestMessage request = new()
+            {
+                RequestUri = new Uri(url),
+                Method = HttpMethod.Post,
+                Version = httpClient.DefaultRequestVersion,
+                VersionPolicy = httpClient.DefaultVersionPolicy
+            };
 
             if (headers != default)
             {
                 foreach (var header in headers)
                 {
-                    httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    request.Headers.Add(header.Key, header.Value);
                 }
             }
 
             string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
 
-            using MultipartFormDataContent formDataContent = new(boundary);
+            using MultipartFormDataContent content = new(boundary);
             foreach (var item in formItems)
             {
                 if (item.IsFile)
                 {
                     //上传文件
-                    formDataContent.Add(new StreamContent(item.FileContent!), item.Key!, item.FileName!);
+                    content.Add(new StreamContent(item.FileContent!), item.Key!, item.FileName!);
                 }
                 else
                 {
                     //上传文本
-                    formDataContent.Add(new StringContent(item.Value!), item.Key!);
+                    content.Add(new StringContent(item.Value!), item.Key!);
                 }
             }
 
-            using var httpResponse = httpClient.PostAsync(url, formDataContent);
+            request.Content = content;
+
+            using var httpResponse = httpClient.SendAsync(request);
             return httpResponse.Result.Content.ReadAsStringAsync().Result;
         }
 
@@ -238,6 +258,7 @@ namespace Common
 
 
         }
+
 
     }
 }

@@ -104,7 +104,7 @@ namespace WebAPI.Libraries.HttpHandler
 
                 var getTKStr = JsonHelper.ObjectToJson(getTK);
 
-                token = httpClient.Post("https://localhost:9833/api/Authorize/GetToken", getTKStr, "json");
+                token = httpClient.PostAsync("https://localhost:9833/api/Authorize/GetToken", getTKStr, "json").Result.Content.ReadAsStringAsync().Result;
 
                 distributedCache.SetString("token", token);
             }

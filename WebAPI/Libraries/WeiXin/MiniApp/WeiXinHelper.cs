@@ -35,7 +35,7 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
         {
             string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appid + "&secret=" + secret + "&js_code=" + code + "&grant_type=authorization_code";
 
-            string httpret = httpClient.Get(url);
+            string httpret = httpClient.GetAsync(url).Result.Content.ReadAsStringAsync().Result;
 
             try
             {

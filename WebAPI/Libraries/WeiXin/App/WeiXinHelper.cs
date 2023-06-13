@@ -34,7 +34,7 @@ namespace WebAPI.Libraries.WeiXin.App
 
                 string url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + appid + "&secret=" + appsecret + "&code=" + code + "&grant_type=authorization_code";
 
-                var returnJson = httpClient.Post(url, "", "form");
+                var returnJson = httpClient.PostAsync(url, "", "form").Result.Content.ReadAsStringAsync().Result;
 
                 var retToken = JsonHelper.GetValueByKey(returnJson, "access_token");
                 var retOpenId = JsonHelper.GetValueByKey(returnJson, "openid");
@@ -74,7 +74,7 @@ namespace WebAPI.Libraries.WeiXin.App
         {
             string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
 
-            var returnJson = httpClient.Post(url, "", "form");
+            var returnJson = httpClient.PostAsync(url, "", "form").Result.Content.ReadAsStringAsync().Result;  
 
             var userInfo = JsonHelper.JsonToObject<DtoGetUserInfo>(returnJson);
 

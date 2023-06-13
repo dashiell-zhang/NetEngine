@@ -45,7 +45,7 @@ namespace WebAPI.Libraries.WeiXin.H5
             {
                 string url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + appsecret;
 
-                var returnJson = httpClient.Post(url, "", "form");
+                var returnJson = httpClient.PostAsync(url, "", "form").Result.Content.ReadAsStringAsync().Result;
 
                 token = JsonHelper.GetValueByKey(returnJson, "access_token");
 
@@ -76,7 +76,7 @@ namespace WebAPI.Libraries.WeiXin.H5
 
                 string getUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + GetAccessToken(distributedCache, httpClient) + "&type=jsapi";
 
-                string returnJson = httpClient.Post(getUrl, "", "form");
+                string returnJson = httpClient.PostAsync(getUrl, "", "form").Result.Content.ReadAsStringAsync().Result;
 
                 ticketid = JsonHelper.GetValueByKey(returnJson, "ticket");
 

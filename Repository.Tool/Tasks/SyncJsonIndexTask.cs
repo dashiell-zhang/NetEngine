@@ -190,7 +190,7 @@ namespace Repository.Tool.Tasks
 
                     if (indexColumnSQLList.Any())
                     {
-                        string indexName = "jsonbIX_" + CryptoHelper.GetMD5(tableName + "_" + string.Join("_", columnNameList));
+                        string indexName = "jsonbIX_" + CryptoHelper.MD5HashData(tableName + "_" + string.Join("_", columnNameList));
 
                         string columnSQLStr = string.Join(", ", indexColumnSQLList);
 

@@ -43,7 +43,7 @@ namespace AdminAPI.Filters
                 key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
             }
 
-            key = "CacheData_" + CryptoHelper.GetMD5(key);
+            key = "CacheData_" + CryptoHelper.MD5HashData(key);
 
             try
             {
@@ -89,7 +89,7 @@ namespace AdminAPI.Filters
                         key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
                     }
 
-                    key = "CacheData_" + CryptoHelper.GetMD5(key);
+                    key = "CacheData_" + CryptoHelper.MD5HashData(key);
 
                     if (objectResult.Value != null)
                     {

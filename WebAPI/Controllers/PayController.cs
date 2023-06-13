@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
+using System.Security.Cryptography;
 using System.Text;
 using WebAPI.Libraries;
 using WebAPI.Models.Pay;
@@ -117,7 +118,7 @@ namespace WebAPI.Controllers
                             var timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
                             var nonceStr = Path.GetRandomFileName();
                             var message = $"{appId}\n{timeStamp}\n{nonceStr}\n{package}\n";
-                            var signature = CryptoHelper.GetSHA256withRSASignData(message, mchApiCertKey, "base64");
+                            var signature = CryptoHelper.RSASignData(mchApiCertKey, message, "base64", HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                             ret = new()
                             {
@@ -202,7 +203,7 @@ namespace WebAPI.Controllers
                             var timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
                             var nonceStr = Path.GetRandomFileName();
                             var message = $"{appId}\n{timeStamp}\n{nonceStr}\n{prepayId}\n";
-                            var signature = CryptoHelper.GetSHA256withRSASignData(message, mchApiCertKey, "base64");
+                            var signature = CryptoHelper.RSASignData(mchApiCertKey, message, "base64", HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                             ret = new()
                             {

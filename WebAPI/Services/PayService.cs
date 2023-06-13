@@ -2,6 +2,9 @@
 using DistributedLock;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using WebAPI.Models.Pay;
 
 namespace WebAPI.Services
@@ -50,7 +53,7 @@ namespace WebAPI.Services
             long timeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             string nonceStr = Path.GetRandomFileName();
             string message = $"{method}\n{url[29..]}\n{timeStamp}\n{nonceStr}\n{dataJson}\n";
-            string signature = CryptoHelper.GetSHA256withRSASignData(message, mchApiCertKey, "base64");
+            string signature = CryptoHelper.RSASignData(mchApiCertKey, message, "base64", HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             string authorization = $"WECHATPAY2-SHA256-RSA2048 mchid=\"{mchId}\",nonce_str=\"{nonceStr}\",timestamp=\"{timeStamp}\",serial_no=\"{mchApiCertId}\",signature=\"{signature}\"";
 
 
@@ -176,14 +179,19 @@ namespace WebAPI.Services
             {
                 string message = $"{wechatpayTimestamp}\n{wechatPayNonce}\n{body}\n";
 
-                var isPass = CryptoHelper.GetSHA256withRSAVerifyData(certificate, message, wechatpaySignature, "base64");
+                using X509Certificate2 x509Certificate2 = new(Encoding.UTF8.GetBytes(certificate));
+                using var rsa = x509Certificate2.GetRSAPublicKey();
 
-                return isPass;
+                if (rsa != null)
+                {
+                    var publicKey = rsa.ExportRSAPublicKeyPem();
+
+                    return CryptoHelper.RSAVerifyData(publicKey, message, wechatpaySignature, "base64", HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+                }
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
     }

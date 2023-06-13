@@ -55,7 +55,7 @@ namespace WebAPI.Filters
                 key = key + "_" + parameter;
             }
 
-            key = "QueueLimit_" + Common.CryptoHelper.GetMD5(key);
+            key = "QueueLimit_" + Common.CryptoHelper.MD5HashData(key);
 
             try
             {

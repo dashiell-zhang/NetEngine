@@ -1,6 +1,4 @@
-﻿using NPOI.Util;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace Common
@@ -14,9 +12,9 @@ namespace Common
         /// </summary>
         /// <param name="text">待加密文本</param>
         /// <param name="privateKey">密钥 16位采用Aes128、24位采用Aes192、32位采用Aes256</param>
-        /// <param name="stringType">返回的字符串编码类型 base64 或 hex</param>
+        /// <param name="stringEncoding">返回结果的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string AesEncrypt(string text, string privateKey, string stringType)
+        public static string AesEncrypt(string text, string privateKey, string stringEncoding)
         {
             using var aes = Aes.Create();
             aes.Key = Encoding.UTF8.GetBytes(privateKey);
@@ -26,7 +24,7 @@ namespace Common
             ICryptoTransform cryptoTransform = aes.CreateEncryptor();
             byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
 
-            switch (stringType)
+            switch (stringEncoding)
             {
                 case "base64":
                     {
@@ -38,7 +36,7 @@ namespace Common
                     }
                 default:
                     {
-                        throw new ArgumentException("stringType 无效，只能是 base64 或 hex");
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
                     }
             }
         }
@@ -50,9 +48,9 @@ namespace Common
         /// </summary>
         /// <param name="cipherText">加密文本</param>
         /// <param name="privateKey">密钥 16位采用Aes128、24位采用Aes192、32位采用Aes256</param>
-        /// <param name="stringType">加密文本的字符串编码类型 base64 或 hex</param>
+        /// <param name="stringEncoding">加密文本的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string AesDecrypt(string cipherText, string privateKey, string stringType)
+        public static string AesDecrypt(string cipherText, string privateKey, string stringEncoding)
         {
             using var aes = Aes.Create();
             aes.Key = Encoding.UTF8.GetBytes(privateKey);
@@ -60,7 +58,7 @@ namespace Common
             aes.Padding = PaddingMode.PKCS7;
             byte[] inputBuffers;
 
-            switch (stringType)
+            switch (stringEncoding)
             {
                 case "base64":
                     {
@@ -74,7 +72,7 @@ namespace Common
                     }
                 default:
                     {
-                        throw new ArgumentException("stringType 无效，只能是 base64 或 hex");
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
                     }
             }
 
@@ -88,13 +86,13 @@ namespace Common
         /// <summary>
         /// 使用 AesGcm 解密
         /// </summary>
-        /// <param name="cipherText">加密文本</param>
+        /// <param name="cipherText">已加密文本</param>
         /// <param name="privateKey">密钥 16位采用Aes128、24位采用Aes192、32位采用Aes256</param>
         /// <param name="nonce">随机值 长度必须是12</param>
         /// <param name="associatedText">相关文本</param>
-        /// <param name="stringType">加密文本的字符串编码类型 base64 或 hex</param>
+        /// <param name="stringEncoding">已加密文本的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string AesGcmDecrypt(string cipherText, string privateKey, string nonce, string? associatedText, string stringType)
+        public static string AesGcmDecrypt(string cipherText, string privateKey, string nonce, string? associatedText, string stringEncoding)
         {
             var keyBytes = Encoding.UTF8.GetBytes(privateKey);
             var nonceBytes = Encoding.UTF8.GetBytes(nonce);
@@ -102,7 +100,7 @@ namespace Common
 
             byte[] encryptedBytes;
 
-            switch (stringType)
+            switch (stringEncoding)
             {
                 case "base64":
                     {
@@ -116,7 +114,7 @@ namespace Common
                     }
                 default:
                     {
-                        throw new ArgumentException("stringType 无效，只能是 base64 或 hex");
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
                     }
             }
 
@@ -137,9 +135,9 @@ namespace Common
         /// <param name="privateKey">密钥 16位采用Aes128、24位采用Aes192、32位采用Aes256</param>
         /// <param name="nonce">随机值 长度必须是12</param>
         /// <param name="associatedText">附加数据</param>
-        /// <param name="stringType">返回字符串编码类型 base64 或 hex</param>
+        /// <param name="stringEncoding">加密结果的符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string AesGcmEncrypt(string text, string privateKey, string nonce, string? associatedText, string stringType)
+        public static string AesGcmEncrypt(string text, string privateKey, string nonce, string? associatedText, string stringEncoding)
         {
             var keyBytes = Encoding.UTF8.GetBytes(privateKey);
             var nonceBytes = Encoding.UTF8.GetBytes(nonce);
@@ -156,7 +154,7 @@ namespace Common
             Buffer.BlockCopy(cipherBytes, 0, cipherWithTag, 0, cipherBytes.Length);
             Buffer.BlockCopy(tag, 0, cipherWithTag, cipherBytes.Length, tag.Length);
 
-            switch (stringType)
+            switch (stringEncoding)
             {
                 case "base64":
                     {
@@ -168,7 +166,7 @@ namespace Common
                     }
                 default:
                     {
-                        throw new ArgumentException("stringType 无效，只能是 base64 或 hex");
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
                     }
             }
         }
@@ -200,11 +198,11 @@ namespace Common
 
 
         /// <summary>
-        /// MD5 签名计算
+        /// MD5 摘要计算
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static string GetMD5(string text)
+        public static string MD5HashData(string text)
         {
             return Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(text)));
         }
@@ -212,11 +210,21 @@ namespace Common
 
 
         /// <summary>
-        /// SHA256 签名计算
+        /// SHA1 摘要计算
         /// </summary>
-        /// <param name="srcString">The string to be encrypted</param>
         /// <returns></returns>
-        public static string GetSHA256(string text)
+        public static string SHA1HashData(string text)
+        {
+            return Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes(text)));
+        }
+
+
+
+        /// <summary>
+        /// SHA256 摘要计算
+        /// </summary>
+        /// <returns></returns>
+        public static string SHA256HashData(string text)
         {
             return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
         }
@@ -224,11 +232,21 @@ namespace Common
 
 
         /// <summary>
-        /// SHA512 签名计算
+        /// SHA384 摘要计算
         /// </summary>
-        /// <param name="srcString">The string to be encrypted</param>
         /// <returns></returns>
-        public static string GetSHA512(string text)
+        public static string SHA384HashData(string text)
+        {
+            return Convert.ToHexString(SHA384.HashData(Encoding.UTF8.GetBytes(text)));
+        }
+
+
+
+        /// <summary>
+        /// SHA512 摘要计算
+        /// </summary>
+        /// <returns></returns>
+        public static string SHA512HashData(string text)
         {
             return Convert.ToHexString(SHA512.HashData(Encoding.UTF8.GetBytes(text)));
         }
@@ -236,13 +254,16 @@ namespace Common
 
 
         /// <summary>
-        /// SHA256withRSA 签名计算
+        /// RSA 签名计算
         /// </summary>
-        /// <param name="content"></param>
-        /// <param name="privateKey"></param>      
-        /// <param name="stringType">返回字符串编码类型 base64 或 hex</param>
+        /// <param name="privateKey">私钥</param>      
+        /// <param name="content">待计算签名的文本</param>
+        /// <param name="stringEncoding">签名结果的字符串编码类型 base64 或 hex</param>
+        /// <param name="hashAlgorithm">签名算法 MD5 SHA1 SHA256 SHA512</param>
+        /// <param name="signaturePadding">签名填充模式 Pss 或 Pkcs1</param>
+        /// <remarks>新系统推荐签名算法至少采用SHA256，签名填充模式采用Pss，Pkcs1仅用于兼容老系统安全性不如Pss</remarks>
         /// <returns></returns>
-        public static string GetSHA256withRSASignData(string content, string privateKey, string stringType)
+        public static string RSASignData(string privateKey, string content, string stringEncoding, HashAlgorithmName hashAlgorithm, RSASignaturePadding signaturePadding)
         {
             privateKey = privateKey.Replace("\n", "").Replace("\r", "");
 
@@ -285,9 +306,9 @@ namespace Common
 
             byte[] data = Encoding.UTF8.GetBytes(content);
 
-            var signData = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            var signData = rsa.SignData(data, hashAlgorithm, signaturePadding);
 
-            switch (stringType)
+            switch (stringEncoding)
             {
                 case "base64":
                     {
@@ -299,7 +320,7 @@ namespace Common
                     }
                 default:
                     {
-                        throw new ArgumentException("stringType 无效，只能是 base64 或 hex");
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
                     }
             }
         }
@@ -307,18 +328,28 @@ namespace Common
 
 
         /// <summary>
-        /// SHA256withRSA 签名验证
+        /// RSA 签名验证
         /// </summary>
-        /// <param name="certText">证书文本内容</param>
-        /// <param name="content">内容</param>
+        /// <param name="publicKey">公钥</param>
+        /// <param name="content">待验证签名的文本</param>
         /// <param name="signature">签名</param>
-        /// <param name="stringType">签名编码类型 base64 或 hex</param>
+        /// <param name="stringEncoding">签名的字符串编码类型 base64 或 hex</param>
+        /// <param name="hashAlgorithm">签名算法 MD5 SHA1 SHA256 SHA512</param>
+        /// <param name="signaturePadding">签名填充模式 Pss 或 Pkcs1</param>
+        /// <remarks>新系统推荐签名算法至少采用SHA256，签名填充模式采用Pss，Pkcs1仅用于兼容老系统安全性不如Pss</remarks>
         /// <returns></returns>
-        public static bool GetSHA256withRSAVerifyData(string certText, string content, string signature, string stringType)
+        public static bool RSAVerifyData(string publicKey, string content, string signature, string stringEncoding, HashAlgorithmName hashAlgorithm, RSASignaturePadding signaturePadding)
         {
+            publicKey = publicKey.Replace("\n", "").Replace("\r", "");
 
-            using X509Certificate2 x509Certificate2 = new(Encoding.UTF8.GetBytes(certText));
-            using var rsa = x509Certificate2.GetRSAPublicKey();
+            if (publicKey.StartsWith("-") && publicKey.EndsWith("-"))
+            {
+                publicKey = publicKey.Split("-").ToList().OrderByDescending(t => t.Length).First();
+            }
+
+            using var rsa = RSA.Create();
+
+            rsa.ImportRSAPublicKey(Convert.FromBase64String(publicKey), out _);
 
             var data = Encoding.UTF8.GetBytes(content);
 
@@ -327,7 +358,7 @@ namespace Common
 
                 byte[] signData;
 
-                switch (stringType)
+                switch (stringEncoding)
                 {
                     case "base64":
                         {
@@ -341,12 +372,12 @@ namespace Common
                         }
                     default:
                         {
-                            throw new ArgumentException("stringType 无效，只能是 base64 或 hex");
+                            throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
                         }
                 }
 
-                var isOk = rsa.VerifyData(data, signData, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                return isOk;
+                return rsa.VerifyData(data, signData, hashAlgorithm, signaturePadding);
+
             }
             else
             {
@@ -356,6 +387,134 @@ namespace Common
 
         }
 
+
+
+        /// <summary>
+        /// RSA 加密
+        /// </summary>
+        /// <param name="publicKey">公钥</param>      
+        /// <param name="content">待加密的文本</param>
+        /// <param name="stringEncoding">加密结果的字符串编码类型 base64 或 hex</param>
+        /// <param name="encryptionPadding">加密算法 Pkcs1 SHA1 SHA256 SHA512</param>
+        /// <remarks>新系统推荐签名算法至少采用SHA256</remarks>
+        /// <returns></returns>
+        public static string RSAEncrypt(string publicKey, string content, string stringEncoding, RSAEncryptionPadding encryptionPadding)
+        {
+            publicKey = publicKey.Replace("\n", "").Replace("\r", "");
+
+            if (publicKey.StartsWith("-") && publicKey.EndsWith("-"))
+            {
+                publicKey = publicKey.Split("-").ToList().OrderByDescending(t => t.Length).First();
+            }
+
+            using var rsa = RSA.Create();
+
+            rsa.ImportRSAPublicKey(Convert.FromBase64String(publicKey), out _);
+
+            if (rsa != null)
+            {
+
+                byte[] data = Encoding.UTF8.GetBytes(content);
+
+                var signData = rsa.Encrypt(data, encryptionPadding);
+
+                switch (stringEncoding)
+                {
+                    case "base64":
+                        {
+                            return Convert.ToBase64String(signData);
+                        }
+                    case "hex":
+                        {
+                            return Convert.ToHexString(signData);
+                        }
+                    default:
+                        {
+                            throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                        }
+                }
+            }
+            else
+            {
+                throw new Exception("RSA 初始化失败");
+            }
+        }
+
+
+
+        /// <summary>
+        /// RSA 解密
+        /// </summary>
+        /// <param name="privateKey">私钥</param>      
+        /// <param name="content">已加密的文本</param>
+        /// <param name="stringEncoding">已加密文本的字符串编码类型 base64 或 hex</param>
+        /// <param name="encryptionPadding">加密算法 Pkcs1 SHA1 SHA256 SHA512</param>
+        /// <remarks>新系统推荐签名算法至少采用SHA256</remarks>
+        /// <returns></returns>
+        public static string RSADecrypt(string privateKey, string content, string stringEncoding, RSAEncryptionPadding encryptionPadding)
+        {
+            privateKey = privateKey.Replace("\n", "").Replace("\r", "");
+
+            using var rsa = RSA.Create();
+
+        ImportInfo:
+            if (privateKey.StartsWith("-") && privateKey.EndsWith("-"))
+            {
+                try
+                {
+                    rsa.ImportFromPem(privateKey);
+                }
+                catch
+                {
+                    privateKey = privateKey.Split("-").ToList().OrderByDescending(t => t.Length).First();
+
+                    goto ImportInfo;
+                }
+            }
+            else
+            {
+                byte[] keyData = Convert.FromBase64String(privateKey);
+
+                try
+                {
+                    rsa.ImportRSAPrivateKey(keyData, out _);
+                }
+                catch
+                {
+                    try
+                    {
+                        rsa.ImportPkcs8PrivateKey(keyData, out _);
+                    }
+                    catch
+                    {
+                        throw new Exception("私钥导入初始化RSA失败");
+                    }
+                }
+            }
+
+
+            byte[] contentData;
+
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        contentData = Convert.FromBase64String(content);
+                        break;
+                    }
+                case "hex":
+                    {
+                        contentData = Convert.FromHexString(content);
+                        break;
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
+
+            return Encoding.UTF8.GetString(rsa.Decrypt(contentData, encryptionPadding));
+        }
 
     }
 }

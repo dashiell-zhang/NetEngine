@@ -78,7 +78,7 @@ namespace WebAPI.Filters
                             }
                         }
 
-                        string tk = Common.CryptoHelper.GetSHA256(dataStr);
+                        string tk = Common.CryptoHelper.SHA256HashData(dataStr);
 
                         if (token != tk)
                         {

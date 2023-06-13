@@ -55,7 +55,7 @@ namespace AdminAPI.Filters
                 key = key + "_" + parameter;
             }
 
-            key = "QueueLimit_" + CryptoHelper.GetMD5(key);
+            key = "QueueLimit_" + CryptoHelper.MD5HashData(key);
 
             try
             {

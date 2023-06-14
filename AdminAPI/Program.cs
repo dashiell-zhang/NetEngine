@@ -226,17 +226,6 @@ namespace AdminAPI
                 AutomaticDecompression = System.Net.DecompressionMethods.All
             });
 
-
-            builder.Services.AddHttpClient("SkipSsl", options =>
-            {
-                options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
-            }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-            {
-                AllowAutoRedirect = false,
-                AutomaticDecompression = System.Net.DecompressionMethods.All,
-                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
-            });
-
             #endregion
 
             builder.Services.BatchRegisterServices();

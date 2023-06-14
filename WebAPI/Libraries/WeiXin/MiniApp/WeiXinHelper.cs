@@ -106,37 +106,5 @@ namespace WebAPI.Libraries.WeiXin.MiniApp
         }
 
 
-
-        /// <summary>
-        /// 证书双向校验POST
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        private string UseCretPost(string url, string data)
-        {
-            var sslPath = Path.Combine(Directory.GetCurrentDirectory(), "ssl", "apiclient_cert.p12");
-
-            using HttpClientHandler handler = new();
-            X509Certificate2 cert = new(sslPath, mchid, X509KeyStorageFlags.MachineKeySet);
-
-            handler.ClientCertificates.Add(cert);
-
-            using HttpClient client = new(handler);
-
-            client.DefaultRequestVersion = new("2.0");
-
-            using Stream dataStream = new MemoryStream(Encoding.UTF8.GetBytes(data));
-            using HttpContent content = new StreamContent(dataStream);
-
-            content.Headers.ContentType = new("application/x-www-form-urlencoded");
-
-            using var httpResponse = client.PostAsync(url, content);
-            return httpResponse.Result.Content.ReadAsStringAsync().Result;
-
-        }
-
-
-
     }
 }

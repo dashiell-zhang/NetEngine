@@ -14,6 +14,7 @@ using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using WebAPI.Filters;
 using WebAPI.Libraries;
 using WebAPI.Libraries.HealthCheck;
@@ -223,6 +224,7 @@ namespace WebAPI
 
 
             #region 注册HttpClient
+
             builder.Services.AddHttpClient("", options =>
             {
                 options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
@@ -231,7 +233,6 @@ namespace WebAPI
                 AllowAutoRedirect = false,
                 AutomaticDecompression = System.Net.DecompressionMethods.All
             });
-
 
             builder.Services.AddHttpClient("SkipSsl", options =>
             {
@@ -243,8 +244,6 @@ namespace WebAPI
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
             });
 
-
-            builder.Services.AddTransient<HttpSignHandler>();
             builder.Services.AddHttpClient("HttpSign", options =>
             {
                 options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
@@ -252,7 +251,23 @@ namespace WebAPI
             {
                 AllowAutoRedirect = false,
                 AutomaticDecompression = System.Net.DecompressionMethods.All,
-            }).AddHttpMessageHandler(t => t.GetRequiredService<HttpSignHandler>());
+            }).AddHttpMessageHandler<HttpSignHandler>();
+
+            builder.Services.AddHttpClient("CarryCert", options =>
+            {
+                options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+            }).ConfigurePrimaryHttpMessageHandler(() =>
+            {
+                using HttpClientHandler handler = new()
+                {
+                    AllowAutoRedirect = false,
+                    AutomaticDecompression = System.Net.DecompressionMethods.All
+                };
+                var sslPath = Path.Combine(Directory.GetCurrentDirectory(), "ssl", "xxxx.p12");
+                using X509Certificate2 certificate = new(sslPath, "证书密码", X509KeyStorageFlags.MachineKeySet);
+                handler.ClientCertificates.Add(certificate);
+                return handler;
+            });
 
             #endregion
 

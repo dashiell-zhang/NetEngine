@@ -106,17 +106,6 @@ namespace TaskService
                         AutomaticDecompression = System.Net.DecompressionMethods.All
                     });
 
-
-                    services.AddHttpClient("SkipSsl", options =>
-                    {
-                        options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
-                    }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-                    {
-                        AllowAutoRedirect = false,
-                        AutomaticDecompression = System.Net.DecompressionMethods.All,
-                        ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
-                    });
-
                     #endregion
 
                 }).ConfigureLogging((hostContext, builder) =>

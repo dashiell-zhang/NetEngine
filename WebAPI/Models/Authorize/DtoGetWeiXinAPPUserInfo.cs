@@ -1,10 +1,10 @@
-﻿namespace WebAPI.Libraries.WeiXin.App.Models
+﻿namespace WebAPI.Models.Authorize
 {
 
     /// <summary>
-    /// 获取用户信息接口返回数据类型
+    /// 获取微信APP用户信息
     /// </summary>
-    public class DtoGetUserInfo
+    public class DtoGetWeiXinAPPUserInfo
     {
         public string? OpenId { get; set; }
 

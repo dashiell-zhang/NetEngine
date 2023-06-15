@@ -16,7 +16,7 @@ namespace Common
         /// <param name="url">请求地址</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default, Dictionary<string, string>? options = default)
+        public static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
         {
             HttpRequestMessage request = new()
             {
@@ -41,7 +41,7 @@ namespace Common
         /// <param name="type">json,xml</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default, Dictionary<string, string>? options = default)
+        public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
         {
             HttpRequestMessage request = new()
             {
@@ -78,7 +78,7 @@ namespace Common
         /// <param name="headers">自定义Header集合</param>
         /// <param name="httpClientName">httpClient名称</param>
         /// <returns></returns>
-        public static Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default, Dictionary<string, string>? options = default)
+        public static Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
         {
             HttpRequestMessage request = new()
             {
@@ -103,7 +103,7 @@ namespace Common
         /// <param name="formItems">Post表单内容</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static Task<HttpResponseMessage> PostFormAsync(this HttpClient httpClient, string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, Dictionary<string, string>? options = default)
+        public static Task<HttpResponseMessage> PostFormAsync(this HttpClient httpClient, string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
         {
             HttpRequestMessage request = new()
             {
@@ -133,7 +133,7 @@ namespace Common
         /// <param name="formItems">Post表单内容</param>
         /// <param name="headers">自定义Header集合</param>
         /// <returns></returns>
-        public static Task<HttpResponseMessage> PostFormDataAsync(this HttpClient httpClient, string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, Dictionary<string, string>? options = default)
+        public static Task<HttpResponseMessage> PostFormDataAsync(this HttpClient httpClient, string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
         {
             HttpRequestMessage request = new()
             {
@@ -227,7 +227,7 @@ namespace Common
         /// <summary>
         /// 为请求设置 Headers 和 Options
         /// </summary>
-        private static HttpRequestMessage SetHeadersAndOptions(this HttpRequestMessage request, Dictionary<string, string>? headers = default, Dictionary<string, string>? options = default)
+        private static HttpRequestMessage SetHeadersAndOptions(this HttpRequestMessage request, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
         {
             if (headers != default)
             {

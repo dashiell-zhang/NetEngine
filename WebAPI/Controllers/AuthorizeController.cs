@@ -95,44 +95,33 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 通过微信小程序Code获取Token认证信息
         /// </summary>
-        /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
+        /// <param name="getTokenByWeiXinCode"></param>
         /// <returns></returns>
         [HttpPost]
-        public string GetTokenByWeiXinMiniAppCode([FromBody] DtoKeyValue keyValue)
+        public string? GetTokenByWeiXinMiniAPPCode([FromBody] GetTokenByWeiXinCode getTokenByWeiXinCode)
         {
+            var wxInfo = authorizeService.GetWeiXinMiniAPPOpenIdAndSessionKey(getTokenByWeiXinCode.APPId, getTokenByWeiXinCode.Code);
 
-            var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
-            string code = keyValue.Value!.ToString()!;
+            string openId = wxInfo.openId;
+            string sessionKey = wxInfo.sessionKey;
 
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == weiXinKeyId).ToList();
+            var userIdQuery = db.TUserBindExternal.Where(t => t.APPName == "WeiXinMiniAPP" && t.APPId == getTokenByWeiXinCode.APPId && t.OpenId == getTokenByWeiXinCode.APPId).Select(t => t.User.Id);
 
-            var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
-            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
+            var userId = userIdQuery.FirstOrDefault();
 
-            Libraries.WeiXin.MiniApp.WeiXinHelper weiXinHelper = new(appid!, appSecret!);
-
-
-            var wxinfo = weiXinHelper.GetOpenIdAndSessionKey(distributedCache, httpClient, code);
-
-            string openid = wxinfo.openid;
-            string sessionkey = wxinfo.sessionkey;
-
-            var user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
-
-            if (user == null)
+            if (userId == default)
             {
 
-                using (distLock.Lock("GetTokenByWeiXinMiniAppCode" + openid))
+                using (distLock.Lock("GetTokenByWeiXinMiniAPPCode" + openId))
                 {
-                    user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == appid && t.OpenId == openid).Select(t => t.User).FirstOrDefault();
+                    userId = userIdQuery.FirstOrDefault();
 
-                    if (user == null)
+                    if (userId == default)
                     {
-
                         string userName = DateTime.UtcNow.ToString() + "微信小程序新用户";
 
                         //注册一个只有基本信息的账户出来
-                        user = new()
+                        TUser user = new()
                         {
                             Id = idHelper.GetId(),
                             CreateTime = DateTime.UtcNow,
@@ -151,22 +140,34 @@ namespace WebAPI.Controllers
                             Id = idHelper.GetId(),
                             CreateTime = DateTime.UtcNow,
                             UserId = user.Id,
-                            AppName = "WeiXinMiniApp",
-                            AppId = appid!,
-                            OpenId = openid
+                            APPName = "WeiXinMiniAPP",
+                            APPId = getTokenByWeiXinCode.APPId,
+                            OpenId = openId
                         };
 
 
                         db.TUserBindExternal.Add(userBind);
 
                         db.SaveChanges();
+
+                        userId = user.Id;
                     }
 
                 }
 
             }
 
-            return authorizeService.GetTokenByUserId(user.Id);
+            if (userId != default)
+            {
+                return authorizeService.GetTokenByUserId(userId);
+
+            }
+            else
+            {
+                HttpContext.SetErrMsg("获取Token失败");
+
+                return null;
+            }
         }
 
 
@@ -296,31 +297,18 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 通过微信APP Code获取Token认证信息
         /// </summary>
-        /// <param name="keyValue">key 为weixinkeyid, value 为 code</param>
+        /// <param name="getTokenByWeiXinCode"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinAppCode(DtoKeyValue keyValue)
+        public string? GetTokenByWeiXinAPPCode(GetTokenByWeiXinCode getTokenByWeiXinCode)
         {
+            var accessTokenAndOpenId = authorizeService.GetWeiXinAPPAccessTokenAndOpenId(getTokenByWeiXinCode.APPId, getTokenByWeiXinCode.Code);
 
-            var weiXinKeyId = long.Parse(keyValue.Key!.ToString()!);
-            string code = keyValue.Value!.ToString()!;
-
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == weiXinKeyId).ToList();
-
-            var appid = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
-            var appSecret = settings.Where(t => t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
-
-            Libraries.WeiXin.App.WeiXinHelper weiXinHelper = new(appid!, appSecret!);
-
-            var accseetoken = weiXinHelper.GetAccessToken(distributedCache, httpClient, code).accessToken;
-
-            var openid = weiXinHelper.GetAccessToken(distributedCache, httpClient, code).openId;
-
-            var userInfo = weiXinHelper.GetUserInfo(httpClient, accseetoken, openid);
+            var userInfo = authorizeService.GetWeiXinAPPUserInfo(accessTokenAndOpenId.accessToken, accessTokenAndOpenId.openId);
 
             if (userInfo.NickName != null)
             {
-                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == appid && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
+                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.APPName == "WeiXinAPP" && t.APPId == getTokenByWeiXinCode.APPId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
 
                 if (user == null)
                 {
@@ -343,9 +331,9 @@ namespace WebAPI.Controllers
                     {
                         Id = idHelper.GetId(),
                         CreateTime = DateTime.UtcNow,
-                        AppName = "WeiXinApp",
-                        AppId = appid!,
-                        OpenId = openid,
+                        APPName = "WeiXinApp",
+                        APPId = getTokenByWeiXinCode.APPId,
+                        OpenId = accessTokenAndOpenId.openId,
 
                         UserId = user.Id
                     };
@@ -357,12 +345,10 @@ namespace WebAPI.Controllers
 
                 return authorizeService.GetTokenByUserId(user.Id);
             }
-            else
-            {
-                HttpContext.SetErrMsg("微信授权失败");
 
-                return default;
-            }
+            HttpContext.SetErrMsg("微信授权失败");
+
+            return default;
 
         }
 
@@ -585,6 +571,7 @@ namespace WebAPI.Controllers
             db.SaveChanges();
 
         }
+
 
 
     }

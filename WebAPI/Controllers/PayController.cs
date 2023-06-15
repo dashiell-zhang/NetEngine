@@ -617,7 +617,7 @@ namespace WebAPI.Controllers
                 {
                     t.OrderNo,
                     t.Price,
-                    AliPayUserId = db.TUserBindExternal.Where(a => a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
+                    AliPayUserId = db.TUserBindExternal.Where(a => a.UserId == t.CreateUserId && a.APPName == "AliPayMiniAPP" && a.APPId == appId).Select(a => a.OpenId).FirstOrDefault(),
                     t.CreateTime
                 }).FirstOrDefault();
 

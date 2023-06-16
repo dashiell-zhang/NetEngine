@@ -4,9 +4,9 @@ namespace WebAPI.Models.Authorize
 {
 
     /// <summary>
-    /// 登录信息
+    /// 获取Token
     /// </summary>
-    public class DtoLogin
+    public class DtoGetToken
     {
 
 

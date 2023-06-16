@@ -596,13 +596,11 @@ namespace WebAPI.Controllers
         /// 支付宝支付-小程序模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
-        /// <param name="aliPayKeyId"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoKeyValue? CreateAliPayMiniApp(string orderNo, long aliPayKeyId)
+        public DtoKeyValue? CreateAliPayMiniApp(string orderNo)
         {
-
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp" && t.GroupId == aliPayKeyId).ToList();
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp").ToList();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -685,7 +683,6 @@ namespace WebAPI.Controllers
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
             var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
-
 
             if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
             {
@@ -817,9 +814,8 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public string AliPayNotify()
+        public string? AliPayNotify()
         {
-            string retValue = "";
 
             //获取当前请求中的post参数
             var parameters = Request.Form.ToDictionary(t => t.Key, t => t.Value.ToString());
@@ -860,9 +856,8 @@ namespace WebAPI.Controllers
                             case "业务逻辑":
                                 {
 
-                                    retValue = "success";
+                                    return "success";
 
-                                    break;
                                 }
                         }
                     }
@@ -871,7 +866,7 @@ namespace WebAPI.Controllers
 
             }
 
-            return retValue;
+            return null;
         }
 
 

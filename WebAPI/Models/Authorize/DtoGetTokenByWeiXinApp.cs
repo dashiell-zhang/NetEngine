@@ -1,6 +1,6 @@
 ﻿namespace WebAPI.Models.Authorize
 {
-    public class DtoGetTokenByWeiXinCode
+    public class DtoGetTokenByWeiXinApp
     {
 
         public string AppId { get; set; }

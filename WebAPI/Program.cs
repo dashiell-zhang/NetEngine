@@ -244,6 +244,7 @@ namespace WebAPI
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
             });
 
+            builder.Services.AddTransient<HttpSignHandler>();
             builder.Services.AddHttpClient("HttpSign", options =>
             {
                 options.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
@@ -252,6 +253,7 @@ namespace WebAPI
                 AllowAutoRedirect = false,
                 AutomaticDecompression = System.Net.DecompressionMethods.All,
             }).AddHttpMessageHandler<HttpSignHandler>();
+
 
             builder.Services.AddHttpClient("CarryCert", options =>
             {

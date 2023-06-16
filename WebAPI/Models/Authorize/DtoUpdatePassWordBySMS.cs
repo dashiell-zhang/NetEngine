@@ -6,7 +6,7 @@ namespace WebAPI.Models.Authorize
     /// <summary>
     /// 通过短信修改账户密码入参
     /// </summary>
-    public class DtoUpdatePassWordBySMS1
+    public class DtoUpdatePassWordBySMS
     {
 
         /// <summary>

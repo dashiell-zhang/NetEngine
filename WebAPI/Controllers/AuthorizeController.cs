@@ -65,7 +65,7 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 获取Token认证信息
         /// </summary>
-        /// <param name="login">登录信息集合</param>
+        /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
         public string? GetToken(DtoGetToken login)
@@ -90,14 +90,14 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 通过微信小程序Code获取Token认证信息
         /// </summary>
-        /// <param name="getTokenByWeiXinCode"></param>
+        /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinMiniAppCode([FromBody] DtoGetTokenByWeiXinCode getTokenByWeiXinCode)
+        public string? GetTokenByWeiXinMiniApp([FromBody] DtoGetTokenByWeiXinApp login)
         {
-            var wxInfo = authorizeService.GetWeiXinMiniAppOpenIdAndSessionKey(getTokenByWeiXinCode.AppId, getTokenByWeiXinCode.Code);
+            var wxInfo = authorizeService.GetWeiXinMiniAppOpenIdAndSessionKey(login.AppId, login.Code);
 
-            var userIdQuery = db.TUserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == getTokenByWeiXinCode.AppId && t.OpenId == getTokenByWeiXinCode.AppId).Select(t => t.User.Id);
+            var userIdQuery = db.TUserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == login.AppId && t.OpenId == login.AppId).Select(t => t.User.Id);
 
             var userId = userIdQuery.FirstOrDefault();
 
@@ -131,7 +131,7 @@ namespace WebAPI.Controllers
                             Id = idHelper.GetId(),
                             UserId = user.Id,
                             AppName = "WeiXinMiniApp",
-                            AppId = getTokenByWeiXinCode.AppId,
+                            AppId = login.AppId,
                             OpenId = wxInfo.openId
                         };
 
@@ -165,18 +165,18 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 利用手机号和短信验证码获取Token认证信息
         /// </summary>
-        /// <param name="getTokenBySMS"></param>
+        /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenBySms(DtoGetTokenBySMS getTokenBySMS)
+        public string? GetTokenBySMS(DtoGetTokenBySMS login)
         {
-            string key = "VerifyPhone_" + getTokenBySMS.Phone;
+            string key = "VerifyPhone_" + login.Phone;
 
             var code = distributedCache.GetString(key);
 
-            if (string.IsNullOrEmpty(code) == false && code == getTokenBySMS.VerifyCode)
+            if (string.IsNullOrEmpty(code) == false && code == login.VerifyCode)
             {
-                var userId = db.TUser.Where(t => t.Phone == getTokenBySMS.Phone).Select(t => t.Id).FirstOrDefault();
+                var userId = db.TUser.Where(t => t.Phone == login.Phone).Select(t => t.Id).FirstOrDefault();
 
                 if (userId == default)
                 {
@@ -188,7 +188,7 @@ namespace WebAPI.Controllers
                         Id = idHelper.GetId(),
                         Name = userName,
                         UserName = Guid.NewGuid().ToString(),
-                        Phone = getTokenBySMS.Phone
+                        Phone = login.Phone
                     };
                     user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
@@ -250,19 +250,15 @@ namespace WebAPI.Controllers
         /// 发送短信验证手机号码所有权
         /// </summary>
         /// <param name="sms"></param>
-        /// <param name="keyValue">key 为手机号，value 可为空</param>
+        /// <param name="sendVerifyCode"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool SendSmsVerifyPhone([FromServices] ISMS sms, DtoKeyValue keyValue)
+        public bool SendSMSVerifyCode([FromServices] ISMS sms, DtoSendSMSVerifyCode sendVerifyCode)
         {
-
-            string phone = keyValue.Key!.ToString()!;
-
-            string key = "VerifyPhone_" + phone;
+            string key = "VerifyPhone_" + sendVerifyCode.Phone;
 
             if (distributedCache.IsContainKey(key) == false)
             {
-
                 Random ran = new();
                 string code = ran.Next(100000, 999999).ToString();
 
@@ -271,7 +267,7 @@ namespace WebAPI.Controllers
                     { "code", code }
                 };
 
-                sms.SendSMS("短信签名", phone, "短信模板编号", templateParams);
+                sms.SendSMS("短信签名", sendVerifyCode.Phone, "短信模板编号", templateParams);
 
                 distributedCache.Set(key, code, new TimeSpan(0, 0, 5, 0));
 
@@ -291,18 +287,18 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 通过微信App Code获取Token认证信息
         /// </summary>
-        /// <param name="getTokenByWeiXinCode"></param>
+        /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinAppCode(DtoGetTokenByWeiXinCode getTokenByWeiXinCode)
+        public string? GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login)
         {
-            var accessTokenAndOpenId = authorizeService.GetWeiXinAppAccessTokenAndOpenId(getTokenByWeiXinCode.AppId, getTokenByWeiXinCode.Code);
+            var accessTokenAndOpenId = authorizeService.GetWeiXinAppAccessTokenAndOpenId(login.AppId, login.Code);
 
             var userInfo = authorizeService.GetWeiXinAppUserInfo(accessTokenAndOpenId.accessToken, accessTokenAndOpenId.openId);
 
             if (userInfo.NickName != null)
             {
-                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == getTokenByWeiXinCode.AppId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
+                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == login.AppId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
 
                 if (user == null)
                 {
@@ -324,7 +320,7 @@ namespace WebAPI.Controllers
                     {
                         Id = idHelper.GetId(),
                         AppName = "WeiXinApp",
-                        AppId = getTokenByWeiXinCode.AppId,
+                        AppId = login.AppId,
                         OpenId = accessTokenAndOpenId.openId,
 
                         UserId = user.Id
@@ -350,21 +346,21 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 通过老密码修改密码
         /// </summary>
-        /// <param name="updatePassWordByOldPassWord"></param>
+        /// <param name="updatePassWord"></param>
         /// <returns></returns>
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
-        public bool UpdatePassWordByOldPassWord(DtoUpdatePassWordByOldPassWord updatePassWordByOldPassWord)
+        public bool UpdatePassWordByOldPassWord(DtoUpdatePassWordByOldPassWord updatePassWord)
         {
 
             var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
             if (user != null)
             {
-                if (user.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWordByOldPassWord.OldPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32)))
+                if (user.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWord.OldPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32)))
                 {
-                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWordByOldPassWord.NewPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWord.NewPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                     user.UpdateTime = DateTime.UtcNow;
                     user.UpdateUserId = user.Id;
                     db.SaveChanges();
@@ -396,7 +392,7 @@ namespace WebAPI.Controllers
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
-        public bool UpdatePassWordBySMS(DtoUpdatePassWordBySMS1 updatePassWord)
+        public bool UpdatePassWordBySMS(DtoUpdatePassWordBySMS updatePassWord)
         {
 
             string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault()!;
@@ -562,8 +558,6 @@ namespace WebAPI.Controllers
             db.SaveChanges();
 
         }
-
-
 
     }
 }

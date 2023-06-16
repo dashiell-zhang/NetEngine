@@ -68,7 +68,6 @@ namespace TaskService.Libraries
                             task = new()
                             {
                                 Id = idHelper.GetId(),
-                                CreateTime = DateTime.UtcNow,
                                 IsEnable = true,
                                 Category = "QueueTask",
                                 Name = item.Key,
@@ -120,7 +119,6 @@ namespace TaskService.Libraries
                             taskSetting = new()
                             {
                                 Id = idHelper.GetId(),
-                                CreateTime = DateTime.UtcNow,
                                 IsEnable = true,
                                 Category = "ScheduleTask",
                                 Name = taskName,

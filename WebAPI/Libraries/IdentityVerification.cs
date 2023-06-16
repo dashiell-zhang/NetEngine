@@ -126,8 +126,7 @@ namespace WebAPI.Libraries
                             {
                                 Id = idHelper.GetId(),
                                 UserId = userId,
-                                LastId = tokenId,
-                                CreateTime = DateTime.UtcNow
+                                LastId = tokenId
                             };
 
                             var claims = new Claim[]{

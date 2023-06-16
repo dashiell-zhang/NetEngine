@@ -34,8 +34,7 @@ namespace AdminAPI.Services
                         Id = idHelper.GetId(),
                         Module = "Site",
                         Key = key,
-                        Value = value,
-                        CreateTime = DateTime.UtcNow
+                        Value = value
                     };
                     db.TAppSetting.Add(appSetting);
                 }

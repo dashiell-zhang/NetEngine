@@ -1,5 +1,4 @@
 ﻿using Common;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
@@ -45,7 +44,6 @@ namespace WebAPI.Services
             {
                 Id = idHelper.GetId(),
                 UserId = userId,
-                CreateTime = DateTime.UtcNow
             };
 
             db.TUserToken.Add(userToken);
@@ -139,13 +137,13 @@ namespace WebAPI.Services
         /// <param name="accessToken"></param>
         /// <param name="openId"></param>
         /// <returns></returns>
-        public DtoGetWeiXinAppUserInfo1 GetWeiXinAppUserInfo(string accessToken, string openId)
+        public DtoGetWeiXinAppUserInfo GetWeiXinAppUserInfo(string accessToken, string openId)
         {
             string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
 
             var returnJson = httpClient.GetAsync(url).Result.Content.ReadAsStringAsync().Result;
 
-            var userInfo = JsonHelper.JsonToObject<DtoGetWeiXinAppUserInfo1>(returnJson);
+            var userInfo = JsonHelper.JsonToObject<DtoGetWeiXinAppUserInfo>(returnJson);
 
             return userInfo;
         }

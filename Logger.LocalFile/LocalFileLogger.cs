@@ -76,7 +76,6 @@ namespace Logger.LocalFile
 
                         var log = new
                         {
-                            CreateTime = DateTime.UtcNow,
                             Category = categoryName,
                             Level = logLevel.ToString(),
                             Content = logContent

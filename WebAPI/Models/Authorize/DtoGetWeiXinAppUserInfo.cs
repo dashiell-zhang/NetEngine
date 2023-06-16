@@ -4,7 +4,7 @@
     /// <summary>
     /// 获取微信App用户信息
     /// </summary>
-    public class DtoGetWeiXinAppUserInfo1
+    public class DtoGetWeiXinAppUserInfo
     {
         public string? OpenId { get; set; }
 

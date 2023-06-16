@@ -115,8 +115,7 @@ namespace AdminAPI.Controllers
                         Table = business,
                         TableId = key,
                         Sign = sign,
-                        CreateUserId = userId,
-                        CreateTime = DateTime.UtcNow
+                        CreateUserId = userId
                     };
                     db.TFile.Add(f);
                     db.SaveChanges();

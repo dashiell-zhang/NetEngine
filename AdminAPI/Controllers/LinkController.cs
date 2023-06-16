@@ -110,9 +110,7 @@ namespace AdminAPI.Controllers
                 Id = idHelper.GetId(),
                 Name = createLink.Name,
                 Url = createLink.Url,
-                CreateTime = DateTime.UtcNow,
                 CreateUserId = userId,
-
                 Sort = createLink.Sort
             };
 

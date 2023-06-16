@@ -191,7 +191,6 @@ namespace AdminAPI.Controllers
                     TFunctionRoute functionRoute = new()
                     {
                         Id = idHelper.GetId(),
-                        CreateTime = DateTime.UtcNow,
                         Module = projectName,
                         Route = item.Route!,
                         Remarks = remarks

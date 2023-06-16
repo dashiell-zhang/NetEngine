@@ -145,7 +145,6 @@ namespace AdminAPI.Controllers
                             Phone = createUser.Phone
                         };
                         user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                        user.CreateTime = DateTime.UtcNow;
                         user.CreateUserId = userId;
 
                         user.Email = createUser.Email;
@@ -157,7 +156,6 @@ namespace AdminAPI.Controllers
                             TUserRole userRole = new()
                             {
                                 Id = idHelper.GetId(),
-                                CreateTime = DateTime.UtcNow,
                                 UserId = user.Id,
                                 CreateUserId = this.userId,
                                 RoleId = item
@@ -239,7 +237,6 @@ namespace AdminAPI.Controllers
                                 TUserRole userRole = new()
                                 {
                                     Id = idHelper.GetId(),
-                                    CreateTime = DateTime.UtcNow,
                                     UserId = userId,
                                     CreateUserId = this.userId,
                                     RoleId = item
@@ -352,7 +349,6 @@ namespace AdminAPI.Controllers
                 if (functionAuthorize.Id == default)
                 {
                     functionAuthorize.Id = idHelper.GetId();
-                    functionAuthorize.CreateTime = DateTime.UtcNow;
                     functionAuthorize.CreateUserId = userId;
 
                     functionAuthorize.FunctionId = setUserFunction.FunctionId;
@@ -438,7 +434,6 @@ namespace AdminAPI.Controllers
                     userRole = new TUserRole
                     {
                         Id = idHelper.GetId(),
-                        CreateTime = DateTime.UtcNow,
                         CreateUserId = userId,
                         UserId = setUserRole.UserId,
                         RoleId = setUserRole.RoleId

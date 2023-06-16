@@ -113,8 +113,7 @@ namespace WebAPI.Controllers
                         Table = business,
                         TableId = key,
                         Sign = sign,
-                        CreateUserId = userId,
-                        CreateTime = DateTime.UtcNow
+                        CreateUserId = userId
                     };
                     db.TFile.Add(f);
                     db.SaveChanges();
@@ -192,8 +191,7 @@ namespace WebAPI.Controllers
                         Table = business,
                         TableId = key,
                         Sign = sign,
-                        CreateUserId = userId,
-                        CreateTime = DateTime.UtcNow
+                        CreateUserId = userId
                     };
                     db.TFile.Add(f);
                     db.SaveChanges();

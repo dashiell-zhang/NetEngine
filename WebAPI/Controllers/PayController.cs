@@ -143,11 +143,11 @@ namespace WebAPI.Controllers
         /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoCreateWeiXinPayAppRet1? CreateWeiXinPayApp(string orderNo)
+        public DtoCreateWeiXinPayAppRet? CreateWeiXinPayApp(string orderNo)
         {
             string key = "wxpayApp" + orderNo;
 
-            var ret = distributedCache.Get<DtoCreateWeiXinPayAppRet1>(key);
+            var ret = distributedCache.Get<DtoCreateWeiXinPayAppRet>(key);
 
             if (ret == null)
             {

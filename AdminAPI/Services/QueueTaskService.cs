@@ -27,7 +27,6 @@ namespace AdminAPI.Services
                     TQueueTask queueTask = new()
                     {
                         Id = idHelper.GetId(),
-                        CreateTime = DateTime.UtcNow,
                         Name = name
                     };
 

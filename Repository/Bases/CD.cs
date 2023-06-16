@@ -22,7 +22,7 @@ namespace Repository.Bases
         /// <summary>
         /// 创建时间
         /// </summary>
-        public DateTimeOffset CreateTime { get; set; }
+        public DateTimeOffset CreateTime { get; set; } = DateTime.UtcNow;
 
 
 

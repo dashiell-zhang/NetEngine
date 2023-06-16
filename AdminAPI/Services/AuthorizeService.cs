@@ -37,8 +37,7 @@ namespace AdminAPI.Services
             TUserToken userToken = new()
             {
                 Id = idHelper.GetId(),
-                UserId = userId,
-                CreateTime = DateTime.UtcNow
+                UserId = userId
             };
 
             db.TUserToken.Add(userToken);

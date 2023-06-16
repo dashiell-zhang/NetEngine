@@ -115,8 +115,6 @@ namespace AdminAPI.Controllers
             var dbRole = new TRole
             {
                 Id = idHelper.GetId(),
-                CreateTime = DateTime.UtcNow,
-
                 Name = role.Name,
                 Remarks = role.Remarks
             };
@@ -253,7 +251,6 @@ namespace AdminAPI.Controllers
                 if (functionAuthorize.Id == default)
                 {
                     functionAuthorize.Id = idHelper.GetId();
-                    functionAuthorize.CreateTime = DateTime.UtcNow;
                     functionAuthorize.CreateUserId = userId;
 
                     db.TFunctionAuthorize.Add(functionAuthorize);

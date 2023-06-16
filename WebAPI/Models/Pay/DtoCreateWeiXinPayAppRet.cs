@@ -1,6 +1,6 @@
 ﻿namespace WebAPI.Models.Pay
 {
-    public class DtoCreateWeiXinPayAppRet1
+    public class DtoCreateWeiXinPayAppRet
     {
 
 

@@ -167,7 +167,6 @@ namespace Repository.Extensions
                         Id = logId,
                         Table = type.Name,
                         Content = result,
-                        CreateTime = DateTime.UtcNow,
                         TableId = entityId,
                         IpAddress = ipAddress == "" ? null : ipAddress,
                         DeviceMark = deviceMark == "" ? null : deviceMark,

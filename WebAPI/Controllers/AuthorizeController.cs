@@ -119,7 +119,6 @@ namespace WebAPI.Controllers
                         TUser user = new()
                         {
                             Id = idHelper.GetId(),
-                            CreateTime = DateTime.UtcNow,
                             Name = userName,
                             UserName = Guid.NewGuid().ToString(),
                             Phone = ""
@@ -133,7 +132,6 @@ namespace WebAPI.Controllers
                         TUserBindExternal userBind = new()
                         {
                             Id = idHelper.GetId(),
-                            CreateTime = DateTime.UtcNow,
                             UserId = user.Id,
                             AppName = "WeiXinMiniApp",
                             AppId = getTokenByWeiXinCode.AppId,
@@ -196,7 +194,6 @@ namespace WebAPI.Controllers
                     user = new()
                     {
                         Id = idHelper.GetId(),
-                        CreateTime = DateTime.UtcNow,
                         Name = userName,
                         UserName = Guid.NewGuid().ToString(),
                         Phone = phone
@@ -312,7 +309,6 @@ namespace WebAPI.Controllers
                     {
                         Id = idHelper.GetId(),
                         IsDelete = false,
-                        CreateTime = DateTime.UtcNow,
                         Name = userInfo.NickName,
                         UserName = Guid.NewGuid().ToString(),
                         Phone = ""
@@ -325,7 +321,6 @@ namespace WebAPI.Controllers
                     TUserBindExternal bind = new()
                     {
                         Id = idHelper.GetId(),
-                        CreateTime = DateTime.UtcNow,
                         AppName = "WeiXinApp",
                         AppId = getTokenByWeiXinCode.AppId,
                         OpenId = accessTokenAndOpenId.openId,
@@ -553,7 +548,6 @@ namespace WebAPI.Controllers
                     TFunctionRoute functionRoute = new()
                     {
                         Id = idHelper.GetId(),
-                        CreateTime = DateTime.UtcNow,
                         Module = projectName,
                         Route = item.Route!,
                         Remarks = remarks

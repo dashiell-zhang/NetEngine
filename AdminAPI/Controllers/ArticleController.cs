@@ -145,7 +145,6 @@ namespace AdminAPI.Controllers
             TCategory category = new()
             {
                 Id = idHelper.GetId(),
-                CreateTime = DateTime.UtcNow,
                 CreateUserId = userId,
                 Name = createCategory.Name,
                 ParentId = createCategory.ParentId,
@@ -323,7 +322,6 @@ namespace AdminAPI.Controllers
             TArticle article = new()
             {
                 Id = idHelper.GetId(),
-                CreateTime = DateTime.UtcNow,
                 CreateUserId = userId,
                 Title = createArticle.Title,
                 Content = createArticle.Content,

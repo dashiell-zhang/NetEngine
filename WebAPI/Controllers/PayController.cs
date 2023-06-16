@@ -29,21 +29,18 @@ namespace WebAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IDistributedCache distributedCache;
-        private readonly HttpClient httpClient;
         private readonly ILogger logger;
         private readonly PayService payService;
 
 
 
-        public PayController(DatabaseContext db, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, ILogger<PayController> logger, PayService payService)
+        public PayController(DatabaseContext db, IDistributedCache distributedCache, ILogger<PayController> logger, PayService payService)
         {
             this.db = db;
             this.distributedCache = distributedCache;
-            httpClient = httpClientFactory.CreateClient();
             this.logger = logger;
             this.payService = payService;
         }
-
 
 
 
@@ -141,16 +138,16 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// 微信支付-APP模式
+        /// 微信支付-App模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoCreateWeiXinPayAPPRet? CreateWeiXinPayAPP(string orderNo)
+        public DtoCreateWeiXinPayAppRet1? CreateWeiXinPayApp(string orderNo)
         {
-            string key = "wxpayAPP" + orderNo;
+            string key = "wxpayApp" + orderNo;
 
-            var ret = distributedCache.Get<DtoCreateWeiXinPayAPPRet>(key);
+            var ret = distributedCache.Get<DtoCreateWeiXinPayAppRet1>(key);
 
             if (ret == null)
             {
@@ -602,7 +599,7 @@ namespace WebAPI.Controllers
         /// <param name="aliPayKeyId"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoKeyValue? CreateAliPayMiniAPP(string orderNo, long aliPayKeyId)
+        public DtoKeyValue? CreateAliPayMiniApp(string orderNo, long aliPayKeyId)
         {
 
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp" && t.GroupId == aliPayKeyId).ToList();
@@ -617,7 +614,7 @@ namespace WebAPI.Controllers
                 {
                     t.OrderNo,
                     t.Price,
-                    AliPayUserId = db.TUserBindExternal.Where(a => a.UserId == t.CreateUserId && a.APPName == "AliPayMiniAPP" && a.APPId == appId).Select(a => a.OpenId).FirstOrDefault(),
+                    AliPayUserId = db.TUserBindExternal.Where(a => a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
                     t.CreateTime
                 }).FirstOrDefault();
 

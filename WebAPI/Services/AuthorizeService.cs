@@ -77,11 +77,11 @@ namespace WebAPI.Services
         /// <param name="appId"></param>
         /// <param name="code">登录时获取的 code，可通过wx.login获取</param>
         /// <returns></returns>
-        public (string openId, string sessionKey) GetWeiXinMiniAPPOpenIdAndSessionKey(string appId, string code)
+        public (string openId, string sessionKey) GetWeiXinMiniAppOpenIdAndSessionKey(string appId, string code)
         {
-            var settingGroupId = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniAPP" && t.Key == "APPId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefault();
+            var settingGroupId = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefault();
 
-            var appSecret = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniAPP" && t.GroupId == settingGroupId && t.Key == "APPSecret").Select(t => t.Value).FirstOrDefault();
+            var appSecret = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
             if (appSecret != null)
             {
@@ -99,20 +99,20 @@ namespace WebAPI.Services
                 }
             }
 
-            throw new Exception("GetWeiXinMiniAPPOpenIdAndSessionKey 获取失败");
+            throw new Exception("GetWeiXinMiniAppOpenIdAndSessionKey 获取失败");
         }
 
 
 
         /// <summary>
-        /// 获取微信APP AccessToken和OpenId
+        /// 获取微信App AccessToken和OpenId
         /// </summary>
         /// <returns></returns>
-        public (string accessToken, string openId) GetWeiXinAPPAccessTokenAndOpenId(string appId, string code)
+        public (string accessToken, string openId) GetWeiXinAppAccessTokenAndOpenId(string appId, string code)
         {
-            var settingGroupId = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinAPP" && t.Key == "APPId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefault();
+            var settingGroupId = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefault();
 
-            var appSecret = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinAPP" && t.GroupId == settingGroupId && t.Key == "APPSecret").Select(t => t.Value).FirstOrDefault();
+            var appSecret = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
 
             if (appSecret != null)
             {
@@ -134,18 +134,18 @@ namespace WebAPI.Services
 
 
         /// <summary>
-        /// 获取微信APP 用户信息
+        /// 获取微信App 用户信息
         /// </summary>
         /// <param name="accessToken"></param>
         /// <param name="openId"></param>
         /// <returns></returns>
-        public DtoGetWeiXinAPPUserInfo GetWeiXinAPPUserInfo(string accessToken, string openId)
+        public DtoGetWeiXinAppUserInfo1 GetWeiXinAppUserInfo(string accessToken, string openId)
         {
             string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
 
             var returnJson = httpClient.GetAsync(url).Result.Content.ReadAsStringAsync().Result;
 
-            var userInfo = JsonHelper.JsonToObject<DtoGetWeiXinAPPUserInfo>(returnJson);
+            var userInfo = JsonHelper.JsonToObject<DtoGetWeiXinAppUserInfo1>(returnJson);
 
             return userInfo;
         }

@@ -3,7 +3,7 @@
     public class GetTokenByWeiXinCode
     {
 
-        public string APPId { get; set; }
+        public string AppId { get; set; }
 
 
 

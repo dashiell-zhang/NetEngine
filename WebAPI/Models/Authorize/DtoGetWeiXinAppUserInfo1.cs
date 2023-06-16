@@ -2,9 +2,9 @@
 {
 
     /// <summary>
-    /// 获取微信APP用户信息
+    /// 获取微信App用户信息
     /// </summary>
-    public class DtoGetWeiXinAPPUserInfo
+    public class DtoGetWeiXinAppUserInfo1
     {
         public string? OpenId { get; set; }
 

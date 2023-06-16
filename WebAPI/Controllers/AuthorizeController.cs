@@ -36,8 +36,6 @@ namespace WebAPI.Controllers
 
         private readonly IDistributedCache distributedCache;
 
-        private readonly HttpClient httpClient;
-
         private readonly AuthorizeService authorizeService;
 
         private readonly long userId;
@@ -45,13 +43,12 @@ namespace WebAPI.Controllers
 
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, IDHelper idHelper, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, IDHelper idHelper, IDistributedCache distributedCache, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distLock = distLock;
             this.idHelper = idHelper;
             this.distributedCache = distributedCache;
-            httpClient = httpClientFactory.CreateClient();
 
             this.authorizeService = authorizeService;
 
@@ -73,7 +70,6 @@ namespace WebAPI.Controllers
         [HttpPost]
         public string? GetToken(DtoLogin login)
         {
-
             var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
 
             var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
@@ -87,7 +83,6 @@ namespace WebAPI.Controllers
                 HttpContext.SetErrMsg("用户名或密码错误");
                 return default;
             }
-
         }
 
 
@@ -98,21 +93,21 @@ namespace WebAPI.Controllers
         /// <param name="getTokenByWeiXinCode"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinMiniAPPCode([FromBody] GetTokenByWeiXinCode getTokenByWeiXinCode)
+        public string? GetTokenByWeiXinMiniAppCode([FromBody] GetTokenByWeiXinCode getTokenByWeiXinCode)
         {
-            var wxInfo = authorizeService.GetWeiXinMiniAPPOpenIdAndSessionKey(getTokenByWeiXinCode.APPId, getTokenByWeiXinCode.Code);
+            var wxInfo = authorizeService.GetWeiXinMiniAppOpenIdAndSessionKey(getTokenByWeiXinCode.AppId, getTokenByWeiXinCode.Code);
 
             string openId = wxInfo.openId;
             string sessionKey = wxInfo.sessionKey;
 
-            var userIdQuery = db.TUserBindExternal.Where(t => t.APPName == "WeiXinMiniAPP" && t.APPId == getTokenByWeiXinCode.APPId && t.OpenId == getTokenByWeiXinCode.APPId).Select(t => t.User.Id);
+            var userIdQuery = db.TUserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == getTokenByWeiXinCode.AppId && t.OpenId == getTokenByWeiXinCode.AppId).Select(t => t.User.Id);
 
             var userId = userIdQuery.FirstOrDefault();
 
             if (userId == default)
             {
 
-                using (distLock.Lock("GetTokenByWeiXinMiniAPPCode" + openId))
+                using (distLock.Lock("GetTokenByWeiXinMiniAppCode" + openId))
                 {
                     userId = userIdQuery.FirstOrDefault();
 
@@ -140,8 +135,8 @@ namespace WebAPI.Controllers
                             Id = idHelper.GetId(),
                             CreateTime = DateTime.UtcNow,
                             UserId = user.Id,
-                            APPName = "WeiXinMiniAPP",
-                            APPId = getTokenByWeiXinCode.APPId,
+                            AppName = "WeiXinMiniApp",
+                            AppId = getTokenByWeiXinCode.AppId,
                             OpenId = openId
                         };
 
@@ -295,20 +290,20 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// 通过微信APP Code获取Token认证信息
+        /// 通过微信App Code获取Token认证信息
         /// </summary>
         /// <param name="getTokenByWeiXinCode"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinAPPCode(GetTokenByWeiXinCode getTokenByWeiXinCode)
+        public string? GetTokenByWeiXinAppCode(GetTokenByWeiXinCode getTokenByWeiXinCode)
         {
-            var accessTokenAndOpenId = authorizeService.GetWeiXinAPPAccessTokenAndOpenId(getTokenByWeiXinCode.APPId, getTokenByWeiXinCode.Code);
+            var accessTokenAndOpenId = authorizeService.GetWeiXinAppAccessTokenAndOpenId(getTokenByWeiXinCode.AppId, getTokenByWeiXinCode.Code);
 
-            var userInfo = authorizeService.GetWeiXinAPPUserInfo(accessTokenAndOpenId.accessToken, accessTokenAndOpenId.openId);
+            var userInfo = authorizeService.GetWeiXinAppUserInfo(accessTokenAndOpenId.accessToken, accessTokenAndOpenId.openId);
 
             if (userInfo.NickName != null)
             {
-                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.APPName == "WeiXinAPP" && t.APPId == getTokenByWeiXinCode.APPId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
+                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == getTokenByWeiXinCode.AppId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
 
                 if (user == null)
                 {
@@ -331,8 +326,8 @@ namespace WebAPI.Controllers
                     {
                         Id = idHelper.GetId(),
                         CreateTime = DateTime.UtcNow,
-                        APPName = "WeiXinApp",
-                        APPId = getTokenByWeiXinCode.APPId,
+                        AppName = "WeiXinApp",
+                        AppId = getTokenByWeiXinCode.AppId,
                         OpenId = accessTokenAndOpenId.openId,
 
                         UserId = user.Id

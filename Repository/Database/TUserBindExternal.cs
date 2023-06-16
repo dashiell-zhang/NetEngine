@@ -16,17 +16,17 @@ namespace Repository.Database
 
 
         /// <summary>
-        /// APP名称
+        /// App名称
         /// </summary>
-        public string APPName { get; set; }
+        public string AppName { get; set; }
 
 
 
 
         /// <summary>
-        /// APPId
+        /// AppId
         /// </summary>
-        public string APPId { get; set; }
+        public string AppId { get; set; }
 
 
 

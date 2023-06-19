@@ -623,8 +623,9 @@ namespace WebAPI.Controllers
 
                     string price = Convert.ToString(order.Price);
 
+                    string gatewayUrl = "https://openapi.alipay.com/gateway.do";
 
-                    DefaultAopClient client = new("https://openapi.alipay.com/gateway.do", appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "utf-8", false);
+                    DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "utf-8", false);
 
                     AlipayTradeCreateRequest request = new();
 
@@ -702,8 +703,7 @@ namespace WebAPI.Controllers
 
                     string price = order.Price.ToString();
 
-                    //string gatewayUrl = "https://openapi.alipay.com/gateway.do";
-                    string gatewayUrl = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";
+                    string gatewayUrl = "https://openapi.alipay.com/gateway.do";
 
                     DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
 
@@ -769,8 +769,7 @@ namespace WebAPI.Controllers
 
                     string price = order.Price.ToString();
 
-                    //string gatewayUrl = "https://openapi.alipay.com/gateway.do";
-                    string gatewayUrl = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";
+                    string gatewayUrl = "https://openapi.alipay.com/gateway.do";
 
                     DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
 
@@ -886,16 +885,15 @@ namespace WebAPI.Controllers
             var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
 
             string gatewayUrl = "https://openapi.alipay.com/gateway.do";
-            //string gatewayUrl = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";
 
             DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
             AlipayTradeRefundRequest request = new();
 
             AlipayTradeRefundModel model = new()
             {
-                TradeNo = "支付宝交易流水号",
-                RefundAmount = "退款金额 05.00",
-                OutRequestNo = "退款单识别号"
+                TradeNo = "",//支付宝交易流水号
+                RefundAmount = "",//退款金额如 0.01
+                OutRequestNo = ""//退款单识别号
             };
 
             request.SetBizModel(model);
@@ -915,7 +913,55 @@ namespace WebAPI.Controllers
                 }
                 else
                 {
-                    //为N的情况，退款不一定失败，同一个请求第一次是Y第二次是N，该标记只标识本次请求是否有金额变动，为N时请主动调用退款查询接口
+                    //为N的情况，退款不一定失败，同一个请求第一次是Y第二次是N，该标记只标识本次请求是否有金额变动，为N时请主动调用退款查询 AliPayRefundSelect 接口
+                }
+            }
+
+        }
+
+
+
+        /// <summary>
+        /// 支付宝退款查询接口
+        /// </summary>
+        /// <returns></returns>
+        private void AliPayRefundSelect()
+        {
+
+            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
+
+            var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
+            var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
+            var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
+
+            string gatewayUrl = "https://openapi.alipay.com/gateway.do";
+
+            DefaultAopClient client = new(gatewayUrl, appId, appPrivateKey, "json", "1.0", "RSA2", aliPayPublicKey, "UTF-8", false);
+            AlipayTradeFastpayRefundQueryRequest request = new();
+
+            AlipayTradeFastpayRefundQueryModel model = new()
+            {
+                TradeNo = "",//支付宝交易流水号
+                OutRequestNo = ""//退款单识别号
+            };
+
+            request.SetBizModel(model);
+
+            AlipayTradeFastpayRefundQueryResponse response = client.Execute(request);
+
+            if (response.IsError)
+            {
+                string errMsg = response.SubMsg;
+            }
+            else
+            {
+                if (response.RefundStatus == "REFUND_SUCCESS")
+                {
+                    //则说明退款成功
+                }
+                else
+                {
+
                 }
             }
 

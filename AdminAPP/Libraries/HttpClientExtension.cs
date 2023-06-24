@@ -7,7 +7,7 @@ namespace AdminAPP.Libraries
     public static class HttpClientExtension
     {
 
-        private static JsonSerializerOptions jsonToObjectOptions;
+        private static readonly JsonSerializerOptions jsonToObjectOptions;
 
         static HttpClientExtension()
         {

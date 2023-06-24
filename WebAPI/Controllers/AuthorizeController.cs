@@ -95,7 +95,7 @@ namespace WebAPI.Controllers
         [HttpPost]
         public string? GetTokenByWeiXinMiniApp([FromBody] DtoGetTokenByWeiXinApp login)
         {
-            var wxInfo = authorizeService.GetWeiXinMiniAppOpenIdAndSessionKey(login.AppId, login.Code);
+            var (openId, sessionKey) = authorizeService.GetWeiXinMiniAppOpenIdAndSessionKey(login.AppId, login.Code);
 
             var userIdQuery = db.TUserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == login.AppId && t.OpenId == login.AppId).Select(t => t.User.Id);
 
@@ -104,7 +104,7 @@ namespace WebAPI.Controllers
             if (userId == default)
             {
 
-                using (distLock.Lock("GetTokenByWeiXinMiniAppCode" + wxInfo.openId))
+                using (distLock.Lock("GetTokenByWeiXinMiniAppCode" + openId))
                 {
                     userId = userIdQuery.FirstOrDefault();
 
@@ -132,7 +132,7 @@ namespace WebAPI.Controllers
                             UserId = user.Id,
                             AppName = "WeiXinMiniApp",
                             AppId = login.AppId,
-                            OpenId = wxInfo.openId
+                            OpenId = openId
                         };
 
                         db.TUserBindExternal.Add(userBind);
@@ -292,9 +292,9 @@ namespace WebAPI.Controllers
         [HttpPost]
         public string? GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login)
         {
-            var accessTokenAndOpenId = authorizeService.GetWeiXinAppAccessTokenAndOpenId(login.AppId, login.Code);
+            var (accessToken, openId) = authorizeService.GetWeiXinAppAccessTokenAndOpenId(login.AppId, login.Code);
 
-            var userInfo = authorizeService.GetWeiXinAppUserInfo(accessTokenAndOpenId.accessToken, accessTokenAndOpenId.openId);
+            var userInfo = authorizeService.GetWeiXinAppUserInfo(accessToken, openId);
 
             if (userInfo.NickName != null)
             {
@@ -321,7 +321,7 @@ namespace WebAPI.Controllers
                         Id = idHelper.GetId(),
                         AppName = "WeiXinApp",
                         AppId = login.AppId,
-                        OpenId = accessTokenAndOpenId.openId,
+                        OpenId = openId,
 
                         UserId = user.Id
                     };

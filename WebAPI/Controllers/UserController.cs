@@ -1,7 +1,5 @@
-﻿using Common;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using WebAPI.Filters;
@@ -27,18 +25,15 @@ namespace WebAPI.Controllers
 
         private readonly IDistributedCache distributedCache;
 
-        private readonly HttpClient httpClient;
-
 
         private readonly long userId;
 
 
 
-        public UserController(DatabaseContext db, IDistributedCache distributedCache, IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
+        public UserController(DatabaseContext db, IDistributedCache distributedCache, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distributedCache = distributedCache;
-            httpClient = httpClientFactory.CreateClient();
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
             if (userIdStr != null)

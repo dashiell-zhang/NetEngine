@@ -157,6 +157,7 @@ namespace Repository.Database
         }
 
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:删除未使用的私有成员", Justification = "<挂起>")]
         private static void GlobalHasQueryFilter<T>(ModelBuilder builder) where T : CD
         {
             builder.Entity<T>().HasQueryFilter(e => e.IsDelete == false);

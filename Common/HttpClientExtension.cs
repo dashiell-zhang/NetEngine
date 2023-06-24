@@ -115,7 +115,7 @@ namespace Common
 
             request.SetHeadersAndOptions(headers, options);
 
-            using FormUrlEncodedContent content = new(formItems);
+            FormUrlEncodedContent content = new(formItems);
             content.Headers.ContentType!.CharSet = "utf-8";
 
             request.Content = content;
@@ -147,7 +147,7 @@ namespace Common
 
             string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
 
-            using MultipartFormDataContent content = new(boundary);
+            MultipartFormDataContent content = new(boundary);
             foreach (var item in formItems)
             {
                 if (item.IsFile)

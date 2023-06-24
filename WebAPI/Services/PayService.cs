@@ -69,8 +69,10 @@ namespace WebAPI.Services
             if (method == "POST")
             {
                 requestMessage.Content = new StringContent(dataJson);
-                requestMessage.Content.Headers.ContentType = new("application/json");
-                requestMessage.Content.Headers.ContentType.CharSet = "utf-8";
+                requestMessage.Content.Headers.ContentType = new("application/json")
+                {
+                    CharSet = "utf-8"
+                };
 
             }
 

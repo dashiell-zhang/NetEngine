@@ -12,15 +12,17 @@
         public string refund_status { get; set; }
         public DateTime success_time { get; set; }
         public Amount amount { get; set; }
+
+        public class Amount
+        {
+            public int total { get; set; }
+            public int refund { get; set; }
+            public int payer_total { get; set; }
+            public int payer_refund { get; set; }
+        }
+
         public string user_received_account { get; set; }
     }
 
-    public class Amount
-    {
-        public int total { get; set; }
-        public int refund { get; set; }
-        public int payer_total { get; set; }
-        public int payer_refund { get; set; }
-    }
 
 }

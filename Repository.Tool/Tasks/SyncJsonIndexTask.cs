@@ -83,7 +83,7 @@ namespace Repository.Tool.Tasks
                             }
                         }
 
-                        if (indexPropertyName.Contains(".") == false)
+                        if (indexPropertyName.Contains('.') == false)
                         {
                             columnNameList.Add(columnName);
                             indexColumnSQLList.Add($"\"{columnName}\"" + orderBy);
@@ -92,20 +92,8 @@ namespace Repository.Tool.Tasks
                         {
                             string childColumnName = indexPropertyName.Split(".").LastOrDefault()!;
 
-                            var column = tableType.GetProperty(columnName);
-
-                            if (column == null)
-                            {
-                                throw new Exception(tableName + "表中不存在" + columnName);
-                            }
-
-                            var childColumn = column!.PropertyType!.GetProperty(childColumnName)!;
-
-                            if (childColumn == null)
-                            {
-                                throw new Exception(tableName + "表中不存在" + columnName + "." + childColumnName);
-                            }
-
+                            var column = tableType.GetProperty(columnName) ?? throw new Exception(tableName + "表中不存在" + columnName);
+                            var childColumn = column!.PropertyType!.GetProperty(childColumnName)! ?? throw new Exception(tableName + "表中不存在" + columnName + "." + childColumnName);
                             string columnSQL = $"(\"{columnName}\" ->> '{childColumnName}'::text)";
 
                             columnNameList.Add(columnName + "." + childColumnName);
@@ -247,11 +235,13 @@ namespace Repository.Tool.Tasks
 
         private class DBIndex
         {
+#pragma warning disable IDE1006 // 命名样式
             public string tablename { get; set; }
 
             public string indexname { get; set; }
 
             public string indexdef { get; set; }
+#pragma warning restore IDE1006 // 命名样式
         }
     }
 }

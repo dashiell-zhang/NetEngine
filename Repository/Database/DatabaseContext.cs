@@ -108,6 +108,20 @@ namespace Repository.Database
             }
 #endif
 
+            //循环移除所有json字段的对应类
+            foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetProperties()).ToArray())
+            {
+                if (property.GetColumnType() == "jsonb")
+                {
+                    var removeEntityType = modelBuilder.Model.GetEntityTypes().FirstOrDefault(e => e.ClrType == property.ClrType);
+
+                    if (removeEntityType != null)
+                    {
+                        modelBuilder.Model.RemoveEntityType(removeEntityType);
+                    }
+                }
+            }
+
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
 

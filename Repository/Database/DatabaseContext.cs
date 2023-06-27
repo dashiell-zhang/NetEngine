@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Common;
+using Common.Attributes;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository.Bases;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -99,6 +102,11 @@ namespace Repository.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            string aesPrivateKey = "PCjumsvbkAbJjwSyBqFrwSpcxIRwf042";
+
+            ValueConverter<string, string> aesConverter = new(
+                v => CryptoHelper.AesEncrypt(v, aesPrivateKey, "base64"),
+                v => CryptoHelper.AesDecrypt(v, aesPrivateKey, "base64"));
 
 #if DEBUG
             //循环关闭所有表的级联删除功能
@@ -133,6 +141,23 @@ namespace Repository.Database
                     //设置生成数据库时的表名移除前缀T
                     var tableName = builder.Metadata.ClrType.GetCustomAttribute<TableAttribute>()?.Name ?? (entity.ClrType.Name[1..]);
                     builder.ToTable(tableName);
+
+
+                    foreach (var property in entity.GetProperties())
+                    {
+                        //为所有 AesEncrypted 字段添加转换器
+                        if (property.PropertyInfo?.GetCustomAttribute<AesEncryptedAttribute>() != null)
+                        {
+                            if (property.ClrType == typeof(string))
+                            {
+                                property.SetValueConverter(aesConverter);
+                            }
+                            else
+                            {
+                                throw new Exception("非 string 类型的字段无法添加 AesEncrypted");
+                            }
+                        }
+                    }
 
 #if DEBUG
                     //设置表的备注

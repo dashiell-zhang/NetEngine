@@ -70,7 +70,7 @@ namespace DistributedLock.Redis
 
                     if (DateTime.UtcNow < endTime)
                     {
-                        Thread.Sleep(1000);
+                        Thread.Sleep(100);
                         goto StartTag;
                     }
                     else

@@ -28,7 +28,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Common\Common.csproj" />
 		<ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
 		<ProjectReference Include="..\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
 		<ProjectReference Include="..\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />

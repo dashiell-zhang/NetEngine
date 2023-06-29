@@ -31,7 +31,15 @@ namespace WebAPI.Filters
             {
                 foreach (var item in context.ActionArguments)
                 {
-                    LoopDetection(item.Value);
+                    var bindingSource = context.ActionDescriptor.Parameters.Where(t => t.Name == item.Key).Select(t => t.BindingInfo?.BindingSource).FirstOrDefault();
+
+                    if (bindingSource != null)
+                    {
+                        if (bindingSource.IsFromRequest)
+                        {
+                            LoopDetection(item.Value);
+                        }
+                    }
                 }
             }
             else

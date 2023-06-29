@@ -13,6 +13,7 @@ using System.Text;
 using System.Xml;
 using WebAPI.Filters;
 using WebAPI.Libraries;
+using WebAPI.Models.AppSetting;
 using WebAPI.Models.Authorize;
 using WebAPI.Models.Shared;
 using WebAPI.Services;
@@ -57,6 +58,28 @@ namespace WebAPI.Controllers
             if (userIdStr != null)
             {
                 userId = long.Parse(userIdStr);
+            }
+        }
+
+
+
+        /// <summary>
+        /// 获取公钥
+        /// </summary>
+        /// <returns></returns>
+        [AllowAnonymous]
+        [HttpGet("GetPublicKey")]
+        public string GetPublicKey(IConfiguration configuration)
+        {
+            var rsaSetting = configuration.GetRequiredSection("RSA").Get<RSASetting>();
+
+            if (rsaSetting != null)
+            {
+                return rsaSetting.PublicKey;
+            }
+            else
+            {
+                throw new Exception("RSA公钥加载异常");
             }
         }
 

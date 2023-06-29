@@ -1,8 +1,7 @@
-﻿using Common;
-using Common.Attributes;
+﻿using Common.Attributes;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository.Bases;
+using Repository.ValueConverters;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
@@ -102,11 +101,6 @@ namespace Repository.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            string aesPrivateKey = "PCjumsvbkAbJjwSyBqFrwSpcxIRwf042";
-
-            ValueConverter<string, string> aesConverter = new(
-                v => CryptoHelper.AesEncrypt(v, aesPrivateKey, "base64"),
-                v => CryptoHelper.AesDecrypt(v, aesPrivateKey, "base64"));
 
 #if DEBUG
             //循环关闭所有表的级联删除功能
@@ -150,7 +144,7 @@ namespace Repository.Database
                         {
                             if (property.ClrType == typeof(string))
                             {
-                                property.SetValueConverter(aesConverter);
+                                property.SetValueConverter(AesValueConverter.aesConverter);
                             }
                             else
                             {

@@ -15,6 +15,16 @@
     <script src="js/ueditor/ueditor.config.js"></script>
     <script src="js/ueditor/ueditor.all.js"></script>
 
+    <script>
+        function CreateObjectURL(fileArray, contentType) {
+            return URL.createObjectURL(new Blob([fileArray], { type: contentType }))
+        }
+
+        function RevokeObjectURL(objectUrl) {
+            URL.revokeObjectURL(objectUrl)
+        }
+    </script>
+
     <style>
         .site-layout-background {
             padding: 24px;

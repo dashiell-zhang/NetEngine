@@ -1,5 +1,9 @@
 ﻿@page "/information/article"
 @using AdminShared.Models.Article
+@using SkiaSharp;
+@using System.Security.Cryptography;
+@using System.Text;
+@using System.Net.Http.Headers;
 @attribute [ReuseTabsPageTitle("文章管理")]
 
 <Layout Style="padding-top:30px;">
@@ -38,9 +42,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                        OnConfirm="_=>DeleteArticle(context.Id)"
-                                        OkText="Yes"
-                                        CancelText="No">
+                                            OnConfirm="_=>DeleteArticle(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -57,13 +61,13 @@
                 </div>
             </PaginationTemplate>
 
-            </Table>
+        </Table>
 
-            </Content>
-            </Layout>
+    </Content>
+</Layout>
 
 
-            @{
+@{
     RenderFragment editFooter = @<Template>
         <Button OnClick="SaveArticle" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
         <Button OnClick="()=>isShowEditArticle=false" @key="@("back")">取消</Button>
@@ -81,72 +85,178 @@
 
                 <FormItem Label="所属栏目">
                     <TreeSelect TItem="DtoTreeSelect" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
-                    </FormItem>
+                </FormItem>
 
-                    <FormItem Label="标题">
+                <FormItem Label="标题">
                     <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
-                    </FormItem>
+                </FormItem>
 
-                    <FormItem Label="是否显示">
+                <FormItem Label="是否显示">
                     <Switch @bind-Value="@context.IsDisplay" CheckedChildren="是" UnCheckedChildren="否" />
-                    </FormItem>
+                </FormItem>
 
-                    <FormItem Label="是否推荐">
+                <FormItem Label="是否推荐">
                     <Switch @bind-Value="@context.IsRecommend" CheckedChildren="是" UnCheckedChildren="否" />
-                    </FormItem>
+                </FormItem>
 
-                    <FormItem Label="排序">
+                <FormItem Label="排序">
                     <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" style="width: 190px" />
-                    </FormItem>
+                </FormItem>
 
-                    <FormItem Label="点击量">
+                <FormItem Label="点击量">
                     <Input Placeholder="请输入点击量" Type="number" @bind-Value="@context.ClickCount" style="width: 190px" />
-                    </FormItem>
+                </FormItem>
 
-                    <FormItem Label="封面图">
-                    <Upload Action="@(LocalStorage.GetItemAsString("appAPIURL")+"File/UploadFile?business=TArticle&key="+fileKey+"&sign=cover")"
-                            Name="file"
-                            Headers=headers
-                            DefaultFileList="fileList"
-                            ShowButton="fileList?.Count < 5"
-                            ListType="picture-card"
-                            OnPreview="(file)=> PreviewImg(file)"
-                            OnRemove=" (file)=> DeleteImg(file)"
-                            OnChange="StateHasChanged"
-                            BeforeAllUploadAsync="((fileList) =>  BeforeUpload(fileList))"
-                            OnSingleCompleted=" (file)=> OnSingleCompleted(file)">
+                <FormItem Label="封面图">
 
-                        <div>
-                            <Icon Type="plus"></Icon>
-                            <div className="ant-upload-text">上传</div>
-                        </div>
-
+                    <InputFile id="fileInput" OnChange="@UploadImgage" hidden multiple accept=".png,.jpg" />
+                    <Upload Name="files">
+                        <label class="ant-btn" for="fileInput">
+                            <Icon Type="upload" />
+                            上传图片
+                        </label>
                     </Upload>
 
-                    <Modal Visible="isPreviewImg" Title="预览" OnCancel="()=> isPreviewImg=false" Footer="null" Style="width:55%">
-                        <Image Src="@previewImgUrl" />
-                    </Modal>
-                    </FormItem>
+                    <Upload FileList="fileList" ListType="picture-card" OnPreview="(file)=> PreviewImg(file)" OnRemove=" (file)=> DeleteImg(file)" ShowButton=false style="margin-top:8px"></Upload>
+                    
+                    <Image PreviewSrc="@previewImgUrl" Style="display: none;" @bind-PreviewVisible="isPreviewImg" />
 
-                    </TabPane>
+                </FormItem>
 
-                    <TabPane Key="2" Tab="详细内容" ForceRender="true">
-                    <FormItem Label="摘要">
+            </TabPane>
+
+            <TabPane Key="2" Tab="详细内容" ForceRender="true">
+                <FormItem Label="摘要">
                     <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Digest" MinRows="4" MaxRows="6" style="width:50em;min-height:80px" />
-                    </FormItem>
+                </FormItem>
 
-                    <FormItem Label="内容">
+                <FormItem Label="内容">
                     <TextArea Id="Content" @bind-Value="@context.Content" />
-                    </FormItem>
-                    </TabPane>
+                </FormItem>
+            </TabPane>
 
-                    </Tabs>
+        </Tabs>
 
-                    </Form>
-                    </Modal>
+    </Form>
+</Modal>
 
 
-                    @code {
+@code {
+
+    async void UploadImgage(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            string url = LocalStorage.GetItemAsString("appAPIURL") + "File/UploadFile?business=TArticle&key=" + fileKey + "&sign=cover";
+
+            using HttpClientHandler handler = new();
+
+            using HttpClient client = new(handler);
+            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+
+            string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
+
+
+            using MultipartFormDataContent formDataContent = new(boundary);
+
+            byte[] imageByteArray;
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await file.OpenReadStream(999999999999).CopyToAsync(memoryStream);
+                imageByteArray = memoryStream.ToArray();
+            }
+
+            using var original = SKBitmap.Decode(imageByteArray);
+
+            int maxSideLength = 1920;
+
+            int width = original.Width;
+            int height = original.Height;
+
+            if (original.Width > original.Height)
+            {
+                if (original.Width > maxSideLength)
+                {
+                    var percent = maxSideLength / (float)original.Width;
+                    width = (int)(original.Width * percent);
+                    height = (int)(original.Height * percent);
+                }
+            }
+            else
+            {
+                if (original.Height > maxSideLength)
+                {
+                    var percent = maxSideLength / (float)original.Height;
+                    width = (int)(original.Width * percent);
+                    height = (int)(original.Height * percent);
+                }
+            }
+
+
+            using var resizeBitmap = original.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
+            using var image = SKImage.FromBitmap(resizeBitmap);
+            using var imageData = image.Encode(SKEncodedImageFormat.Jpeg, 100);
+
+            using var sha256 = SHA256.Create();
+            var fileSign = Convert.ToHexString(sha256.ComputeHash(imageData.AsStream()));
+
+            var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            var authorization = LocalStorage.GetItemAsString("Authorization");
+            var privateKey = authorization.Split(".").ToList().LastOrDefault();
+            var requestUrl = "/File/UploadFile?business=TArticle&key=" + fileKey + "&sign=cover";
+
+            var dataStr = privateKey + timeStr + requestUrl + "file" + fileSign;
+
+            using var shaa256 = SHA256.Create();
+            string dataSign = Convert.ToHexString(shaa256.ComputeHash(Encoding.UTF8.GetBytes(dataStr)));
+
+            headers.Remove("Token");
+            headers.Remove("Time");
+            headers.Add("Token", dataSign);
+            headers.Add("Time", timeStr);
+
+            foreach (var header in headers)
+            {
+                client.DefaultRequestHeaders.Add(header.Key, header.Value);
+            }
+
+            var fileContent = new StreamContent(imageData.AsStream());
+
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+
+
+            string fileName = file.Name.Replace(file.Name.Split(".").LastOrDefault() ?? "", "jpg");
+
+            formDataContent.Add(fileContent, "file", fileName);
+
+            var httpResponse = await client.PostAsync(url, formDataContent);
+
+            string fileId = httpResponse.Content.ReadAsStringAsync().Result.Replace("\"", "");
+
+            byte[] newImageArray;
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                imageData.SaveTo(ms);
+                newImageArray = ms.ToArray();
+            }
+
+            string fileURL = await JS.InvokeAsync<string>("CreateObjectURL", newImageArray, "image/jpeg");
+
+            fileList.Add(new UploadFileItem()
+                {
+                    Id = fileId,
+                    FileName = file.Name,
+                    Url = fileURL,
+                    State = UploadState.Success
+                });
+
+            StateHasChanged();
+        }
+
+    }
+
 
     private Form<DtoEditArticle>? _editArticleForm;
 
@@ -251,6 +361,15 @@
     {
 
         editArticle = new();
+
+        foreach (var item in fileList)
+        {
+            if (item.Url.StartsWith("blob"))
+            {
+                JS.InvokeAsync<string>("RevokeObjectURL", item.Url);
+            }
+        }
+
         fileList = new();
         articleId = default;
 
@@ -285,9 +404,7 @@
             editArticle.Sort = 99;
         }
 
-
         GetCategoryTreeList();
-
 
         isShowEditArticle = true;
 
@@ -378,44 +495,6 @@
                 return false;
             }
         }
-    }
-
-
-    void OnSingleCompleted(UploadInfo file)
-    {
-        file.File.Id = JsonHelper.JsonToObject<string>(file.File.Response);
-    }
-
-
-    async Task<bool> BeforeUpload(List<UploadFileItem> fileList)
-    {
-        foreach (var file in fileList)
-        {
-            string fileSign = "";
-
-            using (var fileStream = await Http.GetStreamAsync(file.ObjectURL))
-            {
-                using System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create();
-                fileSign = Convert.ToHexString(sha256.ComputeHash(fileStream));
-            }
-
-            var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-            var authorization = LocalStorage.GetItemAsString("Authorization");
-            var privateKey = authorization.Split(".").ToList().LastOrDefault();
-            var requestUrl = "/api/File/UploadFile?business=TArticle&key=" + fileKey + "&sign=cover";
-
-            var dataStr = privateKey + timeStr + requestUrl + "file" + fileSign;
-
-            using System.Security.Cryptography.SHA256 shaa256 = System.Security.Cryptography.SHA256.Create();
-            string dataSign = Convert.ToHexString(shaa256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(dataStr)));
-
-            headers.Remove("Token");
-            headers.Remove("Time");
-            headers.Add("Token", dataSign);
-            headers.Add("Time", timeStr);
-        }
-
-        return true;
     }
 
 

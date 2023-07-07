@@ -24,7 +24,15 @@ namespace TaskService.Libraries
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
 
-            if (queueMethodList.Any() && scheduleMethodList.Any())
+            bool isDebug = false;
+
+#if DEBUG
+            isDebug = true;
+#endif
+
+            await Task.Delay(5000, stoppingToken);
+
+            if ((queueMethodList.Any() || scheduleMethodList.Any()) && isDebug == false)
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {

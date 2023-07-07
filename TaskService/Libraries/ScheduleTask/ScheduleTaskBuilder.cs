@@ -19,7 +19,11 @@
                     Cron = cron,
                     Method = method,
                     Context = context,
+#if DEBUG
+                    IsEnable = false
+#else
                     IsEnable = true
+#endif
                 });
             }
         }

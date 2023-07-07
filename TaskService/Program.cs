@@ -118,12 +118,102 @@ namespace TaskService
                 })
                 .Build();
 
-            host.Run();
+            host.Start();
+#if DEBUG
+
+            var queueMethodList = Libraries.QueueTask.QueueTaskBuilder.queueMethodList;
+
+            var scheduleMethodList = Libraries.ScheduleTask.ScheduleTaskBuilder.scheduleMethodList;
+
+        StartActionTag:
+
+            int indexNo = 1;
+            Console.WriteLine();
+
+            Dictionary<int, (string, string)> actionList = new();
+
+            foreach (var item in queueMethodList)
+            {
+                string actionStatus = item.Value.IsEnable ? "已启动" : "";
+
+                if (item.Value.IsEnable)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                }
+
+                Console.WriteLine($"[{indexNo}] " + "队列任务：" + item.Key + " " + actionStatus);
+
+                actionList.Add(indexNo, ("队列任务", item.Key));
+                indexNo++;
+
+                Console.ResetColor();
+            }
+
+            foreach (var item in scheduleMethodList)
+            {
+                string actionStatus = item.IsEnable ? "已启动" : "";
+
+                if (item.IsEnable)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                }
+
+                Console.WriteLine($"[{indexNo}] " + "定时任务：" + item.Method.Name + " " + actionStatus);
+                actionList.Add(indexNo, ("定时任务", item.Method.Name));
+                indexNo++;
+
+                Console.ResetColor();
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("请选择要启用的服务，输入序号回车即可（支持空格分割一次输入多个序号）");
+
+            var startIndexNoStr = Console.ReadLine();
+
+            if (startIndexNoStr != null)
+            {
+                try
+                {
+                    foreach (var startIndexNo in startIndexNoStr.Split(" "))
+                    {
+                        var startActionName = actionList.GetValueOrDefault(int.Parse(startIndexNo));
+
+                        if (startActionName != default)
+                        {
+
+                            if (startActionName.Item1 == "队列任务")
+                            {
+                                var actionInfo = queueMethodList.Where(t => t.Key == startActionName.Item2).First();
+                                actionInfo.Value.IsEnable = true;
+                            }
+                            else
+                            {
+                                var actionInfo = scheduleMethodList.Where(t => t.Method.Name == startActionName.Item2).First();
+                                actionInfo.IsEnable = true;
+                            }
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("无效的服务序号：" + startIndexNo);
+                            Console.ResetColor();
+                        }
+                    }
+                }
+                catch
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("无效的服务序号：" + startIndexNoStr);
+                    Console.ResetColor();
+                }
+
+                goto StartActionTag;
+            }
+
+#endif
+            host.WaitForShutdown();
 
         }
 
-
-
     }
-
 }

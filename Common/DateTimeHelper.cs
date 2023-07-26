@@ -9,48 +9,50 @@ namespace Common
 
 
         /// <summary>
-        /// 获取某个日期，本周第一天
+        /// 获取某个日期所属周第一天
         /// </summary>
-        /// <param name="time"></param>
+        /// <param name="date"></param>
         /// <returns></returns>
-        public static DateTime GetWeekOne(DateTime time)
+        public static DateOnly GetWeekFirstDay(DateOnly date)
         {
-            switch (time.DayOfWeek.ToString())
+            var dateTime = date.ToDateTime(new TimeOnly());
+
+            switch (dateTime.DayOfWeek.ToString())
             {
 
                 case "Monday":
                     {
-                        return Convert.ToDateTime(time.AddDays(0).ToLongDateString());
+                        return date.AddDays(0);
                     }
 
                 case "Tuesday":
                     {
-                        return Convert.ToDateTime(time.AddDays(-1).ToLongDateString());
+                        return date.AddDays(-1);
                     }
 
                 case "Wednesday":
                     {
-                        return Convert.ToDateTime(time.AddDays(-2).ToLongDateString());
+                        return date.AddDays(-2);
                     }
 
                 case "Thursday":
                     {
-                        return Convert.ToDateTime(time.AddDays(-3).ToLongDateString());
+                        return date.AddDays(-3);
                     }
 
                 case "Friday":
                     {
-                        return Convert.ToDateTime(time.AddDays(-4).ToLongDateString());
+                        return date.AddDays(-4);
                     }
 
                 case "Saturday":
                     {
-                        return Convert.ToDateTime(time.AddDays(-5).ToLongDateString());
+                        return date.AddDays(-5);
                     }
 
                 case "Sunday":
                     {
-                        return Convert.ToDateTime(time.AddDays(-6).ToLongDateString());
+                        return date.AddDays(-6);
                     }
             }
 
@@ -60,68 +62,37 @@ namespace Common
 
 
         /// <summary>
-        /// 获取某个日期，本季度第一天
+        /// 获取某个日期所属季度第一天
         /// </summary>
-        /// <param name="time"></param>
+        /// <param name="date"></param>
         /// <returns></returns>
-        public static DateTime GetQuarterlyOne(DateTime time)
+        public static DateOnly GetQuarterlyFirstDay(DateOnly date)
         {
-            var month = time.Month;
-
-            var startTime = Convert.ToDateTime(time.Year + "-01-01");
-
-            if (month < 4)
+            switch (GetQuarterly(date))
             {
-                return startTime;
+                case 1:
+                    return DateOnly.Parse(date.Year + "-01-01");
+                case 2:
+                    return DateOnly.Parse(date.Year + "-03-01");
+                case 3:
+                    return DateOnly.Parse(date.Year + "-07-01");
+                case 4:
+                    return DateOnly.Parse(date.Year + "-10-01");
+                default:
+                    throw new Exception();
             }
-            else if (month > 3 && month < 7)
-            {
-                return startTime.AddMonths(3);
-            }
-            else if (month > 6 && month < 10)
-            {
-                return startTime.AddMonths(6);
-            }
-            else if (month > 9)
-            {
-                return startTime.AddMonths(9);
-            }
-
-            return default;
         }
 
 
 
         /// <summary>
-        /// 获取一个时间是第几季度
+        /// 获取某个日期所属季度
         /// </summary>
-        /// <param name="time"></param>
+        /// <param name="date"></param>
         /// <returns></returns>
-        public static int GetQuarterly(DateTime time)
+        public static int GetQuarterly(DateOnly date)
         {
-
-            var month = time.Month;
-
-            int quarterly = 0;
-
-            if (month <= 3)
-            {
-                quarterly = 1;
-            }
-            else if (month >= 4 & month <= 6)
-            {
-                quarterly = 2;
-            }
-            else if (month >= 7 & month <= 9)
-            {
-                quarterly = 3;
-            }
-            else if (month >= 10 & month <= 12)
-            {
-                quarterly = 4;
-            }
-
-            return quarterly;
+            return Convert.ToInt32(Math.Ceiling(date.Month / 3.0));
         }
 
 
@@ -179,6 +150,45 @@ namespace Common
         public static DateTimeOffset GetTimeByString(string timeText, string format)
         {
             return DateTimeOffset.ParseExact(timeText, format, CultureInfo.CurrentCulture);
+        }
+
+
+
+
+        /// <summary>
+        /// 年龄计算
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public static int GetAge(DateOnly date)
+        {
+            var dateTime = date.ToDateTime(new TimeOnly());
+
+            return Convert.ToInt32(Math.Ceiling((DateTime.Today.Subtract(dateTime).Days + 1) / 365.0));
+        }
+
+
+
+        /// <summary>
+        /// 时间抹零
+        /// </summary>
+        /// <param name="dateTimeOffset"></param>
+        /// <returns></returns>
+        public static DateTime TimeErase(DateTime dateTime)
+        {
+            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, 0, 0, 0, dateTime.Kind);
+        }
+
+
+
+        /// <summary>
+        /// 时间抹零
+        /// </summary>
+        /// <param name="dateTimeOffset"></param>
+        /// <returns></returns>
+        public static DateTimeOffset TimeErase(DateTimeOffset dateTimeOffset)
+        {
+            return new DateTimeOffset(dateTimeOffset.DateTime.Date, dateTimeOffset.Offset);
         }
 
 

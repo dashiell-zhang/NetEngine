@@ -165,7 +165,11 @@ namespace WebAPI
 
                 options.MapType<long>(() => new OpenApiSchema { Type = "string", Format = "long" });
 
-                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml"), true);
+                var xmlPaths = IOHelper.GetFolderAllFiles(AppContext.BaseDirectory).Where(t => t.EndsWith(".xml")).ToList();
+                foreach (var xmlPath in xmlPaths)
+                {
+                    options.IncludeXmlComments(xmlPath, true);
+                }
 
                 options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
                 {

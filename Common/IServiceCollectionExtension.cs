@@ -119,7 +119,8 @@ namespace Common
                 }
             }
 
-            var runtimeLibraryNameList = DependencyContext.Default?.RuntimeLibraries.Select(o => o.Name).ToList();
+            var runtimeLibraryNameList = DependencyContext.Default?.RuntimeLibraries.SelectMany(t=>t.RuntimeAssemblyGroups.SelectMany(r=>r.AssetPaths.Select(a=> new FileInfo(a)).Where(f => f.Extension == ".dll").Select(f => f.Name[..^4]))).ToList();
+
             if (runtimeLibraryNameList != null)
             {
                 var allDLLDirPath = allAssemblies.Select(t => new FileInfo(t.Location).Directory?.ToString()).Distinct().ToList();

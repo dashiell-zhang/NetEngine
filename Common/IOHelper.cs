@@ -146,7 +146,7 @@ namespace Common
         /// 获取文件夹下所有文件
         /// </summary>
         /// <param name="folderPath">文件夹路径</param>
-        public static List<string> GetFolderAllFiles(string folderPath)
+        public static List<string> GetFolderAllFiles(string folderPath, bool includeSubfolders = false)
         {
             List<string> list = new();
 
@@ -155,10 +155,16 @@ namespace Common
             {
                 list.Add(info.FullName);
             }
-            foreach (DirectoryInfo info in directoryInfo.GetDirectories())
+
+            if (includeSubfolders)
             {
-                list.AddRange(GetFolderAllFiles(info.FullName));
+                foreach (DirectoryInfo info in directoryInfo.GetDirectories())
+                {
+                    list.AddRange(GetFolderAllFiles(info.FullName, includeSubfolders));
+                }
             }
+
+
 
             return list;
         }

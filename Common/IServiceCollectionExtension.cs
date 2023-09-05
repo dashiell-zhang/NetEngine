@@ -64,7 +64,6 @@ namespace Common
 
 
 
-
         /// <summary>
         /// 注册后台服务
         /// </summary>
@@ -123,21 +122,29 @@ namespace Common
             var runtimeLibraryNameList = DependencyContext.Default?.RuntimeLibraries.Select(o => o.Name).ToList();
             if (runtimeLibraryNameList != null)
             {
+                var allDLLDirPath = allAssemblies.Select(t => new FileInfo(t.Location).Directory?.ToString()).Distinct().ToList();
+
+                List<string> allDLLs = new();
+
+                foreach (var item in allDLLDirPath)
+                {
+                    if (item != null)
+                    {
+                        var dllPaths = IOHelper.GetFolderAllFiles(item).Select(t => new FileInfo(t)).Where(t => t.Extension == ".dll").Select(t => t.Name[..^4]).ToList();
+
+                        allDLLs.AddRange(dllPaths);
+                    }
+                }
+
                 foreach (var runtimeLibraryName in runtimeLibraryNameList)
                 {
-                    try
+                    if (loadedAssemblies.Contains(runtimeLibraryName) == false && allDLLs.Contains(runtimeLibraryName))
                     {
-                        if (!loadedAssemblies.Contains(runtimeLibraryName))
-                        {
-                            var assembly = Assembly.Load(runtimeLibraryName);
+                        var assembly = Assembly.Load(runtimeLibraryName);
 
-                            loadedAssemblies.Add(runtimeLibraryName);
+                        loadedAssemblies.Add(runtimeLibraryName);
 
-                            allAssemblies.Add(assembly);
-                        }
-                    }
-                    catch
-                    {
+                        allAssemblies.Add(assembly);
                     }
                 }
             }

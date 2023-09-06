@@ -89,64 +89,26 @@ namespace Common
         /// <returns></returns>
         private static List<Assembly> GetAllAssembly()
         {
-            var allAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
+            List<Assembly> allAssemblies = new();
 
-            HashSet<string> loadedAssemblies = new();
+            var runtimeLibraryNameList = DependencyContext.Default?.RuntimeLibraries.SelectMany(t => t.RuntimeAssemblyGroups.SelectMany(r => r.AssetPaths.Select(a => new FileInfo(a)).Where(f => f.Extension == ".dll").Select(f => f.Name[..^4]))).Distinct().ToList();
 
-            foreach (var item in allAssemblies)
+            List<string> removeKeyList = new()
             {
-                loadedAssemblies.Add(item.GetName().Name!);
-            }
-
-            Queue<Assembly> assembliesToCheck = new();
-            assembliesToCheck.Enqueue(Assembly.GetEntryAssembly()!);
-
-            while (assembliesToCheck.Any())
-            {
-                var assemblyToCheck = assembliesToCheck.Dequeue();
-                foreach (var reference in assemblyToCheck!.GetReferencedAssemblies())
-                {
-                    if (!loadedAssemblies.Contains(reference.Name!))
-                    {
-                        var assembly = Assembly.Load(reference);
-
-                        assembliesToCheck.Enqueue(assembly);
-
-                        loadedAssemblies.Add(reference.Name!);
-
-                        allAssemblies.Add(assembly);
-                    }
-                }
-            }
-
-            var runtimeLibraryNameList = DependencyContext.Default?.RuntimeLibraries.SelectMany(t=>t.RuntimeAssemblyGroups.SelectMany(r=>r.AssetPaths.Select(a=> new FileInfo(a)).Where(f => f.Extension == ".dll").Select(f => f.Name[..^4]))).ToList();
+                "NPOI"
+            };
 
             if (runtimeLibraryNameList != null)
             {
-                var allDLLDirPath = allAssemblies.Select(t => new FileInfo(t.Location).Directory?.ToString()).Distinct().ToList();
-
-                List<string> allDLLs = new();
-
-                foreach (var item in allDLLDirPath)
+                foreach (var removeKey in removeKeyList)
                 {
-                    if (item != null)
-                    {
-                        var dllPaths = IOHelper.GetFolderAllFiles(item).Select(t => new FileInfo(t)).Where(t => t.Extension == ".dll").Select(t => t.Name[..^4]).ToList();
-
-                        allDLLs.AddRange(dllPaths);
-                    }
+                    runtimeLibraryNameList.RemoveAll(t => t.StartsWith(removeKey));
                 }
 
                 foreach (var runtimeLibraryName in runtimeLibraryNameList)
                 {
-                    if (loadedAssemblies.Contains(runtimeLibraryName) == false && allDLLs.Contains(runtimeLibraryName))
-                    {
-                        var assembly = Assembly.Load(runtimeLibraryName);
-
-                        loadedAssemblies.Add(runtimeLibraryName);
-
-                        allAssemblies.Add(assembly);
-                    }
+                    var assembly = Assembly.Load(runtimeLibraryName);
+                    allAssemblies.Add(assembly);
                 }
             }
 

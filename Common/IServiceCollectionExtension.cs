@@ -95,6 +95,8 @@ namespace Common
 
             List<string> removeKeyList = new()
             {
+                "Microsoft",
+                "System",
                 "NPOI"
             };
 

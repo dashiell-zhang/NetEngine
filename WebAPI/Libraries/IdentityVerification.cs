@@ -99,8 +99,10 @@ namespace WebAPI.Libraries
             var nbfTime = DateTimeOffset.FromUnixTimeSeconds(nbf);
             var expTime = DateTimeOffset.FromUnixTimeSeconds(exp);
 
-            //当前Token过期前15分钟开始签发新的Token
-            if (expTime < DateTime.UtcNow.AddMinutes(15))
+            var lifeSpan = nbfTime + ((expTime - nbfTime) * 0.5);
+
+            //当前Token有效期不足一半时签发新的Token
+            if (lifeSpan < DateTimeOffset.UtcNow)
             {
 
                 var tokenId = long.Parse(httpContext.GetClaimByAuthorization("tokenId")!);

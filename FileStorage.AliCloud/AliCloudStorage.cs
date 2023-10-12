@@ -117,7 +117,7 @@ namespace FileStorage.AliCloud
 
 
 
-        public string? GetFileTempUrl(string remotePath, TimeSpan expiry, string? fileName = null)
+        public string? GetFileTempURL(string remotePath, TimeSpan expiry, string? fileName = null)
         {
 
             try

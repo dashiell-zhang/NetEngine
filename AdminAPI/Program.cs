@@ -237,20 +237,24 @@ namespace AdminAPI
             #region 注册文件服务
 
 
-            //builder.Services.AddTencentCloudSMS(options =>
+            //builder.Services.AddTencentCloudStorage(options =>
             //{
-            //    var settings = builder.Configuration.GetRequiredSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>()!;
+            //    var settings = builder.Configuration.GetRequiredSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>()!;
             //    options.AppId = settings.AppId;
+            //    options.Region = settings.Region;
             //    options.SecretId = settings.SecretId;
             //    options.SecretKey = settings.SecretKey;
+            //    options.BucketName = settings.BucketName;
             //});
 
 
-            //builder.Services.AddAliCloudSMS(options =>
+            //builder.Services.AddAliCloudStorage(options =>
             //{
-            //    var settings = builder.Configuration.GetRequiredSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>()!;
+            //    var settings = builder.Configuration.GetRequiredSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>()!;
+            //    options.Endpoint = settings.Endpoint;
             //    options.AccessKeyId = settings.AccessKeyId;
             //    options.AccessKeySecret = settings.AccessKeySecret;
+            //    options.BucketName = settings.BucketName;
             //});
 
             #endregion

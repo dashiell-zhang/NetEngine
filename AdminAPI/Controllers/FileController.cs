@@ -111,6 +111,7 @@ namespace AdminAPI.Controllers
                     {
                         Id = idHelper.GetId(),
                         Name = file.FileName,
+                        Length = file.Length,
                         Path = filePath,
                         Table = business,
                         TableId = key,

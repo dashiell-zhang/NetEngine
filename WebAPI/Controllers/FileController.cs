@@ -82,6 +82,8 @@ namespace WebAPI.Controllers
             if (dlPath != null)
             {
 
+                var length = new FileInfo(dlPath).Length;
+
                 var isSuccess = true;
 
                 string fileInfoName = fileInfo.Value.ToString()!;
@@ -109,6 +111,7 @@ namespace WebAPI.Controllers
                     {
                         Id = idHelper.GetId(),
                         Name = fileInfoName,
+                        Length = length,
                         Path = filePath,
                         Table = business,
                         TableId = key,
@@ -187,6 +190,7 @@ namespace WebAPI.Controllers
                     {
                         Id = idHelper.GetId(),
                         Name = file.FileName,
+                        Length = file.Length,
                         Path = filePath,
                         Table = business,
                         TableId = key,

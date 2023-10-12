@@ -42,7 +42,7 @@
         /// <param name="expiry">失效时长</param>
         /// <param name="fileName">自定义下载文件名</param>
         /// <returns></returns>
-        public string? GetFileTempUrl(string remotePath, TimeSpan expiry, string? fileName = null);
+        public string? GetFileTempURL(string remotePath, TimeSpan expiry, string? fileName = null);
 
 
     }

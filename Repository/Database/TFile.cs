@@ -25,6 +25,14 @@ namespace Repository.Database
         public string Path { get; set; }
 
 
+
+        /// <summary>
+        /// 文件大小
+        /// </summary>
+        public long Length { get; set; }
+
+
+
         /// <summary>
         /// 外链表名
         /// </summary>

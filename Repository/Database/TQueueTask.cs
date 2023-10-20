@@ -24,6 +24,13 @@ namespace Repository.Database
 
 
         /// <summary>
+        /// 计划执行时间
+        /// </summary>
+        public DateTimeOffset? PlanTime { set; get; }
+
+
+
+        /// <summary>
         /// 执行次数
         /// </summary>
         public int Count { get; set; }

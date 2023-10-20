@@ -18,7 +18,7 @@ namespace WebAPI.Services
         }
 
 
-        public bool Create(string name, object? parameter)
+        public bool Create(string name, object? parameter, DateTimeOffset? planTime = null)
         {
             if (db.Database.CurrentTransaction != null)
             {
@@ -27,7 +27,8 @@ namespace WebAPI.Services
                     TQueueTask queueTask = new()
                     {
                         Id = idHelper.GetId(),
-                        Name = name
+                        Name = name,
+                        PlanTime = planTime
                     };
 
                     if (parameter != null)

@@ -210,6 +210,7 @@ namespace Repository.Database
 
             Dictionary<string, string> fieldList = new();
 
+
             if (fieldName == null)
             {
                 var matchKey = "T:" + typeName;
@@ -220,11 +221,16 @@ namespace Repository.Database
                     {
                         var name = node.Attributes!["name"]!.Value;
 
-                        var summary = node.InnerText.Trim();
-
                         if (name == matchKey)
                         {
-                            fieldList.Add(name, summary);
+                            foreach (var item in node.ChildNodes)
+                            {
+                                if (item is XmlNode childNode && childNode.Name == "summary")
+                                {
+                                    var summary = childNode.InnerText.Trim();
+                                    fieldList.Add(name, summary);
+                                }
+                            }
                         }
                     }
                 }
@@ -240,8 +246,6 @@ namespace Repository.Database
                     {
                         string name = node.Attributes!["name"]!.Value;
 
-                        var summary = node.InnerText.Trim();
-
                         var matchKey = "P:" + typeName + ".";
                         if (name.StartsWith(matchKey))
                         {
@@ -249,7 +253,14 @@ namespace Repository.Database
 
                             fieldList.Remove(name);
 
-                            fieldList.Add(name, summary);
+                            foreach (var item in node.ChildNodes)
+                            {
+                                if (item is XmlNode childNode && childNode.Name == "summary")
+                                {
+                                    var summary = childNode.InnerText.Trim();
+                                    fieldList.Add(name, summary);
+                                }
+                            }
                         }
 
                         if (baseTypeNames != null)
@@ -262,12 +273,19 @@ namespace Repository.Database
                                     if (name.StartsWith(matchKey))
                                     {
                                         name = name.Replace(matchKey, "");
-                                        fieldList.Add(name, summary);
+
+                                        foreach (var item in node.ChildNodes)
+                                        {
+                                            if (item is XmlNode childNode && childNode.Name == "summary")
+                                            {
+                                                var summary = childNode.InnerText.Trim();
+                                                fieldList.Add(name, summary);
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-
                     }
                 }
 

@@ -55,9 +55,39 @@ namespace Common
                             {
                                 pi.SetValue(model, Convert.ToBoolean(drValue), null);
                             }
+                            else if (piFullName.Contains("System.Decimal"))
+                            {
+                                if (piFullName.StartsWith("System.Nullable`1[[System.Decimal") && string.IsNullOrWhiteSpace($"{drValue}"))
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else
+                                {
+                                    pi.SetValue(model, Convert.ToDecimal(drValue), null);
+                                }
+                            }
+                            else if (piFullName.Contains("System.Int32"))
+                            {
+                                if (piFullName.StartsWith("System.Nullable`1[[System.Int32") && string.IsNullOrWhiteSpace($"{drValue}"))
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else
+                                {
+                                    pi.SetValue(model, Convert.ToInt32(drValue), null);
+                                }
+                            }
                             else
                             {
-                                pi.SetValue(model, drValue, null);
+                                if (string.IsNullOrWhiteSpace($"{drValue}"))
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else
+                                {
+                                    pi.SetValue(model, $"{drValue}".Trim(), null);
+                                }
+
                             }
 
                         }
@@ -121,9 +151,39 @@ namespace Common
                             {
                                 pi.SetValue(model, Convert.ToBoolean(drValue), null);
                             }
+                            else if (piFullName.Contains("System.Decimal"))
+                            {
+                                if (piFullName.StartsWith("System.Nullable`1[[System.Decimal") && string.IsNullOrWhiteSpace($"{drValue}"))
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else
+                                {
+                                    pi.SetValue(model, Convert.ToDecimal(drValue), null);
+                                }
+                            }
+                            else if (piFullName.Contains("System.Int32"))
+                            {
+                                if (piFullName.StartsWith("System.Nullable`1[[System.Int32") && string.IsNullOrWhiteSpace($"{drValue}"))
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else
+                                {
+                                    pi.SetValue(model, Convert.ToInt32(drValue), null);
+                                }
+                            }
                             else
                             {
-                                pi.SetValue(model, drValue, null);
+                                if (string.IsNullOrWhiteSpace($"{drValue}"))
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else
+                                {
+                                    pi.SetValue(model, $"{drValue}".Trim(), null);
+                                }
+
                             }
 
                         }
@@ -203,23 +263,33 @@ namespace Common
         public static DataTable? ExcelToDataTable(string filePath, bool isColumnName)
         {
             DataTable? dataTable = null;
-            FileStream? fs = null;
-            IWorkbook? workbook = null;
-            ISheet? sheet = null;
-            int startRow = 0;
+
             try
             {
-                using (fs = File.OpenRead(filePath))
+                using (var fs = File.OpenRead(filePath))
                 {
-                    // 2007版本  
+
+                    IWorkbook? workbook = null;
+                    ISheet? sheet = null;
+
                     if (filePath.IndexOf(".xlsx") > 0)
+                    {
                         workbook = new XSSFWorkbook(fs);
-                    // 2003版本  
+                    }
+
                     else if (filePath.IndexOf(".xls") > 0)
+                    {
                         workbook = new HSSFWorkbook(fs);
+                    }
+                    else
+                    {
+                        throw new Exception("传入文件非 Excel 格式");
+                    }
 
                     if (workbook != null)
                     {
+                        int startRow = 0;
+
                         sheet = workbook.GetSheetAt(0);//读取第一个sheet，当然也可以循环读取每个sheet  
                         dataTable = new();
                         if (sheet != null)
@@ -232,6 +302,7 @@ namespace Common
 
                                 DataColumn column;
                                 ICell cell;
+
                                 //构建datatable的列  
                                 if (isColumnName)
                                 {
@@ -241,9 +312,9 @@ namespace Common
                                         cell = firstRow.GetCell(i);
                                         if (cell != null)
                                         {
-                                            if (cell.StringCellValue != null)
+                                            if (!string.IsNullOrWhiteSpace(cell.StringCellValue))
                                             {
-                                                column = new(cell.StringCellValue);
+                                                column = new(cell.StringCellValue.Trim());
                                                 dataTable.Columns.Add(column);
                                             }
                                         }
@@ -253,7 +324,7 @@ namespace Common
                                 {
                                     for (int i = firstRow.FirstCellNum; i < cellCount; ++i)
                                     {
-                                        column = new("column" + (i + 1));
+                                        column = new($"column{i + 1}");
                                         dataTable.Columns.Add(column);
                                     }
                                 }
@@ -262,7 +333,10 @@ namespace Common
                                 for (int i = startRow; i <= rowCount; ++i)
                                 {
                                     IRow row = sheet.GetRow(i);
-                                    if (row == null || row!.Cells.Count == 0) continue;
+                                    if (row == null || !row.Cells.Any()) continue;
+
+                                    //跳过空行(所有列都为空的 视为空行)
+                                    if (!row.Cells.Any(it => !string.IsNullOrWhiteSpace(it.StringCellValue))) continue;
 
                                     DataRow dataRow = dataTable.NewRow();
                                     for (int j = row.FirstCellNum; j < cellCount; ++j)
@@ -307,7 +381,6 @@ namespace Common
             }
             catch (Exception)
             {
-                fs?.Close();
                 return null;
             }
         }
@@ -323,9 +396,9 @@ namespace Common
         /// <returns></returns>
         public static byte[] ListToExcel<T>(List<T> list) where T : notnull, new()
         {
-
             //创建Excel文件的对象
             XSSFWorkbook book = new();
+
             //添加一个sheet
             ISheet sheet1 = book.CreateSheet("Sheet1");
 
@@ -342,9 +415,7 @@ namespace Common
                 x++;
             }
 
-
             //将数据逐步写入sheet1各个行
-
             foreach (var item in list)
             {
                 int i = list.IndexOf(item);
@@ -354,7 +425,6 @@ namespace Common
                 int d = 0;
                 foreach (var it in dict)
                 {
-
                     rowtemp.CreateCell(d).SetCellValue(it.Value != null ? it.Value.ToString() : "");
                     d++;
                 }
@@ -364,7 +434,6 @@ namespace Common
             book.Write(ms);
             var byteData = ms.ToArray();
             return byteData;
-
         }
 
 
@@ -377,9 +446,9 @@ namespace Common
         /// <returns></returns>
         public static byte[] ListToExcelDispalyName<T>(List<T> list) where T : notnull, new()
         {
-
             //创建Excel文件的对象
             XSSFWorkbook book = new();
+
             //添加一个sheet
             ISheet sheet1 = book.CreateSheet("Sheet1");
 
@@ -396,9 +465,7 @@ namespace Common
                 x++;
             }
 
-
             //将数据逐步写入sheet1各个行
-
             foreach (var item in list)
             {
                 int i = list.IndexOf(item);
@@ -408,18 +475,15 @@ namespace Common
                 int d = 0;
                 foreach (var it in dict)
                 {
-
                     rowtemp.CreateCell(d).SetCellValue(it.Value != null ? it.Value.ToString() : "");
                     d++;
                 }
             }
 
-
             using MemoryStream ms = new();
             book.Write(ms);
             var byteData = ms.ToArray();
             return byteData;
-
         }
     }
 }

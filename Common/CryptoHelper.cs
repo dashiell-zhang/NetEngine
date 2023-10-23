@@ -200,7 +200,7 @@ namespace Common
         /// <summary>
         /// MD5 摘要计算
         /// </summary>
-        /// <param name="data"></param>
+        /// <param name="text">待计算摘要的文本</param>
         /// <returns></returns>
         public static string MD5HashData(string text)
         {
@@ -212,10 +212,26 @@ namespace Common
         /// <summary>
         /// SHA1 摘要计算
         /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string SHA1HashData(string text)
+        public static string SHA1HashData(string text, string stringEncoding = "hex")
         {
-            return Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes(text)));
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(SHA1.HashData(Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
         }
 
 
@@ -223,10 +239,26 @@ namespace Common
         /// <summary>
         /// SHA256 摘要计算
         /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string SHA256HashData(string text)
+        public static string SHA256HashData(string text, string stringEncoding = "hex")
         {
-            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
         }
 
 
@@ -234,10 +266,26 @@ namespace Common
         /// <summary>
         /// SHA384 摘要计算
         /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string SHA384HashData(string text)
+        public static string SHA384HashData(string text, string stringEncoding = "hex")
         {
-            return Convert.ToHexString(SHA384.HashData(Encoding.UTF8.GetBytes(text)));
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(SHA384.HashData(Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(SHA384.HashData(Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
         }
 
 
@@ -245,11 +293,168 @@ namespace Common
         /// <summary>
         /// SHA512 摘要计算
         /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
         /// <returns></returns>
-        public static string SHA512HashData(string text)
+        public static string SHA512HashData(string text, string stringEncoding = "hex")
         {
-            return Convert.ToHexString(SHA512.HashData(Encoding.UTF8.GetBytes(text)));
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(SHA512.HashData(Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(SHA512.HashData(Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
         }
+
+
+
+        /// <summary>
+        /// HMACMD5 摘要计算
+        /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="privateKey">私钥</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
+        /// <returns></returns>
+        public static string HMACMD5HashData(string text, string privateKey, string stringEncoding = "hex")
+        {
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(HMACMD5.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(HMACMD5.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
+        }
+
+
+
+        /// <summary>
+        /// HMACSHA1 摘要计算
+        /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="privateKey">私钥</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
+        /// <returns></returns>
+        public static string HMACSHA1HashData(string text, string privateKey, string stringEncoding = "hex")
+        {
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(HMACSHA1.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(HMACSHA1.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
+        }
+
+
+
+        /// <summary>
+        /// HMACSHA256 摘要计算
+        /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="privateKey">私钥</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
+        /// <returns></returns>
+        public static string HMACSHA256HashData(string text, string privateKey, string stringEncoding = "hex")
+        {
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(HMACSHA256.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
+        }
+
+
+
+        /// <summary>
+        /// HMACSHA384 摘要计算
+        /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="privateKey">私钥</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
+        /// <returns></returns>
+        public static string HMACSHA384HashData(string text, string privateKey, string stringEncoding = "hex")
+        {
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(HMACSHA384.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(HMACSHA384.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
+        }
+
+
+
+        /// <summary>
+        /// HMACSHA512 摘要计算
+        /// </summary>
+        /// <param name="text">待计算摘要的文本</param>
+        /// <param name="privateKey">私钥</param>
+        /// <param name="stringEncoding">摘要计算结果的字符串编码类型 base64 或 hex</param>
+        /// <returns></returns>
+        public static string HMACSHA512HashData(string text, string privateKey, string stringEncoding = "hex")
+        {
+            switch (stringEncoding)
+            {
+                case "base64":
+                    {
+                        return Convert.ToBase64String(HMACSHA512.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                case "hex":
+                    {
+                        return Convert.ToHexString(HMACSHA512.HashData(Encoding.UTF8.GetBytes(privateKey), Encoding.UTF8.GetBytes(text)));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("stringEncoding 无效，只能是 base64 或 hex");
+                    }
+            }
+        }
+
 
 
 

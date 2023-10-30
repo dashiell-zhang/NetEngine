@@ -30,7 +30,7 @@ namespace WebAPI.Services
         /// <remarks>需要外部开启事务</remarks>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, string? callbackParameter = null)
+        public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null)
         {
             if (db.Database.CurrentTransaction != null)
             {
@@ -53,7 +53,7 @@ namespace WebAPI.Services
         /// <param name="callbackName"></param>
         /// <param name="callbackParameter"></param>
         /// <returns></returns>
-        public bool CreateSingle(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, string? callbackParameter = null)
+        public bool CreateSingle(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null)
         {
             try
             {
@@ -63,12 +63,16 @@ namespace WebAPI.Services
                     Name = name,
                     PlanTime = planTime,
                     CallbackName = callbackName,
-                    CallbackParameter = callbackParameter
                 };
 
                 if (parameter != null)
                 {
                     queueTask.Parameter = JsonHelper.ObjectToJson(parameter);
+                }
+
+                if (callbackName != null && callbackParameter != null)
+                {
+                    queueTask.CallbackParameter = JsonHelper.ObjectToJson(callbackParameter);
                 }
 
                 db.TQueueTask.Add(queueTask);

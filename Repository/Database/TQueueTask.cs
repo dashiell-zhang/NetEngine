@@ -56,5 +56,19 @@ namespace Repository.Database
         /// </summary>
         public DateTimeOffset? SuccessTime { get; set; }
 
+
+
+        /// <summary>
+        /// 回调任务名称
+        /// </summary>
+        public string? CallbackName { get; set; }
+
+
+
+        /// <summary>
+        /// 回调参数
+        /// </summary>
+        public string? CallbackParameter { get; set; }
+
     }
 }

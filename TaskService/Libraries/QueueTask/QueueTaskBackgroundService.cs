@@ -1,5 +1,6 @@
 ﻿using Common;
 using DistributedLock;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Repository.Database;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -92,6 +93,7 @@ namespace TaskService.Libraries.QueueTask
                     using var scope = serviceProvider.CreateScope();
 
                     var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                    var idHelper = scope.ServiceProvider.GetRequiredService<IDHelper>();
 
                     using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(5), queueTaskInfo.Semaphore);
                     if (lockActionState != null)
@@ -109,14 +111,19 @@ namespace TaskService.Libraries.QueueTask
 
                         queueTask.Count++;
 
+                        var isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
+
                         var parameterType = queueTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
+
+                        object? returnObject = null;
+
                         if (parameterType != null)
                         {
                             if (queueTask.Parameter != null)
                             {
                                 var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
 
-                                queueTaskInfo.Method.Invoke(queueTaskInfo.Context, new object[] { parameter });
+                                returnObject = queueTaskInfo.Method.Invoke(queueTaskInfo.Context, new object[] { parameter });
                             }
                             else
                             {
@@ -125,7 +132,27 @@ namespace TaskService.Libraries.QueueTask
                         }
                         else
                         {
-                            queueTaskInfo.Method.Invoke(queueTaskInfo.Context, null)?.ToString();
+                            returnObject = queueTaskInfo.Method.Invoke(queueTaskInfo.Context, null);
+                        }
+
+                        if (queueTask.CallbackName != null)
+                        {
+                            TQueueTask callbackTask = new()
+                            {
+                                Id = idHelper.GetId(),
+                                Name = queueTask.CallbackName
+                            };
+
+                            if (queueTask.CallbackParameter != null)
+                            {
+                                callbackTask.Parameter = queueTask.CallbackParameter;
+                            }
+                            else if (isReturnVoid == false && returnObject != null)
+                            {
+                                callbackTask.Parameter = JsonHelper.ObjectToJson(returnObject);
+                            }
+
+                            db.TQueueTask.Add(callbackTask);
                         }
 
                         queueTask.SuccessTime = DateTime.UtcNow;

@@ -68,7 +68,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [AllowAnonymous]
-        [HttpGet("GetPublicKey")]
+        [HttpGet]
         public string GetPublicKey(IConfiguration configuration)
         {
             var rsaSetting = configuration.GetRequiredSection("RSA").Get<RSASetting>();

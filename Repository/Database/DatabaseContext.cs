@@ -5,6 +5,7 @@ using Repository.ValueConverters;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Xml;
 
 namespace Repository.Database
@@ -294,8 +295,7 @@ namespace Repository.Database
         }
 
 
-
-        public override int SaveChanges()
+        internal void PreprocessingChangeTracker()
         {
             var list = this.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
 
@@ -308,7 +308,35 @@ namespace Repository.Database
                     item.State = EntityState.Detached;
                     continue;
                 }
+
+                var updateTime = item.Properties.Where(t => t.Metadata.Name == "UpdateTime").FirstOrDefault();
+
+                if (updateTime != null && updateTime.IsModified == false)
+                {
+                    updateTime.CurrentValue = DateTimeOffset.UtcNow;
+                }
+
+
+                var isDelete = item.Properties.Where(t => t.Metadata.Name == "IsDelete").FirstOrDefault();
+
+                if (isDelete != null && isDelete.IsModified == true && Convert.ToBoolean(isDelete.CurrentValue) == true)
+                {
+                    var deleteTime = item.Properties.Where(t => t.Metadata.Name == "DeleteTime").FirstOrDefault();
+
+                    if (deleteTime != null && deleteTime.IsModified == false)
+                    {
+                        deleteTime.CurrentValue = DateTimeOffset.UtcNow;
+                    }
+                }
+
             }
+        }
+
+
+
+        public override int SaveChanges()
+        {
+            PreprocessingChangeTracker();
 
             return base.SaveChanges();
         }

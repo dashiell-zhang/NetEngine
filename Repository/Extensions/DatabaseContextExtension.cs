@@ -108,18 +108,12 @@ namespace Repository.Extensions
         /// <returns></returns>
         public static int SaveChangesWithUpdateLog(this DatabaseContext db, long logId, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
         {
+            db.PreprocessingChangeTracker();
+
             var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
 
             foreach (var item in list)
             {
-                var isValidUpdate = item.Properties.Where(t => t.IsModified && t.Metadata.Name != "UpdateTime" && t.Metadata.Name != "UpdateUserId").Any();
-
-                if (!isValidUpdate)
-                {
-                    item.State = EntityState.Detached;
-                    continue;
-                }
-
                 var type = item.Entity.GetType();
 
                 var oldEntity = item.OriginalValues.ToObject();

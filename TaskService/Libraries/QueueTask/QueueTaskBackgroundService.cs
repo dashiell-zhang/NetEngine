@@ -107,9 +107,9 @@ namespace TaskService.Libraries.QueueTask
 
                         queueTask.LastTime = DateTime.UtcNow;
 
-                        db.SaveChanges();
-
                         queueTask.Count++;
+
+                        db.SaveChanges();
 
                         var isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
 

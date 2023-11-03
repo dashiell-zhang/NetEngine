@@ -294,5 +294,24 @@ namespace Repository.Database
         }
 
 
+
+        public override int SaveChanges()
+        {
+            var list = this.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
+
+            foreach (var item in list)
+            {
+                var isValidUpdate = item.Properties.Where(t => t.IsModified && t.Metadata.Name != "UpdateTime" && t.Metadata.Name != "UpdateUserId").Any();
+
+                if (!isValidUpdate)
+                {
+                    item.State = EntityState.Detached;
+                    continue;
+                }
+            }
+
+            return base.SaveChanges();
+        }
+
     }
 }

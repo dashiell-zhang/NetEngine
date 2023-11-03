@@ -203,7 +203,6 @@ namespace AdminAPI.Controllers
 
                         if (user != null)
                         {
-                            user.UpdateTime = DateTime.UtcNow;
                             user.UpdateUserId = this.userId;
 
                             user.Name = updateUser.Name;
@@ -227,7 +226,6 @@ namespace AdminAPI.Controllers
                                 else
                                 {
                                     item.IsDelete = true;
-                                    item.DeleteTime = DateTime.UtcNow;
                                     item.DeleteUserId = this.userId;
                                 }
                             }
@@ -278,7 +276,6 @@ namespace AdminAPI.Controllers
             if (user != null)
             {
                 user.IsDelete = true;
-                user.DeleteTime = DateTime.UtcNow;
                 user.DeleteUserId = userId;
 
                 db.SaveChanges();
@@ -370,7 +367,6 @@ namespace AdminAPI.Controllers
                         foreach (var userFunction in userFunctionList)
                         {
                             userFunction.IsDelete = true;
-                            userFunction.DeleteTime = DateTime.UtcNow;
                             userFunction.DeleteUserId = userId;
                         }
 
@@ -449,7 +445,6 @@ namespace AdminAPI.Controllers
                 if (userRole != null)
                 {
                     userRole.IsDelete = true;
-                    userRole.DeleteTime = DateTime.UtcNow;
                     userRole.DeleteUserId = userId;
 
                     db.SaveChanges();

@@ -412,7 +412,6 @@ namespace WebAPI.Controllers
                                     order.PayTime = resource.success_time.ToUniversalTime();
                                     order.PayType = "微信支付";
                                     order.State = "已支付";
-                                    order.UpdateTime = DateTime.UtcNow;
 
                                     db.SaveChanges();
 

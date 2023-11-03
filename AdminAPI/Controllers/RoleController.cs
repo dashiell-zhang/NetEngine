@@ -181,7 +181,6 @@ namespace AdminAPI.Controllers
             if (role != null)
             {
                 role.IsDelete = true;
-                role.DeleteTime = DateTime.UtcNow;
 
                 db.SaveChanges();
 
@@ -261,7 +260,6 @@ namespace AdminAPI.Controllers
                 if (functionAuthorize.Id != default)
                 {
                     functionAuthorize.IsDelete = true;
-                    functionAuthorize.DeleteTime = DateTime.UtcNow;
                     functionAuthorize.DeleteUserId = userId;
                 }
             }

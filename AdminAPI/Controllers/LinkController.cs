@@ -162,7 +162,6 @@ namespace AdminAPI.Controllers
             if (link != null)
             {
                 link.IsDelete = true;
-                link.DeleteTime = DateTime.UtcNow;
                 link.DeleteUserId = userId;
 
                 db.SaveChanges();

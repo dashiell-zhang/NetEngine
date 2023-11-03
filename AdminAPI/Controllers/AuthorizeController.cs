@@ -173,7 +173,6 @@ namespace AdminAPI.Controllers
             foreach (var item in delList)
             {
                 item.IsDelete = true;
-                item.DeleteTime = DateTime.UtcNow;
             }
 
             foreach (var item in actionList)

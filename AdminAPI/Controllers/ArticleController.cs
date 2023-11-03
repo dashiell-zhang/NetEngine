@@ -205,7 +205,6 @@ namespace AdminAPI.Controllers
             if (category != null)
             {
                 category.IsDelete = true;
-                category.DeleteTime = DateTime.UtcNow;
                 category.DeleteUserId = userId;
 
                 db.SaveChanges();
@@ -416,7 +415,6 @@ namespace AdminAPI.Controllers
             if (article != null)
             {
                 article.IsDelete = true;
-                article.DeleteTime = DateTime.UtcNow;
                 article.DeleteUserId = userId;
 
                 db.SaveChanges();

@@ -360,7 +360,6 @@ namespace WebAPI.Controllers
             {
                 file.IsDelete = true;
                 file.DeleteUserId = userId;
-                file.DeleteTime = DateTime.UtcNow;
 
                 db.SaveChanges();
 

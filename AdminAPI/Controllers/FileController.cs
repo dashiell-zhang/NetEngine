@@ -285,7 +285,6 @@ namespace AdminAPI.Controllers
             if (file != null)
             {
                 file.IsDelete = true;
-                file.DeleteTime = DateTime.UtcNow;
 
                 db.SaveChanges();
 

@@ -384,7 +384,6 @@ namespace WebAPI.Controllers
                 if (user.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWord.OldPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32)))
                 {
                     user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWord.NewPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                    user.UpdateTime = DateTime.UtcNow;
                     user.UpdateUserId = user.Id;
                     db.SaveChanges();
 
@@ -432,7 +431,6 @@ namespace WebAPI.Controllers
                 if (user != null)
                 {
                     user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWord.NewPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                    user.UpdateTime = DateTime.UtcNow;
                     user.UpdateUserId = userId;
 
                     var tokenList = db.TUserToken.Where(t => t.UserId == userId).ToList();
@@ -551,7 +549,6 @@ namespace WebAPI.Controllers
             foreach (var item in delList)
             {
                 item.IsDelete = true;
-                item.DeleteTime = DateTime.UtcNow;
             }
 
             foreach (var item in actionList)

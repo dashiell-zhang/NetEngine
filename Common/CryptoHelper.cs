@@ -121,7 +121,7 @@ namespace Common
             var cipherBytes = encryptedBytes[..^16];
             var tag = encryptedBytes[^16..];
             var decryptedData = new byte[cipherBytes.Length];
-            using AesGcm cipher = new(keyBytes);
+            using AesGcm cipher = new(keyBytes,tag.Length);
             cipher.Decrypt(nonceBytes, cipherBytes, tag, decryptedData, associatedBytes);
             return Encoding.UTF8.GetString(decryptedData);
         }
@@ -147,7 +147,7 @@ namespace Common
             var cipherBytes = new byte[plainBytes.Length];
 
             var tag = new byte[16];
-            using AesGcm cipher = new(keyBytes);
+            using AesGcm cipher = new(keyBytes,tag.Length);
             cipher.Encrypt(nonceBytes, plainBytes, cipherBytes, tag, associatedBytes);
 
             var cipherWithTag = new byte[cipherBytes.Length + tag.Length];

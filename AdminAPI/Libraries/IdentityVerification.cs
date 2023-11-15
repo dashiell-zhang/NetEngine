@@ -159,15 +159,15 @@ namespace AdminAPI.Libraries
 
                             cache.Set(userToken.Id + "token", token, TimeSpan.FromMinutes(10));
 
-                            httpContext.Response.Headers.Add("NewToken", token);
-                            httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");
+                            httpContext.Response.Headers.Append("NewToken", token);
+                            httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");
                         }
                     }
                     else
                     {
                         var token = cache.GetString(newToken.Id + "token");
-                        httpContext.Response.Headers.Add("NewToken", token);
-                        httpContext.Response.Headers.Add("Access-Control-Expose-Headers", "NewToken");
+                        httpContext.Response.Headers.Append("NewToken", token);
+                        httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");
                     }
                 }
             }

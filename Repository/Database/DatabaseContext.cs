@@ -305,7 +305,7 @@ namespace Repository.Database
 
                 if (!isValidUpdate)
                 {
-                    item.State = EntityState.Detached;
+                    item.State = EntityState.Unchanged;
                     continue;
                 }
 

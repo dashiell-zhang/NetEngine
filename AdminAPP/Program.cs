@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using System.Globalization;
 
-namespace AdminAPP.Client
+namespace AdminAPP
 {
     public class Program
     {

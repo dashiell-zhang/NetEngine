@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Npgsql;
 using Repository.Tool.Tasks;
 
 namespace Repository.Tool
@@ -14,7 +15,12 @@ namespace Repository.Tool
                     {
                         services.AddDbContext<Database.DatabaseContext>(options =>
                         {
-                            options.UseNpgsql("Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456", x => x.MigrationsAssembly("Repository.Tool"));
+                            var connectionString = "Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456";
+
+                            NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
+                            dataSourceBuilder.EnableDynamicJsonMappings();
+
+                            options.UseNpgsql(dataSourceBuilder.Build(), x => x.MigrationsAssembly("Repository.Tool"));
                         });
                         services.AddHostedService<SyncJsonIndexTask>();
                     }).Build();

@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using StackExchange.Redis;
 using System.Security.Cryptography;
 
@@ -48,7 +49,12 @@ namespace AdminAPI
 
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
-                options.UseNpgsql(builder.Configuration.GetConnectionString("dbConnection")!);
+                var connectionString = builder.Configuration.GetConnectionString("dbConnection");
+
+                NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
+                dataSourceBuilder.EnableDynamicJsonMappings();
+
+                options.UseNpgsql(dataSourceBuilder.Build());
             }, 30);
 
 

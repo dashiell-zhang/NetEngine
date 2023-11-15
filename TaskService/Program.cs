@@ -2,6 +2,7 @@
 using DistributedLock.Redis;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using StackExchange.Redis;
 
 namespace TaskService
@@ -20,7 +21,13 @@ namespace TaskService
 
                     services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
                     {
-                        options.UseNpgsql(hostContext.Configuration.GetConnectionString("dbConnection")!);
+                        var connectionString = hostContext.Configuration.GetConnectionString("dbConnection");
+
+                        NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
+                        dataSourceBuilder.EnableDynamicJsonMappings();
+
+                        options.UseNpgsql(dataSourceBuilder.Build());
+                  
                     }, 30);
 
 

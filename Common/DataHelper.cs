@@ -25,7 +25,7 @@ namespace Common
             else
             {
 
-                IList<T> list = new List<T>();
+                List<T> list = [];
                 foreach (DataRow dr in table.Rows)
                 {
                     T model = Activator.CreateInstance<T>();
@@ -116,7 +116,7 @@ namespace Common
             else
             {
 
-                IList<T> list = new List<T>();
+                List<T> list = [];
 
                 foreach (DataRow dr in table.Rows)
                 {

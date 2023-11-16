@@ -80,10 +80,10 @@ namespace FileStorage.TencentCloud
 
                 TransferManager transferManager = new(cosXml, transferConfig);
 
-                string localDir = localPath[..(localPath.LastIndexOf("/") + 1)];
+                string localDir = localPath[..(localPath.LastIndexOf('/') + 1)];
                 Directory.CreateDirectory(localDir);
 
-                string localFileName = localPath[(localPath.LastIndexOf("/") + 1)..];
+                string localFileName = localPath[(localPath.LastIndexOf('/') + 1)..];
 
                 // 下载对象
                 COSXMLDownloadTask downloadTask = new(bucketName, remotePath, localDir, localFileName);

@@ -475,7 +475,7 @@ namespace Common
             using var rsa = RSA.Create();
 
         ImportInfo:
-            if (privateKey.StartsWith("-") && privateKey.EndsWith("-"))
+            if (privateKey.StartsWith('-') && privateKey.EndsWith('-'))
             {
                 try
                 {
@@ -547,7 +547,7 @@ namespace Common
         {
             publicKey = publicKey.Replace("\n", "").Replace("\r", "");
 
-            if (publicKey.StartsWith("-") && publicKey.EndsWith("-"))
+            if (publicKey.StartsWith('-') && publicKey.EndsWith('-'))
             {
                 publicKey = publicKey.Split("-").ToList().OrderByDescending(t => t.Length).First();
             }
@@ -607,7 +607,7 @@ namespace Common
         {
             publicKey = publicKey.Replace("\n", "").Replace("\r", "");
 
-            if (publicKey.StartsWith("-") && publicKey.EndsWith("-"))
+            if (publicKey.StartsWith('-') && publicKey.EndsWith('-'))
             {
                 publicKey = publicKey.Split("-").ToList().OrderByDescending(t => t.Length).First();
             }
@@ -663,7 +663,7 @@ namespace Common
             using var rsa = RSA.Create();
 
         ImportInfo:
-            if (privateKey.StartsWith("-") && privateKey.EndsWith("-"))
+            if (privateKey.StartsWith('-') && privateKey.EndsWith('-'))
             {
                 try
                 {

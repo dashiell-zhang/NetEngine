@@ -218,15 +218,15 @@ namespace TaskService.Libraries.ScheduleTask
                             break;
                         }
 
-                        if (exprOn == DayOfMonth && expr.IndexOf('L') != -1 && expr.Length > 1 && expr.Contains(','))
+                        if (exprOn == DayOfMonth && expr.Contains('L') && expr.Length > 1 && expr.Contains(','))
                         {
                             throw new FormatException("不支持在月份的其他日期指定“L”和“LW”");
                         }
-                        if (exprOn == DayOfWeek && expr.IndexOf('L') != -1 && expr.Length > 1 && expr.Contains(','))
+                        if (exprOn == DayOfWeek && expr.Contains('L') && expr.Length > 1 && expr.Contains(','))
                         {
                             throw new FormatException("不支持在一周的其他日期指定“L”");
                         }
-                        if (exprOn == DayOfWeek && expr.IndexOf('#') != -1 && expr.IndexOf('#', expr.IndexOf('#') + 1) != -1)
+                        if (exprOn == DayOfWeek && expr.Contains('#') && expr.IndexOf('#', expr.IndexOf('#') + 1) != -1)
                         {
                             throw new FormatException("不支持指定多个“第N”天。");
                         }

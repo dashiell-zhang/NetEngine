@@ -54,9 +54,7 @@ namespace WebAPI.Filters
 
                     if (objValue.GetType().Name == ("Dictionary`2"))
                     {
-                        var objValueDictionary = objValue as IDictionary;
-
-                        if (objValueDictionary != null)
+                        if (objValue is IDictionary objValueDictionary)
                         {
                             foreach (var item in objValueDictionary.Values)
                             {
@@ -70,9 +68,7 @@ namespace WebAPI.Filters
                     }
                     else if (objValue.GetType().Name == "List`1" || objValue.GetType().BaseType?.Name == "Array")
                     {
-                        var objValueList = objValue as ICollection;
-
-                        if (objValueList != null)
+                        if (objValue is ICollection objValueList)
                         {
                             foreach (var item in objValueList)
                             {

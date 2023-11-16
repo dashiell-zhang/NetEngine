@@ -68,19 +68,14 @@ namespace Common
         /// <returns></returns>
         public static DateOnly GetQuarterlyFirstDay(DateOnly date)
         {
-            switch (GetQuarterly(date))
+            return GetQuarterly(date) switch
             {
-                case 1:
-                    return DateOnly.Parse(date.Year + "-01-01");
-                case 2:
-                    return DateOnly.Parse(date.Year + "-03-01");
-                case 3:
-                    return DateOnly.Parse(date.Year + "-07-01");
-                case 4:
-                    return DateOnly.Parse(date.Year + "-10-01");
-                default:
-                    throw new Exception();
-            }
+                1 => DateOnly.Parse(date.Year + "-01-01"),
+                2 => DateOnly.Parse(date.Year + "-03-01"),
+                3 => DateOnly.Parse(date.Year + "-07-01"),
+                4 => DateOnly.Parse(date.Year + "-10-01"),
+                _ => throw new Exception(),
+            };
         }
 
 

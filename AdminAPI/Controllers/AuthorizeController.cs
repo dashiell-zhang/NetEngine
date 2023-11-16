@@ -114,7 +114,7 @@ namespace AdminAPI.Controllers
         {
             var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new
             {
-                Name = x.DisplayName![..(x.DisplayName!.IndexOf("(") - 1)],
+                Name = x.DisplayName![..(x.DisplayName!.IndexOf('(') - 1)],
                 Route = x.AttributeRouteInfo!.Template,
                 IsAuthorize = (x.EndpointMetadata.Where(t => t.GetType().FullName == "Microsoft.AspNetCore.Authorization.AuthorizeAttribute").Any() == true && x.EndpointMetadata.Where(t => t.GetType().FullName == "Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute").Any() == false),
             }).ToList();
@@ -150,7 +150,7 @@ namespace AdminAPI.Controllers
 
                                 if (name.Contains('(', StringComparison.CurrentCulture))
                                 {
-                                    name = name[..name.IndexOf("(")];
+                                    name = name[..name.IndexOf('(')];
                                 }
 
                                 summary = summary.Replace("\n", "").Trim();

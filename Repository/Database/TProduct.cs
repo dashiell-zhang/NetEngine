@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repository.Database.Bases;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
@@ -12,7 +11,6 @@ namespace Repository.Database
     [Index(nameof(SKU)), Index(nameof(Name))]
     public class TProduct : CUD_User
     {
-
 
 
         /// <summary>
@@ -30,7 +28,7 @@ namespace Repository.Database
         /// <summary>
         /// 价格
         /// </summary>
-        [Column(TypeName = "decimal(38,2)")]
+        [Precision(10, 2)]
         public decimal Price { get; set; }
 
 

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repository.Database.Bases;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database
 {
@@ -30,7 +29,7 @@ namespace Repository.Database
         /// <summary>
         /// 价格
         /// </summary>
-        [Column(TypeName = "decimal(38,2)")]
+        [Precision(10, 2)]
         public decimal Price { get; set; }
 
 
@@ -68,7 +67,7 @@ namespace Repository.Database
         /// <summary>
         /// 实际支付金额
         /// </summary>
-        [Column(TypeName = "decimal(38,2)")]
+        [Precision(10, 2)]
         public decimal? PayPrice { get; set; }
 
 

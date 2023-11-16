@@ -34,7 +34,7 @@ namespace WebAPI.Libraries
         /// <returns></returns>
         public static string? GetClaimByAuthorization(this HttpContext httpContext, string key)
         {
-            var authorization = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Replace("Bearer ", "");
+            var authorization = httpContext.Request.Headers.Authorization.FirstOrDefault()?.Replace("Bearer ", "");
 
             if (authorization != null)
             {

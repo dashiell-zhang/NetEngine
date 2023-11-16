@@ -121,10 +121,8 @@ namespace WebAPI
                 };
             });
 
-            builder.Services.AddAuthorization(options =>
-            {
-                options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build();
-            });
+            builder.Services.AddAuthorizationBuilder()
+                .SetDefaultPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build());
 
             #endregion
 

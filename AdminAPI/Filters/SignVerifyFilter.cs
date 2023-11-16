@@ -36,7 +36,7 @@ namespace AdminAPI.Filters
                 if (time.AddMinutes(3) > DateTime.UtcNow)
                 {
 
-                    var authorizationStr = context.HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                    var authorizationStr = context.HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
                     JwtSecurityToken securityToken = new(authorizationStr);
 
                     string privateKey = securityToken.RawSignature;

@@ -31,7 +31,7 @@ namespace WebAPI.Libraries
                 _ = parameterStr[..102400];
             }
 
-            var authorization = httpContext.Request.Headers["Authorization"].ToString();
+            var authorization = httpContext.Request.Headers.Authorization.ToString();
 
             var content = new
             {

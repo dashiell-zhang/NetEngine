@@ -16,8 +16,7 @@ namespace AdminAPI.Libraries.Swagger
             {
                 operation.Security = new List<OpenApiSecurityRequirement>
                 {
-                    new OpenApiSecurityRequirement
-                    {
+                    new() {
                         {
                             new OpenApiSecurityScheme
                             {

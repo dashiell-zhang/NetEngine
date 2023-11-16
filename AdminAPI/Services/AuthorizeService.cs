@@ -45,8 +45,8 @@ namespace AdminAPI.Services
 
             var claims = new Claim[]
             {
-                new Claim("tokenId",userToken.Id.ToString()),
-                new Claim("userId",userId.ToString())
+                new("tokenId",userToken.Id.ToString()),
+                new("userId",userId.ToString())
             };
 
             var jwtSetting = configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;

@@ -18,6 +18,7 @@ namespace Repository.Database
         /// <summary>
         /// 名称
         /// </summary>
+        [Column(TypeName = "citext")]
         public string Name { get; set; }
 
 

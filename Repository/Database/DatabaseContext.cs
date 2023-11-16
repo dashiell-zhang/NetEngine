@@ -5,7 +5,6 @@ using Repository.ValueConverters;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Xml;
 
 namespace Repository.Database
@@ -179,7 +178,7 @@ namespace Repository.Database
                         }
 
                         //为所有 tableid 列添加索引
-                        if (property.Name.ToLower() == "tableid")
+                        if (property.Name.Equals("tableid", StringComparison.OrdinalIgnoreCase))
                         {
                             builder.HasIndex(property.Name);
                         }
@@ -236,7 +235,7 @@ namespace Repository.Database
                     }
                 }
 
-                return fieldList.FirstOrDefault(t => t.Key.ToLower() == matchKey.ToLower()).Value ?? typeName.ToString().Split(".").ToList().LastOrDefault()!;
+                return fieldList.FirstOrDefault(t => t.Key.Equals(matchKey, StringComparison.OrdinalIgnoreCase)).Value ?? typeName.ToString().Split(".").ToList().LastOrDefault()!;
             }
             else
             {
@@ -290,7 +289,7 @@ namespace Repository.Database
                     }
                 }
 
-                return fieldList.FirstOrDefault(t => t.Key.ToLower() == fieldName.ToLower()).Value ?? fieldName;
+                return fieldList.FirstOrDefault(t => t.Key.Equals(fieldName, StringComparison.OrdinalIgnoreCase)).Value ?? fieldName;
             }
         }
 

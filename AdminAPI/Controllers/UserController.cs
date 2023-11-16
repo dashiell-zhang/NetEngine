@@ -8,6 +8,7 @@ using DistributedLock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System.Text;
 
@@ -63,7 +64,7 @@ namespace AdminAPI.Controllers
 
             int skip = (pageNum - 1) * pageSize;
 
-            var query = db.TUser.Where(t => 1 == 1);
+            var query = db.TUser.AsSplitQuery();
 
             if (!string.IsNullOrEmpty(searchKey))
             {
@@ -131,7 +132,7 @@ namespace AdminAPI.Controllers
             {
                 if (handle != null)
                 {
-                    var isHaveUserName = db.TUser.Where(t => t.UserName.ToLower() == createUser.UserName.ToLower()).Any();
+                    var isHaveUserName = db.TUser.Where(t => t.UserName == createUser.UserName).Any();
 
                     if (isHaveUserName == false)
                     {

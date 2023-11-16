@@ -7,25 +7,14 @@ using SMS.AliCloud.Models;
 
 namespace SMS.AliCloud
 {
-    public class AliCloudSMS : ISMS
+    public class AliCloudSMS(IOptionsMonitor<SMSSetting> config) : ISMS
     {
 
 
-        private readonly string accessKeyId;
+        private readonly string accessKeyId = config.CurrentValue.AccessKeyId;
 
 
-        private readonly string accessKeySecret;
-
-
-
-        public AliCloudSMS(IOptionsMonitor<SMSSetting> config)
-        {
-            accessKeyId = config.CurrentValue.AccessKeyId;
-            accessKeySecret = config.CurrentValue.AccessKeySecret;
-        }
-
-
-
+        private readonly string accessKeySecret = config.CurrentValue.AccessKeySecret;
 
         public bool SendSMS(string signName, string phone, string templateCode, Dictionary<string, string> templateParams)
         {

@@ -1,26 +1,13 @@
-﻿using Common;
-using DistributedLock;
+﻿using DistributedLock;
 using Repository.Database;
 using TaskService.Libraries.QueueTask;
 using TaskService.Libraries.ScheduleTask;
 
 namespace TaskService.Tasks
 {
-    public class DemoTask : BackgroundService
+    public class DemoTask(IServiceProvider serviceProvider, ILogger<DemoTask> logger) : BackgroundService
     {
-
-        private readonly IServiceProvider serviceProvider;
-        private readonly ILogger logger;
-        private readonly IDHelper idHelper;
-
-
-        public DemoTask(IServiceProvider serviceProvider, ILogger<DemoTask> logger, IDHelper idHelper)
-        {
-            this.serviceProvider = serviceProvider;
-            this.logger = logger;
-            this.idHelper = idHelper;
-        }
-
+        private readonly ILogger logger = logger;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

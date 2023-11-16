@@ -6,17 +6,8 @@ using System.Text;
 
 namespace Logger.DataBase.Tasks
 {
-    internal class LogSaveTask : BackgroundService
+    internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
     {
-
-        private readonly IServiceProvider serviceProvider;
-
-
-        public LogSaveTask(IServiceProvider serviceProvider)
-        {
-            this.serviceProvider = serviceProvider;
-        }
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)

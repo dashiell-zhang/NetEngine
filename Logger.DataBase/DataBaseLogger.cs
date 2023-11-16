@@ -6,26 +6,8 @@ using System.Text;
 
 namespace Logger.DataBase
 {
-    public class DataBaseLogger : ILogger
+    public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IDHelper idHelper) : ILogger
     {
-
-        private readonly string categoryName;
-
-
-        private readonly IDHelper idHelper;
-
-        private readonly LoggerSetting loggerSetting;
-
-
-
-        public DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IDHelper idHelper)
-        {
-            this.categoryName = categoryName;
-            this.loggerSetting = loggerSetting;
-            this.idHelper = idHelper;
-        }
-
-
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
             return default;

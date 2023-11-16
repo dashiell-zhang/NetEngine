@@ -7,19 +7,8 @@ namespace AdminAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class UeditorController : ControllerBase
+    public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfiguration configuration) : ControllerBase
     {
-
-        private readonly IWebHostEnvironment webHostEnvironment;
-        private readonly IConfiguration configuration;
-
-        public UeditorController(IWebHostEnvironment webHostEnvironment, IConfiguration configuration)
-        {
-            this.webHostEnvironment = webHostEnvironment;
-            this.configuration = configuration;
-        }
-
-
         [DisableRequestSizeLimit]
         [HttpGet]
         [HttpPost]

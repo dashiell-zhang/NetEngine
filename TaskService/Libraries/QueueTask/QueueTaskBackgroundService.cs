@@ -8,24 +8,10 @@ using static TaskService.Libraries.QueueTask.QueueTaskBuilder;
 
 namespace TaskService.Libraries.QueueTask
 {
-    public class QueueTaskBackgroundService : BackgroundService
+    public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock) : BackgroundService
     {
-
-        private readonly IServiceProvider serviceProvider;
-        private readonly ILogger logger;
-        private readonly IDistributedLock distLock;
-
-
+        private readonly ILogger logger = logger;
         private readonly ConcurrentDictionary<long, string> runingTaskList = new();
-
-
-        public QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock)
-        {
-            this.serviceProvider = serviceProvider;
-            this.logger = logger;
-            this.distLock = distLock;
-        }
-
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

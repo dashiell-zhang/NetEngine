@@ -1,6 +1,5 @@
 ﻿using Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,24 +12,9 @@ namespace WebAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService
+    public class AuthorizeService(DatabaseContext db, IDHelper idHelper, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
-
-        private readonly DatabaseContext db;
-        private readonly IDHelper idHelper;
-        private readonly IConfiguration configuration;
-        private readonly HttpClient httpClient;
-        private readonly IDistributedCache distributedCache;
-
-
-        public AuthorizeService(DatabaseContext db, IDHelper idHelper, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedCache distributedCache)
-        {
-            this.db = db;
-            this.idHelper = idHelper;
-            this.configuration = configuration;
-            httpClient = httpClientFactory.CreateClient();
-            this.distributedCache = distributedCache;
-        }
+        private readonly HttpClient httpClient = httpClientFactory.CreateClient();
 
 
         /// <summary>

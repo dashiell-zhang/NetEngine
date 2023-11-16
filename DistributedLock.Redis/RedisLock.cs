@@ -6,19 +6,13 @@ using System.Text;
 
 namespace DistributedLock.Redis
 {
-    public class RedisLock : IDistributedLock
+    public class RedisLock(IOptionsMonitor<RedisSetting> config) : IDistributedLock
     {
 
-        private readonly ConnectionMultiplexer connectionMultiplexer;
+        private readonly ConnectionMultiplexer connectionMultiplexer = ConnectionMultiplexer.Connect(config.CurrentValue.Configuration);
 
 
-        private readonly RedisSetting redisSetting;
-
-        public RedisLock(IOptionsMonitor<RedisSetting> config)
-        {
-            connectionMultiplexer = ConnectionMultiplexer.Connect(config.CurrentValue.Configuration);
-            redisSetting = config.CurrentValue;
-        }
+        private readonly RedisSetting redisSetting = config.CurrentValue;
 
 
 

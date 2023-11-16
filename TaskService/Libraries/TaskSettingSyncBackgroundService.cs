@@ -5,21 +5,9 @@ using static TaskService.Libraries.ScheduleTask.ScheduleTaskBuilder;
 
 namespace TaskService.Libraries
 {
-    public class TaskSettingSyncBackgroundService : BackgroundService
+    public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IDHelper idHelper) : BackgroundService
     {
-
-        private readonly IServiceProvider serviceProvider;
-        private readonly ILogger logger;
-        private readonly IDHelper idHelper;
-
-
-        public TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IDHelper idHelper)
-        {
-            this.serviceProvider = serviceProvider;
-            this.logger = logger;
-            this.idHelper = idHelper;
-        }
-
+        private readonly ILogger logger = logger;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

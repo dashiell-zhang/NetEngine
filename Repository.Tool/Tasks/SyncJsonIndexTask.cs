@@ -9,18 +9,8 @@ using System.Reflection;
 
 namespace Repository.Tool.Tasks
 {
-    public class SyncJsonIndexTask : BackgroundService
+    public class SyncJsonIndexTask(IServiceProvider serviceProvider) : BackgroundService
     {
-
-        private readonly IServiceProvider serviceProvider;
-
-
-        public SyncJsonIndexTask(IServiceProvider serviceProvider)
-        {
-            this.serviceProvider = serviceProvider;
-        }
-
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await Task.Delay(500);

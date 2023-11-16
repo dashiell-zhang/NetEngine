@@ -10,22 +10,9 @@ using WebAPI.Models.Pay;
 namespace WebAPI.Services
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class PayService
+    public class PayService(IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock)
     {
-        private readonly HttpClient httpClient;
-        private readonly DatabaseContext db;
-        private readonly IDistributedCache distributedCache;
-        private readonly IDistributedLock distributedLock;
-
-
-
-        public PayService(IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock)
-        {
-            httpClient = httpClientFactory.CreateClient("");
-            this.db = db;
-            this.distributedCache = distributedCache;
-            this.distributedLock = distributedLock;
-        }
+        private readonly HttpClient httpClient = httpClientFactory.CreateClient("");
 
 
 

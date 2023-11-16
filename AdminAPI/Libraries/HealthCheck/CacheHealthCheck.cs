@@ -4,16 +4,8 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace AdminAPI.Libraries.HealthCheck
 {
-    public class CacheHealthCheck : IHealthCheck
+    public class CacheHealthCheck(IDistributedCache distributedCache) : IHealthCheck
     {
-        private readonly IDistributedCache distributedCache;
-
-        public CacheHealthCheck(IDistributedCache distributedCache)
-        {
-            this.distributedCache = distributedCache;
-        }
-
-
         public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
 

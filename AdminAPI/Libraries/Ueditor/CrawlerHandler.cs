@@ -6,19 +6,10 @@ namespace AdminAPI.Libraries.Ueditor
     /// <summary>
     /// Crawler 的摘要说明
     /// </summary>
-    public class CrawlerHandler : Handler
+    public class CrawlerHandler(string rootPath, HttpContext httpContext) : Handler
     {
         private string[]? Sources;
         private Crawler[]? Crawlers;
-
-        private readonly string rootPath;
-        private readonly HttpContext httpContext;
-
-        public CrawlerHandler(string rootPath, HttpContext httpContext)
-        {
-            this.rootPath = rootPath;
-            this.httpContext = httpContext;
-        }
 
         public override string Process(string fileServerUrl)
         {
@@ -47,24 +38,11 @@ namespace AdminAPI.Libraries.Ueditor
         }
     }
 
-    public class Crawler
+    public class Crawler(string sourceUrl, string rootPath, string fileServerUrl)
     {
-        public string? SourceUrl { get; set; }
+        public string? SourceUrl { get; set; } = sourceUrl;
         public string? ServerUrl { get; set; }
         public string? State { get; set; }
-
-        private readonly string rootPath;
-
-        private readonly string fileServerUrl;
-
-
-
-        public Crawler(string sourceUrl, string rootPath, string fileServerUrl)
-        {
-            SourceUrl = sourceUrl;
-            this.rootPath = rootPath;
-            this.fileServerUrl = fileServerUrl;
-        }
 
         public Crawler Fetch(IFileStorage? fileStorage)
         {

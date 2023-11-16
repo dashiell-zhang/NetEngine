@@ -10,20 +10,9 @@ namespace WebAPI.Libraries.HttpHandler
     /// <summary>
     /// Http签名处理模块
     /// </summary>
-    public class HttpSignHandler : DelegatingHandler
+    public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory) : DelegatingHandler
     {
-
-
-        private readonly IDistributedCache distributedCache;
-        private readonly HttpClient httpClient;
-
-
-        public HttpSignHandler(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory)
-        {
-            this.distributedCache = distributedCache;
-            httpClient = httpClientFactory.CreateClient();
-        }
-
+        private readonly HttpClient httpClient = httpClientFactory.CreateClient();
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {

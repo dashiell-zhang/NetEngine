@@ -4,18 +4,12 @@ using static TaskService.Libraries.ScheduleTask.ScheduleTaskBuilder;
 
 namespace TaskService.Libraries.QueueTask
 {
-    public class ScheduleTaskBackgroundService : BackgroundService
+    public class ScheduleTaskBackgroundService(ILogger<ScheduleTaskBackgroundService> logger) : BackgroundService
     {
 
         private readonly ConcurrentDictionary<string, string?> historyList = new();
 
-        private readonly ILogger logger;
-
-        public ScheduleTaskBackgroundService(ILogger<ScheduleTaskBackgroundService> logger)
-        {
-            this.logger = logger;
-        }
-
+        private readonly ILogger logger = logger;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

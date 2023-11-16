@@ -12,19 +12,8 @@ namespace AdminAPI.Controllers
     [SignVerifyFilter]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class BaseController : ControllerBase
+    public class BaseController(DatabaseContext db, IDHelper idHelper) : ControllerBase
     {
-
-        private readonly DatabaseContext db;
-        private readonly IDHelper idHelper;
-
-
-
-        public BaseController(DatabaseContext db, IDHelper idHelper)
-        {
-            this.db = db;
-            this.idHelper = idHelper;
-        }
 
 
 

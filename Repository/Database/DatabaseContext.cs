@@ -9,11 +9,8 @@ using System.Xml;
 
 namespace Repository.Database
 {
-    public class DatabaseContext : DbContext
+    public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbContext(options)
     {
-
-
-        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
 
         #region 表实体声明

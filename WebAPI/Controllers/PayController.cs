@@ -23,24 +23,9 @@ namespace WebAPI.Controllers
     /// </summary>
     [Route("[controller]/[action]")]
     [ApiController]
-    public class PayController : ControllerBase
+    public class PayController(DatabaseContext db, IDistributedCache distributedCache, ILogger<PayController> logger, PayService payService) : ControllerBase
     {
-
-
-        private readonly DatabaseContext db;
-        private readonly IDistributedCache distributedCache;
-        private readonly ILogger logger;
-        private readonly PayService payService;
-
-
-
-        public PayController(DatabaseContext db, IDistributedCache distributedCache, ILogger<PayController> logger, PayService payService)
-        {
-            this.db = db;
-            this.distributedCache = distributedCache;
-            this.logger = logger;
-            this.payService = payService;
-        }
+        private readonly ILogger logger = logger;
 
 
 

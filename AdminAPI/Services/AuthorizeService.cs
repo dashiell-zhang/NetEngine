@@ -10,19 +10,8 @@ namespace AdminAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService
+    public class AuthorizeService(DatabaseContext db, IDHelper idHelper, IConfiguration configuration)
     {
-
-        private readonly DatabaseContext db;
-        private readonly IDHelper idHelper;
-        private readonly IConfiguration configuration;
-
-        public AuthorizeService(DatabaseContext db, IDHelper idHelper, IConfiguration configuration)
-        {
-            this.db = db;
-            this.idHelper = idHelper;
-            this.configuration = configuration;
-        }
 
 
 

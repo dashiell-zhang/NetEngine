@@ -6,18 +6,8 @@ namespace AdminAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class ArticleService
+    public class ArticleService(DatabaseContext db)
     {
-
-        private readonly DatabaseContext db;
-
-        public ArticleService(DatabaseContext db)
-        {
-            this.db = db;
-        }
-
-
-
         public List<DtoKeyValueChild>? GetCategoryChildList(long categoryId)
         {
             var list = db.TCategory.Where(t => t.ParentId == categoryId).Select(t => new DtoKeyValueChild

@@ -10,26 +10,13 @@ namespace FileStorage.AliCloud
     /// <summary>
     /// 阿里云OSS文件存储
     /// </summary>
-    public class AliCloudStorage : IFileStorage
+    public class AliCloudStorage(IOptionsMonitor<FileStorageSetting> config) : IFileStorage
     {
 
-        private readonly string endpoint;
-        private readonly string accessKeyId;
-        private readonly string accessKeySecret;
-        private readonly string bucketName;
-
-
-
-        public AliCloudStorage(IOptionsMonitor<FileStorageSetting> config)
-        {
-            endpoint = config.CurrentValue.Endpoint;
-            accessKeyId = config.CurrentValue.AccessKeyId;
-            accessKeySecret = config.CurrentValue.AccessKeySecret;
-            bucketName = config.CurrentValue.BucketName;
-        }
-
-
-
+        private readonly string endpoint = config.CurrentValue.Endpoint;
+        private readonly string accessKeyId = config.CurrentValue.AccessKeyId;
+        private readonly string accessKeySecret = config.CurrentValue.AccessKeySecret;
+        private readonly string bucketName = config.CurrentValue.BucketName;
 
         public bool FileDelete(string remotePath)
         {

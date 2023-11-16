@@ -5,17 +5,8 @@ namespace WebAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class QueueTaskService
+    public class QueueTaskService(DatabaseContext db, IDHelper idHelper)
     {
-
-        private readonly DatabaseContext db;
-        private readonly IDHelper idHelper;
-
-        public QueueTaskService(DatabaseContext db, IDHelper idHelper)
-        {
-            this.db = db;
-            this.idHelper = idHelper;
-        }
 
 
 

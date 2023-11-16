@@ -6,17 +6,8 @@ namespace AdminAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class RoleService
+    public class RoleService(DatabaseContext db)
     {
-
-
-        private readonly DatabaseContext db;
-
-
-        public RoleService(DatabaseContext db)
-        {
-            this.db = db;
-        }
 
 
 

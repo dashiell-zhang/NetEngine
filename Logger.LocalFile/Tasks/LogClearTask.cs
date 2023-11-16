@@ -5,16 +5,10 @@ using Microsoft.Extensions.Options;
 
 namespace Logger.LocalFile.Tasks
 {
-    internal class LogClearTask : BackgroundService
+    internal class LogClearTask(IOptionsMonitor<LoggerSetting> config) : BackgroundService
     {
 
-        private readonly int saveDays;
-
-
-        public LogClearTask(IOptionsMonitor<LoggerSetting> config)
-        {
-            saveDays = config.CurrentValue.SaveDays;
-        }
+        private readonly int saveDays = config.CurrentValue.SaveDays;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

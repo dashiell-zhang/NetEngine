@@ -11,22 +11,8 @@ namespace WebAPI.Controllers
     /// </summary>
     [Route("[controller]/[action]")]
     [ApiController]
-    public class BaseController : ControllerBase
+    public class BaseController(DatabaseContext db, IDHelper idHelper, IDistributedCache distributedCache) : ControllerBase
     {
-
-
-        private readonly DatabaseContext db;
-        private readonly IDHelper idHelper;
-        private readonly IDistributedCache distributedCache;
-
-
-
-        public BaseController(DatabaseContext db, IDHelper idHelper, IDistributedCache distributedCache)
-        {
-            this.db = db;
-            this.idHelper = idHelper;
-            this.distributedCache = distributedCache;
-        }
 
 
 

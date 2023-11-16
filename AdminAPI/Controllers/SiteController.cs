@@ -16,22 +16,8 @@ namespace AdminAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class SiteController : ControllerBase
+    public class SiteController(DatabaseContext db, SiteService siteService) : ControllerBase
     {
-
-        private readonly DatabaseContext db;
-
-        private readonly SiteService siteService;
-
-
-
-        public SiteController(DatabaseContext db, SiteService siteService)
-        {
-            this.db = db;
-
-            this.siteService = siteService;
-
-        }
 
 
 

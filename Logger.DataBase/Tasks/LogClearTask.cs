@@ -7,19 +7,10 @@ using Repository.Database;
 
 namespace Logger.DataBase.Tasks
 {
-    internal class LogClearTask : BackgroundService
+    internal class LogClearTask(IOptionsMonitor<LoggerSetting> config, IServiceProvider serviceProvider) : BackgroundService
     {
 
-        private readonly int saveDays;
-        private readonly IServiceProvider serviceProvider;
-
-
-
-        public LogClearTask(IOptionsMonitor<LoggerSetting> config, IServiceProvider serviceProvider)
-        {
-            saveDays = config.CurrentValue.SaveDays;
-            this.serviceProvider = serviceProvider;
-        }
+        private readonly int saveDays = config.CurrentValue.SaveDays;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

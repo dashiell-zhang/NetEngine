@@ -6,24 +6,11 @@ using System.Collections.Concurrent;
 
 namespace Logger.DataBase
 {
-    public class DataBaseLoggerProvider : ILoggerProvider
+    public class DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, IDHelper idHelper) : ILoggerProvider
     {
 
-        private readonly LoggerSetting loggerConfiguration;
-
-        private readonly IDHelper idHelper;
-
+        private readonly LoggerSetting loggerConfiguration = config.CurrentValue;
         private readonly ConcurrentDictionary<string, DataBaseLogger> loggers = new();
-
-
-
-        public DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, IDHelper idHelper)
-        {
-            loggerConfiguration = config.CurrentValue;
-            this.idHelper = idHelper;
-        }
-
-
 
         public ILogger CreateLogger(string categoryName)
         {

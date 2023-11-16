@@ -333,7 +333,7 @@ namespace Common
                                 for (int i = startRow; i <= rowCount; ++i)
                                 {
                                     IRow row = sheet.GetRow(i);
-                                    if (row == null || !row.Cells.Any()) continue;
+                                    if (row == null || row.Cells.Count == 0) continue;
 
                                     //跳过空行(所有列都为空的 视为空行)
                                     if (!row.Cells.Any(it => !string.IsNullOrWhiteSpace(it.StringCellValue))) continue;

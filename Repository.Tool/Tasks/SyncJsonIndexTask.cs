@@ -176,7 +176,7 @@ namespace Repository.Tool.Tasks
                     }
 
 
-                    if (indexColumnSQLList.Any())
+                    if (indexColumnSQLList.Count != 0)
                     {
                         string indexName = "jsonbIX_" + CryptoHelper.MD5HashData(tableName + "_" + string.Join("_", columnNameList));
 

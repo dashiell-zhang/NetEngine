@@ -32,18 +32,18 @@ namespace TaskService.Libraries
 
             await Task.Delay(5000, stoppingToken);
 
-            if ((queueMethodList.Any() || scheduleMethodList.Any()) && isDebug == false)
+            if ((queueMethodList.Count != 0 || scheduleMethodList.Count != 0) && isDebug == false)
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     try
                     {
-                        if (queueMethodList.Any())
+                        if (queueMethodList.Count != 0)
                         {
                             SyncQueueTaskSetting();
                         }
 
-                        if (scheduleMethodList.Any())
+                        if (scheduleMethodList.Count != 0)
                         {
                             SyncScheduleTaskSetting();
                         }

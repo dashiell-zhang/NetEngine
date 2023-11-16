@@ -38,7 +38,7 @@ namespace TaskService.Libraries.QueueTask
             using var scope = serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-            if (queueMethodList.Any())
+            if (queueMethodList.Count != 0)
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {

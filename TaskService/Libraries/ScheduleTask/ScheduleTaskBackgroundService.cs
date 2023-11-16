@@ -25,7 +25,7 @@ namespace TaskService.Libraries.QueueTask
             await Task.Delay(10000, stoppingToken);
 #endif
 
-            if (scheduleMethodList.Any())
+            if (scheduleMethodList.Count != 0)
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {

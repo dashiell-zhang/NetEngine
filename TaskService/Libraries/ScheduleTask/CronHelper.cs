@@ -1183,7 +1183,7 @@ namespace TaskService.Libraries.ScheduleTask
                     {
                         // 逐月获取规则
                         st = daysOfMonth.GetViewBetween(day, 9999999);
-                        bool found = st.Any();
+                        bool found = st.Count != 0;
                         if (lastdayOfMonth)
                         {
                             if (!nearestWeekday)

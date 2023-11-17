@@ -30,7 +30,7 @@ namespace AdminAPI.Controllers
                 }, rootPath, HttpContext),
                 "uploadscrawl" => new UploadHandler(new UploadConfig()
                 {
-                    AllowExtensions = new string[] { ".png" },
+                    AllowExtensions = [".png"],
                     PathFormat = Config.GetString("scrawlPathFormat", fileServerUrl),
                     SizeLimit = Config.GetInt("scrawlMaxSize", fileServerUrl),
                     UploadFieldName = Config.GetString("scrawlFieldName", fileServerUrl),

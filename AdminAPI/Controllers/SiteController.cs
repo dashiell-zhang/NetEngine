@@ -87,8 +87,8 @@ namespace AdminAPI.Controllers
         [HttpGet]
         public List<DtoKeyValue> GetServerInfo()
         {
-            List<DtoKeyValue> list = new()
-            {
+            List<DtoKeyValue> list =
+            [
                 new DtoKeyValue
                 {
                     Key = "服务器名称",
@@ -130,7 +130,7 @@ namespace AdminAPI.Controllers
                     Key = "本网站占用内存",
                     Value = ((double)GC.GetTotalMemory(false) / 1048576).ToString("N2") + "M"
                 }
-            };
+            ];
 
             return list;
         }

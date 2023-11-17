@@ -132,7 +132,7 @@ namespace Repository.Extensions
                     }
                 }
 
-                object[] parameters = { db, oldEntity, newEntity };
+                object[] parameters = [db, oldEntity, newEntity];
 
 
                 string result = typeof(DatabaseContextExtension).GetMethod("ComparisonEntity")!.MakeGenericMethod(type).Invoke(null, parameters)!.ToString()!;
@@ -197,7 +197,7 @@ namespace Repository.Extensions
 
             var fields = typeof(T).GetProperties();
 
-            List<string> baseTypeNames = new();
+            List<string> baseTypeNames = [];
             var baseType = original?.GetType().BaseType;
             while (baseType != null)
             {

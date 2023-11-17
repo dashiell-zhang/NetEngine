@@ -154,7 +154,7 @@ namespace Repository.Database
                     //设置表的备注
                     builder.ToTable(t => t.HasComment(GetEntityComment(entity.Name)));
 
-                    List<string> baseTypeNames = new();
+                    List<string> baseTypeNames = [];
                     var baseType = entity.ClrType.BaseType;
                     while (baseType != null)
                     {
@@ -187,7 +187,6 @@ namespace Repository.Database
         }
 
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:删除未使用的私有成员", Justification = "<挂起>")]
         private static void GlobalHasQueryFilter<T>(ModelBuilder builder) where T : CD
         {
             builder.Entity<T>().HasQueryFilter(e => e.IsDelete == false);
@@ -205,7 +204,7 @@ namespace Repository.Database
             xml.Load(path);
             XmlNodeList memebers = xml.SelectNodes("/doc/members/member")!;
 
-            Dictionary<string, string> fieldList = new();
+            Dictionary<string, string> fieldList = [];
 
 
             if (fieldName == null)

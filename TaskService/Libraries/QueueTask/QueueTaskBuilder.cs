@@ -2,7 +2,7 @@
 {
     public class QueueTaskBuilder
     {
-        public static readonly Dictionary<string, QueueTaskInfo> queueMethodList = new();
+        public static readonly Dictionary<string, QueueTaskInfo> queueMethodList = [];
 
 
         public static void Builder(object context)

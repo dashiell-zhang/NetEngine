@@ -147,7 +147,7 @@ namespace AdminAPI.Libraries
 
             var context = httpContext;
 
-            List<DtoKeyValue> parameters = new();
+            List<DtoKeyValue> parameters = [];
 
             if (context.Request.Method == "POST")
             {

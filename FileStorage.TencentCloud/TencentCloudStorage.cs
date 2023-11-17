@@ -22,7 +22,7 @@ namespace FileStorage.TencentCloud
         private readonly string bucketName;
 
 
-        private readonly CosXml cosXml;
+        private readonly CosXmlServer cosXml;
 
 
 

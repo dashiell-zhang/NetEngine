@@ -137,7 +137,7 @@ namespace TaskService
             int indexNo = 1;
             Console.WriteLine();
 
-            Dictionary<int, (string, string)> actionList = new();
+            Dictionary<int, (string, string)> actionList = [];
 
             foreach (var item in queueMethodList)
             {

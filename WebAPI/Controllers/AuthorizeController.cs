@@ -501,7 +501,7 @@ namespace WebAPI.Controllers
             xml.Load(AppContext.BaseDirectory + projectName + ".xml");
             XmlNodeList memebers = xml.SelectNodes("/doc/members/member")!;
 
-            Dictionary<string, string> remarksDict = new();
+            Dictionary<string, string> remarksDict = [];
 
 
             for (int c = 0; c < memebers.Count; c++)

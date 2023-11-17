@@ -24,7 +24,7 @@ namespace Repository.Tool.Tasks
 
             var dbIndexList = DataHelper.DataTableToList<DBIndex>(dbIndexDT);
 
-            List<DBIndex> codeIndexList = new();
+            List<DBIndex> codeIndexList = [];
 
             PropertyInfo[] dbSetList = db.GetType().GetProperties().Where(x => x.PropertyType.Name == "DbSet`1").ToArray();
 
@@ -41,9 +41,9 @@ namespace Repository.Tool.Tasks
                 foreach (var jsonIndex in jsonIndexAttributes)
                 {
 
-                    List<string> indexColumnSQLList = new();
+                    List<string> indexColumnSQLList = [];
 
-                    List<string> columnNameList = new();
+                    List<string> columnNameList = [];
 
                     foreach (var indexPropertyName in jsonIndex.PropertyNames)
                     {

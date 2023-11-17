@@ -57,7 +57,7 @@ namespace TaskService.Libraries.ScheduleTask
         {
             CronExpression cron = new(cronExpression);
 
-            List<DateTimeOffset> dateTimeOffsets = new();
+            List<DateTimeOffset> dateTimeOffsets = [];
 
             for (int i = 0; i < count; i++)
             {
@@ -128,9 +128,9 @@ namespace TaskService.Libraries.ScheduleTask
 
             private static readonly int MaxYear = DateTime.Now.Year + 100;
 
-            private static readonly char[] splitSeparators = { ' ', '\t', '\r', '\n' };
+            private static readonly char[] splitSeparators = [' ', '\t', '\r', '\n'];
 
-            private static readonly char[] commaSeparator = { ',' };
+            private static readonly char[] commaSeparator = [','];
 
 
             private static readonly Regex regex = new("^L-[0-9]*[W]?", RegexOptions.Compiled);
@@ -194,13 +194,13 @@ namespace TaskService.Libraries.ScheduleTask
             {
                 try
                 {
-                    seconds ??= new();
-                    minutes ??= new();
-                    hours ??= new();
-                    daysOfMonth ??= new();
-                    months ??= new();
-                    daysOfWeek ??= new();
-                    years ??= new();
+                    seconds ??= [];
+                    minutes ??= [];
+                    hours ??= [];
+                    daysOfMonth ??= [];
+                    months ??= [];
+                    daysOfWeek ??= [];
+                    years ??= [];
 
                     int exprOn = Second;
 

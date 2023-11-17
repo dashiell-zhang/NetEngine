@@ -11,7 +11,7 @@
         public bool[]? IsDescending { get; set; }
 
 
-        public List<string> PropertyNames = new();
+        public List<string> PropertyNames = [];
 
 
         public JsonIndexAttribute(params string[] additionalPropertyNames)

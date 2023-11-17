@@ -89,16 +89,16 @@ namespace Common
         /// <returns></returns>
         private static List<Assembly> GetAllAssembly()
         {
-            List<Assembly> allAssemblies = new();
+            List<Assembly> allAssemblies = [];
 
             var runtimeLibraryNameList = DependencyContext.Default?.RuntimeLibraries.SelectMany(t => t.RuntimeAssemblyGroups.SelectMany(r => r.AssetPaths.Select(a => new FileInfo(a)).Where(f => f.Extension == ".dll").Select(f => f.Name[..^4]))).Distinct().ToList();
 
-            List<string> removeKeyList = new()
-            {
+            List<string> removeKeyList =
+            [
                 "Microsoft",
                 "System",
                 "NPOI"
-            };
+            ];
 
             if (runtimeLibraryNameList != null)
             {

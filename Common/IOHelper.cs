@@ -148,7 +148,7 @@ namespace Common
         /// <param name="folderPath">文件夹路径</param>
         public static List<string> GetFolderAllFiles(string folderPath, bool includeSubfolders = false)
         {
-            List<string> list = new();
+            List<string> list = [];
 
             DirectoryInfo directoryInfo = new(folderPath);
             foreach (FileInfo info in directoryInfo.GetFiles())

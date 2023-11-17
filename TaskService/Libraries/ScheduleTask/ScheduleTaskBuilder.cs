@@ -3,7 +3,7 @@
     public class ScheduleTaskBuilder
     {
 
-        public static List<ScheduleTaskInfo> scheduleMethodList = new();
+        public static List<ScheduleTaskInfo> scheduleMethodList = [];
 
 
         public static void Builder(object context)

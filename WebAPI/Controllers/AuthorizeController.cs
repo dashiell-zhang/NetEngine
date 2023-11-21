@@ -63,6 +63,45 @@ namespace WebAPI.Controllers
 
 
 
+        [AllowAnonymous]
+        [HttpGet]
+        public bool A()
+        {
+            var phone = db.TPhone.First();
+
+
+
+            TPhone.SIM.X xx = new()
+            {
+                Address = "1231",
+                Na = "454545"
+            };
+
+            phone.SIMInfo.XList.Add(xx);
+
+            //phone.SIMList = new();
+
+            //var sssa = new TPhone.SIM()
+            //{
+            //    CardNo = "",
+            //    Nickname = "",
+            //    XList = []
+            //};
+            //phone.SIMList.Add(sssa);
+
+            //var sss = new TPhone.SIM();
+
+            //PropertyHelper.Assignment<TPhone.SIM>(sss, phone.SIMInfo);
+
+
+            //phone.SIMList.Add(sss);
+
+            db.SaveChanges();
+
+            return true;
+        }
+
+
         /// <summary>
         /// 获取公钥
         /// </summary>

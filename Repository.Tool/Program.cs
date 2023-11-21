@@ -18,7 +18,6 @@ namespace Repository.Tool
                             var connectionString = "Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456";
 
                             NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
-                            dataSourceBuilder.EnableDynamicJsonMappings();
 
                             options.UseNpgsql(dataSourceBuilder.Build(), x => x.MigrationsAssembly("Repository.Tool"));
                         });

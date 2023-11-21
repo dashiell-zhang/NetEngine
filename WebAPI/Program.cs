@@ -57,7 +57,6 @@ namespace WebAPI
                 var connectionString = builder.Configuration.GetConnectionString("dbConnection");
 
                 NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
-                dataSourceBuilder.EnableDynamicJsonMappings();
 
                 options.UseNpgsql(dataSourceBuilder.Build());
             }, 30);
@@ -332,7 +331,7 @@ namespace WebAPI
             #region 注册日志服务
 
             //注册数据库日志服务
-            builder.Logging.AddDataBaseLogger(options => { });
+            //builder.Logging.AddDataBaseLogger(options => { });
 
             //注册本地文件日志服务
             //builder.Logging.AddLocalFileLogger(options => { });

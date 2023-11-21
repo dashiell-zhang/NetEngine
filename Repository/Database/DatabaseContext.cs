@@ -1,5 +1,7 @@
 ﻿using Common.Attributes;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Repository.Attributes;
 using Repository.Bases;
 using Repository.ValueConverters;
 using System.ComponentModel;
@@ -99,29 +101,53 @@ namespace Repository.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
+            #region Json列映射关系维护
+
+            List<JsonColumnOwnedNavigation> jsonBuilders = [];
+
+            var tableEntityTypes = this.GetType().GetProperties().Where(t => t.PropertyType.Name == "DbSet`1").Select(t => t.PropertyType.GetGenericArguments()[0]).ToList();
+
+
+            foreach (var entityType in tableEntityTypes)
+            {
+                jsonBuilders.AddRange(GetJsonColumnOwnedNavigationList(entityType.GetProperties()));
+            }
+
+            foreach (var jsonBuilder in jsonBuilders)
+            {
+                modelBuilder.Entity(jsonBuilder.EntityTypeName, builder =>
+                {
+                    if (jsonBuilder.IsOwnsMany)
+                    {
+                        builder.OwnsMany(jsonBuilder.OwnedTypeName, jsonBuilder.NavigationName, b =>
+                        {
+                            b.ToJson();
+                            jsonBuilder.ChildList.ForEach(c => JsonOwnedNavigationBuilder(b, c));
+                        });
+                    }
+                    else
+                    {
+                        builder.OwnsOne(jsonBuilder.OwnedTypeName, jsonBuilder.NavigationName, b =>
+                        {
+                            b.ToJson();
+                            jsonBuilder.ChildList.ForEach(c => JsonOwnedNavigationBuilder(b, c));
+                        });
+                    }
+                });
+            }
+
+            #endregion
+
 #if DEBUG
             //循环关闭所有表的级联删除功能
-            foreach (var foreignKey in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+            foreach (var foreignKey in modelBuilder.Model.GetEntityTypes().Where(t => t.IsMappedToJson() == false).SelectMany(e => e.GetForeignKeys()))
             {
                 foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
             }
 #endif
 
-            //循环移除所有json字段的对应类
-            foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetProperties()).ToArray())
-            {
-                if (property.GetColumnType() == "jsonb")
-                {
-                    var removeEntityType = modelBuilder.Model.GetEntityTypes().FirstOrDefault(e => e.ClrType == property.ClrType);
 
-                    if (removeEntityType != null)
-                    {
-                        modelBuilder.Model.RemoveEntityType(removeEntityType);
-                    }
-                }
-            }
-
-            foreach (var entity in modelBuilder.Model.GetEntityTypes())
+            foreach (var entity in modelBuilder.Model.GetEntityTypes().Where(t => t.IsMappedToJson() == false))
             {
 
                 //添加全局过滤器
@@ -186,14 +212,6 @@ namespace Repository.Database
             }
         }
 
-
-        private static void GlobalHasQueryFilter<T>(ModelBuilder builder) where T : CD
-        {
-            builder.Entity<T>().HasQueryFilter(e => e.IsDelete == false);
-        }
-
-
-        private static readonly MethodInfo globalHasQueryFilter = typeof(DatabaseContext).GetMethod("GlobalHasQueryFilter", BindingFlags.Static | BindingFlags.NonPublic)!;
 
 
 
@@ -335,6 +353,90 @@ namespace Repository.Database
 
             return base.SaveChanges();
         }
+
+
+        #region Json列映射逻辑
+
+        private class JsonColumnOwnedNavigation
+        {
+            public string EntityTypeName { get; set; }
+
+            public string OwnedTypeName { get; set; }
+
+            public string NavigationName { get; set; }
+
+            public bool IsOwnsMany { get; set; }
+
+            public List<JsonColumnOwnedNavigation> ChildList { get; set; }
+        }
+
+
+        private List<JsonColumnOwnedNavigation> GetJsonColumnOwnedNavigationList(PropertyInfo[] propertyInfos)
+        {
+            List<JsonColumnOwnedNavigation> jsonColumnOwnedNavigations = [];
+
+            foreach (var propertyInfo in propertyInfos)
+            {
+                var jsonColumnAttribute = propertyInfo.GetCustomAttribute<JsonColumnAttribute>();
+
+                if (jsonColumnAttribute != null)
+                {
+
+                    var isOwnsMany = propertyInfo.PropertyType.Name == "List`1";
+
+                    JsonColumnOwnedNavigation jsonColumnOwnedNavigation = new()
+                    {
+                        EntityTypeName = propertyInfo.DeclaringType!.FullName!,
+                        OwnedTypeName = isOwnsMany ? propertyInfo.PropertyType.GetGenericArguments().First().FullName! : propertyInfo.PropertyType.FullName!,
+                        NavigationName = propertyInfo.Name,
+                        IsOwnsMany = isOwnsMany
+                    };
+
+                    var clrType = isOwnsMany ? propertyInfo.PropertyType.GetGenericArguments().First() : propertyInfo.PropertyType;
+
+                    jsonColumnOwnedNavigation.ChildList = GetJsonColumnOwnedNavigationList(clrType.GetProperties());
+
+                    jsonColumnOwnedNavigations.Add(jsonColumnOwnedNavigation);
+
+                }
+            }
+
+            return jsonColumnOwnedNavigations;
+        }
+
+
+        private void JsonOwnedNavigationBuilder(OwnedNavigationBuilder ownedNavigationBuilder, JsonColumnOwnedNavigation jsonColumnOwnedNavigation)
+        {
+            if (jsonColumnOwnedNavigation.IsOwnsMany)
+            {
+                ownedNavigationBuilder.OwnsMany(jsonColumnOwnedNavigation.OwnedTypeName, jsonColumnOwnedNavigation.NavigationName, b =>
+                {
+                    jsonColumnOwnedNavigation.ChildList.ForEach(c => JsonOwnedNavigationBuilder(b, c));
+                });
+            }
+            else
+            {
+                ownedNavigationBuilder.OwnsOne(jsonColumnOwnedNavigation.OwnedTypeName, jsonColumnOwnedNavigation.NavigationName, b =>
+                {
+                    jsonColumnOwnedNavigation.ChildList.ForEach(c => JsonOwnedNavigationBuilder(b, c));
+                });
+            }
+        }
+
+        #endregion
+
+
+        #region 全局逻辑删除过滤器
+
+        private static void GlobalHasQueryFilter<T>(ModelBuilder builder) where T : CD
+        {
+            builder.Entity<T>().HasQueryFilter(e => e.IsDelete == false);
+        }
+
+
+        private static readonly MethodInfo globalHasQueryFilter = typeof(DatabaseContext).GetMethod("GlobalHasQueryFilter", BindingFlags.Static | BindingFlags.NonPublic)!;
+
+        #endregion
 
     }
 }

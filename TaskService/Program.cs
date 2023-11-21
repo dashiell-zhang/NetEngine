@@ -24,7 +24,6 @@ namespace TaskService
                         var connectionString = hostContext.Configuration.GetConnectionString("dbConnection");
 
                         NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
-                        dataSourceBuilder.EnableDynamicJsonMappings();
 
                         options.UseNpgsql(dataSourceBuilder.Build());
                   

@@ -52,7 +52,6 @@ namespace AdminAPI
                 var connectionString = builder.Configuration.GetConnectionString("dbConnection");
 
                 NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
-                dataSourceBuilder.EnableDynamicJsonMappings();
 
                 options.UseNpgsql(dataSourceBuilder.Build());
             }, 30);

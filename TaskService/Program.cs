@@ -109,7 +109,8 @@ namespace TaskService
                     }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
                     {
                         AllowAutoRedirect = false,
-                        AutomaticDecompression = System.Net.DecompressionMethods.All
+                        AutomaticDecompression = System.Net.DecompressionMethods.All,
+                        UseCookies = false
                     });
 
                     #endregion

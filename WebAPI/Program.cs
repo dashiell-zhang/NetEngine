@@ -239,7 +239,8 @@ namespace WebAPI
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 AllowAutoRedirect = false,
-                AutomaticDecompression = System.Net.DecompressionMethods.All
+                AutomaticDecompression = System.Net.DecompressionMethods.All,
+                UseCookies = false
             });
 
             builder.Services.AddHttpClient("SkipSsl", options =>
@@ -249,6 +250,7 @@ namespace WebAPI
             {
                 AllowAutoRedirect = false,
                 AutomaticDecompression = System.Net.DecompressionMethods.All,
+                UseCookies = false,
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
             });
 
@@ -260,6 +262,7 @@ namespace WebAPI
             {
                 AllowAutoRedirect = false,
                 AutomaticDecompression = System.Net.DecompressionMethods.All,
+                UseCookies = false
             }).AddHttpMessageHandler<HttpSignHandler>();
 
 
@@ -271,7 +274,8 @@ namespace WebAPI
                 using HttpClientHandler handler = new()
                 {
                     AllowAutoRedirect = false,
-                    AutomaticDecompression = System.Net.DecompressionMethods.All
+                    AutomaticDecompression = System.Net.DecompressionMethods.All,
+                    UseCookies = false
                 };
                 var sslPath = Path.Combine(Directory.GetCurrentDirectory(), "ssl", "xxxx.p12");
                 using X509Certificate2 certificate = new(sslPath, "证书密码", X509KeyStorageFlags.MachineKeySet);

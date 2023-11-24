@@ -41,8 +41,15 @@ namespace Repository.ValueConverters
 
         private static string AesDecrypt(string cipherText)
         {
-            byte[] inputBuffers = Convert.FromBase64String(cipherText);
-            return Encoding.UTF8.GetString(decryptorTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length));
+            try
+            {
+                byte[] inputBuffers = Convert.FromBase64String(cipherText);
+                return Encoding.UTF8.GetString(decryptorTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length));
+            }
+            catch
+            {
+                return cipherText;
+            }
         }
 
     }

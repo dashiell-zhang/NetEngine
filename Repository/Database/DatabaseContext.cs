@@ -138,14 +138,25 @@ namespace Repository.Database
 
             #endregion
 
-#if DEBUG
-            //循环关闭所有表的级联删除功能
-            foreach (var foreignKey in modelBuilder.Model.GetEntityTypes().Where(t => t.IsMappedToJson() == false).SelectMany(e => e.GetForeignKeys()))
+            #region 为所有实体的 AesEncrypted 字段添加转换器
+            foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
-                foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
+                foreach (var property in entity.GetProperties())
+                {
+                    if (property.PropertyInfo?.GetCustomAttribute<AesEncryptedAttribute>() != null)
+                    {
+                        if (property.ClrType == typeof(string))
+                        {
+                            property.SetValueConverter(AesValueConverter.aesConverter);
+                        }
+                        else
+                        {
+                            throw new Exception("非 string 类型的字段无法添加 AesEncrypted");
+                        }
+                    }
+                }
             }
-#endif
-
+            #endregion
 
             foreach (var entity in modelBuilder.Model.GetEntityTypes().Where(t => t.IsMappedToJson() == false))
             {
@@ -153,28 +164,16 @@ namespace Repository.Database
                 //添加全局过滤器
                 globalHasQueryFilter.MakeGenericMethod(entity.ClrType).Invoke(null, new object[] { modelBuilder });
 
+#if DEBUG
+                //关闭表外键的级联删除功能
+                entity.GetForeignKeys().ToList().ForEach(t => t.DeleteBehavior = DeleteBehavior.Restrict);
+#endif
+
                 modelBuilder.Entity(entity.Name, builder =>
                 {
                     //设置生成数据库时的表名移除前缀T
                     var tableName = builder.Metadata.ClrType.GetCustomAttribute<TableAttribute>()?.Name ?? (entity.ClrType.Name[1..]);
                     builder.ToTable(tableName);
-
-
-                    foreach (var property in entity.GetProperties())
-                    {
-                        //为所有 AesEncrypted 字段添加转换器
-                        if (property.PropertyInfo?.GetCustomAttribute<AesEncryptedAttribute>() != null)
-                        {
-                            if (property.ClrType == typeof(string))
-                            {
-                                property.SetValueConverter(AesValueConverter.aesConverter);
-                            }
-                            else
-                            {
-                                throw new Exception("非 string 类型的字段无法添加 AesEncrypted");
-                            }
-                        }
-                    }
 
 #if DEBUG
                     //设置表的备注

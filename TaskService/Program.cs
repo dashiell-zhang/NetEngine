@@ -15,7 +15,17 @@ namespace TaskService
 
             EnvironmentHelper.ChangeDirectory(args);
 
+            List<Type>? initSingletonServiceTypes = [];
+
             IHost host = Host.CreateDefaultBuilder(args).UseWindowsService()
+                .ConfigureLogging((hostContext, builder) =>
+                {
+                    //注册数据库日志服务
+                    builder.AddDataBaseLogger(options => { });
+
+                    //注册本地文件日志服务
+                    //builder.AddLocalFileLogger(options => { });
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
 
@@ -115,17 +125,15 @@ namespace TaskService
 
                     #endregion
 
-                }).ConfigureLogging((hostContext, builder) =>
-                {
-                    //注册数据库日志服务
-                    builder.AddDataBaseLogger(options => { });
-
-                    //注册本地文件日志服务
-                    //builder.AddLocalFileLogger(options => { });
+                    initSingletonServiceTypes = services.Where(t => t.Lifetime == ServiceLifetime.Singleton && t.ServiceType.ContainsGenericParameters == false).Select(t => t.ServiceType).ToList();
                 })
                 .Build();
 
             host.Start();
+
+            //初始化所有不包含开放泛型的单例服务
+            initSingletonServiceTypes.ForEach(t => host.Services.GetService(t));
+            initSingletonServiceTypes = null;
 #if DEBUG
 
             var queueMethodList = Libraries.QueueTask.QueueTaskBuilder.queueMethodList;

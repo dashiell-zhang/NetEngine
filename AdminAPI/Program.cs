@@ -353,6 +353,9 @@ namespace AdminAPI
 
 
             app.Start();
+
+            //初始化所有不包含开放泛型的单例服务
+            builder.Services.Where(t => t.Lifetime == ServiceLifetime.Singleton && t.ServiceType.ContainsGenericParameters == false).Select(t => t.ServiceType).ToList().ForEach(t => app.Services.GetService(t));
 #if DEBUG
             string url = app.Urls.First().Replace("http://[::]", "http://127.0.0.1");
             Console.WriteLine(Environment.NewLine + "Swagger Doc: " + url + "/swagger/" + Environment.NewLine);

@@ -37,7 +37,7 @@ namespace TaskService.Libraries.QueueTask
                             }
                         }
 
-                        foreach (var item in scheduleMethodList.Where(t => t.IsEnable).ToList())
+                        foreach (var item in scheduleMethodList.Values.Where(t => t.IsEnable).ToList())
                         {
                             if (item.LastTime == null)
                             {

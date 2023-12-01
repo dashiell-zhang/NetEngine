@@ -64,7 +64,6 @@ namespace TaskService.Libraries
                             task = new()
                             {
                                 Id = idHelper.GetId(),
-                                IsEnable = true,
                                 Category = "QueueTask",
                                 Name = item.Key,
                                 Semaphore = item.Value.Semaphore
@@ -106,19 +105,16 @@ namespace TaskService.Libraries
                     foreach (var item in scheduleMethodList)
                     {
 
-                        var taskName = item.Method.Name;
-
-                        var taskSetting = db.TTaskSetting.Where(t => t.Name == taskName).FirstOrDefault();
+                        var taskSetting = db.TTaskSetting.Where(t => t.Name == item.Key).FirstOrDefault();
 
                         if (taskSetting == null)
                         {
                             taskSetting = new()
                             {
                                 Id = idHelper.GetId(),
-                                IsEnable = true,
                                 Category = "ScheduleTask",
-                                Name = taskName,
-                                Cron = item.Cron
+                                Name = item.Key,
+                                Cron = item.Value.Cron
                             };
 
                             db.Add(taskSetting);
@@ -127,11 +123,11 @@ namespace TaskService.Libraries
                         }
                         else
                         {
-                            if (taskSetting.Cron != null && taskSetting.Cron != item.Cron)
+                            if (taskSetting.Cron != null && taskSetting.Cron != item.Value.Cron)
                             {
-                                item.Cron = taskSetting.Cron;
+                                item.Value.Cron = taskSetting.Cron;
                             }
-                            item.IsEnable = taskSetting.IsEnable;
+                            item.Value.IsEnable = taskSetting.IsEnable;
                         }
                     }
 

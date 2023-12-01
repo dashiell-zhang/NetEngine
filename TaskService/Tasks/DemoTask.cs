@@ -19,7 +19,7 @@ namespace TaskService.Tasks
 
 
 
-        [ScheduleTask(Cron = "0/1 * * * * ?")]
+        [ScheduleTask(Name = "ShowTime", Cron = "0/1 * * * * ?")]
         public void ShowTime()
         {
             try

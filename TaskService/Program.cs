@@ -36,7 +36,7 @@ namespace TaskService
                         NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
 
                         options.UseNpgsql(dataSourceBuilder.Build());
-                  
+
                     }, 30);
 
 
@@ -164,7 +164,7 @@ namespace TaskService
                 Console.ResetColor();
             }
 
-            foreach (var item in scheduleMethodList)
+            foreach (var item in scheduleMethodList.Values)
             {
                 string actionStatus = item.IsEnable ? "已启动" : "";
 
@@ -203,8 +203,8 @@ namespace TaskService
                             }
                             else
                             {
-                                var actionInfo = scheduleMethodList.Where(t => t.Method.Name == startActionName.Item2).First();
-                                actionInfo.IsEnable = true;
+                                var actionInfo = scheduleMethodList.Where(t => t.Value.Method.Name == startActionName.Item2).First();
+                                actionInfo.Value.IsEnable = true;
                             }
                         }
                         else

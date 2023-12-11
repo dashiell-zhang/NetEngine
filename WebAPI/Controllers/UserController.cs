@@ -35,7 +35,7 @@ namespace WebAPI.Controllers
             this.db = db;
             this.distributedCache = distributedCache;
 
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
             if (userIdStr != null)
             {
                 userId = long.Parse(userIdStr);

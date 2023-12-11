@@ -28,7 +28,7 @@ namespace AdminAPI.Controllers
             this.db = db;
             this.idHelper = idHelper;
 
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
             if (userIdStr != null)
             {
                 userId = long.Parse(userIdStr);

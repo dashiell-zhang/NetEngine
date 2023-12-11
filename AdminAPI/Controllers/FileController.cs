@@ -42,7 +42,7 @@ namespace AdminAPI.Controllers
 
             rootPath = webHostEnvironment.WebRootPath;
 
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
 
             if (userIdStr != null)
             {

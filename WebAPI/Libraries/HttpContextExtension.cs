@@ -27,27 +27,14 @@ namespace WebAPI.Libraries
 
 
         /// <summary>
-        /// 通过Authorization获取Claim
+        /// 通过Key获取HttpContext.User.Claims中的信息
         /// </summary>
         /// <param name="httpContext"></param>
         /// <param name="key">Claim关键字</param>
         /// <returns></returns>
-        public static string? GetClaimByAuthorization(this HttpContext httpContext, string key)
+        public static string? GetClaimByUser(this HttpContext httpContext, string key)
         {
-            var authorization = httpContext.Request.Headers.Authorization.FirstOrDefault()?.Replace("Bearer ", "");
-
-            if (authorization != null)
-            {
-                JwtSecurityToken securityToken = new(authorization);
-
-                var value = securityToken.Claims.ToList().Where(t => t.Type == key).FirstOrDefault()?.Value;
-
-                return value;
-            }
-            else
-            {
-                return null;
-            }
+            return httpContext.User.Claims.Where(t => t.Type == key).Select(t => t.Value).FirstOrDefault();
         }
 
 

@@ -33,7 +33,7 @@ namespace AdminAPI.Controllers
             this.idHelper = idHelper;
             this.roleService = roleService;
 
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
 
             if (userIdStr != null)
             {

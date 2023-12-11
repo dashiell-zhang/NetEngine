@@ -53,7 +53,7 @@ namespace WebAPI.Controllers
 
             this.authorizeService = authorizeService;
 
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
 
             if (userIdStr != null)
             {

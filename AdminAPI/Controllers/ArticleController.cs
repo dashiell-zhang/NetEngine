@@ -34,7 +34,7 @@ namespace AdminAPI.Controllers
             this.configuration = configuration;
             this.idHelper = idHelper;
 
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
 
             if (userIdStr != null)
             {

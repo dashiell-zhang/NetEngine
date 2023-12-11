@@ -50,7 +50,7 @@ namespace WebAPI.Libraries
 
                     if (functionId != default)
                     {
-                        var userId = long.Parse(httpContext.GetClaimByAuthorization("userId")!);
+                        var userId = long.Parse(httpContext.GetClaimByUser("userId")!);
                         var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
 
                         var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
@@ -93,8 +93,8 @@ namespace WebAPI.Libraries
 
             var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-            var nbf = Convert.ToInt64(httpContext.GetClaimByAuthorization("nbf"));
-            var exp = Convert.ToInt64(httpContext.GetClaimByAuthorization("exp"));
+            var nbf = Convert.ToInt64(httpContext.GetClaimByUser("nbf"));
+            var exp = Convert.ToInt64(httpContext.GetClaimByUser("exp"));
 
             var nbfTime = DateTimeOffset.FromUnixTimeSeconds(nbf);
             var expTime = DateTimeOffset.FromUnixTimeSeconds(exp);
@@ -105,8 +105,8 @@ namespace WebAPI.Libraries
             if (lifeSpan < DateTimeOffset.UtcNow)
             {
 
-                var tokenId = long.Parse(httpContext.GetClaimByAuthorization("tokenId")!);
-                var userId = long.Parse(httpContext.GetClaimByAuthorization("userId")!);
+                var tokenId = long.Parse(httpContext.GetClaimByUser("tokenId")!);
+                var userId = long.Parse(httpContext.GetClaimByUser("userId")!);
 
                 string key = "IssueNewToken" + tokenId;
 

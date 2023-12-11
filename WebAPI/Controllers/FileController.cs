@@ -43,7 +43,7 @@ namespace WebAPI.Controllers
 
             rootPath = webHostEnvironment.ContentRootPath;
 
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByAuthorization("userId");
+            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
 
             if (userIdStr != null)
             {

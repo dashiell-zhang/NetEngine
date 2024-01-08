@@ -28,7 +28,7 @@
 		<PackageReference Include="NPOI" Version="2.6.2" />
 		<PackageReference Include="SkiaSharp" Version="2.88.6" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.6" />
-		<PackageReference Include="SkiaSharp.QrCode" Version="0.6.0" />
+		<PackageReference Include="SkiaSharp.QrCode" Version="0.7.0" />
 	</ItemGroup>
 
 </Project>

@@ -152,5 +152,22 @@
         }
 
 
+
+        /// <summary>
+        /// 获取指定时间开始的最小Id
+        /// </summary>
+        /// <returns></returns>
+        public long GetMinIdByTime(DateTimeOffset startTime)
+        {
+            long timestamp = startTime.ToUnixTimeMilliseconds();
+
+            lastTimestamp = timestamp; //把当前时间戳保存为最后生成ID的时间戳
+            long Id = ((timestamp - twepoch) << (int)timestampLeftShift)
+                | (0L << (int)datacenterIdShift)
+                | (0L << (int)machineIdShift)
+                | 0;
+            return Id;
+        }
+
     }
 }

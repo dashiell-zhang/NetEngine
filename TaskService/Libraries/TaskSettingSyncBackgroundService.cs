@@ -66,7 +66,8 @@ namespace TaskService.Libraries
                                 Id = idHelper.GetId(),
                                 Category = "QueueTask",
                                 Name = item.Key,
-                                Semaphore = item.Value.Semaphore
+                                Semaphore = item.Value.Semaphore,
+                                Duration = item.Value.Duration
                             };
 
                             db.Add(task);
@@ -79,6 +80,12 @@ namespace TaskService.Libraries
                             {
                                 item.Value.Semaphore = task.Semaphore.Value;
                             }
+
+                            if (task.Duration != null && task.Duration != item.Value.Duration)
+                            {
+                                item.Value.Duration = task.Duration.Value;
+                            }
+
                             item.Value.IsEnable = task.IsEnable;
                         }
                     }

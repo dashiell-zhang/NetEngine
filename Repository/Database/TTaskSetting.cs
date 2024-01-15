@@ -32,6 +32,13 @@ namespace Repository.Database
 
 
         /// <summary>
+        /// 预期持续时间(单位：分)
+        /// </summary>
+        public int? Duration { get; set; }
+
+
+
+        /// <summary>
         /// Cron 表达式
         /// </summary>
         public string? Cron { get; set; }

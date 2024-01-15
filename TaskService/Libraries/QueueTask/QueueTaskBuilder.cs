@@ -11,7 +11,7 @@
 
             foreach (var method in taskList)
             {
-                string name = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Name" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
+                string name = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Name" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).First()!;
 
                 int semaphore = 1;
 
@@ -22,14 +22,25 @@
                     semaphore = int.Parse(semaphoreStr);
                 }
 
+                int duration = 5;
+
+                var durationStr = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Duration" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault();
+
+                if (durationStr != null)
+                {
+                    duration = int.Parse(durationStr);
+                }
+
                 queueMethodList.Add(name, new()
                 {
                     Name = name,
                     Semaphore = semaphore,
                     Method = method,
-                    Context = context
+                    Context = context,
+                    Duration = duration,
                 });
             }
+
         }
 
     }

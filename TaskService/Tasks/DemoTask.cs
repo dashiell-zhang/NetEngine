@@ -37,7 +37,7 @@ namespace TaskService.Tasks
         }
 
 
-        [QueueTask(Name = "ShowName", Semaphore = 1)]
+        [QueueTask(Name = "ShowName", Semaphore = 1, Duration = 5)]
         public void ShowName(string name)
         {
             Console.WriteLine(DateTime.Now + "姓名：" + name);

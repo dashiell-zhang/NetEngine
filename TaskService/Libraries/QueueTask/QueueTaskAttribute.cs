@@ -16,7 +16,15 @@
         /// <summary>
         /// 并发值
         /// </summary>
-        public int Semaphore { get; set; } = 1;
+        public int Semaphore { get; set; }
+
+
+
+
+        /// <summary>
+        /// 预期持续时间(单位：分)
+        /// </summary>
+        public int Duration { get; set; }
 
     }
 }

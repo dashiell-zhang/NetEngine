@@ -41,5 +41,12 @@ namespace TaskService.Libraries.QueueTask
         /// 是否启用
         /// </summary>
         public bool IsEnable { get; set; }
+
+
+
+        /// <summary>
+        /// 预期持续时间(单位：分)
+        /// </summary>
+        public int Duration { get; set; }
     }
 }

@@ -81,7 +81,7 @@ namespace TaskService.Libraries.QueueTask
                     var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
                     var idHelper = scope.ServiceProvider.GetRequiredService<IDHelper>();
 
-                    using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(5), queueTaskInfo.Semaphore);
+                    using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
                     if (lockActionState != null)
                     {
                         var queueTask = db.TQueueTask.FirstOrDefault(t => t.Id == queueTaskId)!;

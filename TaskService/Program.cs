@@ -164,17 +164,17 @@ namespace TaskService
                 Console.ResetColor();
             }
 
-            foreach (var item in scheduleMethodList.Values)
+            foreach (var item in scheduleMethodList)
             {
-                string actionStatus = item.IsEnable ? "已启动" : "";
+                string actionStatus = item.Value.IsEnable ? "已启动" : "";
 
-                if (item.IsEnable)
+                if (item.Value.IsEnable)
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                 }
 
-                Console.WriteLine($"[{indexNo}] " + "定时任务：" + item.Method.Name + " " + actionStatus);
-                actionList.Add(indexNo, ("定时任务", item.Method.Name));
+                Console.WriteLine($"[{indexNo}] " + "定时任务：" + item.Key + " " + actionStatus);
+                actionList.Add(indexNo, ("定时任务", item.Key));
                 indexNo++;
 
                 Console.ResetColor();
@@ -203,7 +203,7 @@ namespace TaskService
                             }
                             else
                             {
-                                var actionInfo = scheduleMethodList.Where(t => t.Value.Method.Name == startActionName.Item2).First();
+                                var actionInfo = scheduleMethodList.Where(t => t.Key == startActionName.Item2).First();
                                 actionInfo.Value.IsEnable = true;
                             }
                         }

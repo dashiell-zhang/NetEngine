@@ -144,14 +144,14 @@ namespace TaskService.Libraries.QueueTask
                         queueTask.SuccessTime = DateTime.UtcNow;
 
                         db.SaveChanges();
-
-                        runingTaskList.TryRemove(queueTaskId, out _);
                     }
-
                 }
                 catch (Exception ex)
                 {
                     logger.LogError($"RunAction-{queueTaskInfo.Name};{queueTaskId};{ex.Message}");
+                }
+                finally
+                {
                     runingTaskList.TryRemove(queueTaskId, out _);
                 }
             });

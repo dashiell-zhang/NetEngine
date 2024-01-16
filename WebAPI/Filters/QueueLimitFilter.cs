@@ -34,6 +34,13 @@ namespace WebAPI.Filters
         public bool IsBlock { get; set; }
 
 
+
+        /// <summary>
+        /// 失效时长（单位秒）
+        /// </summary>
+        public int Expiry { get; set; }
+
+
         private IDisposable? LockHandle { get; set; }
 
 
@@ -63,7 +70,14 @@ namespace WebAPI.Filters
 
                 while (true)
                 {
-                    var handle = distLock.TryLock(key);
+                    var expiryTime = TimeSpan.FromSeconds(60);
+
+                    if (Expiry > 0)
+                    {
+                        expiryTime = TimeSpan.FromSeconds(Expiry);
+                    }
+
+                    var handle = distLock.TryLock(key, expiryTime);
                     if (handle != null)
                     {
                         LockHandle = handle;
@@ -96,7 +110,10 @@ namespace WebAPI.Filters
         {
             try
             {
-                LockHandle?.Dispose();
+                if (Expiry <= 0)
+                {
+                    LockHandle?.Dispose();
+                }
             }
             catch (Exception ex)
             {

@@ -34,6 +34,12 @@ namespace AdminAPI.Filters
         public bool IsBlock { get; set; }
 
 
+        /// <summary>
+        /// 失效时长（单位秒）
+        /// </summary>
+        public int Expiry { get; set; }
+
+
         private IDisposable? LockHandle { get; set; }
 
 
@@ -55,7 +61,7 @@ namespace AdminAPI.Filters
                 key = key + "_" + parameter;
             }
 
-            key = "QueueLimit_" + CryptoHelper.MD5HashData(key);
+            key = "QueueLimit_" + Common.CryptoHelper.MD5HashData(key);
 
             try
             {
@@ -63,7 +69,14 @@ namespace AdminAPI.Filters
 
                 while (true)
                 {
-                    var handle = distLock.TryLock(key);
+                    var expiryTime = TimeSpan.FromSeconds(60);
+
+                    if (Expiry > 0)
+                    {
+                        expiryTime = TimeSpan.FromSeconds(Expiry);
+                    }
+
+                    var handle = distLock.TryLock(key, expiryTime);
                     if (handle != null)
                     {
                         LockHandle = handle;
@@ -96,7 +109,10 @@ namespace AdminAPI.Filters
         {
             try
             {
-                LockHandle?.Dispose();
+                if (Expiry <= 0)
+                {
+                    LockHandle?.Dispose();
+                }
             }
             catch (Exception ex)
             {
@@ -104,7 +120,6 @@ namespace AdminAPI.Filters
                 logger.LogError(ex, "队列限制模块异常-Out");
             }
         }
-
 
     }
 }

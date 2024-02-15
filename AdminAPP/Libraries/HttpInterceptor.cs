@@ -35,7 +35,7 @@ namespace AdminAPP.Libraries
 
             if (!string.IsNullOrEmpty(authorization) || isGetToken)
             {
-                if (!isGetToken)
+                if (!string.IsNullOrEmpty(authorization) && !isGetToken)
                 {
                     var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
                     var privateKey = authorization.Split(".").ToList().LastOrDefault();

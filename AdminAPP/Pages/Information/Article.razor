@@ -203,7 +203,7 @@
 
             var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
             var authorization = LocalStorage.GetItemAsString("Authorization");
-            var privateKey = authorization.Split(".").ToList().LastOrDefault();
+            var privateKey = authorization?.Split(".").ToList().LastOrDefault();
             var requestUrl = "/File/UploadFile?business=TArticle&key=" + fileKey + "&sign=cover";
 
             var dataStr = privateKey + timeStr + requestUrl + "file" + fileSign;

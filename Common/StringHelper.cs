@@ -1,5 +1,6 @@
 ﻿using System.IO.Compression;
 using System.Net;
+using System.Numerics;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -405,5 +406,202 @@ namespace Common
 
             return sb.ToString();
         }
+
+
+
+        /// <summary>
+        /// 检查IPv4地址是否是局域网IP
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <returns></returns>
+        public static bool IsLanIpAddressV4(string ipAddress)
+        {
+            if (IPAddress.TryParse(ipAddress, out IPAddress? ip))
+            {
+                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    byte[] ipBytes = ip.GetAddressBytes();
+                    // A 类私有地址范围：10.0.0.0 - 10.255.255.255
+                    if (ipBytes[0] == 10)
+                    {
+                        return true;
+                    }
+                    // B 类私有地址范围：172.16.0.0 - 172.31.255.255
+                    else if (ipBytes[0] == 172 && ipBytes[1] >= 16 && ipBytes[1] <= 31)
+                    {
+                        return true;
+                    }
+                    // C 类私有地址范围：192.168.0.0 - 192.168.255.255
+                    else if (ipBytes[0] == 192 && ipBytes[1] == 168)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+
+
+        /// <summary>
+        /// 检查IPv6地址是否是局域网IP
+        /// </summary>
+        /// <param name="ipv6Address"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static bool IsLanIpAddressV6(string ipv6Address)
+        {
+            if (!IPAddress.TryParse(ipv6Address, out IPAddress? ipAddress))
+            {
+                //无效的IPv6地址
+                return false;
+            }
+
+            //确保地址是IPv6  
+            if (ipAddress.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
+            {
+                //提供的IP地址不是IPv6地址
+                return false;
+            }
+
+            //获取IPv6地址的字节数组  
+            var bytes = ipAddress.GetAddressBytes();
+
+            //检查是否是 ULA 地址
+            if (bytes[0] >= 0xfc)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+
+
+        /// <summary>
+        /// 检查IPv4地址是否在某个CIDR范围内
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <param name="cidrRange"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static bool IsIpInCidrRangeV4(string ipAddress, string cidrRange)
+        {
+            // 解析CIDR表示法  
+            string[] parts = cidrRange.Split('/');
+            if (parts.Length != 2)
+            {
+                //无效的CIDR表示法
+                return false;
+            }
+
+            // 解析网络地址  
+            if (!IPAddress.TryParse(parts[0], out IPAddress? network))
+            {
+                //CIDR表示法中的网络地址无效
+                return false;
+            }
+
+            // 解析子网掩码长度  
+            if (!int.TryParse(parts[1], out int cidrMaskLength) || cidrMaskLength < 0 || cidrMaskLength > 32)
+            {
+                //CIDR表示法中的子网掩码长度无效
+                return false;
+            }
+
+            // 解析待检查的IP地址  
+            if (!IPAddress.TryParse(ipAddress, out IPAddress? ipToCheck))
+            {
+                //要检查的IP地址无效
+                return false;
+            }
+
+            // 确保地址都是IPv4  
+            if (network.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || ipToCheck.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                //两个IP地址都必须是IPv4
+                return false;
+            }
+
+            byte[] networkBytes = network.GetAddressBytes();
+            byte[] ipBytes = ipToCheck.GetAddressBytes();
+
+            byte[] maskBytes = new byte[4];
+            for (int i = 0; i < 4; i++)
+            {
+                maskBytes[i] = (byte)(i < cidrMaskLength / 8 ? 0xFF : (0xFF << (8 - cidrMaskLength % 8)));
+            }
+
+            byte[] networkAddressBytes = new byte[4];
+            for (int i = 0; i < 4; i++)
+            {
+                networkAddressBytes[i] = (byte)(networkBytes[i] & maskBytes[i]);
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                if ((ipBytes[i] & maskBytes[i]) != networkAddressBytes[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+
+        /// <summary>
+        /// 检查IPv6地址是否在某个CIDR范围内
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <param name="cidrNotation"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static bool IsIpInCidrRangeV6(string ipAddress, string cidrNotation)
+        {
+            // 解析IP地址  
+            if (!IPAddress.TryParse(ipAddress, out IPAddress? ipToCheck))
+            {
+                //要检查的IP地址无效
+                return false;
+            }
+
+            // 解析CIDR表示法  
+            var cidrParts = cidrNotation.Split('/');
+            if (cidrParts.Length != 2 || !int.TryParse(cidrParts[1], out int cidrBits))
+            {
+                //无效的CIDR表示法
+                return false;
+            }
+
+            // 解析网络地址  
+            if (!IPAddress.TryParse(cidrParts[0], out IPAddress? networkAddress))
+            {
+                //CIDR表示法中的网络地址无效
+                return false;
+            }
+
+            // 确保地址都是IPv6  
+            if (ipToCheck.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6 || networkAddress.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
+            {
+                //两个IP地址都必须是IPv6
+                return false;
+            }
+
+            // 获取IP地址和网络地址的字节数组  
+            var ipBytes = ipToCheck.GetAddressBytes();
+            var networkBytes = networkAddress.GetAddressBytes();
+
+
+            var ipBigInteger = new BigInteger(ipBytes.Reverse().ToArray());
+            var networkBigInteger = new BigInteger(networkBytes.Reverse().ToArray());
+
+            var maskedNetwork = networkBigInteger >> (128 - cidrBits);
+
+            return (ipBigInteger >> (128 - cidrBits)) == maskedNetwork;
+        }
+
+
     }
 }

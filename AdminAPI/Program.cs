@@ -34,19 +34,6 @@ namespace AdminAPI
 
             builder.Host.UseWindowsService();
 
-            #region 启用 Kestrel Https 并绑定证书
-
-            //builder.WebHost.UseKestrel(options =>
-            //{
-            //    options.ConfigureHttpsDefaults(options =>
-            //    {
-            //        options.ServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(Path.Combine(AppContext.BaseDirectory, "xxxx.pfx"), "123456");
-            //    });
-            //});
-            //builder.WebHost.UseUrls("https://*");
-
-            #endregion
-
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
                 var connectionString = builder.Configuration.GetConnectionString("dbConnection");

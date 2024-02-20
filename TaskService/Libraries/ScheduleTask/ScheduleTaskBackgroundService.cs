@@ -7,7 +7,7 @@ namespace TaskService.Libraries.QueueTask
     public class ScheduleTaskBackgroundService(ILogger<ScheduleTaskBackgroundService> logger) : BackgroundService
     {
 
-        private readonly ConcurrentDictionary<string, string?> historyList = new();
+        private readonly ConcurrentDictionary<string, string?> runingTaskList = new();
 
         private readonly ILogger logger = logger;
 
@@ -46,7 +46,7 @@ namespace TaskService.Libraries.QueueTask
                             {
                                 string key = nowTime.ToUnixTimeSeconds() + item.Name;
 
-                                if (historyList.TryAdd(key, null))
+                                if (runingTaskList.TryAdd(key, null))
                                 {
                                     item.LastTime = nowTime;
                                     RunAction(item,key);
@@ -80,7 +80,7 @@ namespace TaskService.Libraries.QueueTask
                 }
                 finally
                 {
-                    historyList.TryRemove(key, out _);
+                    runingTaskList.TryRemove(key, out _);
                 }
             });
         }

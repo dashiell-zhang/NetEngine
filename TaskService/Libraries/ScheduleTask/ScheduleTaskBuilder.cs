@@ -19,6 +19,7 @@
 
                 scheduleMethodList.Add(name, new ScheduleTaskInfo
                 {
+                    Name = name,
                     Cron = cron,
                     Method = method,
                     Context = context

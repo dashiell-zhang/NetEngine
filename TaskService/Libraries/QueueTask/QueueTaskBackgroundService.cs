@@ -107,9 +107,9 @@ namespace TaskService.Libraries.QueueTask
                         {
                             if (queueTask.Parameter != null)
                             {
-                                var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, new object[] { queueTask.Parameter })!;
+                                var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
 
-                                returnObject = queueTaskInfo.Method.Invoke(queueTaskInfo.Context, new object[] { parameter });
+                                returnObject = queueTaskInfo.Method.Invoke(queueTaskInfo.Context, [parameter]);
                             }
                             else
                             {

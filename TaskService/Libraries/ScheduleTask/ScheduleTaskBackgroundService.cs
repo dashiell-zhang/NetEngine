@@ -25,26 +25,17 @@ namespace TaskService.Libraries.QueueTask
                 {
                     try
                     {
-                        var nowTime = DateTime.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-
-                        foreach (var key in historyList.Keys)
-                        {
-                            var keyTime = DateTime.Parse(key[..19]);
-
-                            if (keyTime! <= nowTime.AddSeconds(-3))
-                            {
-                                historyList.TryRemove(key, out _);
-                            }
-                        }
 
                         foreach (var item in scheduleMethodList.Values.Where(t => t.IsEnable).ToList())
                         {
+                            var nowTime = DateTimeOffset.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss zzz"));
+
                             if (item.LastTime == null)
                             {
-                                item.LastTime = DateTimeOffset.Now.AddSeconds(5);
+                                item.LastTime = nowTime.AddSeconds(5);
                             }
 
-                            var nextTime = DateTime.Parse(CronHelper.GetNextOccurrence(item.Cron, item.LastTime.Value).ToString("yyyy-MM-dd HH:mm:ss"));
+                            var nextTime = DateTimeOffset.Parse(CronHelper.GetNextOccurrence(item.Cron, item.LastTime.Value).ToString("yyyy-MM-dd HH:mm:ss zzz"));
 
                             if (nextTime < nowTime)
                             {
@@ -53,13 +44,12 @@ namespace TaskService.Libraries.QueueTask
 
                             if (nextTime == nowTime)
                             {
-                                string key = nextTime.ToString("yyyy-MM-dd HH:mm:ss") + " " + item.Method.DeclaringType?.FullName + "." + item.Method.Name;
+                                string key = nowTime.ToUnixTimeSeconds() + item.Name;
 
                                 if (historyList.TryAdd(key, null))
                                 {
-                                    item.LastTime = DateTimeOffset.Now;
-
-                                    RunAction(item);
+                                    item.LastTime = nowTime;
+                                    RunAction(item,key);
                                 }
                             }
                         }
@@ -76,7 +66,7 @@ namespace TaskService.Libraries.QueueTask
 
 
 
-        private void RunAction(ScheduleTaskInfo scheduleTaskInfo)
+        private void RunAction(ScheduleTaskInfo scheduleTaskInfo,string key)
         {
             Task.Run(() =>
             {
@@ -87,6 +77,10 @@ namespace TaskService.Libraries.QueueTask
                 catch (Exception ex)
                 {
                     logger.LogError($"RunAction-{scheduleTaskInfo.Method.Name};{ex.Message}");
+                }
+                finally
+                {
+                    historyList.TryRemove(key, out _);
                 }
             });
         }

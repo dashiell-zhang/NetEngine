@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Repository.Database;
 using System.Data;
 using System.Data.Common;
@@ -101,13 +103,15 @@ namespace Repository.Extensions
         /// 保存数据并记录更新日志
         /// </summary>
         /// <param name="db"></param>
-        /// <param name="logId"></param>
         /// <param name="actionUserId"></param>
         /// <param name="ipAddress"></param>
         /// <param name="deviceMark"></param>
         /// <returns></returns>
-        public static int SaveChangesWithUpdateLog(this DatabaseContext db, long logId, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
+        public static int SaveChangesWithUpdateLog(this DatabaseContext db, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
         {
+
+            var idService = db.Database.GetService<IdService>();
+
             db.PreprocessingChangeTracker();
 
             var list = db.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
@@ -164,7 +168,7 @@ namespace Repository.Extensions
 
                     TDataUpdateLog osLog = new()
                     {
-                        Id = logId,
+                        Id = idService.GetId(),
                         Table = type.Name,
                         Content = result,
                         TableId = entityId,

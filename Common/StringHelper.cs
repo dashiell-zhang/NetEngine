@@ -17,21 +17,6 @@ namespace Common
     {
 
 
-        /// <summary>
-        /// 生成一个订单号
-        /// </summary>
-        /// <returns></returns>
-        public static string GetOrderNo(string sign)
-        {
-            Random ran = new();
-            int RandKey = ran.Next(10000, 99999);
-
-
-            string orderno = sign + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + RandKey;
-            return orderno;
-        }
-
-
 
         /// <summary>
         /// 过滤删除掉字符串中的 全部标点符号
@@ -603,5 +588,33 @@ namespace Common
         }
 
 
+
+        /// <summary>
+        /// 替换模板字符串中的参数
+        /// </summary>
+        /// <param name="template">模板字符串</param>
+        /// <param name="placeholders">参数值字典集</param>
+        /// <param name="placeholderPrefix">参数前缀，如 ${ </param>
+        /// <param name="placeholderSuffix">参数后缀，如 } </param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static string ReplacePlaceholders(string template, Dictionary<string, string> placeholders, string placeholderPrefix, string placeholderSuffix)
+        {
+            string pattern = $"{Regex.Escape(placeholderPrefix)}(.*?){Regex.Escape(placeholderSuffix)}";
+
+            return Regex.Replace(template, pattern, match =>
+            {
+                string key = match.Groups[1].Value;
+
+                if (placeholders.TryGetValue(key, out string? value))
+                {
+                    return value;
+                }
+                else
+                {
+                    throw new Exception(key + "参数的值未找到");
+                }
+            });
+        }
     }
 }

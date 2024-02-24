@@ -4,6 +4,7 @@ using AdminAPI.Services;
 using AdminShared.Models;
 using AdminShared.Models.Article;
 using Common;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -20,7 +21,7 @@ namespace AdminAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IConfiguration configuration;
-        private readonly IDHelper idHelper;
+        private readonly IdService idService;
 
         private readonly ArticleService articleService;
 
@@ -28,11 +29,11 @@ namespace AdminAPI.Controllers
 
 
 
-        public ArticleController(DatabaseContext db, IConfiguration configuration, IDHelper idHelper, IHttpContextAccessor httpContextAccessor, ArticleService articleService)
+        public ArticleController(DatabaseContext db, IConfiguration configuration, IdService idService, IHttpContextAccessor httpContextAccessor, ArticleService articleService)
         {
             this.db = db;
             this.configuration = configuration;
-            this.idHelper = idHelper;
+            this.idService = idService;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
 
@@ -144,7 +145,7 @@ namespace AdminAPI.Controllers
         {
             TCategory category = new()
             {
-                Id = idHelper.GetId(),
+                Id = idService.GetId(),
                 CreateUserId = userId,
                 Name = createCategory.Name,
                 ParentId = createCategory.ParentId,
@@ -320,7 +321,7 @@ namespace AdminAPI.Controllers
         {
             TArticle article = new()
             {
-                Id = idHelper.GetId(),
+                Id = idService.GetId(),
                 CreateUserId = userId,
                 Title = createArticle.Title,
                 Content = createArticle.Content,

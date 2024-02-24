@@ -3,6 +3,7 @@ using AdminAPI.Libraries;
 using AdminAPI.Services;
 using AdminShared.Models.Authorize;
 using Common;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
@@ -32,12 +33,12 @@ namespace AdminAPI.Controllers
 
         private readonly long userId;
 
-        private readonly IDHelper idHelper;
+        private readonly IdService idService;
 
 
 
 
-        public AuthorizeController(DatabaseContext db, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor, IDHelper idHelper)
+        public AuthorizeController(DatabaseContext db, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor, IdService idService)
         {
             this.db = db;
 
@@ -49,7 +50,7 @@ namespace AdminAPI.Controllers
                 userId = long.Parse(userIdStr);
             }
 
-            this.idHelper = idHelper;
+            this.idService = idService;
         }
 
 
@@ -189,7 +190,7 @@ namespace AdminAPI.Controllers
                 {
                     TFunctionRoute functionRoute = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         Module = projectName,
                         Route = item.Route!,
                         Remarks = remarks

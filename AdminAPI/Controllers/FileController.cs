@@ -2,6 +2,7 @@
 using AdminAPI.Libraries;
 using Common;
 using FileStorage;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -25,7 +26,7 @@ namespace AdminAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IConfiguration configuration;
-        private readonly IDHelper idHelper;
+        private readonly IdService idService;
         private readonly IFileStorage? fileStorage;
 
         private readonly string rootPath;
@@ -33,11 +34,11 @@ namespace AdminAPI.Controllers
         private readonly long userId;
 
 
-        public FileController(DatabaseContext db, IConfiguration configuration, IDHelper idHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
+        public FileController(DatabaseContext db, IConfiguration configuration, IdService idService, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
         {
             this.db = db;
             this.configuration = configuration;
-            this.idHelper = idHelper;
+            this.idService = idService;
             this.fileStorage = fileStorage;
 
             rootPath = webHostEnvironment.WebRootPath;
@@ -75,7 +76,7 @@ namespace AdminAPI.Controllers
                 Directory.CreateDirectory(folderPath);
             }
 
-            var fileName = idHelper.GetId() + Path.GetExtension(file.FileName).ToLower();
+            var fileName = idService.GetId() + Path.GetExtension(file.FileName).ToLower();
 
             var filePath = Path.Combine(folderPath, fileName);
 
@@ -109,7 +110,7 @@ namespace AdminAPI.Controllers
 
                     TFile f = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         Name = file.FileName,
                         Length = file.Length,
                         Path = filePath,

@@ -1,5 +1,6 @@
 ﻿using AdminAPI.Models.AppSetting;
 using Common;
+using IdentifierGenerator;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,7 +11,7 @@ namespace AdminAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService(DatabaseContext db, IDHelper idHelper, IConfiguration configuration)
+    public class AuthorizeService(DatabaseContext db, IdService idService, IConfiguration configuration)
     {
 
 
@@ -25,7 +26,7 @@ namespace AdminAPI.Services
 
             TUserToken userToken = new()
             {
-                Id = idHelper.GetId(),
+                Id = idService.GetId(),
                 UserId = userId
             };
 

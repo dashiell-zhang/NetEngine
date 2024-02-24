@@ -1,4 +1,5 @@
 ﻿using Common;
+using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
@@ -12,7 +13,7 @@ namespace WebAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService(DatabaseContext db, IDHelper idHelper, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public class AuthorizeService(DatabaseContext db, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
         private readonly HttpClient httpClient = httpClientFactory.CreateClient();
 
@@ -26,7 +27,7 @@ namespace WebAPI.Services
         {
             TUserToken userToken = new()
             {
-                Id = idHelper.GetId(),
+                Id = idService.GetId(),
                 UserId = userId,
             };
 

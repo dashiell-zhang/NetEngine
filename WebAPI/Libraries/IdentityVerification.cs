@@ -1,5 +1,6 @@
 ﻿using Common;
 using DistributedLock;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Caching.Distributed;
@@ -89,7 +90,7 @@ namespace WebAPI.Libraries
         private static void IssueNewToken(HttpContext httpContext)
         {
 
-            var idHelper = httpContext.RequestServices.GetRequiredService<IDHelper>();
+            var idService = httpContext.RequestServices.GetRequiredService<IdService>();
 
             var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
@@ -126,7 +127,7 @@ namespace WebAPI.Libraries
 
                             TUserToken userToken = new()
                             {
-                                Id = idHelper.GetId(),
+                                Id = idService.GetId(),
                                 UserId = userId,
                                 LastId = tokenId
                             };

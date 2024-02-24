@@ -5,6 +5,7 @@ using AdminShared.Models;
 using AdminShared.Models.User;
 using Common;
 using DistributedLock;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
@@ -28,17 +29,17 @@ namespace AdminAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IDistributedLock distLock;
-        private readonly IDHelper idHelper;
+        private readonly IdService idService;
 
         private readonly UserService userService;
         private readonly long userId;
 
 
-        public UserController(DatabaseContext db, IDistributedLock distLock, IDHelper idHelper, UserService userService, IHttpContextAccessor httpContextAccessor)
+        public UserController(DatabaseContext db, IDistributedLock distLock, IdService idService, UserService userService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distLock = distLock;
-            this.idHelper = idHelper;
+            this.idService = idService;
             this.userService = userService;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
@@ -140,7 +141,7 @@ namespace AdminAPI.Controllers
 
                         TUser user = new()
                         {
-                            Id = idHelper.GetId(),
+                            Id = idService.GetId(),
                             Name = createUser.Name,
                             UserName = createUser.UserName,
                             Phone = createUser.Phone
@@ -156,7 +157,7 @@ namespace AdminAPI.Controllers
                         {
                             TUserRole userRole = new()
                             {
-                                Id = idHelper.GetId(),
+                                Id = idService.GetId(),
                                 UserId = user.Id,
                                 CreateUserId = this.userId,
                                 RoleId = item
@@ -235,7 +236,7 @@ namespace AdminAPI.Controllers
                             {
                                 TUserRole userRole = new()
                                 {
-                                    Id = idHelper.GetId(),
+                                    Id = idService.GetId(),
                                     UserId = userId,
                                     CreateUserId = this.userId,
                                     RoleId = item
@@ -346,7 +347,7 @@ namespace AdminAPI.Controllers
             {
                 if (functionAuthorize.Id == default)
                 {
-                    functionAuthorize.Id = idHelper.GetId();
+                    functionAuthorize.Id = idService.GetId();
                     functionAuthorize.CreateUserId = userId;
 
                     functionAuthorize.FunctionId = setUserFunction.FunctionId;
@@ -430,7 +431,7 @@ namespace AdminAPI.Controllers
                 {
                     userRole = new TUserRole
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         CreateUserId = userId,
                         UserId = setUserRole.UserId,
                         RoleId = setUserRole.RoleId

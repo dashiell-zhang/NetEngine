@@ -1,5 +1,4 @@
-﻿using Common.Attributes;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Repository.Attributes;
 using Repository.Bases;

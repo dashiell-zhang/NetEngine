@@ -1,5 +1,6 @@
 ﻿using Common;
 using DistributedLock;
+using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Repository.Database;
 using System.Collections.Concurrent;
@@ -79,7 +80,7 @@ namespace TaskService.Libraries.QueueTask
                     using var scope = serviceProvider.CreateScope();
 
                     var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-                    var idHelper = scope.ServiceProvider.GetRequiredService<IDHelper>();
+                    var idService = scope.ServiceProvider.GetRequiredService<IdService>();
 
                     using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
                     if (lockActionState != null)
@@ -125,7 +126,7 @@ namespace TaskService.Libraries.QueueTask
                         {
                             TQueueTask callbackTask = new()
                             {
-                                Id = idHelper.GetId(),
+                                Id = idService.GetId(),
                                 Name = queueTask.CallbackName
                             };
 

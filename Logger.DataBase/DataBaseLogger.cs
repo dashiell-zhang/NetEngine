@@ -1,4 +1,5 @@
 ﻿using Common;
+using IdentifierGenerator;
 using Logger.DataBase.Models;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
@@ -6,7 +7,7 @@ using System.Text;
 
 namespace Logger.DataBase
 {
-    public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IDHelper idHelper) : ILogger
+    public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IdService idService) : ILogger
     {
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
@@ -60,7 +61,7 @@ namespace Logger.DataBase
 
                         TLog log = new()
                         {
-                            Id = idHelper.GetId(),
+                            Id = idService.GetId(),
                             Project = loggerSetting.Project,
                             MachineName = Environment.MachineName,
                             Category = categoryName,

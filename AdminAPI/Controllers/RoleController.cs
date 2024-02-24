@@ -4,6 +4,7 @@ using AdminAPI.Services;
 using AdminShared.Models;
 using AdminShared.Models.Role;
 using Common;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -21,16 +22,16 @@ namespace AdminAPI.Controllers
 
 
         private readonly DatabaseContext db;
-        private readonly IDHelper idHelper;
+        private readonly IdService idService;
         private readonly RoleService roleService;
 
         private readonly long userId;
 
 
-        public RoleController(DatabaseContext db, IDHelper idHelper, IHttpContextAccessor httpContextAccessor, RoleService roleService)
+        public RoleController(DatabaseContext db, IdService idService, IHttpContextAccessor httpContextAccessor, RoleService roleService)
         {
             this.db = db;
-            this.idHelper = idHelper;
+            this.idService = idService;
             this.roleService = roleService;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
@@ -114,7 +115,7 @@ namespace AdminAPI.Controllers
         {
             var dbRole = new TRole
             {
-                Id = idHelper.GetId(),
+                Id = idService.GetId(),
                 Name = role.Name,
                 Remarks = role.Remarks
             };
@@ -249,7 +250,7 @@ namespace AdminAPI.Controllers
             {
                 if (functionAuthorize.Id == default)
                 {
-                    functionAuthorize.Id = idHelper.GetId();
+                    functionAuthorize.Id = idService.GetId();
                     functionAuthorize.CreateUserId = userId;
 
                     db.TFunctionAuthorize.Add(functionAuthorize);

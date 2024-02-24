@@ -1,11 +1,12 @@
 ﻿using Common;
+using IdentifierGenerator;
 using Repository.Database;
 using static TaskService.Libraries.QueueTask.QueueTaskBuilder;
 using static TaskService.Libraries.ScheduleTask.ScheduleTaskBuilder;
 
 namespace TaskService.Libraries
 {
-    public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IDHelper idHelper) : BackgroundService
+    public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IdService idService) : BackgroundService
     {
         private readonly ILogger logger = logger;
 
@@ -63,7 +64,7 @@ namespace TaskService.Libraries
                         {
                             task = new()
                             {
-                                Id = idHelper.GetId(),
+                                Id = idService.GetId(),
                                 Category = "QueueTask",
                                 Name = item.Key,
                                 Semaphore = item.Value.Semaphore,
@@ -118,7 +119,7 @@ namespace TaskService.Libraries
                         {
                             taskSetting = new()
                             {
-                                Id = idHelper.GetId(),
+                                Id = idService.GetId(),
                                 Category = "ScheduleTask",
                                 Name = item.Key,
                                 Cron = item.Value.Cron

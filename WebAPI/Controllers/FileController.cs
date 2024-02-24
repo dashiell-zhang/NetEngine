@@ -1,5 +1,6 @@
 ﻿using Common;
 using FileStorage;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -25,7 +26,7 @@ namespace WebAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IConfiguration configuration;
-        private readonly IDHelper idHelper;
+        private readonly IdService idService;
         private readonly IFileStorage? fileStorage;
 
         private readonly string rootPath;
@@ -34,11 +35,11 @@ namespace WebAPI.Controllers
 
 
 
-        public FileController(DatabaseContext db, IConfiguration configuration, IDHelper idHelper, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
+        public FileController(DatabaseContext db, IConfiguration configuration, IdService idService, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
         {
             this.db = db;
             this.configuration = configuration;
-            this.idHelper = idHelper;
+            this.idService = idService;
             this.fileStorage = fileStorage;
 
             rootPath = webHostEnvironment.ContentRootPath;
@@ -69,7 +70,7 @@ namespace WebAPI.Controllers
             string remoteFileUrl = fileInfo.Key!.ToString()!;
 
             var fileExtension = Path.GetExtension(fileInfo.Value!.ToString()!).ToLower();
-            var fileName = idHelper.GetId() + fileExtension;
+            var fileName = idService.GetId() + fileExtension;
 
             var utcNow = DateTime.UtcNow;
 
@@ -109,7 +110,7 @@ namespace WebAPI.Controllers
 
                     TFile f = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         Name = fileInfoName,
                         Length = length,
                         Path = filePath,
@@ -155,7 +156,7 @@ namespace WebAPI.Controllers
                 Directory.CreateDirectory(folderPath);
             }
 
-            var fileName = idHelper.GetId() + Path.GetExtension(file.FileName).ToLower();
+            var fileName = idService.GetId() + Path.GetExtension(file.FileName).ToLower();
 
             var filePath = Path.Combine(folderPath, fileName);
 
@@ -188,7 +189,7 @@ namespace WebAPI.Controllers
 
                     TFile f = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         Name = file.FileName,
                         Length = file.Length,
                         Path = filePath,

@@ -1,7 +1,6 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-#FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-FROM registry.cn-shanghai.aliyuncs.com/onekib/dotnet-aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 
 USER root
 
@@ -20,8 +19,7 @@ EXPOSE 8080
 EXPOSE 8081
 
 
-#FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-FROM registry.cn-shanghai.aliyuncs.com/onekib/dotnet-sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["WebAPI/WebAPI.csproj", "WebAPI/"]

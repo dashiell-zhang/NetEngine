@@ -22,6 +22,7 @@ using WebAPI.Libraries.HealthCheck;
 using WebAPI.Libraries.HttpHandler;
 using WebAPI.Libraries.Swagger;
 using WebAPI.Models.AppSetting;
+using IdentifierGenerator;
 
 namespace WebAPI
 {
@@ -194,8 +195,8 @@ namespace WebAPI
             });
 
 
-            //注册雪花ID算法
-            builder.Services.AddSingleton(new IDHelper(0, 0));
+            //注册Id生成器
+            builder.Services.AddIdentifierGenerator(option => { option.MachineId = 0; option.DataCenterId = 0; });
 
 
             //注册分布式锁 Redis模式
@@ -344,6 +345,7 @@ namespace WebAPI
             builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
             #endregion
 
+
             var app = builder.Build();
 
             app.UseForwardedHeaders();
@@ -395,6 +397,7 @@ namespace WebAPI
 
             //初始化所有不包含开放泛型的单例服务
             builder.Services.Where(t => t.Lifetime == ServiceLifetime.Singleton && t.ServiceType.ContainsGenericParameters == false).Select(t => t.ServiceType).ToList().ForEach(t => app.Services.GetService(t));
+
 #if DEBUG
             string url = app.Urls.First().Replace("http://[::]", "http://127.0.0.1");
             Console.WriteLine(Environment.NewLine + "Swagger Doc: " + url + "/swagger/" + Environment.NewLine);

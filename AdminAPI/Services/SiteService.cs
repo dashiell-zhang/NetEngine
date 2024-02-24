@@ -1,11 +1,12 @@
 ﻿using Common;
+using IdentifierGenerator;
 using Repository.Database;
 
 namespace AdminAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class SiteService(DatabaseContext db, IDHelper idHelper)
+    public class SiteService(DatabaseContext db, IdService idService)
     {
         public bool SetSiteInfo(string key, string? value)
         {
@@ -19,7 +20,7 @@ namespace AdminAPI.Services
                 {
                     appSetting = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         Module = "Site",
                         Key = key,
                         Value = value

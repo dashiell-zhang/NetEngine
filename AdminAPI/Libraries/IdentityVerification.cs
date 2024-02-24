@@ -1,6 +1,7 @@
 ﻿using AdminAPI.Models.AppSetting;
 using Common;
 using DistributedLock;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Caching.Distributed;
@@ -88,7 +89,7 @@ namespace AdminAPI.Libraries
         private static void IssueNewToken(HttpContext httpContext)
         {
 
-            IDHelper idHelper = httpContext.RequestServices.GetRequiredService<IDHelper>();
+            IdService idService = httpContext.RequestServices.GetRequiredService<IdService>();
 
             var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
@@ -126,7 +127,7 @@ namespace AdminAPI.Libraries
 
                             TUserToken userToken = new()
                             {
-                                Id = idHelper.GetId(),
+                                Id = idService.GetId(),
                                 UserId = userId,
                                 LastId = tokenId
                             };

@@ -1,5 +1,6 @@
 ﻿using Common;
 using DistributedLock;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +34,7 @@ namespace WebAPI.Controllers
 
         private readonly DatabaseContext db;
         private readonly IDistributedLock distLock;
-        private readonly IDHelper idHelper;
+        private readonly IdService idService;
 
         private readonly IDistributedCache distributedCache;
 
@@ -44,11 +45,11 @@ namespace WebAPI.Controllers
 
 
 
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, IDHelper idHelper, IDistributedCache distributedCache, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
+        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, IdService idService, IDistributedCache distributedCache, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
             this.distLock = distLock;
-            this.idHelper = idHelper;
+            this.idService = idService;
             this.distributedCache = distributedCache;
 
             this.authorizeService = authorizeService;
@@ -138,7 +139,7 @@ namespace WebAPI.Controllers
                         //注册一个只有基本信息的账户出来
                         TUser user = new()
                         {
-                            Id = idHelper.GetId(),
+                            Id = idService.GetId(),
                             Name = userName,
                             UserName = Guid.NewGuid().ToString(),
                             Phone = ""
@@ -151,7 +152,7 @@ namespace WebAPI.Controllers
 
                         TUserBindExternal userBind = new()
                         {
-                            Id = idHelper.GetId(),
+                            Id = idService.GetId(),
                             UserId = user.Id,
                             AppName = "WeiXinMiniApp",
                             AppId = login.AppId,
@@ -208,7 +209,7 @@ namespace WebAPI.Controllers
 
                     TUser user = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         Name = userName,
                         UserName = Guid.NewGuid().ToString(),
                         Phone = login.Phone
@@ -328,7 +329,7 @@ namespace WebAPI.Controllers
 
                     user = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         IsDelete = false,
                         Name = userInfo.NickName,
                         UserName = Guid.NewGuid().ToString(),
@@ -341,7 +342,7 @@ namespace WebAPI.Controllers
 
                     TUserBindExternal bind = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         AppName = "WeiXinApp",
                         AppId = login.AppId,
                         OpenId = openId,
@@ -470,7 +471,7 @@ namespace WebAPI.Controllers
         {
             DtoKeyValue keyValue = new()
             {
-                Key = idHelper.GetId()
+                Key = idService.GetId()
             };
 
             keyValue.Value = Convert.ToBase64String(KeyDerivation.Pbkdf2(passWord, Encoding.UTF8.GetBytes(keyValue.Key.ToString()!), KeyDerivationPrf.HMACSHA256, 1000, 32));
@@ -565,7 +566,7 @@ namespace WebAPI.Controllers
                 {
                     TFunctionRoute functionRoute = new()
                     {
-                        Id = idHelper.GetId(),
+                        Id = idService.GetId(),
                         Module = projectName,
                         Route = item.Route!,
                         Remarks = remarks

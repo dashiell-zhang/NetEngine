@@ -1,6 +1,7 @@
 ﻿using AdminAPI.Filters;
 using AdminShared.Models;
 using Common;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
 
@@ -12,7 +13,7 @@ namespace AdminAPI.Controllers
     [SignVerifyFilter]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class BaseController(DatabaseContext db, IDHelper idHelper) : ControllerBase
+    public class BaseController(DatabaseContext db, IdService idService) : ControllerBase
     {
 
 
@@ -119,7 +120,7 @@ namespace AdminAPI.Controllers
         [HttpGet]
         public long GetSnowflakeId()
         {
-            return idHelper.GetId();
+            return idService.GetId();
         }
 
     }

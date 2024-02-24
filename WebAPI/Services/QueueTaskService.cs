@@ -1,11 +1,12 @@
 ﻿using Common;
+using IdentifierGenerator;
 using Repository.Database;
 
 namespace WebAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class QueueTaskService(DatabaseContext db, IDHelper idHelper)
+    public class QueueTaskService(DatabaseContext db, IdService idService)
     {
 
 
@@ -50,7 +51,7 @@ namespace WebAPI.Services
             {
                 TQueueTask queueTask = new()
                 {
-                    Id = idHelper.GetId(),
+                    Id = idService.GetId(),
                     Name = name,
                     PlanTime = planTime,
                     CallbackName = callbackName,

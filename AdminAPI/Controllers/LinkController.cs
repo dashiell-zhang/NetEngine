@@ -3,6 +3,7 @@ using AdminAPI.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.Link;
 using Common;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
@@ -17,16 +18,16 @@ namespace AdminAPI.Controllers
     {
 
         private readonly DatabaseContext db;
-        private readonly IDHelper idHelper;
+        private readonly IdService idService;
 
         private readonly long userId;
 
 
 
-        public LinkController(DatabaseContext db, IDHelper idHelper, IHttpContextAccessor httpContextAccessor)
+        public LinkController(DatabaseContext db, IdService idService, IHttpContextAccessor httpContextAccessor)
         {
             this.db = db;
-            this.idHelper = idHelper;
+            this.idService = idService;
 
             var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
             if (userIdStr != null)
@@ -107,7 +108,7 @@ namespace AdminAPI.Controllers
         {
             TLink link = new()
             {
-                Id = idHelper.GetId(),
+                Id = idService.GetId(),
                 Name = createLink.Name,
                 Url = createLink.Url,
                 CreateUserId = userId,

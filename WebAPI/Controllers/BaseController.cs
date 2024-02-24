@@ -1,4 +1,5 @@
 ﻿using Common;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
@@ -11,7 +12,7 @@ namespace WebAPI.Controllers
     /// </summary>
     [Route("[controller]/[action]")]
     [ApiController]
-    public class BaseController(DatabaseContext db, IDHelper idHelper, IDistributedCache distributedCache) : ControllerBase
+    public class BaseController(DatabaseContext db, IdService idService, IDistributedCache distributedCache) : ControllerBase
     {
 
 
@@ -140,7 +141,7 @@ namespace WebAPI.Controllers
         [HttpGet]
         public long GetSnowflakeId()
         {
-            return idHelper.GetId();
+            return idService.GetId();
         }
 
 

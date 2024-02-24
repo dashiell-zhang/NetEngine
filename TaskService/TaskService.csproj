@@ -32,6 +32,7 @@
 		<ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
 		<ProjectReference Include="..\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
 		<ProjectReference Include="..\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
+		<ProjectReference Include="..\IdentifierGenerator\IdentifierGenerator.csproj" />
 		<ProjectReference Include="..\Logger.DataBase\Logger.DataBase.csproj" />
 		<ProjectReference Include="..\Logger.LocalFile\Logger.LocalFile.csproj" />
 		<ProjectReference Include="..\Repository\Repository.csproj" />

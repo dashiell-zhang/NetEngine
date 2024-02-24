@@ -5,6 +5,7 @@ using AdminAPI.Libraries.Swagger;
 using AdminAPI.Models.AppSetting;
 using Common;
 using DistributedLock.Redis;
+using IdentifierGenerator;
 using Logger.DataBase;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -185,8 +186,8 @@ namespace AdminAPI
             });
 
 
-            //注册雪花ID算法
-            builder.Services.AddSingleton(new Common.IDHelper(0, 0));
+            //注册Id生成器
+            builder.Services.AddIdentifierGenerator(option => { option.MachineId = 0; option.DataCenterId = 0; });
 
 
             //注册分布式锁 Redis模式

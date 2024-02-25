@@ -1,13 +1,11 @@
-﻿using Common;
-using IdentifierGenerator;
-using Logger.DataBase.Models;
+﻿using Logger.DataBase.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 
 namespace Logger.DataBase
 {
-    public class DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, IdService idService) : ILoggerProvider
+    public class DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, IServiceProvider serviceProvider) : ILoggerProvider
     {
 
         private readonly LoggerSetting loggerConfiguration = config.CurrentValue;
@@ -15,7 +13,7 @@ namespace Logger.DataBase
 
         public ILogger CreateLogger(string categoryName)
         {
-            return loggers.GetOrAdd(categoryName, new DataBaseLogger(categoryName, loggerConfiguration, idService));
+            return loggers.GetOrAdd(categoryName, new DataBaseLogger(categoryName, loggerConfiguration, serviceProvider));
         }
 
         public void Dispose()

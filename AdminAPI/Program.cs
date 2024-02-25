@@ -187,7 +187,7 @@ namespace AdminAPI
 
 
             //注册Id生成器
-            builder.Services.AddIdentifierGenerator(option => { option.IsAuto = true; });
+            builder.Services.AddIdentifierGenerator();
 
 
             //注册分布式锁 Redis模式

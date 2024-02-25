@@ -1,13 +1,14 @@
 ﻿using Common;
 using IdentifierGenerator;
 using Logger.DataBase.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System.Text;
 
 namespace Logger.DataBase
 {
-    public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IdService idService) : ILogger
+    public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IServiceProvider serviceProvider) : ILogger
     {
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
@@ -57,7 +58,7 @@ namespace Logger.DataBase
                             logContent = JsonHelper.ObjectToJson(logMsg);
                         }
 
-
+                        var idService = serviceProvider.GetRequiredService<IdService>();
 
                         TLog log = new()
                         {

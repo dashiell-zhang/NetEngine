@@ -88,7 +88,7 @@ namespace TaskService
                     #endregion
 
 
-                
+
 
 
                     //注册分布式锁 Redis模式
@@ -108,7 +108,7 @@ namespace TaskService
 
 
                     //注册Id生成器
-                    services.AddIdentifierGenerator(options => { options.IsAuto = true; });
+                    services.AddIdentifierGenerator();
 
 
                     //注册 Redis 驱动

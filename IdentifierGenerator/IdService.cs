@@ -2,70 +2,65 @@
 using DistributedLock;
 using IdentifierGenerator.Models;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace IdentifierGenerator
 {
     public class IdService
     {
-        public IdService(IOptionsMonitor<IdSetting> config, IDistributedLock distributedLock, IServiceProvider serviceProvider)
+
+        public IdService(IOptionsMonitor<IdSetting> config, IDistributedLock distributedLock, IDistributedCache distributedCache)
         {
 
-            if (config.CurrentValue.IsAuto)
+            if (config.CurrentValue.DataCenterId == null || config.CurrentValue.MachineId == null)
             {
                 using (distributedLock.Lock("IdentifierGenerator"))
                 {
-                    try
+                    Random rand = new();
+
+                    string key = "";
+
+                    do
                     {
-                        using var scope = serviceProvider.CreateScope();
-                        var distributedCache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
+                        int combinedNumber = rand.Next(0, 1025);
 
-                        Random rand = new();
+                        config.CurrentValue.DataCenterId = (combinedNumber >> 5) & 31; //dataCenterId 取组合数右移5位后的低5位
+                        config.CurrentValue.MachineId = combinedNumber & 31; //machineId 取组合数的低5位
 
-                        string key = "";
+                        key = "IdentifierGenerator-" + config.CurrentValue.DataCenterId + ":" + config.CurrentValue.MachineId;
 
-                        do
-                        {
-                            int combinedNumber = rand.Next(0, 1025);
+                    } while (distributedCache.IsContainKey(key));
 
-                            config.CurrentValue.DataCenterId = (combinedNumber >> 5) & 31; //dataCenterId 取组合数右移5位后的低5位
-                            config.CurrentValue.MachineId = combinedNumber & 31; //machineId 取组合数的低5位
-
-                            key = "IdentifierGenerator-" + config.CurrentValue.DataCenterId + ":" + config.CurrentValue.MachineId;
-
-                        } while (distributedCache.IsContainKey(key));
-
-                        distributedCache.Set(key, "", TimeSpan.FromDays(7));
-                    }
-                    catch
-                    {
-                        Console.WriteLine(999);
-                    }
+                    distributedCache.Set(key, "", TimeSpan.FromDays(7));
                 }
             }
 
-
-
-            dataCenterId = config.CurrentValue.DataCenterId;
-            machineId = config.CurrentValue.MachineId;
-
-            maxMachineId = -1L ^ -1L << (int)machineIdBits;
-            maxDataCenterId = -1L ^ -1L << (int)dataCenterIdBits;
-            machineIdShift = sequenceBits;
-            dataCenterIdShift = sequenceBits + machineIdBits;
-            timestampLeftShift = sequenceBits + machineIdBits + dataCenterIdBits;
-            sequenceMask = -1L ^ -1L << (int)sequenceBits;
-
-
-            if (machineId < 0 || machineId > maxMachineId)
+            if (config.CurrentValue.DataCenterId != null && config.CurrentValue.MachineId != null)
             {
-                throw new Exception("机器码ID非法");
+                dataCenterId = config.CurrentValue.DataCenterId.Value;
+                machineId = config.CurrentValue.MachineId.Value;
+
+                maxMachineId = -1L ^ -1L << (int)machineIdBits;
+                maxDataCenterId = -1L ^ -1L << (int)dataCenterIdBits;
+                machineIdShift = sequenceBits;
+                dataCenterIdShift = sequenceBits + machineIdBits;
+                timestampLeftShift = sequenceBits + machineIdBits + dataCenterIdBits;
+                sequenceMask = -1L ^ -1L << (int)sequenceBits;
+
+
+                if (dataCenterId < 0 || dataCenterId > maxDataCenterId)
+                {
+                    throw new Exception("数据中心ID异常");
+                }
+
+                if (machineId < 0 || machineId > maxMachineId)
+                {
+                    throw new Exception("机器码ID异常");
+                }
             }
-
-            if (dataCenterId < 0 || dataCenterId > maxDataCenterId)
+            else
             {
-                throw new Exception("数据中心ID非法");
+                throw new Exception("数据中心ID或机器码ID异常");
             }
         }
 

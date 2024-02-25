@@ -63,6 +63,7 @@ namespace Logger.DataBase
                         TLog log = new()
                         {
                             Id = idService.GetId(),
+                            CreateTime = DateTimeOffset.UtcNow,
                             Project = loggerSetting.Project,
                             MachineName = Environment.MachineName,
                             Category = categoryName,

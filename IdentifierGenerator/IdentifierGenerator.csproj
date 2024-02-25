@@ -22,4 +22,9 @@
 		<PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\Common\Common.csproj" />
+	  <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+	</ItemGroup>
+
 </Project>

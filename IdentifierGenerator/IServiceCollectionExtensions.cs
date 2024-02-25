@@ -1,4 +1,5 @@
 ﻿using IdentifierGenerator.Models;
+using IdentifierGenerator.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace IdentifierGenerator
@@ -11,6 +12,8 @@ namespace IdentifierGenerator
         {
             services.Configure(action);
             services.AddSingleton<IdService>();
+            //services.AddHostedService<RefreshSignTask>();
         }
+
     }
 }

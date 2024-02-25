@@ -88,8 +88,7 @@ namespace TaskService
                     #endregion
 
 
-                    //注册Id生成器
-                    services.AddIdentifierGenerator(option => { option.MachineId = 0; option.DataCenterId = 0; });
+                
 
 
                     //注册分布式锁 Redis模式
@@ -106,6 +105,10 @@ namespace TaskService
                         options.Configuration = hostContext.Configuration.GetConnectionString("redisConnection");
                         options.InstanceName = "cache";
                     });
+
+
+                    //注册Id生成器
+                    services.AddIdentifierGenerator(options => { options.IsAuto = true; });
 
 
                     //注册 Redis 驱动

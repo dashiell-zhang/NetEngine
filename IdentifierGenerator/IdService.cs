@@ -1,14 +1,55 @@
-﻿using IdentifierGenerator.Models;
+﻿using Common;
+using DistributedLock;
+using IdentifierGenerator.Models;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace IdentifierGenerator
 {
     public class IdService
     {
-
-
-        public IdService(IOptionsMonitor<IdSetting> config)
+        public IdService(IOptionsMonitor<IdSetting> config, IDistributedLock distributedLock, IServiceProvider serviceProvider)
         {
+
+            if (config.CurrentValue.IsAuto)
+            {
+                using (distributedLock.Lock("IdentifierGenerator"))
+                {
+                    try
+                    {
+                        using var scope = serviceProvider.CreateScope();
+                        var distributedCache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
+
+                        Random rand = new();
+
+                        string key = "";
+
+                        do
+                        {
+                            int combinedNumber = rand.Next(0, 1025);
+
+                            config.CurrentValue.DataCenterId = (combinedNumber >> 5) & 31; //dataCenterId 取组合数右移5位后的低5位
+                            config.CurrentValue.MachineId = combinedNumber & 31; //machineId 取组合数的低5位
+
+                            key = "IdentifierGenerator-" + config.CurrentValue.DataCenterId + ":" + config.CurrentValue.MachineId;
+
+                        } while (distributedCache.IsContainKey(key));
+
+                        distributedCache.Set(key, "", TimeSpan.FromDays(7));
+                    }
+                    catch
+                    {
+                        Console.WriteLine(999);
+                    }
+                }
+            }
+
+
+
+            dataCenterId = config.CurrentValue.DataCenterId;
+            machineId = config.CurrentValue.MachineId;
+
             maxMachineId = -1L ^ -1L << (int)machineIdBits;
             maxDataCenterId = -1L ^ -1L << (int)dataCenterIdBits;
             machineIdShift = sequenceBits;
@@ -21,18 +62,10 @@ namespace IdentifierGenerator
             {
                 throw new Exception("机器码ID非法");
             }
-            else
-            {
-                machineId = config.CurrentValue.MachineId;
-            }
 
             if (dataCenterId < 0 || dataCenterId > maxDataCenterId)
             {
                 throw new Exception("数据中心ID非法");
-            }
-            else
-            {
-                dataCenterId = config.CurrentValue.DataCenterId;
             }
         }
 
@@ -69,7 +102,7 @@ namespace IdentifierGenerator
                 long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
                 if (lastTimestamp == timestamp)
-                { 
+                {
                     //同一微妙中生成ID
                     sequence = sequence + 1 & sequenceMask; //用&运算计算该微秒内产生的计数是否已经到达上限
                     if (sequence == 0)
@@ -81,7 +114,7 @@ namespace IdentifierGenerator
                         {
                             timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                             i--;
-                        } while (timestamp <= lastTimestamp && i>0);
+                        } while (timestamp <= lastTimestamp && i > 0);
                     }
                 }
                 else

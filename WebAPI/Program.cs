@@ -196,7 +196,7 @@ namespace WebAPI
 
 
             //注册Id生成器
-            builder.Services.AddIdentifierGenerator(option => { option.MachineId = 0; option.DataCenterId = 0; });
+            builder.Services.AddIdentifierGenerator(options => { options.IsAuto = true; });
 
 
             //注册分布式锁 Redis模式

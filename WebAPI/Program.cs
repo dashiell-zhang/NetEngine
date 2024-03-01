@@ -37,6 +37,36 @@ namespace WebAPI
 
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.WebHost.UseKestrel((context, options) =>
+            {
+                options.ConfigureHttpsDefaults(options =>
+                {
+                    var certConf = context.Configuration.GetSection("Kestrel:Certificates:Default");
+
+                    if (certConf != null)
+                    {
+                        X509Certificate2Collection x509Certificate2s = new();
+
+                        var sslPath = certConf.GetValue<string>("Path")!;
+
+                        if (sslPath.EndsWith("pfx", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string password = certConf.GetValue<string>("Password")!;
+
+                            x509Certificate2s.Import(sslPath, password);
+                            options.ServerCertificateChain = x509Certificate2s;
+                        }
+                        else if (sslPath.EndsWith("pem", StringComparison.OrdinalIgnoreCase) || sslPath.EndsWith("crt", StringComparison.OrdinalIgnoreCase))
+                        {
+                            x509Certificate2s.ImportFromPemFile(sslPath);
+                            options.ServerCertificateChain = x509Certificate2s;
+
+                        }
+                    }
+
+                });
+            });
+
             builder.Host.UseWindowsService();
 
 

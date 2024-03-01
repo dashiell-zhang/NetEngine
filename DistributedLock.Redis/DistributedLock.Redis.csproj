@@ -19,7 +19,7 @@
 
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
-	  <PackageReference Include="StackExchange.Redis" Version="2.7.20" />
+	  <PackageReference Include="StackExchange.Redis" Version="2.7.27" />
 	</ItemGroup>
 
 	<ItemGroup>

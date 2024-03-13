@@ -43,7 +43,7 @@ namespace WebAPI
                 {
                     var certConf = context.Configuration.GetSection("Kestrel:Certificates:Default");
 
-                    if (certConf != null)
+                    if (certConf.Value != null)
                     {
                         X509Certificate2Collection x509Certificate2s = new();
 

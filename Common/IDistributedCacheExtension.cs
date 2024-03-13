@@ -160,12 +160,7 @@ namespace Common
             try
             {
                 var valueStr = JsonHelper.ObjectToJson(value);
-
-                if (valueStr != "[]")
-                {
-                    distributedCache.SetString(key, valueStr);
-                }
-
+                distributedCache.SetString(key, valueStr);
                 return true;
             }
             catch
@@ -204,12 +199,7 @@ namespace Common
             try
             {
                 var valueStr = JsonHelper.ObjectToJson(value);
-
-                if (valueStr != "[]")
-                {
-                    distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = absoluteExpirationRelativeToNow });
-                }
-
+                distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = absoluteExpirationRelativeToNow });
                 return true;
             }
             catch
@@ -249,12 +239,7 @@ namespace Common
             try
             {
                 var valueStr = JsonHelper.ObjectToJson(value);
-
-                if (valueStr != "[]")
-                {
-                    distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
-                }
-
+                distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
                 return true;
             }
             catch

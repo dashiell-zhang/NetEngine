@@ -171,6 +171,7 @@ namespace WebAPI
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableStringConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableStructConverterFactory());
             });
 

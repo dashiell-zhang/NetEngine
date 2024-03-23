@@ -127,8 +127,7 @@ namespace AdminAPI.Controllers
 
             }
 
-            HttpContext.SetErrMsg("文件上传失败");
-            return default;
+            throw new CustomException("文件上传失败");
 
         }
 
@@ -160,9 +159,7 @@ namespace AdminAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
-
-                return null;
+                throw new CustomException("通过指定的文件ID未找到任何文件");
             }
         }
 
@@ -233,9 +230,7 @@ namespace AdminAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
-
-                return null;
+                throw new CustomException("通过指定的文件ID未找到任何文件");
             }
         }
 
@@ -262,9 +257,7 @@ namespace AdminAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
-
-                return null;
+                throw new CustomException("通过指定的文件ID未找到任何文件");
             }
 
         }

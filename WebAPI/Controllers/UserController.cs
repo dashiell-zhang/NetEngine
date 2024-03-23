@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
@@ -107,23 +108,17 @@ namespace WebAPI.Controllers
                     }
                     else
                     {
-                        HttpContext.SetErrMsg("手机号已被其他账户绑定");
-
-                        return false;
+                        throw new CustomException("手机号已被其他账户绑定");
                     }
                 }
                 else
                 {
-                    HttpContext.SetErrMsg("账户不存在");
-
-                    return false;
+                    throw new CustomException("账户不存在");
                 }
             }
             else
             {
-                HttpContext.SetErrMsg("短信验证码错误");
-
-                return false;
+                throw new CustomException("短信验证码错误");
             }
         }
 

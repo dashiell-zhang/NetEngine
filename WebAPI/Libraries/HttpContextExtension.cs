@@ -1,5 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Text;
 using WebAPI.Models.Shared;
 
@@ -169,18 +168,6 @@ namespace WebAPI.Libraries
         }
 
 
-
-
-        /// <summary>
-        /// 设置错误消息
-        /// </summary>
-        /// <param name="httpContext"></param>
-        /// <param name="errMsg"></param>
-        public static void SetErrMsg(this HttpContext httpContext, string errMsg)
-        {
-            httpContext.Response.StatusCode = 400;
-            httpContext.Items.Add("errMsg", errMsg);
-        }
 
     }
 }

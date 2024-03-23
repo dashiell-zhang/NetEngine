@@ -174,9 +174,7 @@ namespace AdminAPI.Controllers
 
             if (isHaveUser != null)
             {
-                HttpContext.SetErrMsg("当前角色下存在人员信息，无法删除！");
-
-                return false;
+                throw new CustomException("当前角色下存在人员信息，无法删除！");
             }
 
             if (role != null)
@@ -189,9 +187,7 @@ namespace AdminAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("角色不存在或已被删除！");
-
-                return false;
+                throw new CustomException("角色不存在或已被删除！");
             }
         }
 

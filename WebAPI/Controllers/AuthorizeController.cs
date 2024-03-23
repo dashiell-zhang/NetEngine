@@ -1,4 +1,5 @@
-﻿using Common;
+﻿using Aop.Api.Domain;
+using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
@@ -70,17 +71,17 @@ namespace WebAPI.Controllers
         /// <returns></returns>
         [AllowAnonymous]
         [HttpGet]
-        public string GetPublicKey(IConfiguration configuration)
+        public string? GetPublicKey(IConfiguration configuration)
         {
-            var rsaSetting = configuration.GetRequiredSection("RSA").Get<RSASetting>();
+            try
+            {
+                var rsaSetting = configuration.GetRequiredSection("RSA").Get<RSASetting>();
 
-            if (rsaSetting != null)
-            {
-                return rsaSetting.PublicKey;
+                return rsaSetting?.PublicKey;
             }
-            else
+            catch
             {
-                throw new Exception("RSA公钥加载异常");
+                throw new CustomException("RSA公钥加载异常");
             }
         }
 
@@ -104,8 +105,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("用户名或密码错误");
-                return default;
+                throw new CustomException("用户名或密码错误");
             }
         }
 
@@ -177,9 +177,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("获取Token失败");
-
-                return null;
+                throw new CustomException("获取Token失败");
             }
         }
 
@@ -229,16 +227,12 @@ namespace WebAPI.Controllers
                 }
                 else
                 {
-                    HttpContext.SetErrMsg("系统异常暂时无法登录");
-
-                    return default;
+                    throw new CustomException("系统异常暂时无法登录");
                 }
             }
             else
             {
-                HttpContext.SetErrMsg("短信验证码错误");
-
-                return default;
+                throw new CustomException("短信验证码错误");
             }
         }
 
@@ -299,9 +293,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("请勿频繁获取验证码！");
-
-                return false;
+                throw new CustomException("请勿频繁获取验证码！");
             }
 
         }
@@ -358,9 +350,7 @@ namespace WebAPI.Controllers
                 return authorizeService.GetTokenByUserId(user.Id);
             }
 
-            HttpContext.SetErrMsg("微信授权失败");
-
-            return default;
+            throw new CustomException("微信授权失败");
 
         }
 
@@ -392,16 +382,12 @@ namespace WebAPI.Controllers
                 }
                 else
                 {
-                    HttpContext.SetErrMsg("原始密码验证失败");
-
-                    return false;
+                    throw new CustomException("原始密码验证失败");
                 }
             }
             else
             {
-                HttpContext.SetErrMsg("账户异常，请联系后台工作人员");
-
-                return false;
+                throw new CustomException("账户异常，请联系后台工作人员");
             }
 
         }
@@ -444,16 +430,12 @@ namespace WebAPI.Controllers
                 }
                 else
                 {
-                    HttpContext.SetErrMsg("账户不存在");
-
-                    return false;
+                    throw new CustomException("账户不存在");
                 }
             }
             else
             {
-                HttpContext.SetErrMsg("短信验证码错误");
-
-                return false;
+                throw new CustomException("短信验证码错误");
             }
 
         }

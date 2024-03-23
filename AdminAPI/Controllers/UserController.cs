@@ -172,9 +172,8 @@ namespace AdminAPI.Controllers
                     }
                 }
             }
-            HttpContext.SetErrMsg("用户名已被占用,无法保存");
+            throw new CustomException("用户名已被占用,无法保存");
 
-            return default;
         }
 
 
@@ -258,9 +257,7 @@ namespace AdminAPI.Controllers
                 }
             }
 
-            HttpContext.SetErrMsg("用户名已被占用,无法保存");
-
-            return false;
+            throw new CustomException("用户名已被占用,无法保存");
         }
 
 
@@ -378,9 +375,7 @@ namespace AdminAPI.Controllers
                     }
                     else
                     {
-                        HttpContext.SetErrMsg("该权限继承自角色，无法单独删除！");
-
-                        return false;
+                        throw new CustomException("该权限继承自角色，无法单独删除！");
                     }
                 }
             }

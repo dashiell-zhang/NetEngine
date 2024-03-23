@@ -75,9 +75,7 @@ namespace AdminAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("用户名或密码错误");
-
-                return default;
+                throw new CustomException("用户名或密码错误");
             }
 
         }

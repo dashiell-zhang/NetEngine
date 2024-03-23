@@ -143,12 +143,11 @@ namespace WebAPI
 
             #endregion
 
-            //注册HttpContext
+
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 
-            //注册全局过滤器
-            builder.Services.AddMvc(options => options.Filters.Add(new GlobalFilter()));
+            builder.Services.AddMvc(options => options.Filters.Add(new ExceptionFilter()));
 
 
             //注册跨域信息

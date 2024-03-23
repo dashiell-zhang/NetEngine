@@ -90,7 +90,7 @@ namespace WebAPI.Controllers
                             string? errCode = JsonHelper.GetValueByKey(resultJson, "code");
                             string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
 
-                            HttpContext.SetErrMsg($"{errCode}:{errMessage}");
+                            throw new CustomException($"{errCode}:{errMessage}");
                         }
                         else
                         {
@@ -178,7 +178,7 @@ namespace WebAPI.Controllers
                             string? errCode = JsonHelper.GetValueByKey(resultJson, "code");
                             string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
 
-                            HttpContext.SetErrMsg($"{errCode}:{errMessage}");
+                            throw new CustomException($"{errCode}:{errMessage}");
                         }
                         else
                         {
@@ -270,7 +270,7 @@ namespace WebAPI.Controllers
                             string? errCode = JsonHelper.GetValueByKey(resultJson, "code");
                             string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
 
-                            HttpContext.SetErrMsg($"{errCode}:{errMessage}");
+                            throw new CustomException($"{errCode}:{errMessage}");
                         }
                         else
                         {
@@ -343,7 +343,7 @@ namespace WebAPI.Controllers
                             string? errCode = JsonHelper.GetValueByKey(resultJson, "code");
                             string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
 
-                            HttpContext.SetErrMsg($"{errCode}:{errMessage}");
+                            throw new CustomException($"{errCode}:{errMessage}");
                         }
                     }
                 }
@@ -568,7 +568,7 @@ namespace WebAPI.Controllers
                     string? errCode = JsonHelper.GetValueByKey(resultJson, "code");
                     string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
 
-                    HttpContext.SetErrMsg($"{errCode}:{errMessage}");
+                    throw new CustomException($"{errCode}:{errMessage}");
                 }
 
             }
@@ -633,7 +633,7 @@ namespace WebAPI.Controllers
 
                     if (string.IsNullOrEmpty(tradeNo))
                     {
-                        HttpContext.SetErrMsg("支付宝交易订单创建失败");
+                        throw new CustomException("支付宝交易订单创建失败");
                     }
                     else
                     {

@@ -127,8 +127,7 @@ namespace WebAPI.Controllers
 
             }
 
-            HttpContext.SetErrMsg("文件上传失败");
-            return default;
+            throw new CustomException("文件上传失败");
         }
 
 
@@ -207,8 +206,7 @@ namespace WebAPI.Controllers
             }
 
 
-            HttpContext.SetErrMsg("文件上传失败");
-            return default;
+            throw new CustomException("文件上传失败");
         }
 
 
@@ -239,9 +237,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
-
-                return File(Encoding.UTF8.GetBytes(""), "text/plain");
+                throw new CustomException("通过指定的文件ID未找到任何文件");
             }
         }
 
@@ -310,9 +306,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
-
-                return File(Encoding.UTF8.GetBytes(""), "text/plain");
+                throw new CustomException("通过指定的文件ID未找到任何文件");
             }
         }
 
@@ -339,9 +333,7 @@ namespace WebAPI.Controllers
             }
             else
             {
-                HttpContext.SetErrMsg("通过指定的文件ID未找到任何文件");
-
-                return null;
+                throw new CustomException("通过指定的文件ID未找到任何文件");
             }
         }
 

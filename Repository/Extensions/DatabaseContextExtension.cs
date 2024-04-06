@@ -120,11 +120,71 @@ namespace Repository.Extensions
             {
                 var type = item.Entity.GetType();
 
+                var entityType = db.Model.FindEntityType(type)!;
+
+                string tableName = entityType.GetTableName()!;
+
                 var oldEntity = item.OriginalValues.ToObject();
 
                 var newEntity = item.CurrentValues.ToObject();
 
-                var entityId = item.CurrentValues.GetValue<long>("Id");
+                var isMappedToJson = entityType.IsMappedToJson();
+
+                long entityId = 0;
+
+                if (isMappedToJson)
+                {
+                    string jsonPropertyName = "";
+
+                    var ownership = entityType.FindOwnership();
+
+                    if (ownership?.PrincipalEntityType?.IsMappedToJson() ?? false)
+                    {
+                        jsonPropertyName = entityType.GetJsonPropertyName()!;
+                    }
+
+                    var navigations = ownership?.PrincipalEntityType.FindNavigation(entityType.GetJsonPropertyName()!)!;
+
+                    if (navigations.IsCollection)
+                    {
+                        //如果当前是 List 子表集合直接跳过日志记录（因为数据无唯一ID日志无意义）
+                        continue;
+                    }
+
+
+                    while (ownership?.PrincipalEntityType != null)
+                    {
+
+                        if (ownership.PrincipalEntityType.IsMappedToJson())
+                        {
+
+                            if (ownership.PrincipalEntityType.FindOwnership()?.PrincipalEntityType?.IsMappedToJson() ?? false)
+                            {
+                                jsonPropertyName = ownership.PrincipalEntityType.GetJsonPropertyName() + "." + jsonPropertyName;
+                            }
+                        }
+                        ownership = ownership.PrincipalEntityType.FindOwnership();
+
+                    }
+
+
+                    entityId = (long)item.Properties.Where(t => t.Metadata.IsPrimaryKey()).First().CurrentValue!;
+
+                    if (jsonPropertyName != "")
+                    {
+                        tableName = tableName + "." + entityType.GetContainerColumnName() + "." + jsonPropertyName;
+                    }
+                    else
+                    {
+                        tableName = tableName + "." + entityType.GetContainerColumnName();
+                    }
+
+                }
+                else
+                {
+                    entityId = item.CurrentValues.GetValue<long>("Id");
+                }
+
 
                 if (actionUserId == null)
                 {
@@ -169,7 +229,7 @@ namespace Repository.Extensions
                     TDataUpdateLog osLog = new()
                     {
                         Id = idService.GetId(),
-                        Table = type.Name,
+                        Table = tableName,
                         Content = result,
                         TableId = entityId,
                         IpAddress = ipAddress == "" ? null : ipAddress,

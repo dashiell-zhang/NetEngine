@@ -472,39 +472,26 @@ namespace Common
         /// <exception cref="ArgumentException"></exception>
         public static bool IsIpInCidrRangeV4(string ipAddress, string cidrRange)
         {
-            // 解析CIDR表示法  
             string[] parts = cidrRange.Split('/');
             if (parts.Length != 2)
             {
-                //无效的CIDR表示法
                 return false;
             }
 
-            // 解析网络地址  
-            if (!IPAddress.TryParse(parts[0], out IPAddress? network))
+            if (!IPAddress.TryParse(parts[0], out IPAddress? network) ||
+                !IPAddress.TryParse(ipAddress, out IPAddress? ipToCheck))
             {
-                //CIDR表示法中的网络地址无效
                 return false;
             }
 
-            // 解析子网掩码长度  
             if (!int.TryParse(parts[1], out int cidrMaskLength) || cidrMaskLength < 0 || cidrMaskLength > 32)
             {
-                //CIDR表示法中的子网掩码长度无效
                 return false;
             }
 
-            // 解析待检查的IP地址  
-            if (!IPAddress.TryParse(ipAddress, out IPAddress? ipToCheck))
+            if (network.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork ||
+                ipToCheck.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
             {
-                //要检查的IP地址无效
-                return false;
-            }
-
-            // 确保地址都是IPv4  
-            if (network.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || ipToCheck.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
-            {
-                //两个IP地址都必须是IPv4
                 return false;
             }
 
@@ -512,20 +499,18 @@ namespace Common
             byte[] ipBytes = ipToCheck.GetAddressBytes();
 
             byte[] maskBytes = new byte[4];
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < cidrMaskLength / 8; i++)
             {
-                maskBytes[i] = (byte)(i < cidrMaskLength / 8 ? 0xFF : (0xFF << (8 - cidrMaskLength % 8)));
+                maskBytes[i] = 0xFF;
+            }
+            if (cidrMaskLength % 8 != 0)
+            {
+                maskBytes[cidrMaskLength / 8] = (byte)(0xFF << 8 - cidrMaskLength % 8);
             }
 
-            byte[] networkAddressBytes = new byte[4];
             for (int i = 0; i < 4; i++)
             {
-                networkAddressBytes[i] = (byte)(networkBytes[i] & maskBytes[i]);
-            }
-
-            for (int i = 0; i < 4; i++)
-            {
-                if ((ipBytes[i] & maskBytes[i]) != networkAddressBytes[i])
+                if ((ipBytes[i] & maskBytes[i]) != (networkBytes[i] & maskBytes[i]))
                 {
                     return false;
                 }

@@ -1,6 +1,8 @@
 ﻿using Common;
+using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.IdentityModel.Tokens.Jwt;
@@ -21,14 +23,17 @@ namespace WebAPI.Services
         /// <summary>
         /// 通过用户id获取 token
         /// </summary>
-        /// <param name="userId"></param>
+        /// <param name="userId">用户Id</param>
+        /// <param name="lastTokenId">上一次的TokenId</param>
         /// <returns></returns>
-        public string GetTokenByUserId(long userId)
+        public string GetTokenByUserId(long userId, long? lastTokenId = null)
         {
+
             TUserToken userToken = new()
             {
                 Id = idService.GetId(),
                 UserId = userId,
+                LastId = lastTokenId
             };
 
             db.TUserToken.Add(userToken);

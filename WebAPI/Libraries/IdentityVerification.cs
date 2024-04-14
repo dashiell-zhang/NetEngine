@@ -4,12 +4,8 @@ using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using WebAPI.Models.AppSetting;
+using WebAPI.Services;
 
 namespace WebAPI.Libraries
 {
@@ -109,77 +105,40 @@ namespace WebAPI.Libraries
                 var tokenId = long.Parse(httpContext.GetClaimByUser("tokenId")!);
                 var userId = long.Parse(httpContext.GetClaimByUser("userId")!);
 
-                string key = "IssueNewToken" + tokenId;
-
                 var distLock = httpContext.RequestServices.GetRequiredService<IDistributedLock>();
                 var cache = httpContext.RequestServices.GetRequiredService<IDistributedCache>();
 
+                string key = "IssueNewToken" + tokenId;
                 if (distLock.TryLock(key) != null)
                 {
-                    var newToken = db.TUserToken.Where(t => t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefault();
+
+                    var newToken = cache.GetString(tokenId + "newToken");
 
                     if (newToken == null)
                     {
-                        var tokenInfo = db.TUserToken.Where(t => t.Id == tokenId).FirstOrDefault();
+                        var authorizeService = httpContext.RequestServices.GetRequiredService<AuthorizeService>();
 
-                        if (tokenInfo != null)
+                        newToken = authorizeService.GetTokenByUserId(userId, tokenId);
+
+                        if (distLock.TryLock("ClearExpireToken") != null)
                         {
-
-                            TUserToken userToken = new()
-                            {
-                                Id = idService.GetId(),
-                                UserId = userId,
-                                LastId = tokenId
-                            };
-
-                            var claims = new Claim[]{
-                                    new("tokenId",userToken.Id.ToString()),
-                                    new("userId",userId.ToString())
-                                };
-
-                            var configuration = httpContext.RequestServices.GetRequiredService<IConfiguration>();
-                            var jwtSetting = configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
-
-                            var jwtPrivateKey = ECDsa.Create();
-                            jwtPrivateKey.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);
-                            SigningCredentials creds = new(new ECDsaSecurityKey(jwtPrivateKey), SecurityAlgorithms.EcdsaSha256);
-                            JwtSecurityToken jwtSecurityToken = new(jwtSetting.Issuer, jwtSetting.Audience, claims, DateTime.UtcNow, DateTime.UtcNow + jwtSetting.Expiry, creds);
-
-                            var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
-
-                            db.TUserToken.Add(userToken);
-
-                            if (distLock.TryLock("ClearExpireToken") != null)
-                            {
-                                var clearTime = DateTime.UtcNow.AddDays(-7);
-                                var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
-                                db.TUserToken.RemoveRange(clearList);
-                            }
+                            var clearTime = DateTime.UtcNow.AddDays(-7);
+                            var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
+                            db.TUserToken.RemoveRange(clearList);
 
                             db.SaveChanges();
-
-                            cache.Set(userToken.Id + "token", token, TimeSpan.FromMinutes(10));
-
-                            httpContext.Response.Headers.Append("NewToken", token);
-                            httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
                         }
+
+                        cache.Set(tokenId + "newToken", newToken, TimeSpan.FromMinutes(10));
                     }
-                    else
-                    {
-                        var token = cache.GetString(newToken.Id + "token");
-                        httpContext.Response.Headers.Append("NewToken", token);
-                        httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
-                    }
+
+                    httpContext.Response.Headers.Append("NewToken", newToken);
+                    httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");  //解决 Ionic 取不到 Header中的信息问题
                 }
 
             }
 
         }
-
-
-
-
-
 
     }
 }

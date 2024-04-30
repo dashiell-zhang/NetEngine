@@ -1,6 +1,6 @@
 ﻿using Common;
 using DistributedLock.Redis;
-using Logger.DataBase;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
@@ -22,7 +22,6 @@ using WebAPI.Libraries.HealthCheck;
 using WebAPI.Libraries.HttpHandler;
 using WebAPI.Libraries.Swagger;
 using WebAPI.Models.AppSetting;
-using IdentifierGenerator;
 
 namespace WebAPI
 {
@@ -326,8 +325,6 @@ namespace WebAPI
             #endregion
 
             #region 注册文件服务
-
-
             //builder.Services.AddTencentCloudStorage(options =>
             //{
             //    var settings = builder.Configuration.GetRequiredSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>()!;
@@ -336,8 +333,8 @@ namespace WebAPI
             //    options.SecretId = settings.SecretId;
             //    options.SecretKey = settings.SecretKey;
             //    options.BucketName = settings.BucketName;
+            //    options.URL = builder.Configuration.GetValue<string>("FileServerURL")!;
             //});
-
 
             //builder.Services.AddAliCloudStorage(options =>
             //{
@@ -346,8 +343,8 @@ namespace WebAPI
             //    options.AccessKeyId = settings.AccessKeyId;
             //    options.AccessKeySecret = settings.AccessKeySecret;
             //    options.BucketName = settings.BucketName;
+            //    options.URL = builder.Configuration.GetValue<string>("FileServerURL")!;
             //});
-
             #endregion
 
             #region 注册日志服务

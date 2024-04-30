@@ -61,7 +61,7 @@ namespace AdminAPI.Libraries.Ueditor
                     {
                         string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                        var upload = fileStorage.FileUpload(localPath, basePath, Path.GetFileName(localPath));
+                        var upload = fileStorage.FileUpload(localPath, basePath, true, Path.GetFileName(localPath));
 
                         if (upload)
                         {
@@ -142,7 +142,7 @@ namespace AdminAPI.Libraries.Ueditor
 
                             string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                            var upload = fileStorage.FileUpload(localPath, basePath, file.FileName);
+                            var upload = fileStorage.FileUpload(localPath, basePath, true, file.FileName);
 
                             if (upload)
                             {

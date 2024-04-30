@@ -256,8 +256,6 @@ namespace AdminAPI
             builder.Services.BatchRegisterServices();
 
             #region 注册文件服务
-
-
             //builder.Services.AddTencentCloudStorage(options =>
             //{
             //    var settings = builder.Configuration.GetRequiredSection("TencentCloudFileStorage").Get<FileStorage.TencentCloud.Models.FileStorageSetting>()!;
@@ -266,8 +264,8 @@ namespace AdminAPI
             //    options.SecretId = settings.SecretId;
             //    options.SecretKey = settings.SecretKey;
             //    options.BucketName = settings.BucketName;
+            //    options.URL = builder.Configuration.GetValue<string>("FileServerURL")!;
             //});
-
 
             //builder.Services.AddAliCloudStorage(options =>
             //{
@@ -276,8 +274,8 @@ namespace AdminAPI
             //    options.AccessKeyId = settings.AccessKeyId;
             //    options.AccessKeySecret = settings.AccessKeySecret;
             //    options.BucketName = settings.BucketName;
+            //    options.URL = builder.Configuration.GetValue<string>("FileServerURL")!;
             //});
-
             #endregion
 
             #region 注册日志服务

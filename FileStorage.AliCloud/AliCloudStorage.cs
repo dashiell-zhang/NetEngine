@@ -17,6 +17,7 @@ namespace FileStorage.AliCloud
         private readonly string accessKeyId = config.CurrentValue.AccessKeyId;
         private readonly string accessKeySecret = config.CurrentValue.AccessKeySecret;
         private readonly string bucketName = config.CurrentValue.BucketName;
+        private readonly string url = config.CurrentValue.URL;
 
         public bool FileDelete(string remotePath)
         {
@@ -69,7 +70,7 @@ namespace FileStorage.AliCloud
 
 
 
-        public bool FileUpload(string localPath, string remotePath, string? fileName = null)
+        public bool FileUpload(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
         {
             try
             {
@@ -94,6 +95,15 @@ namespace FileStorage.AliCloud
                     client.PutObject(bucketName, objectName, localPath);
                 }
 
+                if (isPublicRead)
+                {
+                    client.SetObjectAcl(bucketName, objectName, CannedAccessControlList.PublicRead);
+                }
+                else
+                {
+                    client.SetObjectAcl(bucketName, objectName, CannedAccessControlList.Private);
+                }
+
                 return true;
             }
             catch
@@ -109,9 +119,11 @@ namespace FileStorage.AliCloud
 
             try
             {
+                string publicEndpoint = endpoint.Replace("-internal.aliyuncs.com", ".aliyuncs.com");
+
                 remotePath = remotePath.Replace("\\", "/");
 
-                OssClient client = new(endpoint, accessKeyId, accessKeySecret);
+                OssClient client = new(publicEndpoint, accessKeyId, accessKeySecret);
 
                 GeneratePresignedUriRequest req = new(bucketName, remotePath);
 
@@ -124,7 +136,11 @@ namespace FileStorage.AliCloud
 
                 var url = client.GeneratePresignedUri(req);
 
-                return url.ToString();
+                Uri tempURL = new(url.ToString());
+
+                return this.url + tempURL.PathAndQuery[1..];
+
+
             }
             catch
             {

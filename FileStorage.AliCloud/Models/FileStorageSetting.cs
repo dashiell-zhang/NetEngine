@@ -26,6 +26,11 @@
         /// </summary>
         public string BucketName { get; set; }
 
+
+        /// <summary>
+        /// 访问URL
+        /// </summary>
+        public string URL { get; set; }
     }
 
 

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using NPOI.SS.UserModel;
 using Repository.Database;
 using SkiaSharp;
 
@@ -59,11 +60,12 @@ namespace AdminAPI.Controllers
         /// <param name="business">业务领域</param>
         /// <param name="key">记录值</param>
         /// <param name="sign">自定义标记</param>
+        /// <param name="isPublicRead">是否允许公开访问</param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost]
-        public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, IFormFile file)
+        public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
         {
             var utcNow = DateTime.UtcNow;
 
@@ -94,7 +96,7 @@ namespace AdminAPI.Controllers
 
                 if (fileStorage != null)
                 {
-                    isSuccess = fileStorage.FileUpload(filePath, basePath, file.FileName);
+                    isSuccess = fileStorage.FileUpload(filePath, basePath, isPublicRead, file.FileName);
 
                     if (isSuccess)
                     {
@@ -113,6 +115,7 @@ namespace AdminAPI.Controllers
                         Id = idService.GetId(),
                         Name = file.FileName,
                         Length = file.Length,
+                        IsPublicRead = isPublicRead,
                         Path = filePath,
                         Table = business,
                         TableId = key,

@@ -20,6 +20,8 @@ namespace FileStorage.TencentCloud
         private readonly string appId;
         private readonly string region;
         private readonly string bucketName;
+        private readonly string url;
+
 
 
         private readonly CosXmlServer cosXml;
@@ -31,6 +33,7 @@ namespace FileStorage.TencentCloud
             appId = config.CurrentValue.AppId;
             region = config.CurrentValue.Region;
             bucketName = config.CurrentValue.BucketName;
+            url = config.CurrentValue.URL;
 
             CosXmlConfig cosXmlConfig = new CosXmlConfig.Builder()
                         .SetConnectionTimeoutMs(60000)  //设置连接超时时间，单位毫秒，默认45000ms
@@ -100,7 +103,7 @@ namespace FileStorage.TencentCloud
 
 
 
-        public bool FileUpload(string localPath, string remotePath, string? fileName = null)
+        public bool FileUpload(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
         {
             try
             {
@@ -116,6 +119,16 @@ namespace FileStorage.TencentCloud
                 {
                     request.SetRequestHeader("Content-Disposition", string.Format("attachment;filename*=utf-8''{0}", HttpUtility.UrlEncode(fileName, Encoding.UTF8)));
                 }
+
+                if (isPublicRead)
+                {
+                    request.SetCosACL(COSXML.Common.CosACL.PublicRead);
+                }
+                else
+                {
+                    request.SetCosACL(COSXML.Common.CosACL.Private);
+                }
+
 
                 COSXMLUploadTask uploadTask = new(request);
 

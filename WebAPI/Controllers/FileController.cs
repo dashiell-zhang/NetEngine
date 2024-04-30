@@ -61,10 +61,11 @@ namespace WebAPI.Controllers
         /// <param name="business">业务领域</param>
         /// <param name="key">记录值</param>
         /// <param name="sign">自定义标记</param>
+        /// <param name="isPublicRead">是否允许公开访问</param>
         /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
         /// <returns>文件ID</returns>
         [HttpPost]
-        public long RemoteUploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, [FromBody] DtoKeyValue fileInfo)
+        public long RemoteUploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, [FromQuery] bool isPublicRead, [FromBody] DtoKeyValue fileInfo)
         {
 
             string remoteFileUrl = fileInfo.Key!.ToString()!;
@@ -91,7 +92,7 @@ namespace WebAPI.Controllers
 
                 if (fileStorage != null)
                 {
-                    var upload = fileStorage.FileUpload(dlPath, basePath, fileInfoName);
+                    var upload = fileStorage.FileUpload(dlPath, basePath, isPublicRead, fileInfoName);
 
                     if (upload)
                     {
@@ -113,6 +114,7 @@ namespace WebAPI.Controllers
                         Id = idService.GetId(),
                         Name = fileInfoName,
                         Length = length,
+                        IsPublicRead = isPublicRead,
                         Path = filePath,
                         Table = business,
                         TableId = key,
@@ -138,11 +140,12 @@ namespace WebAPI.Controllers
         /// <param name="business">业务领域</param>
         /// <param name="key">记录值</param>
         /// <param name="sign">自定义标记</param>
+        /// <param name="isPublicRead"></param>
         /// <param name="file">file</param>
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost]
-        public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, IFormFile file)
+        public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
         {
             var utcNow = DateTime.UtcNow;
 
@@ -173,7 +176,7 @@ namespace WebAPI.Controllers
 
                 if (fileStorage != null)
                 {
-                    isSuccess = fileStorage.FileUpload(filePath, basePath, file.FileName);
+                    isSuccess = fileStorage.FileUpload(filePath, basePath, isPublicRead, file.FileName);
 
                     if (isSuccess)
                     {
@@ -191,6 +194,7 @@ namespace WebAPI.Controllers
                         Id = idService.GetId(),
                         Name = file.FileName,
                         Length = file.Length,
+                        IsPublicRead = isPublicRead,
                         Path = filePath,
                         Table = business,
                         TableId = key,
@@ -318,18 +322,36 @@ namespace WebAPI.Controllers
         /// <param name="fileId">文件ID</param>
         /// <returns></returns>
         [HttpGet]
-        public string? GetFilePath(long fileId)
+        public string? GetFileURL(long fileId)
         {
 
-            var file = db.TFile.AsNoTracking().Where(t => t.Id == fileId).FirstOrDefault();
+            var file = db.TFile.AsNoTracking().Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefault();
 
             if (file != null)
             {
-                string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
+                string fileURL = "";
 
-                string fileUrl = fileServerUrl + file.Path;
+                if (file.IsPublicRead)
+                {
+                    string fileServerUrl = configuration["FileServerURL"]?.ToString() ?? "";
+                    fileURL = fileServerUrl + file.Path;
+                }
+                else
+                {
+                    var tempURL = fileStorage?.GetFileTempURL(file.Path, TimeSpan.FromMinutes(10));
 
-                return fileUrl;
+                    if (tempURL != null)
+                    {
+                        fileURL = tempURL;
+                    }
+                    else
+                    {
+                        throw new CustomException("文件临时授权地址获取失败");
+                    }
+                }
+
+                return fileURL;
+
             }
             else
             {

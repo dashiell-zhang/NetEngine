@@ -34,6 +34,13 @@ namespace Repository.Database
 
 
         /// <summary>
+        /// 是否支持公开访问
+        /// </summary>
+        public bool IsPublicRead { get; set; }
+
+
+
+        /// <summary>
         /// 外链表名
         /// </summary>
         public string Table { get; set; }

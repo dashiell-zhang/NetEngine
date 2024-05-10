@@ -1,7 +1,7 @@
 ﻿using Common.JsonConverter;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace Common
 {
@@ -11,6 +11,8 @@ namespace Common
         private static readonly JsonSerializerOptions objectToJsonOptions;
 
         private static readonly JsonSerializerOptions jsonToObjectOptions;
+
+        private static readonly JsonSerializerOptions cloneObjectOptions;
 
 
         static JsonHelper()
@@ -38,6 +40,19 @@ namespace Common
             jsonToObjectOptions.Converters.Add(new DateTimeOffsetConverter());
             jsonToObjectOptions.Converters.Add(new LongConverter());
             jsonToObjectOptions.Converters.Add(new NullableStringConverter());
+
+
+            #region cloneObjectOptions
+
+            cloneObjectOptions = new()
+            {
+                ReferenceHandler = ReferenceHandler.Preserve,   //解决循环依赖
+                DefaultIgnoreCondition = JsonIgnoreCondition.Never, //屏蔽 JsonIgnore 配置
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,  //关闭默认转义
+            };
+            cloneObjectOptions.Converters.Add(new LongConverter());
+
+            #endregion
         }
 
 
@@ -87,16 +102,17 @@ namespace Common
 
 
         /// <summary>
-        /// 没有 Key 的 Json 转 List<JToken>
+        /// 克隆对象
         /// </summary>
-        /// <param name="strJson"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj"></param>
         /// <returns></returns>
-        public static JsonNode? JsonToArrayList(string json)
+        public static T Clone<T>(T obj) where T : class, new()
         {
-            var jsonNode = JsonNode.Parse(json);
-
-            return jsonNode;
+            var json = JsonSerializer.Serialize(obj, cloneObjectOptions);
+            return JsonSerializer.Deserialize<T>(json, cloneObjectOptions)!;
         }
+
 
     }
 }

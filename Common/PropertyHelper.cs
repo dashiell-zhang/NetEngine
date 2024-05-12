@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections;
+using System.Reflection;
 
 namespace Common
 {
@@ -70,93 +71,6 @@ namespace Common
         }
 
 
-        /// <summary>
-        /// 给对象赋值的方法(不赋地址)(同一个类型)
-        /// </summary>
-        /// <param name="left">=号左边</param>
-        /// <param name="right">=号右边</param>
-        public static void Assignment<T>(T left, T right) where T : notnull
-        {
-            Type type = left.GetType();
-            List<PropertyInfo> pList = type.GetProperties().ToList();
-            for (int i = 0; i < pList.Count; i++)
-            {
-                //根据属性名获得指定的属性对象
-                PropertyInfo gc = type.GetProperty(pList[i].Name)!;
-
-                //验证属性是否可以Set
-                if (gc.CanWrite == true)
-                {
-                    //设置属性的值
-                    gc.SetValue(left, pList[i].GetValue(right, null), null);
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// 给对象赋值的方法(不赋地址)(不同类型)
-        /// </summary>
-        /// <param name="left">=号左边</param>
-        /// <param name="right">=号右边</param>
-        public static void Assignment<L, R>(L left, R right) where L : notnull where R : notnull
-        {
-            Type ltype = left.GetType();
-
-            List<PropertyInfo> lList = ltype.GetProperties().ToList();
-
-            List<PropertyInfo> rList = right.GetType().GetProperties().ToList();
-
-            for (int i = 0; i < lList.Count; i++)
-            {
-                //根据属性名获得指定的属性对象
-                PropertyInfo gc = ltype.GetProperty(lList[i].Name)!;
-
-
-                //验证属性是否可以Set
-                if (gc.CanWrite == true)
-                {
-                    try
-                    {
-                        object? value = rList.Where(t => t.Name == gc.Name).FirstOrDefault()?.GetValue(right, null);
-
-                        //设置属性的值
-                        gc.SetValue(left, value, null);
-                    }
-                    catch
-                    {
-
-                    }
-
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// 将一组List赋值到另一组List(不同类型)
-        /// </summary>
-        /// <param name="lift"></param>
-        /// <param name="right"></param>
-        public static List<L> Assignment<L, R>(List<R> right) where L : notnull, new() where R : notnull, new()
-        {
-            List<L> lift = [];
-
-            foreach (var r in right)
-            {
-                L l = new();
-
-                Assignment<L, R>(l, r);
-
-                lift.Add(l);
-            }
-
-            return lift;
-        }
-
-
-
-
 
         /// <summary>
         /// 比较两个实体的值输出差异结果
@@ -205,5 +119,156 @@ namespace Common
 
             return retValue;
         }
+
+
+
+        /// <summary>
+        /// 给对象赋值的方法(同一个类型)
+        /// </summary>
+        /// <param name="left">=号左边</param>
+        /// <param name="right">=号右边</param>
+        public static void Assignment<T>(T left, T right) where T : class, new()
+        {
+            Type type = left.GetType();
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
+            {
+                var leftDict = left as IDictionary;
+                var rightDict = right as IDictionary;
+
+                if (leftDict != null && rightDict != null)
+                {
+                    var keyType = type.GetGenericArguments()[0];
+                    var valueType = type.GetGenericArguments()[1];
+
+                    foreach (DictionaryEntry entry in rightDict)
+                    {
+                        var clonedKey = Clone(entry.Key, keyType);
+                        var clonedValue = Clone(entry.Value!, valueType);
+                        leftDict.Add(clonedKey!, clonedValue);
+                    }
+                }
+
+            }
+            else if (typeof(IList).IsAssignableFrom(typeof(T)) && typeof(T) != typeof(string))  // 检查T是否为集合类型
+            {
+                var leftList = left as IList;
+                var rightList = right as IList;
+
+                if (leftList != null && rightList != null)
+                {
+                    var rightEnumerator = rightList.GetEnumerator();
+
+                    while (rightEnumerator.MoveNext())
+                    {
+                        var currentElement = rightEnumerator.Current;
+                        var elementType = currentElement.GetType();
+                        var clonedValue = Clone(rightEnumerator.Current, elementType);
+
+                        leftList.Add(clonedValue);
+                    }
+                }
+
+            }
+            else
+            {
+                var properties = type.GetProperties();
+
+                foreach (var prop in properties)
+                {
+                    if (prop.CanWrite)
+                    {
+                        var value = prop.GetValue(right);
+
+                        var clonedValue = Clone(value, prop.PropertyType);
+
+                        prop.SetValue(left, clonedValue);
+                    }
+                }
+            }
+
+            static object? Clone(object? original, Type type)
+            {
+                if (original == null) return null;
+
+                if (type.IsValueType || type == typeof(string))
+                {
+                    return original;
+                }
+                else
+                {
+                    var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(type);
+                    var clonedObject = Activator.CreateInstance(type);
+                    cloneMethod.Invoke(null, [clonedObject, original]);
+                    return clonedObject!;
+                }
+            }
+        }
+
+
+
+        /// <summary>
+        /// 克隆对象
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj"></param>
+        public static T? Clone<T>(T obj) where T : class, new()
+        {
+            Type type = typeof(T);
+
+            var clonedObject = Activator.CreateInstance(type);
+
+            var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(type);
+
+            cloneMethod.Invoke(null, [clonedObject, obj]);
+
+            return (T?)clonedObject;
+        }
+
+
+
+        /// <summary>
+        /// 给对象赋值的方法(不同类型)
+        /// </summary>
+        /// <param name="left">=号左边</param>
+        /// <param name="right">=号右边</param>
+        public static void AssignmentDifferentType<L, R>(L left, R right) where L : notnull where R : notnull
+        {
+            Type ltype = left.GetType();
+            Type rtype = right.GetType();
+
+            var lProperties = ltype.GetProperties().Where(prop => prop.CanWrite);
+            var rProperties = rtype.GetProperties().Where(prop => prop.CanRead);
+
+            foreach (var lProp in lProperties)
+            {
+                var rProp = rProperties.FirstOrDefault(p => p.Name == lProp.Name && p.PropertyType == lProp.PropertyType);
+                if (rProp != null)
+                {
+                    object? rValue = rProp.GetValue(right);
+
+                    if (rValue != null)
+                    {
+                        Type type = lProp.PropertyType;
+
+                        if (type.IsValueType || type == typeof(string))
+                        {
+                            lProp.SetValue(left, rValue);
+                        }
+                        else
+                        {
+                            var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(type);
+
+                            var clonedObject = Activator.CreateInstance(type);
+
+                            cloneMethod.Invoke(null, [clonedObject, rValue]);
+
+                            lProp.SetValue(left, clonedObject);
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }

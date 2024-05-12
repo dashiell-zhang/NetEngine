@@ -74,7 +74,7 @@
 
             <FormItem>
                 <Text>父级栏目</Text>
-                <TreeSelect TItem="DtoTreeSelect" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
+                <TreeSelect TItem="DtoTreeSelect" TItemValue="string" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
             </FormItem>
 
 

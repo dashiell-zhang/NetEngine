@@ -5,6 +5,8 @@ using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using StackExchange.Redis;
+using System.Reflection;
+using TaskService.Libraries;
 
 namespace TaskService
 {
@@ -42,6 +44,14 @@ namespace TaskService
 
 
                     services.BatchRegisterServices();
+
+
+                    //注册所有 TaskBase的子类
+                    Assembly.GetExecutingAssembly().GetTypes().Where(t => typeof(TaskBase).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && t.IsPublic).ToList().ForEach(t =>
+                    {
+                        services.AddScoped(t);
+                    });
+
 
                     #region 注册短信服务
 

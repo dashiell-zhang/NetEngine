@@ -3,13 +3,12 @@
     public class ScheduleTaskBuilder
     {
 
-
         public static readonly Dictionary<string, ScheduleTaskInfo> scheduleMethodList = [];
 
 
-        public static void Builder(object context)
+        public static void Builder(Type cls)
         {
-            var taskList = context.GetType().GetMethods().Where(t => t.GetCustomAttributes(typeof(ScheduleTaskAttribute), false).Length > 0).ToList();
+            var taskList = cls.GetMethods().Where(t => t.GetCustomAttributes(typeof(ScheduleTaskAttribute), false).Length > 0).ToList();
 
             foreach (var method in taskList)
             {
@@ -21,8 +20,7 @@
                 {
                     Name = name,
                     Cron = cron,
-                    Method = method,
-                    Context = context
+                    Method = method
                 });
             }
         }

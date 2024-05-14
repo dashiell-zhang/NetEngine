@@ -70,5 +70,31 @@ namespace Repository.Database
         /// </summary>
         public string? CallbackParameter { get; set; }
 
+
+        //public string? Sign { get; set; }
+
+
+        //public string CallbackSign { get; set; }
+
+
+
+        //public string Sort { get; set; }
+
+
+        //public bool IsActivating { get; set; }
+
+
+        /// <summary>
+        /// 父级任务Id
+        /// </summary>
+        public long? ParentTaskId { get; set; }
+        public virtual TQueueTask ParentTask { get; set; }
+
+
+        /// <summary>
+        /// 子集全部执行成功时间
+        /// </summary>
+        public DateTimeOffset? ChildSuccessTime { get; set; }
+
     }
 }

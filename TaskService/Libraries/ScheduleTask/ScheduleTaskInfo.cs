@@ -33,13 +33,6 @@ namespace TaskService.Libraries.ScheduleTask
 
 
         /// <summary>
-        /// 方法执行的上下文环境
-        /// </summary>
-        public object Context { get; set; }
-
-
-
-        /// <summary>
         /// 最后一次执行时间
         /// </summary>
         public DateTimeOffset? LastTime { get; set; }

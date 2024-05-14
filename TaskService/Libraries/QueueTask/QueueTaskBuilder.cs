@@ -5,9 +5,9 @@
         public static readonly Dictionary<string, QueueTaskInfo> queueMethodList = [];
 
 
-        public static void Builder(object context)
+        public static void Builder(Type cls)
         {
-            var taskList = context.GetType().GetMethods().Where(t => t.GetCustomAttributes(typeof(QueueTaskAttribute), false).Length > 0).ToList();
+            var taskList = cls.GetMethods().Where(t => t.GetCustomAttributes(typeof(QueueTaskAttribute), false).Length > 0).ToList();
 
             foreach (var method in taskList)
             {
@@ -36,7 +36,6 @@
                     Name = name,
                     Semaphore = semaphore,
                     Method = method,
-                    Context = context,
                     Duration = duration,
                 });
             }

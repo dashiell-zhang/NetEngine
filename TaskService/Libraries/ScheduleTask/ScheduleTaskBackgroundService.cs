@@ -1,10 +1,9 @@
 ﻿using System.Collections.Concurrent;
-using TaskService.Libraries.ScheduleTask;
 using static TaskService.Libraries.ScheduleTask.ScheduleTaskBuilder;
 
-namespace TaskService.Libraries.QueueTask
+namespace TaskService.Libraries.ScheduleTask
 {
-    public class ScheduleTaskBackgroundService(ILogger<ScheduleTaskBackgroundService> logger) : BackgroundService
+    public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILogger<ScheduleTaskBackgroundService> logger) : BackgroundService
     {
 
         private readonly ConcurrentDictionary<string, string?> runingTaskList = new();
@@ -49,7 +48,7 @@ namespace TaskService.Libraries.QueueTask
                                 if (runingTaskList.TryAdd(key, null))
                                 {
                                     item.LastTime = nowTime;
-                                    RunAction(item,key);
+                                    RunAction(item, key);
                                 }
                             }
                         }
@@ -66,13 +65,19 @@ namespace TaskService.Libraries.QueueTask
 
 
 
-        private void RunAction(ScheduleTaskInfo scheduleTaskInfo,string key)
+        private void RunAction(ScheduleTaskInfo scheduleTaskInfo, string key)
         {
             Task.Run(() =>
             {
                 try
                 {
-                    scheduleTaskInfo.Method.Invoke(scheduleTaskInfo.Context, null);
+                    using var scope = serviceProvider.CreateScope();
+
+                    Type serviceType = scheduleTaskInfo.Method.DeclaringType!;
+
+                    object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
+
+                    scheduleTaskInfo.Method.Invoke(serviceInstance, null);
                 }
                 catch (Exception ex)
                 {

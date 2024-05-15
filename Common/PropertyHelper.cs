@@ -159,10 +159,10 @@ namespace Common
                 {
                     var rightEnumerator = rightList.GetEnumerator();
 
+                    var elementType = rightList.GetType().GetGenericArguments()[0];
+
                     while (rightEnumerator.MoveNext())
                     {
-                        var currentElement = rightEnumerator.Current;
-                        var elementType = currentElement.GetType();
                         var clonedValue = Clone(rightEnumerator.Current, elementType);
 
                         leftList.Add(clonedValue);
@@ -237,36 +237,182 @@ namespace Common
             Type ltype = left.GetType();
             Type rtype = right.GetType();
 
-            var lProperties = ltype.GetProperties().Where(prop => prop.CanWrite);
-            var rProperties = rtype.GetProperties().Where(prop => prop.CanRead);
-
-            foreach (var lProp in lProperties)
+            if (ltype.IsGenericType && ltype.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
             {
-                var rProp = rProperties.FirstOrDefault(p => p.Name == lProp.Name && p.PropertyType == lProp.PropertyType);
-                if (rProp != null)
+                if (rtype.IsGenericType && rtype.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
                 {
-                    object? rValue = rProp.GetValue(right);
+                    var leftDict = left as IDictionary;
+                    var rightDict = right as IDictionary;
 
-                    if (rValue != null)
+                    if (leftDict != null && rightDict != null)
                     {
-                        Type type = lProp.PropertyType;
+                        var lKeyType = ltype.GetGenericArguments()[0];
+                        var rKeyType = rtype.GetGenericArguments()[0];
 
-                        if (type.IsValueType || type == typeof(string))
+                        if (lKeyType == rKeyType)
                         {
-                            lProp.SetValue(left, rValue);
+                            var lValueType = ltype.GetGenericArguments()[1];
+                            var rValueType = rtype.GetGenericArguments()[1];
+
+                            foreach (DictionaryEntry entry in rightDict)
+                            {
+                                var clonedKey = Clone(entry.Key, lKeyType, rKeyType);
+
+                                if (entry.Value == null)
+                                {
+                                    if (IsNullable(lValueType))
+                                    {
+                                        leftDict.Add(clonedKey!, null);
+                                    }
+                                }
+                                else
+                                {
+                                    var clonedValue = Clone(entry.Value, lValueType, rValueType);
+
+                                    if (clonedValue != null)
+                                    {
+                                        leftDict.Add(clonedKey!, clonedValue);
+                                    }
+                                }
+
+                            }
                         }
                         else
                         {
-                            var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(type);
-
-                            var clonedObject = Activator.CreateInstance(type);
-
-                            cloneMethod.Invoke(null, [clonedObject, rValue]);
-
-                            lProp.SetValue(left, clonedObject);
+                            throw new Exception("左右都必须是 Dictionary 的Key必须是同一个类型");
                         }
                     }
                 }
+                else
+                {
+                    throw new Exception("左右都必须是 Dictionary 类型");
+                }
+            }
+            else if (typeof(IList).IsAssignableFrom(typeof(L)) && typeof(L) != typeof(string))  // 检查T是否为集合类型
+            {
+
+                if (typeof(IList).IsAssignableFrom(typeof(R)) && typeof(R) != typeof(string))
+                {
+
+                    var leftList = left as IList;
+                    var rightList = right as IList;
+
+                    if (leftList != null && rightList != null)
+                    {
+
+                        var lType = leftList.GetType().GetGenericArguments()[0];
+                        var rType = rightList.GetType().GetGenericArguments()[0];
+
+                        var rightEnumerator = rightList.GetEnumerator();
+
+                        while (rightEnumerator.MoveNext())
+                        {
+                            if (rightEnumerator.Current == null)
+                            {
+                                leftList.Add(null);
+                            }
+                            else
+                            {
+                                var clonedValue = Clone(rightEnumerator.Current, lType, rType);
+
+                                if (clonedValue != null)
+                                {
+                                    leftList.Add(clonedValue);
+                                }
+                            }
+
+
+
+                        }
+                    }
+                }
+                else
+                {
+                    throw new Exception("左右都必须是 集合 类型");
+                }
+            }
+            else
+            {
+                var lProperties = ltype.GetProperties().Where(prop => prop.CanWrite);
+                var rProperties = rtype.GetProperties().Where(prop => prop.CanRead);
+
+                foreach (var lProp in lProperties)
+                {
+                    var rProp = rProperties.FirstOrDefault(p => p.Name == lProp.Name);
+
+                    if (rProp != null)
+                    {
+                        object? rValue = rProp.GetValue(right);
+
+                        Type lType = lProp.PropertyType;
+
+                        if (rValue != null)
+                        {
+                            Type rType = rProp.PropertyType;
+
+                            var clonedValue = Clone(rValue, lType, rType);
+
+                            if (clonedValue != null || IsNullable(lType))
+                            {
+                                lProp.SetValue(left, clonedValue);
+                            }
+                        }
+                        else
+                        {
+                            if (IsNullable(lType))
+                            {
+                                lProp.SetValue(left, null);
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+
+
+        static bool IsNullable(Type type)
+        {
+            bool isNullable = false;
+
+            if (Nullable.GetUnderlyingType(type) != null)
+            {
+                isNullable = true;
+            }
+            else if (!type.IsValueType)
+            {
+                isNullable = true;
+            }
+
+            return isNullable;
+        }
+
+
+
+        static object? Clone(object original, Type lType, Type rType)
+        {
+            if (lType.IsValueType || lType == typeof(string) || rType.IsValueType || rType == typeof(string))
+            {
+                if (lType == rType)
+                {
+                    return original;
+                }
+            }
+
+            if (lType == rType)
+            {
+
+                var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(lType);
+                var clonedObject = Activator.CreateInstance(lType);
+                cloneMethod.Invoke(null, [clonedObject, original]);
+                return clonedObject;
+            }
+            else
+            {
+                var cloneMethod = typeof(PropertyHelper).GetMethod("AssignmentDifferentType")!.MakeGenericMethod(lType, rType);
+                var clonedObject = Activator.CreateInstance(lType);
+                cloneMethod.Invoke(null, [clonedObject, original]);
+                return clonedObject;
             }
         }
 

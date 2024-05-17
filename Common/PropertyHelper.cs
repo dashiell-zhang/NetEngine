@@ -232,7 +232,7 @@ namespace Common
         /// </summary>
         /// <param name="left">=号左边</param>
         /// <param name="right">=号右边</param>
-        public static void AssignmentDifferentType<L, R>(L left, R right) where L : notnull where R : notnull
+        public static void AssignmentDifferentType<L, R>(L left, R right) where L : class, new() where R : class, new()
         {
             Type ltype = left.GetType();
             Type rtype = right.GetType();
@@ -368,51 +368,49 @@ namespace Common
                     }
                 }
             }
-        }
 
 
-        static bool IsNullable(Type type)
-        {
-            bool isNullable = false;
-
-            if (Nullable.GetUnderlyingType(type) != null)
+            static bool IsNullable(Type type)
             {
-                isNullable = true;
+                bool isNullable = false;
+
+                if (Nullable.GetUnderlyingType(type) != null)
+                {
+                    isNullable = true;
+                }
+                else if (!type.IsValueType)
+                {
+                    isNullable = true;
+                }
+
+                return isNullable;
             }
-            else if (!type.IsValueType)
+
+            static object? Clone(object original, Type lType, Type rType)
             {
-                isNullable = true;
-            }
+                if (lType.IsValueType || lType == typeof(string) || rType.IsValueType || rType == typeof(string))
+                {
+                    if (lType == rType)
+                    {
+                        return original;
+                    }
+                }
 
-            return isNullable;
-        }
-
-
-
-        static object? Clone(object original, Type lType, Type rType)
-        {
-            if (lType.IsValueType || lType == typeof(string) || rType.IsValueType || rType == typeof(string))
-            {
                 if (lType == rType)
                 {
-                    return original;
+
+                    var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(lType);
+                    var clonedObject = Activator.CreateInstance(lType);
+                    cloneMethod.Invoke(null, [clonedObject, original]);
+                    return clonedObject;
                 }
-            }
-
-            if (lType == rType)
-            {
-
-                var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(lType);
-                var clonedObject = Activator.CreateInstance(lType);
-                cloneMethod.Invoke(null, [clonedObject, original]);
-                return clonedObject;
-            }
-            else
-            {
-                var cloneMethod = typeof(PropertyHelper).GetMethod("AssignmentDifferentType")!.MakeGenericMethod(lType, rType);
-                var clonedObject = Activator.CreateInstance(lType);
-                cloneMethod.Invoke(null, [clonedObject, original]);
-                return clonedObject;
+                else
+                {
+                    var cloneMethod = typeof(PropertyHelper).GetMethod("AssignmentDifferentType")!.MakeGenericMethod(lType, rType);
+                    var clonedObject = Activator.CreateInstance(lType);
+                    cloneMethod.Invoke(null, [clonedObject, original]);
+                    return clonedObject;
+                }
             }
         }
 

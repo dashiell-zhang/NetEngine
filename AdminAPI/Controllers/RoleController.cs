@@ -47,25 +47,14 @@ namespace AdminAPI.Controllers
         /// <summary>
         /// 获取角色列表
         /// </summary>
-        /// <param name="pageNum">页码</param>
-        /// <param name="pageSize">单页数量</param>
-        /// <param name="searchKey">搜索关键字</param>
+        /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoRole> GetRoleList(int pageNum, int pageSize, string? searchKey)
+        public DtoPageList<DtoRole> GetRoleList([FromQuery] DtoPageRequest request)
         {
-
             var retList = new DtoPageList<DtoRole>();
 
-            int skip = (pageNum - 1) * pageSize;
-
             var query = db.TRole.AsQueryable();
-
-
-            if (!string.IsNullOrEmpty(searchKey))
-            {
-                query = query.Where(t => t.Name.Contains(searchKey));
-            }
 
             retList.Total = query.Count();
 
@@ -75,7 +64,7 @@ namespace AdminAPI.Controllers
                 CreateTime = t.CreateTime,
                 Name = t.Name,
                 Remarks = t.Remarks
-            }).Skip(skip).Take(pageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToList();
 
             return retList;
         }

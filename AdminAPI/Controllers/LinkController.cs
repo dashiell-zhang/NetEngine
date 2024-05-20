@@ -2,7 +2,6 @@
 using AdminAPI.Libraries;
 using AdminShared.Models;
 using AdminShared.Models.Link;
-using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,23 +40,14 @@ namespace AdminAPI.Controllers
         /// <summary>
         /// 获取友情链接列表
         /// </summary>
-        /// <param name="pageNum">页码</param>
-        /// <param name="pageSize">单页数量</param>
-        /// <param name="searchKey">搜索关键词</param>
+        /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoLink> GetLinkList(int pageNum, int pageSize, string? searchKey)
+        public DtoPageList<DtoLink> GetLinkList([FromQuery] DtoPageRequest request)
         {
             DtoPageList<DtoLink> data = new();
 
-            int skip = (pageNum - 1) * pageSize;
-
             var query = db.TLink.AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchKey))
-            {
-                query = query.Where(t => t.Name.Contains(searchKey));
-            }
 
             data.Total = query.Count();
 
@@ -68,7 +58,7 @@ namespace AdminAPI.Controllers
                 Url = t.Url,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
-            }).Skip(skip).Take(pageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToList();
 
             return data;
         }

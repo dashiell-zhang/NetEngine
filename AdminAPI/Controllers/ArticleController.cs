@@ -51,23 +51,14 @@ namespace AdminAPI.Controllers
         /// <summary>
         /// 获取栏目列表
         /// </summary>
-        /// <param name="pageNum">页码</param>
-        /// <param name="pageSize">单页数量</param>
-        /// <param name="searchKey">搜索关键词</param>
+        /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoCategory> GetCategoryList(int pageNum, int pageSize, string? searchKey)
+        public DtoPageList<DtoCategory> GetCategoryList([FromQuery] DtoPageRequest request)
         {
             DtoPageList<DtoCategory> data = new();
 
-            int skip = (pageNum - 1) * pageSize;
-
             var query = db.TCategory.AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchKey))
-            {
-                query = query.Where(t => t.Name.Contains(searchKey));
-            }
 
             data.Total = query.Count();
 
@@ -80,7 +71,7 @@ namespace AdminAPI.Controllers
                 ParentId = t.ParentId,
                 ParentName = t.Parent!.Name,
                 CreateTime = t.CreateTime
-            }).Skip(skip).Take(pageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToList();
 
             return data;
         }
@@ -225,23 +216,14 @@ namespace AdminAPI.Controllers
         /// <summary>
         /// 获取文章列表
         /// </summary>
-        /// <param name="pageNum">页码</param>
-        /// <param name="pageSize">单页数量</param>
-        /// <param name="searchKey">搜索关键词</param>
+        /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoArticle> GetArticleList(int pageNum, int pageSize, string? searchKey)
+        public DtoPageList<DtoArticle> GetArticleList([FromQuery] DtoPageRequest request)
         {
             DtoPageList<DtoArticle> data = new();
 
-            int skip = (pageNum - 1) * pageSize;
-
             var query = db.TArticle.AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchKey))
-            {
-                query = query.Where(t => t.Title.Contains(searchKey));
-            }
 
             data.Total = query.Count();
 
@@ -265,7 +247,7 @@ namespace AdminAPI.Controllers
                     Key = f.Id,
                     Value = fileServerUrl + f.Path
                 }).ToList()
-            }).Skip(skip).Take(pageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToList();
 
             return data;
         }

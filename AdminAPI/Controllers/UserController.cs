@@ -54,24 +54,14 @@ namespace AdminAPI.Controllers
         /// <summary>
         /// 获取用户列表
         /// </summary>
-        /// <param name="pageNum"></param>
-        /// <param name="pageSize"></param>
-        /// <param name="searchKey"></param>
+        /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoUser> GetUserList(int pageNum, int pageSize, string? searchKey)
+        public DtoPageList<DtoUser> GetUserList([FromQuery] DtoPageRequest request)
         {
             DtoPageList<DtoUser> data = new();
 
-            int skip = (pageNum - 1) * pageSize;
-
             var query = db.TUser.AsSplitQuery();
-
-            if (!string.IsNullOrEmpty(searchKey))
-            {
-                query = query.Where(t => t.Name.Contains(searchKey) || t.UserName.Contains(searchKey) || t.Phone.Contains(searchKey));
-            }
-
 
             data.Total = query.Count();
 
@@ -85,7 +75,7 @@ namespace AdminAPI.Controllers
                 Roles = string.Join("、", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 RoleIds = db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
                 CreateTime = t.CreateTime
-            }).Skip(skip).Take(pageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToList();
 
             return data;
         }

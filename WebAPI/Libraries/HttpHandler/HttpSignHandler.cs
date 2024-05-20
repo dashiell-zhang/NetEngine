@@ -12,7 +12,7 @@ namespace WebAPI.Libraries.HttpHandler
     /// </summary>
     public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFactory httpClientFactory) : DelegatingHandler
     {
-        private readonly HttpClient httpClient = httpClientFactory.CreateClient();
+        private readonly HttpClient httpClient = httpClientFactory.CreateClient("");
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {

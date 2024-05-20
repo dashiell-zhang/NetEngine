@@ -17,7 +17,7 @@ namespace WebAPI.Services
     [Service(Lifetime = ServiceLifetime.Scoped)]
     public class AuthorizeService(DatabaseContext db, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
-        private readonly HttpClient httpClient = httpClientFactory.CreateClient();
+        private readonly HttpClient httpClient = httpClientFactory.CreateClient("");
 
 
         /// <summary>

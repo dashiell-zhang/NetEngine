@@ -12,7 +12,7 @@ namespace WebAPI.Services
     [Service(Lifetime = ServiceLifetime.Scoped)]
     public class PayService(IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock)
     {
-        private readonly HttpClient httpClient = httpClientFactory.CreateClient("");
+        private readonly HttpClient httpClient = httpClientFactory.CreateClient();
 
 
 

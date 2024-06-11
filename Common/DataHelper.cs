@@ -365,6 +365,7 @@ namespace Common
                                                         dataRow[j] = cell.NumericCellValue;
                                                     }
                                                     break;
+                                                case CellType.Formula://公式类型也像string一样直接取内容
                                                 case CellType.String:
                                                     dataRow[j] = cell.StringCellValue;
                                                     break;

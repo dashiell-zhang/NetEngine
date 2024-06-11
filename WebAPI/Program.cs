@@ -12,6 +12,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
+using Repository.Interceptors;
 using StackExchange.Redis;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -69,14 +70,20 @@ namespace WebAPI
             builder.Host.UseWindowsService();
 
 
+            var connectionString = builder.Configuration.GetConnectionString("dbConnection");
+            NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
+
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
-                var connectionString = builder.Configuration.GetConnectionString("dbConnection");
-
-                NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
-
                 options.UseNpgsql(dataSourceBuilder.Build());
+                options.AddInterceptors(new PostgresPatchInterceptor());
             }, 30);
+
+            builder.Services.AddDbContextFactory<Repository.Database.DatabaseContext>(options =>
+            {
+                options.UseNpgsql(dataSourceBuilder.Build());
+                options.AddInterceptors(new PostgresPatchInterceptor());
+            });
 
 
             #region 基础 Server 配置

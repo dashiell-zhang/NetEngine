@@ -4,6 +4,7 @@ using IdentifierGenerator;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Repository.Interceptors;
 using StackExchange.Redis;
 using System.Reflection;
 using TaskService.Libraries;
@@ -32,15 +33,20 @@ namespace TaskService
                 .ConfigureServices((hostContext, services) =>
                 {
 
+                    var connectionString = hostContext.Configuration.GetConnectionString("dbConnection");
+                    NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
+
                     services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
                     {
-                        var connectionString = hostContext.Configuration.GetConnectionString("dbConnection");
-
-                        NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
-
                         options.UseNpgsql(dataSourceBuilder.Build());
-
+                        options.AddInterceptors(new PostgresPatchInterceptor());
                     }, 30);
+
+                    services.AddDbContextFactory<Repository.Database.DatabaseContext>(options =>
+                    {
+                        options.UseNpgsql(dataSourceBuilder.Build());
+                        options.AddInterceptors(new PostgresPatchInterceptor());
+                    });
 
 
                     services.BatchRegisterServices();

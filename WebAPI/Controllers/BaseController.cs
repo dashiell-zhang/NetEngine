@@ -3,7 +3,7 @@ using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
-using WebAPI.Models.Shared;
+using WebAPIBasic.Models.Shared;
 
 namespace WebAPI.Controllers
 {

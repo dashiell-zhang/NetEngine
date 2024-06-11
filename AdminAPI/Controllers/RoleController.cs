@@ -1,6 +1,4 @@
-﻿using AdminAPI.Filters;
-using AdminAPI.Libraries;
-using AdminAPI.Services;
+﻿using AdminAPI.Services;
 using AdminShared.Models;
 using AdminShared.Models.Role;
 using Common;
@@ -8,6 +6,8 @@ using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
+using WebAPIBasic.Filters;
+using WebAPIBasic.Libraries;
 
 namespace AdminAPI.Controllers
 {

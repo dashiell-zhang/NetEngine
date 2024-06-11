@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using WebAPI.Services;
+using WebAPIBasic.Libraries;
 
 namespace WebAPI.Libraries
 {

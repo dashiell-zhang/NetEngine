@@ -9,7 +9,7 @@ namespace IdentifierGenerator
     {
 
 
-        public static void AddIdentifierGenerator(this IServiceCollection services, Action<IdSetting>? action =null)
+        public static void AddIdentifierGenerator(this IServiceCollection services, Action<IdSetting>? action = null)
         {
             var idSetting = new IdSetting();
 
@@ -21,7 +21,7 @@ namespace IdentifierGenerator
 
             services.AddSingleton<IdService>();
 
-            if(idSetting.DataCenterId==null || idSetting.MachineId == null)
+            if (idSetting.DataCenterId == null || idSetting.MachineId == null)
             {
                 services.AddHostedService<RefreshSignTask>();
             }

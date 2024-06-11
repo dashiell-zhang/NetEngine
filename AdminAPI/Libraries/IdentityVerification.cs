@@ -1,5 +1,4 @@
-﻿using AdminAPI.Models.AppSetting;
-using Common;
+﻿using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +9,8 @@ using Repository.Database;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using WebAPIBasic.Libraries;
+using WebAPIBasic.Models.AppSetting;
 
 namespace AdminAPI.Libraries
 {

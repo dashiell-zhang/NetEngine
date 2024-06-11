@@ -1,11 +1,11 @@
-﻿using AdminAPI.Models.AppSetting;
-using Common;
+﻿using Common;
 using IdentifierGenerator;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using WebAPIBasic.Models.AppSetting;
 
 namespace AdminAPI.Services
 {

@@ -10,10 +10,10 @@ using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System.Security.Cryptography;
 using System.Text;
-using WebAPI.Libraries;
 using WebAPI.Models.Pay;
-using WebAPI.Models.Shared;
 using WebAPI.Services;
+using WebAPIBasic.Libraries;
+using WebAPIBasic.Models.Shared;
 
 namespace WebAPI.Controllers
 {

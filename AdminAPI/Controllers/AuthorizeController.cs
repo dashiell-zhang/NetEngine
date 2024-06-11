@@ -1,6 +1,4 @@
-﻿using AdminAPI.Filters;
-using AdminAPI.Libraries;
-using AdminAPI.Services;
+﻿using AdminAPI.Services;
 using AdminShared.Models.Authorize;
 using Common;
 using IdentifierGenerator;
@@ -13,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using System.Text;
 using System.Xml;
+using WebAPIBasic.Filters;
+using WebAPIBasic.Libraries;
 
 namespace AdminAPI.Controllers
 {

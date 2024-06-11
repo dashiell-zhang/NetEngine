@@ -1,5 +1,4 @@
-﻿using Aop.Api.Domain;
-using Common;
+﻿using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
@@ -13,12 +12,12 @@ using Repository.Database;
 using SMS;
 using System.Text;
 using System.Xml;
-using WebAPI.Filters;
-using WebAPI.Libraries;
-using WebAPI.Models.AppSetting;
 using WebAPI.Models.Authorize;
-using WebAPI.Models.Shared;
 using WebAPI.Services;
+using WebAPIBasic.Filters;
+using WebAPIBasic.Libraries;
+using WebAPIBasic.Models.AppSetting;
+using WebAPIBasic.Models.Shared;
 
 namespace WebAPI.Controllers
 {

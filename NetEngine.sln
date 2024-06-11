@@ -43,6 +43,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminAPP", "AdminAPP\AdminA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentifierGenerator", "IdentifierGenerator\IdentifierGenerator.csproj", "{B5F42B75-0358-4775-BE23-AAF5A2EAED15}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAPIBasic", "WebAPIBasic\WebAPIBasic.csproj", "{9D5B8B25-CF9C-4179-9595-2F461F1049CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,6 +127,10 @@ Global
 		{B5F42B75-0358-4775-BE23-AAF5A2EAED15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5F42B75-0358-4775-BE23-AAF5A2EAED15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5F42B75-0358-4775-BE23-AAF5A2EAED15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D5B8B25-CF9C-4179-9595-2F461F1049CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D5B8B25-CF9C-4179-9595-2F461F1049CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D5B8B25-CF9C-4179-9595-2F461F1049CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D5B8B25-CF9C-4179-9595-2F461F1049CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -142,6 +148,7 @@ Global
 		{EA76F2F5-2576-4399-A21E-BD4C78B306B8} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 		{B1BF441F-D87C-4593-AEA6-62AFF8221BCE} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 		{B5F42B75-0358-4775-BE23-AAF5A2EAED15} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
+		{9D5B8B25-CF9C-4179-9595-2F461F1049CA} = {AF3FE10D-6533-4CFC-9F00-06BD7874A1BB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AFC5F893-16A3-441E-9DC6-2E23DD53C158}

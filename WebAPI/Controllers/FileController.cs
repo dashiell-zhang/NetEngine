@@ -7,9 +7,8 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using SkiaSharp;
-using System.Text;
-using WebAPI.Libraries;
-using WebAPI.Models.Shared;
+using WebAPIBasic.Libraries;
+using WebAPIBasic.Models.Shared;
 
 namespace WebAPI.Controllers
 {

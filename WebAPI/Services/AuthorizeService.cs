@@ -1,15 +1,13 @@
 ﻿using Common;
-using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using WebAPI.Models.AppSetting;
 using WebAPI.Models.Authorize;
+using WebAPIBasic.Models.AppSetting;
 
 namespace WebAPI.Services
 {

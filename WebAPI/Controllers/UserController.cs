@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
-using WebAPI.Filters;
-using WebAPI.Libraries;
-using WebAPI.Models.Shared;
 using WebAPI.Models.User;
+using WebAPIBasic.Filters;
+using WebAPIBasic.Libraries;
+using WebAPIBasic.Models.Shared;
 
 namespace WebAPI.Controllers
 {

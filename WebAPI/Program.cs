@@ -12,17 +12,19 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
+using Repository.HealthCheck;
 using Repository.Interceptors;
 using StackExchange.Redis;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using WebAPI.Filters;
 using WebAPI.Libraries;
-using WebAPI.Libraries.HealthCheck;
 using WebAPI.Libraries.HttpHandler;
-using WebAPI.Libraries.Swagger;
-using WebAPI.Models.AppSetting;
+using WebAPIBasic.Filters;
+using WebAPIBasic.Libraries;
+using WebAPIBasic.Libraries.HealthCheck;
+using WebAPIBasic.Libraries.Swagger;
+using WebAPIBasic.Models.AppSetting;
 
 namespace WebAPI
 {
@@ -367,7 +369,7 @@ namespace WebAPI
             #region 注册健康检测服务
             builder.Services.AddHealthChecks()
                 .AddCheck<CacheHealthCheck>("CacheHealthCheck")
-                .AddDbContextCheck<Repository.Database.DatabaseContext>("DatabaseHealthCheck");
+                .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck");
 
 
             builder.Services.Configure<HealthCheckPublisherOptions>(options =>

@@ -1,8 +1,4 @@
-﻿using AdminAPI.Filters;
-using AdminAPI.Libraries;
-using AdminAPI.Libraries.HealthCheck;
-using AdminAPI.Libraries.Swagger;
-using AdminAPI.Models.AppSetting;
+﻿using AdminAPI.Libraries;
 using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
@@ -18,10 +14,16 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
+using Repository.HealthCheck;
 using Repository.Interceptors;
 using StackExchange.Redis;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using WebAPIBasic.Filters;
+using WebAPIBasic.Libraries;
+using WebAPIBasic.Libraries.HealthCheck;
+using WebAPIBasic.Libraries.Swagger;
+using WebAPIBasic.Models.AppSetting;
 
 namespace AdminAPI
 {
@@ -298,7 +300,7 @@ namespace AdminAPI
             #region 注册健康检测服务
             builder.Services.AddHealthChecks()
                 .AddCheck<CacheHealthCheck>("CacheHealthCheck")
-                .AddDbContextCheck<Repository.Database.DatabaseContext>("DatabaseHealthCheck");
+                .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck");
 
 
             builder.Services.Configure<HealthCheckPublisherOptions>(options =>

@@ -24,13 +24,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.6" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
-		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -42,6 +37,7 @@
 		<ProjectReference Include="..\Logger.DataBase\Logger.DataBase.csproj" />
 		<ProjectReference Include="..\Logger.LocalFile\Logger.LocalFile.csproj" />
 		<ProjectReference Include="..\Repository\Repository.csproj" />
+		<ProjectReference Include="..\WebAPIBasic\WebAPIBasic.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

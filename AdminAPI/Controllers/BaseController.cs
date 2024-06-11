@@ -1,9 +1,9 @@
-﻿using AdminAPI.Filters;
-using AdminShared.Models;
+﻿using AdminShared.Models;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Database;
+using WebAPIBasic.Filters;
 
 namespace AdminAPI.Controllers
 {

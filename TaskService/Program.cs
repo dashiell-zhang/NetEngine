@@ -42,11 +42,11 @@ namespace TaskService
                         options.AddInterceptors(new PostgresPatchInterceptor());
                     }, 30);
 
-                    services.AddDbContextFactory<Repository.Database.DatabaseContext>(options =>
+                    services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options =>
                     {
                         options.UseNpgsql(dataSourceBuilder.Build());
                         options.AddInterceptors(new PostgresPatchInterceptor());
-                    });
+                    }, 30);
 
 
                     services.BatchRegisterServices();

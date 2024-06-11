@@ -76,11 +76,11 @@ namespace AdminAPI
                 options.AddInterceptors(new PostgresPatchInterceptor());
             }, 30);
 
-            builder.Services.AddDbContextFactory<Repository.Database.DatabaseContext>(options =>
+            builder.Services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options =>
             {
                 options.UseNpgsql(dataSourceBuilder.Build());
                 options.AddInterceptors(new PostgresPatchInterceptor());
-            });
+            }, 30);
 
 
             #region 基础 Server 配置

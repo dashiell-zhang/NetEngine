@@ -19,7 +19,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.37" />
+		<PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.38" />
 	</ItemGroup>
 
 

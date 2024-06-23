@@ -402,6 +402,7 @@
             fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId");
             editArticle.IsDisplay = true;
             editArticle.Sort = 99;
+            editArticle.CategoryId = "";
         }
 
         GetCategoryTreeList();

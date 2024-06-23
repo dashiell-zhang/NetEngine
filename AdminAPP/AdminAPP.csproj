@@ -24,9 +24,9 @@
 		<PackageReference Include="AntDesign" Version="0.19.1" />
 		<PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.6" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.5" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.6" PrivateAssets="all" />
 		<PackageReference Include="SkiaSharp.Views.Blazor" Version="2.88.8" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.1" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.2" />
 		<PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
 	</ItemGroup>
 

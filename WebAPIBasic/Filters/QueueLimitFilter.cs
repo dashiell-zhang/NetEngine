@@ -11,8 +11,52 @@ namespace WebAPIBasic.Filters
     /// <summary>
     /// 队列过滤器
     /// </summary>
+    /// 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-    public class QueueLimitFilter : Attribute, IActionFilter
+    public class QueueLimitFilter : Attribute, IFilterFactory
+    {
+
+        /// <summary>
+        /// 是否使用 参数
+        /// </summary>
+        public bool IsUseParameter { get; set; }
+
+
+        /// <summary>
+        /// 是否使用 Token
+        /// </summary>
+        public bool IsUseToken { get; set; }
+
+
+        /// <summary>
+        /// 是否阻断重复请求
+        /// </summary>
+        public bool IsBlock { get; set; }
+
+
+        /// <summary>
+        /// 失效时长（单位秒）
+        /// </summary>
+        public int Expiry { get; set; }
+
+
+
+        public bool IsReusable => false;
+        public IFilterMetadata CreateInstance(IServiceProvider serviceProvider)
+        {
+            QueueLimitFilterAction queueLimitFilterAction = new();
+
+            queueLimitFilterAction.IsUseParameter = IsUseParameter;
+            queueLimitFilterAction.IsUseToken = IsUseToken;
+            queueLimitFilterAction.IsBlock = IsBlock;
+            queueLimitFilterAction.Expiry = Expiry;
+
+            return queueLimitFilterAction;
+        }
+    }
+
+
+    internal class QueueLimitFilterAction : IActionFilter
     {
 
 

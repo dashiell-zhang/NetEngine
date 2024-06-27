@@ -19,7 +19,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="TencentCloudSDK" Version="3.0.1031" />
+		<PackageReference Include="TencentCloudSDK" Version="3.0.1035" />
 	</ItemGroup>
 
 

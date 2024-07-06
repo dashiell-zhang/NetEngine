@@ -2,7 +2,7 @@
 
 namespace WebAPI.Models.Authorize
 {
-    public class DtoUpdatePassWordByOldPassWord
+    public class DtoUpdatePasswordByOldPassword
     {
 
 
@@ -10,7 +10,7 @@ namespace WebAPI.Models.Authorize
         /// 旧的密码
         /// </summary>
         [Required(ErrorMessage = "旧的密码不可以为空")]
-        public string OldPassWord { get; set; }
+        public string OldPassword { get; set; }
 
 
 
@@ -18,7 +18,7 @@ namespace WebAPI.Models.Authorize
         /// 新的密码
         /// </summary>
         [Required(ErrorMessage = "新的密码不可以为空")]
-        public string NewPassWord { get; set; }
+        public string NewPassword { get; set; }
 
     }
 }

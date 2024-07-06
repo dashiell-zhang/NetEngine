@@ -136,7 +136,7 @@ namespace AdminAPI.Controllers
                             UserName = createUser.UserName,
                             Phone = createUser.Phone
                         };
-                        user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                        user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.Password, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                         user.CreateUserId = userId;
 
                         user.Email = createUser.Email;
@@ -201,9 +201,9 @@ namespace AdminAPI.Controllers
                             user.Phone = updateUser.Phone;
                             user.Email = updateUser.Email;
 
-                            if (updateUser.PassWord != "default")
+                            if (updateUser.Password != "default")
                             {
-                                user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.PassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                                user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.Password, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                             }
 
                             var roleList = db.TUserRole.Where(t => t.UserId == user.Id).ToList();

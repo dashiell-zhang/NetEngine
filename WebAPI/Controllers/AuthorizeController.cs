@@ -94,9 +94,9 @@ namespace WebAPI.Controllers
         [HttpPost]
         public string? GetToken(DtoGetToken login)
         {
-            var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.PassWord }).ToList();
+            var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.Password }).ToList();
 
-            var user = userList.Where(t => t.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.PassWord, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
+            var user = userList.Where(t => t.Password == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.Password, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
             if (user != null)
             {
@@ -143,7 +143,7 @@ namespace WebAPI.Controllers
                             UserName = Guid.NewGuid().ToString(),
                             Phone = ""
                         };
-                        user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                        user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                         db.TUser.Add(user);
 
@@ -211,7 +211,7 @@ namespace WebAPI.Controllers
                         UserName = Guid.NewGuid().ToString(),
                         Phone = login.Phone
                     };
-                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                    user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                     db.TUser.Add(user);
 
@@ -326,7 +326,7 @@ namespace WebAPI.Controllers
                         UserName = Guid.NewGuid().ToString(),
                         Phone = ""
                     };
-                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                    user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                     db.TUser.Add(user);
                     db.SaveChanges();
@@ -359,21 +359,21 @@ namespace WebAPI.Controllers
         /// <summary>
         /// 通过老密码修改密码
         /// </summary>
-        /// <param name="updatePassWord"></param>
+        /// <param name="updatePassword"></param>
         /// <returns></returns>
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
-        public bool UpdatePassWordByOldPassWord(DtoUpdatePassWordByOldPassWord updatePassWord)
+        public bool UpdatePasswordByOldPassword(DtoUpdatePasswordByOldPassword updatePassword)
         {
 
             var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
             if (user != null)
             {
-                if (user.PassWord == Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWord.OldPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32)))
+                if (user.Password == Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.OldPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32)))
                 {
-                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWord.NewPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                    user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.NewPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                     user.UpdateUserId = user.Id;
                     db.SaveChanges();
 
@@ -395,12 +395,12 @@ namespace WebAPI.Controllers
 
         /// <summary>
         /// 通过短信验证码修改账户密码</summary>
-        /// <param name="updatePassWord"></param>
+        /// <param name="updatePassword"></param>
         /// <returns></returns>
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
-        public bool UpdatePassWordBySMS(DtoUpdatePassWordBySMS updatePassWord)
+        public bool UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword)
         {
 
             string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault()!;
@@ -410,13 +410,13 @@ namespace WebAPI.Controllers
             var code = distributedCache.GetString(key);
 
 
-            if (string.IsNullOrEmpty(code) == false && code == updatePassWord.SmsCode)
+            if (string.IsNullOrEmpty(code) == false && code == updatePassword.SmsCode)
             {
                 var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
                 if (user != null)
                 {
-                    user.PassWord = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassWord.NewPassWord, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
+                    user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.NewPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                     user.UpdateUserId = userId;
 
                     var tokenList = db.TUserToken.Where(t => t.UserId == userId).ToList();
@@ -448,7 +448,7 @@ namespace WebAPI.Controllers
         /// <param name="passWord"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoKeyValue GeneratePassWord(string passWord)
+        public DtoKeyValue GeneratePassword(string passWord)
         {
             DtoKeyValue keyValue = new()
             {

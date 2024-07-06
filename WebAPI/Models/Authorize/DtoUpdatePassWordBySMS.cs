@@ -6,7 +6,7 @@ namespace WebAPI.Models.Authorize
     /// <summary>
     /// 通过短信修改账户密码入参
     /// </summary>
-    public class DtoUpdatePassWordBySMS
+    public class DtoUpdatePasswordBySMS
     {
 
         /// <summary>
@@ -21,7 +21,7 @@ namespace WebAPI.Models.Authorize
         /// 新密码
         /// </summary>
         [Required(ErrorMessage = "新密码不可以为空")]
-        public string NewPassWord { get; set; }
+        public string NewPassword { get; set; }
 
     }
 }

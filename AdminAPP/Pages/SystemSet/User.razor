@@ -109,7 +109,7 @@
 
             <FormItem>
                 <Text>密码</Text>
-                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.PassWord" VisibilityToggle="false" />
+                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.Password" VisibilityToggle="false" />
             </FormItem>
 
             <Row Gutter="24">
@@ -257,7 +257,7 @@
             editUser.UserName = user.UserName;
             editUser.Phone = user.Phone;
             editUser.Email = user.Email;
-            editUser.PassWord = "default";
+            editUser.Password = "default";
             if (user.RoleIds != null)
             {
                 editUser.RoleIds = user.RoleIds;

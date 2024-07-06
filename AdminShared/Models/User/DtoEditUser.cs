@@ -39,7 +39,7 @@ namespace AdminShared.Models.User
         /// 密码
         /// </summary>
         [Required(ErrorMessage = "密码不可以为空")]
-        public string PassWord { get; set; }
+        public string Password { get; set; }
 
 
 

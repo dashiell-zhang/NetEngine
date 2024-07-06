@@ -43,7 +43,7 @@ namespace Repository.Database
         /// <summary>
         /// 密码
         /// </summary>
-        public string PassWord { get; set; }
+        public string Password { get; set; }
 
 
         /// <summary>

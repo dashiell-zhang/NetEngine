@@ -1,6 +1,7 @@
 ﻿using Common;
 using DistributedLock;
 using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Repository.Database;
 using System.Collections.Concurrent;
@@ -83,7 +84,10 @@ namespace TaskService.Libraries.QueueTask
 
                     queueTaskService.CurrentTaskId = queueTaskId;
 
-                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
+
+                    using var db = factory.CreateDbContext();
+
                     var idService = scope.ServiceProvider.GetRequiredService<IdService>();
 
                     using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);

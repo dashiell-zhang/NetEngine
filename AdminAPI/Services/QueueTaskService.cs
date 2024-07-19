@@ -1,12 +1,13 @@
 ﻿using Common;
 using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 
 namespace AdminAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class QueueTaskService(DatabaseContext db, IdService idService)
+    public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
     {
 
 
@@ -48,6 +49,8 @@ namespace AdminAPI.Services
         {
             try
             {
+                var db = dbFactory.CreateDbContext();
+
                 TQueueTask queueTask = new()
                 {
                     Id = idService.GetId(),

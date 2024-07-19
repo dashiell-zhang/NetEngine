@@ -1,12 +1,13 @@
 ﻿using Common;
 using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 
 namespace TaskService.Libraries.QueueTask
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class QueueTaskService(DatabaseContext db, IdService idService)
+    public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
     {
 
 
@@ -66,7 +67,6 @@ namespace TaskService.Libraries.QueueTask
 
 
 
-
         /// <summary>
         /// 单独创建队列
         /// </summary>
@@ -81,6 +81,8 @@ namespace TaskService.Libraries.QueueTask
         {
             try
             {
+                var db = dbFactory.CreateDbContext();
+
                 TQueueTask queueTask = new()
                 {
                     Id = idService.GetId(),

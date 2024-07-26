@@ -74,13 +74,18 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        /// <param name="absoluteExpirationRelativeToNow">相对过期时间</param>
+        /// <param name="expirationRelativeToNow">相对过期时间</param>
+        /// <param name="isSlidingExp">是否支持滑动延时</param>
         /// <returns></returns>
-        public static bool Set(this IDistributedCache distributedCache, string key, string value, TimeSpan absoluteExpirationRelativeToNow)
+        public static bool Set(this IDistributedCache distributedCache, string key, string value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
         {
             try
             {
-                distributedCache.SetString(key, value, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = absoluteExpirationRelativeToNow });
+                distributedCache.SetString(key, value, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = (isSlidingExp ? null : expirationRelativeToNow),
+                    SlidingExpiration = (isSlidingExp ? expirationRelativeToNow : null)
+                });
                 return true;
             }
             catch
@@ -96,13 +101,14 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        /// <param name="absoluteExpirationRelativeToNow">相对过期时间</param>
+        /// <param name="expirationRelativeToNow">相对过期时间</param>
+        /// <param name="isSlidingExp">是否支持滑动延时</param>
         /// <returns></returns>
-        public static void SetAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan absoluteExpirationRelativeToNow)
+        public static void SetAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
         {
             Task.Run(() =>
             {
-                distributedCache.Set(key, value, absoluteExpirationRelativeToNow);
+                distributedCache.Set(key, value, expirationRelativeToNow, isSlidingExp);
             });
         }
 
@@ -192,14 +198,19 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        /// <param name="absoluteExpirationRelativeToNow">相对过期时间</param>
+        /// <param name="expirationRelativeToNow">相对过期时间</param>
+        /// <param name="isSlidingExp">是否支持滑动延时</param>
         /// <returns></returns>
-        public static bool Set(this IDistributedCache distributedCache, string key, object value, TimeSpan absoluteExpirationRelativeToNow)
+        public static bool Set(this IDistributedCache distributedCache, string key, object value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
         {
             try
             {
                 var valueStr = JsonHelper.ObjectToJson(value);
-                distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = absoluteExpirationRelativeToNow });
+                distributedCache.SetString(key, valueStr, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = (isSlidingExp ? null : expirationRelativeToNow),
+                    SlidingExpiration = (isSlidingExp ? expirationRelativeToNow : null)
+                });
                 return true;
             }
             catch
@@ -215,13 +226,14 @@ namespace Common
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        /// <param name="absoluteExpirationRelativeToNow">相对过期时间</param>
+        /// <param name="expirationRelativeToNow">相对过期时间</param>
+        /// <param name="isSlidingExp">是否支持滑动延时</param>
         /// <returns></returns>
-        public static void SetAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan absoluteExpirationRelativeToNow)
+        public static void SetAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
         {
             Task.Run(() =>
             {
-                distributedCache.Set(key, value, absoluteExpirationRelativeToNow);
+                distributedCache.Set(key, value, expirationRelativeToNow, isSlidingExp);
             });
         }
 

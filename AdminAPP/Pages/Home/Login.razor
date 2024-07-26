@@ -1,6 +1,6 @@
 ﻿@page "/login"
 @layout NullLayout
-@using System.IdentityModel.Tokens.Jwt;
+@using Microsoft.IdentityModel.JsonWebTokens;
 @using AdminShared.Models.Authorize
 @attribute [ReuseTabsPage(Ignore = true)]
 
@@ -53,9 +53,9 @@
 
         if (!string.IsNullOrEmpty(authorization))
         {
-            JwtSecurityToken securityToken = new(authorization);
+            JsonWebToken jsonWebToken = new(authorization);
 
-            var expTimeL = Convert.ToInt64(securityToken.Claims.ToList().Where(t => t.Type == "exp").FirstOrDefault()!.Value);
+            var expTimeL = Convert.ToInt64(jsonWebToken.GetClaim("exp").Value);
 
             var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
 

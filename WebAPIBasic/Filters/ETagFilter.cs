@@ -23,7 +23,7 @@ namespace WebAPIBasic.Filters
             var request = context.HttpContext.Request;
             var response = context.HttpContext.Response;
 
-            if (response.StatusCode == 200)
+            if (response.StatusCode == 200 && string.Equals(request.Method, "get", StringComparison.OrdinalIgnoreCase))
             {
                 if (context.Result is ObjectResult result)
                 {

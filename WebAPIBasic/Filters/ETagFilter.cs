@@ -1,11 +1,11 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
 namespace WebAPIBasic.Filters
 {
-
 
     /// <summary>
     /// ETag计算过滤器
@@ -29,7 +29,7 @@ namespace WebAPIBasic.Filters
                 {
                     if (result.Value != null)
                     {
-                        var etag = CryptoHelper.MD5HashData(JsonHelper.ObjectToJson(result.Value));
+                        var etag = new StringValues($"\"{CryptoHelper.SHA256HashData(JsonHelper.ObjectToJson(result.Value), "base64")}\"");
 
                         if (request.Headers.TryGetValue(HeaderNames.IfNoneMatch, out var incomingEtag) && incomingEtag == etag)
                         {
@@ -37,13 +37,12 @@ namespace WebAPIBasic.Filters
                         }
                         else
                         {
-                            response.Headers[HeaderNames.ETag] = etag;
+                            response.Headers.ETag = etag;
                         }
                     }
                 }
             }
         }
-
 
     }
 }

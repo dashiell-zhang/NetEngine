@@ -76,6 +76,13 @@ namespace Common
                                     pi.SetValue(model, Convert.ToInt32(drValue), null);
                                 }
                             }
+                            else if (pi.PropertyType!.IsEnum)
+                            {
+                                if (!string.IsNullOrWhiteSpace($"{drValue}"))
+                                {
+                                    pi.SetValue(model, Convert.ToInt32(drValue), null);
+                                }
+                            }
                             else
                             {
                                 if (string.IsNullOrWhiteSpace($"{drValue}"))

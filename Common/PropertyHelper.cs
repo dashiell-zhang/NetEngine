@@ -414,5 +414,24 @@ namespace Common
             }
         }
 
+
+
+        /// <summary>
+        /// 判断一个类型是否是枚举或可为空的枚举
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static bool IsEnumOrNullableEnum(Type type)
+        {
+            if (type.IsEnum)
+            {
+                return true;
+            }
+            else
+            {
+                Type underlyingType = Nullable.GetUnderlyingType(type)!;
+                return underlyingType != null && underlyingType.IsEnum;
+            }
+        }
     }
 }

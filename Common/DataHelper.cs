@@ -83,6 +83,12 @@ namespace Common
                                     pi.SetValue(model, Convert.ToInt32(drValue), null);
                                 }
                             }
+                            else if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
+                            {
+                                Type nonNullableType = Nullable.GetUnderlyingType(pi.PropertyType)!;
+                                var enumValue = Enum.ToObject(nonNullableType, Convert.ToInt32(drValue));
+                                pi.SetValue(model, enumValue, null);
+                            }
                             else
                             {
                                 if (string.IsNullOrWhiteSpace($"{drValue}"))
@@ -178,6 +184,19 @@ namespace Common
                                 {
                                     pi.SetValue(model, Convert.ToInt32(drValue), null);
                                 }
+                            }
+                            else if (pi.PropertyType!.IsEnum)
+                            {
+                                if (!string.IsNullOrWhiteSpace($"{drValue}"))
+                                {
+                                    pi.SetValue(model, Convert.ToInt32(drValue), null);
+                                }
+                            }
+                            else if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
+                            {
+                                Type nonNullableType = Nullable.GetUnderlyingType(pi.PropertyType)!;
+                                var enumValue = Enum.ToObject(nonNullableType, Convert.ToInt32(drValue));
+                                pi.SetValue(model, enumValue, null);
                             }
                             else
                             {

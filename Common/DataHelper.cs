@@ -1,6 +1,7 @@
 ﻿using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
+using System.ComponentModel;
 using System.Data;
 using System.Reflection;
 
@@ -24,7 +25,7 @@ namespace Common
             else
             {
 
-                List<T> list = [];
+                IList<T> list = new List<T>();
                 foreach (DataRow dr in table.Rows)
                 {
                     T model = Activator.CreateInstance<T>();
@@ -76,18 +77,39 @@ namespace Common
                                     pi.SetValue(model, Convert.ToInt32(drValue), null);
                                 }
                             }
-                            else if (pi.PropertyType!.IsEnum)
+                            else if (pi.PropertyType!.IsEnum || Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
                             {
-                                if (!string.IsNullOrWhiteSpace($"{drValue}"))
+                                string drValueStr = drValue.ToString()!.Trim();
+
+                                Type enumType = pi.PropertyType;
+
+                                if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
                                 {
-                                    pi.SetValue(model, Convert.ToInt32(drValue), null);
+                                    enumType = Nullable.GetUnderlyingType(pi.PropertyType)!;
                                 }
-                            }
-                            else if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
-                            {
-                                Type nonNullableType = Nullable.GetUnderlyingType(pi.PropertyType)!;
-                                var enumValue = Enum.ToObject(nonNullableType, Convert.ToInt32(drValue));
-                                pi.SetValue(model, enumValue, null);
+
+                                if (int.TryParse(drValueStr, out int drValueInt))
+                                {
+                                    var enumValue = Enum.ToObject(enumType, drValueInt);
+                                    pi.SetValue(model, enumValue, null);
+                                }
+                                else if (Enum.TryParse(enumType, drValueStr, out object? enumValueTemp))
+                                {
+                                    pi.SetValue(model, enumValueTemp, null);
+                                }
+                                else
+                                {
+                                    var enumValue = GetEnumValueFromDescription(enumType, drValueStr);
+
+                                    if (enumValue != null)
+                                    {
+                                        pi.SetValue(model, enumValue, null);
+                                    }
+                                    else
+                                    {
+                                        throw new Exception($"无法转换枚举：{drValueStr} => {enumType.FullName}");
+                                    }
+                                }
                             }
                             else
                             {
@@ -99,7 +121,6 @@ namespace Common
                                 {
                                     pi.SetValue(model, $"{drValue}".Trim(), null);
                                 }
-
                             }
 
                         }
@@ -128,7 +149,7 @@ namespace Common
             else
             {
 
-                List<T> list = [];
+                IList<T> list = new List<T>();
 
                 foreach (DataRow dr in table.Rows)
                 {
@@ -185,18 +206,39 @@ namespace Common
                                     pi.SetValue(model, Convert.ToInt32(drValue), null);
                                 }
                             }
-                            else if (pi.PropertyType!.IsEnum)
+                            else if (pi.PropertyType!.IsEnum || Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
                             {
-                                if (!string.IsNullOrWhiteSpace($"{drValue}"))
+                                string drValueStr = drValue.ToString()!.Trim();
+
+                                Type enumType = pi.PropertyType;
+
+                                if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
                                 {
-                                    pi.SetValue(model, Convert.ToInt32(drValue), null);
+                                    enumType = Nullable.GetUnderlyingType(pi.PropertyType)!;
                                 }
-                            }
-                            else if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
-                            {
-                                Type nonNullableType = Nullable.GetUnderlyingType(pi.PropertyType)!;
-                                var enumValue = Enum.ToObject(nonNullableType, Convert.ToInt32(drValue));
-                                pi.SetValue(model, enumValue, null);
+
+                                if (int.TryParse(drValueStr, out int drValueInt))
+                                {
+                                    var enumValue = Enum.ToObject(enumType, drValueInt);
+                                    pi.SetValue(model, enumValue, null);
+                                }
+                                else if (Enum.TryParse(enumType, drValueStr, out object? enumValueTemp))
+                                {
+                                    pi.SetValue(model, enumValueTemp, null);
+                                }
+                                else
+                                {
+                                    var enumValue = GetEnumValueFromDescription(enumType, drValueStr);
+
+                                    if (enumValue != null)
+                                    {
+                                        pi.SetValue(model, enumValue, null);
+                                    }
+                                    else
+                                    {
+                                        throw new Exception($"无法转换枚举：{drValueStr} => {enumType.FullName}");
+                                    }
+                                }
                             }
                             else
                             {
@@ -219,6 +261,26 @@ namespace Common
                 return list;
             }
 
+        }
+
+
+        /// <summary>
+        /// 通过枚举的描述获取枚举值
+        /// </summary>
+        /// <param name="enumType"></param>
+        /// <param name="description"></param>
+        /// <returns></returns>
+        private static object? GetEnumValueFromDescription(Type enumType, string description)
+        {
+            foreach (var field in enumType.GetFields())
+            {
+                var attribute = Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) as DescriptionAttribute;
+
+                if (attribute != null && attribute.Description == description)
+                    return Enum.Parse(enumType, field.Name);
+            }
+
+            return null;
         }
 
 

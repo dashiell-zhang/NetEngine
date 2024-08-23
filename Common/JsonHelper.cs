@@ -28,7 +28,7 @@ namespace Common
             objectToJsonOptions.Converters.Add(new DateTimeConverter());
             objectToJsonOptions.Converters.Add(new DateTimeOffsetConverter());
             objectToJsonOptions.Converters.Add(new LongConverter());
-            objectToJsonOptions.Converters.Add(new NullableStringConverter());
+            objectToJsonOptions.Converters.Add(new StringConverter());
 
 
             jsonToObjectOptions = new()
@@ -39,7 +39,7 @@ namespace Common
             jsonToObjectOptions.Converters.Add(new DateTimeConverter());
             jsonToObjectOptions.Converters.Add(new DateTimeOffsetConverter());
             jsonToObjectOptions.Converters.Add(new LongConverter());
-            jsonToObjectOptions.Converters.Add(new NullableStringConverter());
+            jsonToObjectOptions.Converters.Add(new StringConverter());
 
 
             #region cloneObjectOptions

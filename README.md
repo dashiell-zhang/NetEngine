@@ -114,7 +114,7 @@ TaskService 支持 Cron 表达式配置周期性执行方法，未依赖任何�
     SQLServer
     驱动：Microsoft.EntityFrameworkCore.SqlServer
     数据库生成模型指令：Scaffold-DbContext "ConnectionString" Microsoft.EntityFrameworkCore.SqlServer -OutputDir WebCore -Force
-    字符串：Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100;Encrypt=True
+    字符串：Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100;Encrypt=True;TrustServerCertificate=True
     EF 配置：optionsBuilder.UseSqlServer("ConnectionString", o => o.MigrationsHistoryTable("__efmigrationshistory"));
 
     PostgreSQL

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Common.JsonConverter
 {
-    public class NullableStringConverter : JsonConverter<string?>
+    public class StringConverter : JsonConverter<string?>
     {
 
         public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

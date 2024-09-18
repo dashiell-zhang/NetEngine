@@ -23,7 +23,7 @@ namespace WebAPIBasic.Filters
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
-#if DEBUG
+#if !DEBUG
             var filter = (SignVerifyFilter)context.Filters.Where(t => t.ToString() == typeof(SignVerifyFilter).Assembly.GetName().Name + ".Filters.SignVerifyFilter").ToList().LastOrDefault()!;
 
             if (!filter.IsSkip)

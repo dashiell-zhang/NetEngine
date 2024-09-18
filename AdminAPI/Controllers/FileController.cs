@@ -64,7 +64,7 @@ namespace AdminAPI.Controllers
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost]
-        public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
+        public long UploadFile([FromQuery] string business, [FromQuery] long? key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
         {
             var utcNow = DateTime.UtcNow;
 
@@ -106,6 +106,11 @@ namespace AdminAPI.Controllers
 
                 if (isSuccess)
                 {
+
+                    if (key == default(long))
+                    {
+                        key = null;
+                    }
 
                     filePath = Path.Combine(basePath, fileName).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 

@@ -49,7 +49,7 @@ namespace Repository.Database
         /// <summary>
         /// 外链表ID
         /// </summary>
-        public long TableId { get; set; }
+        public long? TableId { get; set; }
 
 
         /// <summary>

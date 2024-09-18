@@ -64,7 +64,7 @@ namespace WebAPI.Controllers
         /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
         /// <returns>文件ID</returns>
         [HttpPost]
-        public long RemoteUploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, [FromQuery] bool isPublicRead, [FromBody] DtoKeyValue fileInfo)
+        public long RemoteUploadFile([FromQuery] string business, [FromQuery] long? key, [FromQuery] string sign, [FromQuery] bool isPublicRead, [FromBody] DtoKeyValue fileInfo)
         {
 
             string remoteFileUrl = fileInfo.Key!.ToString()!;
@@ -105,6 +105,10 @@ namespace WebAPI.Controllers
 
                 if (isSuccess)
                 {
+                    if (key == default(long))
+                    {
+                        key = null;
+                    }
 
                     var filePath = Path.Combine(basePath, fileName).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
@@ -144,7 +148,7 @@ namespace WebAPI.Controllers
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost]
-        public long UploadFile([FromQuery] string business, [FromQuery] long key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
+        public long UploadFile([FromQuery] string business, [FromQuery] long? key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
         {
             var utcNow = DateTime.UtcNow;
 
@@ -185,6 +189,10 @@ namespace WebAPI.Controllers
 
                 if (isSuccess)
                 {
+                    if (key == default(long))
+                    {
+                        key = null;
+                    }
 
                     filePath = Path.Combine(basePath, fileName).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 

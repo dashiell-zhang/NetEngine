@@ -4,9 +4,9 @@ using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using WebAPIBasic.Libraries;
@@ -143,10 +143,25 @@ namespace AdminAPI.Libraries
                             var jwtSetting = configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
                             var jwtPrivateKey = ECDsa.Create();
                             jwtPrivateKey.ImportECPrivateKey(Convert.FromBase64String(jwtSetting.PrivateKey), out _);
-                            SigningCredentials creds = new(new ECDsaSecurityKey(jwtPrivateKey), SecurityAlgorithms.EcdsaSha256);
-                            JwtSecurityToken jwtSecurityToken = new(jwtSetting.Issuer, jwtSetting.Audience, claims, DateTime.UtcNow, DateTime.UtcNow + jwtSetting.Expiry, creds);
+                            SigningCredentials signingCredentials = new(new ECDsaSecurityKey(jwtPrivateKey), SecurityAlgorithms.EcdsaSha256);
 
-                            var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+                            var nowTime = DateTime.UtcNow;
+
+                            SecurityTokenDescriptor tokenDescriptor = new()
+                            {
+                                IssuedAt = nowTime,
+                                Issuer = jwtSetting.Issuer,
+                                Audience = jwtSetting.Audience,
+                                NotBefore = nowTime,
+                                Subject = new ClaimsIdentity(claims),
+                                Expires = nowTime + jwtSetting.Expiry,
+                                SigningCredentials = signingCredentials
+                            };
+
+                            JsonWebTokenHandler jwtTokenHandler = new();
+
+                            var token = jwtTokenHandler.CreateToken(tokenDescriptor);
+                      
 
                             db.TUserToken.Add(userToken);
 

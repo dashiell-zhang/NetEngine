@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Cryptography;
 using WebAPIBasic.Libraries;
 
@@ -23,6 +23,7 @@ namespace WebAPIBasic.Filters
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
+
 #if !DEBUG
             var filter = (SignVerifyFilter)context.Filters.Where(t => t.ToString() == typeof(SignVerifyFilter).Assembly.GetName().Name + ".Filters.SignVerifyFilter").ToList().LastOrDefault()!;
 
@@ -36,10 +37,9 @@ namespace WebAPIBasic.Filters
                 if (time.AddMinutes(3) > DateTime.UtcNow)
                 {
 
-                    var authorizationStr = context.HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-                    JwtSecurityToken securityToken = new(authorizationStr);
+                    var jsonWebToken = context.HttpContext.GetJsonWebToken();
 
-                    string privateKey = securityToken.RawSignature;
+                    string privateKey = jsonWebToken.EncodedSignature.ToString();
 
                     string dataStr = privateKey + timeStr;
 

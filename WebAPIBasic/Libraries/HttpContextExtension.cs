@@ -1,4 +1,5 @@
-﻿using System.IO.Compression;
+﻿using Microsoft.IdentityModel.JsonWebTokens;
+using System.IO.Compression;
 using System.Text;
 using WebAPIBasic.Models.Shared;
 
@@ -168,6 +169,19 @@ namespace WebAPIBasic.Libraries
         }
 
 
+
+        /// <summary>
+        /// 获取Http请求中的JsonWebToken
+        /// </summary>
+        /// <param name="httpContext"></param>
+        /// <returns></returns>
+        public static JsonWebToken GetJsonWebToken(this HttpContext httpContext)
+        {
+            var authorizationStr = httpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+
+            return new JsonWebToken(authorizationStr);
+
+        }
 
     }
 }

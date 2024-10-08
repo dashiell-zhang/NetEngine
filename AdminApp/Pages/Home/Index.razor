@@ -1,0 +1,36 @@
+﻿@page "/"
+@attribute [ReuseTabsPage(Title = "仪表盘", PinUrl = "/", Closable = false)]
+
+<Layout Style="padding-top:30px;">
+
+    <Content Class="site-layout-background">
+
+        <Card Title="服务器信息">
+            @foreach (var info in serverInfos)
+            {
+                <CardGrid Style="width:25%;text-align:left" Hoverable="true">
+                    @(info.Key!.ToString() + "：" + info.Value!.ToString())
+                </CardGrid>
+            }
+        </Card>
+
+    </Content>
+</Layout>
+
+@code {
+
+    List<DtoKeyValue> serverInfos = new();
+
+    async override protected void OnInitialized()
+    {
+        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Site/GetServerInfo");
+
+        if (retData != null)
+        {
+            serverInfos = retData;
+        }
+
+        StateHasChanged();
+    }
+
+}

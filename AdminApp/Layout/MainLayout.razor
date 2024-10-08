@@ -1,0 +1,199 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.IdentityModel.JsonWebTokens;
+@using AdminShared.Models.User
+
+<Layout Style="min-height: 100vh;">
+
+    <Sider Collapsible Collapsed=@collapsed CollapsedChanged=@onCollapse Style="overflow: auto;height: 100vh;position: fixed;left: 0;z-index:3">
+        <div class="logo" style="height: 32px;margin: 16px;display:flex">
+            <img src="img/logo.png" style="height:29px" />
+            <h1 style="color:#fff;font-size:20px;margin-left:17px">NetEngine</h1>
+        </div>
+
+        <Menu Theme="MenuTheme.Dark" DefaultSelectedKeys=@(new[]{"1"}) Mode="MenuMode.Inline">
+
+            @if (functionList.Contains("information"))
+            {
+                <SubMenu TitleTemplate=subArticle>
+                    @if (functionList.Contains("article"))
+                    {
+                        <MenuItem><a href="information/article">文章管理</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("category"))
+                    {
+                        <MenuItem> <a href="information/category">栏目管理</a></MenuItem>
+                    }
+                </SubMenu>
+            }
+
+            @if (functionList.Contains("systemset"))
+            {
+                <SubMenu TitleTemplate=subSystemSet>
+                    @if (functionList.Contains("user"))
+                    {
+                        <MenuItem><a href="systemset/user">用户管理</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("role"))
+                    {
+                        <MenuItem><a href="systemset/role">角色管理</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("link"))
+                    {
+                        <MenuItem><a href="systemset/link">友链管理</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("info"))
+                    {
+                        <MenuItem><a href="systemset/site">信息维护</a></MenuItem>
+                    }
+                </SubMenu>
+            }
+
+        </Menu>
+    </Sider>
+
+    <Header Class="site-layout-background" Style="height: 48px;padding: 0 20px;line-height: 39px;position:fixed;width:100%;right:0;z-index:2;">
+        <div style="float: right;">
+            <Avatar Size="33" Icon="user" Style="background-color: #87d068" />
+            <Dropdown>
+                <Overlay>
+                    <Menu>
+                        <MenuItem OnClick="Logout">
+                            退出登录
+                        </MenuItem>
+                    </Menu>
+                </Overlay>
+                <ChildContent>
+                    @user.Name  <Icon Type="down" Style="margin-left: 5px;font-size:1.1em;" />
+                </ChildContent>
+            </Dropdown>
+        </div>
+    </Header>
+
+    <Layout Class="site-layout" Style=@leftLayoutStyle>
+        <Content Style="margin:0 0px;margin-top:4px;">
+            <ReuseTabs Class="MainTab"></ReuseTabs>
+        </Content>
+    </Layout>
+
+</Layout>
+
+<style>
+    .MainTab > :first-child {
+        width: 80%;
+        padding-left: 5px;
+        position: fixed;
+        z-index: 2;
+    }
+</style>
+
+@code {
+    string leftLayoutStyle = "margin-left:200px";
+
+    RenderFragment subSystemSet =
+    @<span>
+        <Icon Type="control" Theme="outline" />
+        <span>系统设置</span>
+    </span>;
+
+    RenderFragment subArticle =
+    @<span>
+        <Icon Type="read" Theme="outline" />
+        <span>资讯管理</span>
+    </span>
+    ;
+
+    bool collapsed;
+
+    void onCollapse(bool collapsed)
+    {
+        if (collapsed)
+        {
+            leftLayoutStyle = "margin-left:80px";
+
+        }
+        else
+        {
+            leftLayoutStyle = "margin-left:200px";
+
+        }
+
+        this.collapsed = collapsed;
+    }
+
+    public static DtoUser user = new();
+
+
+    override protected void OnInitialized()
+    {
+        Authentication();
+        GetFunctionList();
+    }
+
+    public static List<string> functionList = new();
+
+
+    async void GetFunctionList()
+    {
+        var retList = await Http.GetFromJsonAsync<List<string>>("Authorize/GetFunctionList");
+
+        if (retList != null)
+        {
+            functionList = retList;
+
+            StateHasChanged();
+        }
+    }
+
+
+
+
+    private async void Authentication()
+    {
+        var authorization = LocalStorage.GetItemAsString("Authorization");
+
+        if (string.IsNullOrEmpty(authorization))
+        {
+            NavigationManager.NavigateTo("login");
+        }
+        else
+        {
+            JsonWebToken jsonWebToken = new(authorization);
+
+            var expTimeL = Convert.ToInt64(jsonWebToken.GetClaim("exp").Value);
+
+            var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
+
+            if (expTime < DateTime.UtcNow)
+            {
+                NavigationManager.NavigateTo("login");
+            }
+            else
+            {
+                try
+                {
+                    user = (await Http.GetFromJsonAsync<DtoUser>("User/GetUser"))!;
+                }
+                catch
+                {
+                    LocalStorage.RemoveItem("Authorization");
+                    NavigationManager.NavigateTo("login");
+                }
+
+                StateHasChanged();
+            }
+        }
+    }
+
+
+    private void Logout()
+    {
+        LocalStorage.RemoveItem("Authorization");
+
+        NavigationManager.NavigateTo("login");
+    }
+
+}

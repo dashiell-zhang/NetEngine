@@ -17,13 +17,12 @@
         <Table TItem="DtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
-                <Column @bind-Field="@context.Name" Title="名称"></Column>
-                <Column @bind-Field="@context.UserName" Title="用户名"></Column>
-                <Column @bind-Field="@context.Phone" Title="电话"></Column>
-                <Column @bind-Field="@context.Email" Title="邮箱"></Column>
-                <Column @bind-Field="@context.Roles" Title="角色"></Column>
-                <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间">
-                </Column>
+                <PropertyColumn Property="c=>c.Name" Title="名称"></PropertyColumn>
+                <PropertyColumn Property="c=>c.UserName" Title="用户名"></PropertyColumn>
+                <PropertyColumn Property="c=>c.Phone" Title="电话"></PropertyColumn>
+                <PropertyColumn Property="c=>c.Email" Title="邮箱"></PropertyColumn>
+                <PropertyColumn Property="c=>c.Roles" Title="角色"></PropertyColumn>
+                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
                 <ActionColumn Title="操作">
                     <Space>
 
@@ -45,9 +44,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                        OnConfirm="_=>DeleteUser(context.Id)"
-                                        OkText="Yes"
-                                        CancelText="No">
+                                            OnConfirm="_=>DeleteUser(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 

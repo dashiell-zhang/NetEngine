@@ -21,12 +21,13 @@
         <Table TItem="DtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
-                <Column @bind-Field="@context.Title" Title="标题"></Column>
-                <Column @bind-Field="@context.CategoryName" Title="类别"></Column>
-                <Column @bind-Field="@context.IsRecommend" Title="是否推荐"></Column>
-                <Column @bind-Field="@context.IsDisplay" Title="显示状态"></Column>
-                <Column @bind-Field="@context.ClickCount" Title="点击量"></Column>
-                <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></Column>
+                <PropertyColumn Property="c=>c.Title" Title="标题"></PropertyColumn>
+                <PropertyColumn Property="c=>c.CategoryName" Title="类别"></PropertyColumn>
+                <PropertyColumn Property="c=>c.IsRecommend" Title="是否推荐"></PropertyColumn>
+                <PropertyColumn Property="c=>c.IsDisplay" Title="显示状态"></PropertyColumn>
+                <PropertyColumn Property="c=>c.ClickCount" Title="点击量"></PropertyColumn>
+                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
+
                 <ActionColumn Title="操作">
                     <Space>
 

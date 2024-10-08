@@ -19,7 +19,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="aliyun-net-sdk-core" Version="1.6.1" />
+		<PackageReference Include="aliyun-net-sdk-core" Version="1.6.2" />
 	</ItemGroup>
 
 

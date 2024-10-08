@@ -17,11 +17,10 @@
         <Table TItem="DtoLink" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
-                <Column @bind-Field="@context.Name" Title="名称"></Column>
-                <Column @bind-Field="@context.Url" Title="Url"></Column>
-                <Column @bind-Field="@context.Sort" Title="排序"></Column>
-                <Column Field="@context.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间">
-                </Column>
+                <PropertyColumn Property="c=>c.Name" Title="名称"></PropertyColumn>
+                <PropertyColumn Property="c=>c.Url" Title="Url"></PropertyColumn>
+                <PropertyColumn Property="c=>c.Sort" Title="排序"></PropertyColumn>
+                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
                 <ActionColumn Title="操作">
                     <Space>
 

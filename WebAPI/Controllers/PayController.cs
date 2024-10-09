@@ -25,12 +25,10 @@ namespace WebAPI.Controllers
     [ApiController]
     public class PayController(DatabaseContext db, IDistributedCache distributedCache, ILogger<PayController> logger, PayService payService) : ControllerBase
     {
-        private readonly ILogger logger = logger;
 
 
 
-
-        /// <summary>
+                /// <summary>
         /// 微信支付-JSAPI模式
         /// </summary>
         /// <param name="orderNo">订单号</param>

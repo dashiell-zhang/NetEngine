@@ -52,7 +52,7 @@ namespace AdminAPI.Libraries
 
                     if (functionId != default)
                     {
-                        var userId = long.Parse(httpContext.GetClaimByUser("userId")!);
+                        var userId = httpContext.User.GetClaim<long>("userId");
                         var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
 
                         var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
@@ -94,8 +94,8 @@ namespace AdminAPI.Libraries
 
             var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-            var nbf = Convert.ToInt64(httpContext.GetClaimByUser("nbf"));
-            var exp = Convert.ToInt64(httpContext.GetClaimByUser("exp"));
+            var nbf = httpContext.User.GetClaim<long>("nbf");
+            var exp = httpContext.User.GetClaim<long>("exp");
 
             var nbfTime = DateTimeOffset.FromUnixTimeSeconds(nbf);
             var expTime = DateTimeOffset.FromUnixTimeSeconds(exp);
@@ -106,8 +106,8 @@ namespace AdminAPI.Libraries
             if (lifeSpan < DateTimeOffset.UtcNow)
             {
 
-                var tokenId = long.Parse(httpContext.GetClaimByUser("tokenId")!);
-                var userId = long.Parse(httpContext.GetClaimByUser("userId")!);
+                var tokenId = httpContext.User.GetClaim<long>("tokenId");
+                var userId = httpContext.User.GetClaim<long>("userId");
 
 
                 string key = "IssueNewToken" + tokenId;
@@ -161,7 +161,7 @@ namespace AdminAPI.Libraries
                             JsonWebTokenHandler jwtTokenHandler = new();
 
                             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
-                      
+
 
                             db.TUserToken.Add(userToken);
 

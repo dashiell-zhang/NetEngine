@@ -15,36 +15,9 @@ namespace AdminAPI.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class ArticleController : ControllerBase
+    public class ArticleController(DatabaseContext db, IConfiguration configuration, IdService idService, ArticleService articleService) : ControllerBase
     {
-
-
-        private readonly DatabaseContext db;
-        private readonly IConfiguration configuration;
-        private readonly IdService idService;
-
-        private readonly ArticleService articleService;
-
-        private readonly long userId;
-
-
-
-        public ArticleController(DatabaseContext db, IConfiguration configuration, IdService idService, IHttpContextAccessor httpContextAccessor, ArticleService articleService)
-        {
-            this.db = db;
-            this.configuration = configuration;
-            this.idService = idService;
-
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
-
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
-
-            this.articleService = articleService;
-        }
-
+        private long userId => User.GetClaim<long>("userId");
 
 
 

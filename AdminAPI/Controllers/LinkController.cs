@@ -13,27 +13,9 @@ namespace AdminAPI.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class LinkController : ControllerBase
+    public class LinkController(DatabaseContext db, IdService idService) : ControllerBase
     {
-
-        private readonly DatabaseContext db;
-        private readonly IdService idService;
-
-        private readonly long userId;
-
-
-
-        public LinkController(DatabaseContext db, IdService idService, IHttpContextAccessor httpContextAccessor)
-        {
-            this.db = db;
-            this.idService = idService;
-
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
-        }
+        private long userId => User.GetClaim<long>("userId");
 
 
 

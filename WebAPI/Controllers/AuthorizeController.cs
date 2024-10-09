@@ -28,39 +28,10 @@ namespace WebAPI.Controllers
     /// </summary>
     [Route("[controller]/[action]")]
     [ApiController]
-    public class AuthorizeController : ControllerBase
+    public class AuthorizeController(DatabaseContext db, IDistributedLock distLock, IdService idService, IDistributedCache distributedCache, AuthorizeService authorizeService) : ControllerBase
     {
 
-
-        private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
-        private readonly IdService idService;
-
-        private readonly IDistributedCache distributedCache;
-
-        private readonly AuthorizeService authorizeService;
-
-        private readonly long userId;
-
-
-
-
-        public AuthorizeController(DatabaseContext db, IDistributedLock distLock, IdService idService, IDistributedCache distributedCache, AuthorizeService authorizeService, IHttpContextAccessor httpContextAccessor)
-        {
-            this.db = db;
-            this.distLock = distLock;
-            this.idService = idService;
-            this.distributedCache = distributedCache;
-
-            this.authorizeService = authorizeService;
-
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
-
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
-        }
+        private long userId => User.GetClaim<long>("userId");
 
 
 

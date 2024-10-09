@@ -17,30 +17,10 @@ namespace AdminAPI.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class RoleController : ControllerBase
+    public class RoleController(DatabaseContext db, IdService idService, RoleService roleService) : ControllerBase
     {
 
-
-        private readonly DatabaseContext db;
-        private readonly IdService idService;
-        private readonly RoleService roleService;
-
-        private readonly long userId;
-
-
-        public RoleController(DatabaseContext db, IdService idService, IHttpContextAccessor httpContextAccessor, RoleService roleService)
-        {
-            this.db = db;
-            this.idService = idService;
-            this.roleService = roleService;
-
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
-
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
-        }
+        private long userId => User.GetClaim<long>("userId");
 
 
 

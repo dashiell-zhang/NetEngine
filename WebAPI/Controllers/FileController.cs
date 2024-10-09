@@ -19,39 +19,11 @@ namespace WebAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class FileController : ControllerBase
+    public class FileController(DatabaseContext db, IConfiguration configuration, IdService idService, IWebHostEnvironment webHostEnvironment, IFileStorage? fileStorage = null) : ControllerBase
     {
+        private readonly string rootPath = webHostEnvironment.ContentRootPath;
 
-
-        private readonly DatabaseContext db;
-        private readonly IConfiguration configuration;
-        private readonly IdService idService;
-        private readonly IFileStorage? fileStorage;
-
-        private readonly string rootPath;
-
-        private readonly long userId;
-
-
-
-        public FileController(DatabaseContext db, IConfiguration configuration, IdService idService, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, IFileStorage? fileStorage = null)
-        {
-            this.db = db;
-            this.configuration = configuration;
-            this.idService = idService;
-            this.fileStorage = fileStorage;
-
-            rootPath = webHostEnvironment.ContentRootPath;
-
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
-
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
-        }
-
-
+        private long userId => User.GetClaim<long>("userId");
 
 
         /// <summary>

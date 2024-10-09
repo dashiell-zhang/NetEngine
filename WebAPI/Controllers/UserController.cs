@@ -18,31 +18,9 @@ namespace WebAPI.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController(DatabaseContext db, IDistributedCache distributedCache) : ControllerBase
     {
-
-
-        private readonly DatabaseContext db;
-
-        private readonly IDistributedCache distributedCache;
-
-
-        private readonly long userId;
-
-
-
-        public UserController(DatabaseContext db, IDistributedCache distributedCache, IHttpContextAccessor httpContextAccessor)
-        {
-            this.db = db;
-            this.distributedCache = distributedCache;
-
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
-        }
-
+        private long userId => User.GetClaim<long>("userId");
 
 
 

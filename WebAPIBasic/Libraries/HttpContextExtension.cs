@@ -27,19 +27,6 @@ namespace WebAPIBasic.Libraries
 
 
         /// <summary>
-        /// 通过Key获取HttpContext.User.Claims中的信息
-        /// </summary>
-        /// <param name="httpContext"></param>
-        /// <param name="key">Claim关键字</param>
-        /// <returns></returns>
-        public static string? GetClaimByUser(this HttpContext httpContext, string key)
-        {
-            return httpContext.User.Claims.Where(t => t.Type == key).Select(t => t.Value).FirstOrDefault();
-        }
-
-
-
-        /// <summary>
         /// 获取 IP 信息
         /// </summary>
         /// <param name="httpContext"></param>

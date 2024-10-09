@@ -24,30 +24,9 @@ namespace AdminAPI.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController(DatabaseContext db, IDistributedLock distLock, IdService idService, UserService userService) : ControllerBase
     {
-
-        private readonly DatabaseContext db;
-        private readonly IDistributedLock distLock;
-        private readonly IdService idService;
-
-        private readonly UserService userService;
-        private readonly long userId;
-
-
-        public UserController(DatabaseContext db, IDistributedLock distLock, IdService idService, UserService userService, IHttpContextAccessor httpContextAccessor)
-        {
-            this.db = db;
-            this.distLock = distLock;
-            this.idService = idService;
-            this.userService = userService;
-
-            var userIdStr = httpContextAccessor.HttpContext?.GetClaimByUser("userId");
-            if (userIdStr != null)
-            {
-                userId = long.Parse(userIdStr);
-            }
-        }
+        private long userId => User.GetClaim<long>("userId");
 
 
 

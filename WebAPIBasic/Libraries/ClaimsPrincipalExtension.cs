@@ -12,7 +12,7 @@ namespace WebAPIBasic.Libraries
         /// <param name="claims"></param>
         /// <param name="key">Claim关键字</param>
         /// <returns></returns>
-        public static T GetClaim<T>(this ClaimsPrincipal claims, string key) where T : IConvertible
+        public static T GetClaim<T>(this ClaimsPrincipal claims, string key)
         {
             var valueStr = claims.FindFirst(key)?.Value;
 

@@ -30,14 +30,14 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\AdminShared\AdminShared.csproj" />
-		<ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
-		<ProjectReference Include="..\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
-		<ProjectReference Include="..\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
-		<ProjectReference Include="..\IdentifierGenerator\IdentifierGenerator.csproj" />
-		<ProjectReference Include="..\Logger.DataBase\Logger.DataBase.csproj" />
-		<ProjectReference Include="..\Logger.LocalFile\Logger.LocalFile.csproj" />
+		<ProjectReference Include="..\Infrastructure\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
+		<ProjectReference Include="..\Infrastructure\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
+		<ProjectReference Include="..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
+		<ProjectReference Include="..\Infrastructure\DistributedLock.Redis\DistributedLock.Redis.csproj" />
+		<ProjectReference Include="..\Infrastructure\Logger.DataBase\Logger.DataBase.csproj" />
+		<ProjectReference Include="..\Infrastructure\Logger.LocalFile\Logger.LocalFile.csproj" />
+		<ProjectReference Include="..\Infrastructure\WebAPIBasic\WebAPIBasic.csproj" />
 		<ProjectReference Include="..\Repository\Repository.csproj" />
-		<ProjectReference Include="..\WebAPIBasic\WebAPIBasic.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

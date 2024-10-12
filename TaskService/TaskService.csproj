@@ -29,15 +29,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
-		<ProjectReference Include="..\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
-		<ProjectReference Include="..\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
-		<ProjectReference Include="..\IdentifierGenerator\IdentifierGenerator.csproj" />
-		<ProjectReference Include="..\Logger.DataBase\Logger.DataBase.csproj" />
-		<ProjectReference Include="..\Logger.LocalFile\Logger.LocalFile.csproj" />
+		<ProjectReference Include="..\Infrastructure\DistributedLock.Redis\DistributedLock.Redis.csproj" />
+		<ProjectReference Include="..\Infrastructure\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
+		<ProjectReference Include="..\Infrastructure\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
+		<ProjectReference Include="..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
+		<ProjectReference Include="..\Infrastructure\Logger.DataBase\Logger.DataBase.csproj" />
+		<ProjectReference Include="..\Infrastructure\Logger.LocalFile\Logger.LocalFile.csproj" />
 		<ProjectReference Include="..\Repository\Repository.csproj" />
-		<ProjectReference Include="..\SMS.AliCloud\SMS.AliCloud.csproj" />
-		<ProjectReference Include="..\SMS.TencentCloud\SMS.TencentCloud.csproj" />
+		<ProjectReference Include="..\Infrastructure\SMS.AliCloud\SMS.AliCloud.csproj" />
+		<ProjectReference Include="..\Infrastructure\SMS.TencentCloud\SMS.TencentCloud.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

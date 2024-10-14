@@ -3,7 +3,6 @@ using Admin.Model.Authorize;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,16 +12,15 @@ using Repository.Database;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using WebAPI.Core.Libraries;
 using WebAPI.Core.Models.AppSetting;
 
 namespace Admin.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService(IHttpContextAccessor httpContextAccessor, DatabaseContext db, IdService idService, IConfiguration configuration) : IAuthorizeService
+    public class AuthorizeService(IUserContext userContext, DatabaseContext db, IdService idService, IConfiguration configuration) : IAuthorizeService
     {
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
         public string? GetToken(DtoLogin login)

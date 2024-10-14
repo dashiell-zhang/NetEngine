@@ -9,18 +9,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPI.Core.Libraries;
 
 namespace Admin.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class FileService(IHttpContextAccessor httpContextAccessor,DatabaseContext db, IConfiguration configuration, IdService idService, IWebHostEnvironment webHostEnvironment, IFileStorage? fileStorage = null) : IFileService
+    public class FileService(IUserContext userContext, DatabaseContext db, IConfiguration configuration, IdService idService, IWebHostEnvironment webHostEnvironment, IFileStorage? fileStorage = null) : IFileService
     {
 
 
         private readonly string rootPath = webHostEnvironment.WebRootPath;
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
 

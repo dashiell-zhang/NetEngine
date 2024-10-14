@@ -13,10 +13,10 @@ using WebAPI.Core.Libraries;
 namespace Admin.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class ArticleService(DatabaseContext db, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IdService idService) : IArticleService
+    public class ArticleService(IUserContext userContext, DatabaseContext db, IConfiguration configuration, IdService idService) : IArticleService
     {
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
         public DtoPageList<DtoCategory> GetCategoryList(DtoPageRequest request)

@@ -3,19 +3,17 @@ using Admin.Model;
 using Admin.Model.Role;
 using Common;
 using IdentifierGenerator;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPI.Core.Libraries;
 
 namespace Admin.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class RoleService(DatabaseContext db, IdService idService, IHttpContextAccessor httpContextAccessor) : IRoleService
+    public class RoleService(DatabaseContext db, IdService idService, IUserContext userContext) : IRoleService
     {
 
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
 

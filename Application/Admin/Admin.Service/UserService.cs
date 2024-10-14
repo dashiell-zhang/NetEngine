@@ -5,24 +5,22 @@ using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System.Text;
-using WebAPI.Core.Libraries;
 
 namespace Admin.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class UserService(DatabaseContext db, IDistributedLock distLock, IdService idService,IHttpContextAccessor httpContextAccessor) : IUserService
+    public class UserService(DatabaseContext db, IDistributedLock distLock, IdService idService, IUserContext userContext) : IUserService
     {
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
-       
+
         public DtoPageList<DtoUser> GetUserList([FromQuery] DtoPageRequest request)
         {
             DtoPageList<DtoUser> data = new();

@@ -6,16 +6,15 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System.Text;
-using WebAPI.Core.Libraries;
 using WebAPI.Core.Models.Shared;
 
 namespace Client.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class UserService(DatabaseContext db, IDistributedCache distributedCache, IHttpContextAccessor httpContextAccessor) : IUserService
+    public class UserService(DatabaseContext db, IDistributedCache distributedCache, IUserContext userContext) : IUserService
     {
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
         public DtoUser? GetUser(long? userId)

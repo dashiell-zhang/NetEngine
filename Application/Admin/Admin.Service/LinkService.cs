@@ -3,18 +3,16 @@ using Admin.Model;
 using Admin.Model.Link;
 using Common;
 using IdentifierGenerator;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPI.Core.Libraries;
 
 namespace Admin.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class LinkService(DatabaseContext db, IdService idService, IHttpContextAccessor httpContextAccessor) : ILinkService
+    public class LinkService(DatabaseContext db, IdService idService, IUserContext userContext) : ILinkService
     {
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
 

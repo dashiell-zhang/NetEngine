@@ -8,17 +8,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPI.Core.Libraries;
 using WebAPI.Core.Models.Shared;
 
 namespace Client.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class FileService(DatabaseContext db, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IdService idService, IWebHostEnvironment webHostEnvironment, IFileStorage? fileStorage = null) : IFileService
+    public class FileService(DatabaseContext db, IUserContext userContext, IConfiguration configuration, IdService idService, IWebHostEnvironment webHostEnvironment, IFileStorage? fileStorage = null) : IFileService
     {
         private readonly string rootPath = webHostEnvironment.ContentRootPath;
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
 

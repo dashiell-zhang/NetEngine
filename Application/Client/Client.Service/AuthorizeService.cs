@@ -5,7 +5,6 @@ using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
@@ -17,7 +16,6 @@ using SMS;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using WebAPI.Core.Libraries;
 using WebAPI.Core.Models.AppSetting;
 using WebAPI.Core.Models.Shared;
 
@@ -25,10 +23,10 @@ namespace Client.Service
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService(DatabaseContext db, IHttpContextAccessor httpContextAccessor, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, ISMS sms) : IAuthorizeService
+    public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, ISMS sms) : IAuthorizeService
     {
 
-        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
         private readonly HttpClient httpClient = httpClientFactory.CreateClient();

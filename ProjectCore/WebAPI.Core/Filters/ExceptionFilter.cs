@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace WebAPIBasic.Filters
+namespace WebAPI.Core.Filters
 {
 
     /// <summary>

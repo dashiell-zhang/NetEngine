@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System.Text;
-using WebAPIBasic.Libraries;
+using WebAPI.Core.Libraries;
 
 namespace Admin.Service
 {

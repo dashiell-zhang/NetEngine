@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Cryptography;
-using WebAPIBasic.Libraries;
+using WebAPI.Core.Libraries;
 
-namespace WebAPIBasic.Filters
+namespace WebAPI.Core.Filters
 {
 
     /// <summary>

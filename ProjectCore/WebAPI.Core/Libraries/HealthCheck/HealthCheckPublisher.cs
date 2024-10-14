@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace WebAPIBasic.Libraries.HealthCheck
+namespace WebAPI.Core.Libraries.HealthCheck
 {
     public class HealthCheckPublisher : IHealthCheckPublisher
     {

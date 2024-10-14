@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
-namespace WebAPIBasic.Filters
+namespace WebAPI.Core.Filters
 {
 
 

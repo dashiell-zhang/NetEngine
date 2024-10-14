@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
-namespace WebAPIBasic.Filters
+namespace WebAPI.Core.Filters
 {
 
     /// <summary>

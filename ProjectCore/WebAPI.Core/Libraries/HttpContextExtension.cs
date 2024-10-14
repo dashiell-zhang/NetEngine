@@ -1,9 +1,9 @@
 ﻿using Microsoft.IdentityModel.JsonWebTokens;
 using System.IO.Compression;
 using System.Text;
-using WebAPIBasic.Models.Shared;
+using WebAPI.Core.Models.Shared;
 
-namespace WebAPIBasic.Libraries
+namespace WebAPI.Core.Libraries
 {
 
     /// <summary>

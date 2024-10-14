@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace WebAPIBasic.Libraries.HealthCheck
+namespace WebAPI.Core.Libraries.HealthCheck
 {
     public class CacheHealthCheck(IDistributedCache distributedCache) : IHealthCheck
     {

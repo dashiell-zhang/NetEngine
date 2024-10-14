@@ -1,4 +1,4 @@
-﻿namespace WebAPIBasic.Models.Shared
+﻿namespace WebAPI.Core.Models.Shared
 {
 
 

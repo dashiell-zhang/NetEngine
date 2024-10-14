@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPIBasic.Libraries;
+using WebAPI.Core.Libraries;
 
 namespace Admin.Service
 {

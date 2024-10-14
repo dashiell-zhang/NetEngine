@@ -13,8 +13,8 @@ using Repository.Database;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using WebAPIBasic.Libraries;
-using WebAPIBasic.Models.AppSetting;
+using WebAPI.Core.Libraries;
+using WebAPI.Core.Models.AppSetting;
 
 namespace Admin.Service
 {

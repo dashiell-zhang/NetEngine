@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "WebAPIBasic": {
+    "WebAPI.Core": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {

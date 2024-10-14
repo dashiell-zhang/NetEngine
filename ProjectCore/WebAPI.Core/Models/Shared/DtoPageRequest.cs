@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebAPIBasic.Models.Shared
+namespace WebAPI.Core.Models.Shared
 {
 
     /// <summary>

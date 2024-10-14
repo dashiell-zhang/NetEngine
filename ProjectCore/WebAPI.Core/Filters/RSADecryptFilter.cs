@@ -3,11 +3,10 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using System.Collections;
 using System.Reflection;
 using System.Security.Cryptography;
-using WebAPIBasic.Attributes;
-using WebAPIBasic.Models.AppSetting;
+using WebAPI.Core.Attributes;
+using WebAPI.Core.Models.AppSetting;
 
-
-namespace WebAPIBasic.Filters
+namespace WebAPI.Core.Filters
 {
 
 

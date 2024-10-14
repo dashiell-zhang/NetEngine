@@ -1,4 +1,4 @@
-﻿namespace WebAPIBasic.Models.AppSetting
+﻿namespace WebAPI.Core.Models.AppSetting
 {
 
 

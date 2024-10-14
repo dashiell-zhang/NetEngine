@@ -2,9 +2,9 @@
 using DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using WebAPIBasic.Libraries;
+using WebAPI.Core.Libraries;
 
-namespace WebAPIBasic.Filters
+namespace WebAPI.Core.Filters
 {
 
 
@@ -106,7 +106,7 @@ namespace WebAPIBasic.Filters
                 key = key + "_" + parameter;
             }
 
-            key = "QueueLimit_" + Common.CryptoHelper.MD5HashData(key);
+            key = "QueueLimit_" + CryptoHelper.MD5HashData(key);
 
             try
             {

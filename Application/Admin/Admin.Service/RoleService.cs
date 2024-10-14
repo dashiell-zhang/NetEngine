@@ -1,36 +1,25 @@
-﻿using AdminAPI.Services;
+﻿using Admin.Interface;
 using AdminShared.Models;
 using AdminShared.Models.Role;
 using Common;
 using IdentifierGenerator;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPIBasic.Filters;
 using WebAPIBasic.Libraries;
 
-namespace AdminAPI.Controllers
+namespace Admin.Service
 {
-
-
-    [SignVerifyFilter]
-    [Route("[controller]/[action]")]
-    [Authorize]
-    [ApiController]
-    public class RoleController(DatabaseContext db, IdService idService, RoleService roleService) : ControllerBase
+    [Service(Lifetime = ServiceLifetime.Scoped)]
+    public class RoleService(DatabaseContext db, IdService idService, IHttpContextAccessor httpContextAccessor) : IRoleService
     {
 
-        private long userId => User.GetClaim<long>("userId");
+
+        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
 
 
 
-        /// <summary>
-        /// 获取角色列表
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [HttpGet]
-        public DtoPageList<DtoRole> GetRoleList([FromQuery] DtoPageRequest request)
+        public DtoPageList<DtoRole> GetRoleList(DtoPageRequest request)
         {
             var retList = new DtoPageList<DtoRole>();
 
@@ -51,12 +40,7 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 通过ID获取角色信息
-        /// </summary>
-        /// <param name="roleId">角色ID</param>
-        /// <returns></returns>
-        [HttpGet]
+
         public DtoRole? GetRole(long roleId)
         {
 
@@ -73,13 +57,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 创建角色
-        /// </summary>
-        /// <param name="role"></param>
-        /// <returns></returns>
-        [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
-        [HttpPost]
         public long CreateRole(DtoEditRole role)
         {
             var dbRole = new TRole
@@ -98,14 +75,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 编辑角色
-        /// </summary>
-        /// <param name="roleId"></param>
-        /// <param name="role"></param>
-        /// <returns></returns>
-        [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
-        [HttpPost]
         public bool UpdateRole(long roleId, DtoEditRole role)
         {
             var dbRole = db.TRole.Where(t => t.Id == roleId).FirstOrDefault();
@@ -127,13 +96,6 @@ namespace AdminAPI.Controllers
 
 
 
-
-        /// <summary>
-        /// 删除角色
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpDelete]
         public bool DeleteRole(long id)
         {
 
@@ -163,12 +125,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 获取某个角色的功能权限
-        /// </summary>
-        /// <param name="roleId">角色ID</param>
-        /// <returns></returns>
-        [HttpGet]
         public List<DtoRoleFunction> GetRoleFunction(long roleId)
         {
             var functionList = db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
@@ -188,7 +144,7 @@ namespace AdminAPI.Controllers
 
             foreach (var function in functionList)
             {
-                function.ChildList = roleService.GetRoleFunctionChildList(roleId, function.Id);
+                function.ChildList = GetRoleFunctionChildList(roleId, function.Id);
             }
 
             return functionList;
@@ -197,12 +153,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 设置角色的功能
-        /// </summary>
-        /// <param name="setRoleFunction"></param>
-        /// <returns></returns>
-        [HttpPost]
         public bool SetRoleFunction(DtoSetRoleFunction setRoleFunction)
         {
 
@@ -237,11 +187,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 获取角色键值对
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
         public List<DtoKeyValue> GetRoleKV()
         {
             var list = db.TRole.Select(t => new DtoKeyValue
@@ -252,5 +197,35 @@ namespace AdminAPI.Controllers
 
             return list;
         }
+
+
+
+        public List<DtoRoleFunction> GetRoleFunctionChildList(long roleId, long parentId)
+        {
+
+            var functionList = db.TFunction.Where(t => t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
+            {
+                Id = t.Id,
+                Name = t.Name.Replace(t.Parent!.Name + "-", ""),
+                Sign = t.Sign,
+                IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
+                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoRoleFunction
+                {
+                    Id = f.Id,
+                    Name = f.Name.Replace(f.Parent!.Name + "-", ""),
+                    Sign = f.Sign,
+                    IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
+                }).ToList()
+            }).ToList();
+
+            foreach (var function in functionList)
+            {
+                function.ChildList = GetRoleFunctionChildList(roleId, function.Id);
+            }
+
+            return functionList;
+
+        }
+
     }
 }

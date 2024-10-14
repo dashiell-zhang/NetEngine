@@ -1,31 +1,24 @@
-﻿using AdminShared.Models;
+﻿using Admin.Interface;
+using AdminShared.Models;
 using AdminShared.Models.Link;
+using Common;
 using IdentifierGenerator;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPIBasic.Filters;
 using WebAPIBasic.Libraries;
 
-namespace AdminAPI.Controllers
+namespace Admin.Service
 {
-    [SignVerifyFilter]
-    [Route("[controller]/[action]")]
-    [Authorize]
-    [ApiController]
-    public class LinkController(DatabaseContext db, IdService idService) : ControllerBase
+    [Service(Lifetime = ServiceLifetime.Scoped)]
+    public class LinkService(DatabaseContext db, IdService idService, IHttpContextAccessor httpContextAccessor) : ILinkService
     {
-        private long userId => User.GetClaim<long>("userId");
+
+        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
 
 
 
-        /// <summary>
-        /// 获取友情链接列表
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [HttpGet]
-        public DtoPageList<DtoLink> GetLinkList([FromQuery] DtoPageRequest request)
+        public DtoPageList<DtoLink> GetLinkList(DtoPageRequest request)
         {
             DtoPageList<DtoLink> data = new();
 
@@ -47,12 +40,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 获取友情链接
-        /// </summary>
-        /// <param name="linkId">链接ID</param>
-        /// <returns></returns>
-        [HttpGet]
         public DtoLink? GetLink(long linkId)
         {
             var link = db.TLink.Where(t => t.Id == linkId).Select(t => new DtoLink
@@ -70,12 +57,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 创建友情链接
-        /// </summary>
-        /// <param name="createLink"></param>
-        /// <returns></returns>
-        [HttpPost]
         public long CreateLink(DtoEditLink createLink)
         {
             TLink link = new()
@@ -96,14 +77,6 @@ namespace AdminAPI.Controllers
 
 
 
-
-        /// <summary>
-        /// 更新友情链接
-        /// </summary>
-        /// <param name="linkId"></param>
-        /// <param name="updateLink"></param>
-        /// <returns></returns>
-        [HttpPost]
         public bool UpdateLink(long linkId, DtoEditLink updateLink)
         {
             var link = db.TLink.Where(t => t.Id == linkId).FirstOrDefault();
@@ -122,12 +95,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 删除友情链接
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpDelete]
         public bool DeleteLink(long id)
         {
             var link = db.TLink.Where(t => t.Id == id).FirstOrDefault();
@@ -146,7 +113,6 @@ namespace AdminAPI.Controllers
                 return false;
             }
         }
-
 
     }
 }

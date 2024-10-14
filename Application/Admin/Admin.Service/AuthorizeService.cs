@@ -1,26 +1,63 @@
-﻿using Common;
+﻿using Admin.Interface;
+using AdminShared.Models.Authorize;
+using Common;
 using IdentifierGenerator;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
+using WebAPIBasic.Libraries;
 using WebAPIBasic.Models.AppSetting;
 
-namespace AdminAPI.Services
+namespace Admin.Service
 {
-
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService(DatabaseContext db, IdService idService, IConfiguration configuration)
+    public class AuthorizeService(IHttpContextAccessor httpContextAccessor, DatabaseContext db, IdService idService, IConfiguration configuration) : IAuthorizeService
     {
 
+        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
 
 
-        /// <summary>
-        /// 通过用户id获取 token
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <returns></returns>
+        public string? GetToken(DtoLogin login)
+        {
+            var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.Password }).ToList();
+
+            var user = userList.Where(t => t.Password == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.Password, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
+
+            if (user != null)
+            {
+                return GetTokenByUserId(user.Id);
+            }
+            else
+            {
+                throw new CustomException("用户名或密码错误");
+            }
+
+        }
+
+
+
+
+        public List<string> GetFunctionList()
+        {
+            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
+
+            var kvList = db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t =>
+                t.Function.Sign
+            ).ToList();
+
+            return kvList;
+        }
+
+
+
         public string GetTokenByUserId(long userId)
         {
 
@@ -64,7 +101,6 @@ namespace AdminAPI.Services
 
             return jwtToken;
         }
-
 
     }
 }

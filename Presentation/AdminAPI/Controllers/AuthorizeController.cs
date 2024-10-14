@@ -1,18 +1,13 @@
-﻿using AdminAPI.Services;
+﻿using Admin.Interface;
 using AdminShared.Models.Authorize;
-using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Repository.Database;
-using System.Text;
 using System.Xml;
 using WebAPIBasic.Filters;
-using WebAPIBasic.Libraries;
 
 namespace AdminAPI.Controllers
 {
@@ -23,9 +18,8 @@ namespace AdminAPI.Controllers
     /// </summary>
     [Route("[controller]/[action]")]
     [ApiController]
-    public class AuthorizeController(DatabaseContext db, AuthorizeService authorizeService, IdService idService) : ControllerBase
+    public class AuthorizeController(IAuthorizeService authorizeService, DatabaseContext db, IdService idService) : ControllerBase
     {
-        private long userId => User.GetClaim<long>("userId");
 
 
 
@@ -37,19 +31,7 @@ namespace AdminAPI.Controllers
         [HttpPost]
         public string? GetToken(DtoLogin login)
         {
-            var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.Password }).ToList();
-
-            var user = userList.Where(t => t.Password == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.Password, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
-
-            if (user != null)
-            {
-                return authorizeService.GetTokenByUserId(user.Id);
-            }
-            else
-            {
-                throw new CustomException("用户名或密码错误");
-            }
-
+            return authorizeService.GetToken(login);
         }
 
 
@@ -64,13 +46,7 @@ namespace AdminAPI.Controllers
         [HttpGet]
         public List<string> GetFunctionList()
         {
-            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
-
-            var kvList = db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t =>
-                t.Function.Sign
-            ).ToList();
-
-            return kvList;
+            return authorizeService.GetFunctionList();
         }
 
 

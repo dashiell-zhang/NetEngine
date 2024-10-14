@@ -1,41 +1,28 @@
-﻿using AdminAPI.Services;
+﻿using Admin.Interface;
 using AdminShared.Models;
 using AdminShared.Models.User;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using System.Text;
-using WebAPIBasic.Filters;
 using WebAPIBasic.Libraries;
 
-namespace AdminAPI.Controllers
+namespace Admin.Service
 {
-
-
-    /// <summary>
-    /// 用户数据操作控制器
-    /// </summary>
-    [SignVerifyFilter]
-    [Route("[controller]/[action]")]
-    [Authorize]
-    [ApiController]
-    public class UserController(DatabaseContext db, IDistributedLock distLock, IdService idService, UserService userService) : ControllerBase
+    [Service(Lifetime = ServiceLifetime.Scoped)]
+    public class UserService(DatabaseContext db, IDistributedLock distLock, IdService idService,IHttpContextAccessor httpContextAccessor) : IUserService
     {
-        private long userId => User.GetClaim<long>("userId");
+
+        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
 
 
-
-        /// <summary>
-        /// 获取用户列表
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [HttpGet]
+       
         public DtoPageList<DtoUser> GetUserList([FromQuery] DtoPageRequest request)
         {
             DtoPageList<DtoUser> data = new();
@@ -61,12 +48,7 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 通过 UserId 获取用户信息 
-        /// </summary>
-        /// <param name="userId">用户ID</param>
-        /// <returns></returns>
-        [HttpGet]
+      
         public DtoUser? GetUser(long? userId)
         {
 
@@ -88,12 +70,7 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 创建用户
-        /// </summary>
-        /// <param name="createUser"></param>
-        /// <returns></returns>
-        [HttpPost]
+       
         public long? CreateUser(DtoEditUser createUser)
         {
             string key = "userName:" + createUser.UserName.ToLower();
@@ -119,7 +96,6 @@ namespace AdminAPI.Controllers
                         user.CreateUserId = userId;
 
                         user.Email = createUser.Email;
-
                         db.TUser.Add(user);
 
                         foreach (var item in roleIds)
@@ -148,13 +124,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 更新用户信息
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="updateUser"></param>
-        /// <returns></returns>
-        [HttpPost]
         public bool UpdateUser(long userId, DtoEditUser updateUser)
         {
             string key = "userName:" + updateUser.UserName.ToLower();
@@ -231,12 +200,7 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 删除用户
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpDelete]
+       
         public bool DeleteUser(long id)
         {
             var user = db.TUser.Where(t => t.Id == id).FirstOrDefault();
@@ -259,12 +223,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 获取某个用户的功能权限
-        /// </summary>
-        /// <param name="userId">用户ID</param>
-        /// <returns></returns>
-        [HttpGet]
         public List<DtoUserFunction> GetUserFunction(long userId)
         {
             var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
@@ -286,7 +244,7 @@ namespace AdminAPI.Controllers
 
             foreach (var function in functionList)
             {
-                function.ChildList = userService.GetUserFunctionChildList(userId, function.Id, roleIds);
+                function.ChildList = GetUserFunctionChildList(userId, function.Id, roleIds);
             }
 
             return functionList;
@@ -295,13 +253,7 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 设置用户的功能
-        /// </summary>
-        /// <param name="setUserFunction"></param>
-        /// <returns></returns>
-        [QueueLimitFilter()]
-        [HttpPost]
+      
         public bool SetUserFunction(DtoSetUserFunction setUserFunction)
         {
 
@@ -355,13 +307,6 @@ namespace AdminAPI.Controllers
 
 
 
-
-        /// <summary>
-        /// 获取用户角色列表
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        [HttpGet]
         public List<DtoUserRole> GetUserRoleList(long userId)
         {
             var list = db.TRole.Select(t => new DtoUserRole
@@ -378,13 +323,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 设置用户角色
-        /// </summary>
-        /// <param name="setUserRole"></param>
-        /// <returns></returns>
-        [QueueLimitFilter()]
-        [HttpPost]
         public bool SetUserRole(DtoSetUserRole setUserRole)
         {
             var userRole = db.TUserRole.Where(t => t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefault();
@@ -423,5 +361,30 @@ namespace AdminAPI.Controllers
 
 
 
+        public List<DtoUserFunction> GetUserFunctionChildList(long userId, long parentId, List<long> roleIds)
+        {
+
+            var functionList = db.TFunction.Where(t => t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
+            {
+                Id = t.Id,
+                Name = t.Name.Replace(t.Parent!.Name + "-", ""),
+                Sign = t.Sign,
+                IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
+                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoUserFunction
+                {
+                    Id = f.Id,
+                    Name = f.Name.Replace(f.Parent!.Name + "-", ""),
+                    Sign = f.Sign,
+                    IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == f.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
+                }).ToList()
+            }).ToList();
+
+            foreach (var function in functionList)
+            {
+                function.ChildList = GetUserFunctionChildList(userId, function.Id, roleIds);
+            }
+
+            return functionList;
+        }
     }
 }

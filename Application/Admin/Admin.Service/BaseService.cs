@@ -1,31 +1,16 @@
-﻿using AdminShared.Models;
+﻿using Admin.Interface;
+using AdminShared.Models;
 using Common;
-using IdentifierGenerator;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPIBasic.Filters;
 
-namespace AdminAPI.Controllers
+namespace Admin.Service
 {
-    /// <summary>
-    /// 系统基础方法控制器
-    /// </summary>
-    [SignVerifyFilter]
-    [Route("[controller]/[action]")]
-    [ApiController]
-    public class BaseController(DatabaseContext db, IdService idService) : ControllerBase
+    [Service(Lifetime = ServiceLifetime.Scoped)]
+    public class BaseService(DatabaseContext db) : IBaseService
     {
 
 
-
-        /// <summary>
-        /// 获取省市级联地址数据
-        /// </summary>
-        /// <param name="provinceId">省份ID</param>
-        /// <param name="cityId">城市ID</param>
-        /// <returns></returns>
-        /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
-        [HttpGet]
         public List<DtoKeyValue> GetRegion(int provinceId, int cityId)
         {
             List<DtoKeyValue> list = [];
@@ -50,11 +35,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 获取全部省市级联地址数据
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
         public List<DtoKeyValueChild> GetRegionAll()
         {
 
@@ -78,27 +58,6 @@ namespace AdminAPI.Controllers
         }
 
 
-
-        /// <summary>
-        /// 自定义二维码生成方法
-        /// </summary>
-        /// <param name="text">数据内容</param>
-        /// <returns></returns>
-        [HttpGet]
-        public FileResult GetQrCode(string text)
-        {
-            var image = ImgHelper.GetQrCode(text);
-            return File(image, "image/png");
-        }
-
-
-
-        /// <summary>
-        /// 获取指定组ID的KV键值对
-        /// </summary>
-        /// <param name="groupId"></param>
-        /// <returns></returns>
-        [HttpGet]
         public List<DtoKeyValue> GetValueList(long groupId)
         {
 
@@ -110,18 +69,5 @@ namespace AdminAPI.Controllers
 
             return list;
         }
-
-
-
-        /// <summary>
-        /// 获取一个雪花ID
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        public long GetSnowflakeId()
-        {
-            return idService.GetId();
-        }
-
     }
 }

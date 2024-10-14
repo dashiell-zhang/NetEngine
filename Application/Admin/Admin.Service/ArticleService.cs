@@ -1,33 +1,25 @@
-﻿using AdminAPI.Services;
+﻿using Admin.Interface;
 using AdminShared.Models;
 using AdminShared.Models.Article;
 using Common;
 using IdentifierGenerator;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPIBasic.Filters;
 using WebAPIBasic.Libraries;
 
-namespace AdminAPI.Controllers
+namespace Admin.Service
 {
-    [SignVerifyFilter]
-    [Route("[controller]/[action]")]
-    [Authorize]
-    [ApiController]
-    public class ArticleController(DatabaseContext db, IConfiguration configuration, IdService idService, ArticleService articleService) : ControllerBase
+    [Service(Lifetime = ServiceLifetime.Scoped)]
+    public class ArticleService(DatabaseContext db, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IdService idService) : IArticleService
     {
-        private long userId => User.GetClaim<long>("userId");
+
+        private long userId => httpContextAccessor.HttpContext!.User.GetClaim<long>("userId");
 
 
-
-        /// <summary>
-        /// 获取栏目列表
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [HttpGet]
-        public DtoPageList<DtoCategory> GetCategoryList([FromQuery] DtoPageRequest request)
+        public DtoPageList<DtoCategory> GetCategoryList(DtoPageRequest request)
         {
             DtoPageList<DtoCategory> data = new();
 
@@ -50,12 +42,6 @@ namespace AdminAPI.Controllers
         }
 
 
-
-        /// <summary>
-        /// 获取栏目树形列表
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
         public List<DtoKeyValueChild> GetCategoryTreeList()
         {
             var list = db.TCategory.Where(t => t.ParentId == null).Select(t => new DtoKeyValueChild
@@ -66,7 +52,7 @@ namespace AdminAPI.Controllers
 
             foreach (var item in list)
             {
-                item.ChildList = articleService.GetCategoryChildList(Convert.ToInt64(item.Key));
+                item.ChildList = GetCategoryChildList(Convert.ToInt64(item.Key));
             }
 
             return list;
@@ -74,12 +60,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 通过栏目Id 获取栏目信息 
-        /// </summary>
-        /// <param name="categoryId">栏目ID</param>
-        /// <returns></returns>
-        [HttpGet]
         public DtoCategory? GetCategory(long categoryId)
         {
             var category = db.TCategory.Where(t => t.Id == categoryId).Select(t => new DtoCategory
@@ -99,12 +79,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 创建栏目
-        /// </summary>
-        /// <param name="createCategory"></param>
-        /// <returns></returns>
-        [HttpPost]
         public long CreateCategory(DtoEditCategory createCategory)
         {
             TCategory category = new()
@@ -126,14 +100,6 @@ namespace AdminAPI.Controllers
 
 
 
-
-        /// <summary>
-        /// 更新栏目信息
-        /// </summary>
-        /// <param name="categoryId"></param>
-        /// <param name="updateCategory"></param>
-        /// <returns></returns>
-        [HttpPost]
         public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory)
         {
             var category = db.TCategory.Where(t => t.Id == categoryId).FirstOrDefault();
@@ -157,12 +123,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 删除栏目
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpDelete]
         public bool DeleteCategory(long id)
         {
             var category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
@@ -185,13 +145,6 @@ namespace AdminAPI.Controllers
 
 
 
-
-        /// <summary>
-        /// 获取文章列表
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [HttpGet]
         public DtoPageList<DtoArticle> GetArticleList([FromQuery] DtoPageRequest request)
         {
             DtoPageList<DtoArticle> data = new();
@@ -227,14 +180,6 @@ namespace AdminAPI.Controllers
 
 
 
-
-
-        /// <summary>
-        /// 通过文章ID 获取文章信息
-        /// </summary>
-        /// <param name="articleId">文章ID</param>
-        /// <returns></returns>
-        [HttpGet]
         public DtoArticle? GetArticle(long articleId)
         {
             string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
@@ -264,14 +209,6 @@ namespace AdminAPI.Controllers
 
 
 
-
-        /// <summary>
-        /// 创建文章
-        /// </summary>
-        /// <param name="createArticle"></param>
-        /// <param name="fileKey">文件key</param>
-        /// <returns></returns>
-        [HttpPost]
         public long CreateArticle(DtoEditArticle createArticle, long fileKey)
         {
             TArticle article = new()
@@ -315,13 +252,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 更新文章信息
-        /// </summary>
-        /// <param name="articleId"></param>
-        /// <param name="updateArticle"></param>
-        /// <returns></returns>
-        [HttpPost]
         public bool UpdateArticle(long articleId, DtoEditArticle updateArticle)
         {
             var article = db.TArticle.Where(t => t.Id == articleId).FirstOrDefault();
@@ -358,12 +288,6 @@ namespace AdminAPI.Controllers
 
 
 
-        /// <summary>
-        /// 删除文章
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpDelete]
         public bool DeleteArticle(long id)
         {
             var article = db.TArticle.Where(t => t.Id == id).FirstOrDefault();
@@ -384,6 +308,22 @@ namespace AdminAPI.Controllers
 
         }
 
+
+        public List<DtoKeyValueChild>? GetCategoryChildList(long categoryId)
+        {
+            var list = db.TCategory.Where(t => t.ParentId == categoryId).Select(t => new DtoKeyValueChild
+            {
+                Key = t.Id,
+                Value = t.Name,
+            }).ToList();
+
+            foreach (var item in list)
+            {
+                item.ChildList = GetCategoryChildList(Convert.ToInt64(item.Key));
+            }
+
+            return list;
+        }
 
     }
 }

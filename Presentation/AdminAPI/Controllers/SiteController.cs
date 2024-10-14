@@ -1,9 +1,8 @@
-﻿using AdminAPI.Services;
+﻿using Admin.Interface;
 using AdminShared.Models;
 using AdminShared.Models.Site;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Repository.Database;
 using WebAPIBasic.Filters;
 
 namespace AdminAPI.Controllers
@@ -16,7 +15,7 @@ namespace AdminAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class SiteController(DatabaseContext db, SiteService siteService) : ControllerBase
+    public class SiteController(ISiteService siteService) : ControllerBase
     {
 
 
@@ -28,27 +27,7 @@ namespace AdminAPI.Controllers
         [HttpGet]
         public DtoSite GetSite()
         {
-            var kvList = db.TAppSetting.Where(t => t.Module == "Site").Select(t => new
-            {
-                t.Key,
-                t.Value
-            }).ToList();
-
-            DtoSite site = new()
-            {
-                WebUrl = kvList.Where(t => t.Key == "WebUrl").Select(t => t.Value).FirstOrDefault(),
-                ManagerName = kvList.Where(t => t.Key == "ManagerName").Select(t => t.Value).FirstOrDefault(),
-                ManagerAddress = kvList.Where(t => t.Key == "ManagerAddress").Select(t => t.Value).FirstOrDefault(),
-                ManagerPhone = kvList.Where(t => t.Key == "ManagerPhone").Select(t => t.Value).FirstOrDefault(),
-                ManagerEmail = kvList.Where(t => t.Key == "ManagerEmail").Select(t => t.Value).FirstOrDefault(),
-                RecordNumber = kvList.Where(t => t.Key == "RecordNumber").Select(t => t.Value).FirstOrDefault(),
-                SeoTitle = kvList.Where(t => t.Key == "SeoTitle").Select(t => t.Value).FirstOrDefault(),
-                SeoKeyWords = kvList.Where(t => t.Key == "SeoKeyWords").Select(t => t.Value).FirstOrDefault(),
-                SeoDescription = kvList.Where(t => t.Key == "SeoDescription").Select(t => t.Value).FirstOrDefault(),
-                FootCode = kvList.Where(t => t.Key == "FootCode").Select(t => t.Value).FirstOrDefault()
-            };
-
-            return site;
+            return siteService.GetSite();
         }
 
 
@@ -62,20 +41,7 @@ namespace AdminAPI.Controllers
         [HttpPost]
         public bool EditSite(DtoSite editSite)
         {
-            var query = db.TAppSetting.Where(t => t.Module == "Site");
-
-            siteService.SetSiteInfo("WebUrl", editSite.WebUrl);
-            siteService.SetSiteInfo("ManagerName", editSite.ManagerName);
-            siteService.SetSiteInfo("ManagerAddress", editSite.ManagerAddress);
-            siteService.SetSiteInfo("ManagerPhone", editSite.ManagerPhone);
-            siteService.SetSiteInfo("ManagerEmail", editSite.ManagerEmail);
-            siteService.SetSiteInfo("RecordNumber", editSite.RecordNumber);
-            siteService.SetSiteInfo("SeoTitle", editSite.SeoTitle);
-            siteService.SetSiteInfo("SeoKeyWords", editSite.SeoKeyWords);
-            siteService.SetSiteInfo("SeoDescription", editSite.SeoDescription);
-            siteService.SetSiteInfo("FootCode", editSite.FootCode);
-
-            return true;
+            return siteService.EditSite(editSite);
         }
 
 

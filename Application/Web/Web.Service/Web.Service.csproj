@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Infrastructure\FileStorage\FileStorage.csproj" />
-    <ProjectReference Include="..\..\..\Infrastructure\WebAPIBasic\WebAPIBasic.csproj" />
     <ProjectReference Include="..\Web.Interface\Web.Interface.csproj" />
   </ItemGroup>
 

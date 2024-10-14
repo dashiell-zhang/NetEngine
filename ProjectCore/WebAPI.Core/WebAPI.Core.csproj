@@ -27,8 +27,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Common\Common.csproj" />
-	  <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+	  <ProjectReference Include="..\..\Infrastructure\Common\Common.csproj" />
+	  <ProjectReference Include="..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
 	</ItemGroup>
 
 </Project>

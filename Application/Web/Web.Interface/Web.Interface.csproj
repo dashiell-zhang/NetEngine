@@ -10,7 +10,7 @@
     <ProjectReference Include="..\..\..\Infrastructure\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
     <ProjectReference Include="..\..\..\Infrastructure\SMS\SMS.csproj" />
-    <ProjectReference Include="..\..\..\Infrastructure\WebAPIBasic\WebAPIBasic.csproj" />
+    <ProjectReference Include="..\..\..\ProjectCore\WebAPI.Core\WebAPI.Core.csproj" />
     <ProjectReference Include="..\..\..\Repository\Repository.csproj" />
   </ItemGroup>
 

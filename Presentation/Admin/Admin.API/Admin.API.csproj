@@ -36,7 +36,7 @@
 		<ProjectReference Include="..\..\..\Infrastructure\DistributedLock.Redis\DistributedLock.Redis.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\Logger.DataBase\Logger.DataBase.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\Logger.LocalFile\Logger.LocalFile.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\WebAPIBasic\WebAPIBasic.csproj" />
+		<ProjectReference Include="..\..\..\ProjectCore\WebAPI.Core\WebAPI.Core.csproj" />
 		<ProjectReference Include="..\..\..\Repository\Repository.csproj" />
 	</ItemGroup>
 

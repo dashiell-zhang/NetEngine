@@ -1,11 +1,11 @@
 ﻿using Common;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 
-namespace Admin.API.Services
+namespace SharedService
 {
-
     [Service(Lifetime = ServiceLifetime.Scoped)]
     public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
     {
@@ -22,7 +22,7 @@ namespace Admin.API.Services
         /// <remarks>需要外部开启事务</remarks>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, string? callbackParameter = null)
+        public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null)
         {
             if (db.Database.CurrentTransaction != null)
             {
@@ -45,7 +45,7 @@ namespace Admin.API.Services
         /// <param name="callbackName"></param>
         /// <param name="callbackParameter"></param>
         /// <returns></returns>
-        public bool CreateSingle(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, string? callbackParameter = null)
+        public bool CreateSingle(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null)
         {
             try
             {
@@ -57,12 +57,16 @@ namespace Admin.API.Services
                     Name = name,
                     PlanTime = planTime,
                     CallbackName = callbackName,
-                    CallbackParameter = callbackParameter
                 };
 
                 if (parameter != null)
                 {
                     queueTask.Parameter = JsonHelper.ObjectToJson(parameter);
+                }
+
+                if (callbackName != null && callbackParameter != null)
+                {
+                    queueTask.CallbackParameter = JsonHelper.ObjectToJson(callbackParameter);
                 }
 
                 db.TQueueTask.Add(queueTask);
@@ -76,5 +80,6 @@ namespace Admin.API.Services
                 return false;
             }
         }
+
     }
 }

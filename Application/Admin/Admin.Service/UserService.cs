@@ -1,6 +1,6 @@
 ﻿using Admin.Interface;
-using AdminShared.Models;
-using AdminShared.Models.User;
+using Admin.Model;
+using Admin.Model.User;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;

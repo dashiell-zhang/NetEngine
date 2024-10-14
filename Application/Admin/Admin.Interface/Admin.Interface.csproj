@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\AdminShared\AdminShared.csproj" />
     <ProjectReference Include="..\..\..\Infrastructure\WebAPIBasic\WebAPIBasic.csproj" />
+    <ProjectReference Include="..\Admin.Model\Admin.Model.csproj" />
   </ItemGroup>
 
 </Project>

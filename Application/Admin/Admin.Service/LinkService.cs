@@ -1,6 +1,6 @@
 ﻿using Admin.Interface;
-using AdminShared.Models;
-using AdminShared.Models.Link;
+using Admin.Model;
+using Admin.Model.Link;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Http;

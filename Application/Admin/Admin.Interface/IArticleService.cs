@@ -1,5 +1,5 @@
-﻿using AdminShared.Models;
-using AdminShared.Models.Article;
+﻿using Admin.Model;
+using Admin.Model.Article;
 
 namespace Admin.Interface
 {

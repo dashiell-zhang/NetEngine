@@ -1,4 +1,4 @@
-﻿using AdminShared.Models.Authorize;
+﻿using Admin.Model.Authorize;
 
 namespace Admin.Interface
 {

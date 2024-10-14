@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\AdminShared\AdminShared.csproj" />
     <ProjectReference Include="..\..\..\Infrastructure\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
     <ProjectReference Include="..\..\..\Infrastructure\FileStorage\FileStorage.csproj" />

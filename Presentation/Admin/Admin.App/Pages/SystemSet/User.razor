@@ -1,0 +1,334 @@
+﻿@page "/systemset/user"
+@using Admin.Model.User
+@attribute [ReuseTabsPageTitle("用户管理")]
+
+<Layout Style="padding-top:30px;">
+
+    <Content Class="site-layout-background">
+
+        <div style="margin-bottom:10px">
+
+            @if (MainLayout.functionList.Contains("user-add"))
+            {
+                <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditUser()">添加</Button>
+            }
+
+        </div>
+        <Table TItem="DtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+            <ColumnDefinitions>
+                <PropertyColumn Property="c=>c.Name" Title="名称"></PropertyColumn>
+                <PropertyColumn Property="c=>c.UserName" Title="用户名"></PropertyColumn>
+                <PropertyColumn Property="c=>c.Phone" Title="电话"></PropertyColumn>
+                <PropertyColumn Property="c=>c.Email" Title="邮箱"></PropertyColumn>
+                <PropertyColumn Property="c=>c.Roles" Title="角色"></PropertyColumn>
+                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
+                <ActionColumn Title="操作">
+                    <Space>
+
+                        @if (MainLayout.functionList.Contains("user-edit"))
+                        {
+                            <SpaceItem>
+                                <a @onclick="()=>EditUser(context)">编辑</a>
+                            </SpaceItem>
+                        }
+
+                        @if (MainLayout.functionList.Contains("user-function"))
+                        {
+                            <SpaceItem>
+                                <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
+                            </SpaceItem>
+                        }
+
+                        @if (MainLayout.functionList.Contains("user-delete"))
+                        {
+                            <SpaceItem>
+                                <Popconfirm Title="确认要删除吗？"
+                                            OnConfirm="_=>DeleteUser(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
+                                    <a style="color:red">删除</a>
+                                </Popconfirm>
+
+                            </SpaceItem>
+                        }
+
+                    </Space>
+                </ActionColumn>
+            </ColumnDefinitions>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
+        </Table>
+
+    </Content>
+</Layout>
+
+
+<Drawer Closable="true" Width="380" Visible="isShowEditUser" Title='("用户信息")' OnClose="()=>isShowEditUser=false">
+    <Template style="height:90%">
+
+        <Form Model="@editUser" OnFinish="SaveUser">
+
+            <FormItem>
+                <Text>名称</Text>
+                <Input Placeholder="请输入名称" @bind-Value="@context.Name" AutoComplete=false />
+            </FormItem>
+
+            <FormItem>
+                <Text>用户名</Text>
+                <Input Placeholder="请输入用户名" @bind-Value="@context.UserName" />
+            </FormItem>
+
+            <FormItem>
+                <Text>角色</Text>
+                <CheckboxGroup Style="width:100%" @bind-Value="@context.RoleIds">
+                    <Row>
+                        @foreach (var item in roleList)
+                        {
+                            <AntDesign.Col Span="8"><Checkbox Label="@item.Key!.ToString()">@item.Value</Checkbox></AntDesign.Col>
+                        }
+                    </Row>
+                </CheckboxGroup>
+            </FormItem>
+
+            <FormItem>
+                <Text>手机</Text>
+                <Input Placeholder="请输入手机号" Type="number" @bind-Value="@context.Phone" />
+            </FormItem>
+
+            <FormItem>
+                <Text>邮箱</Text>
+                <Input Placeholder="请输入邮箱" Type="email" @bind-Value="@context.Email" />
+            </FormItem>
+
+            <FormItem>
+                <Text>密码</Text>
+                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.Password" VisibilityToggle="false" />
+            </FormItem>
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <div style="float:right">
+                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditUser=false">取消</Button>
+                    </div>
+                </AntDesign.Col>
+            </Row>
+        </Form>
+    </Template>
+</Drawer>
+
+<Modal Title="权限范围" Style="width:1160px;" Visible="@isShowEditAuthority" OnCancel="()=>isShowEditAuthority=false" Footer="null" MaxBodyHeight="@("70vh")">
+    <Table DataSource="userFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
+
+        <Column Title="菜单模块" TData="string">
+            <Checkbox Label="@context.Id.ToString()" @bind-Checked="@context.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,context)">@context.Name</Checkbox>
+        </Column>
+
+        <Column Title="功能操作" TData="string">
+            <Row>
+                @foreach (var item in context.FunctionList)
+                {
+                    <Checkbox Label="@item.Id.ToString()" @bind-Checked="@item.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,item)">@item.Name</Checkbox>
+                }
+            </Row>
+        </Column>
+
+    </Table>
+
+</Modal>
+
+
+@code {
+
+    override protected void OnInitialized()
+    {
+        GetUserList();
+        GetRoleKV();
+    }
+
+
+    bool saveLoading = false;
+    bool tableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    DtoPageList<DtoUser> pageList = new();
+
+    bool isShowEditAuthority = false;
+
+    List<DtoKeyValue> roleList = new();
+
+    List<DtoUserFunction> userFunctionList = new();
+
+    async void GetRoleKV()
+    {
+        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Role/GetRoleKV");
+
+        if (retData != null)
+        {
+            roleList = retData;
+        }
+    }
+
+    async void GetUserList()
+    {
+        tableLoading = true;
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetUserList();
+    }
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowEditUser = false;
+    DtoEditUser editUser = new();
+    long userId;
+
+    async void SaveUser()
+    {
+        saveLoading = true;
+
+        if (userId == default)
+        {
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/CreateUser", editUser))
+            {
+                var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
+
+                Message.Success("添加成功");
+            }
+        }
+        else
+        {
+
+            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser))
+            {
+                var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                if (bool.Parse(updateUserRet))
+                {
+                    Message.Success("编辑成功");
+                }
+            }
+        }
+
+        saveLoading = false;
+
+        GetUserList();
+
+        isShowEditUser = false;
+    }
+
+
+    void EditUser(DtoUser? user = null)
+    {
+        editUser = new DtoEditUser();
+        userId = default;
+        if (user != null)
+        {
+            userId = user.Id;
+            editUser.Name = user.Name;
+            editUser.UserName = user.UserName;
+            editUser.Phone = user.Phone;
+            editUser.Email = user.Email;
+            editUser.Password = "default";
+            if (user.RoleIds != null)
+            {
+                editUser.RoleIds = user.RoleIds;
+            }
+        }
+
+        isShowEditUser = true;
+
+        StateHasChanged();
+    }
+
+
+
+    async void DeleteUser(long userId)
+    {
+        using (var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetUserList();
+                Message.Success("删除成功");
+            }
+        }
+    }
+
+
+    async void EditAuthority(long roleId)
+    {
+        this.userId = roleId;
+
+        var retData = await Http.GetFromJsonAsync<List<DtoUserFunction>>("User/GetUserFunction?userId=" + userId);
+
+        if (retData != null)
+        {
+            userFunctionList = retData;
+        }
+
+        isShowEditAuthority = true;
+
+        StateHasChanged();
+    }
+
+
+    async void SetUserFunction(bool isCheck, DtoUserFunction userFunction)
+    {
+        DtoSetUserFunction setUserFunction = new()
+            {
+                UserId = userId,
+                FunctionId = userFunction.Id,
+                IsCheck = isCheck
+            };
+
+        using (var httpResponse = await Http.PostAsJsonAsync<DtoSetUserFunction>("User/SetUserFunction", setUserFunction))
+        {
+            var ret = httpResponse.Content.ReadAsStringAsync().Result;
+
+            try
+            {
+                if (bool.Parse(ret))
+                {
+                    Message.Success("设置成功");
+                }
+            }
+            catch
+            {
+                userFunction.IsCheck = true;
+                StateHasChanged();
+            }
+
+        }
+    }
+
+}

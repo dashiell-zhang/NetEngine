@@ -1,4 +1,4 @@
-﻿using AdminShared.Models.Site;
+﻿using Admin.Model.Site;
 
 namespace Admin.Interface
 {

@@ -1,5 +1,5 @@
 ﻿using Admin.Interface;
-using AdminShared.Models.Authorize;
+using Admin.Model.Authorize;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;

@@ -1,5 +1,5 @@
 ﻿using Admin.Interface;
-using AdminShared.Models.Site;
+using Admin.Model.Site;
 using Common;
 using IdentifierGenerator;
 using Microsoft.Extensions.DependencyInjection;

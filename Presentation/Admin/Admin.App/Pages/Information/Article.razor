@@ -1,0 +1,503 @@
+﻿@page "/information/article"
+@using Admin.Model.Article
+@using SkiaSharp;
+@using System.Security.Cryptography;
+@using System.Text;
+@using System.Net.Http.Headers;
+@attribute [ReuseTabsPageTitle("文章管理")]
+
+<Layout Style="padding-top:30px;">
+
+    <Content Class="site-layout-background">
+
+        <div style="margin-bottom:10px">
+
+            @if (MainLayout.functionList.Contains("article-add"))
+            {
+                <Button Icon="plus" Type="@ButtonType.Primary" OnClick="()=>EditArticle()">添加</Button>
+            }
+
+        </div>
+        <Table TItem="DtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+            <ColumnDefinitions>
+                <PropertyColumn Property="c=>c.Title" Title="标题"></PropertyColumn>
+                <PropertyColumn Property="c=>c.CategoryName" Title="类别"></PropertyColumn>
+                <PropertyColumn Property="c=>c.IsRecommend" Title="是否推荐"></PropertyColumn>
+                <PropertyColumn Property="c=>c.IsDisplay" Title="显示状态"></PropertyColumn>
+                <PropertyColumn Property="c=>c.ClickCount" Title="点击量"></PropertyColumn>
+                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
+
+                <ActionColumn Title="操作">
+                    <Space>
+
+                        @if (MainLayout.functionList.Contains("article-edit"))
+                        {
+
+                            <SpaceItem>
+                                <a @onclick="()=>EditArticle(context)">编辑</a>
+                            </SpaceItem>
+                        }
+
+                        @if (MainLayout.functionList.Contains("article-delete"))
+                        {
+                            <SpaceItem>
+                                <Popconfirm Title="确认要删除吗？"
+                                            OnConfirm="_=>DeleteArticle(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
+                                    <a style="color:red">删除</a>
+                                </Popconfirm>
+
+                            </SpaceItem>
+                        }
+
+                    </Space>
+                </ActionColumn>
+            </ColumnDefinitions>
+
+            <PaginationTemplate>
+                <div style="margin:15px 0;float:right">
+                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                </div>
+            </PaginationTemplate>
+
+        </Table>
+
+    </Content>
+</Layout>
+
+
+@{
+    RenderFragment editFooter = @<Template>
+        <Button OnClick="SaveArticle" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
+        <Button OnClick="()=>isShowEditArticle=false" @key="@("back")">取消</Button>
+    </Template>;
+}
+
+
+<Modal Title="文章信息" Style="width:1160px;" Visible="@isShowEditArticle" OnCancel="()=>isShowEditArticle=false" Footer="@editFooter">
+
+    <Form @ref="@_editArticleForm" Model="@editArticle" LabelColSpan="2" WrapperColSpan="22" Class="ueditorBody">
+
+        <Tabs Type="@TabType.Card">
+
+            <TabPane Key="1" Tab="基本信息">
+
+                <FormItem Label="所属栏目">
+                    <TreeSelect TItem="DtoTreeSelect" TItemValue="string" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
+                </FormItem>
+
+                <FormItem Label="标题">
+                    <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
+                </FormItem>
+
+                <FormItem Label="是否显示">
+                    <Switch @bind-Value="@context.IsDisplay" CheckedChildren="是" UnCheckedChildren="否" />
+                </FormItem>
+
+                <FormItem Label="是否推荐">
+                    <Switch @bind-Value="@context.IsRecommend" CheckedChildren="是" UnCheckedChildren="否" />
+                </FormItem>
+
+                <FormItem Label="排序">
+                    <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" style="width: 190px" />
+                </FormItem>
+
+                <FormItem Label="点击量">
+                    <Input Placeholder="请输入点击量" Type="number" @bind-Value="@context.ClickCount" style="width: 190px" />
+                </FormItem>
+
+                <FormItem Label="封面图">
+
+                    <InputFile id="fileInput" OnChange="@UploadImgage" hidden multiple accept=".png,.jpg" />
+                    <Upload Name="files">
+                        <label class="ant-btn" for="fileInput">
+                            <Icon Type="upload" />
+                            上传图片
+                        </label>
+                    </Upload>
+
+                    <Upload FileList="fileList" ListType="picture-card" OnPreview="(file)=> PreviewImg(file)" OnRemove=" (file)=> DeleteImg(file)" ShowButton=false style="margin-top:8px"></Upload>
+                    
+                    <Image PreviewSrc="@previewImgUrl" Style="display: none;" @bind-PreviewVisible="isPreviewImg" />
+
+                </FormItem>
+
+            </TabPane>
+
+            <TabPane Key="2" Tab="详细内容" ForceRender="true">
+                <FormItem Label="摘要">
+                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Digest" MinRows="4" MaxRows="6" style="width:50em;min-height:80px" />
+                </FormItem>
+
+                <FormItem Label="内容">
+                    <TextArea Id="Content" @bind-Value="@context.Content" />
+                </FormItem>
+            </TabPane>
+
+        </Tabs>
+
+    </Form>
+</Modal>
+
+
+@code {
+
+    async void UploadImgage(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            string url = LocalStorage.GetItemAsString("appApiUrl") + "File/UploadFile?business=TArticle&key=" + fileKey + "&sign=cover";
+
+            using HttpClientHandler handler = new();
+
+            using HttpClient client = new(handler);
+            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+
+            string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
+
+
+            using MultipartFormDataContent formDataContent = new(boundary);
+
+            byte[] imageByteArray;
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await file.OpenReadStream(999999999999).CopyToAsync(memoryStream);
+                imageByteArray = memoryStream.ToArray();
+            }
+
+            using var original = SKBitmap.Decode(imageByteArray);
+
+            int maxSideLength = 1920;
+
+            int width = original.Width;
+            int height = original.Height;
+
+            if (original.Width > original.Height)
+            {
+                if (original.Width > maxSideLength)
+                {
+                    var percent = maxSideLength / (float)original.Width;
+                    width = (int)(original.Width * percent);
+                    height = (int)(original.Height * percent);
+                }
+            }
+            else
+            {
+                if (original.Height > maxSideLength)
+                {
+                    var percent = maxSideLength / (float)original.Height;
+                    width = (int)(original.Width * percent);
+                    height = (int)(original.Height * percent);
+                }
+            }
+
+
+            using var resizeBitmap = original.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
+            using var image = SKImage.FromBitmap(resizeBitmap);
+            using var imageData = image.Encode(SKEncodedImageFormat.Jpeg, 100);
+
+            using var sha256 = SHA256.Create();
+            var fileSign = Convert.ToHexString(sha256.ComputeHash(imageData.AsStream()));
+
+            var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            var authorization = LocalStorage.GetItemAsString("Authorization");
+            var privateKey = authorization?.Split(".").ToList().LastOrDefault();
+            var requestUrl = "/File/UploadFile?business=TArticle&key=" + fileKey + "&sign=cover";
+
+            var dataStr = privateKey + timeStr + requestUrl + "file" + fileSign;
+
+            using var shaa256 = SHA256.Create();
+            string dataSign = Convert.ToHexString(shaa256.ComputeHash(Encoding.UTF8.GetBytes(dataStr)));
+
+            headers.Remove("Token");
+            headers.Remove("Time");
+            headers.Add("Token", dataSign);
+            headers.Add("Time", timeStr);
+
+            foreach (var header in headers)
+            {
+                client.DefaultRequestHeaders.Add(header.Key, header.Value);
+            }
+
+            var fileContent = new StreamContent(imageData.AsStream());
+
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+
+
+            string fileName = file.Name.Replace(file.Name.Split(".").LastOrDefault() ?? "", "jpg");
+
+            formDataContent.Add(fileContent, "file", fileName);
+
+            var httpResponse = await client.PostAsync(url, formDataContent);
+
+            string fileId = httpResponse.Content.ReadAsStringAsync().Result.Replace("\"", "");
+
+            byte[] newImageArray;
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                imageData.SaveTo(ms);
+                newImageArray = ms.ToArray();
+            }
+
+            string fileURL = await JS.InvokeAsync<string>("CreateObjectURL", newImageArray, "image/jpeg");
+
+            fileList.Add(new UploadFileItem()
+                {
+                    Id = fileId,
+                    FileName = file.Name,
+                    Url = fileURL,
+                    State = UploadState.Success
+                });
+
+            StateHasChanged();
+        }
+
+    }
+
+
+    private Form<DtoEditArticle>? _editArticleForm;
+
+    Dictionary<string, string> headers = new();
+
+    bool isPreviewImg = false;
+    string? previewImgUrl;
+    long fileKey;
+    bool saveLoading = false;
+    List<UploadFileItem> fileList = new();
+
+    [Parameter]
+    public string? channelId { get; set; }
+
+    List<DtoTreeSelect>? selectCategoryList;
+
+    override protected void OnInitialized()
+    {
+        GetCategoryTreeList();
+
+        var authorization = LocalStorage.GetItemAsString("Authorization");
+
+        headers.Add("Authorization", "Bearer " + authorization);
+    }
+
+    override protected void OnParametersSet()
+    {
+        GetArticleList();
+        GetCategoryTreeList();
+    }
+
+
+
+    async void GetCategoryTreeList()
+    {
+        List<DtoKeyValueChild> parentKVList = new();
+
+        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList?channelId=" + channelId);
+
+        if (kvList != null)
+        {
+            parentKVList.AddRange(kvList);
+
+            selectCategoryList = CategoryTreeConvert(parentKVList)!.ToList();
+        }
+
+    }
+
+    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoKeyValueChild>? keyValueChildren)
+    {
+        return keyValueChildren?.Select(t => new DtoTreeSelect
+            {
+                Key = t.Key!.ToString()!,
+                Title = t.Value!.ToString()!,
+                Children = CategoryTreeConvert(t.ChildList),
+                IsDisabled = false
+            }).ToList();
+    }
+
+    bool tableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    DtoPageList<DtoArticle> pageList = new();
+
+    async void GetArticleList()
+    {
+        tableLoading = true;
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetArticleList();
+    }
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    bool isShowEditArticle = false;
+    DtoEditArticle editArticle = new();
+    long articleId;
+
+
+    async void EditArticle(DtoArticle? article = null)
+    {
+
+        editArticle = new();
+
+        foreach (var item in fileList)
+        {
+            if (item.Url.StartsWith("blob"))
+            {
+                JS.InvokeAsync<string>("RevokeObjectURL", item.Url);
+            }
+        }
+
+        fileList = new();
+        articleId = default;
+
+        if (article != null)
+        {
+
+            fileKey = article.Id;
+
+            articleId = article.Id;
+            editArticle.CategoryId = article.CategoryId.ToString();
+
+            editArticle.Title = article.Title;
+            editArticle.Sort = article.Sort;
+            editArticle.ClickCount = article.ClickCount;
+            editArticle.Digest = article.Digest;
+            editArticle.Content = article.Content;
+            editArticle.IsDisplay = article.IsDisplay;
+            editArticle.IsRecommend = article.IsRecommend;
+
+            fileList = article.CoverImageList?.Select(t => new UploadFileItem
+                {
+                    Id = t.Key!.ToString(),
+                    FileName = "coverImg.jpg",
+                    Url = t.Value!.ToString(),
+                    State = UploadState.Success
+                }).ToList()!;
+        }
+        else
+        {
+            fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId");
+            editArticle.IsDisplay = true;
+            editArticle.Sort = 99;
+            editArticle.CategoryId = "";
+        }
+
+        GetCategoryTreeList();
+
+        isShowEditArticle = true;
+
+        StateHasChanged();
+
+        await Task.Delay(200);
+
+        JS.InvokeVoidAsync("InitUeditor", "Content", 370);
+
+    }
+
+
+    async void SaveArticle()
+    {
+        editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
+
+        if (_editArticleForm!.Validate())
+        {
+
+            saveLoading = true;
+
+            if (articleId == default)
+            {
+                using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle))
+                {
+                    var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
+
+                    Message.Success("添加成功");
+                }
+            }
+            else
+            {
+                using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle))
+                {
+                    var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
+
+                    if (bool.Parse(updateArticleRet))
+                    {
+                        Message.Success("编辑成功");
+                    }
+                }
+            }
+
+            saveLoading = false;
+
+            GetArticleList();
+
+            isShowEditArticle = false;
+        }
+    }
+
+
+    async void DeleteArticle(long articleId)
+    {
+        using (var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId))
+        {
+            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
+
+            if (Convert.ToBoolean(retValue))
+            {
+                GetArticleList();
+                Message.Success("删除成功");
+            }
+        }
+    }
+
+
+    void PreviewImg(UploadFileItem file)
+    {
+        isPreviewImg = true;
+        previewImgUrl = file.Url;
+    }
+
+    async Task<bool> DeleteImg(UploadFileItem file)
+    {
+        using (var httpResponse = await Http.DeleteAsync("File/DeleteFile?id=" + file.Id))
+        {
+            var retValue = await httpResponse.Content.ReadAsStringAsync();
+
+            if (Convert.ToBoolean(retValue))
+            {
+                fileList.Remove(file);
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+
+}

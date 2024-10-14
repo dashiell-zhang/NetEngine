@@ -1,4 +1,4 @@
-﻿namespace TaskService.Libraries.QueueTask
+﻿namespace TaskService.Core.QueueTask
 {
 
     [AttributeUsage(AttributeTargets.Method)]

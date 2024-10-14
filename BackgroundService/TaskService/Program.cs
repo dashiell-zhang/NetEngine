@@ -7,7 +7,9 @@ using Npgsql;
 using Repository.Interceptors;
 using StackExchange.Redis;
 using System.Reflection;
-using TaskService.Libraries;
+using TaskService.Core;
+using TaskService.Core.QueueTask;
+using TaskService.Core.ScheduleTask;
 
 namespace TaskService
 {
@@ -151,9 +153,9 @@ namespace TaskService
             initSingletonServiceTypes = null;
 #if DEBUG
 
-            var queueMethodList = Libraries.QueueTask.QueueTaskBuilder.queueMethodList;
+            var queueMethodList = QueueTaskBuilder.queueMethodList;
 
-            var scheduleMethodList = Libraries.ScheduleTask.ScheduleTaskBuilder.scheduleMethodList;
+            var scheduleMethodList = ScheduleTaskBuilder.scheduleMethodList;
 
         StartActionTag:
 

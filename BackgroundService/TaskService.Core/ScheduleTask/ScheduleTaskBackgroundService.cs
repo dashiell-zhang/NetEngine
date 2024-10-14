@@ -1,7 +1,10 @@
-﻿using System.Collections.Concurrent;
-using static TaskService.Libraries.ScheduleTask.ScheduleTaskBuilder;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using static TaskService.Core.ScheduleTask.ScheduleTaskBuilder;
 
-namespace TaskService.Libraries.ScheduleTask
+namespace TaskService.Core.ScheduleTask
 {
     public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILogger<ScheduleTaskBackgroundService> logger) : BackgroundService
     {

@@ -1,7 +1,7 @@
 ﻿using Repository.Database;
-using TaskService.Libraries;
-using TaskService.Libraries.QueueTask;
-using TaskService.Libraries.ScheduleTask;
+using TaskService.Core;
+using TaskService.Core.QueueTask;
+using TaskService.Core.ScheduleTask;
 
 namespace TaskService.Tasks
 {

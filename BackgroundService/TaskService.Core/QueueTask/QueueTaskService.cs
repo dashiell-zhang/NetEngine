@@ -1,9 +1,10 @@
 ﻿using Common;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 
-namespace TaskService.Libraries.QueueTask
+namespace TaskService.Core.QueueTask
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]

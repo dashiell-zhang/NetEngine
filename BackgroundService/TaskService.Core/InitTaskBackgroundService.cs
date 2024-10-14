@@ -1,8 +1,9 @@
-﻿using System.Reflection;
-using TaskService.Libraries.QueueTask;
-using TaskService.Libraries.ScheduleTask;
+﻿using Microsoft.Extensions.Hosting;
+using System.Reflection;
+using TaskService.Core.QueueTask;
+using TaskService.Core.ScheduleTask;
 
-namespace TaskService.Libraries
+namespace TaskService.Core
 {
     public class InitTaskBackgroundService : BackgroundService
     {

@@ -3,12 +3,15 @@ using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System.Collections.Concurrent;
 using System.Reflection;
-using static TaskService.Libraries.QueueTask.QueueTaskBuilder;
+using static TaskService.Core.QueueTask.QueueTaskBuilder;
 
-namespace TaskService.Libraries.QueueTask
+namespace TaskService.Core.QueueTask
 {
     public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock) : BackgroundService
     {
@@ -45,7 +48,7 @@ namespace TaskService.Libraries.QueueTask
                             {
                                 var nowTime = DateTime.UtcNow;
 
-                                var queueTaskIdList = db.TQueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || (t.LastTime < nowTime.AddMinutes(-5 * t.Count)))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
+                                var queueTaskIdList = db.TQueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
 
                                 foreach (var queueTaskId in queueTaskIdList)
                                 {

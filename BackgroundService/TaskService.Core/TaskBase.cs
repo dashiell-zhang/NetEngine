@@ -1,4 +1,4 @@
-﻿namespace TaskService.Libraries
+﻿namespace TaskService.Core
 {
 
     public class TaskBase

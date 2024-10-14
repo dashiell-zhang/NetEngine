@@ -1,9 +1,12 @@
 ﻿using IdentifierGenerator;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Repository.Database;
-using static TaskService.Libraries.QueueTask.QueueTaskBuilder;
-using static TaskService.Libraries.ScheduleTask.ScheduleTaskBuilder;
+using static TaskService.Core.QueueTask.QueueTaskBuilder;
+using static TaskService.Core.ScheduleTask.ScheduleTaskBuilder;
 
-namespace TaskService.Libraries
+namespace TaskService.Core
 {
     public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IdService idService) : BackgroundService
     {

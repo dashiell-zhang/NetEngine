@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace TaskService.Libraries.ScheduleTask
+namespace TaskService.Core.ScheduleTask
 {
 
 

@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace TaskService.Libraries.ScheduleTask
+namespace TaskService.Core.ScheduleTask
 {
 #pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     public class CronHelper

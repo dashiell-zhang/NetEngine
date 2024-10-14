@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace TaskService.Libraries.QueueTask
+namespace TaskService.Core.QueueTask
 {
 
     /// <summary>

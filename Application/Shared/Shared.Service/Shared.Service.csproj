@@ -19,11 +19,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\Infrastructure\Common\Common.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\FileStorage\FileStorage.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
 		<ProjectReference Include="..\..\..\Repository\Repository.csproj" />
-		<ProjectReference Include="..\Admin.Interface\Admin.Interface.csproj" />
+		<ProjectReference Include="..\Shared.Interface\Shared.Interface.csproj" />
 	</ItemGroup>
 
 </Project>

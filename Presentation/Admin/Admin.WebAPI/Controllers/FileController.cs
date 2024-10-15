@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Repository.Database;
 using SkiaSharp;
-using WebAPI.Core.Libraries;
 using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers
@@ -18,11 +17,11 @@ namespace Admin.WebAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class FileController(IFileService fileService, DatabaseContext db, IWebHostEnvironment webHostEnvironment) : ControllerBase
+    public class FileController(IUserContext userContext, IFileService fileService, DatabaseContext db, IWebHostEnvironment webHostEnvironment) : ControllerBase
     {
         private readonly string rootPath = webHostEnvironment.WebRootPath;
 
-        private long userId => User.GetClaim<long>("userId");
+        private long userId => userContext.UserId;
 
 
 

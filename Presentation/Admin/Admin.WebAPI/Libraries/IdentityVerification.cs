@@ -9,7 +9,6 @@ using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using WebAPI.Core.Libraries;
 using WebAPI.Core.Models.AppSetting;
 
 namespace Admin.WebAPI.Libraries
@@ -52,7 +51,7 @@ namespace Admin.WebAPI.Libraries
 
                     if (functionId != default)
                     {
-                        var userId = httpContext.User.GetClaim<long>("userId");
+                        var userId = long.Parse(httpContext.User.FindFirstValue("userId")!);
                         var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
 
                         var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
@@ -94,8 +93,8 @@ namespace Admin.WebAPI.Libraries
 
             var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-            var nbf = httpContext.User.GetClaim<long>("nbf");
-            var exp = httpContext.User.GetClaim<long>("exp");
+            var nbf = long.Parse(httpContext.User.FindFirstValue("nbf")!);
+            var exp = long.Parse(httpContext.User.FindFirstValue("exp")!);
 
             var nbfTime = DateTimeOffset.FromUnixTimeSeconds(nbf);
             var expTime = DateTimeOffset.FromUnixTimeSeconds(exp);
@@ -106,8 +105,8 @@ namespace Admin.WebAPI.Libraries
             if (lifeSpan < DateTimeOffset.UtcNow)
             {
 
-                var tokenId = httpContext.User.GetClaim<long>("tokenId");
-                var userId = httpContext.User.GetClaim<long>("userId");
+                var tokenId = long.Parse(httpContext.User.FindFirstValue("tokenId")!);
+                var userId = long.Parse(httpContext.User.FindFirstValue("userId")!);
 
 
                 string key = "IssueNewToken" + tokenId;

@@ -29,7 +29,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\..\Application\Admin\Admin.Interface\Admin.Interface.csproj" />
+		<ProjectReference Include="..\..\..\Application\Admin\Admin.Service\Admin.Service.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />

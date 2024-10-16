@@ -5,52 +5,94 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Repository.HealthCheck;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Filters;
+using WebAPI.Core.Libraries.HealthCheck;
 using WebAPI.Core.Libraries.Swagger;
 using WebAPI.Core.Models.AppSetting;
 
 namespace WebAPI.Core.Extensions
 {
-    public static class IServiceCollectionExtension
+    public static class WebApplicationBuilderExtension
     {
 
 
-        public static void AddCommonServices(this IServiceCollection services, IConfiguration configuration)
+        /// <summary>
+        /// 设置 Kestrel 配置
+        /// </summary>
+        /// <param name="builder"></param>
+        public static void SetKestrelConfig(this WebApplicationBuilder builder)
+        {
+            builder.WebHost.UseKestrel((context, options) =>
+            {
+                options.ConfigureHttpsDefaults(options =>
+                {
+                    var certConf = context.Configuration.GetSection("Kestrel:Certificates:Default");
+
+                    if (certConf.Value != null)
+                    {
+                        X509Certificate2Collection x509Certificate2s = new();
+
+                        var sslPath = certConf.GetValue<string>("Path")!;
+
+                        if (sslPath.EndsWith("pfx", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string password = certConf.GetValue<string>("Password")!;
+
+                            x509Certificate2s.Import(sslPath, password);
+                            options.ServerCertificateChain = x509Certificate2s;
+                        }
+                        else if (sslPath.EndsWith("pem", StringComparison.OrdinalIgnoreCase) || sslPath.EndsWith("crt", StringComparison.OrdinalIgnoreCase))
+                        {
+                            x509Certificate2s.ImportFromPemFile(sslPath);
+                            options.ServerCertificateChain = x509Certificate2s;
+
+                        }
+                    }
+
+                });
+            });
+        }
+
+
+
+        public static void AddCommonServices(this WebApplicationBuilder builder)
         {
 
             #region 基础 Server 配置
 
-            services.Configure<FormOptions>(options =>
+            builder.Services.Configure<FormOptions>(options =>
             {
                 options.MultipartBodyLengthLimit = long.MaxValue;
             });
 
-            services.Configure<KestrelServerOptions>(options =>
+            builder.Services.Configure<KestrelServerOptions>(options =>
             {
                 options.AllowSynchronousIO = true;
             });
 
-            services.Configure<IISServerOptions>(options =>
+            builder.Services.Configure<IISServerOptions>(options =>
             {
                 options.AllowSynchronousIO = true;
             });
 
-            services.AddHsts(options =>
+            builder.Services.AddHsts(options =>
             {
                 options.MaxAge = TimeSpan.FromDays(365);
             });
 
-            services.Configure<ForwardedHeadersOptions>(options =>
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
-            services.AddResponseCompression(options =>
+            builder.Services.AddResponseCompression(options =>
             {
                 options.EnableForHttps = true;
             });
@@ -58,14 +100,14 @@ namespace WebAPI.Core.Extensions
             #endregion
 
 
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 
-            services.AddMvc(options => options.Filters.Add(new ExceptionFilter()));
+            builder.Services.AddMvc(options => options.Filters.Add(new ExceptionFilter()));
 
 
             //注册跨域信息
-            services.AddCors(options =>
+            builder.Services.AddCors(options =>
             {
                 options.AddPolicy("cors", policy =>
                 {
@@ -79,13 +121,13 @@ namespace WebAPI.Core.Extensions
 
             #region 注册 JWT 认证机制
 
-            services.AddAuthentication(options =>
+            builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(options =>
             {
-                var jwtSetting = configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
+                var jwtSetting = builder.Configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
                 var issuerSigningKey = ECDsa.Create();
                 issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
 
@@ -101,7 +143,7 @@ namespace WebAPI.Core.Extensions
             //    .SetDefaultPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build());
 
 
-            services.AddAuthorization(options =>
+            builder.Services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
@@ -111,14 +153,14 @@ namespace WebAPI.Core.Extensions
             #endregion
 
 
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 
-            services.AddMvc(options => options.Filters.Add(new ExceptionFilter()));
+            builder.Services.AddMvc(options => options.Filters.Add(new ExceptionFilter()));
 
 
             //注册跨域信息
-            services.AddCors(options =>
+            builder.Services.AddCors(options =>
             {
                 options.AddPolicy("cors", policy =>
                 {
@@ -132,7 +174,7 @@ namespace WebAPI.Core.Extensions
 
 
             #region 注册 Json 序列化配置
-            services.AddControllers().AddJsonOptions(options =>
+            builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
@@ -146,7 +188,7 @@ namespace WebAPI.Core.Extensions
 
 
             #region 注册 Swagger
-            services.AddSwaggerGen(options =>
+            builder.Services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", null);
 
@@ -173,7 +215,7 @@ namespace WebAPI.Core.Extensions
 
 
             //注册统一模型验证
-            services.Configure<ApiBehaviorOptions>(options =>
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.InvalidModelStateResponseFactory = actionContext =>
                 {
@@ -193,13 +235,26 @@ namespace WebAPI.Core.Extensions
             });
 
 
-            services.BatchRegisterServices();
+            builder.Services.BatchRegisterServices();
 
+
+
+            #region 注册健康检测服务
+            builder.Services.AddHealthChecks()
+                .AddCheck<CacheHealthCheck>("CacheHealthCheck")
+                .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck");
+
+
+            builder.Services.Configure<HealthCheckPublisherOptions>(options =>
+            {
+                options.Delay = TimeSpan.FromSeconds(10);
+                options.Period = TimeSpan.FromSeconds(60);
+            });
+
+            builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
+            #endregion
 
         }
-
-
-
 
 
     }

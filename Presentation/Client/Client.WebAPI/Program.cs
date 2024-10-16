@@ -3,15 +3,12 @@ using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
-using Repository.HealthCheck;
 using Repository.Interceptors;
 using SMS.AliCloud;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Extensions;
-using WebAPI.Core.Libraries.HealthCheck;
 
 namespace Client.WebAPI
 {
@@ -26,35 +23,7 @@ namespace Client.WebAPI
 
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.WebHost.UseKestrel((context, options) =>
-            {
-                options.ConfigureHttpsDefaults(options =>
-                {
-                    var certConf = context.Configuration.GetSection("Kestrel:Certificates:Default");
-
-                    if (certConf.Value != null)
-                    {
-                        X509Certificate2Collection x509Certificate2s = new();
-
-                        var sslPath = certConf.GetValue<string>("Path")!;
-
-                        if (sslPath.EndsWith("pfx", StringComparison.OrdinalIgnoreCase))
-                        {
-                            string password = certConf.GetValue<string>("Password")!;
-
-                            x509Certificate2s.Import(sslPath, password);
-                            options.ServerCertificateChain = x509Certificate2s;
-                        }
-                        else if (sslPath.EndsWith("pem", StringComparison.OrdinalIgnoreCase) || sslPath.EndsWith("crt", StringComparison.OrdinalIgnoreCase))
-                        {
-                            x509Certificate2s.ImportFromPemFile(sslPath);
-                            options.ServerCertificateChain = x509Certificate2s;
-
-                        }
-                    }
-
-                });
-            });
+            builder.SetKestrelConfig();
 
             builder.Host.UseWindowsService();
 
@@ -75,9 +44,9 @@ namespace Client.WebAPI
             }, 30);
 
 
-            builder.Services.AddCommonServices(builder.Configuration);
+            builder.AddCommonServices();
 
-   
+
             //注册Id生成器
             builder.Services.AddIdentifierGenerator();
 
@@ -210,25 +179,10 @@ namespace Client.WebAPI
 
             #endregion
 
-            #region 注册健康检测服务
-            builder.Services.AddHealthChecks()
-                .AddCheck<CacheHealthCheck>("CacheHealthCheck")
-                .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck");
-
-
-            builder.Services.Configure<HealthCheckPublisherOptions>(options =>
-            {
-                options.Delay = TimeSpan.FromSeconds(10);
-                options.Period = TimeSpan.FromSeconds(60);
-            });
-
-            builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
-            #endregion
-
 
             var app = builder.Build();
 
-            app.UseCommonMiddleware(app.Environment);
+            app.UseCommonMiddleware();
 
             app.MapControllers();
 
@@ -236,13 +190,10 @@ namespace Client.WebAPI
 
             app.Start();
 
-            //初始化所有不包含开放泛型的单例服务
-            builder.Services.Where(t => t.Lifetime == ServiceLifetime.Singleton && t.ServiceType.ContainsGenericParameters == false).Select(t => t.ServiceType).ToList().ForEach(t => app.Services.GetService(t));
+            app.InitSingletonService(builder.Services);
 
-#if DEBUG
-            string url = app.Urls.First().Replace("http://[::]", "http://127.0.0.1");
-            Console.WriteLine(Environment.NewLine + "Swagger Doc: " + url + "/swagger/" + Environment.NewLine);
-#endif
+            app.ShowDocUrl();
+
             app.WaitForShutdown();
         }
 

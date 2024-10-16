@@ -1,31 +1,17 @@
-﻿using Common;
+﻿using Client.WebAPI.Libraries.HttpHandler;
+using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using Npgsql;
 using Repository.HealthCheck;
 using Repository.Interceptors;
-using StackExchange.Redis;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using WebAPI.Core.Filters;
 using SMS.AliCloud;
-using WebAPI.Core.Libraries.Swagger;
-using WebAPI.Core.Libraries;
-using WebAPI.Core.Models.AppSetting;
+using StackExchange.Redis;
+using System.Security.Cryptography.X509Certificates;
+using WebAPI.Core.Extensions;
 using WebAPI.Core.Libraries.HealthCheck;
-using Client.WebAPI.Libraries.HttpHandler;
-using Client.WebAPI.Libraries;
 
 namespace Client.WebAPI
 {
@@ -89,151 +75,9 @@ namespace Client.WebAPI
             }, 30);
 
 
-            #region 基础 Server 配置
+            builder.Services.AddCommonServices(builder.Configuration);
 
-            builder.Services.Configure<FormOptions>(options =>
-            {
-                options.MultipartBodyLengthLimit = long.MaxValue;
-            });
-
-            builder.Services.Configure<KestrelServerOptions>(options =>
-            {
-                options.AllowSynchronousIO = true;
-            });
-
-            builder.Services.Configure<IISServerOptions>(options =>
-            {
-                options.AllowSynchronousIO = true;
-            });
-
-            builder.Services.AddHsts(options =>
-            {
-                options.MaxAge = TimeSpan.FromDays(365);
-            });
-
-            builder.Services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            });
-
-            builder.Services.AddResponseCompression(options =>
-            {
-                options.EnableForHttps = true;
-            });
-
-            #endregion
-
-            builder.Services.AddControllers();
-
-
-            #region 注册 JWT 认证机制
-
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                var jwtSetting = builder.Configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
-                var issuerSigningKey = ECDsa.Create();
-                issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
-
-                options.TokenValidationParameters = new()
-                {
-                    ValidIssuer = jwtSetting.Issuer,
-                    ValidAudience = jwtSetting.Audience,
-                    IssuerSigningKey = new ECDsaSecurityKey(issuerSigningKey)
-                };
-            });
-
-            builder.Services.AddAuthorizationBuilder()
-                .SetDefaultPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build());
-
-            #endregion
-
-
-            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
-
-            builder.Services.AddMvc(options => options.Filters.Add(new ExceptionFilter()));
-
-
-            //注册跨域信息
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("cors", policy =>
-                {
-                    policy.SetIsOriginAllowed(origin => true)
-                       .AllowAnyHeader()
-                       .AllowAnyMethod()
-                       .AllowCredentials()
-                       .SetPreflightMaxAge(TimeSpan.FromSeconds(7200));
-                });
-            });
-
-
-            #region 注册 Json 序列化配置
-            builder.Services.AddControllers().AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.StringConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableStructConverterFactory());
-            });
-
-            #endregion
-
-
-            #region 注册 Swagger
-            builder.Services.AddSwaggerGen(options =>
-            {
-                options.SwaggerDoc("v1", null);
-
-                var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
-                options.SchemaGeneratorOptions = new() { SchemaIdSelector = type => type.ToString()[(type.ToString().IndexOf("Models.") + 7)..].Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
-
-                options.MapType<long>(() => new OpenApiSchema { Type = "string", Format = "long" });
-
-                var xmlPaths = IOHelper.GetFolderAllFiles(AppContext.BaseDirectory).Where(t => t.EndsWith(".xml")).ToList();
-                foreach (var xmlPath in xmlPaths)
-                {
-                    options.IncludeXmlComments(xmlPath, true);
-                }
-
-                options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
-                {
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT"
-                });
-                options.OperationFilter<SecurityRequirementsOperationFilter>();
-            });
-            #endregion
-
-
-            //注册统一模型验证
-            builder.Services.Configure<ApiBehaviorOptions>(options =>
-            {
-                options.InvalidModelStateResponseFactory = actionContext =>
-                {
-                    //获取验证失败的模型字段 
-                    var errors = actionContext.ModelState.Where(e => e.Value?.Errors.Count > 0).Select(e => e.Key + " : " + e.Value?.Errors.First().ErrorMessage).ToList();
-
-                    var dataStr = string.Join(" | ", errors);
-
-                    //设置返回内容
-                    var result = new
-                    {
-                        errMsg = dataStr
-                    };
-
-                    return new BadRequestObjectResult(result);
-                };
-            });
-
-
+   
             //注册Id生成器
             builder.Services.AddIdentifierGenerator();
 
@@ -312,7 +156,6 @@ namespace Client.WebAPI
 
             #endregion
 
-            builder.Services.BatchRegisterServices();
 
             #region 注册短信服务
 
@@ -385,48 +228,9 @@ namespace Client.WebAPI
 
             var app = builder.Build();
 
-            app.UseForwardedHeaders();
-
-            //开启倒带模式允许多次读取 HttpContext.Body 中的内容
-            app.Use(async (context, next) =>
-            {
-                context.Request.EnableBuffering();
-                await next.Invoke();
-            });
-
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-
-                app.UseSwaggerUI(options =>
-                {
-                    options.SwaggerEndpoint($"/swagger/v1/swagger.json", null);
-                });
-            }
-            else
-            {
-                app.UseResponseCompression();
-
-                //注册全局异常处理机制
-                app.UseExceptionHandler(builder => builder.Run(async context => await GlobalError.ErrorEvent(context)));
-            }
-
-            app.UseHsts();
-
-
-            //注册跨域信息
-            app.UseCors("cors");
-
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            //注册用户认证机制,必须放在 UseCors UseRouting 之后
-            app.UseAuthentication();
-            app.UseAuthorization();
+            app.UseCommonMiddleware(app.Environment);
 
             app.MapControllers();
-
 
             app.MapHealthChecks("/healthz");
 

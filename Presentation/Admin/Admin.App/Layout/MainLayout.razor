@@ -165,9 +165,9 @@
 
             var expTimeL = Convert.ToInt64(jsonWebToken.GetClaim("exp").Value);
 
-            var expTime = TimeZoneInfo.ConvertTimeToUtc((new DateTime(1970, 1, 1)).ToLocalTime()).ToLocalTime().AddSeconds(expTimeL);
+            var expTime = DateTimeOffset.FromUnixTimeSeconds(expTimeL);
 
-            if (expTime < DateTime.UtcNow)
+            if (expTime < DateTimeOffset.UtcNow)
             {
                 NavigationManager.NavigateTo("login");
             }

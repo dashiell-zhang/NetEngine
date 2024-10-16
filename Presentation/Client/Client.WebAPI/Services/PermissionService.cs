@@ -7,23 +7,17 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System.Security.Claims;
+using WebAPI.Core.Interfaces;
 
-namespace Client.WebAPI.Libraries
+namespace Client.WebAPI.Services
 {
 
-    /// <summary>
-    /// 认证模块静态方法
-    /// </summary>
-    public class IdentityVerification
+    [Service(Lifetime = ServiceLifetime.Scoped)]
+    public class PermissionService : IPermissionService
     {
 
 
-        /// <summary>
-        /// 权限校验
-        /// </summary>
-        /// <param name="authorizationHandlerContext"></param>
-        /// <returns></returns>
-        public static bool Authorization(AuthorizationHandlerContext authorizationHandlerContext)
+        public bool VerifyAuthorization(AuthorizationHandlerContext authorizationHandlerContext)
         {
 
             if (authorizationHandlerContext.User.Identity!.IsAuthenticated)
@@ -140,6 +134,7 @@ namespace Client.WebAPI.Libraries
             }
 
         }
+
 
     }
 }

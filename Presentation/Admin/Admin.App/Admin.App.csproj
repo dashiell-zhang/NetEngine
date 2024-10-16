@@ -5,7 +5,6 @@
 		<BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
 		<!--<StaticWebAssetBasePath>admin</StaticWebAssetBasePath>-->
 		<PublishIISAssets>true</PublishIISAssets>
-		<DebugType>embedded</DebugType>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>

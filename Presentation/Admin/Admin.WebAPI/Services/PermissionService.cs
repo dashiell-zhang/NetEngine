@@ -9,15 +9,14 @@ using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using WebAPI.Core.Interfaces;
 using WebAPI.Core.Models.AppSetting;
 
-namespace Admin.WebAPI.Libraries
+namespace Admin.WebAPI.Services
 {
 
-    /// <summary>
-    /// 认证模块静态方法
-    /// </summary>
-    public class IdentityVerification
+    [Service(Lifetime = ServiceLifetime.Scoped)]
+    public class PermissionService : IPermissionService
     {
 
 
@@ -26,7 +25,7 @@ namespace Admin.WebAPI.Libraries
         /// </summary>
         /// <param name="authorizationHandlerContext"></param>
         /// <returns></returns>
-        public static bool Authorization(AuthorizationHandlerContext authorizationHandlerContext)
+        public bool VerifyAuthorization(AuthorizationHandlerContext authorizationHandlerContext)
         {
 
             if (authorizationHandlerContext.User.Identity!.IsAuthenticated)
@@ -189,7 +188,6 @@ namespace Admin.WebAPI.Libraries
             }
 
         }
-
 
 
     }

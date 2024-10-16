@@ -13,6 +13,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Filters;
+using WebAPI.Core.Interfaces;
 using WebAPI.Core.Libraries.HealthCheck;
 using WebAPI.Core.Libraries.Swagger;
 using WebAPI.Core.Models.AppSetting;
@@ -139,15 +140,24 @@ namespace WebAPI.Core.Extensions
                 };
             });
 
-            //services.AddAuthorizationBuilder()
-            //    .SetDefaultPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireAssertion(context => IdentityVerification.Authorization(context)).Build());
-
 
             builder.Services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
-                    // .RequireAssertion(context => IdentityVerification.Authorization(context))
+                    .RequireAssertion(context =>
+                    {
+                        if (context.Resource is HttpContext httpContext)
+                        {
+                            var permissionService = httpContext.RequestServices.GetService<IPermissionService>();
+
+                            return permissionService != null && permissionService.VerifyAuthorization(context);
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    })
                     .Build();
             });
             #endregion
@@ -176,8 +186,8 @@ namespace WebAPI.Core.Extensions
             #region 注册 Json 序列化配置
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
+                //options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
+                //options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.StringConverter());
                 options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableStructConverterFactory());

@@ -19,19 +19,16 @@ EXPOSE 8080
 EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["AdminAPI/AdminAPI.csproj", "AdminAPI/"]
-RUN dotnet restore "AdminAPI/AdminAPI.csproj"
 COPY . .
-WORKDIR "/src/AdminAPI"
-RUN dotnet build "AdminAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/Presentation/Admin/Admin.WebAPI"
+RUN dotnet restore "Admin.WebAPI.csproj"
+RUN dotnet build "Admin.WebAPI.csproj" -c Release -o /app/build
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "AdminAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Admin.WebAPI.csproj" -c Release -r linux-x64 -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "AdminAPI.dll"]
+ENTRYPOINT ["dotnet", "Admin.WebAPI.dll"]

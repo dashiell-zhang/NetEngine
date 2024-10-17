@@ -8,17 +8,14 @@ WORKDIR /app
 ENV TZ=Asia/Shanghai
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["TaskService/TaskService.csproj", "TaskService/"]
-RUN dotnet restore "TaskService/TaskService.csproj"
 COPY . .
-WORKDIR "/src/TaskService"
-RUN dotnet build "TaskService.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/BackgroundService/TaskService"
+RUN dotnet restore "TaskService.csproj"
+RUN dotnet build "TaskService.csproj" -c Release -o /app/build
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "TaskService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "TaskService.csproj" -c Release -r linux-x64 -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app

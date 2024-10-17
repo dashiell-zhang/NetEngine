@@ -9,6 +9,7 @@
 		<!--<InvariantGlobalization>true</InvariantGlobalization>-->
 		<UserSecretsId>8c1a7f89-38d3-4b3e-9208-a58b3664509d</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerfileContext>..\..\..</DockerfileContext>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -20,6 +21,10 @@
 		<NoWarn>1591;8618,CA2254</NoWarn>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\Application\Client\Client.Service\Client.Service.csproj" />

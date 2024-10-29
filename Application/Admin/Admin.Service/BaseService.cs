@@ -1,8 +1,8 @@
 ﻿using Admin.Interface;
-using Admin.Model;
 using Common;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
+using Shared.Model;
 
 namespace Admin.Service
 {

@@ -1,4 +1,4 @@
-﻿namespace Shared.Models
+﻿namespace Shared.Model
 {
 
 

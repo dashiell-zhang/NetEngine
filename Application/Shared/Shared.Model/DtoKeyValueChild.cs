@@ -1,4 +1,4 @@
-﻿namespace Shared.Models
+﻿namespace Shared.Model
 {
     public class DtoKeyValueChild
     {
@@ -8,7 +8,7 @@
         /// <summary>
         /// 键
         /// </summary>
-        public object? Key { get; set; }
+        public object Key { get; set; }
 
 
 

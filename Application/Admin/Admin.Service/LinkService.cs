@@ -1,11 +1,11 @@
 ﻿using Admin.Interface;
-using Admin.Model;
 using Admin.Model.Link;
 using Common;
 using IdentifierGenerator;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Shared.Interface;
+using Shared.Model;
 
 namespace Admin.Service
 {

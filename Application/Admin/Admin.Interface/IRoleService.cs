@@ -1,5 +1,5 @@
-﻿using Admin.Model;
-using Admin.Model.Role;
+﻿using Admin.Model.Role;
+using Shared.Model;
 
 namespace Admin.Interface
 {

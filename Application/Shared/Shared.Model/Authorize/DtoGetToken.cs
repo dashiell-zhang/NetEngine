@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Admin.Model.Authorize
+namespace Shared.Model.Authorize
 {
 
     /// <summary>
-    /// 登录信息
+    /// 获取Token
     /// </summary>
-    public class DtoLogin
+    public class DtoGetToken
     {
 
 

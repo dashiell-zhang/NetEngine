@@ -1,7 +1,6 @@
 ﻿@page "/login"
 @layout NullLayout
 @using Microsoft.IdentityModel.JsonWebTokens;
-@using Admin.Model.Authorize
 @attribute [ReuseTabsPage(Ignore = true)]
 
 
@@ -67,14 +66,14 @@
     }
 
 
-    private DtoLogin loginData = new();
+    private DtoGetToken loginData = new();
 
     private async void LoginAction()
     {
 
         submitLoading = true;
 
-        using (var httpResponse = await Http.PostAsJsonAsync<DtoLogin>("Authorize/GetToken", loginData))
+        using (var httpResponse = await Http.PostAsJsonAsync<DtoGetToken>("Authorize/GetToken", loginData))
         {
             if ((int)httpResponse.StatusCode == 200)
             {

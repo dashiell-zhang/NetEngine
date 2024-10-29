@@ -1,4 +1,4 @@
-﻿namespace Client.Interface.Models.Authorize
+﻿namespace Shared.Model.Authorize
 {
     public class DtoSendSMSVerifyCode
     {

@@ -1,5 +1,5 @@
-﻿using Admin.Model;
-using Admin.Model.Link;
+﻿using Admin.Model.Link;
+using Shared.Model;
 
 namespace Admin.Interface
 {

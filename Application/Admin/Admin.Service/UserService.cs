@@ -1,5 +1,4 @@
 ﻿using Admin.Interface;
-using Admin.Model;
 using Admin.Model.User;
 using Common;
 using DistributedLock;
@@ -9,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Shared.Interface;
+using Shared.Model;
 using System.Text;
 
 namespace Admin.Service

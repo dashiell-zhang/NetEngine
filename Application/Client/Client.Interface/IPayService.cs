@@ -1,5 +1,5 @@
 ﻿using Client.Interface.Models.Pay;
-using Shared.Models;
+using Shared.Model;
 
 namespace Client.Interface
 {

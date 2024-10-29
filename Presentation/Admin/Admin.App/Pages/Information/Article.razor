@@ -310,7 +310,7 @@
     {
         return keyValueChildren?.Select(t => new DtoTreeSelect
             {
-                Key = t.Key!.ToString()!,
+                Key = t.Key.ToString()!,
                 Title = t.Value!.ToString()!,
                 Children = CategoryTreeConvert(t.ChildList),
                 IsDisabled = false
@@ -392,7 +392,7 @@
 
             fileList = article.CoverImageList?.Select(t => new UploadFileItem
                 {
-                    Id = t.Key!.ToString(),
+                    Id = t.Key.ToString(),
                     FileName = "coverImg.jpg",
                     Url = t.Value!.ToString(),
                     State = UploadState.Success

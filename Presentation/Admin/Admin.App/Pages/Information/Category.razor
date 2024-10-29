@@ -147,10 +147,10 @@
     {
         return keyValueChildren?.Select(t => new DtoTreeSelect
             {
-                Key = t.Key!.ToString()!,
+                Key = t.Key.ToString()!,
                 Title = t.Value!.ToString()!,
                 Children = CategoryTreeConvert(t.ChildList),
-                IsDisabled = (categoryId.ToString() == t.Key!.ToString() && categoryId.ToString() != "0")
+                IsDisabled = (categoryId.ToString() == t.Key.ToString() && categoryId.ToString() != "0")
             }).ToList();
     }
 

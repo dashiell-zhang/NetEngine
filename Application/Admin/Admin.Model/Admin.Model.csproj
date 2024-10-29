@@ -17,4 +17,8 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Shared\Shared.Model\Shared.Model.csproj" />
+	</ItemGroup>
+
 </Project>

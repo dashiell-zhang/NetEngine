@@ -77,7 +77,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Interface", "Applica
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Service", "Application\Shared\Shared.Service\Shared.Service.csproj", "{0605E29C-34F2-4D07-9343-AFD4BCF9FB83}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Models", "Application\Shared\Shared.Models\Shared.Models.csproj", "{AC9B0BD3-91CC-4137-83E6-D3760CCFD69F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Model", "Application\Shared\Shared.Model\Shared.Model.csproj", "{DCC7D12A-BB9F-4500-9593-A9D0BE224E7E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -193,10 +193,10 @@ Global
 		{0605E29C-34F2-4D07-9343-AFD4BCF9FB83}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0605E29C-34F2-4D07-9343-AFD4BCF9FB83}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0605E29C-34F2-4D07-9343-AFD4BCF9FB83}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AC9B0BD3-91CC-4137-83E6-D3760CCFD69F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AC9B0BD3-91CC-4137-83E6-D3760CCFD69F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AC9B0BD3-91CC-4137-83E6-D3760CCFD69F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AC9B0BD3-91CC-4137-83E6-D3760CCFD69F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCC7D12A-BB9F-4500-9593-A9D0BE224E7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCC7D12A-BB9F-4500-9593-A9D0BE224E7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCC7D12A-BB9F-4500-9593-A9D0BE224E7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCC7D12A-BB9F-4500-9593-A9D0BE224E7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -232,7 +232,7 @@ Global
 		{D76901D6-E3C7-4661-AFA7-C116BD7BF02D} = {529F8EA9-0FFD-4E29-B386-547025F214AA}
 		{35CBB1CE-2C38-4F40-AC41-834A6251FB26} = {D76901D6-E3C7-4661-AFA7-C116BD7BF02D}
 		{0605E29C-34F2-4D07-9343-AFD4BCF9FB83} = {D76901D6-E3C7-4661-AFA7-C116BD7BF02D}
-		{AC9B0BD3-91CC-4137-83E6-D3760CCFD69F} = {D76901D6-E3C7-4661-AFA7-C116BD7BF02D}
+		{DCC7D12A-BB9F-4500-9593-A9D0BE224E7E} = {D76901D6-E3C7-4661-AFA7-C116BD7BF02D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AFC5F893-16A3-441E-9DC6-2E23DD53C158}

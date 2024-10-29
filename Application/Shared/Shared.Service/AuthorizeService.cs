@@ -1,6 +1,4 @@
-﻿using Client.Interface;
-using Client.Interface.Models.Authorize;
-using Common;
+﻿using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
@@ -12,14 +10,15 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
 using Shared.Interface;
-using Shared.Models;
-using Shared.Models.AppSetting;
+using Shared.Model;
+using Shared.Model.AppSetting;
+using Shared.Model.Authorize;
 using SMS;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Client.Service
+namespace Shared.Service
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
@@ -203,12 +202,19 @@ namespace Client.Service
         /// </summary>
         /// <param name="sign">模块标记</param>
         /// <returns></returns>
-        public List<DtoKeyValue> GetFunctionList(string sign)
+        public List<DtoKeyValue> GetFunctionList(string? sign)
         {
 
             var roleIds = db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
 
-            var kvList = db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId) && t.Function.Parent!.Sign == sign).Select(t => new DtoKeyValue
+            var query = db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId));
+
+            if (sign != null)
+            {
+                query = query.Where(t => t.Function.Sign == sign);
+            }
+
+            var kvList = query.Select(t => new DtoKeyValue
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name

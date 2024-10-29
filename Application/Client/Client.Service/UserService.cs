@@ -5,7 +5,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Shared.Interface;
-using Shared.Models;
+using Shared.Model;
 using System.Text;
 
 namespace Client.Service
@@ -38,7 +38,7 @@ namespace Client.Service
 
         public bool EditUserPhoneBySms(DtoKeyValue keyValue)
         {
-            string phone = keyValue.Key!.ToString()!;
+            string phone = keyValue.Key.ToString()!;
 
             string key = "VerifyPhone_" + phone;
 

@@ -1,8 +1,8 @@
 ﻿using Admin.Interface;
-using Admin.Model;
 using Admin.Model.Site;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Model;
 using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers

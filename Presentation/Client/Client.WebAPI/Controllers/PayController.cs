@@ -1,7 +1,7 @@
 ﻿using Client.Interface;
 using Client.Interface.Models.Pay;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Models;
+using Shared.Model;
 using WebAPI.Core.Libraries;
 
 namespace Client.WebAPI.Controllers

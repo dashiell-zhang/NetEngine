@@ -1,11 +1,12 @@
-﻿using Admin.Interface;
-using Admin.Model.Authorize;
-using IdentifierGenerator;
+﻿using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Repository.Database;
+using Shared.Interface;
+using Shared.Model;
+using Shared.Model.Authorize;
 using System.Xml;
 using WebAPI.Core.Filters;
 
@@ -28,7 +29,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetToken(DtoLogin login) => authorizeService.GetToken(login);
+        public string? GetToken(DtoGetToken login) => authorizeService.GetToken(login);
 
 
 
@@ -39,7 +40,7 @@ namespace Admin.WebAPI.Controllers
         [SignVerifyFilter]
         [Authorize]
         [HttpGet]
-        public List<string> GetFunctionList() => authorizeService.GetFunctionList();
+        public List<DtoKeyValue> GetFunctionList() => authorizeService.GetFunctionList();
 
 
 

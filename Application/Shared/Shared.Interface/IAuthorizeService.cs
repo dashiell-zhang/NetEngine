@@ -1,7 +1,7 @@
-﻿using Client.Interface.Models.Authorize;
-using Shared.Models;
+﻿using Shared.Model;
+using Shared.Model.Authorize;
 
-namespace Client.Interface
+namespace Shared.Interface
 {
     public interface IAuthorizeService
     {
@@ -83,7 +83,7 @@ namespace Client.Interface
         /// </summary>
         /// <param name="sign">模块标记</param>
         /// <returns></returns>
-        public List<DtoKeyValue> GetFunctionList(string sign);
+        public List<DtoKeyValue> GetFunctionList(string? sign = null);
 
 
         /// <summary>

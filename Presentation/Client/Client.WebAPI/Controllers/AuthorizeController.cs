@@ -1,12 +1,12 @@
-﻿using Client.Interface;
-using Client.Interface.Models.Authorize;
-using IdentifierGenerator;
+﻿using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Repository.Database;
-using Shared.Models;
+using Shared.Interface;
+using Shared.Model;
+using Shared.Model.Authorize;
 using System.Xml;
 using WebAPI.Core.Filters;
 

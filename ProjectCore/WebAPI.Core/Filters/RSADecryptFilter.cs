@@ -1,6 +1,6 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Shared.Models.AppSetting;
+using Shared.Model.AppSetting;
 using System.Collections;
 using System.Reflection;
 using System.Security.Cryptography;

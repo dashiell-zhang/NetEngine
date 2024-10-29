@@ -19,9 +19,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="AlipaySDKNet.Standard" Version="4.9.296" />
-		<PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="8.0.10" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
-		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.1.2" />
 	</ItemGroup>
 
 	<ItemGroup>

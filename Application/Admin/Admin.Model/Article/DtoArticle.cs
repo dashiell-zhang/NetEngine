@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Shared.Model;
+using System.ComponentModel.DataAnnotations;
 
 namespace Admin.Model.Article
 {

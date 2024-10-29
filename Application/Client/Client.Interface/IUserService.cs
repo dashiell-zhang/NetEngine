@@ -1,5 +1,5 @@
 ﻿using Client.Interface.Models.User;
-using Shared.Models;
+using Shared.Model;
 
 namespace Client.Interface
 {

@@ -2,7 +2,7 @@
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Models;
+using Shared.Model;
 
 namespace Client.WebAPI.Controllers
 {

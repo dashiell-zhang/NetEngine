@@ -1,4 +1,4 @@
-﻿using Admin.Model;
+﻿using Shared.Model;
 
 namespace Admin.Interface
 {

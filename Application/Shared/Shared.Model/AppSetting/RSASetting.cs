@@ -1,4 +1,4 @@
-﻿namespace Shared.Models.AppSetting
+﻿namespace Shared.Model.AppSetting
 {
     public class RSASetting
     {

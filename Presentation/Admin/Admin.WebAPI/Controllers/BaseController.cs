@@ -1,8 +1,8 @@
 ﻿using Admin.Interface;
-using Admin.Model;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Model;
 using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers

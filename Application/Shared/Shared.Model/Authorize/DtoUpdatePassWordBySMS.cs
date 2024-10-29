@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Client.Interface.Models.Authorize
+namespace Shared.Model.Authorize
 {
 
     /// <summary>

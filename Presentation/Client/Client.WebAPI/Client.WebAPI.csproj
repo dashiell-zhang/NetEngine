@@ -35,7 +35,6 @@
 		<ProjectReference Include="..\..\..\Infrastructure\Logger.DataBase\Logger.DataBase.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\Logger.LocalFile\Logger.LocalFile.csproj" />
 		<ProjectReference Include="..\..\..\ProjectCore\WebAPI.Core\WebAPI.Core.csproj" />
-		<ProjectReference Include="..\..\..\Repository\Repository.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\SMS.AliCloud\SMS.AliCloud.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\SMS.TencentCloud\SMS.TencentCloud.csproj" />
 	</ItemGroup>

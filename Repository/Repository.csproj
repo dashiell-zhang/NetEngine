@@ -27,7 +27,6 @@
 
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Infrastructure\Common\Common.csproj" />
 	  <ProjectReference Include="..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
 	</ItemGroup>
 

@@ -26,6 +26,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\Infrastructure\FileStorage\FileStorage.csproj" />
+		<ProjectReference Include="..\..\..\Infrastructure\SMS\SMS.csproj" />
+		<ProjectReference Include="..\..\..\Repository\Repository.csproj" />
 		<ProjectReference Include="..\..\Shared\Shared.Interface\Shared.Interface.csproj" />
 		<ProjectReference Include="..\Client.Interface\Client.Interface.csproj" />
 	</ItemGroup>

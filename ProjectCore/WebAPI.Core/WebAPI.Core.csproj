@@ -29,7 +29,6 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Application\Shared\Shared.Service\Shared.Service.csproj" />
-	  <ProjectReference Include="..\..\Infrastructure\Common\Common.csproj" />
 	  <ProjectReference Include="..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
 	</ItemGroup>
 

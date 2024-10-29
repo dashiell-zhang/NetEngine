@@ -1,11 +1,9 @@
-﻿using Admin.Interface;
-using Client.Interface;
+﻿using Client.Interface;
 using Client.Interface.Models.Authorize;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
@@ -13,12 +11,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
+using Shared.Interface;
+using Shared.Models;
+using Shared.Models.AppSetting;
 using SMS;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using WebAPI.Core.Models.AppSetting;
-using WebAPI.Core.Models.Shared;
 
 namespace Client.Service
 {

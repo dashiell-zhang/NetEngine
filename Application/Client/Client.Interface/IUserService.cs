@@ -1,5 +1,5 @@
 ﻿using Client.Interface.Models.User;
-using WebAPI.Core.Models.Shared;
+using Shared.Models;
 
 namespace Client.Interface
 {

@@ -1,11 +1,5 @@
 ﻿using Client.Interface.Models.Pay;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WebAPI.Core.Models.Shared;
+using Shared.Models;
 
 namespace Client.Interface
 {
@@ -17,24 +11,28 @@ namespace Client.Interface
         /// </summary>
         /// <param name="orderNo">订单号</param>
         /// <param name="openId">用户OpenId</param>
+        /// <param name="notifyUrl">异步回调Url</param>
         /// <returns></returns>
-        public DtoCreateWeiXinPayJSAPIRet? CreateWeiXinPayJSAPI(string orderNo, string openId);
+        public DtoCreateWeiXinPayJSAPIRet? CreateWeiXinPayJSAPI(string orderNo, string openId, string notifyUrl);
 
 
         /// <summary>
         /// 微信支付-App模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
+        /// <param name="notifyUrl">异步回调Url</param>
         /// <returns></returns>
-        public DtoCreateWeiXinPayAppRet? CreateWeiXinPayApp(string orderNo);
+        public DtoCreateWeiXinPayAppRet? CreateWeiXinPayApp(string orderNo, string notifyUrl);
 
 
         /// <summary>
         /// 微信支付-H5模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
+        /// <param name="notifyUrl">异步回调Url</param>
+        /// <param name="clientIP">客户端ip</param>
         /// <returns></returns>
-        public string? CreateWeiXinPayH5(string orderNo);
+        public string? CreateWeiXinPayH5(string orderNo, string notifyUrl, string clientIP);
 
 
 
@@ -42,15 +40,21 @@ namespace Client.Interface
         /// 微信支付-PC模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
+        /// <param name="notifyUrl">异步回调Url</param>
         /// <returns></returns>
-        public string? CreateWeiXinPayPC(string orderNo);
+        public string? CreateWeiXinPayPC(string orderNo, string notifyUrl);
 
 
 
         /// <summary>
         /// 微信支付异步通知接口
         /// </summary>
-        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify);
+        /// <param name="mchId">商户Id</param>
+        /// <param name="weiXinPayNotify"></param>
+        /// <param name="headers"HttpHeader></param>
+        /// <param name="requestBody">bodyjson数据</param>
+        /// <returns></returns>
+        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify, Dictionary<string, string> headers, string requestBody);
 
 
         /// <summary>
@@ -70,7 +74,7 @@ namespace Client.Interface
         /// </summary>
         /// <param name="orderNo">订单号</param>
         /// <returns></returns>
-        public DtoKeyValue? CreateAliPayMiniApp(string orderNo);
+        public DtoKeyValue? CreateAliPayMiniApp(string orderNo, string notifyUrl);
 
 
 
@@ -78,8 +82,10 @@ namespace Client.Interface
         /// 支付宝支付-PC模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
+        /// <param name="notifyUrl">异步返回Url</param>
+        /// <param name="returnUrl">同步返回Url(二维码模式可为null)</param>
         /// <returns>支付宝支付URL</returns>
-        public string? CreateAliPayPC(string orderNo);
+        public string? CreateAliPayPC(string orderNo, string notifyUrl, string? returnUrl);
 
 
 
@@ -87,15 +93,19 @@ namespace Client.Interface
         /// 支付宝支付-H5模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
+        /// <param name="notifyUrl"></param>
+        /// <param name="returnUrl"></param>
+        /// <param name="quitUrl"></param>
         /// <returns>支付宝支付URL</returns>
-        public string? CreateAliPayH5(string orderNo);
+        public string? CreateAliPayH5(string orderNo, string notifyUrl, string returnUrl, string quitUrl);
 
 
         /// <summary>
         /// 支付宝异步通知接口
         /// </summary>
+        /// <param name="parameters">支付宝回调表单参数</param>
         /// <returns></returns>
-        public string? AliPayNotify();
+        public string? AliPayNotify(Dictionary<string, string> parameters);
 
 
 

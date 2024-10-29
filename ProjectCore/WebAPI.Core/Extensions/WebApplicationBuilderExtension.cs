@@ -9,6 +9,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Repository.HealthCheck;
+using Shared.Models.AppSetting;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -16,7 +17,6 @@ using WebAPI.Core.Filters;
 using WebAPI.Core.Interfaces;
 using WebAPI.Core.Libraries.HealthCheck;
 using WebAPI.Core.Libraries.Swagger;
-using WebAPI.Core.Models.AppSetting;
 
 namespace WebAPI.Core.Extensions
 {

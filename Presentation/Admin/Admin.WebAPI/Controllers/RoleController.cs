@@ -17,17 +17,13 @@ namespace Admin.WebAPI.Controllers
     {
 
 
-
         /// <summary>
         /// 获取角色列表
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoRole> GetRoleList([FromQuery] DtoPageRequest request)
-        {
-            return roleService.GetRoleList(request);
-        }
+        public DtoPageList<DtoRole> GetRoleList([FromQuery] DtoPageRequest request) => roleService.GetRoleList(request);
 
 
 
@@ -37,10 +33,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="roleId">角色ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoRole? GetRole(long roleId)
-        {
-            return roleService.GetRole(roleId);
-        }
+        public DtoRole? GetRole(long roleId) => roleService.GetRole(roleId);
 
 
 
@@ -51,10 +44,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
         [HttpPost]
-        public long CreateRole(DtoEditRole role)
-        {
-            return roleService.CreateRole(role);
-        }
+        public long CreateRole(DtoEditRole role) => roleService.CreateRole(role);
 
 
 
@@ -66,11 +56,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
         [HttpPost]
-        public bool UpdateRole(long roleId, DtoEditRole role)
-        {
-            return roleService.UpdateRole(roleId, role);
-        }
-
+        public bool UpdateRole(long roleId, DtoEditRole role) => roleService.UpdateRole(roleId, role);
 
 
 
@@ -80,11 +66,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteRole(long id)
-        {
-            return roleService.DeleteRole(id);
-        }
-
+        public bool DeleteRole(long id) => roleService.DeleteRole(id);
 
 
 
@@ -94,11 +76,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="roleId">角色ID</param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoRoleFunction> GetRoleFunction(long roleId)
-        {
-            return roleService.GetRoleFunction(roleId);
-        }
-
+        public List<DtoRoleFunction> GetRoleFunction(long roleId) => roleService.GetRoleFunction(roleId);
 
 
 
@@ -108,10 +86,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="setRoleFunction"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool SetRoleFunction(DtoSetRoleFunction setRoleFunction)
-        {
-            return roleService.SetRoleFunction(setRoleFunction);
-        }
+        public bool SetRoleFunction(DtoSetRoleFunction setRoleFunction) => roleService.SetRoleFunction(setRoleFunction);
 
 
 
@@ -120,9 +95,7 @@ namespace Admin.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoKeyValue> GetRoleKV()
-        {
-            return roleService.GetRoleKV();
-        }
+        public List<DtoKeyValue> GetRoleKV() => roleService.GetRoleKV();
+
     }
 }

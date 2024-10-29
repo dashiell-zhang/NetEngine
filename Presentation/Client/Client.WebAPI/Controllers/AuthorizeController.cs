@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Repository.Database;
+using Shared.Models;
 using System.Xml;
-using WebAPI.Core.Models.Shared;
 using WebAPI.Core.Filters;
 
 namespace Client.WebAPI.Controllers
@@ -23,17 +23,13 @@ namespace Client.WebAPI.Controllers
     {
 
 
-
         /// <summary>
         /// 获取公钥
         /// </summary>
         /// <returns></returns>
         [AllowAnonymous]
         [HttpGet]
-        public string? GetPublicKey()
-        {
-            return authorizeService.GetPublicKey();
-        }
+        public string? GetPublicKey() => authorizeService.GetPublicKey();
 
 
 
@@ -43,10 +39,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetToken(DtoGetToken login)
-        {
-            return authorizeService.GetToken(login);
-        }
+        public string? GetToken(DtoGetToken login) => authorizeService.GetToken(login);
 
 
 
@@ -56,11 +49,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinMiniApp([FromBody] DtoGetTokenByWeiXinApp login)
-        {
-            return authorizeService.GetTokenByWeiXinMiniApp(login);
-        }
-
+        public string? GetTokenByWeiXinMiniApp([FromBody] DtoGetTokenByWeiXinApp login) => authorizeService.GetTokenByWeiXinMiniApp(login);
 
 
 
@@ -70,11 +59,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenBySMS(DtoGetTokenBySMS login)
-        {
-            return authorizeService.GetTokenBySMS(login);
-        }
-
+        public string? GetTokenBySMS(DtoGetTokenBySMS login) => authorizeService.GetTokenBySMS(login);
 
 
 
@@ -86,10 +71,7 @@ namespace Client.WebAPI.Controllers
         [Authorize]
         [CacheDataFilter(TTL = 60, IsUseToken = true)]
         [HttpGet]
-        public List<DtoKeyValue> GetFunctionList(string sign)
-        {
-            return authorizeService.GetFunctionList(sign);
-        }
+        public List<DtoKeyValue> GetFunctionList(string sign) => authorizeService.GetFunctionList(sign);
 
 
 
@@ -99,10 +81,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="sendVerifyCode"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool SendSMSVerifyCode(DtoSendSMSVerifyCode sendVerifyCode)
-        {
-            return authorizeService.SendSMSVerifyCode(sendVerifyCode);
-        }
+        public bool SendSMSVerifyCode(DtoSendSMSVerifyCode sendVerifyCode) => authorizeService.SendSMSVerifyCode(sendVerifyCode);
 
 
 
@@ -112,11 +91,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login)
-        {
-            return authorizeService.GetTokenByWeiXinApp(login);
-        }
-
+        public string? GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login) => authorizeService.GetTokenByWeiXinApp(login);
 
 
 
@@ -128,10 +103,7 @@ namespace Client.WebAPI.Controllers
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
-        public bool UpdatePasswordByOldPassword(DtoUpdatePasswordByOldPassword updatePassword)
-        {
-            return authorizeService.UpdatePasswordByOldPassword(updatePassword);
-        }
+        public bool UpdatePasswordByOldPassword(DtoUpdatePasswordByOldPassword updatePassword) => authorizeService.UpdatePasswordByOldPassword(updatePassword);
 
 
 
@@ -142,11 +114,7 @@ namespace Client.WebAPI.Controllers
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
-        public bool UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword)
-        {
-            return authorizeService.UpdatePasswordBySMS(updatePassword);
-        }
-
+        public bool UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword) => authorizeService.UpdatePasswordBySMS(updatePassword);
 
 
 
@@ -156,11 +124,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="passWord"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoKeyValue GeneratePassword(string passWord)
-        {
-            return authorizeService.GeneratePassword(passWord);
-        }
-
+        public DtoKeyValue GeneratePassword(string passWord) => authorizeService.GeneratePassword(passWord);
 
 
 

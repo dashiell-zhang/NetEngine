@@ -1,9 +1,12 @@
 ﻿using System.Security.Claims;
 
-namespace Admin.Interface
+namespace Shared.Interface
 {
     public interface IUserContext
     {
+
+        public bool IsAuthenticated { get; }
+
 
         public long UserId { get; }
 

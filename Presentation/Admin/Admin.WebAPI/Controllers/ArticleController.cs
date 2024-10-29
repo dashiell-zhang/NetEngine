@@ -21,10 +21,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoCategory> GetCategoryList([FromQuery] DtoPageRequest request)
-        {
-            return articleService.GetCategoryList(request);
-        }
+        public DtoPageList<DtoCategory> GetCategoryList([FromQuery] DtoPageRequest request) => articleService.GetCategoryList(request);
 
 
 
@@ -33,10 +30,7 @@ namespace Admin.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoKeyValueChild> GetCategoryTreeList()
-        {
-            return articleService.GetCategoryTreeList();
-        }
+        public List<DtoKeyValueChild> GetCategoryTreeList() => articleService.GetCategoryTreeList();
 
 
 
@@ -46,11 +40,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="categoryId">栏目ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoCategory? GetCategory(long categoryId)
-        {
-            return articleService.GetCategory(categoryId);
-        }
-
+        public DtoCategory? GetCategory(long categoryId) => articleService.GetCategory(categoryId);
 
 
 
@@ -60,11 +50,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="createCategory"></param>
         /// <returns></returns>
         [HttpPost]
-        public long CreateCategory(DtoEditCategory createCategory)
-        {
-            return articleService.CreateCategory(createCategory);
-        }
-
+        public long CreateCategory(DtoEditCategory createCategory) => articleService.CreateCategory(createCategory);
 
 
 
@@ -75,10 +61,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="updateCategory"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory)
-        {
-            return articleService.UpdateCategory(categoryId, updateCategory);
-        }
+        public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory) => articleService.UpdateCategory(categoryId, updateCategory);
 
 
 
@@ -88,11 +71,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteCategory(long id)
-        {
-            return articleService.DeleteCategory(id);
-        }
-
+        public bool DeleteCategory(long id) => articleService.DeleteCategory(id);
 
 
 
@@ -102,12 +81,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoArticle> GetArticleList([FromQuery] DtoPageRequest request)
-        {
-            return articleService.GetArticleList(request);
-        }
-
-
+        public DtoPageList<DtoArticle> GetArticleList([FromQuery] DtoPageRequest request) => articleService.GetArticleList(request);
 
 
 
@@ -117,11 +91,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="articleId">文章ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoArticle? GetArticle(long articleId)
-        {
-            return articleService.GetArticle(articleId);
-        }
-
+        public DtoArticle? GetArticle(long articleId) => articleService.GetArticle(articleId);
 
 
 
@@ -132,11 +102,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="fileKey">文件key</param>
         /// <returns></returns>
         [HttpPost]
-        public long CreateArticle(DtoEditArticle createArticle, long fileKey)
-        {
-            return articleService.CreateArticle(createArticle, fileKey);
-        }
-
+        public long CreateArticle(DtoEditArticle createArticle, long fileKey) => articleService.CreateArticle(createArticle, fileKey);
 
 
 
@@ -147,10 +113,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="updateArticle"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool UpdateArticle(long articleId, DtoEditArticle updateArticle)
-        {
-            return articleService.UpdateArticle(articleId, updateArticle);
-        }
+        public bool UpdateArticle(long articleId, DtoEditArticle updateArticle) => articleService.UpdateArticle(articleId, updateArticle);
 
 
 
@@ -160,10 +123,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteArticle(long id)
-        {
-            return articleService.DeleteArticle(id);
-        }
+        public bool DeleteArticle(long id) => articleService.DeleteArticle(id);
 
 
     }

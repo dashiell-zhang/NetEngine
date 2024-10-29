@@ -3,12 +3,10 @@ using Admin.Model;
 using Admin.Model.Article;
 using Common;
 using IdentifierGenerator;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPI.Core.Libraries;
+using Shared.Interface;
 
 namespace Admin.Service
 {
@@ -145,7 +143,7 @@ namespace Admin.Service
 
 
 
-        public DtoPageList<DtoArticle> GetArticleList([FromQuery] DtoPageRequest request)
+        public DtoPageList<DtoArticle> GetArticleList(DtoPageRequest request)
         {
             DtoPageList<DtoArticle> data = new();
 

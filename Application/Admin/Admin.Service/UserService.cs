@@ -5,10 +5,10 @@ using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
+using Shared.Interface;
 using System.Text;
 
 namespace Admin.Service
@@ -21,7 +21,7 @@ namespace Admin.Service
 
 
 
-        public DtoPageList<DtoUser> GetUserList([FromQuery] DtoPageRequest request)
+        public DtoPageList<DtoUser> GetUserList(DtoPageRequest request)
         {
             DtoPageList<DtoUser> data = new();
 
@@ -46,7 +46,7 @@ namespace Admin.Service
 
 
 
-      
+
         public DtoUser? GetUser(long? userId)
         {
 
@@ -68,7 +68,7 @@ namespace Admin.Service
 
 
 
-       
+
         public long? CreateUser(DtoEditUser createUser)
         {
             string key = "userName:" + createUser.UserName.ToLower();
@@ -198,7 +198,7 @@ namespace Admin.Service
 
 
 
-       
+
         public bool DeleteUser(long id)
         {
             var user = db.TUser.Where(t => t.Id == id).FirstOrDefault();
@@ -251,7 +251,7 @@ namespace Admin.Service
 
 
 
-      
+
         public bool SetUserFunction(DtoSetUserFunction setUserFunction)
         {
 

@@ -19,17 +19,12 @@ namespace Admin.WebAPI.Controllers
     {
 
 
-
         /// <summary>
         /// 获取站点信息
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public DtoSite GetSite()
-        {
-            return siteService.GetSite();
-        }
-
+        public DtoSite GetSite() => siteService.GetSite();
 
 
 
@@ -39,10 +34,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="editSite"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool EditSite(DtoSite editSite)
-        {
-            return siteService.EditSite(editSite);
-        }
+        public bool EditSite(DtoSite editSite) => siteService.EditSite(editSite);
 
 
 

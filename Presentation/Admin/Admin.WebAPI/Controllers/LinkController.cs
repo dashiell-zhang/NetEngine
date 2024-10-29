@@ -15,17 +15,13 @@ namespace Admin.WebAPI.Controllers
     {
 
 
-
         /// <summary>
         /// 获取友情链接列表
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoLink> GetLinkList([FromQuery] DtoPageRequest request)
-        {
-            return linkService.GetLinkList(request);
-        }
+        public DtoPageList<DtoLink> GetLinkList([FromQuery] DtoPageRequest request) => linkService.GetLinkList(request);
 
 
 
@@ -35,11 +31,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="linkId">链接ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoLink? GetLink(long linkId)
-        {
-            return linkService.GetLink(linkId);
-        }
-
+        public DtoLink? GetLink(long linkId) => linkService.GetLink(linkId);
 
 
 
@@ -49,11 +41,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="createLink"></param>
         /// <returns></returns>
         [HttpPost]
-        public long CreateLink(DtoEditLink createLink)
-        {
-            return linkService.CreateLink(createLink);
-        }
-
+        public long CreateLink(DtoEditLink createLink) => linkService.CreateLink(createLink);
 
 
 
@@ -64,10 +52,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="updateLink"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool UpdateLink(long linkId, DtoEditLink updateLink)
-        {
-            return linkService.UpdateLink(linkId, updateLink);
-        }
+        public bool UpdateLink(long linkId, DtoEditLink updateLink) => linkService.UpdateLink(linkId, updateLink);
 
 
 
@@ -77,10 +62,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteLink(long id)
-        {
-            return linkService.DeleteLink(id);
-        }
+        public bool DeleteLink(long id) => linkService.DeleteLink(id);
 
 
     }

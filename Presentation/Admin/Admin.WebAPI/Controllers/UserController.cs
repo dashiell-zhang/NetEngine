@@ -26,10 +26,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoUser> GetUserList([FromQuery] DtoPageRequest request)
-        {
-            return userService.GetUserList(request);
-        }
+        public DtoPageList<DtoUser> GetUserList([FromQuery] DtoPageRequest request) => userService.GetUserList(request);
 
 
 
@@ -39,10 +36,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoUser? GetUser(long? userId)
-        {
-            return userService?.GetUser(userId);
-        }
+        public DtoUser? GetUser(long? userId) => userService?.GetUser(userId);
 
 
 
@@ -52,10 +46,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="createUser"></param>
         /// <returns></returns>
         [HttpPost]
-        public long? CreateUser(DtoEditUser createUser)
-        {
-            return userService.CreateUser(createUser);
-        }
+        public long? CreateUser(DtoEditUser createUser) => userService.CreateUser(createUser);
 
 
 
@@ -66,10 +57,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="updateUser"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool UpdateUser(long userId, DtoEditUser updateUser)
-        {
-            return userService.UpdateUser(userId, updateUser);
-        }
+        public bool UpdateUser(long userId, DtoEditUser updateUser) => userService.UpdateUser(userId, updateUser);
 
 
 
@@ -79,10 +67,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteUser(long id)
-        {
-            return userService.DeleteUser(id);
-        }
+        public bool DeleteUser(long id) => userService.DeleteUser(id);
 
 
 
@@ -92,10 +77,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoUserFunction> GetUserFunction(long userId)
-        {
-            return userService.GetUserFunction(userId);
-        }
+        public List<DtoUserFunction> GetUserFunction(long userId) => userService.GetUserFunction(userId);
 
 
 
@@ -106,11 +88,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [QueueLimitFilter()]
         [HttpPost]
-        public bool SetUserFunction(DtoSetUserFunction setUserFunction)
-        {
-            return userService.SetUserFunction(setUserFunction);
-        }
-
+        public bool SetUserFunction(DtoSetUserFunction setUserFunction) => userService.SetUserFunction(setUserFunction);
 
 
         /// <summary>
@@ -119,10 +97,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="userId"></param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoUserRole> GetUserRoleList(long userId)
-        {
-            return userService.GetUserRoleList(userId);
-        }
+        public List<DtoUserRole> GetUserRoleList(long userId) => userService.GetUserRoleList(userId);
 
 
 
@@ -133,11 +108,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [QueueLimitFilter()]
         [HttpPost]
-        public bool SetUserRole(DtoSetUserRole setUserRole)
-        {
-            return userService.SetUserRole(setUserRole);
-        }
-
+        public bool SetUserRole(DtoSetUserRole setUserRole) => userService.SetUserRole(setUserRole);
 
 
     }

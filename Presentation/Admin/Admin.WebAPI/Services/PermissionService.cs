@@ -7,10 +7,10 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
+using Shared.Models.AppSetting;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using WebAPI.Core.Interfaces;
-using WebAPI.Core.Models.AppSetting;
 
 namespace Admin.WebAPI.Services
 {

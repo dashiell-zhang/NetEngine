@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Admin.Model;
 
 namespace Admin.Model.Article
 {

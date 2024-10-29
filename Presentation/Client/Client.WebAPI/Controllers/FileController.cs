@@ -1,11 +1,11 @@
-﻿using Client.Interface;
-using Common;
+﻿using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Repository.Database;
+using Shared.Interface;
+using Shared.Interface.Models;
 using SkiaSharp;
-using WebAPI.Core.Models.Shared;
 
 namespace Client.WebAPI.Controllers
 {
@@ -16,25 +16,18 @@ namespace Client.WebAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class FileController(IFileService fileService) : ControllerBase
+    public class FileController(IFileService fileService, IWebHostEnvironment webHostEnvironment) : ControllerBase
     {
 
+        private readonly string savePath = webHostEnvironment.WebRootPath;
 
 
         /// <summary>
         /// 远程单文件上传接口
         /// </summary>
-        /// <param name="business">业务领域</param>
-        /// <param name="key">记录值</param>
-        /// <param name="sign">自定义标记</param>
-        /// <param name="isPublicRead">是否允许公开访问</param>
-        /// <param name="fileInfo">Key为文件URL,Value为文件名称</param>
         /// <returns>文件ID</returns>
         [HttpPost]
-        public long RemoteUploadFile([FromQuery] string business, [FromQuery] long? key, [FromQuery] string sign, [FromQuery] bool isPublicRead, [FromBody] DtoKeyValue fileInfo)
-        {
-            return fileService.RemoteUploadFile(business, key, sign, isPublicRead, fileInfo);
-        }
+        public long RemoteUploadFile(DtoRemoteUploadFile uploadFile) => fileService.RemoteUploadFile(savePath, uploadFile);
 
 
 
@@ -51,7 +44,24 @@ namespace Client.WebAPI.Controllers
         [HttpPost]
         public long UploadFile([FromQuery] string business, [FromQuery] long? key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
         {
-            return fileService.UploadFile(business, key, sign, isPublicRead, file);
+            if (file.Length > 0)
+            {
+                DtoUploadFile uploadFile = new()
+                {
+                    Business = business,
+                    Key = key,
+                    Sign = sign,
+                    IsPublicRead = isPublicRead,
+                };
+
+                file.CopyTo(uploadFile.FileContent);
+
+                return fileService.UploadFile(savePath, uploadFile);
+            }
+            else
+            {
+                throw new CustomException("请勿上传空文件");
+            }
         }
 
 
@@ -171,10 +181,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="fileId">文件ID</param>
         /// <returns></returns>
         [HttpGet]
-        public string? GetFileURL(long fileId)
-        {
-            return fileService.GetFileURL(fileId);
-        }
+        public string? GetFileURL(long fileId) => fileService.GetFileURL(fileId);
 
 
 
@@ -184,10 +191,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="id">文件ID</param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteFile(long id)
-        {
-            return fileService.DeleteFile(id);
-        }
+        public bool DeleteFile(long id) => fileService.DeleteFile(id);
 
 
     }

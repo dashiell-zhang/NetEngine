@@ -1,4 +1,4 @@
-﻿namespace WebAPI.Core.Models.AppSetting
+﻿namespace Shared.Models.AppSetting
 {
     public class RSASetting
     {

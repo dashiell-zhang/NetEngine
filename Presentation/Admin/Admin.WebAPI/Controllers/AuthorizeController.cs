@@ -22,18 +22,13 @@ namespace Admin.WebAPI.Controllers
     {
 
 
-
         /// <summary>
         /// 获取Token认证信息
         /// </summary>
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetToken(DtoLogin login)
-        {
-            return authorizeService.GetToken(login);
-        }
-
+        public string? GetToken(DtoLogin login) => authorizeService.GetToken(login);
 
 
 
@@ -44,11 +39,7 @@ namespace Admin.WebAPI.Controllers
         [SignVerifyFilter]
         [Authorize]
         [HttpGet]
-        public List<string> GetFunctionList()
-        {
-            return authorizeService.GetFunctionList();
-        }
-
+        public List<string> GetFunctionList() => authorizeService.GetFunctionList();
 
 
 

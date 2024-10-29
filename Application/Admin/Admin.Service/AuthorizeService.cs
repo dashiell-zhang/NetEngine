@@ -9,10 +9,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
+using Shared.Interface;
+using Shared.Models.AppSetting;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using WebAPI.Core.Models.AppSetting;
 
 namespace Admin.Service
 {

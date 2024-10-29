@@ -1,5 +1,5 @@
-﻿using Admin.Interface;
-using Common;
+﻿using Common;
+using Shared.Interface;
 using System.Security.Claims;
 
 namespace WebAPI.Core.Services
@@ -10,7 +10,10 @@ namespace WebAPI.Core.Services
 
         private readonly IHttpContextAccessor _httpContextAccessor;
 
+
         private readonly Lazy<long> _userId;
+
+        private readonly Lazy<bool> _isAuthenticated;
 
         private readonly Lazy<IEnumerable<Claim>> _claims;
 
@@ -20,6 +23,13 @@ namespace WebAPI.Core.Services
             _httpContextAccessor = httpContextAccessor;
 
             // 使用 Lazy 仅在首次访问时处理赋值
+
+            _isAuthenticated = new Lazy<bool>(() =>
+            {
+                var isAuthenticated = _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated;
+
+                return isAuthenticated != null && isAuthenticated.Value;
+            });
 
             _userId = new Lazy<long>(() =>
             {
@@ -42,10 +52,13 @@ namespace WebAPI.Core.Services
 
 
 
+        public bool IsAuthenticated => _isAuthenticated.Value;
+
+
         public long UserId => _userId.Value;
 
 
-
         public IEnumerable<Claim> Claims => _claims.Value;
+
     }
 }

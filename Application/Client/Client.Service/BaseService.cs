@@ -3,7 +3,7 @@ using Common;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using WebAPI.Core.Models.Shared;
+using Shared.Models;
 
 namespace Client.Service
 {

@@ -1,10 +1,10 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Shared.Models.AppSetting;
 using System.Collections;
 using System.Reflection;
 using System.Security.Cryptography;
 using WebAPI.Core.Attributes;
-using WebAPI.Core.Models.AppSetting;
 
 namespace WebAPI.Core.Filters
 {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.IdentityModel.JsonWebTokens;
+using Shared.Models;
 using System.IO.Compression;
 using System.Text;
-using WebAPI.Core.Models.Shared;
 
 namespace WebAPI.Core.Libraries
 {

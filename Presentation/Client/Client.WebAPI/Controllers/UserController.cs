@@ -2,7 +2,7 @@
 using Client.Interface.Models.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Core.Models.Shared;
+using Shared.Models;
 using WebAPI.Core.Filters;
 
 namespace Client.WebAPI.Controllers
@@ -26,10 +26,7 @@ namespace Client.WebAPI.Controllers
         /// <returns></returns>
         [HttpGet]
         [CacheDataFilter(TTL = 60, IsUseToken = true)]
-        public DtoUser? GetUser(long? userId)
-        {
-            return userService.GetUser(userId);
-        }
+        public DtoUser? GetUser(long? userId) => userService.GetUser(userId);
 
 
 
@@ -39,10 +36,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
         /// <returns></returns>
         [HttpPost]
-        public bool EditUserPhoneBySms(DtoKeyValue keyValue)
-        {
-            return userService.EditUserPhoneBySms(keyValue);
-        }
+        public bool EditUserPhoneBySms(DtoKeyValue keyValue) => userService.EditUserPhoneBySms(keyValue);
 
 
     }

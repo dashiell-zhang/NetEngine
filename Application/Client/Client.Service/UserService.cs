@@ -1,13 +1,12 @@
-﻿using Admin.Interface;
-using Client.Interface;
+﻿using Client.Interface;
 using Client.Interface.Models.User;
 using Common;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
+using Shared.Interface;
+using Shared.Models;
 using System.Text;
-using WebAPI.Core.Models.Shared;
 
 namespace Client.Service
 {

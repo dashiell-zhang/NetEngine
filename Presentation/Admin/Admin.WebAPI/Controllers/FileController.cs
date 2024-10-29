@@ -1,9 +1,10 @@
-﻿using Admin.Interface;
-using Common;
+﻿using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Repository.Database;
+using Shared.Interface;
+using Shared.Interface.Models;
 using SkiaSharp;
 using WebAPI.Core.Filters;
 
@@ -19,7 +20,7 @@ namespace Admin.WebAPI.Controllers
     [ApiController]
     public class FileController(IUserContext userContext, IFileService fileService, DatabaseContext db, IWebHostEnvironment webHostEnvironment) : ControllerBase
     {
-        private readonly string rootPath = webHostEnvironment.WebRootPath;
+        private readonly string savePath = webHostEnvironment.WebRootPath;
 
         private long userId => userContext.UserId;
 
@@ -38,7 +39,24 @@ namespace Admin.WebAPI.Controllers
         [HttpPost]
         public long UploadFile([FromQuery] string business, [FromQuery] long? key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
         {
-            return fileService.UploadFile(business, key, sign, isPublicRead, file);
+            if (file.Length > 0)
+            {
+                DtoUploadFile uploadFile = new()
+                {
+                    Business = business,
+                    Key = key,
+                    Sign = sign,
+                    IsPublicRead = isPublicRead,
+                };
+
+                file.CopyTo(uploadFile.FileContent);
+
+                return fileService.UploadFile(savePath, uploadFile);
+            }
+            else
+            {
+                throw new CustomException("请勿上传空文件");
+            }
         }
 
 
@@ -57,7 +75,7 @@ namespace Admin.WebAPI.Controllers
 
             if (file != null)
             {
-                string physicalPath = Path.Combine(rootPath, file.Path); ;
+                string physicalPath = Path.Combine(savePath, file.Path); ;
 
                 string fileExt = Path.GetExtension(file.Path);
 
@@ -92,7 +110,7 @@ namespace Admin.WebAPI.Controllers
 
             if (file != null)
             {
-                var physicalPath = Path.Combine(rootPath, file.Path);
+                var physicalPath = Path.Combine(savePath, file.Path);
 
                 string fileExt = Path.GetExtension(file.Path);
                 FileExtensionContentTypeProvider provider = new();
@@ -152,10 +170,8 @@ namespace Admin.WebAPI.Controllers
         /// <param name="fileId">文件ID</param>
         /// <returns></returns>
         [HttpGet]
-        public string? GetFilePath(long fileId)
-        {
-            return fileService.GetFilePath(fileId);
-        }
+        public string? GetFileURL(long fileId) => fileService.GetFileURL(fileId);
+
 
 
 
@@ -166,10 +182,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id">文件ID</param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteFile(long id)
-        {
-            return fileService.DeleteFile(id);
-        }
+        public bool DeleteFile(long id) => fileService.DeleteFile(id);
 
 
     }

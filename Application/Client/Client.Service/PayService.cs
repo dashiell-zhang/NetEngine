@@ -7,27 +7,25 @@ using Client.Interface;
 using Client.Interface.Models.Pay;
 using Common;
 using DistributedLock;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
+using Shared.Models;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using WebAPI.Core.Libraries;
-using WebAPI.Core.Models.Shared;
 
 namespace Client.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock, IHttpContextAccessor httpContextAccessor) : IPayService
+    public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock) : IPayService
     {
         private readonly HttpClient httpClient = httpClientFactory.CreateClient();
 
 
-        public DtoCreateWeiXinPayJSAPIRet? CreateWeiXinPayJSAPI(string orderNo, string openId)
+        public DtoCreateWeiXinPayJSAPIRet? CreateWeiXinPayJSAPI(string orderNo, string openId, string notifyUrl)
         {
             string key = "wxpayJSAPI" + orderNo;
 
@@ -49,7 +47,7 @@ namespace Client.Service
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        var notifyURL = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
+                        notifyUrl = notifyUrl + mchId;
 
                         var reqData = new
                         {
@@ -57,7 +55,7 @@ namespace Client.Service
                             out_trade_no = order.OrderNo,
                             appid = appId,
                             description = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
-                            notify_url = notifyURL,
+                            notify_url = notifyUrl,
                             amount = new
                             {
                                 total = price,
@@ -111,7 +109,7 @@ namespace Client.Service
         }
 
 
-        public DtoCreateWeiXinPayAppRet? CreateWeiXinPayApp(string orderNo)
+        public DtoCreateWeiXinPayAppRet? CreateWeiXinPayApp(string orderNo, string notifyUrl)
         {
             string key = "wxpayApp" + orderNo;
 
@@ -133,7 +131,7 @@ namespace Client.Service
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        var notifyURL = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
+                        notifyUrl = notifyUrl + mchId;
 
                         var reqData = new
                         {
@@ -141,7 +139,7 @@ namespace Client.Service
                             out_trade_no = order.OrderNo,
                             appid = appId,
                             description = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
-                            notify_url = notifyURL,
+                            notify_url = notifyUrl,
                             amount = new
                             {
                                 total = price,
@@ -191,7 +189,7 @@ namespace Client.Service
 
 
 
-        public string? CreateWeiXinPayH5(string orderNo)
+        public string? CreateWeiXinPayH5(string orderNo, string notifyUrl, string clientIP)
         {
             string key = "wxpayH5URL" + orderNo;
 
@@ -212,7 +210,7 @@ namespace Client.Service
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        var notifyURL = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
+                        notifyUrl = notifyUrl + mchId;
 
                         var reqData = new
                         {
@@ -220,7 +218,7 @@ namespace Client.Service
                             out_trade_no = order.OrderNo,
                             appid = appId,
                             description = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
-                            notify_url = notifyURL,
+                            notify_url = notifyUrl,
                             amount = new
                             {
                                 total = price,
@@ -228,7 +226,7 @@ namespace Client.Service
                             },
                             scene_info = new
                             {
-                                payer_client_ip = httpContextAccessor.HttpContext!.GetRemoteIP(),
+                                payer_client_ip = clientIP,
                                 h5_info = new
                                 {
                                     type = "Wap"
@@ -262,7 +260,7 @@ namespace Client.Service
 
 
 
-        public string? CreateWeiXinPayPC(string orderNo)
+        public string? CreateWeiXinPayPC(string orderNo, string notifyUrl)
         {
             string key = "wxpayPCURL" + orderNo;
 
@@ -283,7 +281,7 @@ namespace Client.Service
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        var notifyURL = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
+                        notifyUrl = notifyUrl + mchId;
 
                         var reqData = new
                         {
@@ -291,7 +289,7 @@ namespace Client.Service
                             out_trade_no = order.OrderNo,
                             appid = appId,
                             description = DateTime.UtcNow.ToString("yyyyMMddHHmm") + "交易",
-                            notify_url = notifyURL,
+                            notify_url = notifyUrl,
                             amount = new
                             {
                                 total = price,
@@ -325,15 +323,12 @@ namespace Client.Service
 
 
 
-        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify)
+        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify, Dictionary<string, string> headers, string requestBody)
         {
             bool isSuccess = false;
 
-            string requestBody = httpContextAccessor.HttpContext!.GetRequestBody();
-
             try
             {
-                var headers = httpContextAccessor.HttpContext!.Request.Headers.ToDictionary(t => t.Key, t => t.Value.ToString());
 
                 var weiXinPayCertificates = GetWeiXinPayCertificates(mchId);
 
@@ -425,28 +420,19 @@ namespace Client.Service
                 logger.LogError("WeiXinPayNotify：{content}", JsonHelper.ObjectToJson(content));
             }
 
+            DtoWeiXinPayNotifyRet retValue = new();
 
             if (!isSuccess)
             {
-                httpContextAccessor.HttpContext!.Response.StatusCode = 501;
-
-                DtoWeiXinPayNotifyRet retValue = new()
-                {
-                    code = "FAIL",
-                    message = "失败"
-                };
-
-                return retValue;
+                retValue.code = "FAIL";
+                retValue.message = "失败";
             }
             else
             {
-                DtoWeiXinPayNotifyRet retValue = new()
-                {
-                    code = "SUCCESS"
-                };
-
-                return retValue;
+                retValue.code = "SUCCESS";
             }
+
+            return retValue;
         }
 
 
@@ -462,13 +448,15 @@ namespace Client.Service
             if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null)
             {
 
-                var notifyURL = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
+                //var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
+
+                string notifyUrl = "";
 
                 var reqData = new
                 {
                     out_refund_no = "", //退款单号
                     transaction_id = "",    //微信交易流水号
-                    notify_url = notifyURL,
+                    notify_url = notifyUrl,
                     amount = new
                     {
                         refund = 1, //退款金额
@@ -531,7 +519,7 @@ namespace Client.Service
         }
 
 
-        public DtoKeyValue? CreateAliPayMiniApp(string orderNo)
+        public DtoKeyValue? CreateAliPayMiniApp(string orderNo, string notifyUrl)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp").ToList();
 
@@ -551,8 +539,6 @@ namespace Client.Service
 
                 if (order != null && order.AliPayUserId != null)
                 {
-                    var notifyURL = httpContextAccessor.HttpContext!.GetBaseURL() + "/api/Pay/AliPayNotify";
-
 
                     string price = Convert.ToString(order.Price);
 
@@ -574,7 +560,7 @@ namespace Client.Service
 
                     request.SetBizModel(model);
 
-                    request.SetNotifyUrl(notifyURL);
+                    request.SetNotifyUrl(notifyUrl);
 
                     AlipayTradeCreateResponse response = client.Execute(request);
 
@@ -602,7 +588,7 @@ namespace Client.Service
         }
 
 
-        public string? CreateAliPayPC(string orderNo)
+        public string? CreateAliPayPC(string orderNo, string notifyUrl, string? returnUrl)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
 
@@ -622,9 +608,6 @@ namespace Client.Service
 
                 if (order != null && order.State == "待支付")
                 {
-
-                    var returnURL = httpContextAccessor.HttpContext!.GetBaseURL();
-                    var notifyURL = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/AliPayNotify";
 
                     string price = order.Price.ToString();
 
@@ -647,9 +630,9 @@ namespace Client.Service
 
                     AlipayTradePagePayRequest request = new();
 
-                    request.SetReturnUrl(returnURL);// 设置支付完成同步回调地址
+                    request.SetReturnUrl(returnUrl);// 设置支付完成同步回调地址
 
-                    request.SetNotifyUrl(notifyURL);// 设置支付完成异步通知接收地址
+                    request.SetNotifyUrl(notifyUrl);// 设置支付完成异步通知接收地址
 
                     request.SetBizModel(model);// 将业务model载入到request
 
@@ -665,7 +648,7 @@ namespace Client.Service
         }
 
 
-        public string? CreateAliPayH5(string orderNo)
+        public string? CreateAliPayH5(string orderNo, string notifyUrl, string returnUrl, string quitUrl)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
 
@@ -679,11 +662,6 @@ namespace Client.Service
 
                 if (order != null && order.State == "待支付")
                 {
-
-                    var returnURL = httpContextAccessor.HttpContext!.GetBaseURL();
-                    var notifyURL = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/AliPayNotify";
-
-                    var quitURL = httpContextAccessor.HttpContext!.GetBaseURL();
 
                     string price = order.Price.ToString();
 
@@ -701,14 +679,14 @@ namespace Client.Service
                         TotalAmount = price,
                         Body = orderDescription,
                         ProductCode = "QUICK_WAP_WAY",
-                        QuitUrl = quitURL
+                        QuitUrl = quitUrl
                     };
 
                     AlipayTradeWapPayRequest request = new();
 
-                    request.SetReturnUrl(returnURL);// 设置支付完成同步回调地址
+                    request.SetReturnUrl(returnUrl);// 设置支付完成同步回调地址
 
-                    request.SetNotifyUrl(notifyURL);// 设置支付完成异步通知接收地址
+                    request.SetNotifyUrl(notifyUrl);// 设置支付完成异步通知接收地址
 
                     request.SetBizModel(model);// 将业务model载入到request
 
@@ -726,10 +704,8 @@ namespace Client.Service
 
 
 
-        public string? AliPayNotify()
+        public string? AliPayNotify(Dictionary<string, string> parameters)
         {
-            //获取当前请求中的post参数
-            var parameters = httpContextAccessor.HttpContext!.Request.Form.ToDictionary(t => t.Key, t => t.Value.ToString());
 
             if (parameters.Count > 0)
             {
@@ -861,26 +837,6 @@ namespace Client.Service
                 }
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

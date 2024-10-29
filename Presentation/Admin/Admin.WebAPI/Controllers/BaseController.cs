@@ -17,7 +17,6 @@ namespace Admin.WebAPI.Controllers
     {
 
 
-
         /// <summary>
         /// 获取省市级联地址数据
         /// </summary>
@@ -26,10 +25,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
         [HttpGet]
-        public List<DtoKeyValue> GetRegion(int provinceId, int cityId)
-        {
-            return baseService.GetRegion(provinceId, cityId);
-        }
+        public List<DtoKeyValue> GetRegion(int provinceId, int cityId) => baseService.GetRegion(provinceId, cityId);
 
 
 
@@ -38,10 +34,7 @@ namespace Admin.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoKeyValueChild> GetRegionAll()
-        {
-            return baseService.GetRegionAll();
-        }
+        public List<DtoKeyValueChild> GetRegionAll() => baseService.GetRegionAll();
 
 
 
@@ -65,11 +58,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="groupId"></param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoKeyValue> GetValueList(long groupId)
-        {
-
-            return baseService.GetValueList(groupId);
-        }
+        public List<DtoKeyValue> GetValueList(long groupId) => baseService.GetValueList(groupId);
 
 
 
@@ -78,10 +67,7 @@ namespace Admin.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public long GetSnowflakeId()
-        {
-            return idService.GetId();
-        }
+        public long GetSnowflakeId() => idService.GetId();
 
     }
 }

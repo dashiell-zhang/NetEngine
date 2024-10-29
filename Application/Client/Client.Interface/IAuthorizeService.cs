@@ -1,5 +1,5 @@
 ﻿using Client.Interface.Models.Authorize;
-using WebAPI.Core.Models.Shared;
+using Shared.Models;
 
 namespace Client.Interface
 {

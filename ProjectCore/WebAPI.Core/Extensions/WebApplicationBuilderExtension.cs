@@ -23,7 +23,6 @@ namespace WebAPI.Core.Extensions
     public static class WebApplicationBuilderExtension
     {
 
-
         /// <summary>
         /// 设置 Kestrel 配置
         /// </summary>
@@ -46,17 +45,14 @@ namespace WebAPI.Core.Extensions
                         {
                             string password = certConf.GetValue<string>("Password")!;
 
-                            x509Certificate2s.Import(sslPath, password);
-                            options.ServerCertificateChain = x509Certificate2s;
+                            x509Certificate2s = X509CertificateLoader.LoadPkcs12CollectionFromFile(sslPath, password);
                         }
                         else if (sslPath.EndsWith("pem", StringComparison.OrdinalIgnoreCase) || sslPath.EndsWith("crt", StringComparison.OrdinalIgnoreCase))
                         {
                             x509Certificate2s.ImportFromPemFile(sslPath);
-                            options.ServerCertificateChain = x509Certificate2s;
-
                         }
+                        options.ServerCertificateChain = x509Certificate2s;
                     }
-
                 });
             });
         }

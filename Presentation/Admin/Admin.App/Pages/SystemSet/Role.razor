@@ -42,9 +42,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                        OnConfirm="_=>DeleteRole(context.Id)"
-                                        OkText="Yes"
-                                        CancelText="No">
+                                            OnConfirm="_=>DeleteRole(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -101,14 +101,14 @@
     <Table DataSource="roleFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" @bind-Checked="@context.IsCheck" OnChange="isCheck=>SetRoleFunction(context.Id,isCheck)">@context.Name</Checkbox>
+            <Checkbox Label="@context.Id.ToString()" Checked="context.IsCheck" OnChange="isCheck=>SetRoleFunction(context.Id,isCheck)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Checked="@item.IsCheck" OnChange="isCheck=>SetRoleFunction(item.Id,isCheck)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" Checked="item.IsCheck" OnChange="isCheck=>SetRoleFunction(item.Id,isCheck)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>

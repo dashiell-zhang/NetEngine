@@ -127,14 +127,14 @@
     <Table DataSource="userFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" @bind-Checked="@context.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,context)">@context.Name</Checkbox>
+            <Checkbox Label="@context.Id.ToString()" Checked="context.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,context)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Checked="@item.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,item)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" Checked="item.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,item)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>

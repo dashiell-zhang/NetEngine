@@ -984,7 +984,10 @@ namespace Client.Service
             {
                 string message = $"{wechatpayTimestamp}\n{wechatPayNonce}\n{body}\n";
 
-                using X509Certificate2 x509Certificate2 = new(Encoding.UTF8.GetBytes(certificate));
+                byte[] certificateBytes = Encoding.UTF8.GetBytes(certificate);
+
+                using X509Certificate2 x509Certificate2 = X509CertificateLoader.LoadCertificate(certificateBytes);
+
                 using var rsa = x509Certificate2.GetRSAPublicKey();
 
                 if (rsa != null)

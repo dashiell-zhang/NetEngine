@@ -118,7 +118,7 @@ namespace Client.WebAPI
                     UseCookies = false
                 };
                 var sslPath = Path.Combine(Directory.GetCurrentDirectory(), "ssl", "xxxx.p12");
-                using X509Certificate2 certificate = new(sslPath, "证书密码", X509KeyStorageFlags.MachineKeySet);
+                using X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(sslPath, "证书密码", X509KeyStorageFlags.MachineKeySet);
                 handler.ClientCertificates.Add(certificate);
                 return handler;
             });

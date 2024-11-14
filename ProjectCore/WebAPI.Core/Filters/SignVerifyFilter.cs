@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using System.Security.Cryptography;
+using WebAPI.Core.Libraries;
 
 namespace WebAPI.Core.Filters
 {

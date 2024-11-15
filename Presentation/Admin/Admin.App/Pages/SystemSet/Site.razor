@@ -87,7 +87,8 @@
     {
         saveLoading = true;
 
-        using (var httpResponse = await Http.PostAsJsonAsync<DtoSite>("Site/EditSite", editSite))
+        using var httpResponse = await Http.PostAsJsonAsync<DtoSite>("Site/EditSite", editSite);
+        if (httpResponse.IsSuccessStatusCode)
         {
             var editSiteRet = httpResponse.Content.ReadAsStringAsync().Result;
 

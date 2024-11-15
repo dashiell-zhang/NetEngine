@@ -127,14 +127,14 @@
     <Table DataSource="userFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" Checked="context.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,context)">@context.Name</Checkbox>
+            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,context)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" Checked="item.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,item)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck=>SetUserFunction(isCheck,item)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>
@@ -216,7 +216,8 @@
 
         if (userId == default)
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/CreateUser", editUser))
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/CreateUser", editUser);
+            if (httpResponse.IsSuccessStatusCode)
             {
                 var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -226,15 +227,16 @@
         else
         {
 
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser))
-            {
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser);
+            // if (httpResponse.IsSuccessStatusCode)
+            // {
                 var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
 
                 if (bool.Parse(updateUserRet))
                 {
                     Message.Success("编辑成功");
                 }
-            }
+            // }
         }
 
         saveLoading = false;
@@ -272,7 +274,8 @@
 
     async void DeleteUser(long userId)
     {
-        using (var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId))
+        using var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId);
+        if (httpResponse.IsSuccessStatusCode)
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -311,23 +314,15 @@
                 IsCheck = isCheck
             };
 
-        using (var httpResponse = await Http.PostAsJsonAsync<DtoSetUserFunction>("User/SetUserFunction", setUserFunction))
+        using var httpResponse = await Http.PostAsJsonAsync<DtoSetUserFunction>("User/SetUserFunction", setUserFunction);
+        if (httpResponse.IsSuccessStatusCode)
         {
             var ret = httpResponse.Content.ReadAsStringAsync().Result;
 
-            try
+            if (bool.Parse(ret))
             {
-                if (bool.Parse(ret))
-                {
-                    Message.Success("设置成功");
-                }
+                Message.Success("设置成功");
             }
-            catch
-            {
-                userFunction.IsCheck = true;
-                StateHasChanged();
-            }
-
         }
     }
 

@@ -101,14 +101,14 @@
     <Table DataSource="roleFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" Checked="context.IsCheck" OnChange="isCheck=>SetRoleFunction(context.Id,isCheck)">@context.Name</Checkbox>
+            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck=>SetRoleFunction(context.Id,isCheck)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" Checked="item.IsCheck" OnChange="isCheck=>SetRoleFunction(item.Id,isCheck)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck=>SetRoleFunction(item.Id,isCheck)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>
@@ -198,7 +198,8 @@
         saveLoading = true;
         if (roleId == default)
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditRole>("Role/CreateRole", editRole))
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditRole>("Role/CreateRole", editRole);
+            if (httpResponse.IsSuccessStatusCode)
             {
                 var createRoleId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -207,7 +208,8 @@
         }
         else
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditRole>("Role/UpdateRole?roleId=" + roleId, editRole))
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditRole>("Role/UpdateRole?roleId=" + roleId, editRole);
+            if (httpResponse.IsSuccessStatusCode)
             {
                 var updateLinkRet = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -226,7 +228,8 @@
 
     async void DeleteRole(long roleId)
     {
-        using (var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId))
+        using var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId);
+        if (httpResponse.IsSuccessStatusCode)
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -265,7 +268,8 @@
                 IsCheck = isCheck
             };
 
-        using (var httpResponse = await Http.PostAsJsonAsync<DtoSetRoleFunction>("Role/SetRoleFunction", setRoleFunction))
+        using var httpResponse = await Http.PostAsJsonAsync<DtoSetRoleFunction>("Role/SetRoleFunction", setRoleFunction);
+        if (httpResponse.IsSuccessStatusCode)
         {
             var ret = httpResponse.Content.ReadAsStringAsync().Result;
 

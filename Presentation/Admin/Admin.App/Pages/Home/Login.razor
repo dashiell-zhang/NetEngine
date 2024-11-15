@@ -70,23 +70,20 @@
 
     private async void LoginAction()
     {
-
         submitLoading = true;
 
-        using (var httpResponse = await Http.PostAsJsonAsync<DtoGetToken>("Authorize/GetToken", loginData))
+        using var httpResponse = await Http.PostAsJsonAsync<DtoGetToken>("Authorize/GetToken", loginData);
+
+        if (httpResponse.IsSuccessStatusCode)
         {
-            if ((int)httpResponse.StatusCode == 200)
-            {
-                var token = httpResponse.Content.ReadAsStringAsync().Result;
-                LocalStorage.SetItemAsString("Authorization", token);
-                NavigationManager.NavigateTo("", true);
-            }
+            var token = httpResponse.Content.ReadAsStringAsync().Result;
+            LocalStorage.SetItemAsString("Authorization", token);
+            NavigationManager.NavigateTo("", true);
         }
 
         submitLoading = false;
 
         StateHasChanged();
-
     }
 
 }

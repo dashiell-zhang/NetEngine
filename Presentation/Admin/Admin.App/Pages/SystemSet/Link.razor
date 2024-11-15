@@ -35,9 +35,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                        OnConfirm="_=>DeleteLink(context.Id)"
-                                        OkText="Yes"
-                                        CancelText="No">
+                                            OnConfirm="_=>DeleteLink(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -171,7 +171,8 @@
         saveLoading = true;
         if (linkId == default)
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/CreateLink", editLink))
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/CreateLink", editLink);
+            if (httpResponse.IsSuccessStatusCode)
             {
                 var createLinkId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -180,7 +181,8 @@
         }
         else
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink))
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink);
+            if (httpResponse.IsSuccessStatusCode)
             {
                 var updateLinkRet = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -199,7 +201,8 @@
 
     async void DeleteLink(long linkId)
     {
-        using (var httpResponse = await Http.DeleteAsync("Link/DeleteLink?id=" + linkId))
+        using var httpResponse = await Http.DeleteAsync("Link/DeleteLink?id=" + linkId);
+        if (httpResponse.IsSuccessStatusCode)
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

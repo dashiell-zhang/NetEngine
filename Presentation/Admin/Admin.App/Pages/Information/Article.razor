@@ -119,7 +119,7 @@
                     </Upload>
 
                     <Upload FileList="fileList" ListType="picture-card" OnPreview="(file)=> PreviewImg(file)" OnRemove=" (file)=> DeleteImg(file)" ShowButton=false style="margin-top:8px"></Upload>
-                    
+
                     <Image PreviewSrc="@previewImgUrl" Style="display: none;" @bind-PreviewVisible="isPreviewImg" />
 
                 </FormItem>
@@ -231,27 +231,30 @@
 
             formDataContent.Add(fileContent, "file", fileName);
 
-            var httpResponse = await client.PostAsync(url, formDataContent);
+            using var httpResponse = await client.PostAsync(url, formDataContent);
 
-            string fileId = httpResponse.Content.ReadAsStringAsync().Result.Replace("\"", "");
-
-            byte[] newImageArray;
-
-            using (MemoryStream ms = new MemoryStream())
+            if (httpResponse.IsSuccessStatusCode)
             {
-                imageData.SaveTo(ms);
-                newImageArray = ms.ToArray();
-            }
+                string fileId = httpResponse.Content.ReadAsStringAsync().Result.Replace("\"", "");
 
-            string fileURL = await JS.InvokeAsync<string>("CreateObjectURL", newImageArray, "image/jpeg");
+                byte[] newImageArray;
 
-            fileList.Add(new UploadFileItem()
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    Id = fileId,
-                    FileName = file.Name,
-                    Url = fileURL,
-                    State = UploadState.Success
-                });
+                    imageData.SaveTo(ms);
+                    newImageArray = ms.ToArray();
+                }
+
+                string fileURL = await JS.InvokeAsync<string>("CreateObjectURL", newImageArray, "image/jpeg");
+
+                fileList.Add(new UploadFileItem()
+                    {
+                        Id = fileId,
+                        FileName = file.Name,
+                        Url = fileURL,
+                        State = UploadState.Success
+                    });
+            }
 
             StateHasChanged();
         }
@@ -430,7 +433,9 @@
 
             if (articleId == default)
             {
-                using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle))
+                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle);
+
+                if (httpResponse.IsSuccessStatusCode)
                 {
                     var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -439,7 +444,8 @@
             }
             else
             {
-                using (var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle))
+                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle);
+                if (httpResponse.IsSuccessStatusCode)
                 {
                     var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -461,7 +467,8 @@
 
     async void DeleteArticle(long articleId)
     {
-        using (var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId))
+        using var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId);
+        if (httpResponse.IsSuccessStatusCode)
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -482,8 +489,9 @@
 
     async Task<bool> DeleteImg(UploadFileItem file)
     {
-        using (var httpResponse = await Http.DeleteAsync("File/DeleteFile?id=" + file.Id))
-        {
+        using var httpResponse = await Http.DeleteAsync("File/DeleteFile?id=" + file.Id);
+
+        if(httpResponse.IsSuccessStatusCode){
             var retValue = await httpResponse.Content.ReadAsStringAsync();
 
             if (Convert.ToBoolean(retValue))
@@ -492,12 +500,9 @@
 
                 return true;
             }
-            else
-            {
-                return false;
-            }
         }
-    }
 
+        return false;
+    }
 
 }

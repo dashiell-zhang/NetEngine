@@ -37,9 +37,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                        OnConfirm="_=>DeleteCategory(context.Id)"
-                                        OkText="Yes"
-                                        CancelText="No">
+                                            OnConfirm="_=>DeleteCategory(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -251,8 +251,8 @@
 
         if (categoryId == default)
         {
-
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory))
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory);
+            if (httpResponse.IsSuccessStatusCode)
             {
                 var createCategoryId = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -261,7 +261,9 @@
         }
         else
         {
-            using (var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/UpdateCategory?categoryId=" + categoryId, editCategory))
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/UpdateCategory?categoryId=" + categoryId, editCategory);
+
+            if (httpResponse.IsSuccessStatusCode)
             {
                 var updateCategoryRet = httpResponse.Content.ReadAsStringAsync().Result;
 
@@ -281,7 +283,8 @@
 
     async void DeleteCategory(long categoryId)
     {
-        using (var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId))
+        using var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId);
+        if (httpResponse.IsSuccessStatusCode)
         {
             var retValue = httpResponse.Content.ReadAsStringAsync().Result;
 

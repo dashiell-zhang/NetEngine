@@ -107,7 +107,7 @@
 
     DtoPageList<DtoLink> pageList = new();
 
-    async void GetLinkList()
+    async Task GetLinkList()
     {
         tableLoading = true;
         var retData = await Http.GetFromJsonAsync<DtoPageList<DtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize);
@@ -166,7 +166,7 @@
         StateHasChanged();
     }
 
-    async void SaveLink()
+    async Task SaveLink()
     {
         saveLoading = true;
         if (linkId == default)
@@ -199,7 +199,7 @@
     }
 
 
-    async void DeleteLink(long linkId)
+    async Task DeleteLink(long linkId)
     {
         using var httpResponse = await Http.DeleteAsync("Link/DeleteLink?id=" + linkId);
         if (httpResponse.IsSuccessStatusCode)

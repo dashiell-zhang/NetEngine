@@ -136,7 +136,7 @@
     public static List<string> functionList = new();
 
 
-    async void GetFunctionList()
+    async Task GetFunctionList()
     {
         var retList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Authorize/GetFunctionList");
 
@@ -151,7 +151,7 @@
 
 
 
-    private async void Authentication()
+    private async Task Authentication()
     {
         var authorization = LocalStorage.GetItemAsString("Authorization");
 

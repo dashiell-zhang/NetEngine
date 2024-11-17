@@ -44,9 +44,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                            OnConfirm="_=>DeleteUser(context.Id)"
-                                            OkText="Yes"
-                                            CancelText="No">
+                                OnConfirm="_=>DeleteUser(context.Id)"
+                                OkText="Yes"
+                                CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -165,7 +165,7 @@
 
     List<DtoUserFunction> userFunctionList = new();
 
-    async void GetRoleKV()
+    async Task GetRoleKV()
     {
         var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Role/GetRoleKV");
 
@@ -175,7 +175,7 @@
         }
     }
 
-    async void GetUserList()
+    async Task GetUserList()
     {
         tableLoading = true;
         var retData = await Http.GetFromJsonAsync<DtoPageList<DtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize);
@@ -210,7 +210,7 @@
     DtoEditUser editUser = new();
     long userId;
 
-    async void SaveUser()
+    async Task SaveUser()
     {
         saveLoading = true;
 
@@ -220,30 +220,33 @@
             if (httpResponse.IsSuccessStatusCode)
             {
                 var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
-
                 Message.Success("添加成功");
+                isShowEditUser = false;
             }
         }
         else
         {
-
             using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser);
-            // if (httpResponse.IsSuccessStatusCode)
-            // {
+            if (httpResponse.IsSuccessStatusCode)
+            {
                 var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
 
                 if (bool.Parse(updateUserRet))
                 {
                     Message.Success("编辑成功");
+
+                    isShowEditUser = false;
                 }
-            // }
+            }
+        }
+
+        if (!isShowEditUser)
+        {
+            GetUserList();
         }
 
         saveLoading = false;
-
-        GetUserList();
-
-        isShowEditUser = false;
+        StateHasChanged();
     }
 
 
@@ -272,7 +275,7 @@
 
 
 
-    async void DeleteUser(long userId)
+    async Task DeleteUser(long userId)
     {
         using var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId);
         if (httpResponse.IsSuccessStatusCode)
@@ -288,7 +291,7 @@
     }
 
 
-    async void EditAuthority(long roleId)
+    async Task EditAuthority(long roleId)
     {
         this.userId = roleId;
 
@@ -305,7 +308,7 @@
     }
 
 
-    async void SetUserFunction(bool isCheck, DtoUserFunction userFunction)
+    async Task SetUserFunction(bool isCheck, DtoUserFunction userFunction)
     {
         DtoSetUserFunction setUserFunction = new()
             {
@@ -323,7 +326,15 @@
             {
                 Message.Success("设置成功");
             }
+            else{
+                userFunction.IsCheck = !isCheck;
+            }
         }
+        else{
+            userFunction.IsCheck = !isCheck;
+        }
+
+        StateHasChanged();
     }
 
 }

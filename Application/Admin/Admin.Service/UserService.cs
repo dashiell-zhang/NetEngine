@@ -132,7 +132,7 @@ namespace Admin.Service
                 {
                     var isHaveUserName = db.TUser.Where(t => t.Id != userId && t.UserName == updateUser.UserName).Any();
 
-                    if (isHaveUserName)
+                    if (!isHaveUserName)
                     {
                         var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
 

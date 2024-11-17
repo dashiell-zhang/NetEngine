@@ -138,7 +138,7 @@
 
     List<DtoRoleFunction> roleFunctionList = new();
 
-    async void GetRoleList()
+    async Task GetRoleList()
     {
         tableLoading = true;
         var retData = await Http.GetFromJsonAsync<DtoPageList<DtoRole>>("Role/GetRoleList?pageNum=" + pageNum + "&pageSize=" + pageSize);
@@ -193,7 +193,7 @@
         StateHasChanged();
     }
 
-    async void SaveRole()
+    async Task SaveRole()
     {
         saveLoading = true;
         if (roleId == default)
@@ -226,7 +226,7 @@
     }
 
 
-    async void DeleteRole(long roleId)
+    async Task DeleteRole(long roleId)
     {
         using var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId);
         if (httpResponse.IsSuccessStatusCode)
@@ -242,7 +242,7 @@
     }
 
 
-    async void EditAuthority(long roleId)
+    async Task EditAuthority(long roleId)
     {
         this.roleId = roleId;
 
@@ -259,7 +259,7 @@
     }
 
 
-    async void SetRoleFunction(long functionId, bool isCheck)
+    async Task SetRoleFunction(long functionId, bool isCheck)
     {
         DtoSetRoleFunction setRoleFunction = new()
             {

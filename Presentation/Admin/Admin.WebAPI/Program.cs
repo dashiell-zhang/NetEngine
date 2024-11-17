@@ -5,6 +5,7 @@ using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Repository.Interceptors;
+using SMS.AliCloud;
 using StackExchange.Redis;
 using WebAPI.Core.Extensions;
 
@@ -91,6 +92,25 @@ namespace Admin.WebAPI
 
             #endregion
 
+            #region 注册短信服务
+
+            //builder.Services.AddTencentCloudSMS(options =>
+            //{
+            //    var settings = builder.Configuration.GetRequiredSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>()!;
+            //    options.AppId = settings.AppId;
+            //    options.SecretId = settings.SecretId;
+            //    options.SecretKey = settings.SecretKey;
+            //});
+
+
+            builder.Services.AddAliCloudSMS(options =>
+            {
+                var settings = builder.Configuration.GetRequiredSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>()!;
+                options.AccessKeyId = settings.AccessKeyId;
+                options.AccessKeySecret = settings.AccessKeySecret;
+            });
+
+            #endregion
 
             #region 注册文件服务
             //builder.Services.AddTencentCloudStorage(options =>

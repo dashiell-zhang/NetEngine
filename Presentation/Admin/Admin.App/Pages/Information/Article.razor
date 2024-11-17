@@ -144,7 +144,7 @@
 
 @code {
 
-    async void UploadImgage(InputFileChangeEventArgs e)
+    async Task UploadImgage(InputFileChangeEventArgs e)
     {
         foreach (var file in e.GetMultipleFiles())
         {
@@ -294,7 +294,7 @@
 
 
 
-    async void GetCategoryTreeList()
+    async Task GetCategoryTreeList()
     {
         List<DtoKeyValueChild> parentKVList = new();
 
@@ -325,7 +325,7 @@
     int pageSize = 10;
     DtoPageList<DtoArticle> pageList = new();
 
-    async void GetArticleList()
+    async Task GetArticleList()
     {
         tableLoading = true;
         var retData = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
@@ -361,7 +361,7 @@
     long articleId;
 
 
-    async void EditArticle(DtoArticle? article = null)
+    async Task EditArticle(DtoArticle? article = null)
     {
 
         editArticle = new();
@@ -422,7 +422,7 @@
     }
 
 
-    async void SaveArticle()
+    async Task SaveArticle()
     {
         editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
 
@@ -465,7 +465,7 @@
     }
 
 
-    async void DeleteArticle(long articleId)
+    async Task DeleteArticle(long articleId)
     {
         using var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId);
         if (httpResponse.IsSuccessStatusCode)

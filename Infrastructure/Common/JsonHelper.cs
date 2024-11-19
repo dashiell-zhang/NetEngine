@@ -101,8 +101,33 @@ namespace Common
 
 
 
+        /// <summary> 
+        /// 对象 克隆 Json
+        /// </summary> 
+        /// <param name="obj">对象</param> 
+        /// <returns>JSON格式的字符串</returns> 
+        public static string ObjectCloneJson(object obj)
+        {
+            return JsonSerializer.Serialize(obj, cloneObjectOptions);
+        }
+
+
+
+        /// <summary> 
+        /// Json 克隆 对象
+        /// </summary> 
+        /// <typeparam name="T">类型</typeparam> 
+        /// <param name="jsonText">JSON文本</param> 
+        /// <returns>指定类型的对象</returns> 
+        public static T JsonCloneObject<T>(string json)
+        {
+            return JsonSerializer.Deserialize<T>(json, cloneObjectOptions)!;
+        }
+
+
+
         /// <summary>
-        /// 克隆对象
+        /// 对象 克隆 对象
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="obj"></param>

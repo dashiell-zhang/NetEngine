@@ -15,9 +15,45 @@ namespace Shared.Service
 
         public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null)
         {
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new Exception("name 为非法参数");
+            }
+
+            if (callbackParameter != null && string.IsNullOrWhiteSpace(callbackName))
+            {
+                throw new Exception("callbackName 为非法参数");
+            }
+
+            if (planTime < DateTimeOffset.UtcNow)
+            {
+                throw new Exception("planTime 为非法参数");
+            }
+
             if (db.Database.CurrentTransaction != null)
             {
-                return CreateSingle(name, parameter, planTime, callbackName, callbackParameter);
+                TQueueTask queueTask = new()
+                {
+                    Id = idService.GetId(),
+                    Name = name,
+                    PlanTime = planTime,
+                    CallbackName = callbackName,
+                };
+
+                if (parameter != null)
+                {
+                    queueTask.Parameter = JsonHelper.ObjectCloneJson(parameter);
+                }
+
+                if (callbackName != null && callbackParameter != null)
+                {
+                    queueTask.CallbackParameter = JsonHelper.ObjectCloneJson(callbackParameter);
+                }
+
+                db.TQueueTask.Add(queueTask);
+
+                return true;
             }
             else
             {
@@ -30,6 +66,22 @@ namespace Shared.Service
 
         public bool CreateSingle(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null)
         {
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new Exception("name 为非法参数");
+            }
+
+            if (callbackParameter != null && string.IsNullOrWhiteSpace(callbackName))
+            {
+                throw new Exception("callbackName 为非法参数");
+            }
+
+            if (planTime < DateTimeOffset.UtcNow)
+            {
+                throw new Exception("planTime 为非法参数");
+            }
+
             try
             {
                 var db = dbFactory.CreateDbContext();
@@ -44,12 +96,12 @@ namespace Shared.Service
 
                 if (parameter != null)
                 {
-                    queueTask.Parameter = JsonHelper.ObjectToJson(parameter);
+                    queueTask.Parameter = JsonHelper.ObjectCloneJson(parameter);
                 }
 
                 if (callbackName != null && callbackParameter != null)
                 {
-                    queueTask.CallbackParameter = JsonHelper.ObjectToJson(callbackParameter);
+                    queueTask.CallbackParameter = JsonHelper.ObjectCloneJson(callbackParameter);
                 }
 
                 db.TQueueTask.Add(queueTask);

@@ -71,7 +71,7 @@ namespace TaskService.Core.QueueTask
         }
 
 
-        private readonly MethodInfo jsonToParameter = typeof(JsonHelper).GetMethod("JsonToObject", BindingFlags.Static | BindingFlags.Public)!;
+        private readonly MethodInfo jsonCloneObject = typeof(JsonHelper).GetMethod("JsonCloneObject", BindingFlags.Static | BindingFlags.Public)!;
 
 
 
@@ -123,7 +123,7 @@ namespace TaskService.Core.QueueTask
                         {
                             if (queueTask.Parameter != null)
                             {
-                                var parameter = jsonToParameter.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
+                                var parameter = jsonCloneObject.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
 
                                 returnObject = queueTaskInfo.Method.Invoke(serviceInstance, [parameter]);
                             }

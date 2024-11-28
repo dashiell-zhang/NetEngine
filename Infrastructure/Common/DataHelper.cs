@@ -79,6 +79,8 @@ namespace Common
                             }
                             else if (pi.PropertyType!.IsEnum || Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
                             {
+                                bool isNullable = false;
+
                                 string drValueStr = drValue.ToString()!.Trim();
 
                                 Type enumType = pi.PropertyType;
@@ -86,9 +88,14 @@ namespace Common
                                 if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
                                 {
                                     enumType = Nullable.GetUnderlyingType(pi.PropertyType)!;
+                                    isNullable = true;
                                 }
 
-                                if (int.TryParse(drValueStr, out int drValueInt))
+                                if (string.IsNullOrWhiteSpace(drValueStr) && isNullable)
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else if (int.TryParse(drValueStr, out int drValueInt))
                                 {
                                     var enumValue = Enum.ToObject(enumType, drValueInt);
                                     pi.SetValue(model, enumValue, null);
@@ -208,6 +215,8 @@ namespace Common
                             }
                             else if (pi.PropertyType!.IsEnum || Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
                             {
+                                bool isNullable = false;
+
                                 string drValueStr = drValue.ToString()!.Trim();
 
                                 Type enumType = pi.PropertyType;
@@ -215,9 +224,14 @@ namespace Common
                                 if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
                                 {
                                     enumType = Nullable.GetUnderlyingType(pi.PropertyType)!;
+                                    isNullable = true;
                                 }
 
-                                if (int.TryParse(drValueStr, out int drValueInt))
+                                if (string.IsNullOrWhiteSpace(drValueStr) && isNullable)
+                                {
+                                    pi.SetValue(model, null, null);
+                                }
+                                else if (int.TryParse(drValueStr, out int drValueInt))
                                 {
                                     var enumValue = Enum.ToObject(enumType, drValueInt);
                                     pi.SetValue(model, enumValue, null);

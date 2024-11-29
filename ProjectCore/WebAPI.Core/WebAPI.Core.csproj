@@ -28,8 +28,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Application\Shared\Shared.Service\Shared.Service.csproj" />
+	  <ProjectReference Include="..\..\Application\Interface\Authorize.Interface\Authorize.Interface.csproj" />
+	  <ProjectReference Include="..\..\Infrastructure\Common\Common.csproj" />
 	  <ProjectReference Include="..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
+	  <ProjectReference Include="..\..\Repository\Repository.csproj" />
 	</ItemGroup>
 
 </Project>

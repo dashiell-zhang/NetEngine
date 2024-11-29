@@ -1,10 +1,10 @@
-﻿using Common;
+﻿using Basic.Interface;
+using Basic.Model.File;
+using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Repository.Database;
-using Shared.Interface;
-using Shared.Interface.Models;
 using SkiaSharp;
 
 namespace Client.WebAPI.Controllers

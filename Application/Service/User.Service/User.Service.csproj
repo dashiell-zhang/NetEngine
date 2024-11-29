@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Infrastructure\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
+    <ProjectReference Include="..\..\..\Repository\Repository.csproj" />
+    <ProjectReference Include="..\..\Interface\Authorize.Interface\Authorize.Interface.csproj" />
+    <ProjectReference Include="..\..\Interface\User.Interface\User.Interface.csproj" />
+  </ItemGroup>
+
+</Project>

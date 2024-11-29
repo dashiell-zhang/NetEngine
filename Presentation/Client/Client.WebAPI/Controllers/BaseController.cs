@@ -1,4 +1,4 @@
-﻿using Client.Interface;
+﻿using Basic.Interface;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;

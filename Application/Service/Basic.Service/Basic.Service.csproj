@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Infrastructure\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Infrastructure\FileStorage\FileStorage.csproj" />
+    <ProjectReference Include="..\..\..\Repository\Repository.csproj" />
+    <ProjectReference Include="..\..\Interface\Authorize.Interface\Authorize.Interface.csproj" />
+    <ProjectReference Include="..\..\Interface\Basic.Interface\Basic.Interface.csproj" />
+  </ItemGroup>
+
+</Project>

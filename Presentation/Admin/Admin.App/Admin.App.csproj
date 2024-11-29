@@ -30,7 +30,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\..\Application\Admin\Admin.Model\Admin.Model.csproj" />
+	  <ProjectReference Include="..\..\..\Application\Model\Authorize.Model\Authorize.Model.csproj" />
+	  <ProjectReference Include="..\..\..\Application\Model\Site.Model\Site.Model.csproj" />
+	  <ProjectReference Include="..\..\..\Application\Model\User.Model\User.Model.csproj" />
 	</ItemGroup>
 
 	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">

@@ -1,11 +1,11 @@
-﻿using Common;
+﻿using Authorize.Interface;
+using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
-using Shared.Interface;
 using System.Security.Claims;
 using WebAPI.Core.Interfaces;
 

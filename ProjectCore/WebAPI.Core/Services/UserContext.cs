@@ -1,5 +1,5 @@
-﻿using Common;
-using Shared.Interface;
+﻿using Authorize.Interface;
+using Common;
 using System.Security.Claims;
 
 namespace WebAPI.Core.Services

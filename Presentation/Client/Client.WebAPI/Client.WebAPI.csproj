@@ -27,7 +27,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\..\Application\Client\Client.Service\Client.Service.csproj" />
+		<ProjectReference Include="..\..\..\Application\Interface\Authorize.Interface\Authorize.Interface.csproj" />
+		<ProjectReference Include="..\..\..\Application\Interface\Basic.Interface\Basic.Interface.csproj" />
+		<ProjectReference Include="..\..\..\Application\Interface\Pay.Interface\Pay.Interface.csproj" />
+		<ProjectReference Include="..\..\..\Application\Interface\User.Interface\User.Interface.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\DistributedLock.Redis\DistributedLock.Redis.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
 		<ProjectReference Include="..\..\..\Infrastructure\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />

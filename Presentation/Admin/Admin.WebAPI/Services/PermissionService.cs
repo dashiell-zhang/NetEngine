@@ -1,4 +1,5 @@
-﻿using Common;
+﻿using Authorize.Model.AppSetting;
+using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
-using Shared.Model.AppSetting;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using WebAPI.Core.Interfaces;

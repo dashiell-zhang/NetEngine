@@ -5,11 +5,13 @@ using Common;
 using FileStorage;
 using IdentifierGenerator;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 
 namespace Basic.Service
 {
-    public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IFileStorage? fileStorage, IConfiguration configuration) : IFileService
+    [Service(Lifetime = ServiceLifetime.Scoped)]
+    public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IConfiguration configuration, IFileStorage? fileStorage = null) : IFileService
     {
 
 

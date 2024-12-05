@@ -1,5 +1,4 @@
-﻿using Authorize.Interface;
-using Basic.Interface;
+﻿using Basic.Interface;
 using Basic.Model.File;
 using Common;
 using Microsoft.AspNetCore.Authorization;
@@ -19,11 +18,9 @@ namespace Admin.WebAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class FileController(IUserContext userContext, IFileService fileService, DatabaseContext db, IWebHostEnvironment webHostEnvironment) : ControllerBase
+    public class FileController(IFileService fileService, DatabaseContext db, IWebHostEnvironment webHostEnvironment) : ControllerBase
     {
         private readonly string savePath = webHostEnvironment.WebRootPath;
-
-        private long userId => userContext.UserId;
 
 
 
@@ -59,7 +56,6 @@ namespace Admin.WebAPI.Controllers
                 throw new CustomException("请勿上传空文件");
             }
         }
-
 
 
 
@@ -117,8 +113,6 @@ namespace Admin.WebAPI.Controllers
                 FileExtensionContentTypeProvider provider = new();
                 var memi = provider.Mappings[fileExt];
 
-
-
                 if (width == 0 && height == 0)
                 {
                     return PhysicalFile(physicalPath, memi, file.Name);
@@ -150,7 +144,7 @@ namespace Admin.WebAPI.Controllers
                             height = (int)(original.Height * percent);
                         }
 
-                        using var resizeBitmap = original.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
+                        using var resizeBitmap = original.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None));
                         using var image = SKImage.FromBitmap(resizeBitmap);
                         using var imageData = image.Encode(SKEncodedImageFormat.Png, 100);
                         return File(imageData.ToArray(), "image/png");
@@ -172,8 +166,6 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [HttpGet]
         public string? GetFileURL(long fileId) => fileService.GetFileURL(fileId);
-
-
 
 
 

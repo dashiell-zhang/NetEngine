@@ -160,7 +160,7 @@ namespace Client.WebAPI.Controllers
                             height = (int)(original.Height * percent);
                         }
 
-                        using var resizeBitmap = original.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
+                        using var resizeBitmap = original.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None));
                         using var image = SKImage.FromBitmap(resizeBitmap);
                         using var imageData = image.Encode(SKEncodedImageFormat.Png, 100);
                         return File(imageData.ToArray(), "image/png");

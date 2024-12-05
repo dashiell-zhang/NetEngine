@@ -81,17 +81,21 @@ namespace Common
                 canvas.DrawLine(random.Next(0, width), random.Next(0, height), random.Next(0, width), random.Next(0, height), drawStyle);
             }
 
+
+            using SKFont font = new();
+
+            font.Size = height;
+
             //将文字写到画布上
             using (SKPaint drawStyle = new())
             {
                 drawStyle.Color = SKColors.Red;
-                drawStyle.TextSize = height;
                 drawStyle.StrokeWidth = 1;
 
                 float emHeight = height - (float)height * (float)0.14;
                 float emWidth = ((float)width / text.Length) - ((float)width * (float)0.13);
 
-                canvas.DrawText(text, emWidth, emHeight, drawStyle);
+                canvas.DrawText(text, emWidth, emHeight, font, drawStyle);
             }
 
             //画图片的前景噪音点

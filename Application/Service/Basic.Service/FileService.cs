@@ -34,12 +34,9 @@ namespace Basic.Service
 
             var isSuccess = true;
 
-            using (FileStream fs = File.Create(filePath))
-            {
-                uploadFile.FileContent.CopyTo(fs);
-                fs.Flush();
-            }
+            File.Move(uploadFile.TempFilePath, filePath);
 
+            FileInfo fileInfo = new(filePath);
 
             if (fileStorage != null)
             {
@@ -50,7 +47,6 @@ namespace Basic.Service
                     IOHelper.DeleteFile(filePath);
                 }
             }
-
 
             if (isSuccess)
             {
@@ -65,7 +61,7 @@ namespace Basic.Service
                 {
                     Id = idService.GetId(),
                     Name = uploadFile.FileName,
-                    Length = uploadFile.FileContent.Length,
+                    Length = fileInfo.Length,
                     IsPublicRead = uploadFile.IsPublicRead,
                     Path = filePath,
                     Table = uploadFile.Business,
@@ -90,62 +86,30 @@ namespace Basic.Service
         public long RemoteUploadFile(string savePath, DtoRemoteUploadFile remoteUploadFile)
         {
 
-            var fileExtension = Path.GetExtension(remoteUploadFile.FileName).ToLower();
-            var fileName = idService.GetId() + fileExtension;
+            var tempDirPath = Path.Combine(savePath, "temps");
 
-            var utcNow = DateTime.UtcNow;
-
-            string basePath = Path.Combine("files", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
-
-            var folderPath = Path.Combine(savePath, basePath);
-
-            var dlPath = IOHelper.DownloadFile(remoteUploadFile.FileUrl, folderPath, fileName);
-
-            if (dlPath != null)
+            if (!Directory.Exists(tempDirPath))
             {
-                string filePath = dlPath;
+                Directory.CreateDirectory(tempDirPath);
+            }
 
-                var isSuccess = true;
+            var tempFileName = Guid.NewGuid().ToString() + Path.GetExtension(remoteUploadFile.FileName);
 
-                long length = new FileInfo(filePath).Length;
+            var tempFilePath = IOHelper.DownloadFile(remoteUploadFile.FileUrl, tempDirPath, tempFileName);
 
-                if (fileStorage != null)
+            if (tempFilePath != null)
+            {
+                DtoUploadFile uploadFile = new()
                 {
-                    isSuccess = fileStorage.FileUpload(filePath, basePath, remoteUploadFile.IsPublicRead, fileName);
+                    Business = remoteUploadFile.Business,
+                    Key = remoteUploadFile.Key,
+                    Sign = remoteUploadFile.Sign,
+                    IsPublicRead = remoteUploadFile.IsPublicRead,
+                    FileName = remoteUploadFile.FileName,
+                    TempFilePath = tempFilePath
+                };
 
-                    if (isSuccess)
-                    {
-                        IOHelper.DeleteFile(filePath);
-                    }
-                }
-
-                if (isSuccess)
-                {
-                    if (remoteUploadFile.Key == default(long))
-                    {
-                        remoteUploadFile.Key = null;
-                    }
-
-                    filePath = Path.Combine(basePath, fileName).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-                    TFile f = new()
-                    {
-                        Id = idService.GetId(),
-                        Name = remoteUploadFile.FileName,
-                        Length = length,
-                        IsPublicRead = remoteUploadFile.IsPublicRead,
-                        Path = filePath,
-                        Table = remoteUploadFile.Business,
-                        TableId = remoteUploadFile.Key,
-                        Sign = remoteUploadFile.Sign,
-                        CreateUserId = userContext.UserId
-                    };
-
-                    db.TFile.Add(f);
-                    db.SaveChanges();
-
-                    return f.Id;
-                }
+                return UploadFile(savePath, uploadFile);
             }
 
             throw new CustomException("文件上传失败");

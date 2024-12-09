@@ -34,7 +34,7 @@
 
 
         /// <summary>
-        /// 文件流
+        /// 远程文件Url
         /// </summary>
         public string FileUrl { get; set; }
 

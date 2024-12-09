@@ -16,7 +16,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="table"></param>
         /// <returns></returns>
-        public static IList<T> DataTableToList<T>(DataTable table) where T : class
+        public static List<T> DataTableToList<T>(DataTable table) where T : class
         {
             if (table.Rows.Count == 0)
             {
@@ -25,7 +25,7 @@ namespace Common
             else
             {
 
-                IList<T> list = new List<T>();
+                List<T> list = new();
                 foreach (DataRow dr in table.Rows)
                 {
                     T model = Activator.CreateInstance<T>();
@@ -147,7 +147,7 @@ namespace Common
         /// <typeparam name="T"></typeparam>
         /// <param name="table"></param>
         /// <returns></returns>
-        public static IList<T> DataTableToListDisplayName<T>(DataTable table) where T : class
+        public static List<T> DataTableToListDisplayName<T>(DataTable table) where T : class
         {
             if (table.Rows.Count == 0)
             {
@@ -156,7 +156,7 @@ namespace Common
             else
             {
 
-                IList<T> list = new List<T>();
+                List<T> list = new();
 
                 foreach (DataRow dr in table.Rows)
                 {

@@ -25,7 +25,7 @@
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.0" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.3.0" />
-		<PackageReference Include="SkiaSharp.Views.Blazor" Version="3.116.0" />
+		<PackageReference Include="SkiaSharp.Views.Blazor" Version="3.116.1" />
 		<PackageReference Include="System.Net.Http.Json" Version="9.0.0" />
 	</ItemGroup>
 

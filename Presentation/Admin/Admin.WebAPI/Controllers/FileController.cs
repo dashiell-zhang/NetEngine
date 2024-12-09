@@ -39,17 +39,38 @@ namespace Admin.WebAPI.Controllers
         {
             if (file.Length > 0)
             {
-                DtoUploadFile uploadFile = new()
+                var tempDirPath = Path.Combine(savePath, "temps");
+
+                if (!Directory.Exists(tempDirPath))
                 {
-                    Business = business,
-                    Key = key,
-                    Sign = sign,
-                    IsPublicRead = isPublicRead,
-                };
+                    Directory.CreateDirectory(tempDirPath);
+                }
 
-                file.CopyTo(uploadFile.FileContent);
+                var tempFilePath = Path.Combine(tempDirPath, Guid.NewGuid().ToString() + Path.GetExtension(file.FileName));
 
-                return fileService.UploadFile(savePath, uploadFile);
+                try
+                {
+                    using (FileStream fileStream = new(tempFilePath, FileMode.Create))
+                    {
+                        file.CopyTo(fileStream);
+                    }
+
+                    DtoUploadFile uploadFile = new()
+                    {
+                        Business = business,
+                        Key = key,
+                        Sign = sign,
+                        IsPublicRead = isPublicRead,
+                        FileName = file.FileName,
+                        TempFilePath = tempFilePath,
+                    };
+
+                    return fileService.UploadFile(savePath, uploadFile);
+                }
+                finally
+                {
+                    IOHelper.DeleteFile(tempFilePath);
+                }
             }
             else
             {

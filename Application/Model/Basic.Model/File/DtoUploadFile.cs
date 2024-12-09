@@ -33,11 +33,10 @@
         public string FileName { get; set; }
 
 
-
         /// <summary>
-        /// 文件流
+        /// 临时文件地址
         /// </summary>
-        public FileStream FileContent { get; set; }
+        public string TempFilePath { get; set; }
 
     }
 }

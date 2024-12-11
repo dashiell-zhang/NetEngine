@@ -397,7 +397,7 @@ namespace Common
                             if (rowCount > 0)
                             {
                                 IRow firstRow = sheet.GetRow(0);//第一行  
-                                int cellCount = firstRow.LastCellNum;//列数  
+                                int cellCount = GetEffectiveColumnCount(firstRow);//列数  
 
                                 DataColumn column;
                                 ICell cell;
@@ -488,6 +488,22 @@ namespace Common
             catch (Exception)
             {
                 return null;
+            }
+
+
+            int GetEffectiveColumnCount(IRow row)
+            {
+                int lastCell = row.LastCellNum;
+                while (lastCell > 0)
+                {
+                    var cell = row.GetCell(lastCell - 1);
+                    if (cell != null && !string.IsNullOrWhiteSpace(cell.StringCellValue))
+                    {
+                        break;
+                    }
+                    lastCell--;
+                }
+                return lastCell;
             }
         }
 

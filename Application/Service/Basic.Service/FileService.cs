@@ -36,7 +36,7 @@ namespace Basic.Service
 
             File.Move(uploadFile.TempFilePath, filePath);
 
-            FileInfo fileInfo = new(filePath);
+            long fileLength = new FileInfo(filePath).Length;
 
             if (fileStorage != null)
             {
@@ -61,7 +61,7 @@ namespace Basic.Service
                 {
                     Id = idService.GetId(),
                     Name = uploadFile.FileName,
-                    Length = fileInfo.Length,
+                    Length = fileLength,
                     IsPublicRead = uploadFile.IsPublicRead,
                     Path = filePath,
                     Table = uploadFile.Business,

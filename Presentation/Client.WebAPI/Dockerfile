@@ -23,18 +23,18 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY . .
-WORKDIR "/src/Presentation/Admin/Admin.WebAPI"
-RUN dotnet restore "Admin.WebAPI.csproj"
-RUN dotnet build "Admin.WebAPI.csproj" -c Release -o /app/build
+WORKDIR "/src/Presentation/Client.WebAPI"
+RUN dotnet restore "Client.WebAPI.csproj"
+RUN dotnet build "Client.WebAPI.csproj" -c Release -o /app/build
 
 
 # 此阶段用于发布要复制到最终阶段的服务项目
 FROM build AS publish
-RUN dotnet publish "Admin.WebAPI.csproj" -c Release -r linux-x64 -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Client.WebAPI.csproj" -c Release -r linux-x64 -o /app/publish /p:UseAppHost=false
 
 
 # 此阶段在生产中使用，或在常规模式下从 VS 运行时使用(在不使用调试配置时为默认值)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Admin.WebAPI.dll"]
+ENTRYPOINT ["dotnet", "Client.WebAPI.dll"]

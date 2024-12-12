@@ -9,7 +9,7 @@
 		<!--<InvariantGlobalization>true</InvariantGlobalization>-->
 		<UserSecretsId>742f0bcb-df8d-442a-8b51-772aa0ed6c69</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-		<DockerfileContext>..\..\..</DockerfileContext>
+		<DockerfileContext>..\..</DockerfileContext>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -29,18 +29,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\..\Application\Service\Authorize.Service\Authorize.Service.csproj" />
-		<ProjectReference Include="..\..\..\Application\Service\Basic.Service\Basic.Service.csproj" />
-		<ProjectReference Include="..\..\..\Application\Service\Site.Service\Site.Service.csproj" />
-		<ProjectReference Include="..\..\..\Application\Service\User.Service\User.Service.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\DistributedLock.Redis\DistributedLock.Redis.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\Logger.DataBase\Logger.DataBase.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\Logger.LocalFile\Logger.LocalFile.csproj" />
-		<ProjectReference Include="..\..\..\Infrastructure\SMS.AliCloud\SMS.AliCloud.csproj" />
-		<ProjectReference Include="..\..\..\ProjectCore\WebAPI.Core\WebAPI.Core.csproj" />
+		<ProjectReference Include="..\..\Application\Service\Authorize.Service\Authorize.Service.csproj" />
+		<ProjectReference Include="..\..\Application\Service\Basic.Service\Basic.Service.csproj" />
+		<ProjectReference Include="..\..\Application\Service\Site.Service\Site.Service.csproj" />
+		<ProjectReference Include="..\..\Application\Service\User.Service\User.Service.csproj" />
+		<ProjectReference Include="..\..\Infrastructure\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
+		<ProjectReference Include="..\..\Infrastructure\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
+		<ProjectReference Include="..\..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
+		<ProjectReference Include="..\..\Infrastructure\DistributedLock.Redis\DistributedLock.Redis.csproj" />
+		<ProjectReference Include="..\..\Infrastructure\Logger.DataBase\Logger.DataBase.csproj" />
+		<ProjectReference Include="..\..\Infrastructure\Logger.LocalFile\Logger.LocalFile.csproj" />
+		<ProjectReference Include="..\..\Infrastructure\SMS.AliCloud\SMS.AliCloud.csproj" />
+		<ProjectReference Include="..\..\ProjectCore\WebAPI.Core\WebAPI.Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -372,25 +372,54 @@ namespace Common
         /// <returns></returns>
         public static string ModelToUriParam(object obj, string url = "")
         {
-            PropertyInfo[] propertis = obj.GetType().GetProperties();
+            PropertyInfo[] properties = obj.GetType().GetProperties();
             StringBuilder sb = new();
             sb.Append(url);
-            sb.Append('?');
-            foreach (var p in propertis)
-            {
-                var v = p.GetValue(obj, null);
-                if (v == null)
-                    continue;
 
-                sb.Append(p.Name);
-                sb.Append('=');
-                sb.Append(HttpUtility.UrlEncode(v.ToString()));
+            if (!url.Contains("?"))
+            {
+                sb.Append('?');
+            }
+            else if (!url.EndsWith("&") && !url.EndsWith("?"))
+            {
                 sb.Append('&');
             }
-            sb.Remove(sb.Length - 1, 1);
+
+            foreach (var p in properties)
+            {
+                var value = p.GetValue(obj, null);
+                if (value == null || string.IsNullOrWhiteSpace(value.ToString()))
+                {
+                    continue;
+                }
+
+                string stringValue;
+
+                if (p.PropertyType.IsEnum || Nullable.GetUnderlyingType(p.PropertyType)?.IsEnum == true)
+                {
+                    // 获取枚举的整数值
+                    stringValue = Convert.ToInt32(value).ToString();
+                }
+                else
+                {
+                    stringValue = value.ToString()!;
+                }
+
+                sb.Append(HttpUtility.UrlEncode(p.Name));
+                sb.Append('=');
+                sb.Append(HttpUtility.UrlEncode(stringValue));
+                sb.Append('&');
+            }
+
+            // 移除最后一个 '&' 字符
+            if (sb[sb.Length - 1] == '&')
+            {
+                sb.Remove(sb.Length - 1, 1);
+            }
 
             return sb.ToString();
         }
+
 
 
 

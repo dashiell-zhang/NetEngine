@@ -279,7 +279,7 @@
 
     override protected void OnInitialized()
     {
-        GetCategoryTreeList();
+        GetCategorySelectList();
 
         var authorization = LocalStorage.GetItemAsString("Authorization");
 
@@ -289,16 +289,16 @@
     override protected void OnParametersSet()
     {
         GetArticleList();
-        GetCategoryTreeList();
+        GetCategorySelectList();
     }
 
 
 
-    async Task GetCategoryTreeList()
+    async Task GetCategorySelectList()
     {
-        List<DtoKeyValueChild> parentKVList = new();
+        List<DtoCategorySelect> parentKVList = new();
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList?channelId=" + channelId);
+        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList?channelId=" + channelId);
 
         if (kvList != null)
         {
@@ -309,12 +309,12 @@
 
     }
 
-    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoKeyValueChild>? keyValueChildren)
+    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoCategorySelect>? keyValueChildren)
     {
         return keyValueChildren?.Select(t => new DtoTreeSelect
             {
-                Key = t.Key.ToString()!,
-                Title = t.Value!.ToString()!,
+                Key = t.Id.ToString()!,
+                Title = t.Name!.ToString()!,
                 Children = CategoryTreeConvert(t.ChildList),
                 IsDisabled = false
             }).ToList();
@@ -409,7 +409,7 @@
             editArticle.CategoryId = "";
         }
 
-        GetCategoryTreeList();
+        GetCategorySelectList();
 
         isShowEditArticle = true;
 
@@ -491,7 +491,8 @@
     {
         using var httpResponse = await Http.DeleteAsync("File/DeleteFile?id=" + file.Id);
 
-        if(httpResponse.IsSuccessStatusCode){
+        if (httpResponse.IsSuccessStatusCode)
+        {
             var retValue = await httpResponse.Content.ReadAsStringAsync();
 
             if (Convert.ToBoolean(retValue))

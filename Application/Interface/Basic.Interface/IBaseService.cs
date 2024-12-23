@@ -1,4 +1,4 @@
-﻿using Shared.Model;
+﻿using Basic.Model.Base;
 
 namespace Basic.Interface
 {
@@ -13,14 +13,14 @@ namespace Basic.Interface
         /// <param name="cityId">城市ID</param>
         /// <returns></returns>
         /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
-        public List<DtoKeyValue> GetRegion(int provinceId, int cityId);
+        public List<DtoRegion> GetRegion(int provinceId, int cityId);
 
 
         /// <summary>
         /// 获取全部省市级联地址数据
         /// </summary>
         /// <returns></returns>
-        public List<DtoKeyValueChild> GetRegionAll();
+        public List<DtoRegion> GetRegionAll();
 
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Basic.Interface
         /// </summary>
         /// <param name="groupId"></param>
         /// <returns></returns>
-        public List<DtoKeyValue> GetValueList(long groupId);
+        public Dictionary<string, string> GetValueList(long groupId);
 
 
 

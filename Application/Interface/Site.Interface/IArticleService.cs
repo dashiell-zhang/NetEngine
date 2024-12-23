@@ -16,10 +16,11 @@ namespace Site.Interface
 
 
         /// <summary>
-        /// 获取栏目树形列表
+        /// 获取栏目选择列表
         /// </summary>
+        /// <param name="id">类型Id</param>
         /// <returns></returns>
-        public List<DtoKeyValueChild> GetCategoryTreeList();
+        public List<DtoCategorySelect> GetCategorySelectList(long? id = null);
 
 
 
@@ -105,14 +106,6 @@ namespace Site.Interface
         /// <returns></returns>
         public bool DeleteArticle(long id);
 
-
-
-        /// <summary>
-        /// 获取栏目下所有子级列表
-        /// </summary>
-        /// <param name="categoryId"></param>
-        /// <returns></returns>
-        public List<DtoKeyValueChild>? GetCategoryChildList(long categoryId);
 
     }
 }

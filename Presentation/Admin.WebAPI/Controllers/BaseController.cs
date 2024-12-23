@@ -1,4 +1,5 @@
 ﻿using Basic.Interface;
+using Basic.Model.Base;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +26,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
         [HttpGet]
-        public List<DtoKeyValue> GetRegion(int provinceId, int cityId) => baseService.GetRegion(provinceId, cityId);
+        public List<DtoRegion> GetRegion(int provinceId, int cityId) => baseService.GetRegion(provinceId, cityId);
 
 
 
@@ -34,7 +35,7 @@ namespace Admin.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoKeyValueChild> GetRegionAll() => baseService.GetRegionAll();
+        public List<DtoRegion> GetRegionAll() => baseService.GetRegionAll();
 
 
 
@@ -58,7 +59,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="groupId"></param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoKeyValue> GetValueList(long groupId) => baseService.GetValueList(groupId);
+        public Dictionary<string, string> GetValueList(long groupId) => baseService.GetValueList(groupId);
 
 
 

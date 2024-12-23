@@ -113,26 +113,26 @@
 
     override protected void OnInitialized()
     {
-        GetCategoryTreeList();
+        GetCategorySelectList();
     }
 
     override protected void OnParametersSet()
     {
         GetCategoryList();
-        GetCategoryTreeList();
+        GetCategorySelectList();
     }
 
 
-    async Task GetCategoryTreeList()
+    async Task GetCategorySelectList()
     {
-        List<DtoKeyValueChild> parentKVList = new();
+        List<DtoCategorySelect> parentKVList = new();
 
 
-        parentKVList.Add(new DtoKeyValueChild { Key = 0, Value = "无父级栏目" });
+        parentKVList.Add(new DtoCategorySelect { Id = 0, Name = "无父级栏目" });
 
 
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoKeyValueChild>>("Article/GetCategoryTreeList");
+        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList");
 
         if (kvList != null)
         {
@@ -143,14 +143,14 @@
 
     }
 
-    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoKeyValueChild>? keyValueChildren)
+    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoCategorySelect>? keyValueChildren)
     {
         return keyValueChildren?.Select(t => new DtoTreeSelect
             {
-                Key = t.Key.ToString()!,
-                Title = t.Value!.ToString()!,
+                Key = t.Id.ToString()!,
+                Title = t.Name!.ToString()!,
                 Children = CategoryTreeConvert(t.ChildList),
-                IsDisabled = (categoryId.ToString() == t.Key.ToString() && categoryId.ToString() != "0")
+                IsDisabled = (categoryId == t.Id && categoryId != 0)
             }).ToList();
     }
 
@@ -204,7 +204,7 @@
         editCategory = new();
         categoryId = default;
 
-        GetCategoryTreeList();
+        GetCategorySelectList();
 
         if (category != null)
         {

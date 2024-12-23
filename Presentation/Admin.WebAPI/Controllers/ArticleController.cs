@@ -28,9 +28,10 @@ namespace Admin.WebAPI.Controllers
         /// <summary>
         /// 获取栏目树形列表
         /// </summary>
+        /// <param name="id">栏目Id</param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoKeyValueChild> GetCategoryTreeList() => articleService.GetCategoryTreeList();
+        public List<DtoCategorySelect> GetCategorySelectList(long? id = null) => articleService.GetCategorySelectList();
 
 
 

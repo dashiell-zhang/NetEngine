@@ -1,52 +1,52 @@
 ﻿using Basic.Interface;
+using Basic.Model.Base;
 using Common;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
-using Shared.Model;
 
 namespace Basic.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
     public class BaseService(DatabaseContext db, IDistributedCache distributedCache) : IBaseService
     {
-        public List<DtoKeyValue> GetRegion(int provinceId, int cityId)
+        public List<DtoRegion> GetRegion(int provinceId, int cityId)
         {
-            List<DtoKeyValue> list = [];
+            List<DtoRegion> list = [];
 
             if (provinceId == 0 && cityId == 0)
             {
-                list = db.TRegionProvince.Select(t => new DtoKeyValue { Key = t.Id, Value = t.Province }).ToList();
+                list = db.TRegionProvince.Select(t => new DtoRegion { Id = t.Id, Name = t.Province }).ToList();
             }
 
             if (provinceId != 0)
             {
-                list = db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new DtoKeyValue { Key = t.Id, Value = t.City }).ToList();
+                list = db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new DtoRegion { Id = t.Id, Name = t.City }).ToList();
             }
 
             if (cityId != 0)
             {
-                list = db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new DtoKeyValue { Key = t.Id, Value = t.Area }).ToList();
+                list = db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new DtoRegion { Id = t.Id, Name = t.Area }).ToList();
             }
 
             return list;
         }
 
 
-        public List<DtoKeyValueChild> GetRegionAll()
+        public List<DtoRegion> GetRegionAll()
         {
-            var list = db.TRegionProvince.Select(t => new DtoKeyValueChild
+            var list = db.TRegionProvince.Select(t => new DtoRegion
             {
-                Key = t.Id,
-                Value = t.Province,
-                ChildList = t.TRegionCity!.Select(c => new DtoKeyValueChild
+                Id = t.Id,
+                Name = t.Province,
+                ChildList = t.TRegionCity!.Select(c => new DtoRegion
                 {
-                    Key = c.Id,
-                    Value = c.City,
-                    ChildList = c.TRegionArea!.Select(a => new DtoKeyValueChild
+                    Id = c.Id,
+                    Name = c.City,
+                    ChildList = c.TRegionArea!.Select(a => new DtoRegion
                     {
-                        Key = a.Id,
-                        Value = a.Area
+                        Id = a.Id,
+                        Name = a.Area
                     }).ToList()
                 }).ToList()
             }).ToList();
@@ -55,15 +55,22 @@ namespace Basic.Service
         }
 
 
-        public List<DtoKeyValue> GetValueList(long groupId)
+        public Dictionary<string, string> GetValueList(long groupId)
         {
-            var list = db.TAppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new DtoKeyValue
+            Dictionary<string, string> keyValuePairs = new();
+
+            var list = db.TAppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new
             {
-                Key = t.Key,
-                Value = t.Value
+                t.Key,
+                t.Value
             }).ToList();
 
-            return list;
+            foreach (var item in list)
+            {
+                keyValuePairs.Add(item.Key, item.Value);
+            }
+
+            return keyValuePairs;
         }
 
 

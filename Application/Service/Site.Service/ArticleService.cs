@@ -40,17 +40,17 @@ namespace Site.Service
         }
 
 
-        public List<DtoKeyValueChild> GetCategoryTreeList()
+        public List<DtoCategorySelect> GetCategorySelectList(long? id = null)
         {
-            var list = db.TCategory.Where(t => t.ParentId == null).Select(t => new DtoKeyValueChild
+            var list = db.TCategory.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoCategorySelect
             {
-                Key = t.Id,
-                Value = t.Name
+                Id = t.Id,
+                Name = t.Name
             }).ToList();
 
             foreach (var item in list)
             {
-                item.ChildList = GetCategoryChildList(Convert.ToInt64(item.Key));
+                item.ChildList = GetCategorySelectList(item.Id);
             }
 
             return list;
@@ -307,21 +307,7 @@ namespace Site.Service
         }
 
 
-        public List<DtoKeyValueChild>? GetCategoryChildList(long categoryId)
-        {
-            var list = db.TCategory.Where(t => t.ParentId == categoryId).Select(t => new DtoKeyValueChild
-            {
-                Key = t.Id,
-                Value = t.Name,
-            }).ToList();
 
-            foreach (var item in list)
-            {
-                item.ChildList = GetCategoryChildList(Convert.ToInt64(item.Key));
-            }
-
-            return list;
-        }
 
     }
 }

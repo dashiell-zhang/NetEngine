@@ -71,7 +71,7 @@ namespace Client.WebAPI.Controllers
         [Authorize]
         [CacheDataFilter(TTL = 60, IsUseToken = true)]
         [HttpGet]
-        public List<DtoKeyValue> GetFunctionList(string sign) => authorizeService.GetFunctionList(sign);
+        public Dictionary<string, string> GetFunctionList(string sign) => authorizeService.GetFunctionList(sign);
 
 
 
@@ -115,16 +115,6 @@ namespace Client.WebAPI.Controllers
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
         public bool UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword) => authorizeService.UpdatePasswordBySMS(updatePassword);
-
-
-
-        /// <summary>
-        /// 生成密码
-        /// </summary>
-        /// <param name="passWord"></param>
-        /// <returns></returns>
-        [HttpGet]
-        public DtoKeyValue GeneratePassword(string passWord) => authorizeService.GeneratePassword(passWord);
 
 
 

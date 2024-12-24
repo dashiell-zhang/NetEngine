@@ -40,7 +40,7 @@ namespace Admin.WebAPI.Controllers
         [SignVerifyFilter]
         [Authorize]
         [HttpGet]
-        public List<DtoKeyValue> GetFunctionList() => authorizeService.GetFunctionList();
+        public Dictionary<string, string> GetFunctionList() => authorizeService.GetFunctionList();
 
 
 

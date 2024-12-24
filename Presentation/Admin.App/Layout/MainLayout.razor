@@ -138,11 +138,11 @@
 
     async Task GetFunctionList()
     {
-        var retList = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Authorize/GetFunctionList");
+        var retList = await Http.GetFromJsonAsync<Dictionary<string, string>>("Authorize/GetFunctionList");
 
         if (retList != null)
         {
-            functionList = retList.Select(t => t.Key.ToString()!).ToList();
+            functionList = retList.Select(t => t.Key).ToList();
 
             StateHasChanged();
         }

@@ -203,7 +203,7 @@ namespace Authorize.Service
         /// </summary>
         /// <param name="sign">模块标记</param>
         /// <returns></returns>
-        public List<DtoKeyValue> GetFunctionList(string? sign)
+        public Dictionary<string, string> GetFunctionList(string? sign)
         {
 
             var roleIds = db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
@@ -215,13 +215,15 @@ namespace Authorize.Service
                 query = query.Where(t => t.Function.Sign == sign);
             }
 
-            var kvList = query.Select(t => new DtoKeyValue
+            var kvList = query.Select(t => new
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name
-            }).ToList();
+            }).ToList().DistinctBy(t => t.Key).ToList();
 
-            return kvList;
+            var keyValues = kvList.ToDictionary(item => item.Key, item => item.Value);
+
+            return keyValues;
         }
 
 
@@ -394,30 +396,6 @@ namespace Authorize.Service
             }
 
         }
-
-
-
-
-        /// <summary>
-        /// 生成密码
-        /// </summary>
-        /// <param name="passWord"></param>
-        /// <returns></returns>
-        public DtoKeyValue GeneratePassword(string passWord)
-        {
-            DtoKeyValue keyValue = new()
-            {
-                Key = idService.GetId()
-            };
-
-            keyValue.Value = Convert.ToBase64String(KeyDerivation.Pbkdf2(passWord, Encoding.UTF8.GetBytes(keyValue.Key.ToString()!), KeyDerivationPrf.HMACSHA256, 1000, 32));
-
-            return keyValue;
-        }
-
-
-
-
 
 
 

@@ -70,20 +70,11 @@ namespace Authorize.Interface
 
 
         /// <summary>
-        /// 生成密码
-        /// </summary>
-        /// <param name="passWord"></param>
-        /// <returns></returns>
-        public DtoKeyValue GeneratePassword(string passWord);
-
-
-
-        /// <summary>
         /// 获取授权功能列表
         /// </summary>
         /// <param name="sign">模块标记</param>
         /// <returns></returns>
-        public List<DtoKeyValue> GetFunctionList(string? sign = null);
+        public Dictionary<string, string> GetFunctionList(string? sign = null);
 
 
         /// <summary>

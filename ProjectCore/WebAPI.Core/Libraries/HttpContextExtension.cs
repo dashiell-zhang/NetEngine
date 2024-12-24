@@ -117,12 +117,12 @@ namespace WebAPI.Core.Libraries
         /// <summary>
         /// 获取Http请求中的全部参数
         /// </summary>
-        public static List<DtoKeyValue> GetParameters(this HttpContext httpContext)
+        public static Dictionary<string, string> GetParameters(this HttpContext httpContext)
         {
 
             var context = httpContext;
 
-            List<DtoKeyValue> parameters = [];
+            Dictionary<string, string> parameters = [];
 
             if (context.Request.Method == "POST")
             {
@@ -130,7 +130,7 @@ namespace WebAPI.Core.Libraries
 
                 if (!string.IsNullOrEmpty(body))
                 {
-                    parameters.Add(new DtoKeyValue { Key = "body", Value = body });
+                    parameters.Add("body", body);
                 }
                 else if (context.Request.HasFormContentType)
                 {
@@ -138,7 +138,7 @@ namespace WebAPI.Core.Libraries
 
                     foreach (var fm in fromlist)
                     {
-                        parameters.Add(new DtoKeyValue { Key = fm.Key, Value = fm.Value.ToString() });
+                        parameters.Add(fm.Key, fm.Value.ToString());
                     }
                 }
             }
@@ -148,7 +148,7 @@ namespace WebAPI.Core.Libraries
 
                 foreach (var query in queryList)
                 {
-                    parameters.Add(new DtoKeyValue { Key = query.Key, Value = query.Value });
+                    parameters.Add(query.Key, query.Value.ToString());
                 }
             }
 

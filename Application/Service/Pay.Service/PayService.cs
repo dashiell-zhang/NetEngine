@@ -519,7 +519,7 @@ namespace Pay.Service
         }
 
 
-        public DtoKeyValue? CreateAliPayMiniApp(string orderNo, string notifyUrl)
+        public string? CreateAliPayMiniApp(string orderNo, string notifyUrl)
         {
             var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp").ToList();
 
@@ -566,19 +566,13 @@ namespace Pay.Service
 
                     string tradeNo = response.TradeNo;
 
-                    if (string.IsNullOrEmpty(tradeNo))
+                    if (!string.IsNullOrEmpty(tradeNo))
                     {
                         throw new CustomException("支付宝交易订单创建失败");
                     }
                     else
                     {
-                        DtoKeyValue keyValue = new()
-                        {
-                            Key = "TradeNo",
-                            Value = tradeNo
-                        };
-
-                        return keyValue;
+                        return tradeNo;
                     }
                 }
 

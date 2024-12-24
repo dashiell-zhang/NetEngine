@@ -108,7 +108,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoKeyValue? CreateAliPayMiniApp(string orderNo)
+        public string? CreateAliPayMiniApp(string orderNo)
         {
             var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/api/Pay/AliPayNotify";
 

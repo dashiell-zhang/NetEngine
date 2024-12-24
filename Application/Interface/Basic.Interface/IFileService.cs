@@ -40,5 +40,17 @@ namespace Basic.Interface
         /// <returns></returns>
         public bool DeleteFile(long id);
 
+
+
+        /// <summary>
+        /// 获取文件列表
+        /// </summary>
+        /// <param name="business">业务领域</param>
+        /// <param name="sign">标记</param>
+        /// <param name="key">关联记录值</param>
+        /// <param name="isGetUrl">是否获取url</param>
+        /// <returns></returns>
+        public List<DtoFileInfo> GetFileList(string business, string? sign, long key, bool isGetUrl);
+
     }
 }

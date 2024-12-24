@@ -73,8 +73,8 @@ namespace Pay.Interface
         /// 支付宝支付-小程序模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
-        /// <returns></returns>
-        public DtoKeyValue? CreateAliPayMiniApp(string orderNo, string notifyUrl);
+        /// <returns>TradeNo</returns>
+        public string? CreateAliPayMiniApp(string orderNo, string notifyUrl);
 
 
 

@@ -1,4 +1,4 @@
-﻿using Shared.Model;
+﻿using Basic.Model.File;
 using System.ComponentModel.DataAnnotations;
 
 namespace Site.Model.Article
@@ -85,9 +85,9 @@ namespace Site.Model.Article
 
 
         /// <summary>
-        /// 封面图
+        /// 封面文件列表
         /// </summary>
-        public List<DtoKeyValue>? CoverImageList { get; set; }
+        public List<DtoFileInfo>? CoverImageList { get; set; }
 
 
     }

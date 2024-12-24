@@ -40,19 +40,18 @@ namespace User.Service
 
 
 
-        public bool EditUserPhoneBySms(DtoKeyValue keyValue)
+        public bool EditUserPhoneBySms(DtoEditUserPhoneBySms request)
         {
-            string phone = keyValue.Key.ToString()!;
 
-            string key = "VerifyPhone_" + phone;
+            string key = "VerifyPhone_" + request.NewPhone;
 
             var code = distributedCache.GetString(key);
 
 
-            if (string.IsNullOrEmpty(code) == false && code == keyValue.Value!.ToString())
+            if (string.IsNullOrEmpty(code) == false && code == request.SmsCode)
             {
 
-                var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == phone).Count();
+                var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == request.NewPhone).Count();
 
                 var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
 
@@ -60,7 +59,7 @@ namespace User.Service
                 {
                     if (checkPhone == 0)
                     {
-                        user.Phone = phone;
+                        user.Phone = request.NewPhone;
 
                         db.SaveChanges();
 

@@ -1,4 +1,5 @@
 ﻿using Authorize.Interface;
+using Basic.Interface;
 using Common;
 using IdentifierGenerator;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +12,7 @@ using Site.Model.Article;
 namespace Site.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class ArticleService(IUserContext userContext, DatabaseContext db, IConfiguration configuration, IdService idService) : IArticleService
+    public class ArticleService(IUserContext userContext, DatabaseContext db, IConfiguration configuration, IdService idService, IFileService fileService) : IArticleService
     {
 
         private long userId => userContext.UserId;
@@ -166,11 +167,6 @@ namespace Site.Service
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f => f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
-                {
-                    Key = f.Id,
-                    Value = fileServerUrl + f.Path
-                }).ToList()
             }).Skip(request.Skip()).Take(request.PageSize).ToList();
 
             return data;
@@ -180,8 +176,6 @@ namespace Site.Service
 
         public DtoArticle? GetArticle(long articleId)
         {
-            string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
-
             var article = db.TArticle.Where(t => t.Id == articleId).Select(t => new DtoArticle
             {
                 Id = t.Id,
@@ -195,12 +189,12 @@ namespace Site.Service
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-                CoverImageList = db.TFile.Where(f => f.Sign == "cover" && f.Table == "TArticle" && f.TableId == t.Id).Select(f => new DtoKeyValue
-                {
-                    Key = f.Id,
-                    Value = fileServerUrl + f.Path
-                }).ToList()
             }).FirstOrDefault();
+
+            if (article != null)
+            {
+                article.CoverImageList = fileService.GetFileList("Article", "cover", article.Id, true);
+            }
 
             return article;
         }

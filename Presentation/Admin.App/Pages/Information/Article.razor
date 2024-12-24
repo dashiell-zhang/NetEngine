@@ -43,9 +43,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                            OnConfirm="_=>DeleteArticle(context.Id)"
-                                            OkText="Yes"
-                                            CancelText="No">
+                                OnConfirm="_=>DeleteArticle(context.Id)"
+                                OkText="Yes"
+                                CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -148,8 +148,9 @@
     {
         foreach (var file in e.GetMultipleFiles())
         {
-            string url = LocalStorage.GetItemAsString("appApiUrl") + "File/UploadFile?business=TArticle&key=" + fileKey + "&sign=cover";
+            var requestUrl = "/File/UploadFile?business=Article&key=" + fileKey + "&sign=cover";
 
+            string url = LocalStorage.GetItemAsString("appApiUrl") + "File/UploadFile?business=Article&key=" + fileKey + "&sign=cover";
             using HttpClientHandler handler = new();
 
             using HttpClient client = new(handler);
@@ -205,7 +206,6 @@
             var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
             var authorization = LocalStorage.GetItemAsString("Authorization");
             var privateKey = authorization?.Split(".").ToList().LastOrDefault();
-            var requestUrl = "/File/UploadFile?business=TArticle&key=" + fileKey + "&sign=cover";
 
             var dataStr = privateKey + timeStr + requestUrl + "file" + fileSign;
 
@@ -395,9 +395,9 @@
 
             fileList = article.CoverImageList?.Select(t => new UploadFileItem
                 {
-                    Id = t.Key.ToString(),
+                    Id = t.Id.ToString(),
                     FileName = "coverImg.jpg",
-                    Url = t.Value!.ToString(),
+                    Url = t.Url,
                     State = UploadState.Success
                 }).ToList()!;
         }

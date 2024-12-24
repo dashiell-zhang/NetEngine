@@ -33,10 +33,10 @@ namespace Client.WebAPI.Controllers
         /// <summary>
         /// 通过短信验证码修改账户手机号
         /// </summary>
-        /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
+        /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool EditUserPhoneBySms(DtoKeyValue keyValue) => userService.EditUserPhoneBySms(keyValue);
+        public bool EditUserPhoneBySms(DtoEditUserPhoneBySms request) => userService.EditUserPhoneBySms(request);
 
 
     }

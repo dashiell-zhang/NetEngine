@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\..\Infrastructure\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\Repository\Repository.csproj" />
     <ProjectReference Include="..\..\Interface\Authorize.Interface\Authorize.Interface.csproj" />
+    <ProjectReference Include="..\..\Interface\Basic.Interface\Basic.Interface.csproj" />
     <ProjectReference Include="..\..\Interface\Site.Interface\Site.Interface.csproj" />
   </ItemGroup>
 

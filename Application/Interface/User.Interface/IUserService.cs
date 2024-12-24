@@ -19,7 +19,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
         /// <returns></returns>
-        public bool EditUserPhoneBySms(DtoKeyValue keyValue);
+        public bool EditUserPhoneBySms(DtoEditUserPhoneBySms request);
 
 
 

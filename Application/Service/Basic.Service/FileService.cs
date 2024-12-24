@@ -174,5 +174,39 @@ namespace Basic.Service
                 return false;
             }
         }
+
+
+
+        public List<DtoFileInfo> GetFileList(string business, string? sign, long key, bool isGetUrl)
+        {
+
+            var query = db.TFile.Where(t => t.Table == business && t.TableId == key);
+
+            if (sign != null)
+            {
+                query = query.Where(t => t.Sign == sign);
+            }
+
+            var fileList = query.OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoFileInfo
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Length = t.Length,
+                Sign = t.Sign,
+                Path = t.Path,
+            }).ToList();
+
+            foreach (var file in fileList)
+            {
+                file.LengthText = IOHelper.FileLengthToString(file.Length);
+
+                if (isGetUrl)
+                {
+                    file.Url = GetFileURL(file.Id);
+                }
+            }
+
+            return fileList;
+        }
     }
 }

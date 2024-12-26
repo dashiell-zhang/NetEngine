@@ -43,9 +43,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                OnConfirm="_=>DeleteArticle(context.Id)"
-                                OkText="Yes"
-                                CancelText="No">
+                                            OnConfirm="_=>DeleteArticle(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -148,9 +148,9 @@
     {
         foreach (var file in e.GetMultipleFiles())
         {
-            var requestUrl = "/File/UploadFile?business=Article&key=" + fileKey + "&sign=cover";
+            var requestUrl = "/File/UploadFile?business=Article&key=" + fileKey + "&sign=cover&isPublicRead=true";
 
-            string url = LocalStorage.GetItemAsString("appApiUrl") + "File/UploadFile?business=Article&key=" + fileKey + "&sign=cover";
+            string url = LocalStorage.GetItemAsString("appApiUrl") + "File/UploadFile?business=Article&key=" + fileKey + "&sign=cover&isPublicRead=true";
             using HttpClientHandler handler = new();
 
             using HttpClient client = new(handler);
@@ -393,13 +393,17 @@
             editArticle.IsDisplay = article.IsDisplay;
             editArticle.IsRecommend = article.IsRecommend;
 
-            fileList = article.CoverImageList?.Select(t => new UploadFileItem
-                {
-                    Id = t.Id.ToString(),
-                    FileName = "coverImg.jpg",
-                    Url = t.Url,
-                    State = UploadState.Success
-                }).ToList()!;
+            if (article.CoverImageList != null && article.CoverImageList.Any())
+            {
+                fileList = article.CoverImageList?.Select(t => new UploadFileItem
+                    {
+                        Id = t.Id.ToString(),
+                        FileName = "coverImg.jpg",
+                        Url = t.Url,
+                        State = UploadState.Success
+                    }).ToList()!;
+            }
+
         }
         else
         {

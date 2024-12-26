@@ -169,6 +169,11 @@ namespace Site.Service
                 CreateTime = t.CreateTime,
             }).Skip(request.Skip()).Take(request.PageSize).ToList();
 
+            foreach (var article in data.List)
+            {
+                article.CoverImageList = fileService.GetFileList("Article", "cover", article.Id, true);
+            }
+
             return data;
         }
 

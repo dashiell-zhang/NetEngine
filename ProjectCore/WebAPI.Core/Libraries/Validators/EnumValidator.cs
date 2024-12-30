@@ -13,22 +13,48 @@ namespace WebAPI.Core.Libraries.Validators
 
                 if (!Enum.IsDefined(enumType, value))
                 {
-                    string errMsg = "";
-
-                    var propertyName = context.ModelMetadata.PropertyName;
-
-                    if (propertyName != null)
+                    if (!flagsEnumCheck())
                     {
-                        errMsg = $"The value {value} in field {propertyName} is invalid.";
+                        string errMsg = "";
+
+                        var propertyName = context.ModelMetadata.PropertyName;
+
+                        if (propertyName != null)
+                        {
+                            errMsg = $"The value {value} in field {propertyName} is invalid.";
+                        }
+                        else
+                        {
+                            errMsg = $"The value {value} is invalid.";
+                        }
+
+                        ModelValidationResult validationResult = new("", errMsg);
+
+                        return [validationResult];
                     }
-                    else
+                }
+
+
+                bool flagsEnumCheck()
+                {
+                    var isFlags = enumType.IsDefined(typeof(FlagsAttribute), false);
+
+                    if (isFlags)
                     {
-                        errMsg = $"The value {value} is invalid.";
+                        var enumValues = Enum.GetValues(enumType).Cast<Enum>();
+                        int intValue = Convert.ToInt32(value);
+
+                        foreach (var enumValue in enumValues)
+                        {
+                            int enumValueInt = Convert.ToInt32(enumValue);
+                            if ((intValue & enumValueInt) == enumValueInt)
+                            {
+                                return true;
+                            }
+                        }
                     }
 
-                    ModelValidationResult validationResult = new("", errMsg);
-
-                    return [validationResult];
+                    return false;
                 }
             }
 

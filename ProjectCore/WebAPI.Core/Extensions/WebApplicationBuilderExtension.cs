@@ -17,6 +17,7 @@ using WebAPI.Core.Filters;
 using WebAPI.Core.Interfaces;
 using WebAPI.Core.Libraries.HealthCheck;
 using WebAPI.Core.Libraries.Swagger;
+using WebAPI.Core.Libraries.Validators;
 
 namespace WebAPI.Core.Extensions
 {
@@ -100,7 +101,11 @@ namespace WebAPI.Core.Extensions
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 
-            builder.Services.AddMvc(options => options.Filters.Add(new ExceptionFilter()));
+            builder.Services.AddMvc(options =>
+            {
+                options.ModelValidatorProviders.Add(new EnumValidationProvider());
+                options.Filters.Add(new ExceptionFilter());
+            });
 
 
             //注册跨域信息
@@ -158,25 +163,6 @@ namespace WebAPI.Core.Extensions
             });
             #endregion
 
-
-            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
-
-            builder.Services.AddMvc(options => options.Filters.Add(new ExceptionFilter()));
-
-
-            //注册跨域信息
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("cors", policy =>
-                {
-                    policy.SetIsOriginAllowed(origin => true)
-                       .AllowAnyHeader()
-                       .AllowAnyMethod()
-                       .AllowCredentials()
-                       .SetPreflightMaxAge(TimeSpan.FromSeconds(7200));
-                });
-            });
 
 
             #region 注册 Json 序列化配置

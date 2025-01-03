@@ -57,7 +57,7 @@
 
     <Header Class="site-layout-background" Style="height: 48px;padding: 0 20px;line-height: 39px;position:fixed;width:100%;right:0;z-index:2;">
         <div style="float: right;">
-            <Avatar Size="33" Icon="user" Style="background-color: #87d068" />
+            <Avatar Size="@(OneOf<AvatarSize,string>.FromT1("33"))" Icon="user" Style="background-color: #87d068" />
             <Dropdown>
                 <Overlay>
                     <Menu>
@@ -95,13 +95,13 @@
 
     RenderFragment subSystemSet =
     @<span>
-        <Icon Type="control" Theme="outline" />
+        <Icon Type="control" Theme="IconThemeType.Outline" />
         <span>系统设置</span>
     </span>;
 
     RenderFragment subArticle =
     @<span>
-        <Icon Type="read" Theme="outline" />
+        <Icon Type="read" Theme="IconThemeType.Outline" />
         <span>资讯管理</span>
     </span>
     ;

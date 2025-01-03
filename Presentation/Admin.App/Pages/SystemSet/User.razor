@@ -44,9 +44,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                OnConfirm="_=>DeleteUser(context.Id)"
-                                OkText="Yes"
-                                CancelText="No">
+                                            OnConfirm="_=>DeleteUser(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -98,17 +98,17 @@
 
             <FormItem>
                 <Text>手机</Text>
-                <Input Placeholder="请输入手机号" Type="number" @bind-Value="@context.Phone" />
+                <Input Placeholder="请输入手机号" Type="InputType.Tel" @bind-Value="@context.Phone" />
             </FormItem>
 
             <FormItem>
                 <Text>邮箱</Text>
-                <Input Placeholder="请输入邮箱" Type="email" @bind-Value="@context.Email" />
+                <Input Placeholder="请输入邮箱" Type="InputType.Email" @bind-Value="@context.Email" />
             </FormItem>
 
             <FormItem>
                 <Text>密码</Text>
-                <InputPassword Placeholder="请输入密码" Type="password" @bind-Value="@context.Password" VisibilityToggle="false" />
+                <InputPassword Placeholder="请输入密码" Type="InputType.Password" @bind-Value="@context.Password" VisibilityToggle="false" />
             </FormItem>
 
             <Row Gutter="24">
@@ -326,11 +326,13 @@
             {
                 Message.Success("设置成功");
             }
-            else{
+            else
+            {
                 userFunction.IsCheck = !isCheck;
             }
         }
-        else{
+        else
+        {
             userFunction.IsCheck = !isCheck;
         }
 

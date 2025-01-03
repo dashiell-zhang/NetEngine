@@ -101,11 +101,11 @@
                 </FormItem>
 
                 <FormItem Label="排序">
-                    <Input Placeholder="请输入排序值" Type="number" @bind-Value="@context.Sort" style="width: 190px" />
+                    <Input Placeholder="请输入排序值" Type="InputType.Number" @bind-Value="@context.Sort" style="width: 190px" />
                 </FormItem>
 
                 <FormItem Label="点击量">
-                    <Input Placeholder="请输入点击量" Type="number" @bind-Value="@context.ClickCount" style="width: 190px" />
+                    <Input Placeholder="请输入点击量" Type="InputType.Number" @bind-Value="@context.ClickCount" style="width: 190px" />
                 </FormItem>
 
                 <FormItem Label="封面图">
@@ -118,7 +118,7 @@
                         </label>
                     </Upload>
 
-                    <Upload FileList="fileList" ListType="picture-card" OnPreview="(file)=> PreviewImg(file)" OnRemove=" (file)=> DeleteImg(file)" ShowButton=false style="margin-top:8px"></Upload>
+                    <Upload FileList="fileList" ListType="UploadListType.PictureCard" OnPreview="(file)=> PreviewImg(file)" OnRemove=" (file)=> DeleteImg(file)" ShowButton=false style="margin-top:8px"></Upload>
 
                     <Image PreviewSrc="@previewImgUrl" Style="display: none;" @bind-PreviewVisible="isPreviewImg" />
 

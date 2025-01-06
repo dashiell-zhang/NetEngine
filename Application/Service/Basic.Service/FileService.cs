@@ -118,26 +118,26 @@ namespace Basic.Service
 
 
 
-        public string? GetFileURL(long fileId)
+        public string? GetFileUrl(long fileId, bool isInline = false)
         {
             var file = db.TFile.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefault();
 
             if (file != null)
             {
-                string fileURL = "";
+                string fileUrl = "";
 
                 if (file.IsPublicRead)
                 {
-                    string fileServerUrl = configuration["FileServerURL"]?.ToString() ?? "";
-                    fileURL = fileServerUrl + file.Path;
+                    string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
+                    fileUrl = fileServerUrl + file.Path;
                 }
                 else
                 {
-                    var tempURL = fileStorage?.GetFileTempURL(file.Path, TimeSpan.FromMinutes(10));
+                    var tempUrl = fileStorage?.GetFileUrl(file.Path, TimeSpan.FromMinutes(10), isInline);
 
-                    if (tempURL != null)
+                    if (tempUrl != null)
                     {
-                        fileURL = tempURL;
+                        fileUrl = tempUrl;
                     }
                     else
                     {
@@ -145,7 +145,7 @@ namespace Basic.Service
                     }
                 }
 
-                return fileURL;
+                return fileUrl;
 
             }
             else
@@ -202,7 +202,7 @@ namespace Basic.Service
 
                 if (isGetUrl)
                 {
-                    file.Url = GetFileURL(file.Id);
+                    file.Url = GetFileUrl(file.Id);
                 }
             }
 

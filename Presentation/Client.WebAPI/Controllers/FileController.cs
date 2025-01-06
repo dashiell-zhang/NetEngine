@@ -200,9 +200,10 @@ namespace Client.WebAPI.Controllers
         /// 通过文件ID获取文件静态访问路径
         /// </summary>
         /// <param name="fileId">文件ID</param>
+        /// <param name="isInline">是否在浏览器中打开</param>
         /// <returns></returns>
         [HttpGet]
-        public string? GetFileURL(long fileId) => fileService.GetFileURL(fileId);
+        public string? GetFileUrl(long fileId, bool isInline) => fileService.GetFileUrl(fileId, isInline);
 
 
 

@@ -28,8 +28,9 @@ namespace Basic.Interface
         /// 通过文件ID获取文件静态访问路径
         /// </summary>
         /// <param name="fileId">文件ID</param>
+        /// <param name="isInline">是否在浏览器中打开</param>
         /// <returns></returns>
-        public string? GetFileURL(long fileId);
+        public string? GetFileUrl(long fileId, bool isInline = false);
 
 
 

@@ -146,7 +146,7 @@ namespace FileStorage.TencentCloud
 
 
 
-        public string? GetFileTempURL(string remotePath, TimeSpan expiry, string? fileName = null)
+        public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false)
         {
             try
             {
@@ -164,17 +164,16 @@ namespace FileStorage.TencentCloud
                     headers = null//签名中需要校验的 header
                 };
 
-
-                if (fileName != null)
+                if (isInline)
                 {
                     preSignatureStruct.queryParameters = new()
                     {
-                        { "response-content-disposition", string.Format("attachment;filename*=utf-8''{0}", HttpUtility.UrlEncode(fileName, Encoding.UTF8)) }
-                    }; //签名中需要校验的 URL 中请求参数
+                        { "response-content-disposition", "inline" }
+                    };
                 }
                 else
                 {
-                    preSignatureStruct.queryParameters = null;  //签名中需要校验的 URL 中请求参数
+                    preSignatureStruct.queryParameters = null;
                 }
 
                 string requestSignURL = cosXml.GenerateSignURL(preSignatureStruct);
@@ -184,8 +183,6 @@ namespace FileStorage.TencentCloud
             {
                 return null;
             }
-
-
         }
     }
 }

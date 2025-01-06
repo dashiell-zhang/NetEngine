@@ -245,13 +245,13 @@
                     newImageArray = ms.ToArray();
                 }
 
-                string fileURL = await JS.InvokeAsync<string>("CreateObjectURL", newImageArray, "image/jpeg");
+                string fileUrl = await JS.InvokeAsync<string>("CreateObjectURL", newImageArray, "image/jpeg");
 
                 fileList.Add(new UploadFileItem()
                     {
                         Id = fileId,
                         FileName = file.Name,
-                        Url = fileURL,
+                        Url = fileUrl,
                         State = UploadState.Success
                     });
             }

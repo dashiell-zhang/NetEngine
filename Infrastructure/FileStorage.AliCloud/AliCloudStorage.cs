@@ -114,7 +114,7 @@ namespace FileStorage.AliCloud
 
 
 
-        public string? GetFileTempURL(string remotePath, TimeSpan expiry, string? fileName = null)
+        public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false)
         {
 
             try
@@ -127,18 +127,18 @@ namespace FileStorage.AliCloud
 
                 GeneratePresignedUriRequest req = new(bucketName, remotePath);
 
-                if (fileName != null)
+                if (isInline)
                 {
-                    req.ResponseHeaders.ContentDisposition = string.Format("attachment;filename*=utf-8''{0}", HttpUtils.EncodeUri(fileName, "utf-8"));
+                    req.ResponseHeaders.ContentDisposition = "inline";
                 }
 
                 req.Expiration = DateTime.UtcNow + expiry;
 
                 var url = client.GeneratePresignedUri(req);
 
-                Uri tempURL = new(url.ToString());
+                Uri tempUrl = new(url.ToString());
 
-                return this.url + tempURL.PathAndQuery[1..];
+                return this.url + tempUrl.PathAndQuery[1..];
 
 
             }

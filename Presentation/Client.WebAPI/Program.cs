@@ -9,6 +9,7 @@ using SMS.AliCloud;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Extensions;
+using Logger.DataBase;
 
 namespace Client.WebAPI
 {
@@ -172,7 +173,7 @@ namespace Client.WebAPI
             #region 注册日志服务
 
             //注册数据库日志服务
-            //builder.Logging.AddDataBaseLogger(options => { });
+            builder.Logging.AddDataBaseLogger(options => { });
 
             //注册本地文件日志服务
             //builder.Logging.AddLocalFileLogger(options => { });

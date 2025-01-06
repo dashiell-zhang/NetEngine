@@ -34,14 +34,7 @@ namespace Logger.LocalFile
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            if (logLevel != LogLevel.None)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return logLevel != LogLevel.None;
         }
 
 

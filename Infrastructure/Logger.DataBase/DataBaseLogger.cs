@@ -1,6 +1,7 @@
 ﻿using Common;
 using IdentifierGenerator;
 using Logger.DataBase.Models;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
@@ -16,22 +17,16 @@ namespace Logger.DataBase
         }
 
 
-
         public bool IsEnabled(LogLevel logLevel)
         {
-            if (logLevel != LogLevel.None)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return logLevel != LogLevel.None;
         }
 
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
+
+
 
             if (IsEnabled(logLevel))
             {
@@ -42,6 +37,32 @@ namespace Logger.DataBase
 
                     if (logContent != null)
                     {
+                        if (eventId.Id == RelationalEventId.MultipleCollectionIncludeWarning.Id)    //20504
+                        {
+                            var stackTrace = new System.Diagnostics.StackTrace(true);
+                            var frames = stackTrace.GetFrames();
+
+                            var relevantFrames = frames?.Where(t => t.GetFileName() != null).ToList();
+
+                            var relevantFrame = relevantFrames?[1];
+
+                            if (relevantFrame != null)
+                            {
+                                var logMsg = new
+                                {
+                                    message = logContent,
+                                    stackFrame = new
+                                    {
+                                        fullName = relevantFrame.GetMethod()!.DeclaringType!.FullName,
+                                        methodName = relevantFrame.GetMethod()!.Name,
+                                        src = $"{relevantFrame.GetFileName()}:line {relevantFrame.GetFileLineNumber()}"
+                                    }
+                                };
+
+                                logContent = JsonHelper.ObjectToJson(logMsg);
+                            }
+                        }
+
                         if (exception != null)
                         {
                             var logMsg = new

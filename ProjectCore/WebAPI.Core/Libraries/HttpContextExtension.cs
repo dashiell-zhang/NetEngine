@@ -33,14 +33,36 @@ namespace WebAPI.Core.Libraries
         /// <returns></returns>
         public static string GetRemoteIP(this HttpContext httpContext)
         {
-            var ip = httpContext.Connection.RemoteIpAddress!.ToString();
+            string[] headerKeys = { "x-original-forwarded-for", "x-forwarded-for" };
+
+            foreach (var headerKey in headerKeys)
+            {
+                var headerValue = httpContext.Request.Headers
+                    .FirstOrDefault(h => h.Key.Equals(headerKey, StringComparison.OrdinalIgnoreCase)).Value.ToString();
+
+                if (!string.IsNullOrWhiteSpace(headerValue))
+                {
+                    var ip = headerValue.Split(',', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
+                    if (!string.IsNullOrWhiteSpace(ip))
+                    {
+                        return ip;
+                    }
+                }
+            }
+
+            if (httpContext.Connection.RemoteIpAddress == null)
+            {
+                throw new Exception("RemoteIpAddress 为 null 无法处理");
+            }
+
+            var remoteIp = httpContext.Connection.RemoteIpAddress.ToString();
 
             if (httpContext.Connection.RemoteIpAddress.IsIPv4MappedToIPv6)
             {
-                ip = httpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                remoteIp = httpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
             }
 
-            return ip;
+            return remoteIp;
         }
 
 

@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
@@ -75,152 +75,172 @@ namespace TaskService.Core.QueueTask
 
 
 
-        private void RunAction(QueueTaskInfo queueTaskInfo, long queueTaskId)
+        private async void RunAction(QueueTaskInfo queueTaskInfo, long queueTaskId)
         {
-            Task.Run(() =>
+            try
             {
-                try
+                using var scope = serviceProvider.CreateScope();
+
+                var queueTaskService = scope.ServiceProvider.GetRequiredService<QueueTaskService>();
+
+                queueTaskService.CurrentTaskId = queueTaskId;
+
+                var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
+
+                using var db = factory.CreateDbContext();
+
+                var idService = scope.ServiceProvider.GetRequiredService<IdService>();
+
+                using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
+                if (lockActionState != null)
                 {
-                    using var scope = serviceProvider.CreateScope();
+                    var queueTask = db.TQueueTask.FirstOrDefault(t => t.Id == queueTaskId)!;
 
-                    var queueTaskService = scope.ServiceProvider.GetRequiredService<QueueTaskService>();
-
-                    queueTaskService.CurrentTaskId = queueTaskId;
-
-                    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
-
-                    using var db = factory.CreateDbContext();
-
-                    var idService = scope.ServiceProvider.GetRequiredService<IdService>();
-
-                    using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
-                    if (lockActionState != null)
+                    if (queueTask.FirstTime == null)
                     {
-                        var queueTask = db.TQueueTask.FirstOrDefault(t => t.Id == queueTaskId)!;
+                        queueTask.FirstTime = DateTime.UtcNow;
+                    }
 
-                        if (queueTask.FirstTime == null)
+                    queueTask.LastTime = DateTime.UtcNow;
+
+                    queueTask.Count++;
+
+                    db.SaveChanges();
+
+                    var isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
+
+                    var parameterType = queueTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
+
+                    object? returnObject = null;
+
+                    Type serviceType = queueTaskInfo.Method.DeclaringType!;
+
+                    object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
+
+                    if (parameterType != null)
+                    {
+                        if (queueTask.Parameter != null)
                         {
-                            queueTask.FirstTime = DateTime.UtcNow;
-                        }
+                            var parameter = jsonCloneObject.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
 
-                        queueTask.LastTime = DateTime.UtcNow;
-
-                        queueTask.Count++;
-
-                        db.SaveChanges();
-
-                        var isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
-
-                        var parameterType = queueTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
-
-                        object? returnObject = null;
-
-                        Type serviceType = queueTaskInfo.Method.DeclaringType!;
-
-                        object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
-
-                        if (parameterType != null)
-                        {
-                            if (queueTask.Parameter != null)
-                            {
-                                var parameter = jsonCloneObject.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
-
-                                returnObject = queueTaskInfo.Method.Invoke(serviceInstance, [parameter]);
-                            }
-                            else
-                            {
-                                logger.LogError(queueTaskInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
-                            }
+                            returnObject = queueTaskInfo.Method.Invoke(serviceInstance, [parameter]);
                         }
                         else
                         {
-                            returnObject = queueTaskInfo.Method.Invoke(serviceInstance, null);
+                            logger.LogError(queueTaskInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
                         }
+                    }
+                    else
+                    {
+                        returnObject = queueTaskInfo.Method.Invoke(serviceInstance, null);
+                    }
 
-                        queueTask.SuccessTime = DateTime.UtcNow;
 
-                        var isHaveChild = db.TQueueTask.Where(t => t.ParentTaskId == queueTaskId).Any();
+                    if (returnObject is Task task)
+                    {
+                        await task;
 
-                        if (!isHaveChild)
+                        var resultProperty = task.GetType().GetProperty("Result");
+
+                        if (resultProperty == null)
                         {
-                            queueTask.ChildSuccessTime = queueTask.SuccessTime;
+                            throw new Exception("无法获取到Task.Result");
                         }
-
-                        if (queueTask.CallbackName != null)
+                        else
                         {
+                            returnObject = resultProperty?.GetValue(task);
 
-                            if (queueTask.CallbackParameter == null && isReturnVoid == false && returnObject != null)
+                            if (returnObject?.GetType().FullName == "System.Threading.Tasks.VoidTaskResult")
                             {
-                                queueTask.CallbackParameter = JsonHelper.ObjectToJson(returnObject);
+                                returnObject = null;
                             }
+                        }
+                    }
 
-                            if (queueTask.ChildSuccessTime != null)
+
+                    queueTask.SuccessTime = DateTime.UtcNow;
+
+                    var isHaveChild = db.TQueueTask.Where(t => t.ParentTaskId == queueTaskId).Any();
+
+                    if (!isHaveChild)
+                    {
+                        queueTask.ChildSuccessTime = queueTask.SuccessTime;
+                    }
+
+                    if (queueTask.CallbackName != null)
+                    {
+
+                        if (queueTask.CallbackParameter == null && isReturnVoid == false && returnObject != null)
+                        {
+                            queueTask.CallbackParameter = JsonHelper.ObjectToJson(returnObject);
+                        }
+
+                        if (queueTask.ChildSuccessTime != null)
+                        {
+                            TQueueTask callbackTask = new()
+                            {
+                                Id = idService.GetId(),
+                                Name = queueTask.CallbackName,
+                                Parameter = queueTask.CallbackParameter
+                            };
+
+                            db.TQueueTask.Add(callbackTask);
+                        }
+                    }
+
+                    if (queueTask.ParentTaskId != null && queueTask.ChildSuccessTime != null)
+                    {
+                        UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
+                    }
+
+                    db.SaveChanges();
+                }
+
+
+                void UpdateParentState(long parentTaskId, long currentTaskId)
+                {
+                    using (distLock.Lock(parentTaskId.ToString()))
+                    {
+                        //同级别是否全部执行完成
+                        var isSameLevelHaveWait = db.TQueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).Any();
+
+                        if (!isSameLevelHaveWait)
+                        {
+                            var parentTaskInfo = db.TQueueTask.Where(t => t.Id == parentTaskId).First();
+
+                            parentTaskInfo.ChildSuccessTime = DateTimeOffset.UtcNow;
+
+                            if (parentTaskInfo.CallbackName != null)
                             {
                                 TQueueTask callbackTask = new()
                                 {
                                     Id = idService.GetId(),
-                                    Name = queueTask.CallbackName,
-                                    Parameter = queueTask.CallbackParameter
+                                    Name = parentTaskInfo.CallbackName,
+                                    Parameter = parentTaskInfo.CallbackParameter
                                 };
 
                                 db.TQueueTask.Add(callbackTask);
                             }
-                        }
 
-                        if (queueTask.ParentTaskId != null && queueTask.ChildSuccessTime != null)
-                        {
-                            UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
-                        }
-
-                        db.SaveChanges();
-                    }
-
-
-                    void UpdateParentState(long parentTaskId, long currentTaskId)
-                    {
-                        using (distLock.Lock(parentTaskId.ToString()))
-                        {
-                            //同级别是否全部执行完成
-                            var isSameLevelHaveWait = db.TQueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).Any();
-
-                            if (!isSameLevelHaveWait)
+                            if (parentTaskInfo.ParentTaskId != null)
                             {
-                                var parentTaskInfo = db.TQueueTask.Where(t => t.Id == parentTaskId).First();
-
-                                parentTaskInfo.ChildSuccessTime = DateTimeOffset.UtcNow;
-
-                                if (parentTaskInfo.CallbackName != null)
-                                {
-                                    TQueueTask callbackTask = new()
-                                    {
-                                        Id = idService.GetId(),
-                                        Name = parentTaskInfo.CallbackName,
-                                        Parameter = parentTaskInfo.CallbackParameter
-                                    };
-
-                                    db.TQueueTask.Add(callbackTask);
-                                }
-
-                                if (parentTaskInfo.ParentTaskId != null)
-                                {
-                                    UpdateParentState(parentTaskInfo.ParentTaskId.Value, parentTaskInfo.Id);
-                                }
+                                UpdateParentState(parentTaskInfo.ParentTaskId.Value, parentTaskInfo.Id);
                             }
                         }
-
-
                     }
 
+
                 }
-                catch (Exception ex)
-                {
-                    logger.LogError($"RunAction-{queueTaskInfo.Name};{queueTaskId};{ex.Message}");
-                }
-                finally
-                {
-                    runingTaskList.TryRemove(queueTaskId, out _);
-                }
-            });
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"RunAction-{queueTaskInfo.Name};{queueTaskId};{ex.Message}");
+            }
+            finally
+            {
+                runingTaskList.TryRemove(queueTaskId, out _);
+            }
         }
 
     }

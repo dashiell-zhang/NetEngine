@@ -1,4 +1,7 @@
-﻿namespace TaskService.Core.QueueTask
+using System.Reflection;
+using System.Runtime.CompilerServices;
+
+namespace TaskService.Core.QueueTask
 {
     public class QueueTaskBuilder
     {
@@ -11,6 +14,15 @@
 
             foreach (var method in taskList)
             {
+
+                bool isAsyncVoid = method.ReturnType == typeof(void) && method.GetCustomAttribute<AsyncStateMachineAttribute>() != null;
+
+                if (isAsyncVoid)
+                {
+                    throw new Exception($"{method.Name}返回类型暂不支持 async void 的返回类型方法，请调整为 async Task 或 async Task<>");
+                }
+
+
                 string name = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Name" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).First()!;
 
                 int semaphore = 1;

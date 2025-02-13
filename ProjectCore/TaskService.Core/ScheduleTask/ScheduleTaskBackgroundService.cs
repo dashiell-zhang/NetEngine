@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -68,29 +68,33 @@ namespace TaskService.Core.ScheduleTask
 
 
 
-        private void RunAction(ScheduleTaskInfo scheduleTaskInfo, string key)
+        private async void RunAction(ScheduleTaskInfo scheduleTaskInfo, string key)
         {
-            Task.Run(() =>
+            try
             {
-                try
-                {
-                    using var scope = serviceProvider.CreateScope();
+                using var scope = serviceProvider.CreateScope();
 
-                    Type serviceType = scheduleTaskInfo.Method.DeclaringType!;
+                Type serviceType = scheduleTaskInfo.Method.DeclaringType!;
 
-                    object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
+                object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
 
-                    scheduleTaskInfo.Method.Invoke(serviceInstance, null);
-                }
-                catch (Exception ex)
+                var returnObject = scheduleTaskInfo.Method.Invoke(serviceInstance, null);
+
+                if (returnObject is Task task)
                 {
-                    logger.LogError($"RunAction-{scheduleTaskInfo.Method.Name};{ex.Message}");
+                    await task;
                 }
-                finally
-                {
-                    runingTaskList.TryRemove(key, out _);
-                }
-            });
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"RunAction-{scheduleTaskInfo.Method.Name};{ex.Message}");
+            }
+            finally
+            {
+                runingTaskList.TryRemove(key, out _);
+            }
+
         }
     }
 }

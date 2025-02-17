@@ -1,13 +1,11 @@
-﻿using Common;
+using Common;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace WebAPI.Core.Libraries
 {
 
-
     public class GlobalError
     {
-
 
         public static Task ErrorEvent(HttpContext httpContext)
         {
@@ -19,16 +17,15 @@ namespace WebAPI.Core.Libraries
                 errMsg = "系统全局内部异常"
             };
 
-
             string path = httpContext.GetURL();
 
-            var parameter = httpContext.GetParameters();
+            var parameters = httpContext.GetParameters();
 
-            var parameterStr = JsonHelper.ObjectToJson(parameter);
+            var parametersStr = JsonHelper.ObjectToJson(parameters);
 
-            if (parameterStr.Length > 102400)
+            if (parametersStr.Length > 102400)
             {
-                _ = parameterStr[..102400];
+                _ = parametersStr[..102400];
             }
 
             var authorization = httpContext.Request.Headers.Authorization.ToString();
@@ -36,7 +33,7 @@ namespace WebAPI.Core.Libraries
             var content = new
             {
                 path,
-                parameter,
+                parameters,
                 authorization,
                 error = new
                 {
@@ -54,7 +51,6 @@ namespace WebAPI.Core.Libraries
 
             return httpContext.Response.WriteAsJsonAsync(ret);
         }
-
 
     }
 }

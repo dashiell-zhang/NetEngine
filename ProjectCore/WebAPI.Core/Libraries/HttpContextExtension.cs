@@ -1,4 +1,4 @@
-﻿using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Shared.Model;
 using System.IO.Compression;
 using System.Text;
@@ -137,40 +137,43 @@ namespace WebAPI.Core.Libraries
 
 
         /// <summary>
-        /// 获取Http请求中的全部参数
+        /// 获取请求中的Query和Body中的参数
         /// </summary>
+        /// <remarks>排除Body中的文件信息</remarks>
         public static Dictionary<string, string> GetParameters(this HttpContext httpContext)
         {
-
             var context = httpContext;
 
             Dictionary<string, string> parameters = [];
 
-            if (context.Request.Method == "POST")
-            {
-                string body = httpContext.GetRequestBody();
+            var queryList = context.Request.Query.ToList();
 
-                if (!string.IsNullOrEmpty(body))
+            foreach (var query in queryList)
+            {
+                parameters.Add(query.Key, query.Value.ToString());
+            }
+
+            if (context.Request.ContentLength != null && context.Request.ContentLength != 0)
+            {
+                if (context.Request.HasFormContentType)
                 {
-                    parameters.Add("body", body);
-                }
-                else if (context.Request.HasFormContentType)
-                {
-                    var fromlist = context.Request.Form.OrderBy(t => t.Key).ToList();
+                    var fileNameList = context.Request.Form.Files.Select(t => t.Name).ToList();
+
+                    var fromlist = context.Request.Form.Where(t => fileNameList.Contains(t.Key) == false).OrderBy(t => t.Key).ToList();
 
                     foreach (var fm in fromlist)
                     {
                         parameters.Add(fm.Key, fm.Value.ToString());
                     }
                 }
-            }
-            else if (context.Request.Method == "GET")
-            {
-                var queryList = context.Request.Query.ToList();
-
-                foreach (var query in queryList)
+                else
                 {
-                    parameters.Add(query.Key, query.Value.ToString());
+                    string body = httpContext.GetRequestBody();
+
+                    if (!string.IsNullOrEmpty(body))
+                    {
+                        parameters.Add("body", body);
+                    }
                 }
             }
 

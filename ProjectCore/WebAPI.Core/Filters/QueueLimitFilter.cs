@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -102,8 +102,8 @@ namespace WebAPI.Core.Filters
 
             if (IsUseParameter)
             {
-                var parameter = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
-                key = key + "_" + parameter;
+                var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
+                key = key + "_" + parameters;
             }
 
             key = "QueueLimit_" + CryptoHelper.MD5HashData(key);

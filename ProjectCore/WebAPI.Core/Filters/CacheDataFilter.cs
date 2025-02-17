@@ -1,8 +1,9 @@
-﻿using Common;
+using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
+using WebAPI.Core.Libraries;
 
 namespace WebAPI.Core.Filters
 {
@@ -30,17 +31,16 @@ namespace WebAPI.Core.Filters
 
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
-            string key = "";
+
+            var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
+
+            string key = parameters;
 
             if (IsUseToken)
             {
                 var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
 
-                key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString + "_" + token;
-            }
-            else
-            {
-                key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
+                key = key + "_" + token;
             }
 
             key = "CacheData_" + CryptoHelper.MD5HashData(key);
@@ -70,23 +70,22 @@ namespace WebAPI.Core.Filters
         }
 
 
+
         void IActionFilter.OnActionExecuted(ActionExecutedContext context)
         {
             try
             {
                 if (context.Result is ObjectResult objectResult && objectResult.Value != null)
                 {
-                    string key = "";
+                    var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
+
+                    string key = parameters;
 
                     if (IsUseToken)
                     {
                         var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
 
-                        key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString + "_" + token;
-                    }
-                    else
-                    {
-                        key = context.ActionDescriptor.DisplayName + "_" + context.HttpContext.Request.QueryString;
+                        key = key + "_" + token;
                     }
 
                     key = "CacheData_" + CryptoHelper.MD5HashData(key);
@@ -96,7 +95,6 @@ namespace WebAPI.Core.Filters
                         var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
                         distributedCache.SetAsync(key, objectResult.Value, TimeSpan.FromSeconds(TTL));
                     }
-
                 }
             }
             catch (Exception ex)

@@ -29,26 +29,29 @@ namespace WebAPI.Core.Filters
         public bool IsUseToken { get; set; }
 
 
+
+        private string cacheKey;
+
+
         void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
 
             var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
 
-            string key = parameters;
+            cacheKey = parameters;
 
             if (IsUseToken)
             {
                 var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
-
-                key = key + "_" + token;
+                cacheKey = cacheKey + "_" + token;
             }
 
-            key = "CacheData_" + CryptoHelper.MD5HashData(key);
+            cacheKey = "CacheData_" + CryptoHelper.MD5HashData(cacheKey);
 
             try
             {
                 var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-                var cacheInfo = distributedCache.Get<object>(key);
+                var cacheInfo = distributedCache.Get<object>(cacheKey);
 
                 if (cacheInfo != null)
                 {
@@ -77,23 +80,10 @@ namespace WebAPI.Core.Filters
             {
                 if (context.Result is ObjectResult objectResult && objectResult.Value != null)
                 {
-                    var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
-
-                    string key = parameters;
-
-                    if (IsUseToken)
-                    {
-                        var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
-
-                        key = key + "_" + token;
-                    }
-
-                    key = "CacheData_" + CryptoHelper.MD5HashData(key);
-
                     if (objectResult.Value != null)
                     {
                         var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-                        distributedCache.SetAsync(key, objectResult.Value, TimeSpan.FromSeconds(TTL));
+                        distributedCache.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(TTL));
                     }
                 }
             }

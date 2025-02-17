@@ -24,7 +24,7 @@
 		<PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.2" PrivateAssets="all" />
-		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.4.0" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.5.0" />
 		<PackageReference Include="SkiaSharp.Views.Blazor" Version="3.116.1" />
 		<PackageReference Include="System.Net.Http.Json" Version="9.0.2" />
 	</ItemGroup>

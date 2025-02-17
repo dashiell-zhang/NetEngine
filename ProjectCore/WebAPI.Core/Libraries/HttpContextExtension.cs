@@ -68,21 +68,21 @@ namespace WebAPI.Core.Libraries
 
 
         /// <summary>
-        /// 获取完整URL信息
+        /// 获取完整Url信息
         /// </summary>
         /// <returns></returns>
-        public static string GetURL(this HttpContext httpContext)
+        public static string GetUrl(this HttpContext httpContext)
         {
-            return httpContext.GetBaseURL() + $"{httpContext.Request.Path}{httpContext.Request.QueryString}";
+            return httpContext.GetBaseUrl() + $"{httpContext.Request.Path}{httpContext.Request.QueryString}";
         }
 
 
 
         /// <summary>
-        /// 获取基础URL信息
+        /// 获取基础Url信息
         /// </summary>
         /// <returns></returns>
-        public static string GetBaseURL(this HttpContext httpContext)
+        public static string GetBaseUrl(this HttpContext httpContext)
         {
             var url = $"{httpContext.Request.Scheme}://{httpContext.Request.Host.Host}";
 

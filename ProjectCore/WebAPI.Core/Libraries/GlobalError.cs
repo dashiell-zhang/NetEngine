@@ -17,7 +17,7 @@ namespace WebAPI.Core.Libraries
                 errMsg = "系统全局内部异常"
             };
 
-            string path = httpContext.GetURL();
+            string path = httpContext.GetUrl();
 
             var parameters = httpContext.GetParameters();
 

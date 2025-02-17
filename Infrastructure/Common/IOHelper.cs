@@ -1,4 +1,4 @@
-﻿using System.IO.Compression;
+using System.IO.Compression;
 
 namespace Common
 {
@@ -63,7 +63,7 @@ namespace Common
         /// <summary>
         /// 下载远程文件保存到本地
         /// </summary>
-        /// <param name="url">文件URL</param>
+        /// <param name="url">文件Url</param>
         /// <param name="folderPath">保存文件夹路径</param>
         /// <param name="fileName">保存文件名称,不传则自动通过 url 获取名称</param>
         /// <returns></returns>

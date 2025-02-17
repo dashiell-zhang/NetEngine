@@ -1,4 +1,4 @@
-﻿@page "/systemset/site"
+@page "/systemset/site"
 @using global::Site.Model.Site
 @attribute [ReuseTabsPageTitle("信息维护")]
 
@@ -11,8 +11,8 @@
             <Tabs Type="@TabType.Card">
 
                 <TabPane Key="1" Tab="站点信息">
-                    <FormItem Label="网站URL">
-                        <Input Placeholder="请输入网站URL" @bind-Value="@context.WebUrl" style="width: 30em" />
+                    <FormItem Label="网站Url">
+                        <Input Placeholder="请输入网站Url" @bind-Value="@context.WebUrl" style="width: 30em" />
                     </FormItem>
 
                     <FormItem Label="管理者名称">

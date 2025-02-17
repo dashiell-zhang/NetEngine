@@ -1,4 +1,4 @@
-﻿using Aop.Api;
+using Aop.Api;
 using Aop.Api.Domain;
 using Aop.Api.Request;
 using Aop.Api.Response;
@@ -67,9 +67,9 @@ namespace Pay.Service
                             }
                         };
 
-                        string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi";
+                        string wxUrl = "https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi";
 
-                        var resultJson = WeiXinPayHttp(mchId, wxURL, reqData);
+                        var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
 
                         var prepayId = JsonHelper.GetValueByKey(resultJson, "prepay_id");
 
@@ -148,9 +148,9 @@ namespace Pay.Service
                         };
 
 
-                        string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/app";
+                        string wxUrl = "https://api.mch.weixin.qq.com/v3/pay/transactions/app";
 
-                        var resultJson = WeiXinPayHttp(mchId, wxURL, reqData);
+                        var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
 
                         var prepayId = JsonHelper.GetValueByKey(resultJson, "prepay_id");
 
@@ -191,11 +191,11 @@ namespace Pay.Service
 
         public string? CreateWeiXinPayH5(string orderNo, string notifyUrl, string clientIP)
         {
-            string key = "wxpayH5URL" + orderNo;
+            string key = "wxpayH5Url" + orderNo;
 
-            string? h5URL = distributedCache.GetString(key);
+            string? h5Url = distributedCache.GetString(key);
 
-            if (string.IsNullOrEmpty(h5URL))
+            if (string.IsNullOrEmpty(h5Url))
             {
                 var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
@@ -234,13 +234,13 @@ namespace Pay.Service
                             }
                         };
 
-                        string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/h5";
+                        string wxUrl = "https://api.mch.weixin.qq.com/v3/pay/transactions/h5";
 
-                        var resultJson = WeiXinPayHttp(mchId, wxURL, reqData);
+                        var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
 
-                        h5URL = JsonHelper.GetValueByKey(resultJson, "h5_url");
+                        h5Url = JsonHelper.GetValueByKey(resultJson, "h5_url");
 
-                        if (h5URL == null)
+                        if (h5Url == null)
                         {
                             string? errCode = JsonHelper.GetValueByKey(resultJson, "code");
                             string? errMessage = JsonHelper.GetValueByKey(resultJson, "message");
@@ -249,24 +249,24 @@ namespace Pay.Service
                         }
                         else
                         {
-                            distributedCache.Set(key, h5URL, TimeSpan.FromMinutes(4.5));
+                            distributedCache.Set(key, h5Url, TimeSpan.FromMinutes(4.5));
                         }
                     }
                 }
             }
 
-            return h5URL;
+            return h5Url;
         }
 
 
 
         public string? CreateWeiXinPayPC(string orderNo, string notifyUrl)
         {
-            string key = "wxpayPCURL" + orderNo;
+            string key = "wxpayPCUrl" + orderNo;
 
-            string? codeURL = distributedCache.GetString(key);
+            string? codeUrl = distributedCache.GetString(key);
 
-            if (string.IsNullOrEmpty(codeURL))
+            if (string.IsNullOrEmpty(codeUrl))
             {
                 var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
 
@@ -297,15 +297,15 @@ namespace Pay.Service
                             }
                         };
 
-                        string wxURL = "https://api.mch.weixin.qq.com/v3/pay/transactions/native";
+                        string wxUrl = "https://api.mch.weixin.qq.com/v3/pay/transactions/native";
 
-                        var resultJson = WeiXinPayHttp(mchId, wxURL, reqData);
+                        var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
 
-                        codeURL = JsonHelper.GetValueByKey(resultJson, "code_url");
+                        codeUrl = JsonHelper.GetValueByKey(resultJson, "code_url");
 
-                        if (codeURL != null)
+                        if (codeUrl != null)
                         {
-                            distributedCache.Set(key, codeURL, TimeSpan.FromMinutes(15));
+                            distributedCache.Set(key, codeUrl, TimeSpan.FromMinutes(15));
                         }
                         else
                         {
@@ -318,7 +318,7 @@ namespace Pay.Service
                 }
             }
 
-            return codeURL;
+            return codeUrl;
         }
 
 
@@ -448,7 +448,7 @@ namespace Pay.Service
             if (appId != null && mchId != null && mchApiCertId != null && mchApiCertKey != null)
             {
 
-                //var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/" + mchId;
+                //var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/" + mchId;
 
                 string notifyUrl = "";
 
@@ -465,9 +465,9 @@ namespace Pay.Service
                     }
                 };
 
-                string wxURL = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds";
+                string wxUrl = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds";
 
-                var resultJson = WeiXinPayHttp(mchId, wxURL, reqData);
+                var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
 
                 var refundId = JsonHelper.GetValueByKey(resultJson, "refund_id");
 
@@ -500,9 +500,9 @@ namespace Pay.Service
 
                 string outRefundNo = "";    //商户退款单号
 
-                string wxURL = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds/" + outRefundNo;
+                string wxUrl = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds/" + outRefundNo;
 
-                var resultJson = WeiXinPayHttp(mchId, wxURL);
+                var resultJson = WeiXinPayHttp(mchId, wxUrl);
 
                 var result = JsonHelper.JsonToObject<DtoWeiXinPayRefundRet>(resultJson);
 

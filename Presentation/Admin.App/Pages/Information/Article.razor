@@ -1,4 +1,4 @@
-﻿@page "/information/article"
+@page "/information/article"
 @using Site.Model.Article
 @using SkiaSharp;
 @using System.Security.Cryptography;
@@ -245,7 +245,7 @@
                     newImageArray = ms.ToArray();
                 }
 
-                string fileUrl = await JS.InvokeAsync<string>("CreateObjectURL", newImageArray, "image/jpeg");
+                string fileUrl = await JS.InvokeAsync<string>("CreateObjectUrl", newImageArray, "image/jpeg");
 
                 fileList.Add(new UploadFileItem()
                     {
@@ -370,7 +370,7 @@
         {
             if (item.Url.StartsWith("blob"))
             {
-                JS.InvokeAsync<string>("RevokeObjectURL", item.Url);
+                JS.InvokeAsync<string>("RevokeObjectUrl", item.Url);
             }
         }
 

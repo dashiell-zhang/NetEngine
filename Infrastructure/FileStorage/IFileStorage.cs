@@ -1,4 +1,4 @@
-﻿namespace FileStorage
+namespace FileStorage
 {
     public interface IFileStorage
     {
@@ -32,7 +32,7 @@
 
 
         /// <summary>
-        /// 获取文件临时访问URL
+        /// 获取文件临时访问Url
         /// </summary>
         /// <param name="remotePath">远程文件地址</param>
         /// <param name="expiry">失效时长</param>

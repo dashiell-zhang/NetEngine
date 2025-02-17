@@ -1,4 +1,4 @@
-﻿using COSXML;
+using COSXML;
 using COSXML.Auth;
 using COSXML.Model.Object;
 using COSXML.Model.Tag;
@@ -33,7 +33,7 @@ namespace FileStorage.TencentCloud
             appId = config.CurrentValue.AppId;
             region = config.CurrentValue.Region;
             bucketName = config.CurrentValue.BucketName;
-            url = config.CurrentValue.URL;
+            url = config.CurrentValue.Url;
 
             CosXmlConfig cosXmlConfig = new CosXmlConfig.Builder()
                         .SetConnectionTimeoutMs(60000)  //设置连接超时时间，单位毫秒，默认45000ms
@@ -159,7 +159,7 @@ namespace FileStorage.TencentCloud
                     bucket = bucketName, //存储桶
                     key = remotePath, //对象键
                     httpMethod = "GET", //HTTP 请求方法
-                    isHttps = true, //生成 HTTPS 请求 URL
+                    isHttps = true, //生成 HTTPS 请求 Url
                     signDurationSecond = Convert.ToInt64(expiry.TotalSeconds), //请求签名时间,单位秒
                     headers = null//签名中需要校验的 header
                 };
@@ -176,8 +176,8 @@ namespace FileStorage.TencentCloud
                     preSignatureStruct.queryParameters = null;
                 }
 
-                string requestSignURL = cosXml.GenerateSignURL(preSignatureStruct);
-                return requestSignURL;
+                string requestSignUrl = cosXml.GenerateSignURL(preSignatureStruct);
+                return requestSignUrl;
             }
             catch
             {

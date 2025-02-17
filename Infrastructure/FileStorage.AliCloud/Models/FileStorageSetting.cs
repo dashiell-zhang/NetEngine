@@ -1,4 +1,4 @@
-﻿namespace FileStorage.AliCloud.Models
+namespace FileStorage.AliCloud.Models
 {
     public class FileStorageSetting
     {
@@ -28,9 +28,9 @@
 
 
         /// <summary>
-        /// 访问URL
+        /// 访问Url
         /// </summary>
-        public string URL { get; set; }
+        public string Url { get; set; }
     }
 
 

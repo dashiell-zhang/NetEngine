@@ -1,4 +1,4 @@
-﻿using Aliyun.OSS;
+using Aliyun.OSS;
 using Aliyun.OSS.Util;
 using FileStorage.AliCloud.Models;
 using Microsoft.Extensions.Options;
@@ -17,7 +17,7 @@ namespace FileStorage.AliCloud
         private readonly string accessKeyId = config.CurrentValue.AccessKeyId;
         private readonly string accessKeySecret = config.CurrentValue.AccessKeySecret;
         private readonly string bucketName = config.CurrentValue.BucketName;
-        private readonly string url = config.CurrentValue.URL;
+        private readonly string url = config.CurrentValue.Url;
 
         public bool FileDelete(string remotePath)
         {

@@ -1,4 +1,4 @@
-﻿using Pay.Model.Pay;
+using Pay.Model.Pay;
 using Shared.Model;
 
 namespace Pay.Interface
@@ -84,7 +84,7 @@ namespace Pay.Interface
         /// <param name="orderNo">订单号</param>
         /// <param name="notifyUrl">异步返回Url</param>
         /// <param name="returnUrl">同步返回Url(二维码模式可为null)</param>
-        /// <returns>支付宝支付URL</returns>
+        /// <returns>支付宝支付Url</returns>
         public string? CreateAliPayPC(string orderNo, string notifyUrl, string? returnUrl);
 
 
@@ -96,7 +96,7 @@ namespace Pay.Interface
         /// <param name="notifyUrl"></param>
         /// <param name="returnUrl"></param>
         /// <param name="quitUrl"></param>
-        /// <returns>支付宝支付URL</returns>
+        /// <returns>支付宝支付Url</returns>
         public string? CreateAliPayH5(string orderNo, string notifyUrl, string returnUrl, string quitUrl);
 
 

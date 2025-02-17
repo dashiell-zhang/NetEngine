@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Pay.Interface;
 using Pay.Model.Pay;
 using Shared.Model;
@@ -25,7 +25,7 @@ namespace Client.WebAPI.Controllers
         [HttpGet]
         public DtoCreateWeiXinPayJSAPIRet? CreateWeiXinPayJSAPI(string orderNo, string openId)
         {
-            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/";
+            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
             return payService.CreateWeiXinPayJSAPI(orderNo, openId, notifyUrl);
         }
@@ -41,7 +41,7 @@ namespace Client.WebAPI.Controllers
         public DtoCreateWeiXinPayAppRet? CreateWeiXinPayApp(string orderNo)
         {
 
-            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/";
+            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
             return payService.CreateWeiXinPayApp(orderNo, notifyUrl);
         }
@@ -56,7 +56,7 @@ namespace Client.WebAPI.Controllers
         [HttpGet]
         public string? CreateWeiXinPayH5(string orderNo)
         {
-            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/";
+            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
             var clientIP = httpContextAccessor.HttpContext!.GetRemoteIP();
 
@@ -73,7 +73,7 @@ namespace Client.WebAPI.Controllers
         [HttpGet]
         public string? CreateWeiXinPayPC(string orderNo)
         {
-            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/WeiXinPayNotify/";
+            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
             return payService.CreateWeiXinPayPC(orderNo, notifyUrl);
         }
@@ -110,7 +110,7 @@ namespace Client.WebAPI.Controllers
         [HttpGet]
         public string? CreateAliPayMiniApp(string orderNo)
         {
-            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/api/Pay/AliPayNotify";
+            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
             return payService.CreateAliPayMiniApp(orderNo, notifyUrl);
         }
@@ -122,13 +122,13 @@ namespace Client.WebAPI.Controllers
         /// 支付宝支付-PC模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
-        /// <returns>支付宝支付URL</returns>
+        /// <returns>支付宝支付Url</returns>
         [HttpGet]
         public string? CreateAliPayPC(string orderNo)
         {
 
-            //var returnUrl = httpContextAccessor.HttpContext!.GetBaseURL();
-            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/AliPayNotify";
+            //var returnUrl = httpContextAccessor.HttpContext!.GetBaseUrl();
+            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/AliPayNotify";
 
             return payService.CreateAliPayPC(orderNo, notifyUrl, null);
         }
@@ -139,13 +139,13 @@ namespace Client.WebAPI.Controllers
         /// 支付宝支付-H5模式
         /// </summary>
         /// <param name="orderNo">订单号</param>
-        /// <returns>支付宝支付URL</returns>
+        /// <returns>支付宝支付Url</returns>
         [HttpGet]
         public string? CreateAliPayH5(string orderNo)
         {
             var returnUrl = "";
 
-            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseURL() + "/Pay/AliPayNotify";
+            var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/AliPayNotify";
 
             var quitUrl = "";
 

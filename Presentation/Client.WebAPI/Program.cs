@@ -1,4 +1,4 @@
-﻿using Client.WebAPI.Libraries.HttpHandler;
+using Client.WebAPI.Libraries.HttpHandler;
 using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
@@ -156,7 +156,7 @@ namespace Client.WebAPI
             //    options.SecretId = settings.SecretId;
             //    options.SecretKey = settings.SecretKey;
             //    options.BucketName = settings.BucketName;
-            //    options.URL = builder.Configuration.GetValue<string>("FileServerUrl")!;
+            //    options.Url = builder.Configuration.GetValue<string>("FileServerUrl")!;
             //});
 
             //builder.Services.AddAliCloudStorage(options =>
@@ -166,7 +166,7 @@ namespace Client.WebAPI
             //    options.AccessKeyId = settings.AccessKeyId;
             //    options.AccessKeySecret = settings.AccessKeySecret;
             //    options.BucketName = settings.BucketName;
-            //    options.URL = builder.Configuration.GetValue<string>("FileServerUrl")!;
+            //    options.Url = builder.Configuration.GetValue<string>("FileServerUrl")!;
             //});
             #endregion
 

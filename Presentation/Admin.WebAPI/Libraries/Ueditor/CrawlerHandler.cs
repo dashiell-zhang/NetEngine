@@ -1,4 +1,4 @@
-﻿using FileStorage;
+using FileStorage;
 using System.Net;
 using WebAPI.Core.Libraries;
 
@@ -49,7 +49,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
         {
             if (!IsExternalIPAddress(SourceUrl!))
             {
-                State = "INVALID_URL";
+                State = "INVALID_Url";
                 return this;
             }
 

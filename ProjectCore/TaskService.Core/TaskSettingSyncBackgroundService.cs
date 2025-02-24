@@ -1,4 +1,5 @@
-﻿using IdentifierGenerator;
+using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -49,107 +50,100 @@ namespace TaskService.Core
             }
         }
 
-        private void SyncQueueTaskSetting()
+        private async void SyncQueueTaskSetting()
         {
-            Task.Run(() =>
+            try
             {
-                try
-                {
-                    using var scope = serviceProvider.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                using var scope = serviceProvider.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-                    foreach (var item in queueMethodList)
+                foreach (var item in queueMethodList)
+                {
+                    var task = await db.TTaskSetting.Where(t => t.Name == item.Key).FirstOrDefaultAsync();
+
+                    if (task == null)
                     {
-                        var task = db.TTaskSetting.Where(t => t.Name == item.Key).FirstOrDefault();
-
-                        if (task == null)
+                        task = new()
                         {
-                            task = new()
-                            {
-                                Id = idService.GetId(),
-                                Category = "QueueTask",
-                                Name = item.Key,
-                                Semaphore = item.Value.Semaphore,
-                                Duration = item.Value.Duration
-                            };
+                            Id = idService.GetId(),
+                            Category = "QueueTask",
+                            Name = item.Key,
+                            Semaphore = item.Value.Semaphore,
+                            Duration = item.Value.Duration
+                        };
 
-                            db.Add(task);
+                        db.Add(task);
 
-                            db.SaveChanges();
-                        }
-                        else
-                        {
-                            if (task.Semaphore != null && task.Semaphore != item.Value.Semaphore)
-                            {
-                                item.Value.Semaphore = task.Semaphore.Value;
-                            }
-
-                            if (task.Duration != null && task.Duration != item.Value.Duration)
-                            {
-                                item.Value.Duration = task.Duration.Value;
-                            }
-
-                            item.Value.IsEnable = task.IsEnable;
-                        }
+                        await db.SaveChangesAsync();
                     }
+                    else
+                    {
+                        if (task.Semaphore != null && task.Semaphore != item.Value.Semaphore)
+                        {
+                            item.Value.Semaphore = task.Semaphore.Value;
+                        }
 
+                        if (task.Duration != null && task.Duration != item.Value.Duration)
+                        {
+                            item.Value.Duration = task.Duration.Value;
+                        }
+
+                        item.Value.IsEnable = task.IsEnable;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    logger.LogError($"SyncQueueTaskSetting：{ex.Message}");
-                }
-            });
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"SyncQueueTaskSetting：{ex.Message}");
+            }
         }
 
 
 
-        private void SyncScheduleTaskSetting()
+        private async void SyncScheduleTaskSetting()
         {
-            Task.Run(() =>
+            try
             {
-                try
-                {
-                    using var scope = serviceProvider.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                using var scope = serviceProvider.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-                    foreach (var item in scheduleMethodList)
+                foreach (var item in scheduleMethodList)
+                {
+
+                    var taskSetting = await db.TTaskSetting.Where(t => t.Name == item.Key).FirstOrDefaultAsync();
+
+                    if (taskSetting == null)
                     {
-
-                        var taskSetting = db.TTaskSetting.Where(t => t.Name == item.Key).FirstOrDefault();
-
-                        if (taskSetting == null)
+                        taskSetting = new()
                         {
-                            taskSetting = new()
-                            {
-                                Id = idService.GetId(),
-                                Category = "ScheduleTask",
-                                Name = item.Key,
-                                Cron = item.Value.Cron
-                            };
+                            Id = idService.GetId(),
+                            Category = "ScheduleTask",
+                            Name = item.Key,
+                            Cron = item.Value.Cron
+                        };
 
-                            db.Add(taskSetting);
+                        db.Add(taskSetting);
 
-                            db.SaveChanges();
-                        }
-                        else
-                        {
-                            if (taskSetting.Cron != null && taskSetting.Cron != item.Value.Cron)
-                            {
-                                item.Value.Cron = taskSetting.Cron;
-                            }
-                            item.Value.IsEnable = taskSetting.IsEnable;
-                        }
+                        await db.SaveChangesAsync();
                     }
+                    else
+                    {
+                        if (taskSetting.Cron != null && taskSetting.Cron != item.Value.Cron)
+                        {
+                            item.Value.Cron = taskSetting.Cron;
+                        }
+                        item.Value.IsEnable = taskSetting.IsEnable;
+                    }
+                }
 
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError($"SyncScheduleTaskSetting：{ex.Message}");
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"SyncScheduleTaskSetting：{ex.Message}");
+            }
+
         }
-
-
 
 
     }

@@ -36,12 +36,17 @@ namespace Common
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static void SetAsync(this IDistributedCache distributedCache, string key, string value)
+        public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value)
         {
-            Task.Run(() =>
+            try
             {
-                distributedCache.Set(key, value);
-            });
+                await distributedCache.SetStringAsync(key, value);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
 

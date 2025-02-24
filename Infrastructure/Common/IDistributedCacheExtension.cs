@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Common
 {
@@ -9,28 +9,6 @@ namespace Common
     /// </summary>
     public static class IDistributedCacheExtension
     {
-
-
-        /// <summary>
-        /// 删除缓存
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public static bool Remove(this IDistributedCache distributedCache, string key)
-        {
-            try
-            {
-                distributedCache.Remove(key);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-
-
 
         /// <summary>
         /// 设置 string 类型的缓存
@@ -52,7 +30,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 设置 string 类型的缓存（异步）
         /// </summary>
@@ -66,7 +43,6 @@ namespace Common
                 distributedCache.Set(key, value);
             });
         }
-
 
 
         /// <summary>
@@ -95,7 +71,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 设置 string 类型的缓存（异步）
         /// </summary>
@@ -104,15 +79,22 @@ namespace Common
         /// <param name="expirationRelativeToNow">相对过期时间</param>
         /// <param name="isSlidingExp">是否支持滑动延时</param>
         /// <returns></returns>
-        public static void SetAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
+        public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
         {
-            Task.Run(() =>
+            try
             {
-                distributedCache.Set(key, value, expirationRelativeToNow, isSlidingExp);
-            });
+                await distributedCache.SetStringAsync(key, value, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = (isSlidingExp ? null : expirationRelativeToNow),
+                    SlidingExpiration = (isSlidingExp ? expirationRelativeToNow : null)
+                });
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
-
-
 
 
         /// <summary>
@@ -136,7 +118,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 设置 string 类型的缓存（异步）
         /// </summary>
@@ -144,15 +125,18 @@ namespace Common
         /// <param name="value">值</param>
         /// <param name="absoluteExpiration">绝对过期时间</param>
         /// <returns></returns>
-        public static void SetAsync(this IDistributedCache distributedCache, string key, string value, DateTimeOffset absoluteExpiration)
+        public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value, DateTimeOffset absoluteExpiration)
         {
-            Task.Run(() =>
+            try
             {
-                distributedCache.Set(key, value, absoluteExpiration);
-            });
+                await distributedCache.SetStringAsync(key, value, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
-
-
 
 
         /// <summary>
@@ -176,21 +160,25 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 设置 object 类型的缓存（异步）
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static void SetAsync(this IDistributedCache distributedCache, string key, object value)
+        public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value)
         {
-            Task.Run(() =>
+            try
             {
-                distributedCache.Set(key, value);
-            });
+                var valueStr = JsonHelper.ObjectToJson(value);
+                await distributedCache.SetStringAsync(key, valueStr);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
-
 
 
         /// <summary>
@@ -220,7 +208,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 设置 object 类型的缓存（异步）
         /// </summary>
@@ -229,14 +216,23 @@ namespace Common
         /// <param name="expirationRelativeToNow">相对过期时间</param>
         /// <param name="isSlidingExp">是否支持滑动延时</param>
         /// <returns></returns>
-        public static void SetAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
+        public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
         {
-            Task.Run(() =>
+            try
             {
-                distributedCache.Set(key, value, expirationRelativeToNow, isSlidingExp);
-            });
+                var valueStr = JsonHelper.ObjectToJson(value);
+                await distributedCache.SetStringAsync(key, valueStr, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = (isSlidingExp ? null : expirationRelativeToNow),
+                    SlidingExpiration = (isSlidingExp ? expirationRelativeToNow : null)
+                });
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
-
 
 
         /// <summary>
@@ -261,7 +257,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 设置 object 类型的缓存（异步）
         /// </summary>
@@ -269,15 +264,19 @@ namespace Common
         /// <param name="value"></param>
         /// <param name="absoluteExpiration">绝对过期时间</param>
         /// <returns></returns>
-        public static void SetAsync(this IDistributedCache distributedCache, string key, object value, DateTimeOffset absoluteExpiration)
+        public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value, DateTimeOffset absoluteExpiration)
         {
-            Task.Run(() =>
+            try
             {
-                distributedCache.Set(key, value, absoluteExpiration);
-            });
+                var valueStr = JsonHelper.ObjectToJson(value);
+                await distributedCache.SetStringAsync(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
-
-
 
 
         /// <summary>
@@ -309,7 +308,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 判断缓存是否存在
         /// </summary>
@@ -326,7 +324,6 @@ namespace Common
                 return true;
             }
         }
-
 
     }
 }

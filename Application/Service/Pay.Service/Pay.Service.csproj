@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AlipaySDKNet.Standard" Version="4.9.401" />
+    <PackageReference Include="AlipaySDKNet.Standard" Version="4.9.412" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 

@@ -1,10 +1,9 @@
-﻿using Basic.Model.Base;
+using Basic.Model.Base;
 
 namespace Basic.Interface
 {
     public interface IBaseService
     {
-
 
         /// <summary>
         /// 获取省市级联地址数据
@@ -13,14 +12,14 @@ namespace Basic.Interface
         /// <param name="cityId">城市ID</param>
         /// <returns></returns>
         /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
-        public List<DtoRegion> GetRegion(int provinceId, int cityId);
+        Task<List<DtoRegion>> GetRegionAsync(int provinceId, int cityId);
 
 
         /// <summary>
         /// 获取全部省市级联地址数据
         /// </summary>
         /// <returns></returns>
-        public List<DtoRegion> GetRegionAll();
+        Task<List<DtoRegion>> GetRegionAllAsync();
 
 
         /// <summary>
@@ -28,7 +27,7 @@ namespace Basic.Interface
         /// </summary>
         /// <param name="sign">标记</param>
         /// <returns></returns>
-        public byte[] GetVerifyCode(Guid sign);
+        Task<byte[]> GetVerifyCodeAsync(Guid sign);
 
 
         /// <summary>
@@ -36,10 +35,7 @@ namespace Basic.Interface
         /// </summary>
         /// <param name="groupId"></param>
         /// <returns></returns>
-        public Dictionary<string, string> GetValueList(long groupId);
-
-
-
+        Task<Dictionary<string, string>> GetValueListAsync(long groupId);
 
     }
 }

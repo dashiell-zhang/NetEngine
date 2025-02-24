@@ -1,4 +1,4 @@
-﻿using Basic.Interface;
+using Basic.Interface;
 using Basic.Model.Base;
 using Common;
 using IdentifierGenerator;
@@ -15,7 +15,6 @@ namespace Client.WebAPI.Controllers
     {
 
 
-
         /// <summary>
         /// 获取省市级联地址数据
         /// </summary>
@@ -24,7 +23,7 @@ namespace Client.WebAPI.Controllers
         /// <returns></returns>
         /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
         [HttpGet]
-        public List<DtoRegion> GetRegion(int provinceId, int cityId) => baseService.GetRegion(provinceId, cityId);
+        public Task<List<DtoRegion>> GetRegion(int provinceId, int cityId) => baseService.GetRegionAsync(provinceId, cityId);
 
 
 
@@ -33,7 +32,7 @@ namespace Client.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoRegion> GetRegionAll() => baseService.GetRegionAll();
+        public Task<List<DtoRegion>> GetRegionAll() => baseService.GetRegionAllAsync();
 
 
 
@@ -51,16 +50,15 @@ namespace Client.WebAPI.Controllers
 
 
 
-
         /// <summary>
         /// 图像验证码生成
         /// </summary>
         /// <param name="sign">标记</param>
         /// <returns></returns>
         [HttpGet]
-        public FileResult GetVerifyCode(Guid sign)
+        public async Task<FileResult> GetVerifyCode(Guid sign)
         {
-            var image = baseService.GetVerifyCode(sign);
+            var image = await baseService.GetVerifyCodeAsync(sign);
             return File(image, "image/png");
         }
 
@@ -72,7 +70,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="groupId"></param>
         /// <returns></returns>
         [HttpGet]
-        public Dictionary<string, string> GetValueList(long groupId) => baseService.GetValueList(groupId);
+        public Task<Dictionary<string, string>> GetValueList(long groupId) => baseService.GetValueListAsync(groupId);
 
 
 

@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="9.0.2" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.5.0" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.6.0" />
   </ItemGroup>
 
   <ItemGroup>

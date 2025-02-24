@@ -1,6 +1,7 @@
-﻿using Basic.Interface;
+using Basic.Interface;
 using Basic.Model.Base;
 using Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
@@ -10,32 +11,32 @@ namespace Basic.Service
     [Service(Lifetime = ServiceLifetime.Scoped)]
     public class BaseService(DatabaseContext db, IDistributedCache distributedCache) : IBaseService
     {
-        public List<DtoRegion> GetRegion(int provinceId, int cityId)
+        public async Task<List<DtoRegion>> GetRegionAsync(int provinceId, int cityId)
         {
             List<DtoRegion> list = [];
 
             if (provinceId == 0 && cityId == 0)
             {
-                list = db.TRegionProvince.Select(t => new DtoRegion { Id = t.Id, Name = t.Province }).ToList();
+                list = await db.TRegionProvince.Select(t => new DtoRegion { Id = t.Id, Name = t.Province }).ToListAsync();
             }
 
             if (provinceId != 0)
             {
-                list = db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new DtoRegion { Id = t.Id, Name = t.City }).ToList();
+                list = await db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new DtoRegion { Id = t.Id, Name = t.City }).ToListAsync();
             }
 
             if (cityId != 0)
             {
-                list = db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new DtoRegion { Id = t.Id, Name = t.Area }).ToList();
+                list = await db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new DtoRegion { Id = t.Id, Name = t.Area }).ToListAsync();
             }
 
             return list;
         }
 
 
-        public List<DtoRegion> GetRegionAll()
+        public async Task<List<DtoRegion>> GetRegionAllAsync()
         {
-            var list = db.TRegionProvince.Select(t => new DtoRegion
+            var list = await db.TRegionProvince.Select(t => new DtoRegion
             {
                 Id = t.Id,
                 Name = t.Province,
@@ -49,21 +50,21 @@ namespace Basic.Service
                         Name = a.Area
                     }).ToList()
                 }).ToList()
-            }).ToList();
+            }).ToListAsync();
 
             return list;
         }
 
 
-        public Dictionary<string, string> GetValueList(long groupId)
+        public async Task<Dictionary<string, string>> GetValueListAsync(long groupId)
         {
             Dictionary<string, string> keyValuePairs = new();
 
-            var list = db.TAppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new
+            var list = await db.TAppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new
             {
                 t.Key,
                 t.Value
-            }).ToList();
+            }).ToListAsync();
 
             foreach (var item in list)
             {
@@ -74,7 +75,7 @@ namespace Basic.Service
         }
 
 
-        public byte[] GetVerifyCode(Guid sign)
+        public async Task<byte[]> GetVerifyCodeAsync(Guid sign)
         {
             var cacheKey = "VerifyCode" + sign.ToString();
             Random random = new();
@@ -82,9 +83,11 @@ namespace Basic.Service
 
             var image = ImgHelper.GetVerifyCode(text);
 
-            distributedCache.Set(cacheKey, text, TimeSpan.FromMinutes(5));
+            await distributedCache.SetAsync(cacheKey, text, TimeSpan.FromMinutes(5));
 
             return image;
         }
+
+
     }
 }

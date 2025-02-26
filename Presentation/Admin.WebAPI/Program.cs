@@ -15,7 +15,10 @@ namespace Admin.WebAPI
     {
         public static void Main(string[] args)
         {
-            ThreadPool.SetMinThreads(128, 1);
+            int minWorkerThreads = Environment.ProcessorCount * 4;
+            int minIoThreads = Environment.ProcessorCount * 4;
+
+            ThreadPool.SetMinThreads(minWorkerThreads, minIoThreads);
 
             EnvironmentHelper.ChangeDirectory(args);
 

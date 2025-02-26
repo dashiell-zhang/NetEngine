@@ -18,10 +18,8 @@ namespace Client.WebAPI
         public static void Main(string[] args)
         {
 
-            int minWorkerThreads = Environment.ProcessorCount * 4;
-            int minIoThreads = Environment.ProcessorCount * 4;
-
-            ThreadPool.SetMinThreads(minWorkerThreads, minIoThreads);
+            ThreadPool.GetMinThreads(out int minWorkerThreads, out int minCompletionPortThreads);
+            ThreadPool.SetMinThreads(minWorkerThreads * 8, minCompletionPortThreads);
 
             EnvironmentHelper.ChangeDirectory(args);
 

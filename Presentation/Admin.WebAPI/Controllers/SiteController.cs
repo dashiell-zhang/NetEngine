@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Model;
 using Site.Interface;
@@ -24,7 +24,7 @@ namespace Admin.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public DtoSite GetSite() => siteService.GetSite();
+        public Task<DtoSite> GetSite() => siteService.GetSiteAsync();
 
 
 
@@ -34,7 +34,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="editSite"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool EditSite(DtoSite editSite) => siteService.EditSite(editSite);
+        public Task<bool> EditSite(DtoSite editSite) => siteService.EditSiteAsync(editSite);
 
 
 

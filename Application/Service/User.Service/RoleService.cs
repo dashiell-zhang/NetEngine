@@ -1,6 +1,7 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Common;
 using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Shared.Model;
@@ -13,50 +14,48 @@ namespace User.Service
     public class RoleService(DatabaseContext db, IdService idService, IUserContext userContext) : IRoleService
     {
 
-
         private long userId => userContext.UserId;
 
 
-
-        public DtoPageList<DtoRole> GetRoleList(DtoPageRequest request)
+        public async Task<DtoPageList<DtoRole>> GetRoleListAsync(DtoPageRequest request)
         {
-            var retList = new DtoPageList<DtoRole>();
-
             var query = db.TRole.AsQueryable();
 
-            retList.Total = query.Count();
+            var countTask = query.CountAsync();
 
-            retList.List = query.OrderBy(t => t.CreateTime).Select(t => new DtoRole
+            var listTask = query.OrderBy(t => t.CreateTime).Select(t => new DtoRole
             {
                 Id = t.Id,
                 CreateTime = t.CreateTime,
                 Name = t.Name,
                 Remarks = t.Remarks
-            }).Skip(request.Skip()).Take(request.PageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            return retList;
+            await Task.WhenAll(countTask, listTask);
+
+            return new()
+            {
+                Total = countTask.Result,
+                List = listTask.Result
+            };
         }
 
 
-
-
-        public DtoRole? GetRole(long roleId)
+        public Task<DtoRole?> GetRoleAsync(long roleId)
         {
-
             var role = db.TRole.Where(t => t.Id == roleId).Select(t => new DtoRole
             {
                 Id = t.Id,
                 CreateTime = t.CreateTime,
                 Name = t.Name,
                 Remarks = t.Remarks
-            }).FirstOrDefault();
+            }).FirstOrDefaultAsync();
 
             return role;
         }
 
 
-
-        public long CreateRole(DtoEditRole role)
+        public async Task<long> CreateRoleAsync(DtoEditRole role)
         {
             var dbRole = new TRole
             {
@@ -67,23 +66,22 @@ namespace User.Service
 
             db.TRole.Add(dbRole);
 
-            db.SaveChanges();
+            await db.SaveChangesAsync();
 
             return dbRole.Id;
         }
 
 
-
-        public bool UpdateRole(long roleId, DtoEditRole role)
+        public async Task<bool> UpdateRoleAsync(long roleId, DtoEditRole role)
         {
-            var dbRole = db.TRole.Where(t => t.Id == roleId).FirstOrDefault();
+            var dbRole = await db.TRole.Where(t => t.Id == roleId).FirstOrDefaultAsync();
 
             if (dbRole != null)
             {
                 dbRole.Name = role.Name;
                 dbRole.Remarks = role.Remarks;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }
@@ -94,24 +92,22 @@ namespace User.Service
         }
 
 
-
-        public bool DeleteRole(long id)
+        public async Task<bool> DeleteRoleAsync(long id)
         {
-
-            var role = db.TRole.Where(t => t.Id == id).FirstOrDefault();
-
-            var isHaveUser = db.TUserRole.Where(t => t.RoleId == id).FirstOrDefault();
+            var isHaveUser = await db.TUserRole.Where(t => t.RoleId == id).FirstOrDefaultAsync();
 
             if (isHaveUser != null)
             {
                 throw new CustomException("当前角色下存在人员信息，无法删除！");
             }
 
+            var role = await db.TRole.Where(t => t.Id == id).FirstOrDefaultAsync();
+
             if (role != null)
             {
                 role.IsDelete = true;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }
@@ -122,11 +118,9 @@ namespace User.Service
         }
 
 
-
-
-        public List<DtoRoleFunction> GetRoleFunction(long roleId)
+        public async Task<List<DtoRoleFunction>> GetRoleFunctionAsync(long roleId)
         {
-            var functionList = db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
+            var functionList = await db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
@@ -139,23 +133,21 @@ namespace User.Service
                     Sign = f.Sign,
                     IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
                 }).ToList()
-            }).ToList();
+            }).ToListAsync();
 
             foreach (var function in functionList)
             {
-                function.ChildList = GetRoleFunctionChildList(roleId, function.Id);
+                function.ChildList = await GetRoleFunctionChildListAsync(roleId, function.Id);
             }
 
             return functionList;
         }
 
 
-
-
-        public bool SetRoleFunction(DtoSetRoleFunction setRoleFunction)
+        public async Task<bool> SetRoleFunctionAsync(DtoSetRoleFunction setRoleFunction)
         {
 
-            var functionAuthorize = db.TFunctionAuthorize.Where(t => t.RoleId == setRoleFunction.RoleId && t.FunctionId == setRoleFunction.FunctionId).FirstOrDefault() ?? new TFunctionAuthorize();
+            var functionAuthorize = await db.TFunctionAuthorize.Where(t => t.RoleId == setRoleFunction.RoleId && t.FunctionId == setRoleFunction.FunctionId).FirstOrDefaultAsync() ?? new TFunctionAuthorize();
 
             functionAuthorize.FunctionId = setRoleFunction.FunctionId;
             functionAuthorize.RoleId = setRoleFunction.RoleId;
@@ -179,30 +171,28 @@ namespace User.Service
                 }
             }
 
-            db.SaveChanges();
+            await db.SaveChangesAsync();
 
             return true;
         }
 
 
-
-        public List<DtoKeyValue> GetRoleKV()
+        public Task<List<DtoKeyValue>> GetRoleKVAsync()
         {
             var list = db.TRole.Select(t => new DtoKeyValue
             {
                 Key = t.Id,
                 Value = t.Name
-            }).ToList();
+            }).ToListAsync();
 
             return list;
         }
 
 
-
-        public List<DtoRoleFunction> GetRoleFunctionChildList(long roleId, long parentId)
+        public async Task<List<DtoRoleFunction>> GetRoleFunctionChildListAsync(long roleId, long parentId)
         {
 
-            var functionList = db.TFunction.Where(t => t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
+            var functionList = await db.TFunction.Where(t => t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
@@ -215,11 +205,11 @@ namespace User.Service
                     Sign = f.Sign,
                     IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
                 }).ToList()
-            }).ToList();
+            }).ToListAsync();
 
             foreach (var function in functionList)
             {
-                function.ChildList = GetRoleFunctionChildList(roleId, function.Id);
+                function.ChildList = await GetRoleFunctionChildListAsync(roleId, function.Id);
             }
 
             return functionList;

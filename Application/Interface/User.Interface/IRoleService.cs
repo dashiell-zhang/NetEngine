@@ -1,4 +1,4 @@
-﻿using Shared.Model;
+using Shared.Model;
 using User.Model.Role;
 
 namespace User.Interface
@@ -6,13 +6,11 @@ namespace User.Interface
     public interface IRoleService
     {
 
-
         /// 获取角色列表
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public DtoPageList<DtoRole> GetRoleList(DtoPageRequest request);
-
+        Task<DtoPageList<DtoRole>> GetRoleListAsync(DtoPageRequest request);
 
 
         /// <summary>
@@ -20,8 +18,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="roleId">角色ID</param>
         /// <returns></returns>
-        public DtoRole? GetRole(long roleId);
-
+        Task<DtoRole?> GetRoleAsync(long roleId);
 
 
         /// <summary>
@@ -29,7 +26,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="role"></param>
         /// <returns></returns>
-        public long CreateRole(DtoEditRole role);
+        Task<long> CreateRoleAsync(DtoEditRole role);
 
 
         /// <summary>
@@ -38,8 +35,7 @@ namespace User.Interface
         /// <param name="roleId"></param>
         /// <param name="role"></param>
         /// <returns></returns>
-        public bool UpdateRole(long roleId, DtoEditRole role);
-
+        Task<bool> UpdateRoleAsync(long roleId, DtoEditRole role);
 
 
         /// <summary>
@@ -47,8 +43,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool DeleteRole(long id);
-
+        Task<bool> DeleteRoleAsync(long id);
 
 
         /// <summary>
@@ -56,8 +51,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="roleId">角色ID</param>
         /// <returns></returns>
-        public List<DtoRoleFunction> GetRoleFunction(long roleId);
-
+        Task<List<DtoRoleFunction>> GetRoleFunctionAsync(long roleId);
 
 
         /// <summary>
@@ -65,16 +59,14 @@ namespace User.Interface
         /// </summary>
         /// <param name="setRoleFunction"></param>
         /// <returns></returns>
-        public bool SetRoleFunction(DtoSetRoleFunction setRoleFunction);
-
+        Task<bool> SetRoleFunctionAsync(DtoSetRoleFunction setRoleFunction);
 
 
         /// <summary>
         /// 获取角色键值对
         /// </summary>
         /// <returns></returns>
-        public List<DtoKeyValue> GetRoleKV();
-
+        Task<List<DtoKeyValue>> GetRoleKVAsync();
 
 
         /// <summary>
@@ -83,7 +75,7 @@ namespace User.Interface
         /// <param name="roleId">角色ID</param>
         /// <param name="parentId">功能父级ID</param>
         /// <returns></returns>
-        public List<DtoRoleFunction> GetRoleFunctionChildList(long roleId, long parentId);
+        Task<List<DtoRoleFunction>> GetRoleFunctionChildListAsync(long roleId, long parentId);
 
     }
 }

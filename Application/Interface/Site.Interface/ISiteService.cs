@@ -1,4 +1,4 @@
-﻿using Site.Model.Site;
+using Site.Model.Site;
 
 namespace Site.Interface
 {
@@ -10,7 +10,7 @@ namespace Site.Interface
         /// 获取站点信息
         /// </summary>
         /// <returns></returns>
-        public DtoSite GetSite();
+        Task<DtoSite> GetSiteAsync();
 
 
         /// <summary>
@@ -18,7 +18,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="editSite"></param>
         /// <returns></returns>
-        public bool EditSite(DtoSite editSite);
+        Task<bool> EditSiteAsync(DtoSite editSite);
 
 
 
@@ -28,6 +28,6 @@ namespace Site.Interface
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public bool SetSiteInfo(string key, string? value);
+        Task<bool> SetSiteInfoAsync(string key, string? value);
     }
 }

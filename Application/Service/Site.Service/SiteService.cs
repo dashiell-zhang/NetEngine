@@ -1,5 +1,6 @@
-﻿using Common;
+using Common;
 using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Site.Interface;
@@ -12,13 +13,13 @@ namespace Site.Service
     {
 
 
-        public DtoSite GetSite()
+        public async Task<DtoSite> GetSiteAsync()
         {
-            var kvList = db.TAppSetting.Where(t => t.Module == "Site").Select(t => new
+            var kvList = await db.TAppSetting.Where(t => t.Module == "Site").Select(t => new
             {
                 t.Key,
                 t.Value
-            }).ToList();
+            }).ToListAsync();
 
             DtoSite site = new()
             {
@@ -39,33 +40,35 @@ namespace Site.Service
 
 
 
-        public bool EditSite(DtoSite editSite)
+        public async Task<bool> EditSiteAsync(DtoSite editSite)
         {
-            var query = db.TAppSetting.Where(t => t.Module == "Site");
+            var tasks = new List<Task<bool>>
+            {
+                SetSiteInfoAsync("WebUrl", editSite.WebUrl),
+                SetSiteInfoAsync("ManagerName", editSite.ManagerName),
+                SetSiteInfoAsync("ManagerAddress", editSite.ManagerAddress),
+                SetSiteInfoAsync("ManagerPhone", editSite.ManagerPhone),
+                SetSiteInfoAsync("ManagerEmail", editSite.ManagerEmail),
+                SetSiteInfoAsync("RecordNumber", editSite.RecordNumber),
+                SetSiteInfoAsync("SeoTitle", editSite.SeoTitle),
+                SetSiteInfoAsync("SeoKeyWords", editSite.SeoKeyWords),
+                SetSiteInfoAsync("SeoDescription", editSite.SeoDescription),
+                SetSiteInfoAsync("FootCode", editSite.FootCode)
+             };
 
-            SetSiteInfo("WebUrl", editSite.WebUrl);
-            SetSiteInfo("ManagerName", editSite.ManagerName);
-            SetSiteInfo("ManagerAddress", editSite.ManagerAddress);
-            SetSiteInfo("ManagerPhone", editSite.ManagerPhone);
-            SetSiteInfo("ManagerEmail", editSite.ManagerEmail);
-            SetSiteInfo("RecordNumber", editSite.RecordNumber);
-            SetSiteInfo("SeoTitle", editSite.SeoTitle);
-            SetSiteInfo("SeoKeyWords", editSite.SeoKeyWords);
-            SetSiteInfo("SeoDescription", editSite.SeoDescription);
-            SetSiteInfo("FootCode", editSite.FootCode);
-
-            return true;
+            await Task.WhenAll(tasks);
+            return tasks.All(t => t.Result);
         }
 
 
 
-        public bool SetSiteInfo(string key, string? value)
+        public async Task<bool> SetSiteInfoAsync(string key, string? value)
         {
 
             if (value != null)
             {
 
-                var appSetting = db.TAppSetting.Where(t => t.Module == "Site" && t.Key == key).FirstOrDefault();
+                var appSetting = await db.TAppSetting.Where(t => t.Module == "Site" && t.Key == key).FirstOrDefaultAsync();
 
                 if (appSetting == null)
                 {
@@ -83,7 +86,7 @@ namespace Site.Service
                     appSetting.Value = value;
                 }
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             return true;

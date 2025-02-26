@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Model;
 using User.Interface;
@@ -23,7 +23,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoRole> GetRoleList([FromQuery] DtoPageRequest request) => roleService.GetRoleList(request);
+        public Task<DtoPageList<DtoRole>> GetRoleList([FromQuery] DtoPageRequest request) => roleService.GetRoleListAsync(request);
 
 
 
@@ -33,7 +33,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="roleId">角色ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoRole? GetRole(long roleId) => roleService.GetRole(roleId);
+        public Task<DtoRole?> GetRole(long roleId) => roleService.GetRoleAsync(roleId);
 
 
 
@@ -44,7 +44,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
         [HttpPost]
-        public long CreateRole(DtoEditRole role) => roleService.CreateRole(role);
+        public Task<long> CreateRole(DtoEditRole role) => roleService.CreateRoleAsync(role);
 
 
 
@@ -56,7 +56,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
         [HttpPost]
-        public bool UpdateRole(long roleId, DtoEditRole role) => roleService.UpdateRole(roleId, role);
+        public Task<bool> UpdateRole(long roleId, DtoEditRole role) => roleService.UpdateRoleAsync(roleId, role);
 
 
 
@@ -66,7 +66,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteRole(long id) => roleService.DeleteRole(id);
+        public Task<bool> DeleteRole(long id) => roleService.DeleteRoleAsync(id);
 
 
 
@@ -76,7 +76,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="roleId">角色ID</param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoRoleFunction> GetRoleFunction(long roleId) => roleService.GetRoleFunction(roleId);
+        public Task<List<DtoRoleFunction>> GetRoleFunction(long roleId) => roleService.GetRoleFunctionAsync(roleId);
 
 
 
@@ -86,7 +86,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="setRoleFunction"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool SetRoleFunction(DtoSetRoleFunction setRoleFunction) => roleService.SetRoleFunction(setRoleFunction);
+        public Task<bool> SetRoleFunction(DtoSetRoleFunction setRoleFunction) => roleService.SetRoleFunctionAsync(setRoleFunction);
 
 
 
@@ -95,7 +95,7 @@ namespace Admin.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoKeyValue> GetRoleKV() => roleService.GetRoleKV();
+        public Task<List<DtoKeyValue>> GetRoleKV() => roleService.GetRoleKVAsync();
 
     }
 }

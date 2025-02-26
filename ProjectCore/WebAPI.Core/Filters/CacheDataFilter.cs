@@ -83,7 +83,9 @@ namespace WebAPI.Core.Filters
                     if (objectResult.Value != null)
                     {
                         var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                         distributedCache.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(TTL));
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                     }
                 }
             }

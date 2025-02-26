@@ -1,4 +1,4 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;

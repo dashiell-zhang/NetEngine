@@ -314,6 +314,35 @@ namespace Common
 
 
         /// <summary>
+        /// 获取 Object 类型的缓存（异步）
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public static async Task<T?> GetAsync<T>(this IDistributedCache distributedCache, string key)
+        {
+            try
+            {
+                var valueStr = await distributedCache.GetStringAsync(key);
+
+                if (valueStr != null)
+                {
+                    var value = JsonHelper.JsonToObject<T>(valueStr);
+                    return value;
+                }
+                else
+                {
+                    return default;
+                }
+            }
+            catch
+            {
+                return default;
+            }
+        }
+
+
+        /// <summary>
         /// 判断缓存是否存在
         /// </summary>
         /// <param name="key"></param>
@@ -321,6 +350,25 @@ namespace Common
         public static bool IsContainKey(this IDistributedCache distributedCache, string key)
         {
             if (string.IsNullOrEmpty(distributedCache.GetString(key)))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
+
+        /// <summary>
+        /// 判断缓存是否存在（异步）
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public static async Task<bool> IsContainKeyAsync(this IDistributedCache distributedCache, string key)
+        {
+            if (string.IsNullOrEmpty(await distributedCache.GetStringAsync(key)))
             {
                 return false;
             }

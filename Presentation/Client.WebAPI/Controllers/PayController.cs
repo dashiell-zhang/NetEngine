@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Pay.Interface;
 using Pay.Model.Pay;
-using Shared.Model;
 using WebAPI.Core.Libraries;
 
 namespace Client.WebAPI.Controllers
@@ -23,11 +22,11 @@ namespace Client.WebAPI.Controllers
         /// <param name="openId">用户OpenId</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoCreateWeiXinPayJSAPIRet? CreateWeiXinPayJSAPI(string orderNo, string openId)
+        public Task<DtoCreateWeiXinPayJSAPIRet?>  CreateWeiXinPayJSAPI(string orderNo, string openId)
         {
             var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
-            return payService.CreateWeiXinPayJSAPI(orderNo, openId, notifyUrl);
+            return payService.CreateWeiXinPayJSAPIAsync(orderNo, openId, notifyUrl);
         }
 
 
@@ -38,12 +37,12 @@ namespace Client.WebAPI.Controllers
         /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoCreateWeiXinPayAppRet? CreateWeiXinPayApp(string orderNo)
+        public Task<DtoCreateWeiXinPayAppRet?>  CreateWeiXinPayApp(string orderNo)
         {
 
             var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
-            return payService.CreateWeiXinPayApp(orderNo, notifyUrl);
+            return payService.CreateWeiXinPayAppAsync(orderNo, notifyUrl);
         }
 
 
@@ -54,13 +53,13 @@ namespace Client.WebAPI.Controllers
         /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
-        public string? CreateWeiXinPayH5(string orderNo)
+        public Task<string?>  CreateWeiXinPayH5(string orderNo)
         {
             var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
             var clientIP = httpContextAccessor.HttpContext!.GetRemoteIP();
 
-            return payService.CreateWeiXinPayH5(orderNo, notifyUrl, clientIP);
+            return payService.CreateWeiXinPayH5Async(orderNo, notifyUrl, clientIP);
         }
 
 
@@ -71,11 +70,11 @@ namespace Client.WebAPI.Controllers
         /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
-        public string? CreateWeiXinPayPC(string orderNo)
+        public Task<string?>  CreateWeiXinPayPC(string orderNo)
         {
             var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
-            return payService.CreateWeiXinPayPC(orderNo, notifyUrl);
+            return payService.CreateWeiXinPayPCAsync(orderNo, notifyUrl);
         }
 
 
@@ -84,13 +83,13 @@ namespace Client.WebAPI.Controllers
         /// 微信支付异步通知接口
         /// </summary>
         [HttpPost("{mchid}")]
-        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify)
+        public async Task<DtoWeiXinPayNotifyRet?>  WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify)
         {
             string requestBody = HttpContext.GetRequestBody();
 
             var headers = HttpContext.Request.Headers.ToDictionary(t => t.Key, t => t.Value.ToString());
 
-            var ret = payService.WeiXinPayNotify(mchId, weiXinPayNotify, headers, requestBody);
+            var ret = await payService.WeiXinPayNotifyAsync(mchId, weiXinPayNotify, headers, requestBody);
 
             if (ret == null || ret.code != "SUCCESS")
             {
@@ -108,11 +107,11 @@ namespace Client.WebAPI.Controllers
         /// <param name="orderNo">订单号</param>
         /// <returns></returns>
         [HttpGet]
-        public string? CreateAliPayMiniApp(string orderNo)
+        public Task<string?>  CreateAliPayMiniApp(string orderNo)
         {
             var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/api/Pay/AliPayNotify";
 
-            return payService.CreateAliPayMiniApp(orderNo, notifyUrl);
+            return payService.CreateAliPayMiniAppAsync(orderNo, notifyUrl);
         }
 
 
@@ -124,13 +123,13 @@ namespace Client.WebAPI.Controllers
         /// <param name="orderNo">订单号</param>
         /// <returns>支付宝支付Url</returns>
         [HttpGet]
-        public string? CreateAliPayPC(string orderNo)
+        public Task<string?>  CreateAliPayPC(string orderNo)
         {
 
             //var returnUrl = httpContextAccessor.HttpContext!.GetBaseUrl();
             var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/AliPayNotify";
 
-            return payService.CreateAliPayPC(orderNo, notifyUrl, null);
+            return payService.CreateAliPayPCAsync(orderNo, notifyUrl, null);
         }
 
 
@@ -141,7 +140,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="orderNo">订单号</param>
         /// <returns>支付宝支付Url</returns>
         [HttpGet]
-        public string? CreateAliPayH5(string orderNo)
+        public Task<string?>  CreateAliPayH5(string orderNo)
         {
             var returnUrl = "";
 
@@ -149,7 +148,7 @@ namespace Client.WebAPI.Controllers
 
             var quitUrl = "";
 
-            return payService.CreateAliPayH5(orderNo, notifyUrl, returnUrl, quitUrl);
+            return payService.CreateAliPayH5Async(orderNo, notifyUrl, returnUrl, quitUrl);
         }
 
 
@@ -159,11 +158,11 @@ namespace Client.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public string? AliPayNotify()
+        public Task<string?>  AliPayNotify()
         {
             var parameters = HttpContext.Request.Form.ToDictionary(t => t.Key, t => t.Value.ToString());
 
-            return payService.AliPayNotify(parameters);
+            return payService.AliPayNotifyAsync(parameters);
         }
 
     }

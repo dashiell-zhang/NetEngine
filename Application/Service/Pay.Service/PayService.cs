@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using Pay.Interface;
 using Pay.Model.Pay;
 using Repository.Database;
-using Shared.Model;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -25,19 +24,19 @@ namespace Pay.Service
         private readonly HttpClient httpClient = httpClientFactory.CreateClient();
 
 
-        public DtoCreateWeiXinPayJSAPIRet? CreateWeiXinPayJSAPI(string orderNo, string openId, string notifyUrl)
+        public async Task<DtoCreateWeiXinPayJSAPIRet?> CreateWeiXinPayJSAPIAsync(string orderNo, string openId, string notifyUrl)
         {
             string key = "wxpayJSAPI" + orderNo;
 
-            var ret = distributedCache.Get<DtoCreateWeiXinPayJSAPIRet>(key);
+            var ret = await distributedCache.GetAsync<DtoCreateWeiXinPayJSAPIRet>(key);
 
             if (ret == null)
             {
-                var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
+                var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
 
                 if (order != null)
                 {
-                    var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+                    var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
                     var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                     var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -69,7 +68,7 @@ namespace Pay.Service
 
                         string wxUrl = "https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi";
 
-                        var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
+                        var resultJson = await WeiXinPayHttpAsync(mchId, wxUrl, reqData);
 
                         var prepayId = JsonHelper.GetValueByKey(resultJson, "prepay_id");
 
@@ -99,7 +98,7 @@ namespace Pay.Service
                                 Sign = signature
                             };
 
-                            distributedCache.Set(key, ret, TimeSpan.FromHours(1.8));
+                            await distributedCache.SetAsync(key, ret, TimeSpan.FromHours(1.8));
                         }
                     }
                 }
@@ -109,19 +108,19 @@ namespace Pay.Service
         }
 
 
-        public DtoCreateWeiXinPayAppRet? CreateWeiXinPayApp(string orderNo, string notifyUrl)
+        public async Task<DtoCreateWeiXinPayAppRet?> CreateWeiXinPayAppAsync(string orderNo, string notifyUrl)
         {
             string key = "wxpayApp" + orderNo;
 
-            var ret = distributedCache.Get<DtoCreateWeiXinPayAppRet>(key);
+            var ret = await distributedCache.GetAsync<DtoCreateWeiXinPayAppRet>(key);
 
             if (ret == null)
             {
-                var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
+                var order = await db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
 
                 if (order != null)
                 {
-                    var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+                    var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
                     var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                     var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -150,7 +149,7 @@ namespace Pay.Service
 
                         string wxUrl = "https://api.mch.weixin.qq.com/v3/pay/transactions/app";
 
-                        var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
+                        var resultJson = await WeiXinPayHttpAsync(mchId, wxUrl, reqData);
 
                         var prepayId = JsonHelper.GetValueByKey(resultJson, "prepay_id");
 
@@ -178,7 +177,7 @@ namespace Pay.Service
                                 Sign = signature
                             };
 
-                            distributedCache.Set(key, ret, TimeSpan.FromHours(1.8));
+                            await distributedCache.SetAsync(key, ret, TimeSpan.FromHours(1.8));
                         }
                     }
                 }
@@ -188,20 +187,19 @@ namespace Pay.Service
         }
 
 
-
-        public string? CreateWeiXinPayH5(string orderNo, string notifyUrl, string clientIP)
+        public async Task<string?> CreateWeiXinPayH5Async(string orderNo, string notifyUrl, string clientIP)
         {
             string key = "wxpayH5Url" + orderNo;
 
-            string? h5Url = distributedCache.GetString(key);
+            string? h5Url = await distributedCache.GetStringAsync(key);
 
             if (string.IsNullOrEmpty(h5Url))
             {
-                var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
+                var order = await db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
 
                 if (order != null)
                 {
-                    var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+                    var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
                     var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                     var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -236,7 +234,7 @@ namespace Pay.Service
 
                         string wxUrl = "https://api.mch.weixin.qq.com/v3/pay/transactions/h5";
 
-                        var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
+                        var resultJson = await WeiXinPayHttpAsync(mchId, wxUrl, reqData);
 
                         h5Url = JsonHelper.GetValueByKey(resultJson, "h5_url");
 
@@ -249,7 +247,7 @@ namespace Pay.Service
                         }
                         else
                         {
-                            distributedCache.Set(key, h5Url, TimeSpan.FromMinutes(4.5));
+                            await distributedCache.SetAsync(key, h5Url, TimeSpan.FromMinutes(4.5));
                         }
                     }
                 }
@@ -259,20 +257,19 @@ namespace Pay.Service
         }
 
 
-
-        public string? CreateWeiXinPayPC(string orderNo, string notifyUrl)
+        public async Task<string?> CreateWeiXinPayPCAsync(string orderNo, string notifyUrl)
         {
             string key = "wxpayPCUrl" + orderNo;
 
-            string? codeUrl = distributedCache.GetString(key);
+            string? codeUrl = await distributedCache.GetStringAsync(key);
 
             if (string.IsNullOrEmpty(codeUrl))
             {
-                var order = db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefault();
+                var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
 
                 if (order != null)
                 {
-                    var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+                    var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
                     var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                     var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -299,13 +296,13 @@ namespace Pay.Service
 
                         string wxUrl = "https://api.mch.weixin.qq.com/v3/pay/transactions/native";
 
-                        var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
+                        var resultJson = await WeiXinPayHttpAsync(mchId, wxUrl, reqData);
 
                         codeUrl = JsonHelper.GetValueByKey(resultJson, "code_url");
 
                         if (codeUrl != null)
                         {
-                            distributedCache.Set(key, codeUrl, TimeSpan.FromMinutes(15));
+                            await distributedCache.SetAsync(key, codeUrl, TimeSpan.FromMinutes(15));
                         }
                         else
                         {
@@ -322,15 +319,14 @@ namespace Pay.Service
         }
 
 
-
-        public DtoWeiXinPayNotifyRet? WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify, Dictionary<string, string> headers, string requestBody)
+        public async Task<DtoWeiXinPayNotifyRet?> WeiXinPayNotifyAsync(string mchId, DtoWeiXinPayNotify weiXinPayNotify, Dictionary<string, string> headers, string requestBody)
         {
             bool isSuccess = false;
 
             try
             {
 
-                var weiXinPayCertificates = GetWeiXinPayCertificates(mchId);
+                var weiXinPayCertificates = await GetWeiXinPayCertificatesAsync(mchId);
 
                 if (VerifySign(headers, requestBody, weiXinPayCertificates))
                 {
@@ -338,7 +334,7 @@ namespace Pay.Service
                     //支付成功异步回调
                     if (weiXinPayNotify.event_type == "TRANSACTION.SUCCESS")
                     {
-                        var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
+                        var mchApiV3Key = await db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).FirstAsync();
 
                         var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
 
@@ -346,7 +342,7 @@ namespace Pay.Service
 
                         if (resource.trade_state == "SUCCESS")
                         {
-                            var order = db.TOrder.Where(t => t.OrderNo == resource.out_trade_no).FirstOrDefault();
+                            var order = await db.TOrder.Where(t => t.OrderNo == resource.out_trade_no).FirstOrDefaultAsync();
 
                             if (order != null)
                             {
@@ -359,7 +355,7 @@ namespace Pay.Service
                                     order.PayType = "微信支付";
                                     order.State = "已支付";
 
-                                    db.SaveChanges();
+                                    await db.SaveChangesAsync();
 
                                     if (order.Type == "")
                                     {
@@ -377,7 +373,7 @@ namespace Pay.Service
                     //退款异步回调
                     if (weiXinPayNotify.resource.original_type == "refund")
                     {
-                        var mchApiV3Key = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).First();
+                        var mchApiV3Key = await db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).FirstAsync();
 
                         var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
 
@@ -436,9 +432,9 @@ namespace Pay.Service
         }
 
 
-        public void WeiXinPayRefund()
+        public async Task WeiXinPayRefundAsync()
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+            var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -467,7 +463,7 @@ namespace Pay.Service
 
                 string wxUrl = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds";
 
-                var resultJson = WeiXinPayHttp(mchId, wxUrl, reqData);
+                var resultJson = await WeiXinPayHttpAsync(mchId, wxUrl, reqData);
 
                 var refundId = JsonHelper.GetValueByKey(resultJson, "refund_id");
 
@@ -489,9 +485,10 @@ namespace Pay.Service
             }
         }
 
-        public void WeiXinPayRefundSelect()
+
+        public async Task WeiXinPayRefundSelectAsync()
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToList();
+            var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
             var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
 
@@ -502,7 +499,7 @@ namespace Pay.Service
 
                 string wxUrl = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds/" + outRefundNo;
 
-                var resultJson = WeiXinPayHttp(mchId, wxUrl);
+                var resultJson = await WeiXinPayHttpAsync(mchId, wxUrl);
 
                 var result = JsonHelper.JsonToObject<DtoWeiXinPayRefundRet>(resultJson);
 
@@ -519,9 +516,9 @@ namespace Pay.Service
         }
 
 
-        public string? CreateAliPayMiniApp(string orderNo, string notifyUrl)
+        public async Task<string?> CreateAliPayMiniAppAsync(string orderNo, string notifyUrl)
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp").ToList();
+            var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp").ToListAsync();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -529,13 +526,13 @@ namespace Pay.Service
 
             if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
             {
-                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
+                var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
                 {
                     t.OrderNo,
                     t.Price,
                     AliPayUserId = db.TUserBindExternal.Where(a => a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
                     t.CreateTime
-                }).FirstOrDefault();
+                }).FirstOrDefaultAsync();
 
                 if (order != null && order.AliPayUserId != null)
                 {
@@ -582,9 +579,9 @@ namespace Pay.Service
         }
 
 
-        public string? CreateAliPayPC(string orderNo, string notifyUrl, string? returnUrl)
+        public async Task<string?> CreateAliPayPCAsync(string orderNo, string notifyUrl, string? returnUrl)
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
+            var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -592,13 +589,13 @@ namespace Pay.Service
 
             if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
             {
-                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
+                var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
                 {
                     t.OrderNo,
                     t.Price,
                     t.State,
                     t.CreateTime
-                }).FirstOrDefault();
+                }).FirstOrDefaultAsync();
 
                 if (order != null && order.State == "待支付")
                 {
@@ -642,9 +639,9 @@ namespace Pay.Service
         }
 
 
-        public string? CreateAliPayH5(string orderNo, string notifyUrl, string returnUrl, string quitUrl)
+        public async Task<string?> CreateAliPayH5Async(string orderNo, string notifyUrl, string returnUrl, string quitUrl)
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
+            var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -652,7 +649,7 @@ namespace Pay.Service
 
             if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
             {
-                var order = db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, t.CreateTime }).FirstOrDefault();
+                var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, t.CreateTime }).FirstOrDefaultAsync();
 
                 if (order != null && order.State == "待支付")
                 {
@@ -697,17 +694,16 @@ namespace Pay.Service
         }
 
 
-
-        public string? AliPayNotify(Dictionary<string, string> parameters)
+        public async Task<string?> AliPayNotifyAsync(Dictionary<string, string> parameters)
         {
 
             if (parameters.Count > 0)
             {
                 var appId = parameters.GetValueOrDefault("app_id");
 
-                var appIdSettingGroupId = db.TAppSetting.Where(t => t.Module.StartsWith("AliPay") && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefault();
+                var appIdSettingGroupId = await db.TAppSetting.Where(t => t.Module.StartsWith("AliPay") && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
 
-                var settings = db.TAppSetting.AsNoTracking().Where(t => t.GroupId == appIdSettingGroupId).ToList();
+                var settings = await db.TAppSetting.AsNoTracking().Where(t => t.GroupId == appIdSettingGroupId).ToListAsync();
 
                 var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
                 var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
@@ -719,7 +715,7 @@ namespace Pay.Service
                 {
                     var orderno = parameters.GetValueOrDefault("out_trade_no");
 
-                    var order = db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefault();
+                    var order = await db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefaultAsync();
 
                     if (order != null)
                     {
@@ -730,7 +726,7 @@ namespace Pay.Service
                         order.PayType = "支付宝";
                         order.State = "已支付";
 
-                        db.SaveChanges();
+                       await db.SaveChangesAsync();
 
                         switch (order.Type)
                         {
@@ -750,9 +746,9 @@ namespace Pay.Service
             return null;
         }
 
-        public void AliPayRefund()
+        public async Task AliPayRefundAsync()
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
+            var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -792,9 +788,9 @@ namespace Pay.Service
             }
         }
 
-        public void AliPayRefundSelect()
+        public async Task AliPayRefundSelectAsync()
         {
-            var settings = db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToList();
+            var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
 
             var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -833,12 +829,11 @@ namespace Pay.Service
         }
 
 
-
-        public string WeiXinPayHttp(string mchId, string url, object? data = null)
+        public async Task<string> WeiXinPayHttpAsync(string mchId, string url, object? data = null)
         {
-            var weiXinPayGroupId = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchId" && t.Value == mchId).Select(t => t.GroupId).FirstOrDefault();
+            var weiXinPayGroupId = await db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchId" && t.Value == mchId).Select(t => t.GroupId).FirstOrDefaultAsync();
 
-            var settings = db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.GroupId == weiXinPayGroupId).ToList();
+            var settings = await db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.GroupId == weiXinPayGroupId).ToListAsync();
 
             string mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).First();
             string mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).First();
@@ -879,9 +874,9 @@ namespace Pay.Service
             requestMessage.Headers.Add("Authorization", authorization);
 
 
-            using var responseMessage = httpClient.SendAsync(requestMessage).Result;
+            using var responseMessage = await httpClient.SendAsync(requestMessage);
 
-            string responseBody = responseMessage.Content.ReadAsStringAsync().Result;
+            string responseBody = await responseMessage.Content.ReadAsStringAsync();
 
 
             DtoWeiXinPayCertificates weiXinPayCertificates = new();
@@ -897,7 +892,7 @@ namespace Pay.Service
             }
             else
             {
-                weiXinPayCertificates = GetWeiXinPayCertificates(mchId);
+                weiXinPayCertificates = await GetWeiXinPayCertificatesAsync(mchId);
             }
 
 
@@ -907,7 +902,7 @@ namespace Pay.Service
             {
                 if (url == "https://api.mch.weixin.qq.com/v3/certificates")
                 {
-                    distributedCache.Set(mchId + "GetWeiXinPayCertificates", weiXinPayCertificates, TimeSpan.FromHours(1));
+                    await distributedCache.SetAsync(mchId + "GetWeiXinPayCertificates", weiXinPayCertificates, TimeSpan.FromHours(1));
                 }
 
                 return responseBody;
@@ -919,12 +914,11 @@ namespace Pay.Service
         }
 
 
-
-        public DtoWeiXinPayCertificates GetWeiXinPayCertificates(string mchId)
+        public async Task<DtoWeiXinPayCertificates> GetWeiXinPayCertificatesAsync(string mchId)
         {
             var cacheKey = mchId + "GetWeiXinPayCertificates";
 
-            var weiXinPayCertificates = distributedCache.Get<DtoWeiXinPayCertificates>(cacheKey);
+            var weiXinPayCertificates = await distributedCache.GetAsync<DtoWeiXinPayCertificates>(cacheKey);
 
             if (weiXinPayCertificates != null)
             {
@@ -934,7 +928,7 @@ namespace Pay.Service
             {
                 using (distributedLock.Lock(mchId + "GetWeiXinPayCertificates" + "lock"))
                 {
-                    weiXinPayCertificates = distributedCache.Get<DtoWeiXinPayCertificates>(cacheKey);
+                    weiXinPayCertificates = await distributedCache.GetAsync<DtoWeiXinPayCertificates>(cacheKey);
 
                     if (weiXinPayCertificates != null)
                     {
@@ -943,11 +937,11 @@ namespace Pay.Service
                     }
                     else
                     {
-                        var certificatesRetData = WeiXinPayHttp(mchId, "https://api.mch.weixin.qq.com/v3/certificates");
+                        var certificatesRetData = await WeiXinPayHttpAsync(mchId, "https://api.mch.weixin.qq.com/v3/certificates");
 
                         if (certificatesRetData != null)
                         {
-                            weiXinPayCertificates = distributedCache.Get<DtoWeiXinPayCertificates>(cacheKey);
+                            weiXinPayCertificates = await distributedCache.GetAsync<DtoWeiXinPayCertificates>(cacheKey);
                         }
 
                         if (weiXinPayCertificates != null)
@@ -962,7 +956,6 @@ namespace Pay.Service
                 }
             }
         }
-
 
 
         public bool VerifySign(Dictionary<string, string> headers, string body, DtoWeiXinPayCertificates weiXinPayCertificates)

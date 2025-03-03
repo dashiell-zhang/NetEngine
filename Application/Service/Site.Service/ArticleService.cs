@@ -1,8 +1,8 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Basic.Interface;
 using Common;
 using IdentifierGenerator;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Shared.Model;
@@ -12,21 +12,20 @@ using Site.Model.Article;
 namespace Site.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class ArticleService(IUserContext userContext, DatabaseContext db, IConfiguration configuration, IdService idService, IFileService fileService) : IArticleService
+    public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, IFileService fileService) : IArticleService
     {
 
         private long userId => userContext.UserId;
 
 
-        public DtoPageList<DtoCategory> GetCategoryList(DtoPageRequest request)
+        public async Task<DtoPageList<DtoCategory>> GetCategoryListAsync(DtoPageRequest request)
         {
-            DtoPageList<DtoCategory> data = new();
 
             var query = db.TCategory.AsQueryable();
 
-            data.Total = query.Count();
+            var countTask = query.CountAsync();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory
+            var listTask = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -35,31 +34,36 @@ namespace Site.Service
                 ParentId = t.ParentId,
                 ParentName = t.Parent!.Name,
                 CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            return data;
+            await Task.WhenAll(countTask, listTask);
+
+            return new()
+            {
+                Total = countTask.Result,
+                List = listTask.Result
+            };
         }
 
 
-        public List<DtoCategorySelect> GetCategorySelectList(long? id = null)
+        public async Task<List<DtoCategorySelect>> GetCategorySelectListAsync(long? id = null)
         {
-            var list = db.TCategory.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoCategorySelect
+            var list = await db.TCategory.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoCategorySelect
             {
                 Id = t.Id,
                 Name = t.Name
-            }).ToList();
+            }).ToListAsync();
 
             foreach (var item in list)
             {
-                item.ChildList = GetCategorySelectList(item.Id);
+                item.ChildList = await GetCategorySelectListAsync(item.Id);
             }
 
             return list;
         }
 
 
-
-        public DtoCategory? GetCategory(long categoryId)
+        public Task<DtoCategory?> GetCategoryAsync(long categoryId)
         {
             var category = db.TCategory.Where(t => t.Id == categoryId).Select(t => new DtoCategory
             {
@@ -70,15 +74,13 @@ namespace Site.Service
                 ParentId = t.ParentId,
                 ParentName = t.Parent!.Name,
                 CreateTime = t.CreateTime
-            }).FirstOrDefault();
+            }).FirstOrDefaultAsync();
 
             return category;
         }
 
 
-
-
-        public long CreateCategory(DtoEditCategory createCategory)
+        public async Task<long> CreateCategoryAsync(DtoEditCategory createCategory)
         {
             TCategory category = new()
             {
@@ -92,16 +94,15 @@ namespace Site.Service
 
             db.TCategory.Add(category);
 
-            db.SaveChanges();
+            await db.SaveChangesAsync();
 
             return category.Id;
         }
 
 
-
-        public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory)
+        public async Task<bool> UpdateCategoryAsync(long categoryId, DtoEditCategory updateCategory)
         {
-            var category = db.TCategory.Where(t => t.Id == categoryId).FirstOrDefault();
+            var category = await db.TCategory.Where(t => t.Id == categoryId).FirstOrDefaultAsync();
 
             if (category != null)
             {
@@ -110,7 +111,7 @@ namespace Site.Service
                 category.Remarks = updateCategory.Remarks;
                 category.Sort = updateCategory.Sort;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }
@@ -121,17 +122,16 @@ namespace Site.Service
         }
 
 
-
-        public bool DeleteCategory(long id)
+        public async Task<bool> DeleteCategoryAsync(long id)
         {
-            var category = db.TCategory.Where(t => t.Id == id).FirstOrDefault();
+            var category = await db.TCategory.Where(t => t.Id == id).FirstOrDefaultAsync();
 
             if (category != null)
             {
                 category.IsDelete = true;
                 category.DeleteUserId = userId;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }
@@ -139,22 +139,16 @@ namespace Site.Service
             {
                 return false;
             }
-
         }
 
 
-
-        public DtoPageList<DtoArticle> GetArticleList(DtoPageRequest request)
+        public async Task<DtoPageList<DtoArticle>> GetArticleListAsync(DtoPageRequest request)
         {
-            DtoPageList<DtoArticle> data = new();
-
             var query = db.TArticle.AsQueryable();
 
-            data.Total = query.Count();
+            var countTask = query.CountAsync();
 
-            string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
-
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
+            var listTask = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
@@ -167,21 +161,26 @@ namespace Site.Service
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-            }).Skip(request.Skip()).Take(request.PageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            foreach (var article in data.List)
+            await Task.WhenAll(countTask, listTask);
+
+            foreach (var article in listTask.Result)
             {
                 article.CoverImageList = fileService.GetFileList("Article", "cover", article.Id, true);
             }
 
-            return data;
+            return new()
+            {
+                Total = countTask.Result,
+                List = listTask.Result
+            };
         }
 
 
-
-        public DtoArticle? GetArticle(long articleId)
+        public async Task<DtoArticle?> GetArticleAsync(long articleId)
         {
-            var article = db.TArticle.Where(t => t.Id == articleId).Select(t => new DtoArticle
+            var article = await db.TArticle.Where(t => t.Id == articleId).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
@@ -194,7 +193,7 @@ namespace Site.Service
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-            }).FirstOrDefault();
+            }).FirstOrDefaultAsync();
 
             if (article != null)
             {
@@ -205,8 +204,7 @@ namespace Site.Service
         }
 
 
-
-        public long CreateArticle(DtoEditArticle createArticle, long fileKey)
+        public async Task<long> CreateArticleAsync(DtoEditArticle createArticle, long fileKey)
         {
             TArticle article = new()
             {
@@ -234,24 +232,22 @@ namespace Site.Service
             db.TArticle.Add(article);
 
 
-            var fileList = db.TFile.Where(t => t.Table == "TArticle" && t.TableId == fileKey).ToList();
+            var fileList = await db.TFile.Where(t => t.Table == "TArticle" && t.TableId == fileKey).ToListAsync();
 
             foreach (var file in fileList)
             {
                 file.TableId = article.Id;
             }
 
-            db.SaveChanges();
+            await db.SaveChangesAsync();
 
             return article.Id;
         }
 
 
-
-
-        public bool UpdateArticle(long articleId, DtoEditArticle updateArticle)
+        public async Task<bool> UpdateArticleAsync(long articleId, DtoEditArticle updateArticle)
         {
-            var article = db.TArticle.Where(t => t.Id == articleId).FirstOrDefault();
+            var article = await db.TArticle.Where(t => t.Id == articleId).FirstOrDefaultAsync();
 
             if (article != null)
             {
@@ -273,7 +269,7 @@ namespace Site.Service
                     article.Digest = updateArticle.Digest;
                 }
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }
@@ -284,17 +280,16 @@ namespace Site.Service
         }
 
 
-
-        public bool DeleteArticle(long id)
+        public async Task<bool> DeleteArticleAsync(long id)
         {
-            var article = db.TArticle.Where(t => t.Id == id).FirstOrDefault();
+            var article = await db.TArticle.Where(t => t.Id == id).FirstOrDefaultAsync();
 
             if (article != null)
             {
                 article.IsDelete = true;
                 article.DeleteUserId = userId;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }
@@ -304,9 +299,6 @@ namespace Site.Service
             }
 
         }
-
-
-
 
     }
 }

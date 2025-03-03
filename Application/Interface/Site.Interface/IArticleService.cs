@@ -1,4 +1,4 @@
-﻿using Shared.Model;
+using Shared.Model;
 using Site.Model.Article;
 
 namespace Site.Interface
@@ -11,8 +11,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public DtoPageList<DtoCategory> GetCategoryList(DtoPageRequest request);
-
+        Task<DtoPageList<DtoCategory>> GetCategoryListAsync(DtoPageRequest request);
 
 
         /// <summary>
@@ -20,8 +19,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="id">类型Id</param>
         /// <returns></returns>
-        public List<DtoCategorySelect> GetCategorySelectList(long? id = null);
-
+        Task<List<DtoCategorySelect>> GetCategorySelectListAsync(long? id = null);
 
 
         /// <summary>
@@ -29,8 +27,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="categoryId">栏目ID</param>
         /// <returns></returns>
-        public DtoCategory? GetCategory(long categoryId);
-
+        Task<DtoCategory?> GetCategoryAsync(long categoryId);
 
 
         /// <summary>
@@ -38,8 +35,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="createCategory"></param>
         /// <returns></returns>
-        public long CreateCategory(DtoEditCategory createCategory);
-
+        Task<long> CreateCategoryAsync(DtoEditCategory createCategory);
 
 
         /// <summary>
@@ -48,8 +44,7 @@ namespace Site.Interface
         /// <param name="categoryId"></param>
         /// <param name="updateCategory"></param>
         /// <returns></returns>
-        public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory);
-
+        Task<bool> UpdateCategoryAsync(long categoryId, DtoEditCategory updateCategory);
 
 
         /// <summary>
@@ -57,8 +52,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool DeleteCategory(long id);
-
+        Task<bool> DeleteCategoryAsync(long id);
 
 
         /// <summary>
@@ -66,8 +60,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public DtoPageList<DtoArticle> GetArticleList(DtoPageRequest request);
-
+        Task<DtoPageList<DtoArticle>> GetArticleListAsync(DtoPageRequest request);
 
 
         /// <summary>
@@ -75,8 +68,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="articleId">文章ID</param>
         /// <returns></returns>
-        public DtoArticle? GetArticle(long articleId);
-
+        Task<DtoArticle?> GetArticleAsync(long articleId);
 
 
         /// <summary>
@@ -85,8 +77,7 @@ namespace Site.Interface
         /// <param name="createArticle"></param>
         /// <param name="fileKey">文件key</param>
         /// <returns></returns>
-        public long CreateArticle(DtoEditArticle createArticle, long fileKey);
-
+        Task<long> CreateArticleAsync(DtoEditArticle createArticle, long fileKey);
 
 
         /// <summary>
@@ -95,8 +86,7 @@ namespace Site.Interface
         /// <param name="articleId"></param>
         /// <param name="updateArticle"></param>
         /// <returns></returns>
-        public bool UpdateArticle(long articleId, DtoEditArticle updateArticle);
-
+        Task<bool> UpdateArticleAsync(long articleId, DtoEditArticle updateArticle);
 
 
         /// <summary>
@@ -104,8 +94,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool DeleteArticle(long id);
-
+        Task<bool> DeleteArticleAsync(long id);
 
     }
 }

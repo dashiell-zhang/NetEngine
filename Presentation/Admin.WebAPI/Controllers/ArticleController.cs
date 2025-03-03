@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Model;
 using Site.Interface;
@@ -21,7 +21,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoCategory> GetCategoryList([FromQuery] DtoPageRequest request) => articleService.GetCategoryList(request);
+        public Task<DtoPageList<DtoCategory>> GetCategoryList([FromQuery] DtoPageRequest request) => articleService.GetCategoryListAsync(request);
 
 
 
@@ -31,7 +31,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id">栏目Id</param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoCategorySelect> GetCategorySelectList(long? id = null) => articleService.GetCategorySelectList();
+        public Task<List<DtoCategorySelect>> GetCategorySelectList(long? id = null) => articleService.GetCategorySelectListAsync();
 
 
 
@@ -41,7 +41,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="categoryId">栏目ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoCategory? GetCategory(long categoryId) => articleService.GetCategory(categoryId);
+        public Task<DtoCategory?> GetCategory(long categoryId) => articleService.GetCategoryAsync(categoryId);
 
 
 
@@ -51,7 +51,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="createCategory"></param>
         /// <returns></returns>
         [HttpPost]
-        public long CreateCategory(DtoEditCategory createCategory) => articleService.CreateCategory(createCategory);
+        public Task<long> CreateCategory(DtoEditCategory createCategory) => articleService.CreateCategoryAsync(createCategory);
 
 
 
@@ -62,7 +62,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="updateCategory"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool UpdateCategory(long categoryId, DtoEditCategory updateCategory) => articleService.UpdateCategory(categoryId, updateCategory);
+        public Task<bool> UpdateCategory(long categoryId, DtoEditCategory updateCategory) => articleService.UpdateCategoryAsync(categoryId, updateCategory);
 
 
 
@@ -72,7 +72,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteCategory(long id) => articleService.DeleteCategory(id);
+        public Task<bool> DeleteCategory(long id) => articleService.DeleteCategoryAsync(id);
 
 
 
@@ -82,7 +82,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoArticle> GetArticleList([FromQuery] DtoPageRequest request) => articleService.GetArticleList(request);
+        public Task<DtoPageList<DtoArticle>> GetArticleList([FromQuery] DtoPageRequest request) => articleService.GetArticleListAsync(request);
 
 
 
@@ -92,7 +92,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="articleId">文章ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoArticle? GetArticle(long articleId) => articleService.GetArticle(articleId);
+        public Task<DtoArticle?> GetArticle(long articleId) => articleService.GetArticleAsync(articleId);
 
 
 
@@ -103,7 +103,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="fileKey">文件key</param>
         /// <returns></returns>
         [HttpPost]
-        public long CreateArticle(DtoEditArticle createArticle, long fileKey) => articleService.CreateArticle(createArticle, fileKey);
+        public Task<long> CreateArticle(DtoEditArticle createArticle, long fileKey) => articleService.CreateArticleAsync(createArticle, fileKey);
 
 
 
@@ -114,7 +114,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="updateArticle"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool UpdateArticle(long articleId, DtoEditArticle updateArticle) => articleService.UpdateArticle(articleId, updateArticle);
+        public Task<bool> UpdateArticle(long articleId, DtoEditArticle updateArticle) => articleService.UpdateArticleAsync(articleId, updateArticle);
 
 
 
@@ -124,7 +124,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteArticle(long id) => articleService.DeleteArticle(id);
+        public Task<bool> DeleteArticle(long id) => articleService.DeleteArticleAsync(id);
 
 
     }

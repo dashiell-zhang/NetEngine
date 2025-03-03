@@ -21,7 +21,7 @@ namespace User.Service
         private long userId => userContext.UserId;
 
 
-        public DtoUser? GetUser(long? userId)
+        public Task<DtoUser?> GetUserAsync(long? userId)
         {
             userId ??= this.userId;
 
@@ -33,35 +33,31 @@ namespace User.Service
                 Email = t.Email,
                 Roles = string.Join(",", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 CreateTime = t.CreateTime
-            }).FirstOrDefault();
+            }).FirstOrDefaultAsync();
 
             return user;
         }
 
 
-
-        public bool EditUserPhoneBySms(DtoEditUserPhoneBySms request)
+        public async Task<bool> EditUserPhoneBySmsAsync(DtoEditUserPhoneBySms request)
         {
-
             string key = "VerifyPhone_" + request.NewPhone;
 
-            var code = distributedCache.GetString(key);
-
+            var code = await distributedCache.GetStringAsync(key);
 
             if (string.IsNullOrEmpty(code) == false && code == request.SmsCode)
             {
-
-                var checkPhone = db.TUser.Where(t => t.Id != userId && t.Phone == request.NewPhone).Count();
-
-                var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
+                var user = await db.TUser.Where(t => t.Id == userId).FirstOrDefaultAsync();
 
                 if (user != null)
                 {
+                    var checkPhone = await db.TUser.Where(t => t.Id != userId && t.Phone == request.NewPhone).CountAsync();
+
                     if (checkPhone == 0)
                     {
                         user.Phone = request.NewPhone;
 
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
 
                         return true;
                     }
@@ -82,17 +78,15 @@ namespace User.Service
         }
 
 
-
-
-        public DtoPageList<DtoUser> GetUserList(DtoPageRequest request)
+        public async Task<DtoPageList<DtoUser>> GetUserListAsync(DtoPageRequest request)
         {
             DtoPageList<DtoUser> data = new();
 
             var query = db.TUser.AsSplitQuery();
 
-            data.Total = query.Count();
+            var countTask = query.CountAsync();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser
+            var listTask = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -102,15 +96,19 @@ namespace User.Service
                 Roles = string.Join("、", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
                 RoleIds = db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
                 CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            return data;
+            await Task.WhenAll(countTask, listTask);
+
+            return new()
+            {
+                Total = countTask.Result,
+                List = listTask.Result
+            };
         }
 
 
-
-
-        public long? CreateUser(DtoEditUser createUser)
+        public async Task<long?> CreateUserAsync(DtoEditUser createUser)
         {
             string key = "userName:" + createUser.UserName.ToLower();
 
@@ -118,7 +116,7 @@ namespace User.Service
             {
                 if (handle != null)
                 {
-                    var isHaveUserName = db.TUser.Where(t => t.UserName == createUser.UserName).Any();
+                    var isHaveUserName = await db.TUser.Where(t => t.UserName == createUser.UserName).AnyAsync();
 
                     if (isHaveUserName == false)
                     {
@@ -150,7 +148,7 @@ namespace User.Service
                             db.TUserRole.Add(userRole);
                         }
 
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
 
                         return user.Id;
                     }
@@ -161,9 +159,7 @@ namespace User.Service
         }
 
 
-
-
-        public bool UpdateUser(long userId, DtoEditUser updateUser)
+        public async Task<bool> UpdateUserAsync(long userId, DtoEditUser updateUser)
         {
             string key = "userName:" + updateUser.UserName.ToLower();
 
@@ -171,13 +167,13 @@ namespace User.Service
             {
                 if (handle != null)
                 {
-                    var isHaveUserName = db.TUser.Where(t => t.Id != userId && t.UserName == updateUser.UserName).Any();
+                    var isHaveUserName = await db.TUser.Where(t => t.Id != userId && t.UserName == updateUser.UserName).AnyAsync();
 
                     if (!isHaveUserName)
                     {
                         var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
 
-                        var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
+                        var user = await db.TUser.Where(t => t.Id == userId).FirstOrDefaultAsync();
 
                         if (user != null)
                         {
@@ -193,7 +189,7 @@ namespace User.Service
                                 user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updateUser.Password, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                             }
 
-                            var roleList = db.TUserRole.Where(t => t.UserId == user.Id).ToList();
+                            var roleList = await db.TUserRole.Where(t => t.UserId == user.Id).ToListAsync();
 
                             foreach (var item in roleList)
                             {
@@ -221,8 +217,7 @@ namespace User.Service
                                 db.TUserRole.Add(userRole);
                             }
 
-
-                            db.SaveChanges();
+                            await db.SaveChangesAsync();
 
                             return true;
                         }
@@ -238,18 +233,16 @@ namespace User.Service
         }
 
 
-
-
-        public bool DeleteUser(long id)
+        public async Task<bool> DeleteUserAsync(long id)
         {
-            var user = db.TUser.Where(t => t.Id == id).FirstOrDefault();
+            var user = await db.TUser.Where(t => t.Id == id).FirstOrDefaultAsync();
 
             if (user != null)
             {
                 user.IsDelete = true;
                 user.DeleteUserId = userId;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }
@@ -257,16 +250,14 @@ namespace User.Service
             {
                 return false;
             }
-
         }
 
 
-
-        public List<DtoUserFunction> GetUserFunction(long userId)
+        public async Task<List<DtoUserFunction>> GetUserFunctionAsync(long userId)
         {
-            var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
+            var roleIds = await db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
 
-            var functionList = db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
+            var functionList = await db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
@@ -279,26 +270,22 @@ namespace User.Service
                     Sign = f.Sign,
                     IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == f.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
                 }).ToList()
-            }).ToList();
+            }).ToListAsync();
 
             foreach (var function in functionList)
             {
-                function.ChildList = GetUserFunctionChildList(userId, function.Id, roleIds);
+                function.ChildList = await GetUserFunctionChildListAsync(userId, function.Id, roleIds);
             }
 
             return functionList;
         }
 
 
-
-
-
-        public bool SetUserFunction(DtoSetUserFunction setUserFunction)
+        public async Task<bool> SetUserFunctionAsync(DtoSetUserFunction setUserFunction)
         {
+            var roleIds = await db.TUserRole.Where(t => t.UserId == setUserFunction.UserId).Select(t => t.RoleId).ToListAsync();
 
-            var roleIds = db.TUserRole.Where(t => t.UserId == setUserFunction.UserId).Select(t => t.RoleId).ToList();
-
-            var functionAuthorize = db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == setUserFunction.UserId) && t.FunctionId == setUserFunction.FunctionId).FirstOrDefault() ?? new TFunctionAuthorize();
+            var functionAuthorize = await db.TFunctionAuthorize.Where(t => (roleIds.Contains(t.RoleId!.Value) || t.UserId == setUserFunction.UserId) && t.FunctionId == setUserFunction.FunctionId).FirstOrDefaultAsync() ?? new TFunctionAuthorize();
 
             if (setUserFunction.IsCheck)
             {
@@ -312,7 +299,7 @@ namespace User.Service
 
                     db.TFunctionAuthorize.Add(functionAuthorize);
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
             else
@@ -321,7 +308,7 @@ namespace User.Service
                 {
                     if (functionAuthorize.RoleId == null)
                     {
-                        var userFunctionList = db.TFunctionAuthorize.Where(t => t.UserId == setUserFunction.UserId).ToList();
+                        var userFunctionList = await db.TFunctionAuthorize.Where(t => t.UserId == setUserFunction.UserId).ToListAsync();
 
                         foreach (var userFunction in userFunctionList)
                         {
@@ -329,7 +316,7 @@ namespace User.Service
                             userFunction.DeleteUserId = userId;
                         }
 
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
 
                         return true;
                     }
@@ -345,8 +332,7 @@ namespace User.Service
         }
 
 
-
-        public List<DtoUserRole> GetUserRoleList(long userId)
+        public Task<List<DtoUserRole>> GetUserRoleListAsync(long userId)
         {
             var list = db.TRole.Select(t => new DtoUserRole
             {
@@ -354,17 +340,15 @@ namespace User.Service
                 Name = t.Name,
                 Remarks = t.Remarks,
                 IsCheck = db.TUserRole.Where(r => r.RoleId == t.Id && r.UserId == userId).FirstOrDefault() != null
-            }).ToList();
+            }).ToListAsync();
 
             return list;
         }
 
 
-
-
-        public bool SetUserRole(DtoSetUserRole setUserRole)
+        public async Task<bool> SetUserRoleAsync(DtoSetUserRole setUserRole)
         {
-            var userRole = db.TUserRole.Where(t => t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefault();
+            var userRole = await db.TUserRole.Where(t => t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefaultAsync();
 
             if (setUserRole.IsCheck)
             {
@@ -380,7 +364,7 @@ namespace User.Service
 
                     db.TUserRole.Add(userRole);
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
             else
@@ -390,7 +374,7 @@ namespace User.Service
                     userRole.IsDelete = true;
                     userRole.DeleteUserId = userId;
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
 
@@ -399,11 +383,10 @@ namespace User.Service
         }
 
 
-
-        public List<DtoUserFunction> GetUserFunctionChildList(long userId, long parentId, List<long> roleIds)
+        public async Task<List<DtoUserFunction>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds)
         {
 
-            var functionList = db.TFunction.Where(t => t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
+            var functionList = await db.TFunction.Where(t => t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
@@ -416,16 +399,15 @@ namespace User.Service
                     Sign = f.Sign,
                     IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == f.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
                 }).ToList()
-            }).ToList();
+            }).ToListAsync();
 
             foreach (var function in functionList)
             {
-                function.ChildList = GetUserFunctionChildList(userId, function.Id, roleIds);
+                function.ChildList = await GetUserFunctionChildListAsync(userId, function.Id, roleIds);
             }
 
             return functionList;
         }
-
 
     }
 }

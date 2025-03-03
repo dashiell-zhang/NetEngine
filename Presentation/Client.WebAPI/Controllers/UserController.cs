@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Model;
 using User.Interface;
 using User.Model.User;
 using WebAPI.Core.Filters;
@@ -26,7 +25,7 @@ namespace Client.WebAPI.Controllers
         /// <returns></returns>
         [HttpGet]
         [CacheDataFilter(TTL = 60, IsUseToken = true)]
-        public DtoUser? GetUser(long? userId) => userService.GetUser(userId);
+        public Task<DtoUser?> GetUser(long? userId) => userService.GetUserAsync(userId);
 
 
 
@@ -36,7 +35,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool EditUserPhoneBySms(DtoEditUserPhoneBySms request) => userService.EditUserPhoneBySms(request);
+        public Task<bool> EditUserPhoneBySms(DtoEditUserPhoneBySms request) => userService.EditUserPhoneBySmsAsync(request);
 
 
     }

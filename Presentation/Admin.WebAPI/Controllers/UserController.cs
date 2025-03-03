@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Model;
 using User.Interface;
@@ -7,7 +7,6 @@ using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers
 {
-
 
     /// <summary>
     /// 用户数据操作控制器
@@ -19,15 +18,13 @@ namespace Admin.WebAPI.Controllers
     public class UserController(IUserService userService) : ControllerBase
     {
 
-
         /// <summary>
         /// 获取用户列表
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoUser> GetUserList([FromQuery] DtoPageRequest request) => userService.GetUserList(request);
-
+        public Task<DtoPageList<DtoUser>> GetUserList([FromQuery] DtoPageRequest request) => userService.GetUserListAsync(request);
 
 
         /// <summary>
@@ -36,8 +33,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoUser? GetUser(long? userId) => userService?.GetUser(userId);
-
+        public Task<DtoUser?> GetUser(long? userId) => userService.GetUserAsync(userId);
 
 
         /// <summary>
@@ -46,8 +42,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="createUser"></param>
         /// <returns></returns>
         [HttpPost]
-        public long? CreateUser(DtoEditUser createUser) => userService.CreateUser(createUser);
-
+        public Task<long?> CreateUser(DtoEditUser createUser) => userService.CreateUserAsync(createUser);
 
 
         /// <summary>
@@ -57,8 +52,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="updateUser"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool UpdateUser(long userId, DtoEditUser updateUser) => userService.UpdateUser(userId, updateUser);
-
+        public Task<bool> UpdateUser(long userId, DtoEditUser updateUser) => userService.UpdateUserAsync(userId, updateUser);
 
 
         /// <summary>
@@ -67,8 +61,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteUser(long id) => userService.DeleteUser(id);
-
+        public Task<bool> DeleteUser(long id) => userService.DeleteUserAsync(id);
 
 
         /// <summary>
@@ -77,8 +70,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoUserFunction> GetUserFunction(long userId) => userService.GetUserFunction(userId);
-
+        public Task<List<DtoUserFunction>> GetUserFunction(long userId) => userService.GetUserFunctionAsync(userId);
 
 
         /// <summary>
@@ -88,7 +80,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [QueueLimitFilter()]
         [HttpPost]
-        public bool SetUserFunction(DtoSetUserFunction setUserFunction) => userService.SetUserFunction(setUserFunction);
+        public Task<bool> SetUserFunction(DtoSetUserFunction setUserFunction) => userService.SetUserFunctionAsync(setUserFunction);
 
 
         /// <summary>
@@ -97,8 +89,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="userId"></param>
         /// <returns></returns>
         [HttpGet]
-        public List<DtoUserRole> GetUserRoleList(long userId) => userService.GetUserRoleList(userId);
-
+        public Task<List<DtoUserRole>> GetUserRoleList(long userId) => userService.GetUserRoleListAsync(userId);
 
 
         /// <summary>
@@ -108,8 +99,7 @@ namespace Admin.WebAPI.Controllers
         /// <returns></returns>
         [QueueLimitFilter()]
         [HttpPost]
-        public bool SetUserRole(DtoSetUserRole setUserRole) => userService.SetUserRole(setUserRole);
-
+        public Task<bool> SetUserRole(DtoSetUserRole setUserRole) => userService.SetUserRoleAsync(setUserRole);
 
     }
 }

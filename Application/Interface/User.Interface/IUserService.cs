@@ -1,4 +1,4 @@
-﻿using Shared.Model;
+using Shared.Model;
 using User.Model.User;
 
 namespace User.Interface
@@ -11,7 +11,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
-        public DtoUser? GetUser(long? userId);
+        Task<DtoUser?> GetUserAsync(long? userId);
 
 
         /// <summary>
@@ -19,8 +19,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
         /// <returns></returns>
-        public bool EditUserPhoneBySms(DtoEditUserPhoneBySms request);
-
+        Task<bool> EditUserPhoneBySmsAsync(DtoEditUserPhoneBySms request);
 
 
         /// <summary>
@@ -28,8 +27,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public DtoPageList<DtoUser> GetUserList(DtoPageRequest request);
-
+        Task<DtoPageList<DtoUser>> GetUserListAsync(DtoPageRequest request);
 
 
         /// <summary>
@@ -37,8 +35,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="createUser"></param>
         /// <returns></returns>
-        public long? CreateUser(DtoEditUser createUser);
-
+        Task<long?> CreateUserAsync(DtoEditUser createUser);
 
 
         /// <summary>
@@ -47,7 +44,7 @@ namespace User.Interface
         /// <param name="userId"></param>
         /// <param name="updateUser"></param>
         /// <returns></returns>
-        public bool UpdateUser(long userId, DtoEditUser updateUser);
+        Task<bool> UpdateUserAsync(long userId, DtoEditUser updateUser);
 
 
         /// <summary>
@@ -55,8 +52,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool DeleteUser(long id);
-
+        Task<bool> DeleteUserAsync(long id);
 
 
         /// <summary>
@@ -64,8 +60,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="userId">用户ID</param>
         /// <returns></returns>
-        public List<DtoUserFunction> GetUserFunction(long userId);
-
+        Task<List<DtoUserFunction>> GetUserFunctionAsync(long userId);
 
 
         /// <summary>
@@ -73,8 +68,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="setUserFunction"></param>
         /// <returns></returns>
-        public bool SetUserFunction(DtoSetUserFunction setUserFunction);
-
+        Task<bool> SetUserFunctionAsync(DtoSetUserFunction setUserFunction);
 
 
         /// <summary>
@@ -82,8 +76,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public List<DtoUserRole> GetUserRoleList(long userId);
-
+        Task<List<DtoUserRole>> GetUserRoleListAsync(long userId);
 
 
         /// <summary>
@@ -91,8 +84,7 @@ namespace User.Interface
         /// </summary>
         /// <param name="setUserRole"></param>
         /// <returns></returns>
-        public bool SetUserRole(DtoSetUserRole setUserRole);
-
+        Task<bool> SetUserRoleAsync(DtoSetUserRole setUserRole);
 
 
         /// <summary>
@@ -102,7 +94,7 @@ namespace User.Interface
         /// <param name="parentId">功能父级ID</param>
         /// <param name="roleIds">用户角色ID集合</param>
         /// <returns></returns>
-        public List<DtoUserFunction> GetUserFunctionChildList(long userId, long parentId, List<long> roleIds);
+        Task<List<DtoUserFunction>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds);
 
     }
 }

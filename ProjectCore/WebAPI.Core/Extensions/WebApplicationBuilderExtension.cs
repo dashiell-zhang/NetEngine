@@ -1,4 +1,4 @@
-﻿using Authorize.Model.AppSetting;
+using Authorize.Model.AppSetting;
 using Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -146,13 +146,13 @@ namespace WebAPI.Core.Extensions
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
-                    .RequireAssertion(context =>
+                    .RequireAssertion(async context =>
                     {
                         if (context.Resource is HttpContext httpContext)
                         {
                             var permissionService = httpContext.RequestServices.GetService<IPermissionService>();
 
-                            return permissionService != null && permissionService.VerifyAuthorization(context);
+                            return permissionService != null && await permissionService.VerifyAuthorizationAsync(context);
                         }
                         else
                         {

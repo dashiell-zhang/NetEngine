@@ -1,12 +1,13 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Authorize.Model.Authorize;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
-using Shared.Model;
+using System.Threading.Tasks;
 using System.Xml;
 using WebAPI.Core.Filters;
 
@@ -39,7 +40,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetToken(DtoGetToken login) => authorizeService.GetToken(login);
+        public Task<string?> GetToken(DtoGetToken login) => authorizeService.GetTokenAsync(login);
 
 
 
@@ -49,7 +50,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinMiniApp([FromBody] DtoGetTokenByWeiXinApp login) => authorizeService.GetTokenByWeiXinMiniApp(login);
+        public Task<string?> GetTokenByWeiXinMiniApp([FromBody] DtoGetTokenByWeiXinApp login) => authorizeService.GetTokenByWeiXinMiniAppAsync(login);
 
 
 
@@ -59,7 +60,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenBySMS(DtoGetTokenBySMS login) => authorizeService.GetTokenBySMS(login);
+        public Task<string?> GetTokenBySMS(DtoGetTokenBySMS login) => authorizeService.GetTokenBySMSAsync(login);
 
 
 
@@ -71,7 +72,7 @@ namespace Client.WebAPI.Controllers
         [Authorize]
         [CacheDataFilter(TTL = 60, IsUseToken = true)]
         [HttpGet]
-        public Dictionary<string, string> GetFunctionList(string sign) => authorizeService.GetFunctionList(sign);
+        public Task<Dictionary<string, string>> GetFunctionList(string sign) => authorizeService.GetFunctionListAsync(sign);
 
 
 
@@ -81,7 +82,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="sendVerifyCode"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool SendSMSVerifyCode(DtoSendSMSVerifyCode sendVerifyCode) => authorizeService.SendSMSVerifyCode(sendVerifyCode);
+        public Task<bool> SendSMSVerifyCode(DtoSendSMSVerifyCode sendVerifyCode) => authorizeService.SendSMSVerifyCodeAsync(sendVerifyCode);
 
 
 
@@ -91,7 +92,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login) => authorizeService.GetTokenByWeiXinApp(login);
+        public Task<string?> GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login) => authorizeService.GetTokenByWeiXinAppAsync(login);
 
 
 
@@ -103,7 +104,7 @@ namespace Client.WebAPI.Controllers
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
-        public bool UpdatePasswordByOldPassword(DtoUpdatePasswordByOldPassword updatePassword) => authorizeService.UpdatePasswordByOldPassword(updatePassword);
+        public Task<bool> UpdatePasswordByOldPassword(DtoUpdatePasswordByOldPassword updatePassword) => authorizeService.UpdatePasswordByOldPasswordAsync(updatePassword);
 
 
 
@@ -114,7 +115,7 @@ namespace Client.WebAPI.Controllers
         [Authorize]
         [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
         [HttpPost]
-        public bool UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword) => authorizeService.UpdatePasswordBySMS(updatePassword);
+        public Task<bool> UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword) => authorizeService.UpdatePasswordBySMSAsync(updatePassword);
 
 
 
@@ -122,7 +123,7 @@ namespace Client.WebAPI.Controllers
         /// 更新路由信息表
         /// </summary>
         [HttpGet]
-        public void UpdateRoute(IActionDescriptorCollectionProvider actionDescriptorCollectionProvider, DatabaseContext db, IdService idService)
+        public async void UpdateRoute(IActionDescriptorCollectionProvider actionDescriptorCollectionProvider, DatabaseContext db, IdService idService)
         {
             var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new
             {
@@ -178,7 +179,7 @@ namespace Client.WebAPI.Controllers
             actionList = actionList.Where(t => t.IsAuthorize == true).Distinct().ToList();
 
 
-            var functionRoutes = db.TFunctionRoute.Where(t => t.Module == projectName).ToList();
+            var functionRoutes = await db.TFunctionRoute.Where(t => t.Module == projectName).ToListAsync();
 
             var delList = functionRoutes.Where(t => actionList.Select(t => t.Route).ToList().Contains(t.Route) == false).ToList();
 
@@ -211,7 +212,7 @@ namespace Client.WebAPI.Controllers
                 }
             }
 
-            db.SaveChanges();
+            await db.SaveChangesAsync();
 
         }
 

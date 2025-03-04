@@ -1,12 +1,12 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Authorize.Model.Authorize;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
-using Shared.Model;
 using System.Xml;
 using WebAPI.Core.Filters;
 
@@ -29,7 +29,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="login">登录信息集合</param>
         /// <returns></returns>
         [HttpPost]
-        public string? GetToken(DtoGetToken login) => authorizeService.GetToken(login);
+        public Task<string?> GetToken(DtoGetToken login) => authorizeService.GetTokenAsync(login);
 
 
 
@@ -40,7 +40,7 @@ namespace Admin.WebAPI.Controllers
         [SignVerifyFilter]
         [Authorize]
         [HttpGet]
-        public Dictionary<string, string> GetFunctionList() => authorizeService.GetFunctionList();
+        public Task<Dictionary<string, string>> GetFunctionList() => authorizeService.GetFunctionListAsync();
 
 
 
@@ -49,7 +49,7 @@ namespace Admin.WebAPI.Controllers
         /// </summary>
         /// <param name="actionDescriptorCollectionProvider"></param>
         [HttpGet]
-        public void UpdateRoute(IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
+        public async Task UpdateRoute(IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
         {
             var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new
             {
@@ -105,7 +105,7 @@ namespace Admin.WebAPI.Controllers
             actionList = actionList.Where(t => t.IsAuthorize == true).Distinct().ToList();
 
 
-            var functionRoutes = db.TFunctionRoute.Where(t => t.Module == projectName).ToList();
+            var functionRoutes = await db.TFunctionRoute.Where(t => t.Module == projectName).ToListAsync();
 
             var delList = functionRoutes.Where(t => actionList.Select(t => t.Route).ToList().Contains(t.Route) == false).ToList();
 
@@ -138,7 +138,7 @@ namespace Admin.WebAPI.Controllers
                 }
             }
 
-            db.SaveChanges();
+            await db.SaveChangesAsync();
 
         }
 

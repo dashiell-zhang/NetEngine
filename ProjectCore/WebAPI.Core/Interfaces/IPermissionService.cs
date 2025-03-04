@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebAPI.Core.Interfaces
 {
@@ -10,7 +10,7 @@ namespace WebAPI.Core.Interfaces
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public bool VerifyAuthorization(AuthorizationHandlerContext context);
+        Task<bool> VerifyAuthorizationAsync(AuthorizationHandlerContext context);
 
     }
 }

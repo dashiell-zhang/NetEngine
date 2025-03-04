@@ -1,4 +1,4 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Authorize.Model.AppSetting;
 using Authorize.Model.Authorize;
 using Common;
@@ -54,15 +54,15 @@ namespace Authorize.Service
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public string? GetToken(DtoGetToken login)
+        public async Task<string?> GetTokenAsync(DtoGetToken login)
         {
-            var userList = db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.Password }).ToList();
+            var userList = await db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.Password }).ToListAsync();
 
             var user = userList.Where(t => t.Password == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.Password, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
             if (user != null)
             {
-                return GetTokenByUserId(user.Id);
+                return await GetTokenByUserIdAsync(user.Id);
             }
             else
             {
@@ -77,20 +77,21 @@ namespace Authorize.Service
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public string? GetTokenByWeiXinMiniApp(DtoGetTokenByWeiXinApp login)
+        public async Task<string?> GetTokenByWeiXinMiniAppAsync(DtoGetTokenByWeiXinApp login)
         {
-            var (openId, sessionKey) = GetWeiXinMiniAppOpenIdAndSessionKey(login.AppId, login.Code);
+            var (openId, sessionKey) = await GetWeiXinMiniAppOpenIdAndSessionKeyAsync(login.AppId, login.Code);
 
             var userIdQuery = db.TUserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == login.AppId && t.OpenId == login.AppId).Select(t => t.User.Id);
 
-            var userId = userIdQuery.FirstOrDefault();
+            var userId = await userIdQuery.FirstOrDefaultAsync();
 
             if (userId == default)
             {
 
                 using (distLock.Lock("GetTokenByWeiXinMiniAppCode" + openId))
                 {
-                    userId = userIdQuery.FirstOrDefault();
+
+                    userId = await userIdQuery.FirstOrDefaultAsync();
 
                     if (userId == default)
                     {
@@ -108,8 +109,6 @@ namespace Authorize.Service
 
                         db.TUser.Add(user);
 
-                        db.SaveChanges();
-
                         TUserBindExternal userBind = new()
                         {
                             Id = idService.GetId(),
@@ -121,7 +120,7 @@ namespace Authorize.Service
 
                         db.TUserBindExternal.Add(userBind);
 
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
 
                         userId = user.Id;
                     }
@@ -132,7 +131,7 @@ namespace Authorize.Service
 
             if (userId != default)
             {
-                return GetTokenByUserId(userId);
+                return await GetTokenByUserIdAsync(userId);
 
             }
             else
@@ -149,15 +148,15 @@ namespace Authorize.Service
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public string? GetTokenBySMS(DtoGetTokenBySMS login)
+        public async Task<string?> GetTokenBySMSAsync(DtoGetTokenBySMS login)
         {
             string key = "VerifyPhone_" + login.Phone;
 
-            var code = distributedCache.GetString(key);
+            var code = await distributedCache.GetStringAsync(key);
 
             if (string.IsNullOrEmpty(code) == false && code == login.VerifyCode)
             {
-                var userId = db.TUser.Where(t => t.Phone == login.Phone).Select(t => t.Id).FirstOrDefault();
+                var userId = await db.TUser.Where(t => t.Phone == login.Phone).Select(t => t.Id).FirstOrDefaultAsync();
 
                 if (userId == default)
                 {
@@ -175,14 +174,14 @@ namespace Authorize.Service
 
                     db.TUser.Add(user);
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
 
                     userId = user.Id;
                 }
 
                 if (userId != default)
                 {
-                    return GetTokenByUserId(userId);
+                    return await GetTokenByUserIdAsync(userId);
                 }
                 else
                 {
@@ -203,10 +202,10 @@ namespace Authorize.Service
         /// </summary>
         /// <param name="sign">模块标记</param>
         /// <returns></returns>
-        public Dictionary<string, string> GetFunctionList(string? sign)
+        public async Task<Dictionary<string, string>> GetFunctionListAsync(string? sign)
         {
 
-            var roleIds = db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
+            var roleIds = await db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
 
             var query = db.TFunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == userId);
 
@@ -215,11 +214,11 @@ namespace Authorize.Service
                 query = query.Where(t => t.Function.Sign == sign);
             }
 
-            var kvList = query.Select(t => new
+            var kvList = (await query.Select(t => new
             {
                 Key = t.Function.Sign,
                 Value = t.Function.Name
-            }).ToList().DistinctBy(t => t.Key).ToList();
+            }).ToListAsync()).DistinctBy(t => t.Key).ToList();
 
             var keyValues = kvList.ToDictionary(item => item.Key, item => item.Value);
 
@@ -235,11 +234,11 @@ namespace Authorize.Service
         /// <param name="sms"></param>
         /// <param name="sendVerifyCode"></param>
         /// <returns></returns>
-        public bool SendSMSVerifyCode(DtoSendSMSVerifyCode sendVerifyCode)
+        public async Task<bool> SendSMSVerifyCodeAsync(DtoSendSMSVerifyCode sendVerifyCode)
         {
             string key = "VerifyPhone_" + sendVerifyCode.Phone;
 
-            if (distributedCache.IsContainKey(key) == false)
+            if (await distributedCache.IsContainKeyAsync(key) == false)
             {
                 Random ran = new();
                 string code = ran.Next(100000, 999999).ToString();
@@ -251,7 +250,7 @@ namespace Authorize.Service
 
                 sms.SendSMS("短信签名", sendVerifyCode.Phone, "短信模板编号", templateParams);
 
-                distributedCache.Set(key, code, new TimeSpan(0, 0, 5, 0));
+                await distributedCache.SetAsync(key, code, new TimeSpan(0, 0, 5, 0));
 
                 return true;
             }
@@ -269,15 +268,15 @@ namespace Authorize.Service
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public string? GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login)
+        public async Task<string?> GetTokenByWeiXinAppAsync(DtoGetTokenByWeiXinApp login)
         {
-            var (accessToken, openId) = GetWeiXinAppAccessTokenAndOpenId(login.AppId, login.Code);
+            var (accessToken, openId) = await GetWeiXinAppAccessTokenAndOpenIdAsync(login.AppId, login.Code);
 
-            var userInfo = GetWeiXinAppUserInfo(accessToken, openId);
+            var userInfo = await GetWeiXinAppUserInfoAsync(accessToken, openId);
 
             if (userInfo.NickName != null)
             {
-                var user = db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == login.AppId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefault();
+                var user = await db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == login.AppId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefaultAsync();
 
                 if (user == null)
                 {
@@ -293,7 +292,6 @@ namespace Authorize.Service
                     user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
                     db.TUser.Add(user);
-                    db.SaveChanges();
 
                     TUserBindExternal bind = new()
                     {
@@ -307,10 +305,10 @@ namespace Authorize.Service
 
                     db.TUserBindExternal.Add(bind);
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
 
-                return GetTokenByUserId(user.Id);
+                return await GetTokenByUserIdAsync(user.Id);
             }
 
             throw new CustomException("微信授权失败");
@@ -325,10 +323,10 @@ namespace Authorize.Service
         /// </summary>
         /// <param name="updatePassword"></param>
         /// <returns></returns>
-        public bool UpdatePasswordByOldPassword(DtoUpdatePasswordByOldPassword updatePassword)
+        public async Task<bool> UpdatePasswordByOldPasswordAsync(DtoUpdatePasswordByOldPassword updatePassword)
         {
 
-            var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
+            var user = await db.TUser.Where(t => t.Id == userId).FirstOrDefaultAsync();
 
             if (user != null)
             {
@@ -336,7 +334,8 @@ namespace Authorize.Service
                 {
                     user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.NewPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                     user.UpdateUserId = user.Id;
-                    db.SaveChanges();
+
+                    await db.SaveChangesAsync();
 
                     return true;
                 }
@@ -349,7 +348,6 @@ namespace Authorize.Service
             {
                 throw new CustomException("账户异常，请联系后台工作人员");
             }
-
         }
 
 
@@ -358,30 +356,30 @@ namespace Authorize.Service
         /// 通过短信验证码修改账户密码</summary>
         /// <param name="updatePassword"></param>
         /// <returns></returns>
-        public bool UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword)
+        public async Task<bool> UpdatePasswordBySMSAsync(DtoUpdatePasswordBySMS updatePassword)
         {
 
-            string phone = db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstOrDefault()!;
+            string phone = await db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstAsync();
 
             string key = "VerifyPhone_" + phone;
 
-            var code = distributedCache.GetString(key);
+            var code = await distributedCache.GetStringAsync(key);
 
 
             if (string.IsNullOrEmpty(code) == false && code == updatePassword.SmsCode)
             {
-                var user = db.TUser.Where(t => t.Id == userId).FirstOrDefault();
+                var user = await db.TUser.Where(t => t.Id == userId).FirstOrDefaultAsync();
 
                 if (user != null)
                 {
                     user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.NewPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                     user.UpdateUserId = userId;
 
-                    var tokenList = db.TUserToken.Where(t => t.UserId == userId).ToList();
+                    var tokenList = await db.TUserToken.Where(t => t.UserId == userId).ToListAsync();
 
                     db.TUserToken.RemoveRange(tokenList);
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
 
                     return true;
                 }
@@ -399,7 +397,7 @@ namespace Authorize.Service
 
 
 
-        public string GetTokenByUserId(long userId, long? lastTokenId = null)
+        public async Task<string> GetTokenByUserIdAsync(long userId, long? lastTokenId = null)
         {
 
             TUserToken userToken = new()
@@ -410,7 +408,8 @@ namespace Authorize.Service
             };
 
             db.TUserToken.Add(userToken);
-            db.SaveChanges();
+
+            await db.SaveChangesAsync();
 
             var claims = new Claim[]
             {
@@ -447,25 +446,30 @@ namespace Authorize.Service
 
 
 
-        public (string openId, string sessionKey) GetWeiXinMiniAppOpenIdAndSessionKey(string appId, string code)
+        public async Task<(string openId, string sessionKey)> GetWeiXinMiniAppOpenIdAndSessionKeyAsync(string appId, string code)
         {
-            var settingGroupId = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefault();
+            var settingGroupId = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
 
-            var appSecret = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
+            var appSecret = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefaultAsync();
 
             if (appSecret != null)
             {
 
                 string url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appId + "&secret=" + appSecret + "&js_code=" + code + "&grant_type=authorization_code";
 
-                string httpRet = httpClient.GetAsync(url).Result.Content.ReadAsStringAsync().Result;
+                var httpResponseMessage = await httpClient.GetAsync(url);
 
-                var openId = JsonHelper.GetValueByKey(httpRet, "openid");
-                var sessionKey = JsonHelper.GetValueByKey(httpRet, "session_key");
-
-                if (openId != null && sessionKey != null)
+                if (httpResponseMessage.IsSuccessStatusCode)
                 {
-                    return (openId, sessionKey);
+                    string httpRet = await httpResponseMessage.Content.ReadAsStringAsync();
+
+                    var openId = JsonHelper.GetValueByKey(httpRet, "openid");
+                    var sessionKey = JsonHelper.GetValueByKey(httpRet, "session_key");
+
+                    if (openId != null && sessionKey != null)
+                    {
+                        return (openId, sessionKey);
+                    }
                 }
             }
 
@@ -474,40 +478,56 @@ namespace Authorize.Service
 
 
 
-        public (string accessToken, string openId) GetWeiXinAppAccessTokenAndOpenId(string appId, string code)
+        public async Task<(string accessToken, string openId)> GetWeiXinAppAccessTokenAndOpenIdAsync(string appId, string code)
         {
-            var settingGroupId = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefault();
+            var settingGroupId = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
 
-            var appSecret = db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefault();
+            var appSecret = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefaultAsync();
 
             if (appSecret != null)
             {
                 string url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + appId + "&secret=" + appSecret + "&code=" + code + "&grant_type=authorization_code";
 
-                var returnJson = httpClient.GetAsync(url).Result.Content.ReadAsStringAsync().Result;
+                var httpResponseMessage = await httpClient.GetAsync(url);
 
-                var accessToken = JsonHelper.GetValueByKey(returnJson, "access_token");
-                var openId = JsonHelper.GetValueByKey(returnJson, "openid");
-
-                if (accessToken != null && openId != null)
+                if (httpResponseMessage.IsSuccessStatusCode)
                 {
-                    return (accessToken, openId);
+                    var returnJson = await httpResponseMessage.Content.ReadAsStringAsync();
+
+                    var accessToken = JsonHelper.GetValueByKey(returnJson, "access_token");
+                    var openId = JsonHelper.GetValueByKey(returnJson, "openid");
+
+                    if (accessToken != null && openId != null)
+                    {
+                        return (accessToken, openId);
+                    }
                 }
+
+
             }
             throw new Exception("获取 AccessToken 失败");
         }
 
 
 
-        public DtoGetWeiXinAppUserInfo GetWeiXinAppUserInfo(string accessToken, string openId)
+        public async Task<DtoGetWeiXinAppUserInfo> GetWeiXinAppUserInfoAsync(string accessToken, string openId)
         {
             string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
 
-            var returnJson = httpClient.GetAsync(url).Result.Content.ReadAsStringAsync().Result;
+            var httpResponseMessage = await httpClient.GetAsync(url);
 
-            var userInfo = JsonHelper.JsonToObject<DtoGetWeiXinAppUserInfo>(returnJson);
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                var returnJson = await httpResponseMessage.Content.ReadAsStringAsync();
 
-            return userInfo;
+                var userInfo = JsonHelper.JsonToObject<DtoGetWeiXinAppUserInfo>(returnJson);
+
+                return userInfo;
+            }
+            else
+            {
+                throw new Exception("获取微信用户信息失败");
+            }
         }
     }
 }

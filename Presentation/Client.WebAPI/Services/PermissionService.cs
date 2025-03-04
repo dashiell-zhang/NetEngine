@@ -1,9 +1,10 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Repository.Database;
 using System.Security.Claims;
@@ -16,17 +17,15 @@ namespace Client.WebAPI.Services
     public class PermissionService : IPermissionService
     {
 
-
-        public bool VerifyAuthorization(AuthorizationHandlerContext authorizationHandlerContext)
+        public async Task<bool> VerifyAuthorizationAsync(AuthorizationHandlerContext authorizationHandlerContext)
         {
-
             if (authorizationHandlerContext.User.Identity!.IsAuthenticated)
             {
 
                 if (authorizationHandlerContext.Resource is HttpContext httpContext)
                 {
 
-                    IssueNewToken(httpContext);
+                    await IssueNewTokenAsync(httpContext);
 
                     var module = typeof(Program).Assembly.GetName().Name!;
 
@@ -38,14 +37,14 @@ namespace Client.WebAPI.Services
 
                     using var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-                    var functionId = db.TFunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefault();
+                    var functionId = await db.TFunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefaultAsync();
 
                     if (functionId != default)
                     {
                         var userId = long.Parse(httpContext.User.FindFirstValue("userId")!);
-                        var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
+                        var roleIds = await db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
 
-                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+                        var functionAuthorizeId = await db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefaultAsync();
 
                         if (functionAuthorizeId != default)
                         {
@@ -73,12 +72,11 @@ namespace Client.WebAPI.Services
         }
 
 
-
         /// <summary>
         /// 签发新Token
         /// </summary>
         /// <param name="httpContext"></param>
-        private static void IssueNewToken(HttpContext httpContext)
+        private static async Task IssueNewTokenAsync(HttpContext httpContext)
         {
 
             var idService = httpContext.RequestServices.GetRequiredService<IdService>();
@@ -107,24 +105,24 @@ namespace Client.WebAPI.Services
                 if (distLock.TryLock(key) != null)
                 {
 
-                    var newToken = cache.GetString(tokenId + "newToken");
+                    var newToken = await cache.GetStringAsync(tokenId + "newToken");
 
                     if (newToken == null)
                     {
                         var authorizeService = httpContext.RequestServices.GetRequiredService<IAuthorizeService>();
 
-                        newToken = authorizeService.GetTokenByUserId(userId, tokenId);
+                        newToken = await authorizeService.GetTokenByUserIdAsync(userId, tokenId);
 
                         if (distLock.TryLock("ClearExpireToken") != null)
                         {
                             var clearTime = DateTime.UtcNow.AddDays(-7);
-                            var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
+                            var clearList = await db.TUserToken.Where(t => t.CreateTime < clearTime).ToListAsync();
                             db.TUserToken.RemoveRange(clearList);
 
-                            db.SaveChanges();
+                            await db.SaveChangesAsync();
                         }
 
-                        cache.Set(tokenId + "newToken", newToken, TimeSpan.FromMinutes(10));
+                        await cache.SetAsync(tokenId + "newToken", newToken, TimeSpan.FromMinutes(10));
                     }
 
                     httpContext.Response.Headers.Append("NewToken", newToken);
@@ -134,7 +132,6 @@ namespace Client.WebAPI.Services
             }
 
         }
-
 
     }
 }

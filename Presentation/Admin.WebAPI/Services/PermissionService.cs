@@ -1,9 +1,10 @@
-﻿using Authorize.Model.AppSetting;
+using Authorize.Model.AppSetting;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -25,7 +26,7 @@ namespace Admin.WebAPI.Services
         /// </summary>
         /// <param name="authorizationHandlerContext"></param>
         /// <returns></returns>
-        public bool VerifyAuthorization(AuthorizationHandlerContext authorizationHandlerContext)
+        public async Task<bool> VerifyAuthorizationAsync(AuthorizationHandlerContext authorizationHandlerContext)
         {
 
             if (authorizationHandlerContext.User.Identity!.IsAuthenticated)
@@ -34,7 +35,7 @@ namespace Admin.WebAPI.Services
                 if (authorizationHandlerContext.Resource is HttpContext httpContext)
                 {
 
-                    IssueNewToken(httpContext);
+                    await IssueNewTokenAsync(httpContext);
 
                     var module = typeof(Program).Assembly.GetName().Name!;
 
@@ -46,14 +47,14 @@ namespace Admin.WebAPI.Services
 
                     var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
-                    var functionId = db.TFunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefault();
+                    var functionId = await db.TFunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefaultAsync();
 
                     if (functionId != default)
                     {
                         var userId = long.Parse(httpContext.User.FindFirstValue("userId")!);
-                        var roleIds = db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToList();
+                        var roleIds = await db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
 
-                        var functionAuthorizeId = db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefault();
+                        var functionAuthorizeId = await db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefaultAsync();
 
                         if (functionAuthorizeId != default)
                         {
@@ -85,10 +86,10 @@ namespace Admin.WebAPI.Services
         /// 签发新Token
         /// </summary>
         /// <param name="httpContext"></param>
-        private static void IssueNewToken(HttpContext httpContext)
+        private static async Task IssueNewTokenAsync(HttpContext httpContext)
         {
 
-            IdService idService = httpContext.RequestServices.GetRequiredService<IdService>();
+            var idService = httpContext.RequestServices.GetRequiredService<IdService>();
 
             var db = httpContext.RequestServices.GetRequiredService<DatabaseContext>();
 
@@ -115,11 +116,11 @@ namespace Admin.WebAPI.Services
 
                 if (distLock.TryLock(key) != null)
                 {
-                    var newToken = db.TUserToken.Where(t => t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefault();
+                    var newToken = await db.TUserToken.Where(t => t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefaultAsync();
 
                     if (newToken == null)
                     {
-                        var tokenInfo = db.TUserToken.Where(t => t.Id == tokenId).FirstOrDefault();
+                        var tokenInfo = await db.TUserToken.Where(t => t.Id == tokenId).FirstOrDefaultAsync();
 
                         if (tokenInfo != null)
                         {
@@ -166,13 +167,13 @@ namespace Admin.WebAPI.Services
                             if (distLock.TryLock("ClearExpireToken") != null)
                             {
                                 var clearTime = DateTime.UtcNow.AddDays(-7);
-                                var clearList = db.TUserToken.Where(t => t.CreateTime < clearTime).ToList();
+                                var clearList = await db.TUserToken.Where(t => t.CreateTime < clearTime).ToListAsync();
                                 db.TUserToken.RemoveRange(clearList);
                             }
 
-                            db.SaveChanges();
+                            await db.SaveChangesAsync();
 
-                            cache.Set(userToken.Id + "token", token, TimeSpan.FromMinutes(10));
+                            await cache.SetAsync(userToken.Id + "token", token, TimeSpan.FromMinutes(10));
 
                             httpContext.Response.Headers.Append("NewToken", token);
                             httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");
@@ -180,7 +181,7 @@ namespace Admin.WebAPI.Services
                     }
                     else
                     {
-                        var token = cache.GetString(newToken.Id + "token");
+                        var token = await cache.GetStringAsync(newToken.Id + "token");
                         httpContext.Response.Headers.Append("NewToken", token);
                         httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");
                     }

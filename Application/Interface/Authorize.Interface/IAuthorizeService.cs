@@ -1,5 +1,4 @@
-﻿using Authorize.Model.Authorize;
-using Shared.Model;
+using Authorize.Model.Authorize;
 
 namespace Authorize.Interface
 {
@@ -10,7 +9,7 @@ namespace Authorize.Interface
         /// 获取公钥
         /// </summary>
         /// <returns></returns>
-        public string? GetPublicKey();
+        string? GetPublicKey();
 
 
 
@@ -19,7 +18,7 @@ namespace Authorize.Interface
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public string? GetToken(DtoGetToken login);
+        Task<string?> GetTokenAsync(DtoGetToken login);
 
 
 
@@ -28,7 +27,7 @@ namespace Authorize.Interface
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public string? GetTokenByWeiXinMiniApp(DtoGetTokenByWeiXinApp login);
+        Task<string?> GetTokenByWeiXinMiniAppAsync(DtoGetTokenByWeiXinApp login);
 
 
 
@@ -38,7 +37,7 @@ namespace Authorize.Interface
         /// <param name="sms"></param>
         /// <param name="sendVerifyCode"></param>
         /// <returns></returns>
-        public bool SendSMSVerifyCode(DtoSendSMSVerifyCode sendVerifyCode);
+        Task<bool> SendSMSVerifyCodeAsync(DtoSendSMSVerifyCode sendVerifyCode);
 
 
 
@@ -48,7 +47,7 @@ namespace Authorize.Interface
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public string? GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login);
+        Task<string?> GetTokenByWeiXinAppAsync(DtoGetTokenByWeiXinApp login);
 
 
 
@@ -57,7 +56,7 @@ namespace Authorize.Interface
         /// </summary>
         /// <param name="updatePassword"></param>
         /// <returns></returns>
-        public bool UpdatePasswordByOldPassword(DtoUpdatePasswordByOldPassword updatePassword);
+        Task<bool> UpdatePasswordByOldPasswordAsync(DtoUpdatePasswordByOldPassword updatePassword);
 
 
 
@@ -65,7 +64,7 @@ namespace Authorize.Interface
         /// 通过短信验证码修改账户密码</summary>
         /// <param name="updatePassword"></param>
         /// <returns></returns>
-        public bool UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword);
+        Task<bool> UpdatePasswordBySMSAsync(DtoUpdatePasswordBySMS updatePassword);
 
 
 
@@ -74,7 +73,7 @@ namespace Authorize.Interface
         /// </summary>
         /// <param name="sign">模块标记</param>
         /// <returns></returns>
-        public Dictionary<string, string> GetFunctionList(string? sign = null);
+        Task<Dictionary<string, string>> GetFunctionListAsync(string? sign = null);
 
 
         /// <summary>
@@ -82,7 +81,7 @@ namespace Authorize.Interface
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public string? GetTokenBySMS(DtoGetTokenBySMS login);
+        Task<string?> GetTokenBySMSAsync(DtoGetTokenBySMS login);
 
 
         /// <summary>
@@ -91,7 +90,7 @@ namespace Authorize.Interface
         /// <param name="userId">用户Id</param>
         /// <param name="lastTokenId">上一次的TokenId</param>
         /// <returns></returns>
-        public string GetTokenByUserId(long userId, long? lastTokenId = null);
+        Task<string> GetTokenByUserIdAsync(long userId, long? lastTokenId = null);
 
 
         /// <summary>
@@ -100,14 +99,14 @@ namespace Authorize.Interface
         /// <param name="appId"></param>
         /// <param name="code">登录时获取的 code，可通过wx.login获取</param>
         /// <returns></returns>
-        public (string openId, string sessionKey) GetWeiXinMiniAppOpenIdAndSessionKey(string appId, string code);
+        Task<(string openId, string sessionKey)> GetWeiXinMiniAppOpenIdAndSessionKeyAsync(string appId, string code);
 
 
         /// <summary>
         /// 获取微信App AccessToken和OpenId
         /// </summary>
         /// <returns></returns>
-        public (string accessToken, string openId) GetWeiXinAppAccessTokenAndOpenId(string appId, string code);
+        Task<(string accessToken, string openId)> GetWeiXinAppAccessTokenAndOpenIdAsync(string appId, string code);
 
 
         /// <summary>
@@ -116,7 +115,7 @@ namespace Authorize.Interface
         /// <param name="accessToken"></param>
         /// <param name="openId"></param>
         /// <returns></returns>
-        public DtoGetWeiXinAppUserInfo GetWeiXinAppUserInfo(string accessToken, string openId);
+        Task<DtoGetWeiXinAppUserInfo> GetWeiXinAppUserInfoAsync(string accessToken, string openId);
 
 
     }

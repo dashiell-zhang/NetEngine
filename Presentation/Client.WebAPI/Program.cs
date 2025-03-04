@@ -2,6 +2,7 @@ using Client.WebAPI.Libraries.HttpHandler;
 using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
+using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Repository.Interceptors;
@@ -9,7 +10,6 @@ using SMS.AliCloud;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Extensions;
-using Logger.DataBase;
 
 namespace Client.WebAPI
 {
@@ -33,17 +33,20 @@ namespace Client.WebAPI
             var connectionString = builder.Configuration.GetConnectionString("dbConnection");
             NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
 
+            NpgsqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
+            int maxPoolSize = connectionStringBuilder.MaxPoolSize;
+
             builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
             {
                 options.UseNpgsql(dataSourceBuilder.Build());
                 options.AddInterceptors(new PostgresPatchInterceptor());
-            }, 30);
+            }, maxPoolSize);
 
             builder.Services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options =>
             {
                 options.UseNpgsql(dataSourceBuilder.Build());
                 options.AddInterceptors(new PostgresPatchInterceptor());
-            }, 30);
+            }, maxPoolSize);
 
 
             builder.AddCommonServices();

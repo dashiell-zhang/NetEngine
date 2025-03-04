@@ -39,17 +39,20 @@ namespace TaskService
                     var connectionString = hostContext.Configuration.GetConnectionString("dbConnection");
                     NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
 
+                    NpgsqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
+                    int maxPoolSize = connectionStringBuilder.MaxPoolSize;
+
                     services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
                     {
                         options.UseNpgsql(dataSourceBuilder.Build());
                         options.AddInterceptors(new PostgresPatchInterceptor());
-                    }, 30);
+                    }, maxPoolSize);
 
                     services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options =>
                     {
                         options.UseNpgsql(dataSourceBuilder.Build());
                         options.AddInterceptors(new PostgresPatchInterceptor());
-                    }, 30);
+                    }, maxPoolSize);
 
 
                     services.BatchRegisterServices();

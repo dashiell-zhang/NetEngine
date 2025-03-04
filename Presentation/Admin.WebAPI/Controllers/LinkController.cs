@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Model;
 using Site.Interface;
@@ -14,15 +14,13 @@ namespace Admin.WebAPI.Controllers
     public class LinkController(ILinkService linkService) : ControllerBase
     {
 
-
         /// <summary>
         /// 获取友情链接列表
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpGet]
-        public DtoPageList<DtoLink> GetLinkList([FromQuery] DtoPageRequest request) => linkService.GetLinkList(request);
-
+        public Task<DtoPageList<DtoLink>> GetLinkList([FromQuery] DtoPageRequest request) => linkService.GetLinkListAsync(request);
 
 
         /// <summary>
@@ -31,8 +29,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="linkId">链接ID</param>
         /// <returns></returns>
         [HttpGet]
-        public DtoLink? GetLink(long linkId) => linkService.GetLink(linkId);
-
+        public Task<DtoLink?> GetLink(long linkId) => linkService.GetLinkAsync(linkId);
 
 
         /// <summary>
@@ -41,8 +38,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="createLink"></param>
         /// <returns></returns>
         [HttpPost]
-        public long CreateLink(DtoEditLink createLink) => linkService.CreateLink(createLink);
-
+        public Task<long> CreateLink(DtoEditLink createLink) => linkService.CreateLinkAsync(createLink);
 
 
         /// <summary>
@@ -52,8 +48,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="updateLink"></param>
         /// <returns></returns>
         [HttpPost]
-        public bool UpdateLink(long linkId, DtoEditLink updateLink) => linkService.UpdateLink(linkId, updateLink);
-
+        public Task<bool> UpdateLink(long linkId, DtoEditLink updateLink) => linkService.UpdateLinkAsync(linkId, updateLink);
 
 
         /// <summary>
@@ -62,8 +57,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteLink(long id) => linkService.DeleteLink(id);
-
+        public Task<bool> DeleteLink(long id) => linkService.DeleteLinkAsync(id);
 
     }
 }

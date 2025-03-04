@@ -1,6 +1,7 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Common;
 using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Shared.Model;
@@ -16,30 +17,32 @@ namespace Site.Service
         private long userId => userContext.UserId;
 
 
-
-        public DtoPageList<DtoLink> GetLinkList(DtoPageRequest request)
+        public async Task<DtoPageList<DtoLink>> GetLinkListAsync(DtoPageRequest request)
         {
-            DtoPageList<DtoLink> data = new();
-
             var query = db.TLink.AsQueryable();
 
-            data.Total = query.Count();
+            var countTask = query.CountAsync();
 
-            data.List = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoLink
+            var listTask = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoLink
             {
                 Id = t.Id,
                 Name = t.Name,
                 Url = t.Url,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToList();
+            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            return data;
+            await Task.WhenAll(countTask, listTask);
+
+            return new()
+            {
+                Total = countTask.Result,
+                List = listTask.Result
+            };
         }
 
 
-
-        public DtoLink? GetLink(long linkId)
+        public Task<DtoLink?> GetLinkAsync(long linkId)
         {
             var link = db.TLink.Where(t => t.Id == linkId).Select(t => new DtoLink
             {
@@ -48,15 +51,13 @@ namespace Site.Service
                 Url = t.Url,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
-            }).FirstOrDefault();
+            }).FirstOrDefaultAsync();
 
             return link;
         }
 
 
-
-
-        public long CreateLink(DtoEditLink createLink)
+        public async Task<long> CreateLinkAsync(DtoEditLink createLink)
         {
             TLink link = new()
             {
@@ -69,16 +70,15 @@ namespace Site.Service
 
             db.TLink.Add(link);
 
-            db.SaveChanges();
+            await db.SaveChangesAsync();
 
             return link.Id;
         }
 
 
-
-        public bool UpdateLink(long linkId, DtoEditLink updateLink)
+        public async Task<bool> UpdateLinkAsync(long linkId, DtoEditLink updateLink)
         {
-            var link = db.TLink.Where(t => t.Id == linkId).FirstOrDefault();
+            var link = await db.TLink.Where(t => t.Id == linkId).FirstOrDefaultAsync();
 
             if (link != null)
             {
@@ -86,24 +86,23 @@ namespace Site.Service
                 link.Url = updateLink.Url;
                 link.Sort = updateLink.Sort;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             return true;
         }
 
 
-
-        public bool DeleteLink(long id)
+        public async Task<bool> DeleteLinkAsync(long id)
         {
-            var link = db.TLink.Where(t => t.Id == id).FirstOrDefault();
+            var link = await db.TLink.Where(t => t.Id == id).FirstOrDefaultAsync();
 
             if (link != null)
             {
                 link.IsDelete = true;
                 link.DeleteUserId = userId;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }

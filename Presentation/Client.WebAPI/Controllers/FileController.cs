@@ -1,9 +1,10 @@
-﻿using Basic.Interface;
+using Basic.Interface;
 using Basic.Model.File;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using SkiaSharp;
 
@@ -42,7 +43,7 @@ namespace Client.WebAPI.Controllers
         /// <returns>文件ID</returns>
         [DisableRequestSizeLimit]
         [HttpPost]
-        public long UploadFile([FromQuery] string business, [FromQuery] long? key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
+        public async Task<long> UploadFile([FromQuery] string business, [FromQuery] long? key, [FromQuery] string sign, bool isPublicRead, IFormFile file)
         {
             if (file.Length > 0)
             {
@@ -59,7 +60,7 @@ namespace Client.WebAPI.Controllers
                 {
                     using (FileStream fileStream = new(tempFilePath, FileMode.Create))
                     {
-                        file.CopyTo(fileStream);
+                        await file.CopyToAsync(fileStream);
                     }
 
                     DtoUploadFile uploadFile = new()
@@ -97,11 +98,11 @@ namespace Client.WebAPI.Controllers
         /// <returns></returns>
         [AllowAnonymous]
         [HttpGet]
-        public FileResult? GetFile([FromServices] IWebHostEnvironment webHostEnvironment, [FromServices] DatabaseContext db, long fileid)
+        public async Task<FileResult?> GetFile([FromServices] IWebHostEnvironment webHostEnvironment, [FromServices] DatabaseContext db, long fileid)
         {
             string rootPath = webHostEnvironment.ContentRootPath;
 
-            var file = db.TFile.Where(t => t.Id == fileid).FirstOrDefault();
+            var file = await db.TFile.Where(t => t.Id == fileid).FirstOrDefaultAsync();
 
             if (file != null)
             {
@@ -135,12 +136,12 @@ namespace Client.WebAPI.Controllers
         /// <remarks>不指定宽高参数,返回原图</remarks>
         [AllowAnonymous]
         [HttpGet]
-        public FileResult? GetImage([FromServices] IWebHostEnvironment webHostEnvironment, [FromServices] DatabaseContext db, long fileId, int width, int height)
+        public async Task<FileResult?> GetImage([FromServices] IWebHostEnvironment webHostEnvironment, [FromServices] DatabaseContext db, long fileId, int width, int height)
         {
 
             string rootPath = webHostEnvironment.ContentRootPath;
 
-            var file = db.TFile.Where(t => t.Id == fileId).FirstOrDefault();
+            var file = await db.TFile.Where(t => t.Id == fileId).FirstOrDefaultAsync();
 
             if (file != null)
             {

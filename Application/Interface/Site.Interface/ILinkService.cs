@@ -1,4 +1,4 @@
-﻿using Shared.Model;
+using Shared.Model;
 using Site.Model.Link;
 
 namespace Site.Interface
@@ -6,14 +6,12 @@ namespace Site.Interface
     public interface ILinkService
     {
 
-
         /// <summary>
         /// 获取友情链接列表
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public DtoPageList<DtoLink> GetLinkList(DtoPageRequest request);
-
+        Task<DtoPageList<DtoLink>> GetLinkListAsync(DtoPageRequest request);
 
 
         /// <summary>
@@ -21,8 +19,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="linkId">链接ID</param>
         /// <returns></returns>
-        public DtoLink? GetLink(long linkId);
-
+        Task<DtoLink?> GetLinkAsync(long linkId);
 
 
         /// <summary>
@@ -30,8 +27,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="createLink"></param>
         /// <returns></returns>
-        public long CreateLink(DtoEditLink createLink);
-
+        Task<long> CreateLinkAsync(DtoEditLink createLink);
 
 
         /// <summary>
@@ -40,8 +36,7 @@ namespace Site.Interface
         /// <param name="linkId"></param>
         /// <param name="updateLink"></param>
         /// <returns></returns>
-        public bool UpdateLink(long linkId, DtoEditLink updateLink);
-
+        Task<bool> UpdateLinkAsync(long linkId, DtoEditLink updateLink);
 
 
         /// <summary>
@@ -49,6 +44,7 @@ namespace Site.Interface
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool DeleteLink(long id);
+        Task<bool> DeleteLinkAsync(long id);
+
     }
 }

@@ -5,7 +5,6 @@ namespace Site.Interface
     public interface ISiteService
     {
 
-
         /// <summary>
         /// 获取站点信息
         /// </summary>
@@ -19,7 +18,6 @@ namespace Site.Interface
         /// <param name="editSite"></param>
         /// <returns></returns>
         Task<bool> EditSiteAsync(DtoSite editSite);
-
 
 
         /// <summary>

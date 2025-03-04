@@ -1,8 +1,7 @@
-﻿namespace Basic.Interface
+namespace Basic.Interface
 {
     public interface ITaskService
     {
-
 
         /// <summary>
         /// 创建队列
@@ -15,7 +14,7 @@
         /// <remarks>需要外部开启事务</remarks>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null);
+        bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null);
 
 
 
@@ -28,7 +27,7 @@
         /// <param name="callbackName"></param>
         /// <param name="callbackParameter"></param>
         /// <returns></returns>
-        public bool CreateSingle(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null);
+        Task<bool> CreateSingleAsync(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null);
 
     }
 }

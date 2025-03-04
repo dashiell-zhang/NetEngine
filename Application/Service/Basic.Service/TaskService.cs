@@ -1,4 +1,4 @@
-﻿using Basic.Interface;
+using Basic.Interface;
 using Common;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
@@ -64,7 +64,7 @@ namespace Basic.Service
 
 
 
-        public bool CreateSingle(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null)
+        public async Task<bool> CreateSingleAsync(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null)
         {
 
             if (string.IsNullOrWhiteSpace(name))
@@ -84,7 +84,7 @@ namespace Basic.Service
 
             try
             {
-                var db = dbFactory.CreateDbContext();
+                var db = await dbFactory.CreateDbContextAsync();
 
                 TQueueTask queueTask = new()
                 {
@@ -106,7 +106,7 @@ namespace Basic.Service
 
                 db.TQueueTask.Add(queueTask);
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }

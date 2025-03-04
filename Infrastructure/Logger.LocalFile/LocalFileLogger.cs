@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
@@ -38,7 +38,7 @@ namespace Logger.LocalFile
         }
 
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        public async void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
 
             if (IsEnabled(logLevel))
@@ -78,8 +78,7 @@ namespace Logger.LocalFile
 
                         var logPath = Path.Combine(basePath, DateTime.UtcNow.ToString("yyyyMMddHH") + ".log");
 
-                        File.AppendAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
-
+                        await File.AppendAllTextAsync(logPath, logStr + Environment.NewLine, Encoding.UTF8);
 
                     }
                 }

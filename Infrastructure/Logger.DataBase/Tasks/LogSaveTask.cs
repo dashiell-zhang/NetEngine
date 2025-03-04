@@ -1,4 +1,5 @@
-﻿using Common;
+using Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Database;
@@ -31,12 +32,12 @@ namespace Logger.DataBase.Tasks
                                 var log = JsonHelper.JsonToObject<TLog>(logStr);
 
 
-                                var isHave = db.TLog.Where(t => t.Id == log.Id).Any();
+                                var isHave = await db.TLog.Where(t => t.Id == log.Id).AnyAsync();
 
                                 if (!isHave)
                                 {
                                     db.TLog.Add(log);
-                                    db.SaveChanges();
+                                    await db.SaveChangesAsync();
                                 }
 
                                 File.Delete(logPath);

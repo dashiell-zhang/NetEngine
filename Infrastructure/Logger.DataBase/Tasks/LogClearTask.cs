@@ -1,4 +1,4 @@
-﻿using Logger.DataBase.Models;
+using Logger.DataBase.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,7 +26,7 @@ namespace Logger.DataBase.Tasks
 
                         var delTime = DateTime.UtcNow.AddDays(-1 * saveDays);
 
-                        db.TLog.Where(t => t.CreateTime <= delTime).ExecuteDelete();
+                        await db.TLog.Where(t => t.CreateTime <= delTime).ExecuteDeleteAsync();
                     }
                     catch
                     {

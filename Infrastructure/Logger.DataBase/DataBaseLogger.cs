@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using IdentifierGenerator;
 using Logger.DataBase.Models;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -25,8 +25,6 @@ namespace Logger.DataBase
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-
-
 
             if (IsEnabled(logLevel))
             {
@@ -105,7 +103,9 @@ namespace Logger.DataBase
 
                         var logPath = Path.Combine(basePath, log.Id + ".log");
 
-                        File.WriteAllText(logPath, logStr + Environment.NewLine, Encoding.UTF8);
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+                        File.WriteAllTextAsync(logPath, logStr, Encoding.UTF8);
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 
                     }
                 }

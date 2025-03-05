@@ -248,9 +248,11 @@ namespace Authorize.Service
                     { "code", code }
                 };
 
-                sms.SendSMS("短信签名", sendVerifyCode.Phone, "短信模板编号", templateParams);
+                var sendSMSTask = sms.SendSMSAsync("短信签名", sendVerifyCode.Phone, "短信模板编号", templateParams);
 
-                await distributedCache.SetAsync(key, code, new TimeSpan(0, 0, 5, 0));
+                var setCacheTask = distributedCache.SetAsync(key, code, new TimeSpan(0, 0, 5, 0));
+
+                await Task.WhenAll(sendSMSTask, setCacheTask);
 
                 return true;
             }

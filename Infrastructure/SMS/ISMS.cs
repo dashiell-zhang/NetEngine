@@ -1,4 +1,4 @@
-﻿namespace SMS
+namespace SMS
 {
     public interface ISMS
     {
@@ -12,7 +12,7 @@
         /// <param name="templateCode">模板编号</param>
         /// <param name="templateParams">模板参数</param>
         /// <returns></returns>
-        public bool SendSMS(string signName, string phone, string templateCode, Dictionary<string, string> templateParams);
+        Task<bool> SendSMSAsync(string signName, string phone, string templateCode, Dictionary<string, string> templateParams);
 
     }
 }

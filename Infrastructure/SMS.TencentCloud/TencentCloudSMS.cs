@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using SMS.TencentCloud.Models;
 using TencentCloud.Common;
 using TencentCloud.Sms.V20190711;
@@ -26,7 +26,8 @@ namespace SMS.TencentCloud
         /// </summary>
         private readonly string secretKey = config.CurrentValue.SecretKey;
 
-        public bool SendSMS(string signName, string phone, string templateCode, Dictionary<string, string> templateParams)
+
+        public async Task<bool> SendSMSAsync(string signName, string phone, string templateCode, Dictionary<string, string> templateParams)
         {
             try
             {
@@ -54,7 +55,7 @@ namespace SMS.TencentCloud
                 };
 
 
-                client.SendSms(req);
+                await client.SendSms(req);
 
                 return true;
             }

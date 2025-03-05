@@ -91,7 +91,7 @@ namespace TaskService.Core.QueueTask
 
                 var idService = scope.ServiceProvider.GetRequiredService<IdService>();
 
-                using var lockActionState = distLock.TryLock(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
+                using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
                 if (lockActionState != null)
                 {
                     var queueTask = db.TQueueTask.FirstOrDefault(t => t.Id == queueTaskId)!;
@@ -190,16 +190,16 @@ namespace TaskService.Core.QueueTask
 
                     if (queueTask.ParentTaskId != null && queueTask.ChildSuccessTime != null)
                     {
-                        UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
+                        await UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
                     }
 
                     db.SaveChanges();
                 }
 
 
-                void UpdateParentState(long parentTaskId, long currentTaskId)
+                async Task UpdateParentState(long parentTaskId, long currentTaskId)
                 {
-                    using (distLock.Lock(parentTaskId.ToString()))
+                    using (await distLock.LockAsync(parentTaskId.ToString()))
                     {
                         //同级别是否全部执行完成
                         var isSameLevelHaveWait = db.TQueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).Any();
@@ -224,7 +224,7 @@ namespace TaskService.Core.QueueTask
 
                             if (parentTaskInfo.ParentTaskId != null)
                             {
-                                UpdateParentState(parentTaskInfo.ParentTaskId.Value, parentTaskInfo.Id);
+                                await UpdateParentState(parentTaskInfo.ParentTaskId.Value, parentTaskInfo.Id);
                             }
                         }
                     }

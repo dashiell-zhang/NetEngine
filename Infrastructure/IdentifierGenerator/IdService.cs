@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using DistributedLock;
 using IdentifierGenerator.Models;
 using Microsoft.Extensions.Caching.Distributed;
@@ -14,7 +14,7 @@ namespace IdentifierGenerator
 
             if (config.CurrentValue.DataCenterId == null || config.CurrentValue.MachineId == null)
             {
-                using (distributedLock.Lock("IdentifierGenerator"))
+                using (distributedLock.LockAsync("IdentifierGenerator").Result)
                 {
                     Random rand = new();
 

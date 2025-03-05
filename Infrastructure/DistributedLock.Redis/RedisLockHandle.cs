@@ -1,4 +1,4 @@
-﻿using StackExchange.Redis;
+using StackExchange.Redis;
 
 namespace DistributedLock.Redis
 {
@@ -10,11 +10,10 @@ namespace DistributedLock.Redis
 
         public string LockKey { get; set; }
 
-
         public void Dispose()
         {
             Database.LockReleaseAsync(LockKey, "123456");
-            GC.SuppressFinalize(this);
         }
+
     }
 }

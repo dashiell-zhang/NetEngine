@@ -1,4 +1,4 @@
-﻿using DistributedLock.Redis.Models;
+using DistributedLock.Redis.Models;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Security.Cryptography;
@@ -6,24 +6,24 @@ using System.Text;
 
 namespace DistributedLock.Redis
 {
-    public class RedisLock(IOptionsMonitor<RedisSetting> config) : IDistributedLock
+    public class RedisLock : IDistributedLock
     {
 
-        private readonly ConnectionMultiplexer connectionMultiplexer = ConnectionMultiplexer.Connect(config.CurrentValue.Configuration);
+        private readonly Lazy<Task<ConnectionMultiplexer>> connectionMultiplexer;
 
 
-        private readonly RedisSetting redisSetting = config.CurrentValue;
+        private readonly RedisSetting redisSetting;
 
 
+        public RedisLock(IOptionsMonitor<RedisSetting> config)
+        {
+            redisSetting = config.CurrentValue;
 
-        /// <summary>
-        /// 获取锁
-        /// </summary>
-        /// <param name="key">锁的名称，不可重复</param>
-        /// <param name="expiry">失效时长</param>
-        /// <param name="semaphore">信号量</param>
-        /// <returns></returns>
-        public IDisposable Lock(string key, TimeSpan expiry = default, int semaphore = 1)
+            connectionMultiplexer = new(async () => await ConnectionMultiplexer.ConnectAsync(redisSetting.Configuration));
+        }
+
+
+        public async Task<IDisposable> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
         {
 
             if (expiry == default)
@@ -35,19 +35,21 @@ namespace DistributedLock.Redis
 
             RedisLockHandle redisLockHandle = new();
 
+            var keyMd5 = redisSetting.InstanceName + Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(key)));
+
         StartTag:
             {
                 for (int i = 0; i < semaphore; i++)
                 {
-                    var keyMd5 = redisSetting.InstanceName + Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(key + i)));
+                    var tempKey = keyMd5 + " " + i;
 
                     try
                     {
-                        var database = connectionMultiplexer.GetDatabase();
+                        var database = (await connectionMultiplexer.Value).GetDatabase();
 
-                        if (database.LockTake(keyMd5, "123456", expiry))
+                        if (await database.LockTakeAsync(tempKey, "123456", expiry))
                         {
-                            redisLockHandle.LockKey = keyMd5;
+                            redisLockHandle.LockKey = tempKey;
                             redisLockHandle.Database = database;
                             return redisLockHandle;
                         }
@@ -64,7 +66,7 @@ namespace DistributedLock.Redis
 
                     if (DateTime.UtcNow < endTime)
                     {
-                        Thread.Sleep(100);
+                        await Task.Delay(100);
                         goto StartTag;
                     }
                     else
@@ -78,9 +80,7 @@ namespace DistributedLock.Redis
         }
 
 
-
-
-        public IDisposable? TryLock(string key, TimeSpan expiry = default, int semaphore = 1)
+        public async Task<IDisposable?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
         {
 
             if (expiry == default)
@@ -88,20 +88,21 @@ namespace DistributedLock.Redis
                 expiry = TimeSpan.FromMinutes(1);
             }
 
+            var keyMd5 = redisSetting.InstanceName + Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(key)));
 
             for (int i = 0; i < semaphore; i++)
             {
-                var keyMd5 = redisSetting.InstanceName + Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(key + i)));
+                var tempKey = keyMd5 + " " + i;
 
                 try
                 {
-                    var database = connectionMultiplexer.GetDatabase();
+                    var database = (await connectionMultiplexer.Value).GetDatabase();
 
-                    if (database.LockTake(keyMd5, "123456", expiry))
+                    if (await database.LockTakeAsync(tempKey, "123456", expiry))
                     {
                         RedisLockHandle redisLockHandle = new()
                         {
-                            LockKey = keyMd5,
+                            LockKey = tempKey,
                             Database = database
                         };
                         return redisLockHandle;

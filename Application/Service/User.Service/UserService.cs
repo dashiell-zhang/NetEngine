@@ -112,7 +112,7 @@ namespace User.Service
         {
             string key = "userName:" + createUser.UserName.ToLower();
 
-            using (var handle = distLock.TryLock(key))
+            using (var handle = await distLock.TryLockAsync(key))
             {
                 if (handle != null)
                 {
@@ -163,7 +163,7 @@ namespace User.Service
         {
             string key = "userName:" + updateUser.UserName.ToLower();
 
-            using (var handle = distLock.TryLock(key))
+            using (var handle = await distLock.TryLockAsync(key))
             {
                 if (handle != null)
                 {

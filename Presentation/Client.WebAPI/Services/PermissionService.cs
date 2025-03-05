@@ -102,7 +102,7 @@ namespace Client.WebAPI.Services
                 var cache = httpContext.RequestServices.GetRequiredService<IDistributedCache>();
 
                 string key = "IssueNewToken" + tokenId;
-                if (distLock.TryLock(key) != null)
+                if (await distLock.TryLockAsync(key) != null)
                 {
 
                     var newToken = await cache.GetStringAsync(tokenId + "newToken");
@@ -113,7 +113,7 @@ namespace Client.WebAPI.Services
 
                         newToken = await authorizeService.GetTokenByUserIdAsync(userId, tokenId);
 
-                        if (distLock.TryLock("ClearExpireToken") != null)
+                        if (await distLock.TryLockAsync("ClearExpireToken") != null)
                         {
                             var clearTime = DateTime.UtcNow.AddDays(-7);
                             var clearList = await db.TUserToken.Where(t => t.CreateTime < clearTime).ToListAsync();

@@ -114,7 +114,7 @@ namespace Admin.WebAPI.Services
                 var distLock = httpContext.RequestServices.GetRequiredService<IDistributedLock>();
                 var cache = httpContext.RequestServices.GetRequiredService<IDistributedCache>();
 
-                if (distLock.TryLock(key) != null)
+                if (await distLock.TryLockAsync(key) != null)
                 {
                     var newToken = await db.TUserToken.Where(t => t.LastId == tokenId && t.CreateTime > nbfTime).FirstOrDefaultAsync();
 
@@ -164,7 +164,7 @@ namespace Admin.WebAPI.Services
 
                             db.TUserToken.Add(userToken);
 
-                            if (distLock.TryLock("ClearExpireToken") != null)
+                            if (await distLock.TryLockAsync("ClearExpireToken") != null)
                             {
                                 var clearTime = DateTime.UtcNow.AddDays(-7);
                                 var clearList = await db.TUserToken.Where(t => t.CreateTime < clearTime).ToListAsync();

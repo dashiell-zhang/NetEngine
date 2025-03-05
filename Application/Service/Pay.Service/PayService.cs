@@ -726,7 +726,7 @@ namespace Pay.Service
                         order.PayType = "支付宝";
                         order.State = "已支付";
 
-                       await db.SaveChangesAsync();
+                        await db.SaveChangesAsync();
 
                         switch (order.Type)
                         {
@@ -926,7 +926,7 @@ namespace Pay.Service
             }
             else
             {
-                using (distributedLock.Lock(mchId + "GetWeiXinPayCertificates" + "lock"))
+                using (await distributedLock.LockAsync(mchId + "GetWeiXinPayCertificates" + "lock"))
                 {
                     weiXinPayCertificates = await distributedCache.GetAsync<DtoWeiXinPayCertificates>(cacheKey);
 

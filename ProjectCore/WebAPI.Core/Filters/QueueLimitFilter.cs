@@ -90,7 +90,7 @@ namespace WebAPI.Core.Filters
 
 
 
-        void IActionFilter.OnActionExecuting(ActionExecutingContext context)
+        async void IActionFilter.OnActionExecuting(ActionExecutingContext context)
         {
             string key = context.ActionDescriptor.DisplayName!;
 
@@ -121,7 +121,7 @@ namespace WebAPI.Core.Filters
                         expiryTime = TimeSpan.FromSeconds(Expiry);
                     }
 
-                    var handle = distLock.TryLock(key, expiryTime);
+                    var handle = await distLock.TryLockAsync(key, expiryTime);
                     if (handle != null)
                     {
                         LockHandle = handle;

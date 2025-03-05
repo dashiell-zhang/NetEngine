@@ -88,7 +88,7 @@ namespace Authorize.Service
             if (userId == default)
             {
 
-                using (distLock.Lock("GetTokenByWeiXinMiniAppCode" + openId))
+                using (await distLock.LockAsync("GetTokenByWeiXinMiniAppCode" + openId))
                 {
 
                     userId = await userIdQuery.FirstOrDefaultAsync();

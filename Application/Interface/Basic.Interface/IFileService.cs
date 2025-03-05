@@ -1,4 +1,4 @@
-﻿using Basic.Model.File;
+using Basic.Model.File;
 
 namespace Basic.Interface
 {
@@ -10,7 +10,7 @@ namespace Basic.Interface
         /// <param name="savePath">文件存储基础路径</param>
         /// <param name="uploadFile"></param>
         /// <returns></returns>
-        public long UploadFile(string savePath, DtoUploadFile uploadFile);
+        Task<long> UploadFileAsync(string savePath, DtoUploadFile uploadFile);
 
 
 
@@ -20,7 +20,7 @@ namespace Basic.Interface
         /// <param name="savePath">文件存储基础路径</param>
         /// <param name="remoteUploadFile"></param>
         /// <returns>文件ID</returns>
-        public long RemoteUploadFile(string savePath, DtoRemoteUploadFile remoteUploadFile);
+        Task<long> RemoteUploadFileAsync(string savePath, DtoRemoteUploadFile remoteUploadFile);
 
 
 
@@ -30,7 +30,7 @@ namespace Basic.Interface
         /// <param name="fileId">文件ID</param>
         /// <param name="isInline">是否在浏览器中打开</param>
         /// <returns></returns>
-        public string? GetFileUrl(long fileId, bool isInline = false);
+        Task<string?> GetFileUrlAsync(long fileId, bool isInline = false);
 
 
 
@@ -39,7 +39,7 @@ namespace Basic.Interface
         /// </summary>
         /// <param name="id">文件ID</param>
         /// <returns></returns>
-        public bool DeleteFile(long id);
+        Task<bool> DeleteFileAsync(long id);
 
 
 
@@ -51,7 +51,7 @@ namespace Basic.Interface
         /// <param name="key">关联记录值</param>
         /// <param name="isGetUrl">是否获取url</param>
         /// <returns></returns>
-        public List<DtoFileInfo> GetFileList(string business, string? sign, long key, bool isGetUrl);
+        Task<List<DtoFileInfo>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl);
 
     }
 }

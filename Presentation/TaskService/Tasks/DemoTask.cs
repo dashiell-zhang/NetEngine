@@ -1,4 +1,5 @@
-﻿using Repository.Database;
+using Repository.Database;
+using System.Threading.Tasks;
 using TaskService.Core;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
@@ -10,12 +11,12 @@ namespace TaskService.Tasks
     {
 
         [ScheduleTask(Name = "ShowTime", Cron = "0/3 * * * * ?")]
-        public void ShowTime()
+        public async Task ShowTime()
         {
             try
             {
 
-                queueTaskService.CreateSingle("ShowName", "张晓栋" + DateTime.Now.ToString("ssfff"), null, "ShowNameSuccess", null);
+                await queueTaskService.CreateSingleAsync("ShowName", "张晓栋" + DateTime.Now.ToString("ssfff"), null, "ShowNameSuccess", null);
 
                 var firstUser = db.TUser.FirstOrDefault();
 
@@ -29,25 +30,25 @@ namespace TaskService.Tasks
 
 
         [QueueTask(Name = "ShowName", Semaphore = 5, Duration = 5)]
-        public string ShowName(string name)
+        public async Task<string> ShowName(string name)
         {
             Console.WriteLine(DateTime.Now + "姓名：" + name);
 
-            queueTaskService.CreateSingle("SendEmail", name, null, null, null, true);
-            queueTaskService.CreateSingle("SendSMS", name, null, null, null, true);
+            await queueTaskService.CreateSingleAsync("SendEmail", name, null, null, null, true);
+            await queueTaskService.CreateSingleAsync("SendSMS", name, null, null, null, true);
 
-            queueTaskService.CreateSingle("CallPhone", name);
+            await queueTaskService.CreateSingleAsync("CallPhone", name);
 
             return name;
         }
 
 
         [QueueTask(Name = "SendEmail", Semaphore = 5, Duration = 5)]
-        public void SendEmail(string name)
+        public async Task SendEmail(string name)
         {
             Console.WriteLine(DateTime.Now + "姓名：" + name + ",邮件发送成功");
 
-            queueTaskService.CreateSingle("ClearEmail", name, null, null, null, true);
+            await queueTaskService.CreateSingleAsync("ClearEmail", name, null, null, null, true);
 
         }
 

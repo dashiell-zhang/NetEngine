@@ -1,9 +1,10 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Basic.Interface;
 using Basic.Model.File;
 using Common;
 using FileStorage;
 using IdentifierGenerator;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
@@ -15,7 +16,7 @@ namespace Basic.Service
     {
 
 
-        public long UploadFile(string savePath, DtoUploadFile uploadFile)
+        public async Task<long> UploadFileAsync(string savePath, DtoUploadFile uploadFile)
         {
             var utcNow = DateTime.UtcNow;
 
@@ -71,7 +72,7 @@ namespace Basic.Service
                 };
 
                 db.TFile.Add(f);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return f.Id;
             }
@@ -83,7 +84,7 @@ namespace Basic.Service
 
 
 
-        public long RemoteUploadFile(string savePath, DtoRemoteUploadFile remoteUploadFile)
+        public async Task<long> RemoteUploadFileAsync(string savePath, DtoRemoteUploadFile remoteUploadFile)
         {
 
             var tempDirPath = Path.Combine(savePath, "temps");
@@ -109,7 +110,7 @@ namespace Basic.Service
                     TempFilePath = tempFilePath
                 };
 
-                return UploadFile(savePath, uploadFile);
+                return await UploadFileAsync(savePath, uploadFile);
             }
 
             throw new CustomException("文件上传失败");
@@ -118,9 +119,9 @@ namespace Basic.Service
 
 
 
-        public string? GetFileUrl(long fileId, bool isInline = false)
+        public async Task<string?> GetFileUrlAsync(long fileId, bool isInline = false)
         {
-            var file = db.TFile.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefault();
+            var file = await db.TFile.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefaultAsync();
 
             if (file != null)
             {
@@ -156,16 +157,16 @@ namespace Basic.Service
 
 
 
-        public bool DeleteFile(long id)
+        public async Task<bool> DeleteFileAsync(long id)
         {
-            var file = db.TFile.Where(t => t.Id == id).FirstOrDefault();
+            var file = await db.TFile.Where(t => t.Id == id).FirstOrDefaultAsync();
 
             if (file != null)
             {
                 file.IsDelete = true;
                 file.DeleteUserId = userContext.UserId;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }
@@ -177,7 +178,7 @@ namespace Basic.Service
 
 
 
-        public List<DtoFileInfo> GetFileList(string business, string? sign, long key, bool isGetUrl)
+        public async Task<List<DtoFileInfo>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl)
         {
 
             var query = db.TFile.Where(t => t.Table == business && t.TableId == key);
@@ -187,14 +188,14 @@ namespace Basic.Service
                 query = query.Where(t => t.Sign == sign);
             }
 
-            var fileList = query.OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoFileInfo
+            var fileList = await query.OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoFileInfo
             {
                 Id = t.Id,
                 Name = t.Name,
                 Length = t.Length,
                 Sign = t.Sign,
                 Path = t.Path,
-            }).ToList();
+            }).ToListAsync();
 
             foreach (var file in fileList)
             {
@@ -202,7 +203,7 @@ namespace Basic.Service
 
                 if (isGetUrl)
                 {
-                    file.Url = GetFileUrl(file.Id);
+                    file.Url = await GetFileUrlAsync(file.Id);
                 }
             }
 

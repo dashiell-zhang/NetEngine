@@ -167,7 +167,7 @@ namespace Site.Service
 
             foreach (var article in listTask.Result)
             {
-                article.CoverImageList = fileService.GetFileList("Article", "cover", article.Id, true);
+                article.CoverImageList = await fileService.GetFileListAsync("Article", "cover", article.Id, true);
             }
 
             return new()
@@ -197,7 +197,7 @@ namespace Site.Service
 
             if (article != null)
             {
-                article.CoverImageList = fileService.GetFileList("Article", "cover", article.Id, true);
+                article.CoverImageList = await fileService.GetFileListAsync("Article", "cover", article.Id, true);
             }
 
             return article;

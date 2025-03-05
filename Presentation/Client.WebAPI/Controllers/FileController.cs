@@ -28,7 +28,7 @@ namespace Client.WebAPI.Controllers
         /// </summary>
         /// <returns>文件ID</returns>
         [HttpPost]
-        public long RemoteUploadFile(DtoRemoteUploadFile uploadFile) => fileService.RemoteUploadFile(savePath, uploadFile);
+        public Task<long> RemoteUploadFile(DtoRemoteUploadFile uploadFile) => fileService.RemoteUploadFileAsync(savePath, uploadFile);
 
 
 
@@ -73,7 +73,7 @@ namespace Client.WebAPI.Controllers
                         TempFilePath = tempFilePath,
                     };
 
-                    return fileService.UploadFile(savePath, uploadFile);
+                    return await fileService.UploadFileAsync(savePath, uploadFile);
                 }
                 finally
                 {
@@ -204,7 +204,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="isInline">是否在浏览器中打开</param>
         /// <returns></returns>
         [HttpGet]
-        public string? GetFileUrl(long fileId, bool isInline) => fileService.GetFileUrl(fileId, isInline);
+        public Task<string?> GetFileUrl(long fileId, bool isInline) => fileService.GetFileUrlAsync(fileId, isInline);
 
 
 
@@ -214,7 +214,7 @@ namespace Client.WebAPI.Controllers
         /// <param name="id">文件ID</param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteFile(long id) => fileService.DeleteFile(id);
+        public Task<bool> DeleteFile(long id) => fileService.DeleteFileAsync(id);
 
 
     }

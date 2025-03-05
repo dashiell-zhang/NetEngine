@@ -1,4 +1,4 @@
-﻿using IdentifierGenerator;
+using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Repository.Database;
@@ -109,7 +109,31 @@ namespace Repository.Extensions
         /// <returns></returns>
         public static int SaveChangesWithUpdateLog(this DatabaseContext db, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
         {
+            CreateUpdateLog(db, actionUserId, ipAddress, deviceMark);
 
+            return db.SaveChanges();
+        }
+
+
+
+        /// <summary>
+        /// 保存数据并记录更新日志（异步）
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="actionUserId"></param>
+        /// <param name="ipAddress"></param>
+        /// <param name="deviceMark"></param>
+        /// <returns></returns>
+        public static Task<int> SaveChangesWithUpdateLogAsync(this DatabaseContext db, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
+        {
+            CreateUpdateLog(db, actionUserId, ipAddress, deviceMark);
+
+            return db.SaveChangesAsync();
+        }
+
+
+        private static void CreateUpdateLog(this DatabaseContext db, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
+        {
             var idService = db.Database.GetService<IdService>();
 
             db.PreprocessingChangeTracker();
@@ -241,9 +265,8 @@ namespace Repository.Extensions
                 }
 
             }
-
-            return db.SaveChanges();
         }
+
 
 
 

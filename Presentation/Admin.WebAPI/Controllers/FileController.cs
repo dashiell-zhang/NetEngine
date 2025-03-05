@@ -66,7 +66,7 @@ namespace Admin.WebAPI.Controllers
                         TempFilePath = tempFilePath,
                     };
 
-                    return fileService.UploadFile(savePath, uploadFile);
+                    return await fileService.UploadFileAsync(savePath, uploadFile);
                 }
                 finally
                 {
@@ -188,7 +188,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="isInline">是否在浏览器中打开</param>
         /// <returns></returns>
         [HttpGet]
-        public string? GetFileUrl(long fileId, bool isInline) => fileService.GetFileUrl(fileId, isInline);
+        public Task<string?> GetFileUrl(long fileId, bool isInline) => fileService.GetFileUrlAsync(fileId, isInline);
 
 
 
@@ -198,7 +198,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id">文件ID</param>
         /// <returns></returns>
         [HttpDelete]
-        public bool DeleteFile(long id) => fileService.DeleteFile(id);
+        public Task<bool> DeleteFile(long id) => fileService.DeleteFileAsync(id);
 
 
     }

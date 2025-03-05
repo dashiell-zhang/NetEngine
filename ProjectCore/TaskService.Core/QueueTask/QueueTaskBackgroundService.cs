@@ -105,7 +105,7 @@ namespace TaskService.Core.QueueTask
 
                     queueTask.Count++;
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
 
                     var isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
 
@@ -193,7 +193,7 @@ namespace TaskService.Core.QueueTask
                         await UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
                     }
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
 
 

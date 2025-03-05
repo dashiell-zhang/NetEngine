@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,7 +78,7 @@ namespace TaskService.Core.QueueTask
         /// <param name="callbackParameter"></param>
         /// <param name="isChild"></param>
         /// <returns></returns>
-        public bool CreateSingle(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
+        public async Task<bool> CreateSingleAsync(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace TaskService.Core.QueueTask
 
                 db.TQueueTask.Add(queueTask);
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 return true;
             }

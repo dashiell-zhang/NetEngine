@@ -19,11 +19,13 @@ namespace User.Service
 
         public async Task<DtoPageList<DtoRole>> GetRoleListAsync(DtoPageRequest request)
         {
+            DtoPageList<DtoRole> result = new();
+
             var query = db.TRole.AsQueryable();
 
-            var countTask = query.CountAsync();
+            result.Total = await query.CountAsync();
 
-            var listTask = query.OrderBy(t => t.CreateTime).Select(t => new DtoRole
+            result.List = await query.OrderBy(t => t.CreateTime).Select(t => new DtoRole
             {
                 Id = t.Id,
                 CreateTime = t.CreateTime,
@@ -31,13 +33,8 @@ namespace User.Service
                 Remarks = t.Remarks
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            await Task.WhenAll(countTask, listTask);
 
-            return new()
-            {
-                Total = countTask.Result,
-                List = listTask.Result
-            };
+            return result;
         }
 
 

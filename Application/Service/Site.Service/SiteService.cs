@@ -42,22 +42,18 @@ namespace Site.Service
 
         public async Task<bool> EditSiteAsync(DtoSite editSite)
         {
-            var tasks = new List<Task<bool>>
-            {
-                SetSiteInfoAsync("WebUrl", editSite.WebUrl),
-                SetSiteInfoAsync("ManagerName", editSite.ManagerName),
-                SetSiteInfoAsync("ManagerAddress", editSite.ManagerAddress),
-                SetSiteInfoAsync("ManagerPhone", editSite.ManagerPhone),
-                SetSiteInfoAsync("ManagerEmail", editSite.ManagerEmail),
-                SetSiteInfoAsync("RecordNumber", editSite.RecordNumber),
-                SetSiteInfoAsync("SeoTitle", editSite.SeoTitle),
-                SetSiteInfoAsync("SeoKeyWords", editSite.SeoKeyWords),
-                SetSiteInfoAsync("SeoDescription", editSite.SeoDescription),
-                SetSiteInfoAsync("FootCode", editSite.FootCode)
-             };
+            await SetSiteInfoAsync("WebUrl", editSite.WebUrl);
+            await SetSiteInfoAsync("ManagerName", editSite.ManagerName);
+            await SetSiteInfoAsync("ManagerAddress", editSite.ManagerAddress);
+            await SetSiteInfoAsync("ManagerPhone", editSite.ManagerPhone);
+            await SetSiteInfoAsync("ManagerEmail", editSite.ManagerEmail);
+            await SetSiteInfoAsync("RecordNumber", editSite.RecordNumber);
+            await SetSiteInfoAsync("SeoTitle", editSite.SeoTitle);
+            await SetSiteInfoAsync("SeoKeyWords", editSite.SeoKeyWords);
+            await SetSiteInfoAsync("SeoDescription", editSite.SeoDescription);
+            await SetSiteInfoAsync("FootCode", editSite.FootCode);
 
-            await Task.WhenAll(tasks);
-            return tasks.All(t => t.Result);
+            return true;
         }
 
 

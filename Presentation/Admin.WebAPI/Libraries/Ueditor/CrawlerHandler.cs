@@ -1,3 +1,4 @@
+using Common;
 using FileStorage;
 using System.Net;
 using WebAPI.Core.Libraries;
@@ -7,17 +8,17 @@ namespace Admin.WebAPI.Libraries.Ueditor
     /// <summary>
     /// Crawler 的摘要说明
     /// </summary>
-    public class CrawlerHandler(string rootPath, HttpContext httpContext) : Handler
+    public class CrawlerHandler(string rootPath, HttpContext httpContext)
     {
         private string[]? Sources;
-        private Crawler[]? Crawlers;
 
-        public override string Process(string fileServerUrl)
+        public async Task<string> ProcessAsync(string fileServerUrl)
         {
             Sources = httpContext.Current().Request.Form["source[]"];
+
             if (Sources == null || Sources.Length == 0)
             {
-                return WriteJson(new
+                return JsonHelper.ObjectToJson(new
                 {
                     state = "参数错误：没有指定抓取源"
                 });
@@ -25,8 +26,18 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
             var fileStorage = httpContext.RequestServices.GetService<IFileStorage>();
 
-            Crawlers = Sources.Select(x => new Crawler(x, rootPath, fileServerUrl).Fetch(fileStorage)).ToArray();
-            return WriteJson(new
+            List<Crawler> Crawlers = new();
+
+            foreach (var x in Sources)
+            {
+                Crawler crawler = new(x, rootPath, fileServerUrl);
+
+                await crawler.Fetch(fileStorage);
+
+                Crawlers.Add(crawler);
+            }
+
+            return JsonHelper.ObjectToJson(new
             {
                 state = "SUCCESS",
                 list = Crawlers.Select(x => new
@@ -42,10 +53,13 @@ namespace Admin.WebAPI.Libraries.Ueditor
     public class Crawler(string sourceUrl, string rootPath, string fileServerUrl)
     {
         public string? SourceUrl { get; set; } = sourceUrl;
+
         public string? ServerUrl { get; set; }
+
         public string? State { get; set; }
 
-        public Crawler Fetch(IFileStorage? fileStorage)
+
+        public async Task<Crawler> Fetch(IFileStorage? fileStorage)
         {
             if (!IsExternalIPAddress(SourceUrl!))
             {
@@ -56,7 +70,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
             using HttpClient client = new();
             client.DefaultRequestVersion = new("2.0");
-            using var httpResponse = client.GetAsync(SourceUrl).Result;
+            using var httpResponse = await client.GetAsync(SourceUrl);
             if (httpResponse.StatusCode != HttpStatusCode.OK)
             {
                 State = "Url returns " + httpResponse.StatusCode;
@@ -78,8 +92,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
             try
             {
 
-                File.WriteAllBytes(savePath, httpResponse.Content.ReadAsByteArrayAsync().Result);
-
+                File.WriteAllBytes(savePath, await httpResponse.Content.ReadAsByteArrayAsync());
 
 
                 if (fileStorage != null)
@@ -88,11 +101,11 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
                     string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                    var upload = fileStorage.FileUploadAsync(savePath, basePath, true, Path.GetFileName(SourceUrl!)).Result;
+                    var upload = await fileStorage.FileUploadAsync(savePath, basePath, true, Path.GetFileName(SourceUrl!));
 
                     if (upload)
                     {
-                        Common.IOHelper.DeleteFile(savePath);
+                        IOHelper.DeleteFile(savePath);
 
                         ServerUrl = Path.Combine(basePath, Path.GetFileName(savePath)).Replace("\\", "/");
                         State = "SUCCESS";
@@ -128,7 +141,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
                         _ = ipAddress.GetAddressBytes();
                         if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                         {
-                            if (!IsPrivateIP(ipAddress))
+                            if (!StringHelper.IsLanIpAddressV4(ipAddress.ToString()))
                             {
                                 return true;
                             }
@@ -137,39 +150,11 @@ namespace Admin.WebAPI.Libraries.Ueditor
                     break;
 
                 case UriHostNameType.IPv4:
-                    return !IsPrivateIP(IPAddress.Parse(uri.DnsSafeHost));
+                    return !StringHelper.IsLanIpAddressV4(IPAddress.Parse(uri.DnsSafeHost).ToString());
             }
             return false;
         }
 
-        private static bool IsPrivateIP(IPAddress myIPAddress)
-        {
-            if (IPAddress.IsLoopback(myIPAddress)) return true;
-            if (myIPAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            {
-                byte[] ipBytes = myIPAddress.GetAddressBytes();
-                // 10.0.0.0/24 
-                if (ipBytes[0] == 10)
-                {
-                    return true;
-                }
-                // 172.16.0.0/16
-                else if (ipBytes[0] == 172 && ipBytes[1] == 16)
-                {
-                    return true;
-                }
-                // 192.168.0.0/16
-                else if (ipBytes[0] == 192 && ipBytes[1] == 168)
-                {
-                    return true;
-                }
-                // 169.254.0.0/16
-                else if (ipBytes[0] == 169 && ipBytes[1] == 254)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
+
     }
 }

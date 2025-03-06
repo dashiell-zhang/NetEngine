@@ -21,11 +21,13 @@ namespace Site.Service
         public async Task<DtoPageList<DtoCategory>> GetCategoryListAsync(DtoPageRequest request)
         {
 
+            DtoPageList<DtoCategory> result = new();
+
             var query = db.TCategory.AsQueryable();
 
-            var countTask = query.CountAsync();
+            result.Total = await query.CountAsync();
 
-            var listTask = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory
+            result.List = await query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -36,13 +38,8 @@ namespace Site.Service
                 CreateTime = t.CreateTime
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            await Task.WhenAll(countTask, listTask);
 
-            return new()
-            {
-                Total = countTask.Result,
-                List = listTask.Result
-            };
+            return result;
         }
 
 
@@ -144,11 +141,13 @@ namespace Site.Service
 
         public async Task<DtoPageList<DtoArticle>> GetArticleListAsync(DtoPageRequest request)
         {
+            DtoPageList<DtoArticle> result = new();
+
             var query = db.TArticle.AsQueryable();
 
-            var countTask = query.CountAsync();
+            result.Total = await query.CountAsync();
 
-            var listTask = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
+            result.List = await query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
@@ -163,18 +162,12 @@ namespace Site.Service
                 CreateTime = t.CreateTime,
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            await Task.WhenAll(countTask, listTask);
-
-            foreach (var article in listTask.Result)
+            foreach (var article in result.List)
             {
                 article.CoverImageList = await fileService.GetFileListAsync("Article", "cover", article.Id, true);
             }
 
-            return new()
-            {
-                Total = countTask.Result,
-                List = listTask.Result
-            };
+            return result;
         }
 
 

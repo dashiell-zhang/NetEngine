@@ -1,13 +1,11 @@
+using Common;
 using FileStorage;
-using System.Threading.Tasks;
 using WebAPI.Core.Libraries;
 
 namespace Admin.WebAPI.Libraries.Ueditor
 {
-    /// <summary>
-    /// UploadHandler 的摘要说明
-    /// </summary>
-    public class UploadHandler : Handler
+
+    public class UploadHandler
     {
 
         public UploadConfig UploadConfig { get; private set; }
@@ -31,7 +29,9 @@ namespace Admin.WebAPI.Libraries.Ueditor
             fileStorage = httpContext.RequestServices.GetService<IFileStorage>();
         }
 
-        public override string Process(string fileServerUrl)
+
+
+        public async Task<string> ProcessAsync(string fileServerUrl)
         {
 
             string value = "";
@@ -61,7 +61,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
                     {
                         string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                        var upload = fileStorage.FileUploadAsync(localPath, basePath, true, Path.GetFileName(localPath)).Result;
+                        var upload = await fileStorage.FileUploadAsync(localPath, basePath, true, Path.GetFileName(localPath));
 
                         if (upload)
                         {
@@ -142,11 +142,11 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
                             string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                            var upload = fileStorage.FileUploadAsync(localPath, basePath, true, file.FileName).Result;
+                            var upload = await fileStorage.FileUploadAsync(localPath, basePath, true, file.FileName);
 
                             if (upload)
                             {
-                                Common.IOHelper.DeleteFile(localPath);
+                                IOHelper.DeleteFile(localPath);
 
                                 Result.Url = Path.Combine(basePath, Path.GetFileName(localPath)).Replace("\\", "/");
                                 Result.State = UploadState.Success;
@@ -190,7 +190,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
         private string WriteResult()
         {
-            return WriteJson(new
+            return JsonHelper.ObjectToJson(new
             {
                 state = GetStateMessage(Result.State),
                 url = Result.Url,

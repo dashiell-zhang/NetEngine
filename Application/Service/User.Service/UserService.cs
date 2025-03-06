@@ -80,13 +80,13 @@ namespace User.Service
 
         public async Task<DtoPageList<DtoUser>> GetUserListAsync(DtoPageRequest request)
         {
-            DtoPageList<DtoUser> data = new();
+            DtoPageList<DtoUser> result = new();
 
             var query = db.TUser.AsSplitQuery();
 
-            var countTask = query.CountAsync();
+            result.Total = await query.CountAsync();
 
-            var listTask = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser
+            result.List = await query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -98,13 +98,8 @@ namespace User.Service
                 CreateTime = t.CreateTime
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            await Task.WhenAll(countTask, listTask);
 
-            return new()
-            {
-                Total = countTask.Result,
-                List = listTask.Result
-            };
+            return result;
         }
 
 

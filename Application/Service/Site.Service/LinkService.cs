@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Shared.Model;
 using Site.Interface;
+using Site.Model.Article;
 using Site.Model.Link;
 
 namespace Site.Service
@@ -19,11 +20,13 @@ namespace Site.Service
 
         public async Task<DtoPageList<DtoLink>> GetLinkListAsync(DtoPageRequest request)
         {
+            DtoPageList<DtoLink> result = new();
+
             var query = db.TLink.AsQueryable();
 
-            var countTask = query.CountAsync();
+            result.Total = await query.CountAsync();
 
-            var listTask = query.OrderByDescending(t => t.CreateTime).Select(t => new DtoLink
+            result.List = await query.OrderByDescending(t => t.CreateTime).Select(t => new DtoLink
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -32,13 +35,8 @@ namespace Site.Service
                 CreateTime = t.CreateTime
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            await Task.WhenAll(countTask, listTask);
 
-            return new()
-            {
-                Total = countTask.Result,
-                List = listTask.Result
-            };
+            return result;
         }
 
 

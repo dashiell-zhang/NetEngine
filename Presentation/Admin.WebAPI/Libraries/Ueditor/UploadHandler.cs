@@ -1,4 +1,5 @@
-﻿using FileStorage;
+using FileStorage;
+using System.Threading.Tasks;
 using WebAPI.Core.Libraries;
 
 namespace Admin.WebAPI.Libraries.Ueditor
@@ -60,7 +61,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
                     {
                         string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                        var upload = fileStorage.FileUpload(localPath, basePath, true, Path.GetFileName(localPath));
+                        var upload = fileStorage.FileUploadAsync(localPath, basePath, true, Path.GetFileName(localPath)).Result;
 
                         if (upload)
                         {
@@ -141,7 +142,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
                             string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                            var upload = fileStorage.FileUpload(localPath, basePath, true, file.FileName);
+                            var upload = fileStorage.FileUploadAsync(localPath, basePath, true, file.FileName).Result;
 
                             if (upload)
                             {

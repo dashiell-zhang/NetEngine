@@ -11,7 +11,7 @@ namespace FileStorage
         /// <param name="isPublicRead">是否支持公开访问</param>
         /// <param name="fileName">自定义下载文件名</param>
         /// <returns></returns>
-        public bool FileUpload(string localPath, string remotePath, bool isPublicRead, string? fileName = null);
+        Task<bool> FileUploadAsync(string localPath, string remotePath, bool isPublicRead, string? fileName = null);
 
 
         /// <summary>
@@ -20,7 +20,7 @@ namespace FileStorage
         /// <param name="remotePath">远程文件路径</param>
         /// <param name="localPath">本地文件路径</param>
         /// <returns></returns>
-        public bool FileDownload(string remotePath, string localPath);
+        Task<bool> FileDownloadAsync(string remotePath, string localPath);
 
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace FileStorage
         /// </summary>
         /// <param name="remotePath">远程文件地址</param>
         /// <returns></returns>
-        public bool FileDelete(string remotePath);
+        Task<bool> FileDeleteAsync(string remotePath);
 
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace FileStorage
         /// <param name="expiry">失效时长</param>
         /// <param name="isInline">是否在浏览器中打开</param>
         /// <returns></returns>
-        public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false);
+        Task<string?> GetFileUrlAsync(string remotePath, TimeSpan expiry, bool isInline = false);
 
     }
 }

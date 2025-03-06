@@ -19,7 +19,7 @@ namespace FileStorage.AliCloud
         private readonly string bucketName = config.CurrentValue.BucketName;
         private readonly string url = config.CurrentValue.Url;
 
-        public bool FileDelete(string remotePath)
+        public async Task<bool> FileDeleteAsync(string remotePath)
         {
             try
             {
@@ -27,7 +27,7 @@ namespace FileStorage.AliCloud
 
                 OssClient client = new(endpoint, accessKeyId, accessKeySecret);
 
-                client.DeleteObject(bucketName, remotePath);
+                await Task.Run(() => client.DeleteObject(bucketName, remotePath));
 
                 return true;
             }
@@ -39,7 +39,7 @@ namespace FileStorage.AliCloud
 
 
 
-        public bool FileDownload(string remotePath, string localPath)
+        public async Task<bool> FileDownloadAsync(string remotePath, string localPath)
         {
             try
             {
@@ -47,18 +47,22 @@ namespace FileStorage.AliCloud
 
                 OssClient client = new(endpoint, accessKeyId, accessKeySecret);
 
-                // 下载文件到流。OssObject 包含了文件的各种信息，如文件所在的存储空间、文件名、元信息以及一个输入流。
-                var obj = client.GetObject(bucketName, remotePath);
-                using var requestStream = obj.Content;
-                byte[] buf = new byte[1024];
-                var fs = File.Open(localPath, FileMode.OpenOrCreate);
-                var len = 0;
-                // 通过输入流将文件的内容读取到文件或者内存中。
-                while ((len = requestStream.Read(buf, 0, 1024)) != 0)
+                await Task.Run(() =>
                 {
-                    fs.Write(buf, 0, len);
-                }
-                fs.Close();
+
+                    var obj = client.GetObject(bucketName, remotePath);
+                    using var requestStream = obj.Content;
+                    byte[] buf = new byte[1024];
+                    var fs = File.Open(localPath, FileMode.OpenOrCreate);
+                    var len = 0;
+
+                    while ((len = requestStream.Read(buf, 0, 1024)) != 0)
+                    {
+                        fs.Write(buf, 0, len);
+                    }
+                    fs.Close();
+
+                });
 
                 return true;
             }
@@ -70,7 +74,7 @@ namespace FileStorage.AliCloud
 
 
 
-        public bool FileUpload(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
+        public async Task<bool> FileUploadAsync(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
         {
             try
             {
@@ -78,31 +82,34 @@ namespace FileStorage.AliCloud
 
                 objectName = Path.Combine(remotePath, objectName).Replace("\\", "/");
 
-                // 创建OssClient实例。
                 OssClient client = new(endpoint, accessKeyId, accessKeySecret);
 
-                if (fileName != null)
+                await Task.Run(() =>
                 {
-                    ObjectMetadata metaData = new()
+                    if (fileName != null)
                     {
-                        ContentDisposition = string.Format("attachment;filename*=utf-8''{0}", HttpUtils.EncodeUri(fileName, "utf-8"))
-                    };
+                        ObjectMetadata metaData = new()
+                        {
+                            ContentDisposition = string.Format("attachment;filename*=utf-8''{0}", HttpUtils.EncodeUri(fileName, "utf-8"))
+                        };
 
-                    client.PutObject(bucketName, objectName, localPath, metaData);
-                }
-                else
-                {
-                    client.PutObject(bucketName, objectName, localPath);
-                }
+                        client.PutObject(bucketName, objectName, localPath, metaData);
+                    }
+                    else
+                    {
+                        client.PutObject(bucketName, objectName, localPath);
+                    }
 
-                if (isPublicRead)
-                {
-                    client.SetObjectAcl(bucketName, objectName, CannedAccessControlList.PublicRead);
-                }
-                else
-                {
-                    client.SetObjectAcl(bucketName, objectName, CannedAccessControlList.Private);
-                }
+                    if (isPublicRead)
+                    {
+                        client.SetObjectAcl(bucketName, objectName, CannedAccessControlList.PublicRead);
+                    }
+                    else
+                    {
+                        client.SetObjectAcl(bucketName, objectName, CannedAccessControlList.Private);
+                    }
+
+                });
 
                 return true;
             }
@@ -114,7 +121,7 @@ namespace FileStorage.AliCloud
 
 
 
-        public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false)
+        public async Task<string?> GetFileUrlAsync(string remotePath, TimeSpan expiry, bool isInline = false)
         {
 
             try
@@ -134,20 +141,17 @@ namespace FileStorage.AliCloud
 
                 req.Expiration = DateTime.UtcNow + expiry;
 
-                var url = client.GeneratePresignedUri(req);
+                var url = await Task.Run(() => client.GeneratePresignedUri(req));
 
                 Uri tempUrl = new(url.ToString());
 
                 return this.url + tempUrl.PathAndQuery[1..];
-
-
             }
             catch
             {
                 return null;
             }
         }
-
 
     }
 }

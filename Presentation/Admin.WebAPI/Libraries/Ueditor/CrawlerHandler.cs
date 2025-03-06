@@ -88,7 +88,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
                     string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
 
-                    var upload = fileStorage.FileUpload(savePath, basePath, true, Path.GetFileName(SourceUrl!));
+                    var upload = fileStorage.FileUploadAsync(savePath, basePath, true, Path.GetFileName(SourceUrl!)).Result;
 
                     if (upload)
                     {

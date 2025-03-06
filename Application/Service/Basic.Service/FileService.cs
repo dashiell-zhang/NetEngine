@@ -41,7 +41,7 @@ namespace Basic.Service
 
             if (fileStorage != null)
             {
-                isSuccess = fileStorage.FileUpload(filePath, basePath, uploadFile.IsPublicRead, uploadFile.FileName);
+                isSuccess = await fileStorage.FileUploadAsync(filePath, basePath, uploadFile.IsPublicRead, uploadFile.FileName);
 
                 if (isSuccess)
                 {
@@ -127,14 +127,14 @@ namespace Basic.Service
             {
                 string fileUrl = "";
 
-                if (file.IsPublicRead)
+                if (file.IsPublicRead || fileStorage == null)
                 {
                     string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
                     fileUrl = fileServerUrl + file.Path;
                 }
                 else
                 {
-                    var tempUrl = fileStorage?.GetFileUrl(file.Path, TimeSpan.FromMinutes(10), isInline);
+                    var tempUrl = await fileStorage.GetFileUrlAsync(file.Path, TimeSpan.FromMinutes(10), isInline);
 
                     if (tempUrl != null)
                     {

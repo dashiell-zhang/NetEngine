@@ -54,14 +54,15 @@ namespace FileStorage.TencentCloud
 
 
 
-        public bool FileDelete(string remotePath)
+        public async Task<bool> FileDeleteAsync(string remotePath)
         {
             try
             {
                 remotePath = remotePath.Replace("\\", "/");
 
                 DeleteObjectRequest request = new(bucketName, remotePath);
-                DeleteObjectResult result = cosXml.DeleteObject(request);
+
+                var result = await Task.Run(() => cosXml.DeleteObject(request));
 
                 return true;
             }
@@ -73,7 +74,7 @@ namespace FileStorage.TencentCloud
 
 
 
-        public bool FileDownload(string remotePath, string localPath)
+        public async Task<bool> FileDownloadAsync(string remotePath, string localPath)
         {
             try
             {
@@ -91,7 +92,7 @@ namespace FileStorage.TencentCloud
                 // 下载对象
                 COSXMLDownloadTask downloadTask = new(bucketName, remotePath, localDir, localFileName);
 
-                _ = transferManager.DownloadAsync(downloadTask).Result;
+                await transferManager.DownloadAsync(downloadTask);
 
                 return true;
             }
@@ -103,7 +104,7 @@ namespace FileStorage.TencentCloud
 
 
 
-        public bool FileUpload(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
+        public async Task<bool> FileUploadAsync(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
         {
             try
             {
@@ -134,7 +135,7 @@ namespace FileStorage.TencentCloud
 
                 uploadTask.SetSrcPath(localPath);
 
-                _ = transferManager.UploadAsync(uploadTask).Result;
+                await transferManager.UploadAsync(uploadTask);
 
                 return true;
             }
@@ -146,7 +147,7 @@ namespace FileStorage.TencentCloud
 
 
 
-        public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false)
+        public async Task<string?> GetFileUrlAsync(string remotePath, TimeSpan expiry, bool isInline = false)
         {
             try
             {
@@ -176,7 +177,7 @@ namespace FileStorage.TencentCloud
                     preSignatureStruct.queryParameters = null;
                 }
 
-                string requestSignUrl = cosXml.GenerateSignURL(preSignatureStruct);
+                string requestSignUrl = await Task.Run(() => cosXml.GenerateSignURL(preSignatureStruct));
                 return requestSignUrl;
             }
             catch

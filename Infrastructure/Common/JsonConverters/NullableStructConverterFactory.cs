@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Common.JsonConverter
+namespace Common.JsonConverters
 {
 
     public class NullableStructConverterFactory : JsonConverterFactory
@@ -15,10 +15,10 @@ namespace Common.JsonConverter
             return false;
         }
 
-        public override System.Text.Json.Serialization.JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+        public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
             var converterType = typeof(NullableConverter<>).MakeGenericType(typeToConvert.GenericTypeArguments[0]);
-            return (System.Text.Json.Serialization.JsonConverter)Activator.CreateInstance(converterType)!;
+            return (JsonConverter)Activator.CreateInstance(converterType)!;
         }
 
 

@@ -168,11 +168,11 @@ namespace WebAPI.Core.Extensions
             #region 注册 Json 序列化配置
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                //options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeConverter());
-                //options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.DateTimeOffsetConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.StringConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.NullableStructConverterFactory());
+                //options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.DateTimeConverter());
+                //options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.DateTimeOffsetConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.LongConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.StringConverter());
+                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.NullableStructConverterFactory());
             });
 
             #endregion

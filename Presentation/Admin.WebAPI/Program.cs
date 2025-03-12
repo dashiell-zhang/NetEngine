@@ -51,7 +51,7 @@ namespace Admin.WebAPI
 
             //builder.Services.AddControllers().AddJsonOptions(options =>
             //{
-            //    options.JsonSerializerOptions.Converters.Add(new Common.JsonConverter.LongConverter());
+            //    options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.LongConverter());
             //});
 
             //#endregion

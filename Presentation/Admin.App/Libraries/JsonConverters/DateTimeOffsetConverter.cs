@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Admin.App.Libraries.JsonConverter
+namespace Admin.App.Libraries.JsonConverters
 {
     public class DateTimeOffsetConverter : JsonConverter<DateTimeOffset>
     {

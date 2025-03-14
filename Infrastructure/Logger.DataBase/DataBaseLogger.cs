@@ -35,7 +35,7 @@ namespace Logger.DataBase
 
                     if (logContent != null)
                     {
-                        if (eventId.Id == RelationalEventId.MultipleCollectionIncludeWarning.Id || eventId.Id == CoreEventId.FirstWithoutOrderByAndFilterWarning.Id)    //20504   10103
+                        if (categoryName.StartsWith("Microsoft.EntityFrameworkCore"))
                         {
                             var stackTrace = new System.Diagnostics.StackTrace(true);
                             var frames = stackTrace.GetFrames();

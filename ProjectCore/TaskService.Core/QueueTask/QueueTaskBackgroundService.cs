@@ -235,7 +235,17 @@ namespace TaskService.Core.QueueTask
             }
             catch (Exception ex)
             {
-                logger.LogError($"RunAction-{queueTaskInfo.Name};{queueTaskId};{ex.Message}");
+                var errorLog = new
+                {
+                    ex?.Source,
+                    ex?.Message,
+                    ex?.StackTrace,
+                    InnerSource = ex?.InnerException?.Source,
+                    InnerMessage = ex?.InnerException?.Message,
+                    InnerStackTrace = ex?.InnerException?.StackTrace,
+                };
+
+                logger.LogError($"QueueTaskRunAction-{queueTaskInfo.Name};{JsonHelper.ObjectToJson(errorLog)}");
             }
             finally
             {

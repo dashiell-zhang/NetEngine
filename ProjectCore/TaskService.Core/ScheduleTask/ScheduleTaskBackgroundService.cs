@@ -1,3 +1,4 @@
+using Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -88,7 +89,17 @@ namespace TaskService.Core.ScheduleTask
             }
             catch (Exception ex)
             {
-                logger.LogError($"RunAction-{scheduleTaskInfo.Method.Name};{ex.Message}");
+                var errorLog = new
+                {
+                    ex?.Source,
+                    ex?.Message,
+                    ex?.StackTrace,
+                    InnerSource = ex?.InnerException?.Source,
+                    InnerMessage = ex?.InnerException?.Message,
+                    InnerStackTrace = ex?.InnerException?.StackTrace,
+                };
+
+                logger.LogError($"ScheduleTaskRunAction-{scheduleTaskInfo.Name};{JsonHelper.ObjectToJson(errorLog)}");
             }
             finally
             {

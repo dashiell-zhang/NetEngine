@@ -39,13 +39,16 @@ namespace WebAPI.Core.Libraries
                 {
                     error?.Source,
                     error?.Message,
-                    error?.StackTrace
+                    error?.StackTrace,
+                    InnerSource = error?.InnerException?.Source,
+                    InnerMessage = error?.InnerException?.Message,
+                    InnerStackTrace = error?.InnerException?.StackTrace,
                 }
             };
 
             var logger = httpContext.RequestServices.GetRequiredService<ILogger<GlobalError>>();
 
-            logger.LogError("全局异常：{content}", JsonHelper.ObjectToJson(content));
+            logger.LogError("全局异常：" + JsonHelper.ObjectToJson(content));
 
             httpContext.Response.StatusCode = 400;
 

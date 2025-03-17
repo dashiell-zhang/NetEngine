@@ -1,4 +1,4 @@
-﻿using Repository.Attributes;
+using Repository.Attributes;
 using Repository.Bases;
 
 namespace Repository.Database
@@ -10,6 +10,10 @@ namespace Repository.Database
     public class TRole : CD
     {
 
+        /// <summary>
+        /// 角色编码
+        /// </summary>
+        public string Code { get; set; }
 
 
         /// <summary>
@@ -23,8 +27,6 @@ namespace Repository.Database
         /// 备注信息
         /// </summary>
         public string? Remarks { get; set; }
-
-
 
     }
 }

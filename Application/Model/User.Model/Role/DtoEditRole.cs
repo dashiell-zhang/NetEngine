@@ -1,9 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace User.Model.Role
 {
     public class DtoEditRole
     {
+
+        /// <summary>
+        /// 角色编码
+        /// </summary>
+        [Required(ErrorMessage = "角色编码不可以空")]
+        public string Code { get; set; }
 
 
         /// <summary>
@@ -11,7 +17,6 @@ namespace User.Model.Role
         /// </summary>
         [Required(ErrorMessage = "名称不可以空")]
         public string Name { get; set; }
-
 
 
         /// <summary>

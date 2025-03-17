@@ -31,7 +31,7 @@ namespace User.Service
                 UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join(",", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                Roles = string.Join(",", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Code).ToList()),
                 CreateTime = t.CreateTime
             }).FirstOrDefaultAsync();
 
@@ -93,7 +93,7 @@ namespace User.Service
                 UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join("、", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Name).ToList()),
+                Roles = string.Join("、", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Code).ToList()),
                 RoleIds = db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
                 CreateTime = t.CreateTime
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();

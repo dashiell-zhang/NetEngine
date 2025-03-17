@@ -1,5 +1,6 @@
 using Authorize.Interface;
 using Common;
+using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +12,7 @@ using User.Model.Role;
 namespace User.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class RoleService(DatabaseContext db, IdService idService, IUserContext userContext) : IRoleService
+    public class RoleService(DatabaseContext db, IdService idService, IUserContext userContext, IDistributedLock distLock) : IRoleService
     {
 
         private long userId => userContext.UserId;
@@ -28,11 +29,11 @@ namespace User.Service
             result.List = await query.OrderBy(t => t.CreateTime).Select(t => new DtoRole
             {
                 Id = t.Id,
-                CreateTime = t.CreateTime,
+                Code = t.Code,
                 Name = t.Name,
-                Remarks = t.Remarks
+                Remarks = t.Remarks,
+                CreateTime = t.CreateTime
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
-
 
             return result;
         }
@@ -43,9 +44,10 @@ namespace User.Service
             var role = db.TRole.Where(t => t.Id == roleId).Select(t => new DtoRole
             {
                 Id = t.Id,
-                CreateTime = t.CreateTime,
+                Code = t.Code,
                 Name = t.Name,
-                Remarks = t.Remarks
+                Remarks = t.Remarks,
+                CreateTime = t.CreateTime
             }).FirstOrDefaultAsync();
 
             return role;
@@ -54,38 +56,66 @@ namespace User.Service
 
         public async Task<long> CreateRoleAsync(DtoEditRole role)
         {
-            var dbRole = new TRole
+            using (var lockHandle = await distLock.TryLockAsync("roleCode" + role.Code))
             {
-                Id = idService.GetId(),
-                Name = role.Name,
-                Remarks = role.Remarks
-            };
+                if (lockHandle != null)
+                {
+                    var isHaveRoleCode = db.TRole.Where(t => t.Code == role.Code).Any();
 
-            db.TRole.Add(dbRole);
+                    if (!isHaveRoleCode)
+                    {
+                        var dbRole = new TRole
+                        {
+                            Id = idService.GetId(),
+                            Code = role.Code,
+                            Name = role.Name,
+                            Remarks = role.Remarks
+                        };
 
-            await db.SaveChangesAsync();
+                        db.TRole.Add(dbRole);
 
-            return dbRole.Id;
+                        await db.SaveChangesAsync();
+
+                        return dbRole.Id;
+                    }
+                }
+            }
+
+            throw new CustomException("角色编码已被占用");
         }
 
 
         public async Task<bool> UpdateRoleAsync(long roleId, DtoEditRole role)
         {
-            var dbRole = await db.TRole.Where(t => t.Id == roleId).FirstOrDefaultAsync();
-
-            if (dbRole != null)
+            using (var lockHandle = await distLock.TryLockAsync("roleCode" + role.Code))
             {
-                dbRole.Name = role.Name;
-                dbRole.Remarks = role.Remarks;
+                if (lockHandle != null)
+                {
+                    var isHaveRoleCode = db.TRole.Where(t => t.Id != roleId && t.Code == role.Code).Any();
 
-                await db.SaveChangesAsync();
+                    if (!isHaveRoleCode)
+                    {
+                        var dbRole = await db.TRole.Where(t => t.Id == roleId).FirstOrDefaultAsync();
 
-                return true;
+                        if (dbRole != null)
+                        {
+                            dbRole.Code = role.Code;
+                            dbRole.Name = role.Name;
+                            dbRole.Remarks = role.Remarks;
+
+                            await db.SaveChangesAsync();
+
+                            return true;
+                        }
+                        else
+                        {
+                            throw new CustomException("角色不存在无法编辑");
+                        }
+                    }
+                }
             }
-            else
-            {
-                return false;
-            }
+
+            throw new CustomException("角色编码已被占用");
         }
 
 

@@ -5,6 +5,7 @@ using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
+using Repository.Enum;
 using Shared.Model;
 using User.Interface;
 using User.Model.Role;
@@ -147,13 +148,13 @@ namespace User.Service
 
         public async Task<List<DtoRoleFunction>> GetRoleFunctionAsync(long roleId)
         {
-            var functionList = await db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
+            var functionList = await db.TFunction.Where(t => t.ParentId == null && t.Type == EnumFunctionType.Module).Select(t => new DtoRoleFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
                 Sign = t.Sign,
                 IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoRoleFunction
+                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new DtoRoleFunction
                 {
                     Id = f.Id,
                     Name = f.Name.Replace(f.Parent!.Name + "-", ""),
@@ -219,13 +220,13 @@ namespace User.Service
         public async Task<List<DtoRoleFunction>> GetRoleFunctionChildListAsync(long roleId, long parentId)
         {
 
-            var functionList = await db.TFunction.Where(t => t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoRoleFunction
+            var functionList = await db.TFunction.Where(t => t.ParentId == parentId && t.Type == EnumFunctionType.Module).Select(t => new DtoRoleFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
                 Sign = t.Sign,
                 IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoRoleFunction
+                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new DtoRoleFunction
                 {
                     Id = f.Id,
                     Name = f.Name.Replace(f.Parent!.Name + "-", ""),

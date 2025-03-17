@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Repository.Bases;
+using Repository.Enum;
 
 namespace Repository.Database
 {
@@ -12,12 +13,10 @@ namespace Repository.Database
     public class TFunction : CD
     {
 
-
         /// <summary>
         /// 名称
         /// </summary>
         public string Name { get; set; }
-
 
 
         /// <summary>
@@ -26,12 +25,10 @@ namespace Repository.Database
         public string Sign { get; set; }
 
 
-
         /// <summary>
         /// 备注
         /// </summary>
         public string? Remarks { get; set; }
-
 
 
         /// <summary>
@@ -41,21 +38,13 @@ namespace Repository.Database
         public virtual TFunction? Parent { get; set; }
 
 
-
         /// <summary>
-        /// 类型
+        /// 功能类型
         /// </summary>
-        public EnumType Type { get; set; }
-        public enum EnumType
-        {
-            模块 = 1,
-            功能 = 2
-        }
-
-
+        public EnumFunctionType Type { get; set; }
+       
 
         public virtual List<TFunctionRoute>? TFunctionRoute { get; set; }
-
 
     }
 }

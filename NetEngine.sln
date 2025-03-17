@@ -91,6 +91,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client.WebAPI", "Presentati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskService", "Presentation\TaskService\TaskService.csproj", "{F89CF710-5D8E-420A-A5C5-8C8EAFC52FFA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repository.Enum", "Repository.Enum\Repository.Enum.csproj", "{0E00D13E-0CE0-4DC9-A4CB-BE1E5EDB9459}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -241,6 +243,10 @@ Global
 		{F89CF710-5D8E-420A-A5C5-8C8EAFC52FFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F89CF710-5D8E-420A-A5C5-8C8EAFC52FFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F89CF710-5D8E-420A-A5C5-8C8EAFC52FFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E00D13E-0CE0-4DC9-A4CB-BE1E5EDB9459}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E00D13E-0CE0-4DC9-A4CB-BE1E5EDB9459}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E00D13E-0CE0-4DC9-A4CB-BE1E5EDB9459}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E00D13E-0CE0-4DC9-A4CB-BE1E5EDB9459}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

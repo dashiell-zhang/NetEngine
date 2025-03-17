@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
+using Repository.Enum;
 using Shared.Model;
 using System.Text;
 using User.Interface;
@@ -252,13 +253,13 @@ namespace User.Service
         {
             var roleIds = await db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
 
-            var functionList = await db.TFunction.Where(t => t.ParentId == null && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
+            var functionList = await db.TFunction.Where(t => t.ParentId == null && t.Type == EnumFunctionType.Module).Select(t => new DtoUserFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
                 Sign = t.Sign,
                 IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoUserFunction
+                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new DtoUserFunction
                 {
                     Id = f.Id,
                     Name = f.Name.Replace(f.Parent!.Name + "-", ""),
@@ -381,13 +382,13 @@ namespace User.Service
         public async Task<List<DtoUserFunction>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds)
         {
 
-            var functionList = await db.TFunction.Where(t => t.ParentId == parentId && t.Type == TFunction.EnumType.模块).Select(t => new DtoUserFunction
+            var functionList = await db.TFunction.Where(t => t.ParentId == parentId && t.Type == EnumFunctionType.Module).Select(t => new DtoUserFunction
             {
                 Id = t.Id,
                 Name = t.Name.Replace(t.Parent!.Name + "-", ""),
                 Sign = t.Sign,
                 IsCheck = db.TFunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == TFunction.EnumType.功能).Select(f => new DtoUserFunction
+                FunctionList = db.TFunction.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new DtoUserFunction
                 {
                     Id = f.Id,
                     Name = f.Name.Replace(f.Parent!.Name + "-", ""),

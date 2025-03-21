@@ -1,4 +1,4 @@
-﻿@page "/information/category"
+@page "/information/category"
 @using Site.Model.Article
 @attribute [ReuseTabsPageTitle("栏目管理")]
 
@@ -8,7 +8,7 @@
 
         <div style="margin-bottom:10px">
 
-            @if (MainLayout.functionList.Contains("category-add"))
+            @if (functionList.Contains("category-add"))
             {
                 <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditCategory()">添加</Button>
             }
@@ -26,14 +26,14 @@
                 <ActionColumn Title="操作">
                     <Space>
 
-                        @if (MainLayout.functionList.Contains("category-edit"))
+                        @if (functionList.Contains("category-edit"))
                         {
                             <SpaceItem>
                                 <a @onclick="()=>EditCategory(context)">编辑</a>
                             </SpaceItem>
                         }
 
-                        @if (MainLayout.functionList.Contains("category-delete"))
+                        @if (functionList.Contains("category-delete"))
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
@@ -106,14 +106,17 @@
 
 @code {
 
-    private string parentId = "0";
-
+    string parentId = "0";
 
     List<DtoTreeSelect>? selectCategoryList = new();
 
-    override protected void OnInitialized()
+    List<string> functionList = new();
+
+    override protected async Task OnInitializedAsync()
     {
-        GetCategorySelectList();
+        functionList = await userContextService.GetFunctionList();
+
+        await GetCategorySelectList();
     }
 
     override protected void OnParametersSet()

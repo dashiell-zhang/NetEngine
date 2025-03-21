@@ -1,4 +1,4 @@
-﻿@page "/systemset/user"
+@page "/systemset/user"
 @using global::User.Model.User
 @attribute [ReuseTabsPageTitle("用户管理")]
 
@@ -8,7 +8,7 @@
 
         <div style="margin-bottom:10px">
 
-            @if (MainLayout.functionList.Contains("user-add"))
+            @if (functionList.Contains("user-add"))
             {
                 <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditUser()">添加</Button>
             }
@@ -26,21 +26,21 @@
                 <ActionColumn Title="操作">
                     <Space>
 
-                        @if (MainLayout.functionList.Contains("user-edit"))
+                        @if (functionList.Contains("user-edit"))
                         {
                             <SpaceItem>
                                 <a @onclick="()=>EditUser(context)">编辑</a>
                             </SpaceItem>
                         }
 
-                        @if (MainLayout.functionList.Contains("user-function"))
+                        @if (functionList.Contains("user-function"))
                         {
                             <SpaceItem>
                                 <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
                             </SpaceItem>
                         }
 
-                        @if (MainLayout.functionList.Contains("user-delete"))
+                        @if (functionList.Contains("user-delete"))
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
@@ -146,10 +146,16 @@
 
 @code {
 
-    override protected void OnInitialized()
+    List<string> functionList = new();
+
+    override protected async Task OnInitializedAsync()
     {
-        GetUserList();
-        GetRoleKV();
+        functionList = await userContextService.GetFunctionList();
+
+        var getUserListTask = GetUserList();
+        var getRoleKVTask = GetRoleKV();
+
+        await Task.WhenAll(getUserListTask, getRoleKVTask);
     }
 
 

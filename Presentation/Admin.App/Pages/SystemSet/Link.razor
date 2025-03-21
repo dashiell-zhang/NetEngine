@@ -1,4 +1,4 @@
-﻿@page "/systemset/link"
+@page "/systemset/link"
 @using global::Site.Model.Link
 @attribute [ReuseTabsPageTitle("友链管理")]
 
@@ -8,7 +8,7 @@
 
         <div style="margin-bottom:10px">
 
-            @if (MainLayout.functionList.Contains("link-add"))
+            @if (functionList.Contains("link-add"))
             {
                 <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditLink()">添加</Button>
             }
@@ -24,14 +24,14 @@
                 <ActionColumn Title="操作">
                     <Space>
 
-                        @if (MainLayout.functionList.Contains("link-edit"))
+                        @if (functionList.Contains("link-edit"))
                         {
                             <SpaceItem>
                                 <a @onclick="()=>EditLink(context)">编辑</a>
                             </SpaceItem>
                         }
 
-                        @if (MainLayout.functionList.Contains("link-delete"))
+                        @if (functionList.Contains("link-delete"))
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
@@ -95,9 +95,13 @@
 
 @code {
 
-    override protected void OnInitialized()
+    List<string> functionList = new();
+
+    override protected async Task OnInitializedAsync()
     {
-        GetLinkList();
+        functionList = await userContextService.GetFunctionList();
+
+        await GetLinkList();
     }
 
     bool saveLoading = false;

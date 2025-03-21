@@ -1,4 +1,5 @@
 using Admin.App.Libraries;
+using Admin.App.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -35,6 +36,8 @@ namespace Admin.App
             builder.Services.AddBlazoredLocalStorage();
 
             builder.Services.AddAntDesign();
+
+            builder.Services.AddScoped<UserContextService>();
 
             await using WebAssemblyHost host = builder.Build();
 

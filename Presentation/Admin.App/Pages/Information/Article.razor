@@ -12,7 +12,7 @@
 
         <div style="margin-bottom:10px">
 
-            @if (MainLayout.functionList.Contains("article-add"))
+            @if (functionList.Contains("article-add"))
             {
                 <Button Icon="plus" Type="@ButtonType.Primary" OnClick="()=>EditArticle()">添加</Button>
             }
@@ -31,7 +31,7 @@
                 <ActionColumn Title="操作">
                     <Space>
 
-                        @if (MainLayout.functionList.Contains("article-edit"))
+                        @if (functionList.Contains("article-edit"))
                         {
 
                             <SpaceItem>
@@ -39,7 +39,7 @@
                             </SpaceItem>
                         }
 
-                        @if (MainLayout.functionList.Contains("article-delete"))
+                        @if (functionList.Contains("article-delete"))
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
@@ -277,9 +277,14 @@
 
     List<DtoTreeSelect>? selectCategoryList;
 
-    override protected void OnInitialized()
+
+    List<string> functionList = new();
+
+    override protected async Task OnInitializedAsync()
     {
-        GetCategorySelectList();
+        functionList = await userContextService.GetFunctionList();
+
+        await GetCategorySelectList();
 
         var authorization = LocalStorage.GetItemAsString("Authorization");
 

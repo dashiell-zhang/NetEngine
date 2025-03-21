@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @using Microsoft.IdentityModel.JsonWebTokens;
 @using User.Model.User
 
@@ -124,31 +124,15 @@
         this.collapsed = collapsed;
     }
 
-    public static DtoUser user = new();
 
-
-    override protected void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Authentication();
-        GetFunctionList();
+        await Authentication();
     }
 
-    public static List<string> functionList = new();
+    DtoUser user = new();
 
-
-    async Task GetFunctionList()
-    {
-        var retList = await Http.GetFromJsonAsync<Dictionary<string, string>>("Authorize/GetFunctionList");
-
-        if (retList != null)
-        {
-            functionList = retList.Select(t => t.Key).ToList();
-
-            StateHasChanged();
-        }
-    }
-
-
+    List<string> functionList = new();
 
 
     private async Task Authentication()
@@ -175,7 +159,18 @@
             {
                 try
                 {
-                    user = (await Http.GetFromJsonAsync<DtoUser>("User/GetUser"))!;
+                    var userRet = await userContextService.GetUser();
+
+                    if (userRet != null)
+                    {
+                        user = userRet;
+
+                        functionList = await userContextService.GetFunctionList();
+                    }
+                    else
+                    {
+                        throw new Exception("获取用户信息失败");
+                    }
                 }
                 catch
                 {

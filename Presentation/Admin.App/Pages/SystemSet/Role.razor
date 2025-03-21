@@ -9,7 +9,7 @@
 
         <div style="margin-bottom:10px">
 
-            @if (MainLayout.functionList.Contains("role-add"))
+            @if (functionList.Contains("role-add"))
             {
                 <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditRole()">添加</Button>
             }
@@ -25,27 +25,27 @@
                 <ActionColumn Title="操作">
                     <Space>
 
-                        @if (MainLayout.functionList.Contains("role-edit"))
+                        @if (functionList.Contains("role-edit"))
                         {
                             <SpaceItem>
                                 <a @onclick="()=>EditRole(context)">编辑</a>
                             </SpaceItem>
                         }
 
-                        @if (MainLayout.functionList.Contains("role-function"))
+                        @if (functionList.Contains("role-function"))
                         {
                             <SpaceItem>
                                 <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
                             </SpaceItem>
                         }
 
-                        @if (MainLayout.functionList.Contains("role-delete"))
+                        @if (functionList.Contains("role-delete"))
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                OnConfirm="_=>DeleteRole(context.Id)"
-                                OkText="Yes"
-                                CancelText="No">
+                                            OnConfirm="_=>DeleteRole(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -88,8 +88,6 @@
                 <Input Placeholder="请输入备注" @bind-Value="@context.Remarks" />
             </FormItem>
 
-
-
             <Row Gutter="24">
                 <AntDesign.Col Span="24">
                     <div style="float:right">
@@ -126,9 +124,13 @@
 
 @code {
 
-    override protected void OnInitialized()
+    List<string> functionList = new();
+
+    override protected async Task OnInitializedAsync()
     {
-        GetRoleList();
+        functionList = await userContextService.GetFunctionList();
+
+        await GetRoleList();
     }
 
     bool saveLoading = false;

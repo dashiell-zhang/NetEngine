@@ -43,9 +43,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                            OnConfirm="_=>DeleteArticle(context.Id)"
-                                            OkText="Yes"
-                                            CancelText="No">
+                                OnConfirm="_=>DeleteArticle(context.Id)"
+                                OkText="Yes"
+                                CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -303,7 +303,7 @@
     {
         List<DtoCategorySelect> parentKVList = new();
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList?channelId=" + channelId);
+        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList?channelId=" + channelId, JsonHelper.jsonToObjectOptions);
 
         if (kvList != null)
         {
@@ -333,7 +333,7 @@
     async Task GetArticleList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.jsonToObjectOptions);
 
         if (retData != null)
         {
@@ -412,7 +412,7 @@
         }
         else
         {
-            fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId");
+            fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId", JsonHelper.jsonToObjectOptions);
             editArticle.IsDisplay = true;
             editArticle.Sort = 99;
             editArticle.CategoryId = "";
@@ -442,7 +442,7 @@
 
             if (articleId == default)
             {
-                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle);
+                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle, JsonHelper.objectToJsonOptions);
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
@@ -453,7 +453,7 @@
             }
             else
             {
-                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle);
+                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.objectToJsonOptions);
                 if (httpResponse.IsSuccessStatusCode)
                 {
                     var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;

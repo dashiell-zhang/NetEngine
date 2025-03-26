@@ -114,7 +114,7 @@
     async Task GetLinkList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.jsonToObjectOptions);
 
         if (retData != null)
         {
@@ -175,7 +175,7 @@
         saveLoading = true;
         if (linkId == default)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/CreateLink", editLink);
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/CreateLink", editLink, JsonHelper.objectToJsonOptions);
             if (httpResponse.IsSuccessStatusCode)
             {
                 var createLinkId = httpResponse.Content.ReadAsStringAsync().Result;
@@ -185,7 +185,7 @@
         }
         else
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink);
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink, JsonHelper.objectToJsonOptions);
             if (httpResponse.IsSuccessStatusCode)
             {
                 var updateLinkRet = httpResponse.Content.ReadAsStringAsync().Result;

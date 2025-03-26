@@ -8,9 +8,9 @@ namespace Admin.App.Libraries
     public class JsonHelper
     {
 
-        private static readonly JsonSerializerOptions objectToJsonOptions;
+        public static readonly JsonSerializerOptions objectToJsonOptions;
 
-        private static readonly JsonSerializerOptions jsonToObjectOptions;
+        public static readonly JsonSerializerOptions jsonToObjectOptions;
 
 
         static JsonHelper()

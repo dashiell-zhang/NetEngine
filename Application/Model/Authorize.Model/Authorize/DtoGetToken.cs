@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Authorize.Model.Authorize
 {
@@ -9,7 +9,6 @@ namespace Authorize.Model.Authorize
     public class DtoGetToken
     {
 
-
         /// <summary>
         /// 用户名
         /// </summary>
@@ -17,13 +16,11 @@ namespace Authorize.Model.Authorize
         public string UserName { get; set; }
 
 
-
         /// <summary>
         /// 密码
         /// </summary>
         [Required(ErrorMessage = "密码不可以为空")]
         public string Password { get; set; }
-
 
     }
 }

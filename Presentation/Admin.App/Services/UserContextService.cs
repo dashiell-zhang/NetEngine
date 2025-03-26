@@ -1,4 +1,5 @@
 using Admin.App.Libraries;
+using System.Net.Http.Json;
 using User.Model.User;
 
 namespace Admin.App.Services
@@ -30,7 +31,7 @@ namespace Admin.App.Services
         private Lazy<Task<DtoUser?>> CreateUserLazy()
         {
             return new Lazy<Task<DtoUser?>>(() =>
-                _httpClient.GetFromJsonAsync<DtoUser>("User/GetUser"));
+                _httpClient.GetFromJsonAsync<DtoUser>("User/GetUser", JsonHelper.jsonToObjectOptions));
         }
 
 
@@ -38,7 +39,7 @@ namespace Admin.App.Services
         {
             return new Lazy<Task<List<string>>>(async () =>
             {
-                var retList = await _httpClient.GetFromJsonAsync<Dictionary<string, string>>("Authorize/GetFunctionList");
+                var retList = await _httpClient.GetFromJsonAsync<Dictionary<string, string>>("Authorize/GetFunctionList", JsonHelper.jsonToObjectOptions);
 
                 retList ??= new();
 

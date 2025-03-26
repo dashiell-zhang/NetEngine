@@ -1,6 +1,7 @@
-﻿using AntDesign;
+using AntDesign;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -57,6 +58,11 @@ namespace Admin.App.Libraries
                 }
 
                 var response = await base.SendAsync(request, cancellationToken);
+
+                if ((int)response.StatusCode == 204)
+                {
+                    response.Content = JsonContent.Create((object?)null); // 设置为 JSON 格式的 null
+                }
 
                 if ((int)response.StatusCode == 401)
                 {

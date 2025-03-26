@@ -1,4 +1,4 @@
-﻿@page "/login"
+@page "/login"
 @layout NullLayout
 @using Authorize.Model.Authorize
 @using Microsoft.IdentityModel.JsonWebTokens;
@@ -73,7 +73,7 @@
     {
         submitLoading = true;
 
-        using var httpResponse = await Http.PostAsJsonAsync<DtoGetToken>("Authorize/GetToken", loginData);
+        using var httpResponse = await Http.PostAsJsonAsync<DtoGetToken>("Authorize/GetToken", loginData, JsonHelper.objectToJsonOptions);
 
         if (httpResponse.IsSuccessStatusCode)
         {

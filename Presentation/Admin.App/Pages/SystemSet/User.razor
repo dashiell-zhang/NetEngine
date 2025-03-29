@@ -173,7 +173,7 @@
 
     async Task GetRoleKV()
     {
-        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Role/GetRoleKV", JsonHelper.jsonToObjectOptions);
+        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Role/GetRoleKV", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -184,7 +184,7 @@
     async Task GetUserList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.jsonToObjectOptions);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -222,7 +222,7 @@
 
         if (userId == default)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/CreateUser", editUser, JsonHelper.objectToJsonOptions);
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/CreateUser", editUser, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
@@ -232,7 +232,7 @@
         }
         else
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser, JsonHelper.objectToJsonOptions);
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
@@ -301,7 +301,7 @@
     {
         this.userId = roleId;
 
-        var retData = await Http.GetFromJsonAsync<List<DtoUserFunction>>("User/GetUserFunction?userId=" + userId, JsonHelper.jsonToObjectOptions);
+        var retData = await Http.GetFromJsonAsync<List<DtoUserFunction>>("User/GetUserFunction?userId=" + userId, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -323,7 +323,7 @@
                 IsCheck = isCheck
             };
 
-        using var httpResponse = await Http.PostAsJsonAsync<DtoSetUserFunction>("User/SetUserFunction", setUserFunction, JsonHelper.objectToJsonOptions);
+        using var httpResponse = await Http.PostAsJsonAsync<DtoSetUserFunction>("User/SetUserFunction", setUserFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
             var ret = httpResponse.Content.ReadAsStringAsync().Result;

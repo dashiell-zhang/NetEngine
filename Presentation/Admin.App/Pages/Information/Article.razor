@@ -303,7 +303,7 @@
     {
         List<DtoCategorySelect> parentKVList = new();
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList?channelId=" + channelId, JsonHelper.jsonToObjectOptions);
+        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList?channelId=" + channelId, JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -333,7 +333,7 @@
     async Task GetArticleList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.jsonToObjectOptions);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -412,7 +412,7 @@
         }
         else
         {
-            fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId", JsonHelper.jsonToObjectOptions);
+            fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId", JsonHelper.DeserializeOpts);
             editArticle.IsDisplay = true;
             editArticle.Sort = 99;
             editArticle.CategoryId = "";
@@ -442,7 +442,7 @@
 
             if (articleId == default)
             {
-                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle, JsonHelper.objectToJsonOptions);
+                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle, JsonHelper.SerializeOpts);
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
@@ -453,7 +453,7 @@
             }
             else
             {
-                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.objectToJsonOptions);
+                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.SerializeOpts);
                 if (httpResponse.IsSuccessStatusCode)
                 {
                     var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;

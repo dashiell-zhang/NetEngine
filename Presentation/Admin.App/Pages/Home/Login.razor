@@ -73,7 +73,7 @@
     {
         submitLoading = true;
 
-        using var httpResponse = await Http.PostAsJsonAsync<DtoGetToken>("Authorize/GetToken", loginData, JsonHelper.objectToJsonOptions);
+        using var httpResponse = await Http.PostAsJsonAsync<DtoGetToken>("Authorize/GetToken", loginData, JsonHelper.SerializeOpts);
 
         if (httpResponse.IsSuccessStatusCode)
         {

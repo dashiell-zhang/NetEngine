@@ -31,7 +31,7 @@ namespace Admin.App.Services
         private Lazy<Task<DtoUser?>> CreateUserLazy()
         {
             return new Lazy<Task<DtoUser?>>(() =>
-                _httpClient.GetFromJsonAsync<DtoUser>("User/GetUser", JsonHelper.jsonToObjectOptions));
+                _httpClient.GetFromJsonAsync<DtoUser>("User/GetUser", JsonHelper.DeserializeOpts));
         }
 
 
@@ -39,7 +39,7 @@ namespace Admin.App.Services
         {
             return new Lazy<Task<List<string>>>(async () =>
             {
-                var retList = await _httpClient.GetFromJsonAsync<Dictionary<string, string>>("Authorize/GetFunctionList", JsonHelper.jsonToObjectOptions);
+                var retList = await _httpClient.GetFromJsonAsync<Dictionary<string, string>>("Authorize/GetFunctionList", JsonHelper.DeserializeOpts);
 
                 retList ??= new();
 

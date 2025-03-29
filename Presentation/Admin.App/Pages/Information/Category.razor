@@ -135,7 +135,7 @@
 
 
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList", JsonHelper.jsonToObjectOptions);
+        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList", JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -168,7 +168,7 @@
     async Task GetCategoryList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.jsonToObjectOptions);
+        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -254,7 +254,7 @@
 
         if (categoryId == default)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory, JsonHelper.objectToJsonOptions);
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 var createCategoryId = httpResponse.Content.ReadAsStringAsync().Result;
@@ -264,7 +264,7 @@
         }
         else
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/UpdateCategory?categoryId=" + categoryId, editCategory, JsonHelper.objectToJsonOptions);
+            using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/UpdateCategory?categoryId=" + categoryId, editCategory, JsonHelper.SerializeOpts);
 
             if (httpResponse.IsSuccessStatusCode)
             {

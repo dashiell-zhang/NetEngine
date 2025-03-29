@@ -8,16 +8,16 @@ namespace Common
     public class JsonHelper
     {
 
-        private static readonly JsonSerializerOptions objectToJsonOptions;
+        public static readonly JsonSerializerOptions SerializeOpts;
 
-        private static readonly JsonSerializerOptions jsonToObjectOptions;
+        public static readonly JsonSerializerOptions DeserializeOpts;
 
-        private static readonly JsonSerializerOptions cloneObjectOptions;
+        private static readonly JsonSerializerOptions cloneOpts;
 
 
         static JsonHelper()
         {
-            objectToJsonOptions = new()
+            SerializeOpts = new()
             {
                 //关闭默认转义
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -25,32 +25,32 @@ namespace Common
                 //启用驼峰格式
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-            objectToJsonOptions.Converters.Add(new DateTimeConverter());
-            objectToJsonOptions.Converters.Add(new DateTimeOffsetConverter());
-            objectToJsonOptions.Converters.Add(new LongConverter());
-            objectToJsonOptions.Converters.Add(new StringConverter());
+            SerializeOpts.Converters.Add(new DateTimeConverter());
+            SerializeOpts.Converters.Add(new DateTimeOffsetConverter());
+            SerializeOpts.Converters.Add(new LongConverter());
+            SerializeOpts.Converters.Add(new StringConverter());
 
 
-            jsonToObjectOptions = new()
+            DeserializeOpts = new()
             {
                 //启用大小写不敏感
                 PropertyNameCaseInsensitive = true
             };
-            jsonToObjectOptions.Converters.Add(new DateTimeConverter());
-            jsonToObjectOptions.Converters.Add(new DateTimeOffsetConverter());
-            jsonToObjectOptions.Converters.Add(new LongConverter());
-            jsonToObjectOptions.Converters.Add(new StringConverter());
+            DeserializeOpts.Converters.Add(new DateTimeConverter());
+            DeserializeOpts.Converters.Add(new DateTimeOffsetConverter());
+            DeserializeOpts.Converters.Add(new LongConverter());
+            DeserializeOpts.Converters.Add(new StringConverter());
 
 
             #region cloneObjectOptions
 
-            cloneObjectOptions = new()
+            cloneOpts = new()
             {
                 ReferenceHandler = ReferenceHandler.Preserve,   //解决循环依赖
                 DefaultIgnoreCondition = JsonIgnoreCondition.Never, //屏蔽 JsonIgnore 配置
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,  //关闭默认转义
             };
-            cloneObjectOptions.Converters.Add(new LongConverter());
+            cloneOpts.Converters.Add(new LongConverter());
 
             #endregion
         }
@@ -83,7 +83,7 @@ namespace Common
         /// <returns>JSON格式的字符串</returns> 
         public static string ObjectToJson(object obj)
         {
-            return JsonSerializer.Serialize(obj, objectToJsonOptions);
+            return JsonSerializer.Serialize(obj, SerializeOpts);
         }
 
 
@@ -96,7 +96,7 @@ namespace Common
         /// <returns>指定类型的对象</returns> 
         public static T JsonToObject<T>(string json)
         {
-            return JsonSerializer.Deserialize<T>(json, jsonToObjectOptions)!;
+            return JsonSerializer.Deserialize<T>(json, DeserializeOpts)!;
         }
 
 
@@ -108,7 +108,7 @@ namespace Common
         /// <returns>JSON格式的字符串</returns> 
         public static string ObjectCloneJson(object obj)
         {
-            return JsonSerializer.Serialize(obj, cloneObjectOptions);
+            return JsonSerializer.Serialize(obj, cloneOpts);
         }
 
 
@@ -121,7 +121,7 @@ namespace Common
         /// <returns>指定类型的对象</returns> 
         public static T JsonCloneObject<T>(string json)
         {
-            return JsonSerializer.Deserialize<T>(json, cloneObjectOptions)!;
+            return JsonSerializer.Deserialize<T>(json, cloneOpts)!;
         }
 
 
@@ -134,8 +134,8 @@ namespace Common
         /// <returns></returns>
         public static T Clone<T>(T obj) where T : class, new()
         {
-            var json = JsonSerializer.Serialize(obj, cloneObjectOptions);
-            return JsonSerializer.Deserialize<T>(json, cloneObjectOptions)!;
+            var json = JsonSerializer.Serialize(obj, cloneOpts);
+            return JsonSerializer.Deserialize<T>(json, cloneOpts)!;
         }
 
 

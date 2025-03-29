@@ -73,7 +73,7 @@
     async override protected void OnInitialized()
     {
 
-        var retData = await Http.GetFromJsonAsync<DtoSite>("Site/GetSite", JsonHelper.jsonToObjectOptions);
+        var retData = await Http.GetFromJsonAsync<DtoSite>("Site/GetSite", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -87,7 +87,7 @@
     {
         saveLoading = true;
 
-        using var httpResponse = await Http.PostAsJsonAsync<DtoSite>("Site/EditSite", editSite, JsonHelper.objectToJsonOptions);
+        using var httpResponse = await Http.PostAsJsonAsync<DtoSite>("Site/EditSite", editSite, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
             var editSiteRet = httpResponse.Content.ReadAsStringAsync().Result;

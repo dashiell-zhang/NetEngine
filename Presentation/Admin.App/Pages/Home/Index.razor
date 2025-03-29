@@ -23,7 +23,7 @@
 
     async override protected void OnInitialized()
     {
-        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Site/GetServerInfo", JsonHelper.jsonToObjectOptions);
+        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Site/GetServerInfo", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {

@@ -8,14 +8,14 @@ namespace Admin.App.Libraries
     public class JsonHelper
     {
 
-        public static readonly JsonSerializerOptions objectToJsonOptions;
+        public static readonly JsonSerializerOptions SerializeOpts;
 
-        public static readonly JsonSerializerOptions jsonToObjectOptions;
+        public static readonly JsonSerializerOptions DeserializeOpts;
 
 
         static JsonHelper()
         {
-            objectToJsonOptions = new()
+            SerializeOpts = new()
             {
                 //关闭默认转义
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -23,19 +23,19 @@ namespace Admin.App.Libraries
                 //启用驼峰格式
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-            objectToJsonOptions.Converters.Add(new DateTimeConverter());
-            objectToJsonOptions.Converters.Add(new DateTimeOffsetConverter());
-            objectToJsonOptions.Converters.Add(new LongConverter());
+            SerializeOpts.Converters.Add(new DateTimeConverter());
+            SerializeOpts.Converters.Add(new DateTimeOffsetConverter());
+            SerializeOpts.Converters.Add(new LongConverter());
 
 
-            jsonToObjectOptions = new()
+            DeserializeOpts = new()
             {
                 //启用大小写不敏感
                 PropertyNameCaseInsensitive = true
             };
-            jsonToObjectOptions.Converters.Add(new DateTimeConverter());
-            jsonToObjectOptions.Converters.Add(new DateTimeOffsetConverter());
-            jsonToObjectOptions.Converters.Add(new LongConverter());
+            DeserializeOpts.Converters.Add(new DateTimeConverter());
+            DeserializeOpts.Converters.Add(new DateTimeOffsetConverter());
+            DeserializeOpts.Converters.Add(new LongConverter());
         }
 
 
@@ -68,7 +68,7 @@ namespace Admin.App.Libraries
         /// <returns>JSON格式的字符串</returns> 
         public static string ObjectToJson(object obj)
         {
-            return JsonSerializer.Serialize(obj, objectToJsonOptions);
+            return JsonSerializer.Serialize(obj, SerializeOpts);
         }
 
 
@@ -81,7 +81,7 @@ namespace Admin.App.Libraries
         /// <returns>指定类型的对象</returns> 
         public static T JsonToObject<T>(string json)
         {
-            return JsonSerializer.Deserialize<T>(json, jsonToObjectOptions)!;
+            return JsonSerializer.Deserialize<T>(json, DeserializeOpts)!;
         }
 
 

@@ -19,6 +19,10 @@ namespace Admin.App.Libraries
         private readonly NavigationManager NavigationManager;
         private readonly NotificationService Notice;
 
+
+        private static readonly JsonContent nullJsonContent = JsonContent.Create((object?)null);
+
+
         public HttpInterceptor(ISyncLocalStorageService _LocalStorage, NavigationManager _NavigationManager, NotificationService _Notice)
         {
             LocalStorage = _LocalStorage;
@@ -61,7 +65,7 @@ namespace Admin.App.Libraries
 
                 if ((int)response.StatusCode == 204)
                 {
-                    response.Content = JsonContent.Create((object?)null); // 设置为 JSON 格式的 null
+                    response.Content = nullJsonContent;
                 }
 
                 if ((int)response.StatusCode == 401)

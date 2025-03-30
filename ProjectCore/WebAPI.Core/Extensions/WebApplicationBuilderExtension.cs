@@ -1,5 +1,6 @@
 using Authorize.Model.AppSetting;
 using Common;
+using Common.JsonConverters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
@@ -16,6 +17,7 @@ using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Filters;
 using WebAPI.Core.Interfaces;
 using WebAPI.Core.Libraries.HealthCheck;
+using WebAPI.Core.Libraries.JsonConverters;
 using WebAPI.Core.Libraries.Swagger;
 using WebAPI.Core.Libraries.Validators;
 
@@ -168,11 +170,11 @@ namespace WebAPI.Core.Extensions
             #region 注册 Json 序列化配置
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                //options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.DateTimeConverter());
-                //options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.DateTimeOffsetConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.LongConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.StringConverter());
-                options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.NullableStructConverterFactory());
+                //options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+                //options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
+                options.JsonSerializerOptions.Converters.Add(new LongConverter());
+                options.JsonSerializerOptions.Converters.Add(new StringConverter());
+                options.JsonSerializerOptions.Converters.Add(new NullableStructConverterFactory());
             });
 
             #endregion

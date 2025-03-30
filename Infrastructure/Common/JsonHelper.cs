@@ -28,7 +28,6 @@ namespace Common
             SerializeOpts.Converters.Add(new DateTimeConverter());
             SerializeOpts.Converters.Add(new DateTimeOffsetConverter());
             SerializeOpts.Converters.Add(new LongConverter());
-            SerializeOpts.Converters.Add(new StringConverter());
 
 
             DeserializeOpts = new()
@@ -39,7 +38,6 @@ namespace Common
             DeserializeOpts.Converters.Add(new DateTimeConverter());
             DeserializeOpts.Converters.Add(new DateTimeOffsetConverter());
             DeserializeOpts.Converters.Add(new LongConverter());
-            DeserializeOpts.Converters.Add(new StringConverter());
 
 
             #region cloneObjectOptions

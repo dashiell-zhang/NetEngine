@@ -47,16 +47,6 @@ namespace Admin.WebAPI
 
             builder.AddCommonServices();
 
-            //#region 注册 Json 序列化配置
-
-            //builder.Services.AddControllers().AddJsonOptions(options =>
-            //{
-            //    options.JsonSerializerOptions.Converters.Add(new Common.JsonConverters.LongConverter());
-            //});
-
-            //#endregion
-
-
 
             //注册Id生成器
             builder.Services.AddIdentifierGenerator();

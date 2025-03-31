@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Reflection;
 
 namespace Common
@@ -133,10 +133,8 @@ namespace Common
 
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
             {
-                var leftDict = left as IDictionary;
-                var rightDict = right as IDictionary;
 
-                if (leftDict != null && rightDict != null)
+                if (left is IDictionary leftDict && right is IDictionary rightDict)
                 {
                     var keyType = type.GetGenericArguments()[0];
                     var valueType = type.GetGenericArguments()[1];
@@ -152,10 +150,7 @@ namespace Common
             }
             else if (typeof(IList).IsAssignableFrom(typeof(T)) && typeof(T) != typeof(string))  // 检查T是否为集合类型
             {
-                var leftList = left as IList;
-                var rightList = right as IList;
-
-                if (leftList != null && rightList != null)
+                if (left is IList leftList && right is IList rightList)
                 {
                     var rightEnumerator = rightList.GetEnumerator();
 
@@ -241,10 +236,7 @@ namespace Common
             {
                 if (rtype.IsGenericType && rtype.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
                 {
-                    var leftDict = left as IDictionary;
-                    var rightDict = right as IDictionary;
-
-                    if (leftDict != null && rightDict != null)
+                    if (left is IDictionary leftDict && right is IDictionary rightDict)
                     {
                         var lKeyType = ltype.GetGenericArguments()[0];
                         var rKeyType = rtype.GetGenericArguments()[0];
@@ -293,11 +285,7 @@ namespace Common
 
                 if (typeof(IList).IsAssignableFrom(typeof(R)) && typeof(R) != typeof(string))
                 {
-
-                    var leftList = left as IList;
-                    var rightList = right as IList;
-
-                    if (leftList != null && rightList != null)
+                    if (left is IList leftList && right is IList rightList)
                     {
 
                         var lType = leftList.GetType().GetGenericArguments()[0];

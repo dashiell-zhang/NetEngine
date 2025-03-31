@@ -288,9 +288,7 @@ namespace Common
         {
             foreach (var field in enumType.GetFields())
             {
-                var attribute = Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) as DescriptionAttribute;
-
-                if (attribute != null && attribute.Description == description)
+                if (Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) is DescriptionAttribute attribute && attribute.Description == description)
                     return Enum.Parse(enumType, field.Name);
             }
 

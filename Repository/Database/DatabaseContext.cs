@@ -369,7 +369,7 @@ namespace Repository.Database
         }
 
 
-        private List<JsonColumnOwnedNavigation> GetJsonColumnOwnedNavigationList(PropertyInfo[] propertyInfos)
+        private static List<JsonColumnOwnedNavigation> GetJsonColumnOwnedNavigationList(PropertyInfo[] propertyInfos)
         {
             List<JsonColumnOwnedNavigation> jsonColumnOwnedNavigations = [];
 
@@ -403,7 +403,7 @@ namespace Repository.Database
         }
 
 
-        private void JsonOwnedNavigationBuilder(OwnedNavigationBuilder ownedNavigationBuilder, JsonColumnOwnedNavigation jsonColumnOwnedNavigation)
+        private static void JsonOwnedNavigationBuilder(OwnedNavigationBuilder ownedNavigationBuilder, JsonColumnOwnedNavigation jsonColumnOwnedNavigation)
         {
             if (jsonColumnOwnedNavigation.IsOwnsMany)
             {

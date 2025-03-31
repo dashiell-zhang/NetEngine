@@ -402,11 +402,11 @@ namespace Common
             StringBuilder sb = new();
             sb.Append(url);
 
-            if (!url.Contains("?"))
+            if (!url.Contains('?'))
             {
                 sb.Append('?');
             }
-            else if (!url.EndsWith("&") && !url.EndsWith("?"))
+            else if (!url.EndsWith('&') && !url.EndsWith('?'))
             {
                 sb.Append('&');
             }
@@ -438,7 +438,7 @@ namespace Common
             }
 
             // 移除最后一个 '&' 字符
-            if (sb[sb.Length - 1] == '&')
+            if (sb[^1] == '&')
             {
                 sb.Remove(sb.Length - 1, 1);
             }

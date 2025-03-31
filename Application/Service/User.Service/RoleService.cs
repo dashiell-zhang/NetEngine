@@ -16,7 +16,7 @@ namespace User.Service
     public class RoleService(DatabaseContext db, IdService idService, IUserContext userContext, IDistributedLock distLock) : IRoleService
     {
 
-        private long userId => userContext.UserId;
+        private long UserId => userContext.UserId;
 
 
         public async Task<DtoPageList<DtoRole>> GetRoleListAsync(DtoPageRequest request)
@@ -185,7 +185,7 @@ namespace User.Service
                 if (functionAuthorize.Id == default)
                 {
                     functionAuthorize.Id = idService.GetId();
-                    functionAuthorize.CreateUserId = userId;
+                    functionAuthorize.CreateUserId = UserId;
 
                     db.TFunctionAuthorize.Add(functionAuthorize);
                 }
@@ -195,7 +195,7 @@ namespace User.Service
                 if (functionAuthorize.Id != default)
                 {
                     functionAuthorize.IsDelete = true;
-                    functionAuthorize.DeleteUserId = userId;
+                    functionAuthorize.DeleteUserId = UserId;
                 }
             }
 

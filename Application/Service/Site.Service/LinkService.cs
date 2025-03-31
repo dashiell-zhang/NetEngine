@@ -15,7 +15,7 @@ namespace Site.Service
     public class LinkService(DatabaseContext db, IdService idService, IUserContext userContext) : ILinkService
     {
 
-        private long userId => userContext.UserId;
+        private long UserId => userContext.UserId;
 
 
         public async Task<DtoPageList<DtoLink>> GetLinkListAsync(DtoPageRequest request)
@@ -62,7 +62,7 @@ namespace Site.Service
                 Id = idService.GetId(),
                 Name = createLink.Name,
                 Url = createLink.Url,
-                CreateUserId = userId,
+                CreateUserId = UserId,
                 Sort = createLink.Sort
             };
 
@@ -98,7 +98,7 @@ namespace Site.Service
             if (link != null)
             {
                 link.IsDelete = true;
-                link.DeleteUserId = userId;
+                link.DeleteUserId = UserId;
 
                 await db.SaveChangesAsync();
 

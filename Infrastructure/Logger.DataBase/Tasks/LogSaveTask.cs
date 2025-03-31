@@ -32,12 +32,12 @@ namespace Logger.DataBase.Tasks
                                 var log = JsonHelper.JsonToObject<TLog>(logStr);
 
 
-                                var isHave = await db.TLog.Where(t => t.Id == log.Id).AnyAsync();
+                                var isHave = await db.TLog.Where(t => t.Id == log.Id).AnyAsync(cancellationToken: stoppingToken);
 
                                 if (!isHave)
                                 {
                                     db.TLog.Add(log);
-                                    await db.SaveChangesAsync();
+                                    await db.SaveChangesAsync(stoppingToken);
                                 }
 
                                 File.Delete(logPath);

@@ -31,7 +31,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
 
 
-        public async Task<string> ProcessAsync(string fileServerUrl)
+        public async Task<string> ProcessAsync()
         {
 
             string value = "";
@@ -65,7 +65,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
                         if (upload)
                         {
-                            Common.IOHelper.DeleteFile(localPath);
+                            IOHelper.DeleteFile(localPath);
 
                             Result.Url = Path.Combine(basePath, Path.GetFileName(localPath)).Replace("\\", "/");
                             Result.State = UploadState.Success;

@@ -36,7 +36,7 @@ namespace Admin.WebAPI.Controllers
                     UploadFieldName = Config.GetString("imageFieldName", fileServerUrl)
                 }, rootPath, HttpContext);
 
-                return await uploadHandler.ProcessAsync(fileServerUrl);
+                return await uploadHandler.ProcessAsync();
             }
             else if (actionStr == "uploadscrawl")
             {
@@ -50,7 +50,7 @@ namespace Admin.WebAPI.Controllers
                     Base64Filename = "scrawl.png"
                 }, rootPath, HttpContext);
 
-                return await uploadHandler.ProcessAsync(fileServerUrl);
+                return await uploadHandler.ProcessAsync();
             }
             else if (actionStr == "uploadvideo")
             {
@@ -62,7 +62,7 @@ namespace Admin.WebAPI.Controllers
                     UploadFieldName = Config.GetString("videoFieldName", fileServerUrl)
                 }, rootPath, HttpContext);
 
-                return await uploadHandler.ProcessAsync(fileServerUrl);
+                return await uploadHandler.ProcessAsync();
             }
             else if (actionStr == "uploadfile")
             {
@@ -74,7 +74,7 @@ namespace Admin.WebAPI.Controllers
                     UploadFieldName = Config.GetString("fileFieldName", fileServerUrl)
                 }, rootPath, HttpContext);
 
-                return await uploadHandler.ProcessAsync(fileServerUrl);
+                return await uploadHandler.ProcessAsync();
             }
             else if (actionStr == "catchimage")
             {

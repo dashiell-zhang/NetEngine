@@ -13,7 +13,7 @@ namespace Repository.Tool.Tasks
     {
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await Task.Delay(500);
+            await Task.Delay(500, stoppingToken);
 
             Console.WriteLine();
 

@@ -15,7 +15,7 @@ namespace Site.Service
     public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, IFileService fileService) : IArticleService
     {
 
-        private long userId => userContext.UserId;
+        private long UserId => userContext.UserId;
 
 
         public async Task<DtoPageList<DtoCategory>> GetCategoryListAsync(DtoPageRequest request)
@@ -82,7 +82,7 @@ namespace Site.Service
             TCategory category = new()
             {
                 Id = idService.GetId(),
-                CreateUserId = userId,
+                CreateUserId = UserId,
                 Name = createCategory.Name,
                 ParentId = createCategory.ParentId,
                 Remarks = createCategory.Remarks,
@@ -126,7 +126,7 @@ namespace Site.Service
             if (category != null)
             {
                 category.IsDelete = true;
-                category.DeleteUserId = userId;
+                category.DeleteUserId = UserId;
 
                 await db.SaveChangesAsync();
 
@@ -202,7 +202,7 @@ namespace Site.Service
             TArticle article = new()
             {
                 Id = idService.GetId(),
-                CreateUserId = userId,
+                CreateUserId = UserId,
                 Title = createArticle.Title,
                 Content = createArticle.Content,
                 CategoryId = long.Parse(createArticle.CategoryId),
@@ -280,7 +280,7 @@ namespace Site.Service
             if (article != null)
             {
                 article.IsDelete = true;
-                article.DeleteUserId = userId;
+                article.DeleteUserId = UserId;
 
                 await db.SaveChangesAsync();
 

@@ -15,10 +15,9 @@ namespace WebAPI.Core.Libraries.Validators
                 {
                     if (!flagsEnumCheck())
                     {
-                        string errMsg = "";
-
                         var propertyName = context.ModelMetadata.PropertyName;
 
+                        string errMsg;
                         if (propertyName != null)
                         {
                             errMsg = $"The value {value} in field {propertyName} is invalid.";

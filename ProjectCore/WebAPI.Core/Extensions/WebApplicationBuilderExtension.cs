@@ -144,9 +144,8 @@ namespace WebAPI.Core.Extensions
             });
 
 
-            builder.Services.AddAuthorization(options =>
-            {
-                options.DefaultPolicy = new AuthorizationPolicyBuilder()
+            builder.Services.AddAuthorizationBuilder()
+                .SetDefaultPolicy(new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .RequireAssertion(async context =>
                     {
@@ -161,8 +160,7 @@ namespace WebAPI.Core.Extensions
                             return false;
                         }
                     })
-                    .Build();
-            });
+                    .Build());
             #endregion
 
 

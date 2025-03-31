@@ -46,7 +46,7 @@ namespace Pay.Service
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        notifyUrl = notifyUrl + mchId;
+                        notifyUrl += mchId;
 
                         var reqData = new
                         {
@@ -130,7 +130,7 @@ namespace Pay.Service
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        notifyUrl = notifyUrl + mchId;
+                        notifyUrl += mchId;
 
                         var reqData = new
                         {
@@ -208,7 +208,7 @@ namespace Pay.Service
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        notifyUrl = notifyUrl + mchId;
+                        notifyUrl += mchId;
 
                         var reqData = new
                         {
@@ -278,7 +278,7 @@ namespace Pay.Service
                     {
                         int price = Convert.ToInt32(order.Price * 100);
 
-                        notifyUrl = notifyUrl + mchId;
+                        notifyUrl += mchId;
 
                         var reqData = new
                         {

@@ -31,7 +31,7 @@ namespace Admin.WebAPI.Controllers
         /// <param name="id">栏目Id</param>
         /// <returns></returns>
         [HttpGet]
-        public Task<List<DtoCategorySelect>> GetCategorySelectList(long? id = null) => articleService.GetCategorySelectListAsync();
+        public Task<List<DtoCategorySelect>> GetCategorySelectList(long? id = null) => articleService.GetCategorySelectListAsync(id);
 
 
 

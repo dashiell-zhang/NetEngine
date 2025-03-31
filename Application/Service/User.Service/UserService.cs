@@ -19,12 +19,12 @@ namespace User.Service
     public class UserService(DatabaseContext db, IDistributedCache distributedCache, IUserContext userContext, IDistributedLock distLock, IdService idService) : IUserService
     {
 
-        private long userId => userContext.UserId;
+        private long UserId => userContext.UserId;
 
 
         public Task<DtoUser?> GetUserAsync(long? userId)
         {
-            userId ??= this.userId;
+            userId ??= this.UserId;
 
             var user = db.TUser.Where(t => t.Id == userId).Select(t => new DtoUser
             {
@@ -48,11 +48,11 @@ namespace User.Service
 
             if (string.IsNullOrEmpty(code) == false && code == request.SmsCode)
             {
-                var user = await db.TUser.Where(t => t.Id == userId).FirstOrDefaultAsync();
+                var user = await db.TUser.Where(t => t.Id == UserId).FirstOrDefaultAsync();
 
                 if (user != null)
                 {
-                    var checkPhone = await db.TUser.Where(t => t.Id != userId && t.Phone == request.NewPhone).CountAsync();
+                    var checkPhone = await db.TUser.Where(t => t.Id != UserId && t.Phone == request.NewPhone).CountAsync();
 
                     if (checkPhone == 0)
                     {
@@ -126,7 +126,7 @@ namespace User.Service
                             Phone = createUser.Phone
                         };
                         user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.Password, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                        user.CreateUserId = userId;
+                        user.CreateUserId = UserId;
 
                         user.Email = createUser.Email;
                         db.TUser.Add(user);
@@ -137,7 +137,7 @@ namespace User.Service
                             {
                                 Id = idService.GetId(),
                                 UserId = user.Id,
-                                CreateUserId = userId,
+                                CreateUserId = UserId,
                                 RoleId = item
                             };
 
@@ -173,7 +173,7 @@ namespace User.Service
 
                         if (user != null)
                         {
-                            user.UpdateUserId = this.userId;
+                            user.UpdateUserId = this.UserId;
 
                             user.Name = updateUser.Name;
                             user.UserName = updateUser.UserName;
@@ -196,7 +196,7 @@ namespace User.Service
                                 else
                                 {
                                     item.IsDelete = true;
-                                    item.DeleteUserId = this.userId;
+                                    item.DeleteUserId = this.UserId;
                                 }
                             }
 
@@ -206,7 +206,7 @@ namespace User.Service
                                 {
                                     Id = idService.GetId(),
                                     UserId = userId,
-                                    CreateUserId = this.userId,
+                                    CreateUserId = this.UserId,
                                     RoleId = item
                                 };
 
@@ -236,7 +236,7 @@ namespace User.Service
             if (user != null)
             {
                 user.IsDelete = true;
-                user.DeleteUserId = userId;
+                user.DeleteUserId = UserId;
 
                 await db.SaveChangesAsync();
 
@@ -288,7 +288,7 @@ namespace User.Service
                 if (functionAuthorize.Id == default)
                 {
                     functionAuthorize.Id = idService.GetId();
-                    functionAuthorize.CreateUserId = userId;
+                    functionAuthorize.CreateUserId = UserId;
 
                     functionAuthorize.FunctionId = setUserFunction.FunctionId;
                     functionAuthorize.UserId = setUserFunction.UserId;
@@ -309,7 +309,7 @@ namespace User.Service
                         foreach (var userFunction in userFunctionList)
                         {
                             userFunction.IsDelete = true;
-                            userFunction.DeleteUserId = userId;
+                            userFunction.DeleteUserId = UserId;
                         }
 
                         await db.SaveChangesAsync();
@@ -353,7 +353,7 @@ namespace User.Service
                     userRole = new TUserRole
                     {
                         Id = idService.GetId(),
-                        CreateUserId = userId,
+                        CreateUserId = UserId,
                         UserId = setUserRole.UserId,
                         RoleId = setUserRole.RoleId
                     };
@@ -368,7 +368,7 @@ namespace User.Service
                 if (userRole != null)
                 {
                     userRole.IsDelete = true;
-                    userRole.DeleteUserId = userId;
+                    userRole.DeleteUserId = UserId;
 
                     await db.SaveChangesAsync();
                 }

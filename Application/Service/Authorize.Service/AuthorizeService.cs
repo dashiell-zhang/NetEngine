@@ -26,7 +26,7 @@ namespace Authorize.Service
     public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, ISMS sms) : IAuthorizeService
     {
 
-        private long userId => userContext.UserId;
+        private long UserId => userContext.UserId;
 
 
         private readonly HttpClient httpClient = httpClientFactory.CreateClient();
@@ -205,9 +205,9 @@ namespace Authorize.Service
         public async Task<Dictionary<string, string>> GetFunctionListAsync(string? sign)
         {
 
-            var roleIds = await db.TUserRole.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
+            var roleIds = await db.TUserRole.AsNoTracking().Where(t => t.UserId == UserId).Select(t => t.RoleId).ToListAsync();
 
-            var query = db.TFunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == userId);
+            var query = db.TFunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == UserId);
 
             if (sign != null)
             {
@@ -328,7 +328,7 @@ namespace Authorize.Service
         public async Task<bool> UpdatePasswordByOldPasswordAsync(DtoUpdatePasswordByOldPassword updatePassword)
         {
 
-            var user = await db.TUser.Where(t => t.Id == userId).FirstOrDefaultAsync();
+            var user = await db.TUser.Where(t => t.Id == UserId).FirstOrDefaultAsync();
 
             if (user != null)
             {
@@ -361,7 +361,7 @@ namespace Authorize.Service
         public async Task<bool> UpdatePasswordBySMSAsync(DtoUpdatePasswordBySMS updatePassword)
         {
 
-            string phone = await db.TUser.Where(t => t.Id == userId).Select(t => t.Phone).FirstAsync();
+            string phone = await db.TUser.Where(t => t.Id == UserId).Select(t => t.Phone).FirstAsync();
 
             string key = "VerifyPhone_" + phone;
 
@@ -370,14 +370,14 @@ namespace Authorize.Service
 
             if (string.IsNullOrEmpty(code) == false && code == updatePassword.SmsCode)
             {
-                var user = await db.TUser.Where(t => t.Id == userId).FirstOrDefaultAsync();
+                var user = await db.TUser.Where(t => t.Id == UserId).FirstOrDefaultAsync();
 
                 if (user != null)
                 {
                     user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.NewPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                    user.UpdateUserId = userId;
+                    user.UpdateUserId = UserId;
 
-                    var tokenList = await db.TUserToken.Where(t => t.UserId == userId).ToListAsync();
+                    var tokenList = await db.TUserToken.Where(t => t.UserId == UserId).ToListAsync();
 
                     db.TUserToken.RemoveRange(tokenList);
 

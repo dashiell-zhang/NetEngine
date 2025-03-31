@@ -2,7 +2,7 @@ using StackExchange.Redis;
 
 namespace DistributedLock.Redis
 {
-    public class RedisLockHandle : IDisposable
+    public sealed class RedisLockHandle : IDisposable
     {
 
         public IDatabase Database { get; set; }

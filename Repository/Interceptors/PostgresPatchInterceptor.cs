@@ -23,7 +23,7 @@ namespace Repository.Interceptors
         }
 
 
-        private string GetNewCommandText(string commandText)
+        private static string GetNewCommandText(string commandText)
         {
             //分区表插入数据补丁（分区表在插入数据时，如果直接执行 RETURNING xmin;会返回 cannot retrieve a system column in this context，所以采用 oid(txid_current()) 修复
             if (commandText.Contains("INSERT INTO"))

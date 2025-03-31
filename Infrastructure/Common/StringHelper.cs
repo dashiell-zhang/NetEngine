@@ -12,9 +12,8 @@ namespace Common
     /// <summary>
     /// 针对string字符串常用操作方法
     /// </summary>
-    public class StringHelper
+    public partial class StringHelper
     {
-
 
 
         /// <summary>
@@ -30,7 +29,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 判断字符串中是否包含中文
         /// </summary>
@@ -38,7 +36,7 @@ namespace Common
         /// <returns></returns>
         public static bool IsContainsCN(string text)
         {
-            Regex reg = new(@"[\u4e00-\u9fa5]");//正则表达式
+            Regex reg = RegexIsContainsCN();//正则表达式
 
             if (reg.IsMatch(text))
             {
@@ -50,6 +48,8 @@ namespace Common
             }
         }
 
+        [GeneratedRegex(@"[\u4e00-\u9fa5]")]
+        private static partial Regex RegexIsContainsCN();
 
 
         /// <summary>
@@ -75,7 +75,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 过滤删除掉字符串中的 HTML 标签
         /// </summary>
@@ -86,63 +85,37 @@ namespace Common
             if (!string.IsNullOrEmpty(htmlText))
             {
                 //删除脚本
-                htmlText = Regex.Replace(htmlText, @"<script[^>]*?>.*?</script>", "",
-
-                RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml1().Replace(htmlText, "");
 
                 //删除HTML
 
-                htmlText = Regex.Replace(htmlText, @"<(.[^>]*)>", "",
+                htmlText = RegexRemoveHtml2().Replace(htmlText, "");
 
-                RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml3().Replace(htmlText, "");
 
-                htmlText = Regex.Replace(htmlText, @"([\r\n])[\s]+", "",
+                htmlText = RegexRemoveHtml4().Replace(htmlText, "");
 
-                RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml5().Replace(htmlText, "");
 
-                htmlText = Regex.Replace(htmlText, @"-->", "", RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml6().Replace(htmlText, "\"");
 
-                htmlText = Regex.Replace(htmlText, @"<!--.*", "", RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml7().Replace(htmlText, "&");
 
-                htmlText = Regex.Replace(htmlText, @"&(quot|#34);", "\"",
+                htmlText = RegexRemoveHtml8().Replace(htmlText, "<");
 
-                RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml9().Replace(htmlText, ">");
 
-                htmlText = Regex.Replace(htmlText, @"&(amp|#38);", "&",
+                htmlText = RegexRemoveHtml10().Replace(htmlText, " ");
 
-                RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml11().Replace(htmlText, "\xa1");
 
-                htmlText = Regex.Replace(htmlText, @"&(lt|#60);", "<",
+                htmlText = RegexRemoveHtml12().Replace(htmlText, "\xa2");
 
-                RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml13().Replace(htmlText, "\xa3");
 
-                htmlText = Regex.Replace(htmlText, @"&(gt|#62);", ">",
+                htmlText = RegexRemoveHtml14().Replace(htmlText, "\xa9");
 
-                RegexOptions.IgnoreCase);
-
-                htmlText = Regex.Replace(htmlText, @"&(nbsp|#160);", " ",
-
-                RegexOptions.IgnoreCase);
-
-                htmlText = Regex.Replace(htmlText, @"&(iexcl|#161);", "\xa1",
-
-                RegexOptions.IgnoreCase);
-
-                htmlText = Regex.Replace(htmlText, @"&(cent|#162);", "\xa2",
-
-                RegexOptions.IgnoreCase);
-
-                htmlText = Regex.Replace(htmlText, @"&(pound|#163);", "\xa3",
-
-                RegexOptions.IgnoreCase);
-
-                htmlText = Regex.Replace(htmlText, @"&(copy|#169);", "\xa9",
-
-                RegexOptions.IgnoreCase);
-
-                htmlText = Regex.Replace(htmlText, @"&#(\d+);", "",
-
-                RegexOptions.IgnoreCase);
+                htmlText = RegexRemoveHtml15().Replace(htmlText, "");
 
                 htmlText = htmlText.Replace("<", "");
 
@@ -160,6 +133,66 @@ namespace Common
             }
         }
 
+        #region RegexRemoveHtml
+
+        [GeneratedRegex(@"<script[^>]*?>.*?</script>", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml1();
+
+
+        [GeneratedRegex(@"<(.[^>]*)>", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml2();
+
+
+        [GeneratedRegex(@"([\r\n])[\s]+", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml3();
+
+
+        [GeneratedRegex(@"-->", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml4();
+
+
+        [GeneratedRegex(@"<!--.*", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml5();
+
+
+        [GeneratedRegex(@"&(quot|#34);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml6();
+
+
+        [GeneratedRegex(@"&(amp|#38);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml7();
+        [GeneratedRegex(@"&(lt|#60);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml8();
+
+
+        [GeneratedRegex(@"&(gt|#62);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml9();
+
+
+        [GeneratedRegex(@"&(nbsp|#160);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml10();
+
+
+        [GeneratedRegex(@"&(iexcl|#161);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml11();
+
+
+        [GeneratedRegex(@"&(cent|#162);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml12();
+
+
+        [GeneratedRegex(@"&(pound|#163);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml13();
+
+
+        [GeneratedRegex(@"&(copy|#169);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml14();
+
+
+        [GeneratedRegex(@"&#(\d+);", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex RegexRemoveHtml15();
+
+        #endregion
 
 
         /// <summary>
@@ -183,7 +216,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 对文本进行指定长度截取并添加省略号
         /// </summary>
@@ -203,7 +235,6 @@ namespace Common
                 return text;
             }
         }
-
 
 
         /// <summary>
@@ -258,8 +289,6 @@ namespace Common
         }
 
 
-
-
         /// <summary>
         /// 过滤删除掉字符串中的 数字
         /// </summary>
@@ -267,9 +296,11 @@ namespace Common
         /// <returns></returns>
         public static string RemoveNumber(string key)
         {
-            return Regex.Replace(key, @"\d", "");
+            return RegexRemoveNumber().Replace(key, "");
         }
 
+        [GeneratedRegex(@"\d")]
+        private static partial Regex RegexRemoveNumber();
 
 
         /// <summary>
@@ -279,9 +310,11 @@ namespace Common
         /// <returns></returns>
         public static string RemoveNotNumber(string key)
         {
-            return Regex.Replace(key, @"[^\d]*", "");
+            return RegexRemoveNotNumber().Replace(key, "");
         }
 
+        [GeneratedRegex(@"[^\d]*")]
+        private static partial Regex RegexRemoveNotNumber();
 
 
         /// <summary>
@@ -296,8 +329,6 @@ namespace Common
             }
             return Convert.ToBase64String(memoryStream.ToArray());
         }
-
-
 
 
         /// <summary>
@@ -315,7 +346,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 压缩GUID到22位的字符串
         /// </summary>
@@ -330,7 +360,6 @@ namespace Common
 
             return encoded[..22];
         }
-
 
 
         /// <summary>
@@ -359,8 +388,6 @@ namespace Common
 
             return result;
         }
-
-
 
 
         /// <summary>
@@ -420,8 +447,6 @@ namespace Common
         }
 
 
-
-
         /// <summary>
         /// 检查IPv4地址是否是局域网IP
         /// </summary>
@@ -453,7 +478,6 @@ namespace Common
             }
             return false;
         }
-
 
 
         /// <summary>
@@ -488,7 +512,6 @@ namespace Common
 
             return false;
         }
-
 
 
         /// <summary>
@@ -548,7 +571,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 检查IPv6地址是否在某个CIDR范围内
         /// </summary>
@@ -601,7 +623,6 @@ namespace Common
         }
 
 
-
         /// <summary>
         /// 替换模板字符串中的参数
         /// </summary>
@@ -629,5 +650,7 @@ namespace Common
                 }
             });
         }
+
+
     }
 }

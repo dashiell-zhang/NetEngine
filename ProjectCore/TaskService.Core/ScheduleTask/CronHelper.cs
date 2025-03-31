@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace TaskService.Core.ScheduleTask
 {
-    public class CronHelper
+    public partial class CronHelper
     {
 
 
@@ -70,7 +70,7 @@ namespace TaskService.Core.ScheduleTask
 
 
 
-        private class CronExpression
+        private partial class CronExpression
         {
 
             private const int Second = 0;
@@ -132,7 +132,7 @@ namespace TaskService.Core.ScheduleTask
             private static readonly char[] commaSeparator = [','];
 
 
-            private static readonly Regex regex = new("^L-[0-9]*[W]?", RegexOptions.Compiled);
+            private static readonly Regex regex = MyRegex();
 
 
             private static readonly TimeZoneInfo timeZoneInfo = TimeZoneInfo.Local;
@@ -1606,6 +1606,9 @@ namespace TaskService.Core.ScheduleTask
                 public int pos;
             }
 
+
+            [GeneratedRegex("^L-[0-9]*[W]?", RegexOptions.Compiled)]
+            private static partial Regex MyRegex();
         }
 
     }

@@ -7,7 +7,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
     /// <summary>
     /// PathFormater 的摘要说明
     /// </summary>
-    public static class PathFormatter
+    public static partial class PathFormatter
     {
         public static string Format(string originFileName, string pathFormat)
         {
@@ -16,14 +16,14 @@ namespace Admin.WebAPI.Libraries.Ueditor
                 pathFormat = "{filename}{rand:6}";
             }
 
-            Regex invalidPattern = new(@"[\\\/\:\*\?\042\<\>\|]");
+            Regex invalidPattern = MyRegex1();
             originFileName = invalidPattern.Replace(originFileName, "");
 
             string extension = Path.GetExtension(originFileName);
             string filename = Path.GetFileNameWithoutExtension(originFileName);
 
             pathFormat = pathFormat.Replace("{filename}", filename);
-            pathFormat = new Regex(@"\{rand(\:?)(\d+)\}", RegexOptions.Compiled).Replace(pathFormat, new MatchEvaluator(delegate (Match match)
+            pathFormat = MyRegex2().Replace(pathFormat, new MatchEvaluator(delegate (Match match)
             {
                 var digit = 6;
                 if (match.Groups.Count > 2)
@@ -45,6 +45,14 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
             return pathFormat + extension;
         }
+
+
+        [GeneratedRegex(@"[\\\/\:\*\?\042\<\>\|]")]
+        private static partial Regex MyRegex1();
+
+
+        [GeneratedRegex(@"\{rand(\:?)(\d+)\}", RegexOptions.Compiled)]
+        private static partial Regex MyRegex2();
     }
 
 }

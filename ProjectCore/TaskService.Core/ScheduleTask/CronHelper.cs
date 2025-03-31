@@ -4,13 +4,12 @@ using System.Text.RegularExpressions;
 
 namespace TaskService.Core.ScheduleTask
 {
-#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     public class CronHelper
     {
 
 
         /// <summary>
-        /// »ñÈ¡µ±Ç°Ê±¼äÖ®ºóÏÂÒ»´Î´¥·¢Ê±¼ä
+        /// è·å–å½“å‰æ—¶é—´ä¹‹åä¸‹ä¸€æ¬¡è§¦å‘æ—¶é—´
         /// </summary>
         /// <param name="cronExpression"></param>
         /// <returns></returns>
@@ -22,7 +21,7 @@ namespace TaskService.Core.ScheduleTask
 
 
         /// <summary>
-        /// »ñÈ¡¸ø¶¨Ê±¼äÖ®ºóÏÂÒ»´Î´¥·¢Ê±¼ä
+        /// è·å–ç»™å®šæ—¶é—´ä¹‹åä¸‹ä¸€æ¬¡è§¦å‘æ—¶é—´
         /// </summary>
         /// <param name="cronExpression"></param>
         /// <param name="afterTimeUtc"></param>
@@ -35,7 +34,7 @@ namespace TaskService.Core.ScheduleTask
 
 
         /// <summary>
-        /// »ñÈ¡µ±Ç°Ê±¼äÖ®ºóN´Î´¥·¢Ê±¼ä
+        /// è·å–å½“å‰æ—¶é—´ä¹‹åNæ¬¡è§¦å‘æ—¶é—´
         /// </summary>
         /// <param name="cronExpression"></param>
         /// <param name="count"></param>
@@ -48,7 +47,7 @@ namespace TaskService.Core.ScheduleTask
 
 
         /// <summary>
-        /// »ñÈ¡¸ø¶¨Ê±¼äÖ®ºóN´Î´¥·¢Ê±¼ä
+        /// è·å–ç»™å®šæ—¶é—´ä¹‹åNæ¬¡è§¦å‘æ—¶é—´
         /// </summary>
         /// <param name="cronExpression"></param>
         /// <param name="afterTimeUtc"></param>
@@ -138,7 +137,7 @@ namespace TaskService.Core.ScheduleTask
 
             private static readonly TimeZoneInfo timeZoneInfo = TimeZoneInfo.Local;
 
-            private static readonly object monthMapLock = new();
+            private static readonly Lock monthMapLock = new();
 
             public CronExpression(string cronExpression)
             {
@@ -174,7 +173,7 @@ namespace TaskService.Core.ScheduleTask
 
                 if (cronExpression == null)
                 {
-                    throw new ArgumentException("cronExpression ²»ÄÜÎª¿Õ");
+                    throw new ArgumentException("cronExpression ä¸èƒ½ä¸ºç©º");
                 }
 
                 CronExpressionString = CultureInfo.InvariantCulture.TextInfo.ToUpper(cronExpression);
@@ -186,7 +185,7 @@ namespace TaskService.Core.ScheduleTask
 
 
             /// <summary>
-            /// ¹¹½¨±í´ïÊ½
+            /// æ„å»ºè¡¨è¾¾å¼
             /// </summary>
             /// <param name="expression"></param>
             /// <exception cref="FormatException"></exception>
@@ -220,15 +219,15 @@ namespace TaskService.Core.ScheduleTask
 
                         if (exprOn == DayOfMonth && expr.Contains('L') && expr.Length > 1 && expr.Contains(','))
                         {
-                            throw new FormatException("²»Ö§³ÖÔÚÔÂ·İµÄÆäËûÈÕÆÚÖ¸¶¨¡°L¡±ºÍ¡°LW¡±");
+                            throw new FormatException("ä¸æ”¯æŒåœ¨æœˆä»½çš„å…¶ä»–æ—¥æœŸæŒ‡å®šâ€œLâ€å’Œâ€œLWâ€");
                         }
                         if (exprOn == DayOfWeek && expr.Contains('L') && expr.Length > 1 && expr.Contains(','))
                         {
-                            throw new FormatException("²»Ö§³ÖÔÚÒ»ÖÜµÄÆäËûÈÕÆÚÖ¸¶¨¡°L¡±");
+                            throw new FormatException("ä¸æ”¯æŒåœ¨ä¸€å‘¨çš„å…¶ä»–æ—¥æœŸæŒ‡å®šâ€œLâ€");
                         }
                         if (exprOn == DayOfWeek && expr.Contains('#') && expr.IndexOf('#', expr.IndexOf('#') + 1) != -1)
                         {
-                            throw new FormatException("²»Ö§³ÖÖ¸¶¨¶à¸ö¡°µÚN¡±Ìì¡£");
+                            throw new FormatException("ä¸æ”¯æŒæŒ‡å®šå¤šä¸ªâ€œç¬¬Nâ€å¤©ã€‚");
                         }
 
                         string[] vTok = expr.Split(commaSeparator);
@@ -242,7 +241,7 @@ namespace TaskService.Core.ScheduleTask
 
                     if (exprOn <= DayOfWeek)
                     {
-                        throw new FormatException("±í´ïÊ½ÒâÁÏÖ®ÍâµÄ½áÊø¡£");
+                        throw new FormatException("è¡¨è¾¾å¼æ„æ–™ä¹‹å¤–çš„ç»“æŸã€‚");
                     }
 
                     if (exprOn <= Year)
@@ -266,7 +265,7 @@ namespace TaskService.Core.ScheduleTask
                     }
                     else
                     {
-                        throw new FormatException("²»Ö§³ÖÍ¬Ê±Ö¸¶¨ĞÇÆÚºÍÈÕ²ÎÊı¡£");
+                        throw new FormatException("ä¸æ”¯æŒåŒæ—¶æŒ‡å®šæ˜ŸæœŸå’Œæ—¥å‚æ•°ã€‚");
                     }
                 }
                 catch (FormatException)
@@ -275,7 +274,7 @@ namespace TaskService.Core.ScheduleTask
                 }
                 catch (Exception e)
                 {
-                    throw new FormatException($"·Ç·¨µÄ cron ±í´ïÊ½¸ñÊ½ ({e.Message})", e);
+                    throw new FormatException($"éæ³•çš„ cron è¡¨è¾¾å¼æ ¼å¼ ({e.Message})", e);
                 }
             }
 
@@ -307,7 +306,7 @@ namespace TaskService.Core.ScheduleTask
                         sval = GetMonthNumber(sub) + 1;
                         if (sval <= 0)
                         {
-                            throw new FormatException($"ÎŞĞ§µÄÔÂ·İÖµ£º'{sub}'");
+                            throw new FormatException($"æ— æ•ˆçš„æœˆä»½å€¼ï¼š'{sub}'");
                         }
                         if (s.Length > i + 3)
                         {
@@ -320,7 +319,7 @@ namespace TaskService.Core.ScheduleTask
                                 if (eval <= 0)
                                 {
                                     throw new FormatException(
-                                        $"ÎŞĞ§µÄÔÂ·İÖµ£º '{sub}'");
+                                        $"æ— æ•ˆçš„æœˆä»½å€¼ï¼š '{sub}'");
                                 }
                             }
                         }
@@ -330,7 +329,7 @@ namespace TaskService.Core.ScheduleTask
                         sval = GetDayOfWeekNumber(sub);
                         if (sval < 0)
                         {
-                            throw new FormatException($"ÎŞĞ§µÄĞÇÆÚ¼¸Öµ£º '{sub}'");
+                            throw new FormatException($"æ— æ•ˆçš„æ˜ŸæœŸå‡ å€¼ï¼š '{sub}'");
                         }
                         if (s.Length > i + 3)
                         {
@@ -343,7 +342,7 @@ namespace TaskService.Core.ScheduleTask
                                 if (eval < 0)
                                 {
                                     throw new FormatException(
-                                        $"ÎŞĞ§µÄĞÇÆÚ¼¸Öµ£º '{sub}'");
+                                        $"æ— æ•ˆçš„æ˜ŸæœŸå‡ å€¼ï¼š '{sub}'");
                                 }
                             }
                             else if (c == '#')
@@ -354,12 +353,12 @@ namespace TaskService.Core.ScheduleTask
                                     nthdayOfWeek = Convert.ToInt32(s[i..], CultureInfo.InvariantCulture);
                                     if (nthdayOfWeek is < 1 or > 5)
                                     {
-                                        throw new FormatException("ÖÜµÄµÚnÌìĞ¡ÓÚ1»ò´óÓÚ5");
+                                        throw new FormatException("å‘¨çš„ç¬¬nå¤©å°äº1æˆ–å¤§äº5");
                                     }
                                 }
                                 catch (Exception)
                                 {
-                                    throw new FormatException("1 µ½ 5 Ö®¼äµÄÊıÖµ±ØĞë¸úÔÚ¡°#¡±Ñ¡ÏîºóÃæ");
+                                    throw new FormatException("1 åˆ° 5 ä¹‹é—´çš„æ•°å€¼å¿…é¡»è·Ÿåœ¨â€œ#â€é€‰é¡¹åé¢");
                                 }
                             }
                             else if (c == '/')
@@ -370,12 +369,12 @@ namespace TaskService.Core.ScheduleTask
                                     everyNthWeek = Convert.ToInt32(s[i..], CultureInfo.InvariantCulture);
                                     if (everyNthWeek is < 1 or > 5)
                                     {
-                                        throw new FormatException("Ã¿¸öĞÇÆÚ<1»ò>5");
+                                        throw new FormatException("æ¯ä¸ªæ˜ŸæœŸ<1æˆ–>5");
                                     }
                                 }
                                 catch (Exception)
                                 {
-                                    throw new FormatException("1 µ½ 5 Ö®¼äµÄÊıÖµ±ØĞë¸úÔÚ '/' Ñ¡ÏîºóÃæ");
+                                    throw new FormatException("1 åˆ° 5 ä¹‹é—´çš„æ•°å€¼å¿…é¡»è·Ÿåœ¨ '/' é€‰é¡¹åé¢");
                                 }
                             }
                             else if (c == 'L')
@@ -385,13 +384,13 @@ namespace TaskService.Core.ScheduleTask
                             }
                             else
                             {
-                                throw new FormatException($"´ËÎ»ÖÃµÄ·Ç·¨×Ö·û£º'{sub}'");
+                                throw new FormatException($"æ­¤ä½ç½®çš„éæ³•å­—ç¬¦ï¼š'{sub}'");
                             }
                         }
                     }
                     else
                     {
-                        throw new FormatException($"´ËÎ»ÖÃµÄ·Ç·¨×Ö·û£º'{sub}'");
+                        throw new FormatException($"æ­¤ä½ç½®çš„éæ³•å­—ç¬¦ï¼š'{sub}'");
                     }
                     if (eval != -1)
                     {
@@ -406,12 +405,12 @@ namespace TaskService.Core.ScheduleTask
                     i++;
                     if (i + 1 < s.Length && s[i] != ' ' && s[i + 1] != '\t')
                     {
-                        throw new FormatException("'?' ºóµÄ·Ç·¨×Ö·û: " + s[i]);
+                        throw new FormatException("'?' åçš„éæ³•å­—ç¬¦: " + s[i]);
                     }
                     if (type != DayOfWeek && type != DayOfMonth)
                     {
                         throw new FormatException(
-                            "'?' Ö»ÄÜÎªÔÂÈÕ»òÖÜÈÕÖ¸¶¨¡£");
+                            "'?' åªèƒ½ä¸ºæœˆæ—¥æˆ–å‘¨æ—¥æŒ‡å®šã€‚");
                     }
                     if (type == DayOfWeek && !lastdayOfMonth)
                     {
@@ -419,7 +418,7 @@ namespace TaskService.Core.ScheduleTask
                         if (val == NoSpecInt)
                         {
                             throw new FormatException(
-                                "'?' Ö»ÄÜÎªÔÂÈÕ»òÖÜÈÕÖ¸¶¨¡£");
+                                "'?' åªèƒ½ä¸ºæœˆæ—¥æˆ–å‘¨æ—¥æŒ‡å®šã€‚");
                         }
                     }
 
@@ -437,7 +436,7 @@ namespace TaskService.Core.ScheduleTask
                     }
                     if (c == '/' && (i + 1 >= s.Length || s[i + 1] == ' ' || s[i + 1] == '\t'))
                     {
-                        throw new FormatException("'/' ºóÃæ±ØĞë¸úÒ»¸öÕûÊı¡£");
+                        throw new FormatException("'/' åé¢å¿…é¡»è·Ÿä¸€ä¸ªæ•´æ•°ã€‚");
                     }
                     if (startsWithAsterisk)
                     {
@@ -450,7 +449,7 @@ namespace TaskService.Core.ScheduleTask
                         i++;
                         if (i >= s.Length)
                         {
-                            throw new FormatException("×Ö·û´®ÒâÍâ½áÊø¡£");
+                            throw new FormatException("å­—ç¬¦ä¸²æ„å¤–ç»“æŸã€‚");
                         }
 
                         incr = GetNumericValue(s, i);
@@ -466,7 +465,7 @@ namespace TaskService.Core.ScheduleTask
                     {
                         if (startsWithAsterisk)
                         {
-                            throw new FormatException("ĞÇºÅºóµÄ·Ç·¨×Ö·û£º" + s);
+                            throw new FormatException("æ˜Ÿå·åçš„éæ³•å­—ç¬¦ï¼š" + s);
                         }
                         incr = 1;
                     }
@@ -494,7 +493,7 @@ namespace TaskService.Core.ScheduleTask
                             lastdayOffset = vs.theValue;
                             if (lastdayOffset > 30)
                             {
-                                throw new FormatException("Óë×îºóÒ»ÌìµÄÆ«ÒÆÁ¿±ØĞë <= 30");
+                                throw new FormatException("ä¸æœ€åä¸€å¤©çš„åç§»é‡å¿…é¡» <= 30");
                             }
                             i = vs.pos;
                         }
@@ -533,7 +532,7 @@ namespace TaskService.Core.ScheduleTask
                 }
                 else
                 {
-                    throw new FormatException($"ÒâÍâ×Ö·û£º{c}");
+                    throw new FormatException($"æ„å¤–å­—ç¬¦ï¼š{c}");
                 }
 
                 return i;
@@ -546,23 +545,23 @@ namespace TaskService.Core.ScheduleTask
             {
                 if (incr > 59 && (type == Second || type == Minute))
                 {
-                    throw new FormatException($"ÔöÁ¿ > 60 : {incr}");
+                    throw new FormatException($"å¢é‡ > 60 : {incr}");
                 }
                 if (incr > 23 && type == Hour)
                 {
-                    throw new FormatException($"ÔöÁ¿ > 24 : {incr}");
+                    throw new FormatException($"å¢é‡ > 24 : {incr}");
                 }
                 if (incr > 31 && type == DayOfMonth)
                 {
-                    throw new FormatException($"ÔöÁ¿ > 31 : {incr}");
+                    throw new FormatException($"å¢é‡ > 31 : {incr}");
                 }
                 if (incr > 7 && type == DayOfWeek)
                 {
-                    throw new FormatException($"ÔöÁ¿ > 7 : {incr}");
+                    throw new FormatException($"å¢é‡ > 7 : {incr}");
                 }
                 if (incr > 12 && type == Month)
                 {
-                    throw new FormatException($"ÔöÁ¿ > 12 : {incr}");
+                    throw new FormatException($"å¢é‡ > 12 : {incr}");
                 }
             }
 
@@ -595,13 +594,13 @@ namespace TaskService.Core.ScheduleTask
                     {
                         if (val < 1 || val > 7)
                         {
-                            throw new FormatException("ĞÇÆÚÈÕÖµ±ØĞë½éÓÚ1ºÍ7Ö®¼ä");
+                            throw new FormatException("æ˜ŸæœŸæ—¥å€¼å¿…é¡»ä»‹äº1å’Œ7ä¹‹é—´");
                         }
                         lastdayOfWeek = true;
                     }
                     else
                     {
-                        throw new FormatException($"'L' Ñ¡ÏîÔÚÕâÀïÎŞĞ§¡£(Î»ÖÃ={i})");
+                        throw new FormatException($"'L' é€‰é¡¹åœ¨è¿™é‡Œæ— æ•ˆã€‚(ä½ç½®={i})");
                     }
                     var data = GetSet(type);
                     data.Add(val);
@@ -617,11 +616,11 @@ namespace TaskService.Core.ScheduleTask
                     }
                     else
                     {
-                        throw new FormatException($"'W' Ñ¡ÏîÔÚÕâÀïÎŞĞ§¡£ (Î»ÖÃ={i})");
+                        throw new FormatException($"'W' é€‰é¡¹åœ¨è¿™é‡Œæ— æ•ˆã€‚ (ä½ç½®={i})");
                     }
                     if (val > 31)
                     {
-                        throw new FormatException("'W' Ñ¡Ïî¶ÔÓÚ´óÓÚ 31 µÄÖµ£¨Ò»¸öÔÂÖĞµÄ×î´óÌìÊı£©Ã»ÓĞÒâÒå");
+                        throw new FormatException("'W' é€‰é¡¹å¯¹äºå¤§äº 31 çš„å€¼ï¼ˆä¸€ä¸ªæœˆä¸­çš„æœ€å¤§å¤©æ•°ï¼‰æ²¡æœ‰æ„ä¹‰");
                     }
 
                     var data = GetSet(type);
@@ -634,7 +633,7 @@ namespace TaskService.Core.ScheduleTask
                 {
                     if (type != DayOfWeek)
                     {
-                        throw new FormatException($"'#' Ñ¡ÏîÔÚÕâÀïÎŞĞ§¡£ (Î»ÖÃ={i})");
+                        throw new FormatException($"'#' é€‰é¡¹åœ¨è¿™é‡Œæ— æ•ˆã€‚ (ä½ç½®={i})");
                     }
                     i++;
                     try
@@ -642,12 +641,12 @@ namespace TaskService.Core.ScheduleTask
                         nthdayOfWeek = Convert.ToInt32(s[i..], CultureInfo.InvariantCulture);
                         if (nthdayOfWeek is < 1 or > 5)
                         {
-                            throw new FormatException("ÖÜµÄµÚnÌìĞ¡ÓÚ1»ò´óÓÚ5");
+                            throw new FormatException("å‘¨çš„ç¬¬nå¤©å°äº1æˆ–å¤§äº5");
                         }
                     }
                     catch (Exception)
                     {
-                        throw new FormatException("1 µ½ 5 Ö®¼äµÄÊıÖµ±ØĞë¸úÔÚ¡°#¡±Ñ¡ÏîºóÃæ");
+                        throw new FormatException("1 åˆ° 5 ä¹‹é—´çš„æ•°å€¼å¿…é¡»è·Ÿåœ¨â€œ#â€é€‰é¡¹åé¢");
                     }
 
                     var data = GetSet(type);
@@ -668,7 +667,7 @@ namespace TaskService.Core.ScheduleTask
                     }
                     else
                     {
-                        throw new FormatException($"'C' Ñ¡ÏîÔÚÕâÀïÎŞĞ§¡£(Î»ÖÃ={i})");
+                        throw new FormatException($"'C' é€‰é¡¹åœ¨è¿™é‡Œæ— æ•ˆã€‚(ä½ç½®={i})");
                     }
                     var data = GetSet(type);
                     data.Add(val);
@@ -727,7 +726,7 @@ namespace TaskService.Core.ScheduleTask
                 {
                     if (i + 1 >= s.Length || s[i + 1] == ' ' || s[i + 1] == '\t')
                     {
-                        throw new FormatException("\'/\' ºóÃæ±ØĞë¸úÒ»¸öÕûÊı¡£");
+                        throw new FormatException("\'/\' åé¢å¿…é¡»è·Ÿä¸€ä¸ªæ•´æ•°ã€‚");
                     }
 
                     i++;
@@ -750,7 +749,7 @@ namespace TaskService.Core.ScheduleTask
                         i = vs.pos;
                         return i;
                     }
-                    throw new FormatException($"ÒâÍâµÄ×Ö·û '{c}' ºó '/'");
+                    throw new FormatException($"æ„å¤–çš„å­—ç¬¦ '{c}' å '/'");
                 }
 
                 AddToSet(val, end, 0, type);
@@ -818,14 +817,14 @@ namespace TaskService.Core.ScheduleTask
                 {
                     if ((val < 0 || val > 59 || end > 59) && val != AllSpecInt)
                     {
-                        throw new FormatException("·ÖÖÓºÍÃëÖµ±ØĞë½éÓÚ0ºÍ59Ö®¼ä");
+                        throw new FormatException("åˆ†é’Ÿå’Œç§’å€¼å¿…é¡»ä»‹äº0å’Œ59ä¹‹é—´");
                     }
                 }
                 else if (type == Hour)
                 {
                     if ((val < 0 || val > 23 || end > 23) && val != AllSpecInt)
                     {
-                        throw new FormatException("Ğ¡Ê±Öµ±ØĞë½éÓÚ0ºÍ23Ö®¼ä");
+                        throw new FormatException("å°æ—¶å€¼å¿…é¡»ä»‹äº0å’Œ23ä¹‹é—´");
                     }
                 }
                 else if (type == DayOfMonth)
@@ -833,14 +832,14 @@ namespace TaskService.Core.ScheduleTask
                     if ((val < 1 || val > 31 || end > 31) && val != AllSpecInt
                         && val != NoSpecInt)
                     {
-                        throw new FormatException("ÔÂÈÕÖµ±ØĞë½éÓÚ1ºÍ31Ö®¼ä");
+                        throw new FormatException("æœˆæ—¥å€¼å¿…é¡»ä»‹äº1å’Œ31ä¹‹é—´");
                     }
                 }
                 else if (type == Month)
                 {
                     if ((val < 1 || val > 12 || end > 12) && val != AllSpecInt)
                     {
-                        throw new FormatException("ÔÂ·İÖµ±ØĞë½éÓÚ1ºÍ12Ö®¼ä");
+                        throw new FormatException("æœˆä»½å€¼å¿…é¡»ä»‹äº1å’Œ12ä¹‹é—´");
                     }
                 }
                 else if (type == DayOfWeek)
@@ -848,7 +847,7 @@ namespace TaskService.Core.ScheduleTask
                     if ((val == 0 || val > 7 || end > 7) && val != AllSpecInt
                         && val != NoSpecInt)
                     {
-                        throw new FormatException("ĞÇÆÚÈÕÖµ±ØĞë½éÓÚ1ºÍ7Ö®¼ä");
+                        throw new FormatException("æ˜ŸæœŸæ—¥å€¼å¿…é¡»ä»‹äº1å’Œ7ä¹‹é—´");
                     }
                 }
 
@@ -952,8 +951,8 @@ namespace TaskService.Core.ScheduleTask
                         Month => 12,
                         DayOfWeek => 7,
                         DayOfMonth => 31,
-                        Year => throw new ArgumentException("¿ªÊ¼Äê·İ±ØĞëĞ¡ÓÚÍ£Ö¹Äê·İ"),
-                        _ => throw new ArgumentException("Óöµ½ÒâÍâµÄÀàĞÍ"),
+                        Year => throw new ArgumentException("å¼€å§‹å¹´ä»½å¿…é¡»å°äºåœæ­¢å¹´ä»½"),
+                        _ => throw new ArgumentException("é‡åˆ°æ„å¤–çš„ç±»å‹"),
                     };
                     stopAt += max;
                 }
@@ -1082,24 +1081,24 @@ namespace TaskService.Core.ScheduleTask
 
 
             /// <summary>
-            /// ÔÚ¸ø¶¨Ê±¼äÖ®ºó»ñÈ¡ÏÂÒ»¸ö´¥·¢Ê±¼ä¡£
+            /// åœ¨ç»™å®šæ—¶é—´ä¹‹åè·å–ä¸‹ä¸€ä¸ªè§¦å‘æ—¶é—´ã€‚
             /// </summary>
-            /// <param name="afterTimeUtc">¿ªÊ¼ËÑË÷µÄ UTC Ê±¼ä¡£</param>
+            /// <param name="afterTimeUtc">å¼€å§‹æœç´¢çš„ UTC æ—¶é—´ã€‚</param>
             /// <returns></returns>
             public DateTimeOffset? GetTimeAfter(DateTimeOffset afterTimeUtc)
             {
 
-                // ÏòÇ°ÒÆ¶¯Ò»ÃëÖÓ£¬ÒòÎªÎÒÃÇÕıÔÚ¼ÆËãÊ±¼ä*Ö®ºó*
+                // å‘å‰ç§»åŠ¨ä¸€ç§’é’Ÿï¼Œå› ä¸ºæˆ‘ä»¬æ­£åœ¨è®¡ç®—æ—¶é—´*ä¹‹å*
                 afterTimeUtc = afterTimeUtc.AddSeconds(1);
 
-                // CronTrigger ²»´¦ÀíºÁÃë
+                // CronTrigger ä¸å¤„ç†æ¯«ç§’
                 DateTimeOffset d = CreateDateTimeWithoutMillis(afterTimeUtc);
 
-                // ¸ü¸ÄÎªÖ¸¶¨Ê±Çø
+                // æ›´æ”¹ä¸ºæŒ‡å®šæ—¶åŒº
                 d = TimeZoneInfo.ConvertTime(d, timeZoneInfo);
 
                 bool gotOne = false;
-                //Ñ­»·Ö±µ½ÎÒÃÇ¼ÆËã³öÏÂÒ»´Î£¬»òÕßÎÒÃÇÒÑ¾­¹ıÁË endTime
+                //å¾ªç¯ç›´åˆ°æˆ‘ä»¬è®¡ç®—å‡ºä¸‹ä¸€æ¬¡ï¼Œæˆ–è€…æˆ‘ä»¬å·²ç»è¿‡äº† endTime
                 while (!gotOne)
                 {
                     SortedSet<int> st;
@@ -1181,7 +1180,7 @@ namespace TaskService.Core.ScheduleTask
                     bool dayOfWSpec = !daysOfWeek.Contains(NoSpec);
                     if (dayOfMSpec && !dayOfWSpec)
                     {
-                        // ÖğÔÂ»ñÈ¡¹æÔò
+                        // é€æœˆè·å–è§„åˆ™
                         st = daysOfMonth.GetViewBetween(day, 9999999);
                         bool found = st.Count != 0;
                         if (lastdayOfMonth)
@@ -1198,7 +1197,7 @@ namespace TaskService.Core.ScheduleTask
                                     if (mon > 12)
                                     {
                                         mon = 1;
-                                        tmon = 3333; // È·±£ÏÂÃæµÄ mon != tmon ²âÊÔÊ§°Ü
+                                        tmon = 3333; // ç¡®ä¿ä¸‹é¢çš„ mon != tmon æµ‹è¯•å¤±è´¥
                                         d = d.AddYears(1);
                                     }
                                     day = 1;
@@ -1279,7 +1278,7 @@ namespace TaskService.Core.ScheduleTask
                             t = day;
                             day = st.First();
 
-                            //È·±£ÎÒÃÇ²»»áÔÚ¶ÌÊ±¼äÄÚÅÜµÃ¹ı¿ì£¬±ÈÈç¶şÔÂ
+                            //ç¡®ä¿æˆ‘ä»¬ä¸ä¼šåœ¨çŸ­æ—¶é—´å†…è·‘å¾—è¿‡å¿«ï¼Œæ¯”å¦‚äºŒæœˆ
                             int lastDay = GetLastDayOfMonth(mon, d.Year);
                             if (day > lastDay)
                             {
@@ -1301,8 +1300,8 @@ namespace TaskService.Core.ScheduleTask
                             }
                             else
                             {
-                                //ÕâÊÇÎªÁË±ÜÃâ´ÓÒ»¸öÔÂÒÆ¶¯Ê±³öÏÖ´íÎó
-                                //ÓĞ 30 »ò 31 Ììµ½Ò»¸öÔÂ¸üÉÙ¡£ µ¼ÖÂÊµÀı»¯ÎŞĞ§µÄÈÕÆÚÊ±¼ä¡£
+                                //è¿™æ˜¯ä¸ºäº†é¿å…ä»ä¸€ä¸ªæœˆç§»åŠ¨æ—¶å‡ºç°é”™è¯¯
+                                //æœ‰ 30 æˆ– 31 å¤©åˆ°ä¸€ä¸ªæœˆæ›´å°‘ã€‚ å¯¼è‡´å®ä¾‹åŒ–æ— æ•ˆçš„æ—¥æœŸæ—¶é—´ã€‚
                                 int lDay = DateTime.DaysInMonth(d.Year, mon);
                                 if (day <= lDay)
                                 {
@@ -1318,7 +1317,7 @@ namespace TaskService.Core.ScheduleTask
                     }
                     else if (dayOfWSpec && !dayOfMSpec)
                     {
-                        // »ñÈ¡ĞÇÆÚ¼¸¹æÔò
+                        // è·å–æ˜ŸæœŸå‡ è§„åˆ™
                         if (lastdayOfWeek)
                         {
 
@@ -1353,7 +1352,7 @@ namespace TaskService.Core.ScheduleTask
                                 continue;
                             }
 
-                            // ²éÕÒ±¾ÔÂÕâÒ»Ìì×îºóÒ»´Î³öÏÖµÄÈÕÆÚ...
+                            // æŸ¥æ‰¾æœ¬æœˆè¿™ä¸€å¤©æœ€åä¸€æ¬¡å‡ºç°çš„æ—¥æœŸ...
                             while (day + daysToAdd + 7 <= lDay)
                             {
                                 daysToAdd += 7;
@@ -1489,7 +1488,7 @@ namespace TaskService.Core.ScheduleTask
                     }
                     else
                     {
-                        throw new FormatException("²»Ö§³ÖÍ¬Ê±Ö¸¶¨ĞÇÆÚÈÕºÍÔÂÈÕ²ÎÊı¡£");
+                        throw new FormatException("ä¸æ”¯æŒåŒæ—¶æŒ‡å®šæ˜ŸæœŸæ—¥å’Œæœˆæ—¥å‚æ•°ã€‚");
                     }
 
                     d = new(d.Year, d.Month, day, d.Hour, d.Minute, d.Second, d.Offset);
@@ -1540,7 +1539,7 @@ namespace TaskService.Core.ScheduleTask
                     }
                     d = new(year, d.Month, d.Day, d.Hour, d.Minute, d.Second, d.Offset);
 
-                    //Îª´ËÈÕÆÚÓ¦ÓÃÊÊµ±µÄÆ«ÒÆÁ¿
+                    //ä¸ºæ­¤æ—¥æœŸåº”ç”¨é€‚å½“çš„åç§»é‡
                     d = new(d.DateTime, timeZoneInfo.BaseUtcOffset);
 
                     gotOne = true;

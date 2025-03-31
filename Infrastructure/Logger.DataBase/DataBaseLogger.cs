@@ -105,11 +105,7 @@ namespace Logger.DataBase
                         }
 
                         var logPath = Path.Combine(basePath, log.Id + ".log");
-
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                         File.WriteAllTextAsync(logPath, logStr, Encoding.UTF8);
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-
                     }
                 }
 

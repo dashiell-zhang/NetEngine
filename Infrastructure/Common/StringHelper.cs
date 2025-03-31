@@ -12,7 +12,6 @@ namespace Common
     /// <summary>
     /// 针对string字符串常用操作方法
     /// </summary>
-#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     public class StringHelper
     {
 

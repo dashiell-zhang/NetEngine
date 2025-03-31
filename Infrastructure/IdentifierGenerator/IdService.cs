@@ -82,7 +82,7 @@ namespace IdentifierGenerator
         private readonly long dataCenterIdShift;
         private readonly long timestampLeftShift;//时间戳左移动位数就是机器码+计数器总字节数+数据字节数
         private readonly long sequenceMask; //一微秒内可以产生计数，如果达到该值则等到下一微妙在进行生成
-        private readonly object syncRoot = new();//加锁对象
+        private readonly Lock syncRoot = new();//加锁对象
 
 
 

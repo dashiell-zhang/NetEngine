@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 
 namespace Admin.WebAPI.Libraries.Ueditor
@@ -7,7 +7,6 @@ namespace Admin.WebAPI.Libraries.Ueditor
     /// <summary>
     /// PathFormater 的摘要说明
     /// </summary>
-#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     public static class PathFormatter
     {
         public static string Format(string originFileName, string pathFormat)

@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Attributes;
@@ -26,7 +26,7 @@ namespace Repository.Tool.Tasks
 
             List<DBIndex> codeIndexList = [];
 
-            PropertyInfo[] dbSetList = db.GetType().GetProperties().Where(x => x.PropertyType.Name == "DbSet`1").ToArray();
+            PropertyInfo[] dbSetList = [.. db.GetType().GetProperties().Where(x => x.PropertyType.Name == "DbSet`1")];
 
 
             foreach (PropertyInfo dbSet in dbSetList)

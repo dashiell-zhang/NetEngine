@@ -1,4 +1,4 @@
-﻿using System.IO.Compression;
+using System.IO.Compression;
 using System.Net;
 using System.Numerics;
 using System.Reflection;
@@ -25,7 +25,7 @@ namespace Common
         /// <returns></returns>
         public static string RemovePunctuation(string text)
         {
-            text = new string(text.Where(c => !char.IsPunctuation(c)).ToArray());
+            text = new string([.. text.Where(c => !char.IsPunctuation(c))]);
 
             return text;
         }

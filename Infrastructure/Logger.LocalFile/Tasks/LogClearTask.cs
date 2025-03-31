@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Logger.LocalFile.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -23,7 +23,7 @@ namespace Logger.LocalFile.Tasks
 
                         if (Directory.Exists(basePath))
                         {
-                            List<string> logPaths = IOHelper.GetFolderAllFiles(basePath).ToList();
+                            List<string> logPaths = [.. IOHelper.GetFolderAllFiles(basePath)];
 
                             var deleteTime = DateTime.UtcNow.AddDays(-1 * saveDays);
 

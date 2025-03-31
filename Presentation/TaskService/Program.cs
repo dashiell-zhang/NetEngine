@@ -146,7 +146,7 @@ namespace TaskService
 
                     #endregion
 
-                    initSingletonServiceTypes = services.Where(t => t.Lifetime == ServiceLifetime.Singleton && t.ServiceType.ContainsGenericParameters == false).Select(t => t.ServiceType).ToList();
+                    initSingletonServiceTypes = [.. services.Where(t => t.Lifetime == ServiceLifetime.Singleton && t.ServiceType.ContainsGenericParameters == false).Select(t => t.ServiceType)];
                 })
                 .Build();
 

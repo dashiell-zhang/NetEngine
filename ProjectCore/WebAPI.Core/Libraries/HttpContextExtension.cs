@@ -33,7 +33,7 @@ namespace WebAPI.Core.Libraries
         /// <returns></returns>
         public static string GetRemoteIP(this HttpContext httpContext)
         {
-            string[] headerKeys = { "x-original-forwarded-for", "x-forwarded-for" };
+            string[] headerKeys = ["x-original-forwarded-for", "x-forwarded-for"];
 
             foreach (var headerKey in headerKeys)
             {

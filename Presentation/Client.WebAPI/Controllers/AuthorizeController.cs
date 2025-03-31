@@ -176,7 +176,7 @@ namespace Client.WebAPI.Controllers
             }
 
 
-            actionList = actionList.Where(t => t.IsAuthorize == true).Distinct().ToList();
+            actionList = [.. actionList.Where(t => t.IsAuthorize == true).Distinct()];
 
 
             var functionRoutes = await db.TFunctionRoute.Where(t => t.Module == projectName).ToListAsync();

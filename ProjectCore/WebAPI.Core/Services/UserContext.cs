@@ -1,4 +1,4 @@
-﻿using Authorize.Interface;
+using Authorize.Interface;
 using Common;
 using System.Security.Claims;
 
@@ -47,7 +47,7 @@ namespace WebAPI.Core.Services
             });
 
             _claims = new Lazy<IEnumerable<Claim>>(() =>
-                _httpContextAccessor.HttpContext?.User.Claims ?? Enumerable.Empty<Claim>());
+                _httpContextAccessor.HttpContext?.User.Claims ?? []);
         }
 
 

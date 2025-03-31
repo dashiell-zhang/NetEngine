@@ -47,7 +47,7 @@ namespace SMS.TencentCloud
 
                     Sign = signName,
 
-                    PhoneNumberSet = new string[] { "+86" + phone },
+                    PhoneNumberSet = ["+86" + phone],
 
                     TemplateID = templateCode,
 

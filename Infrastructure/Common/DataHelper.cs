@@ -612,7 +612,7 @@ namespace Common
         /// <returns></returns>
         public static byte[] ListToExcel<T>(List<T> list, ExcelTemplate excelTemplate) where T : notnull, new()
         {
-            XSSFWorkbook book = new XSSFWorkbook();
+            XSSFWorkbook book = new();
             ISheet sheet = book.CreateSheet("Sheet1");
 
             // 添加表头
@@ -677,7 +677,7 @@ namespace Common
                 rowIndex++;
             }
 
-            using MemoryStream ms = new MemoryStream();
+            using MemoryStream ms = new();
             book.Write(ms);
             return ms.ToArray();
 

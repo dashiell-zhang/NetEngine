@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Repository.Attributes;
 using Repository.Bases;
@@ -161,7 +161,7 @@ namespace Repository.Database
             {
 
                 //添加全局过滤器
-                globalHasQueryFilter.MakeGenericMethod(entity.ClrType).Invoke(null, new object[] { modelBuilder });
+                globalHasQueryFilter.MakeGenericMethod(entity.ClrType).Invoke(null, [modelBuilder]);
 
 #if DEBUG
                 //关闭表外键的级联删除功能

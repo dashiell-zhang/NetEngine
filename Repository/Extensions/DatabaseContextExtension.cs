@@ -238,11 +238,11 @@ namespace Repository.Extensions
 
                             if (deviceMark == null)
                             {
-                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "DeviceMark" })!.ToString()!;
+                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, ["DeviceMark"])!.ToString()!;
 
                                 if (deviceMark == "")
                                 {
-                                    deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { "User-Agent" })!.ToString()!;
+                                    deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, ["User-Agent"])!.ToString()!;
                                 }
                             }
                         }

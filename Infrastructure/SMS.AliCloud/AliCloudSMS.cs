@@ -41,7 +41,7 @@ namespace SMS.AliCloud
                     TemplateParam = templateParamsJson,
                 };
 
-                AlibabaCloud.TeaUtil.Models.RuntimeOptions runtime = new AlibabaCloud.TeaUtil.Models.RuntimeOptions();
+                AlibabaCloud.TeaUtil.Models.RuntimeOptions runtime = new();
 
 
                 await client.SendSmsAsync(sendSmsRequest);

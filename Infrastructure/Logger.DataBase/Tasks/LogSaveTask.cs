@@ -19,7 +19,7 @@ namespace Logger.DataBase.Tasks
 
                     if (Directory.Exists(basePath))
                     {
-                        List<string> logPaths = IOHelper.GetFolderAllFiles(basePath).Take(10).ToList();
+                        List<string> logPaths = [.. IOHelper.GetFolderAllFiles(basePath).Take(10)];
 
                         if (logPaths.Count != 0)
                         {

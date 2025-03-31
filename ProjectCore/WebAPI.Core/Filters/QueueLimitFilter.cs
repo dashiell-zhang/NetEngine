@@ -44,12 +44,13 @@ namespace WebAPI.Core.Filters
         public bool IsReusable => false;
         public IFilterMetadata CreateInstance(IServiceProvider serviceProvider)
         {
-            QueueLimitFilterAction queueLimitFilterAction = new();
-
-            queueLimitFilterAction.IsUseParameter = IsUseParameter;
-            queueLimitFilterAction.IsUseToken = IsUseToken;
-            queueLimitFilterAction.IsBlock = IsBlock;
-            queueLimitFilterAction.Expiry = Expiry;
+            QueueLimitFilterAction queueLimitFilterAction = new()
+            {
+                IsUseParameter = IsUseParameter,
+                IsUseToken = IsUseToken,
+                IsBlock = IsBlock,
+                Expiry = Expiry
+            };
 
             return queueLimitFilterAction;
         }

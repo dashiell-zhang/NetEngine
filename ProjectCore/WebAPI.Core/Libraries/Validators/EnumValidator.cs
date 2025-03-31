@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace WebAPI.Core.Libraries.Validators
 {
@@ -58,7 +58,7 @@ namespace WebAPI.Core.Libraries.Validators
                 }
             }
 
-            return Enumerable.Empty<ModelValidationResult>();
+            return [];
         }
     }
 }

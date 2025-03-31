@@ -58,7 +58,7 @@ namespace Basic.Service
 
         public async Task<Dictionary<string, string>> GetValueListAsync(long groupId)
         {
-            Dictionary<string, string> keyValuePairs = new();
+            Dictionary<string, string> keyValuePairs = [];
 
             var list = await db.TAppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new
             {

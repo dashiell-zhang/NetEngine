@@ -1,4 +1,4 @@
-﻿using SkiaSharp;
+using SkiaSharp;
 using SkiaSharp.QrCode;
 
 namespace Common
@@ -93,7 +93,7 @@ namespace Common
             float x = horizontalOffset;
             float y = height * 0.86f;  // 基线位置
 
-            List<SKColor> vibrantColors = new List<SKColor> {
+            List<SKColor> vibrantColors = [
                 SKColors.Red,          // 红色
                 SKColors.Lime,         // 酸橙色
                 SKColors.Fuchsia,      // 紫红色
@@ -101,7 +101,7 @@ namespace Common
                 SKColors.OrangeRed,    // 橙红色
                 SKColors.DeepPink,     // 深粉红色
                 SKColors.DodgerBlue    // 道奇蓝
-            };
+            ];
 
             for (int i = 0; i < text.Length; i++)
             {

@@ -26,7 +26,7 @@ namespace Admin.WebAPI.Libraries.Ueditor
 
             var fileStorage = httpContext.RequestServices.GetService<IFileStorage>();
 
-            List<Crawler> Crawlers = new();
+            List<Crawler> Crawlers = [];
 
             foreach (var x in Sources)
             {

@@ -40,7 +40,7 @@ namespace WebAPI.Core.Extensions
 
                     if (certConf.Value != null)
                     {
-                        X509Certificate2Collection x509Certificate2s = new();
+                        X509Certificate2Collection x509Certificate2s = [];
 
                         var sslPath = certConf.GetValue<string>("Path")!;
 

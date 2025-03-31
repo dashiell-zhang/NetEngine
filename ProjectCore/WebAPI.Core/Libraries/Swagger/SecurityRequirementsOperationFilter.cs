@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -14,8 +14,8 @@ namespace WebAPI.Core.Libraries.Swagger
 
             if (isHaveAuthorize && !isHaveAllowAnonymous)
             {
-                operation.Security = new List<OpenApiSecurityRequirement>
-                {
+                operation.Security =
+                [
                     new() {
                         {
                             new OpenApiSecurityScheme
@@ -29,7 +29,7 @@ namespace WebAPI.Core.Libraries.Swagger
                             Array.Empty<string>()
                         }
                     }
-                };
+                ];
             }
         }
     }

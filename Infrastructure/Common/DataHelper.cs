@@ -1,4 +1,4 @@
-﻿using NPOI.HSSF.UserModel;
+using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System.ComponentModel;
@@ -20,12 +20,12 @@ namespace Common
         {
             if (table.Rows.Count == 0)
             {
-                return new List<T>();
+                return [];
             }
             else
             {
 
-                List<T> list = new();
+                List<T> list = [];
                 foreach (DataRow dr in table.Rows)
                 {
                     T model = Activator.CreateInstance<T>();
@@ -151,12 +151,12 @@ namespace Common
         {
             if (table.Rows.Count == 0)
             {
-                return new List<T>();
+                return [];
             }
             else
             {
 
-                List<T> list = new();
+                List<T> list = [];
 
                 foreach (DataRow dr in table.Rows)
                 {

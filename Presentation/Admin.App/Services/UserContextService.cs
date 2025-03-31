@@ -41,7 +41,7 @@ namespace Admin.App.Services
             {
                 var retList = await _httpClient.GetFromJsonAsync<Dictionary<string, string>>("Authorize/GetFunctionList", JsonHelper.DeserializeOpts);
 
-                retList ??= new();
+                retList ??= [];
 
                 var functionList = retList.Select(t => t.Key).ToList();
 

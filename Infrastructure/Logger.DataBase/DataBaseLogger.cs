@@ -1,10 +1,10 @@
 using Common;
 using IdentifierGenerator;
 using Logger.DataBase.Models;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
+using System.Diagnostics;
 using System.Text;
 
 namespace Logger.DataBase
@@ -37,27 +37,30 @@ namespace Logger.DataBase
                     {
                         if (categoryName.StartsWith("Microsoft.EntityFrameworkCore"))
                         {
-                            var stackTrace = new System.Diagnostics.StackTrace(true);
+                            var stackTrace = new StackTrace(true);
                             var frames = stackTrace.GetFrames();
 
                             var relevantFrames = frames?.Where(t => t.GetFileName() != null).ToList();
 
-                            var relevantFrame = relevantFrames?[1];
-
-                            if (relevantFrame != null)
+                            if (relevantFrames?.Count > 1)
                             {
-                                var logMsg = new
-                                {
-                                    message = logContent,
-                                    stackFrame = new
-                                    {
-                                        fullName = relevantFrame.GetMethod()!.DeclaringType!.FullName,
-                                        methodName = relevantFrame.GetMethod()!.Name,
-                                        src = $"{relevantFrame.GetFileName()}:line {relevantFrame.GetFileLineNumber()}"
-                                    }
-                                };
+                                var relevantFrame = relevantFrames[1];
 
-                                logContent = JsonHelper.ObjectToJson(logMsg);
+                                if (relevantFrame != null)
+                                {
+                                    var logMsg = new
+                                    {
+                                        message = logContent,
+                                        stackFrame = new
+                                        {
+                                            fullName = relevantFrame.GetMethod()?.DeclaringType?.FullName,
+                                            methodName = relevantFrame.GetMethod()?.Name,
+                                            src = $"{relevantFrame.GetFileName()}:line {relevantFrame.GetFileLineNumber()}"
+                                        }
+                                    };
+
+                                    logContent = JsonHelper.ObjectToJson(logMsg);
+                                }
                             }
                         }
 

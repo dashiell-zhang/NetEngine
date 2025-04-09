@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 
@@ -186,6 +186,26 @@ namespace Common
             return new DateTimeOffset(dateTimeOffset.DateTime.Date, dateTimeOffset.Offset);
         }
 
+
+
+        /// <summary>
+        /// 获取GuidV7中的时间信息
+        /// </summary>
+        /// <param name="guid"></param>
+        /// <returns></returns>
+        public static DateTimeOffset GetTimeFromGuidV7(Guid guid)
+        {
+            // 将GUID转换为字符串，这样可以获得标准格式
+            string guidString = guid.ToString("N");
+
+            // 从字符串中提取前12个字符（对应前6个字节）
+            string timestampHex = guidString.Substring(0, 12);
+
+            // 将十六进制字符串转换为长整型
+            long timestamp = Convert.ToInt64(timestampHex, 16);
+
+            return DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
+        }
 
     }
 }

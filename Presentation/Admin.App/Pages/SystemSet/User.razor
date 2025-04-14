@@ -108,7 +108,7 @@
 
             <FormItem>
                 <Text>密码</Text>
-                <InputPassword Placeholder="请输入密码" Type="InputType.Password" @bind-Value="@context.Password" VisibilityToggle="false" />
+                <InputPassword Placeholder="请输入密码" Type="InputType.Password" @bind-Value="@context.Password" ReadOnly=isReadOnly OnFocus="()=> isReadOnly=false" VisibilityToggle="false" />
             </FormItem>
 
             <Row Gutter="24">
@@ -145,6 +145,8 @@
 
 
 @code {
+
+    bool isReadOnly = true;
 
     List<string> functionList = new();
 
@@ -225,7 +227,6 @@
             using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/CreateUser", editUser, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
-                var createUserId = httpResponse.Content.ReadAsStringAsync().Result;
                 Message.Success("添加成功");
                 isShowEditUser = false;
             }
@@ -235,14 +236,9 @@
             using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
-                var updateUserRet = httpResponse.Content.ReadAsStringAsync().Result;
+                Message.Success("编辑成功");
 
-                if (bool.Parse(updateUserRet))
-                {
-                    Message.Success("编辑成功");
-
-                    isShowEditUser = false;
-                }
+                isShowEditUser = false;
             }
         }
 
@@ -286,13 +282,8 @@
         using var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (Convert.ToBoolean(retValue))
-            {
-                GetUserList();
-                Message.Success("删除成功");
-            }
+            GetUserList();
+            Message.Success("删除成功");
         }
     }
 
@@ -326,16 +317,7 @@
         using var httpResponse = await Http.PostAsJsonAsync<DtoSetUserFunction>("User/SetUserFunction", setUserFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
-            var ret = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (bool.Parse(ret))
-            {
-                Message.Success("设置成功");
-            }
-            else
-            {
-                userFunction.IsCheck = !isCheck;
-            }
+            Message.Success("设置成功");
         }
         else
         {

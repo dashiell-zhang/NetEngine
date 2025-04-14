@@ -210,8 +210,6 @@
             using var httpResponse = await Http.PostAsJsonAsync<DtoEditRole>("Role/CreateRole", editRole, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
-                var createRoleId = httpResponse.Content.ReadAsStringAsync().Result;
-
                 Message.Success("添加成功");
             }
         }
@@ -220,12 +218,7 @@
             using var httpResponse = await Http.PostAsJsonAsync<DtoEditRole>("Role/UpdateRole?roleId=" + roleId, editRole, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
-                var updateLinkRet = httpResponse.Content.ReadAsStringAsync().Result;
-
-                if (bool.Parse(updateLinkRet))
-                {
-                    Message.Success("编辑成功");
-                }
+                Message.Success("编辑成功");
             }
         }
         saveLoading = false;
@@ -240,13 +233,8 @@
         using var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (Convert.ToBoolean(retValue))
-            {
-                GetRoleList();
-                Message.Success("删除成功");
-            }
+            GetRoleList();
+            Message.Success("删除成功");
         }
     }
 
@@ -280,12 +268,7 @@
         using var httpResponse = await Http.PostAsJsonAsync<DtoSetRoleFunction>("Role/SetRoleFunction", setRoleFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
-            var ret = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (bool.Parse(ret))
-            {
-                Message.Success("设置成功");
-            }
+            Message.Success("设置成功");
         }
     }
 

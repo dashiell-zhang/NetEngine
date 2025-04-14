@@ -23,7 +23,6 @@ namespace Admin.App.Libraries
                 //启用驼峰格式
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-            SerializeOpts.Converters.Add(new DateTimeConverter());
             SerializeOpts.Converters.Add(new DateTimeOffsetConverter());
             SerializeOpts.Converters.Add(new LongConverter());
 
@@ -33,7 +32,6 @@ namespace Admin.App.Libraries
                 //启用大小写不敏感
                 PropertyNameCaseInsensitive = true
             };
-            DeserializeOpts.Converters.Add(new DateTimeConverter());
             DeserializeOpts.Converters.Add(new DateTimeOffsetConverter());
             DeserializeOpts.Converters.Add(new LongConverter());
         }

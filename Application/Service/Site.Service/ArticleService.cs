@@ -112,10 +112,9 @@ namespace Site.Service
 
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            throw new CustomException("无效的 categoryId");
+           
         }
 
 
@@ -266,10 +265,8 @@ namespace Site.Service
 
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            throw new CustomException("无效的 articleId");
         }
 
 
@@ -283,14 +280,9 @@ namespace Site.Service
                 article.DeleteUserId = UserId;
 
                 await db.SaveChangesAsync();
-
-                return true;
-            }
-            else
-            {
-                return false;
             }
 
+            return true;
         }
 
     }

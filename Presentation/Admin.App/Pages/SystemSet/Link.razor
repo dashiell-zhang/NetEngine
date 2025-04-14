@@ -178,8 +178,6 @@
             using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/CreateLink", editLink, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
-                var createLinkId = httpResponse.Content.ReadAsStringAsync().Result;
-
                 Message.Success("添加成功");
             }
         }
@@ -188,12 +186,7 @@
             using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
-                var updateLinkRet = httpResponse.Content.ReadAsStringAsync().Result;
-
-                if (bool.Parse(updateLinkRet))
-                {
-                    Message.Success("编辑成功");
-                }
+                Message.Success("编辑成功");
             }
         }
         saveLoading = false;
@@ -208,13 +201,8 @@
         using var httpResponse = await Http.DeleteAsync("Link/DeleteLink?id=" + linkId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (Convert.ToBoolean(retValue))
-            {
-                GetLinkList();
-                Message.Success("删除成功");
-            }
+            GetLinkList();
+            Message.Success("删除成功");
         }
     }
 

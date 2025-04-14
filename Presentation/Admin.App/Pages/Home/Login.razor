@@ -77,7 +77,7 @@
 
         if (httpResponse.IsSuccessStatusCode)
         {
-            var token = httpResponse.Content.ReadAsStringAsync().Result;
+            var token = await httpResponse.Content.ReadAsStringAsync();
             LocalStorage.SetItemAsString("Authorization", token);
             NavigationManager.NavigateTo("", true);
         }

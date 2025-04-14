@@ -151,7 +151,6 @@ namespace User.Service
                 }
             }
             throw new CustomException("用户名已被占用,无法保存");
-
         }
 
 
@@ -219,7 +218,7 @@ namespace User.Service
                         }
                         else
                         {
-                            return false;
+                            throw new CustomException("无效的UserId");
                         }
                     }
                 }
@@ -239,13 +238,9 @@ namespace User.Service
                 user.DeleteUserId = UserId;
 
                 await db.SaveChangesAsync();
+            }
 
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return true;
         }
 
 
@@ -324,7 +319,6 @@ namespace User.Service
             }
 
             return true;
-
         }
 
 

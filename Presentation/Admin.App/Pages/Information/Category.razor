@@ -257,8 +257,6 @@
             using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
-                var createCategoryId = httpResponse.Content.ReadAsStringAsync().Result;
-
                 Message.Success("添加成功");
             }
         }
@@ -268,12 +266,7 @@
 
             if (httpResponse.IsSuccessStatusCode)
             {
-                var updateCategoryRet = httpResponse.Content.ReadAsStringAsync().Result;
-
-                if (bool.Parse(updateCategoryRet))
-                {
-                    Message.Success("编辑成功");
-                }
+                Message.Success("编辑成功");
             }
         }
 
@@ -289,13 +282,8 @@
         using var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (Convert.ToBoolean(retValue))
-            {
-                GetCategoryList();
-                Message.Success("删除成功");
-            }
+            GetCategoryList();
+            Message.Success("删除成功");
         }
     }
 

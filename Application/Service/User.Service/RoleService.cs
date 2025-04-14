@@ -134,15 +134,10 @@ namespace User.Service
             if (role != null)
             {
                 role.IsDelete = true;
-
                 await db.SaveChangesAsync();
+            }
 
-                return true;
-            }
-            else
-            {
-                throw new CustomException("角色不存在或已被删除！");
-            }
+            return true;
         }
 
 

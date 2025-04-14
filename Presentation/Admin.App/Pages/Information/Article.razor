@@ -43,9 +43,9 @@
                         {
                             <SpaceItem>
                                 <Popconfirm Title="确认要删除吗？"
-                                OnConfirm="_=>DeleteArticle(context.Id)"
-                                OkText="Yes"
-                                CancelText="No">
+                                            OnConfirm="_=>DeleteArticle(context.Id)"
+                                            OkText="Yes"
+                                            CancelText="No">
                                     <a style="color:red">删除</a>
                                 </Popconfirm>
 
@@ -235,7 +235,9 @@
 
             if (httpResponse.IsSuccessStatusCode)
             {
-                string fileId = httpResponse.Content.ReadAsStringAsync().Result.Replace("\"", "");
+                var content = await httpResponse.Content.ReadAsStringAsync();
+
+                string fileId = content.Replace("\"", "");
 
                 byte[] newImageArray;
 
@@ -446,8 +448,6 @@
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    var createArticleId = httpResponse.Content.ReadAsStringAsync().Result;
-
                     Message.Success("添加成功");
                 }
             }
@@ -456,12 +456,7 @@
                 using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.SerializeOpts);
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    var updateArticleRet = httpResponse.Content.ReadAsStringAsync().Result;
-
-                    if (bool.Parse(updateArticleRet))
-                    {
-                        Message.Success("编辑成功");
-                    }
+                    Message.Success("编辑成功");
                 }
             }
 
@@ -479,13 +474,8 @@
         using var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            var retValue = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (Convert.ToBoolean(retValue))
-            {
-                GetArticleList();
-                Message.Success("删除成功");
-            }
+            GetArticleList();
+            Message.Success("删除成功");
         }
     }
 

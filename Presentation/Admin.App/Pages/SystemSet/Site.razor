@@ -90,12 +90,7 @@
         using var httpResponse = await Http.PostAsJsonAsync<DtoSite>("Site/EditSite", editSite, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
-            var editSiteRet = httpResponse.Content.ReadAsStringAsync().Result;
-
-            if (bool.Parse(editSiteRet))
-            {
-                Message.Success("保存成功");
-            }
+            Message.Success("保存成功");
         }
 
         saveLoading = false;

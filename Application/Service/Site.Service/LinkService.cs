@@ -85,9 +85,12 @@ namespace Site.Service
                 link.Sort = updateLink.Sort;
 
                 await db.SaveChangesAsync();
+
+                return true;
             }
 
-            return true;
+            throw new CustomException("无效的 linkId");
+
         }
 
 
@@ -102,12 +105,8 @@ namespace Site.Service
 
                 await db.SaveChangesAsync();
 
-                return true;
             }
-            else
-            {
-                return false;
-            }
+            return true;
         }
 
     }

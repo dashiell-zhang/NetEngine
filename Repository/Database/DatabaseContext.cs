@@ -353,6 +353,14 @@ namespace Repository.Database
         }
 
 
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            PreprocessingChangeTracker();
+
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+
         #region Json列映射逻辑
 
         private class JsonColumnOwnedNavigation

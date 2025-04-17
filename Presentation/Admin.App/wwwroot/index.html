@@ -16,11 +16,11 @@
     <script src="js/ueditor/ueditor.all.js"></script>
 
     <script>
-        function CreateObjectURL(fileArray, contentType) {
+        function CreateObjectUrl(fileArray, contentType) {
             return URL.createObjectURL(new Blob([fileArray], { type: contentType }))
         }
 
-        function RevokeObjectURL(objectUrl) {
+        function RevokeObjectUrl(objectUrl) {
             URL.revokeObjectURL(objectUrl)
         }
     </script>

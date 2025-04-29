@@ -1,11 +1,11 @@
-﻿using Repository.Bases;
+using Repository.Bases;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database.Bases
 {
 
     /// <summary>
-    /// 创建，编辑，删除，并关联了用户
+    /// 创建，删除，并关联了用户
     /// </summary>
     public class CD_User : CD
     {

@@ -199,7 +199,7 @@ namespace Common
             string guidString = guid.ToString("N");
 
             // 从字符串中提取前12个字符（对应前6个字节）
-            string timestampHex = guidString.Substring(0, 12);
+            string timestampHex = guidString[..12];
 
             // 将十六进制字符串转换为长整型
             long timestamp = Convert.ToInt64(timestampHex, 16);

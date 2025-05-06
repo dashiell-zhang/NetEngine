@@ -1,8 +1,8 @@
+using Application.Core.Interfaces.User;
+using Application.Model.Shared;
+using Application.Model.User.Role;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Model;
-using User.Interface;
-using User.Model.Role;
 using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers

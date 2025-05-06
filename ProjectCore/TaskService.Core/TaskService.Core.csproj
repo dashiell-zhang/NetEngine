@@ -22,8 +22,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\Application\Interface\Authorize.Interface\Authorize.Interface.csproj" />
-		<ProjectReference Include="..\..\Repository\Repository.csproj" />
+		<ProjectReference Include="..\..\Application\Application.Core\Application.Core.csproj" />
 	</ItemGroup>
 
 </Project>

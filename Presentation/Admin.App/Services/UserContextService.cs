@@ -1,6 +1,6 @@
 using Admin.App.Libraries;
+using Application.Model.User.User;
 using System.Net.Http.Json;
-using User.Model.User;
 
 namespace Admin.App.Services
 {

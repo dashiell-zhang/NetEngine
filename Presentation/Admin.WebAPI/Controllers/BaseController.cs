@@ -1,9 +1,8 @@
-using Basic.Interface;
-using Basic.Model.Base;
+using Application.Core.Interfaces.Basic;
+using Application.Model.Basic.Base;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Model;
 using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers

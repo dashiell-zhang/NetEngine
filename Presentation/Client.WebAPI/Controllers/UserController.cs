@@ -1,7 +1,7 @@
+using Application.Core.Interfaces.User;
+using Application.Model.User.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using User.Interface;
-using User.Model.User;
 using WebAPI.Core.Filters;
 
 namespace Client.WebAPI.Controllers

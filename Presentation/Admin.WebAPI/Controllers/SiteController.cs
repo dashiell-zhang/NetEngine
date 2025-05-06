@@ -1,8 +1,8 @@
+using Application.Core.Interfaces.Site;
+using Application.Model.Shared;
+using Application.Model.Site.Site;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Model;
-using Site.Interface;
-using Site.Model.Site;
 using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers

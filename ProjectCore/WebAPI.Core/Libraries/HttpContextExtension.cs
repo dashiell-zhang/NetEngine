@@ -1,5 +1,4 @@
 using Microsoft.IdentityModel.JsonWebTokens;
-using Shared.Model;
 using System.IO.Compression;
 using System.Text;
 

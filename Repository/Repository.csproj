@@ -27,8 +27,8 @@
 
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
-	  <ProjectReference Include="..\Repository.Enum\Repository.Enum.csproj" />
+		<ProjectReference Include="..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
+		<ProjectReference Include="..\Repository.Enum\Repository.Enum.csproj" />
 	</ItemGroup>
 
 </Project>

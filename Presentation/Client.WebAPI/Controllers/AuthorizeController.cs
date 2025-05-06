@@ -1,5 +1,5 @@
-using Authorize.Interface;
-using Authorize.Model.Authorize;
+using Application.Core.Interfaces.Authorize;
+using Application.Model.Authorize.Authorize;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Repository.Database;
-using System.Threading.Tasks;
 using System.Xml;
 using WebAPI.Core.Filters;
 

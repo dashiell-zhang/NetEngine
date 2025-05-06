@@ -489,7 +489,7 @@ namespace Common
             }
 
 
-            int GetEffectiveColumnCount(IRow row)
+            static int GetEffectiveColumnCount(IRow row)
             {
                 int lastCell = row.LastCellNum;
                 while (lastCell > 0)

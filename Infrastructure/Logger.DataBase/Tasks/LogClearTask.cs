@@ -12,12 +12,12 @@ namespace Logger.DataBase.Tasks
 
         private readonly int saveDays = config.CurrentValue.SaveDays;
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             if (saveDays != -1)
             {
 
-                while (!stoppingToken.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
@@ -26,13 +26,13 @@ namespace Logger.DataBase.Tasks
 
                         var delTime = DateTime.UtcNow.AddDays(-1 * saveDays);
 
-                        await db.TLog.Where(t => t.CreateTime <= delTime).ExecuteDeleteAsync();
+                        await db.TLog.Where(t => t.CreateTime <= delTime).ExecuteDeleteAsync(cancellationToken);
                     }
                     catch
                     {
                     }
 
-                    await Task.Delay(1000 * 60 * 60 * 24, stoppingToken);
+                    await Task.Delay(1000 * 60 * 60 * 24, cancellationToken);
                 }
             }
         }

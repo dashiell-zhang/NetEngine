@@ -49,7 +49,7 @@ namespace Admin.App.Libraries
 
                     if (request.Content != null)
                     {
-                        requestBody = await request.Content.ReadAsStringAsync();
+                        requestBody = await request.Content.ReadAsStringAsync(cancellationToken);
                     }
 
                     if (requestBody != null)

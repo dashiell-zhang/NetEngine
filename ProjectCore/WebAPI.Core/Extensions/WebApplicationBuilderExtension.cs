@@ -1,4 +1,4 @@
-using Authorize.Model.AppSetting;
+using Application.Model.AppSetting;
 using Common;
 using Common.JsonConverters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

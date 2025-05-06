@@ -42,7 +42,7 @@ namespace Repository.Database
         /// 功能类型
         /// </summary>
         public EnumFunctionType Type { get; set; }
-       
+
 
         public virtual List<TFunctionRoute>? TFunctionRoute { get; set; }
 

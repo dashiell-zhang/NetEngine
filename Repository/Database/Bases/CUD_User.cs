@@ -1,12 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database.Bases
 {
 
 
     /// <summary>
-    /// 创建，编辑，删除，并关联了用户
+    /// 创建、编辑、删除、并关联了用户
     /// </summary>
+    [Index(nameof(UpdateTime))]
     public class CUD_User : CD_User
     {
 

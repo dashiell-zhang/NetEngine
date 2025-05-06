@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -6,7 +6,7 @@ namespace Repository.Bases
 {
 
     /// <summary>
-    /// 创建，删除
+    /// 创建、删除
     /// </summary>
     [Index(nameof(CreateTime)), Index(nameof(DeleteTime))]
     public class CD

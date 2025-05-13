@@ -4,9 +4,15 @@ namespace FileStorage.AliCloud.Models
     {
 
         /// <summary>
-        /// 对象存储区域节点
+        /// COS存储区域
         /// </summary>
-        public string Endpoint { get; set; }
+        public string Region { get; set; }
+
+
+        /// <summary>
+        /// 使用内部节点
+        /// </summary>
+        public bool UseInternalEndpoint { get; set; }
 
 
         /// <summary>

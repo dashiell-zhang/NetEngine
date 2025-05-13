@@ -13,10 +13,11 @@ namespace FileStorage.AliCloud
     public class AliCloudStorage(IOptionsMonitor<FileStorageSetting> config, IHttpClientFactory httpClientFactory) : IFileStorage
     {
 
-        private readonly string endpoint = config.CurrentValue.Endpoint;
-        private readonly string accessKeyId = config.CurrentValue.AccessKeyId;
-        private readonly string accessKeySecret = config.CurrentValue.AccessKeySecret;
-        private readonly string bucketName = config.CurrentValue.BucketName;
+        private readonly FileStorageSetting storageSetting = config.CurrentValue;
+
+        private readonly AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide credentialsProvide = new(config.CurrentValue.AccessKeyId, config.CurrentValue.AccessKeySecret);
+
+
 
 
         public async Task<bool> FileDeleteAsync(string remotePath)
@@ -25,9 +26,9 @@ namespace FileStorage.AliCloud
 
             Configuration cfg = new()
             {
-                Region = "cn-shanghai",
-                Endpoint = endpoint,
-                CredentialsProvider = new AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide(accessKeyId, accessKeySecret)
+                Region = storageSetting.Region,
+                UseInternalEndpoint = storageSetting.UseInternalEndpoint,
+                CredentialsProvider = credentialsProvide
             };
             cfg.HttpTransport = new(httpClient);
 
@@ -35,7 +36,7 @@ namespace FileStorage.AliCloud
 
             var result = await client.DeleteObjectAsync(new()
             {
-                Bucket = bucketName,
+                Bucket = storageSetting.BucketName,
                 Key = remotePath
             });
 
@@ -49,9 +50,9 @@ namespace FileStorage.AliCloud
 
             Configuration cfg = new()
             {
-                Region = "cn-shanghai",
-                Endpoint = endpoint,
-                CredentialsProvider = new AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide(accessKeyId, accessKeySecret)
+                Region = storageSetting.Region,
+                UseInternalEndpoint = storageSetting.UseInternalEndpoint,
+                CredentialsProvider = credentialsProvide
             };
             cfg.HttpTransport = new(httpClient);
 
@@ -59,7 +60,7 @@ namespace FileStorage.AliCloud
 
             var result = await client.GetObjectToFileAsync(new()
             {
-                Bucket = bucketName,
+                Bucket = storageSetting.BucketName,
                 Key = remotePath,
             }, localPath);
 
@@ -81,9 +82,9 @@ namespace FileStorage.AliCloud
 
                 Configuration cfg = new()
                 {
-                    Region = "cn-shanghai",
-                    Endpoint = endpoint,
-                    CredentialsProvider = new AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide(accessKeyId, accessKeySecret)
+                    Region = storageSetting.Region,
+                    UseInternalEndpoint = storageSetting.UseInternalEndpoint,
+                    CredentialsProvider = credentialsProvide
                 };
                 cfg.HttpTransport = new(httpClient);
 
@@ -91,7 +92,7 @@ namespace FileStorage.AliCloud
 
                 var result = await client.PutObjectFromFileAsync(new()
                 {
-                    Bucket = bucketName,
+                    Bucket = storageSetting.BucketName,
                     Key = objectName,
                     Acl = isPublicRead ? "public-read" : "private",
                     ContentDisposition = fileName != null ? string.Format("attachment;filename*=utf-8''{0}", WebUtility.UrlEncode(fileName)) : null
@@ -112,9 +113,9 @@ namespace FileStorage.AliCloud
 
             Configuration cfg = new()
             {
-                Region = "cn-shanghai",
-                Endpoint = endpoint,
-                CredentialsProvider = new AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide(accessKeyId, accessKeySecret)
+                Region = storageSetting.Region,
+                UseInternalEndpoint = storageSetting.UseInternalEndpoint,
+                CredentialsProvider = credentialsProvide
             };
             cfg.HttpTransport = new(httpClient);
 
@@ -122,12 +123,22 @@ namespace FileStorage.AliCloud
 
             var request = client.Presign(new GetObjectRequest()
             {
-                Bucket = bucketName,
+                Bucket = storageSetting.BucketName,
                 Key = remotePath,
                 ResponseContentDisposition = isInline ? "inline" : null
             }, DateTime.UtcNow + expiry);
 
-            return request.Url;
+            var url = request.Url;
+
+            if (url != null)
+            {
+                Uri tempUrl = new(url.ToString());
+
+                return storageSetting.Url + tempUrl.PathAndQuery[1..];
+            }
+
+            return null;
+
         }
 
     }

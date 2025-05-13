@@ -1,4 +1,4 @@
-﻿using FileStorage.AliCloud.Models;
+using FileStorage.AliCloud.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FileStorage.AliCloud
@@ -10,7 +10,7 @@ namespace FileStorage.AliCloud
         public static void AddAliCloudStorage(this IServiceCollection services, Action<FileStorageSetting> action)
         {
             services.Configure(action);
-            services.AddTransient<IFileStorage, AliCloudStorage>();
+            services.AddScoped<IFileStorage, AliCloudStorage>();
         }
     }
 }

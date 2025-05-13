@@ -1,115 +1,101 @@
-using Aliyun.OSS;
-using Aliyun.OSS.Util;
+using AlibabaCloud.OSS.V2;
+using AlibabaCloud.OSS.V2.Models;
 using FileStorage.AliCloud.Models;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace FileStorage.AliCloud
 {
 
-
     /// <summary>
     /// 阿里云OSS文件存储
     /// </summary>
-    public class AliCloudStorage(IOptionsMonitor<FileStorageSetting> config) : IFileStorage
+    public class AliCloudStorage(IOptionsMonitor<FileStorageSetting> config, IHttpClientFactory httpClientFactory) : IFileStorage
     {
 
         private readonly string endpoint = config.CurrentValue.Endpoint;
         private readonly string accessKeyId = config.CurrentValue.AccessKeyId;
         private readonly string accessKeySecret = config.CurrentValue.AccessKeySecret;
         private readonly string bucketName = config.CurrentValue.BucketName;
-        private readonly string url = config.CurrentValue.Url;
+
 
         public async Task<bool> FileDeleteAsync(string remotePath)
         {
-            try
+            var httpClient = httpClientFactory.CreateClient();
+
+            Configuration cfg = new()
             {
-                remotePath = remotePath.Replace("\\", "/");
+                Region = "cn-shanghai",
+                Endpoint = endpoint,
+                CredentialsProvider = new AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide(accessKeyId, accessKeySecret)
+            };
+            cfg.HttpTransport = new(httpClient);
 
-                OssClient client = new(endpoint, accessKeyId, accessKeySecret);
+            using Client client = new(cfg);
 
-                await Task.Run(() => client.DeleteObject(bucketName, remotePath));
-
-                return true;
-            }
-            catch
+            var result = await client.DeleteObjectAsync(new()
             {
-                return false;
-            }
+                Bucket = bucketName,
+                Key = remotePath
+            });
+
+            return result.StatusCode == 200;
         }
-
 
 
         public async Task<bool> FileDownloadAsync(string remotePath, string localPath)
         {
-            try
+            var httpClient = httpClientFactory.CreateClient();
+
+            Configuration cfg = new()
             {
-                remotePath = remotePath.Replace("\\", "/");
+                Region = "cn-shanghai",
+                Endpoint = endpoint,
+                CredentialsProvider = new AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide(accessKeyId, accessKeySecret)
+            };
+            cfg.HttpTransport = new(httpClient);
 
-                OssClient client = new(endpoint, accessKeyId, accessKeySecret);
+            using Client client = new(cfg);
 
-                await Task.Run(() =>
-                {
-
-                    var obj = client.GetObject(bucketName, remotePath);
-                    using var requestStream = obj.Content;
-                    byte[] buf = new byte[1024];
-                    var fs = File.Open(localPath, FileMode.OpenOrCreate);
-                    var len = 0;
-
-                    while ((len = requestStream.Read(buf, 0, 1024)) != 0)
-                    {
-                        fs.Write(buf, 0, len);
-                    }
-                    fs.Close();
-
-                });
-
-                return true;
-            }
-            catch
+            var result = await client.GetObjectToFileAsync(new()
             {
-                return false;
-            }
+                Bucket = bucketName,
+                Key = remotePath,
+            }, localPath);
+
+
+            return result.StatusCode == 200;
         }
-
 
 
         public async Task<bool> FileUploadAsync(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
         {
+
             try
             {
                 var objectName = Path.GetFileName(localPath);
 
                 objectName = Path.Combine(remotePath, objectName).Replace("\\", "/");
 
-                OssClient client = new(endpoint, accessKeyId, accessKeySecret);
+                var httpClient = httpClientFactory.CreateClient();
 
-                await Task.Run(() =>
+                Configuration cfg = new()
                 {
-                    if (fileName != null)
-                    {
-                        ObjectMetadata metaData = new()
-                        {
-                            ContentDisposition = string.Format("attachment;filename*=utf-8''{0}", HttpUtils.EncodeUri(fileName, "utf-8"))
-                        };
+                    Region = "cn-shanghai",
+                    Endpoint = endpoint,
+                    CredentialsProvider = new AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide(accessKeyId, accessKeySecret)
+                };
+                cfg.HttpTransport = new(httpClient);
 
-                        client.PutObject(bucketName, objectName, localPath, metaData);
-                    }
-                    else
-                    {
-                        client.PutObject(bucketName, objectName, localPath);
-                    }
+                using Client client = new(cfg);
 
-                    if (isPublicRead)
-                    {
-                        client.SetObjectAcl(bucketName, objectName, CannedAccessControlList.PublicRead);
-                    }
-                    else
-                    {
-                        client.SetObjectAcl(bucketName, objectName, CannedAccessControlList.Private);
-                    }
-
-                });
+                var result = await client.PutObjectFromFileAsync(new()
+                {
+                    Bucket = bucketName,
+                    Key = objectName,
+                    Acl = isPublicRead ? "public-read" : "private",
+                    ContentDisposition = fileName != null ? string.Format("attachment;filename*=utf-8''{0}", WebUtility.UrlEncode(fileName)) : null
+                }, localPath);
 
                 return true;
             }
@@ -120,37 +106,28 @@ namespace FileStorage.AliCloud
         }
 
 
-
-        public async Task<string?> GetFileUrlAsync(string remotePath, TimeSpan expiry, bool isInline = false)
+        public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false)
         {
+            var httpClient = httpClientFactory.CreateClient();
 
-            try
+            Configuration cfg = new()
             {
-                string publicEndpoint = endpoint.Replace("-internal.aliyuncs.com", ".aliyuncs.com");
+                Region = "cn-shanghai",
+                Endpoint = endpoint,
+                CredentialsProvider = new AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide(accessKeyId, accessKeySecret)
+            };
+            cfg.HttpTransport = new(httpClient);
 
-                remotePath = remotePath.Replace("\\", "/");
+            using Client client = new(cfg);
 
-                OssClient client = new(publicEndpoint, accessKeyId, accessKeySecret);
-
-                GeneratePresignedUriRequest req = new(bucketName, remotePath);
-
-                if (isInline)
-                {
-                    req.ResponseHeaders.ContentDisposition = "inline";
-                }
-
-                req.Expiration = DateTime.UtcNow + expiry;
-
-                var url = await Task.Run(() => client.GeneratePresignedUri(req));
-
-                Uri tempUrl = new(url.ToString());
-
-                return this.url + tempUrl.PathAndQuery[1..];
-            }
-            catch
+            var request = client.Presign(new GetObjectRequest()
             {
-                return null;
-            }
+                Bucket = bucketName,
+                Key = remotePath,
+                ResponseContentDisposition = isInline ? "inline" : null
+            }, DateTime.UtcNow + expiry);
+
+            return request.Url;
         }
 
     }

@@ -147,43 +147,35 @@ namespace FileStorage.TencentCloud
 
 
 
-        public async Task<string?> GetFileUrlAsync(string remotePath, TimeSpan expiry, bool isInline = false)
+        public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false)
         {
-            try
+            remotePath = remotePath.Replace("\\", "/");
+
+            PreSignatureStruct preSignatureStruct = new()
             {
-                remotePath = remotePath.Replace("\\", "/");
+                appid = appId,//腾讯云账号 APPID
+                region = region, //存储桶地域
+                bucket = bucketName, //存储桶
+                key = remotePath, //对象键
+                httpMethod = "GET", //HTTP 请求方法
+                isHttps = true, //生成 HTTPS 请求 Url
+                signDurationSecond = Convert.ToInt64(expiry.TotalSeconds), //请求签名时间,单位秒
+                headers = null//签名中需要校验的 header
+            };
 
-                PreSignatureStruct preSignatureStruct = new()
-                {
-                    appid = appId,//腾讯云账号 APPID
-                    region = region, //存储桶地域
-                    bucket = bucketName, //存储桶
-                    key = remotePath, //对象键
-                    httpMethod = "GET", //HTTP 请求方法
-                    isHttps = true, //生成 HTTPS 请求 Url
-                    signDurationSecond = Convert.ToInt64(expiry.TotalSeconds), //请求签名时间,单位秒
-                    headers = null//签名中需要校验的 header
-                };
-
-                if (isInline)
-                {
-                    preSignatureStruct.queryParameters = new()
+            if (isInline)
+            {
+                preSignatureStruct.queryParameters = new()
                     {
                         { "response-content-disposition", "inline" }
                     };
-                }
-                else
-                {
-                    preSignatureStruct.queryParameters = null;
-                }
-
-                string requestSignUrl = await Task.Run(() => cosXml.GenerateSignURL(preSignatureStruct));
-                return requestSignUrl;
             }
-            catch
+            else
             {
-                return null;
+                preSignatureStruct.queryParameters = null;
             }
+
+            return cosXml.GenerateSignURL(preSignatureStruct);
         }
     }
 }

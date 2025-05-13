@@ -134,7 +134,7 @@ namespace Application.Core.Services.Basic
                 }
                 else
                 {
-                    var tempUrl = await fileStorage.GetFileUrlAsync(file.Path, TimeSpan.FromMinutes(10), isInline);
+                    var tempUrl = fileStorage.GetFileUrl(file.Path, TimeSpan.FromMinutes(10), isInline);
 
                     if (tempUrl != null)
                     {

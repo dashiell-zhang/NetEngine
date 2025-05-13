@@ -19,7 +19,8 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.14.1" />
+		<PackageReference Include="AlibabaCloud.OSS.V2" Version="0.1.1" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.4" />
 	</ItemGroup>
 
 

@@ -38,7 +38,7 @@ namespace FileStorage
         /// <param name="expiry">失效时长</param>
         /// <param name="isInline">是否在浏览器中打开</param>
         /// <returns></returns>
-        Task<string?> GetFileUrlAsync(string remotePath, TimeSpan expiry, bool isInline = false);
+        string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false);
 
     }
 }

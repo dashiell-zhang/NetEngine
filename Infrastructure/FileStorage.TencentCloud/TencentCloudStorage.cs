@@ -17,134 +17,95 @@ namespace FileStorage.TencentCloud
     public class TencentCloudStorage : IFileStorage
     {
 
-        private readonly string appId;
-        private readonly string region;
-        private readonly string bucketName;
-        private readonly string url;
-
-
+        private readonly FileStorageSetting storageSetting;
 
         private readonly CosXmlServer cosXml;
 
 
-
         public TencentCloudStorage(IOptionsMonitor<FileStorageSetting> config)
         {
-            appId = config.CurrentValue.AppId;
-            region = config.CurrentValue.Region;
-            bucketName = config.CurrentValue.BucketName;
-            url = config.CurrentValue.Url;
+
+            storageSetting = config.CurrentValue;
 
             CosXmlConfig cosXmlConfig = new CosXmlConfig.Builder()
-                        .SetConnectionTimeoutMs(60000)  //设置连接超时时间，单位毫秒，默认45000ms
-                        .SetReadWriteTimeoutMs(40000)  //设置读写超时时间，单位毫秒，默认45000ms
-                        .IsHttps(true)  //设置默认 HTTPS 请求
-                        .SetAppid(appId) //设置腾讯云账户的账户标识 APPID
-                        .SetRegion(region) //设置一个默认的存储桶地域
+                        .SetAppid(storageSetting.AppId)
+                        .SetRegion(storageSetting.Region)
                     .Build();
-
 
             long durationSecond = 600;          //每次请求签名有效时长，单位为秒
 
             QCloudCredentialProvider qCloudCredentialProvider = new DefaultQCloudCredentialProvider(config.CurrentValue.SecretId, config.CurrentValue.SecretKey, durationSecond);
 
-            cosXml = new CosXmlServer(cosXmlConfig, qCloudCredentialProvider);
+            cosXml = new(cosXmlConfig, qCloudCredentialProvider);
         }
-
 
 
 
         public async Task<bool> FileDeleteAsync(string remotePath)
         {
-            try
-            {
-                remotePath = remotePath.Replace("\\", "/");
+            DeleteObjectRequest request = new(storageSetting.BucketName, remotePath);
 
-                DeleteObjectRequest request = new(bucketName, remotePath);
+            var result = await cosXml.ExecuteAsync<DeleteObjectResult>(request);
 
-                var result = await Task.Run(() => cosXml.DeleteObject(request));
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            return result.IsSuccessful();
         }
-
 
 
         public async Task<bool> FileDownloadAsync(string remotePath, string localPath)
         {
-            try
-            {
-                remotePath = remotePath.Replace("\\", "/");
 
-                TransferConfig transferConfig = new();
+            TransferConfig transferConfig = new();
 
-                TransferManager transferManager = new(cosXml, transferConfig);
+            TransferManager transferManager = new(cosXml, transferConfig);
 
-                string localDir = localPath[..(localPath.LastIndexOf('/') + 1)];
-                Directory.CreateDirectory(localDir);
+            string localDir = localPath[..(localPath.LastIndexOf('/') + 1)];
+            Directory.CreateDirectory(localDir);
 
-                string localFileName = localPath[(localPath.LastIndexOf('/') + 1)..];
+            string localFileName = localPath[(localPath.LastIndexOf('/') + 1)..];
 
-                // 下载对象
-                COSXMLDownloadTask downloadTask = new(bucketName, remotePath, localDir, localFileName);
+            COSXMLDownloadTask downloadTask = new(storageSetting.BucketName, remotePath, localDir, localFileName);
 
-                await transferManager.DownloadAsync(downloadTask);
+            var result = await transferManager.DownloadAsync(downloadTask);
 
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            return result.IsSuccessful();
+
         }
-
 
 
         public async Task<bool> FileUploadAsync(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
         {
-            try
+
+            remotePath = remotePath.Replace("\\", "/");
+
+            TransferConfig transferConfig = new();
+
+            TransferManager transferManager = new(cosXml, transferConfig);
+
+            PutObjectRequest request = new(storageSetting.BucketName, remotePath, localPath);
+
+            if (fileName != null)
             {
-                remotePath = remotePath.Replace("\\", "/");
-
-                TransferConfig transferConfig = new();
-
-                TransferManager transferManager = new(cosXml, transferConfig);
-
-                PutObjectRequest request = new(bucketName, remotePath, localPath);
-
-                if (fileName != null)
-                {
-                    request.SetRequestHeader("Content-Disposition", string.Format("attachment;filename*=utf-8''{0}", HttpUtility.UrlEncode(fileName, Encoding.UTF8)));
-                }
-
-                if (isPublicRead)
-                {
-                    request.SetCosACL(COSXML.Common.CosACL.PublicRead);
-                }
-                else
-                {
-                    request.SetCosACL(COSXML.Common.CosACL.Private);
-                }
-
-
-                COSXMLUploadTask uploadTask = new(request);
-
-                uploadTask.SetSrcPath(localPath);
-
-                await transferManager.UploadAsync(uploadTask);
-
-                return true;
+                request.SetRequestHeader("Content-Disposition", string.Format("attachment;filename*=utf-8''{0}", HttpUtility.UrlEncode(fileName, Encoding.UTF8)));
             }
-            catch
+
+            if (isPublicRead)
             {
-                return false;
+                request.SetCosACL(COSXML.Common.CosACL.PublicRead);
             }
+            else
+            {
+                request.SetCosACL(COSXML.Common.CosACL.Private);
+            }
+
+
+            COSXMLUploadTask uploadTask = new(request);
+
+            uploadTask.SetSrcPath(localPath);
+
+            var result = await transferManager.UploadAsync(uploadTask);
+
+            return result.IsSuccessful();
         }
-
 
 
         public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false)
@@ -153,9 +114,9 @@ namespace FileStorage.TencentCloud
 
             PreSignatureStruct preSignatureStruct = new()
             {
-                appid = appId,//腾讯云账号 APPID
-                region = region, //存储桶地域
-                bucket = bucketName, //存储桶
+                appid = storageSetting.AppId,//腾讯云账号 APPID
+                region = storageSetting.Region, //存储桶地域
+                bucket = storageSetting.BucketName, //存储桶
                 key = remotePath, //对象键
                 httpMethod = "GET", //HTTP 请求方法
                 isHttps = true, //生成 HTTPS 请求 Url
@@ -175,7 +136,16 @@ namespace FileStorage.TencentCloud
                 preSignatureStruct.queryParameters = null;
             }
 
-            return cosXml.GenerateSignURL(preSignatureStruct);
+            var url = cosXml.GenerateSignURL(preSignatureStruct);
+
+            if (url != null)
+            {
+                Uri tempUrl = new(url.ToString());
+
+                return storageSetting.Url + tempUrl.PathAndQuery[1..];
+            }
+
+            return null;
         }
     }
 }

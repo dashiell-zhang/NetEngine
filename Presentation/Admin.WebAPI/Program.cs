@@ -1,6 +1,5 @@
 using Common;
 using DistributedLock.Redis;
-using FileStorage.AliCloud;
 using IdentifierGenerator;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
@@ -119,16 +118,16 @@ namespace Admin.WebAPI
             //    options.Url = builder.Configuration.GetValue<string>("FileServerUrl")!;
             //});
 
-            builder.Services.AddAliCloudStorage(options =>
-            {
-                var settings = builder.Configuration.GetRequiredSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>()!;
-                options.Region = settings.Region;
-                options.UseInternalEndpoint = settings.UseInternalEndpoint;
-                options.AccessKeyId = settings.AccessKeyId;
-                options.AccessKeySecret = settings.AccessKeySecret;
-                options.BucketName = settings.BucketName;
-                options.Url = builder.Configuration.GetValue<string>("FileServerUrl")!;
-            });
+            //builder.Services.AddAliCloudStorage(options =>
+            //{
+            //    var settings = builder.Configuration.GetRequiredSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>()!;
+            //    options.Region = settings.Region;
+            //    options.UseInternalEndpoint = settings.UseInternalEndpoint;
+            //    options.AccessKeyId = settings.AccessKeyId;
+            //    options.AccessKeySecret = settings.AccessKeySecret;
+            //    options.BucketName = settings.BucketName;
+            //    options.Url = builder.Configuration.GetValue<string>("FileServerUrl")!;
+            //});
             #endregion
 
             #region 注册日志服务

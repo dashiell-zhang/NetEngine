@@ -166,7 +166,8 @@ namespace Client.WebAPI
             //builder.Services.AddAliCloudStorage(options =>
             //{
             //    var settings = builder.Configuration.GetRequiredSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>()!;
-            //    options.Endpoint = settings.Endpoint;
+            //    options.Region = settings.Region;
+            //    options.UseInternalEndpoint = settings.UseInternalEndpoint;
             //    options.AccessKeyId = settings.AccessKeyId;
             //    options.AccessKeySecret = settings.AccessKeySecret;
             //    options.BucketName = settings.BucketName;

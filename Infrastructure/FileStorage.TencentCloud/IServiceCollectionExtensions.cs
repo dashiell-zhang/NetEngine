@@ -1,4 +1,4 @@
-﻿using FileStorage.TencentCloud.Models;
+using FileStorage.TencentCloud.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FileStorage.TencentCloud
@@ -10,7 +10,7 @@ namespace FileStorage.TencentCloud
         public static void AddTencentCloudStorage(this IServiceCollection services, Action<FileStorageSetting> action)
         {
             services.Configure(action);
-            services.AddTransient<IFileStorage, TencentCloudStorage>();
+            services.AddScoped<IFileStorage, TencentCloudStorage>();
         }
     }
 }

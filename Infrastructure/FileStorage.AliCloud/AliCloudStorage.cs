@@ -10,18 +10,21 @@ namespace FileStorage.AliCloud
     /// <summary>
     /// 阿里云OSS文件存储
     /// </summary>
-    public class AliCloudStorage(IOptionsMonitor<FileStorageSetting> config, IHttpClientFactory httpClientFactory) : IFileStorage
+    public class AliCloudStorage : IFileStorage
     {
 
-        private readonly FileStorageSetting storageSetting = config.CurrentValue;
+        private readonly FileStorageSetting storageSetting;
 
-        private readonly AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide credentialsProvide = new(config.CurrentValue.AccessKeyId, config.CurrentValue.AccessKeySecret);
-
-
+        private readonly Client client;
 
 
-        public async Task<bool> FileDeleteAsync(string remotePath)
+        public AliCloudStorage(IOptionsMonitor<FileStorageSetting> config, IHttpClientFactory httpClientFactory)
         {
+            storageSetting = config.CurrentValue;
+
+
+            AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide credentialsProvide = new(config.CurrentValue.AccessKeyId, config.CurrentValue.AccessKeySecret);
+
             var httpClient = httpClientFactory.CreateClient();
 
             Configuration cfg = new()
@@ -30,10 +33,16 @@ namespace FileStorage.AliCloud
                 UseInternalEndpoint = storageSetting.UseInternalEndpoint,
                 CredentialsProvider = credentialsProvide
             };
+
             cfg.HttpTransport = new(httpClient);
 
-            using Client client = new(cfg);
+            client = new(cfg);
+        }
 
+
+
+        public async Task<bool> FileDeleteAsync(string remotePath)
+        {
             var result = await client.DeleteObjectAsync(new()
             {
                 Bucket = storageSetting.BucketName,
@@ -46,18 +55,6 @@ namespace FileStorage.AliCloud
 
         public async Task<bool> FileDownloadAsync(string remotePath, string localPath)
         {
-            var httpClient = httpClientFactory.CreateClient();
-
-            Configuration cfg = new()
-            {
-                Region = storageSetting.Region,
-                UseInternalEndpoint = storageSetting.UseInternalEndpoint,
-                CredentialsProvider = credentialsProvide
-            };
-            cfg.HttpTransport = new(httpClient);
-
-            using Client client = new(cfg);
-
             var result = await client.GetObjectToFileAsync(new()
             {
                 Bucket = storageSetting.BucketName,
@@ -72,55 +69,26 @@ namespace FileStorage.AliCloud
         public async Task<bool> FileUploadAsync(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
         {
 
-            try
+
+            var objectName = Path.GetFileName(localPath);
+
+            objectName = Path.Combine(remotePath, objectName).Replace("\\", "/");
+
+            var result = await client.PutObjectFromFileAsync(new()
             {
-                var objectName = Path.GetFileName(localPath);
+                Bucket = storageSetting.BucketName,
+                Key = objectName,
+                Acl = isPublicRead ? "public-read" : "private",
+                ContentDisposition = fileName != null ? string.Format("attachment;filename*=utf-8''{0}", WebUtility.UrlEncode(fileName)) : null
+            }, localPath);
 
-                objectName = Path.Combine(remotePath, objectName).Replace("\\", "/");
+            return result.StatusCode == 200;
 
-                var httpClient = httpClientFactory.CreateClient();
-
-                Configuration cfg = new()
-                {
-                    Region = storageSetting.Region,
-                    UseInternalEndpoint = storageSetting.UseInternalEndpoint,
-                    CredentialsProvider = credentialsProvide
-                };
-                cfg.HttpTransport = new(httpClient);
-
-                using Client client = new(cfg);
-
-                var result = await client.PutObjectFromFileAsync(new()
-                {
-                    Bucket = storageSetting.BucketName,
-                    Key = objectName,
-                    Acl = isPublicRead ? "public-read" : "private",
-                    ContentDisposition = fileName != null ? string.Format("attachment;filename*=utf-8''{0}", WebUtility.UrlEncode(fileName)) : null
-                }, localPath);
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
         }
 
 
         public string? GetFileUrl(string remotePath, TimeSpan expiry, bool isInline = false)
         {
-            var httpClient = httpClientFactory.CreateClient();
-
-            Configuration cfg = new()
-            {
-                Region = storageSetting.Region,
-                UseInternalEndpoint = storageSetting.UseInternalEndpoint,
-                CredentialsProvider = credentialsProvide
-            };
-            cfg.HttpTransport = new(httpClient);
-
-            using Client client = new(cfg);
-
             var request = client.Presign(new GetObjectRequest()
             {
                 Bucket = storageSetting.BucketName,

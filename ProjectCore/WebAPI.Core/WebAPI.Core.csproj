@@ -22,7 +22,7 @@
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.5" />
 	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.5" />
 	  <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.5" />
-	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.9.0" />
+	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.10.0" />
 	  <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
 	</ItemGroup>
 

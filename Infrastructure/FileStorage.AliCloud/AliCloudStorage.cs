@@ -22,7 +22,6 @@ namespace FileStorage.AliCloud
         {
             storageSetting = config.CurrentValue;
 
-
             AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide credentialsProvide = new(config.CurrentValue.AccessKeyId, config.CurrentValue.AccessKeySecret);
 
             var httpClient = httpClientFactory.CreateClient();
@@ -61,15 +60,12 @@ namespace FileStorage.AliCloud
                 Key = remotePath,
             }, localPath);
 
-
             return result.StatusCode == 200;
         }
 
 
         public async Task<bool> FileUploadAsync(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
         {
-
-
             var objectName = Path.GetFileName(localPath);
 
             objectName = Path.Combine(remotePath, objectName).Replace("\\", "/");
@@ -83,7 +79,6 @@ namespace FileStorage.AliCloud
             }, localPath);
 
             return result.StatusCode == 200;
-
         }
 
 
@@ -106,7 +101,6 @@ namespace FileStorage.AliCloud
             }
 
             return null;
-
         }
 
     }

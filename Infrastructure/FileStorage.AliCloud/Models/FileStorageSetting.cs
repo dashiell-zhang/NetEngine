@@ -4,7 +4,7 @@ namespace FileStorage.AliCloud.Models
     {
 
         /// <summary>
-        /// COS存储区域
+        /// OSS存储区域
         /// </summary>
         public string Region { get; set; }
 

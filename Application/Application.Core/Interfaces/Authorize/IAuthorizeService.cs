@@ -118,5 +118,18 @@ namespace Application.Core.Interfaces.Authorize
         Task<DtoGetWeiXinAppUserInfo> GetWeiXinAppUserInfoAsync(string accessToken, string openId);
 
 
+        /// <summary>
+        /// 用户功能授权检测
+        /// </summary>
+        /// <returns></returns>
+        Task<bool> CheckFunctionAuthorizeAsync(string module, string route);
+
+
+        /// <summary>
+        /// 签发新的Token
+        /// </summary>
+        /// <returns></returns>
+        Task<string?> IssueNewTokenAsync();
+
     }
 }

@@ -529,5 +529,86 @@ namespace Application.Core.Services.Authorize
                 throw new Exception("获取微信用户信息失败");
             }
         }
+
+
+
+        public async Task<bool> CheckFunctionAuthorizeAsync(string module, string route)
+        {
+
+            var userId = userContext.UserId;
+
+            var functionId = await db.TFunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefaultAsync();
+
+            if (functionId != default)
+            {
+                var roleIds = await db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
+
+                var functionAuthorizeId = await db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefaultAsync();
+
+                if (functionAuthorizeId != default)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
+
+        public async Task<string?> IssueNewTokenAsync()
+        {
+            var nbf = long.Parse(userContext.Claims.First(t => t.Type == "nbf").Value);
+            var exp = long.Parse(userContext.Claims.First(t => t.Type == "exp").Value);
+
+            var nbfTime = DateTimeOffset.FromUnixTimeSeconds(nbf);
+            var expTime = DateTimeOffset.FromUnixTimeSeconds(exp);
+
+            var lifeSpan = nbfTime + (expTime - nbfTime) * 0.5;
+
+            //当前Token有效期不足一半时签发新的Token
+            if (lifeSpan < DateTimeOffset.UtcNow)
+            {
+
+                var tokenId = long.Parse(userContext.Claims.First(t => t.Type == "tokenId").Value);
+                var userId = userContext.UserId;
+
+                string key = "IssueNewToken" + tokenId;
+
+                using (var lockHandle = await distLock.TryLockAsync(key))
+                {
+                    if (lockHandle != null)
+                    {
+                        var newToken = await distributedCache.GetStringAsync(tokenId + "newToken");
+
+                        if (newToken == null)
+                        {
+                            newToken = await GetTokenByUserIdAsync(userId, tokenId);
+
+                            if (await distLock.TryLockAsync("ClearExpireToken") != null)
+                            {
+                                var clearTime = DateTime.UtcNow.AddDays(-7);
+                                var clearList = await db.TUserToken.Where(t => t.CreateTime < clearTime).ToListAsync();
+                                db.TUserToken.RemoveRange(clearList);
+
+                                await db.SaveChangesAsync();
+                            }
+
+                            await distributedCache.SetAsync(tokenId + "newToken", newToken, TimeSpan.FromMinutes(10));
+                        }
+
+                        return newToken;
+                    }
+                }
+            }
+
+            return null;
+        }
     }
 }

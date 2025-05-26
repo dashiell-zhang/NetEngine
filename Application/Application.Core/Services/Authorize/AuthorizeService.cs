@@ -581,30 +581,28 @@ namespace Application.Core.Services.Authorize
 
                 string key = "IssueNewToken" + tokenId;
 
-                using (var lockHandle = await distLock.TryLockAsync(key))
+                using var lockHandle = await distLock.TryLockAsync(key);
+                if (lockHandle != null)
                 {
-                    if (lockHandle != null)
+                    var newToken = await distributedCache.GetStringAsync(tokenId + "newToken");
+
+                    if (newToken == null)
                     {
-                        var newToken = await distributedCache.GetStringAsync(tokenId + "newToken");
+                        newToken = await GetTokenByUserIdAsync(userId, tokenId);
 
-                        if (newToken == null)
+                        if (await distLock.TryLockAsync("ClearExpireToken") != null)
                         {
-                            newToken = await GetTokenByUserIdAsync(userId, tokenId);
+                            var clearTime = DateTime.UtcNow.AddDays(-7);
+                            var clearList = await db.TUserToken.Where(t => t.CreateTime < clearTime).ToListAsync();
+                            db.TUserToken.RemoveRange(clearList);
 
-                            if (await distLock.TryLockAsync("ClearExpireToken") != null)
-                            {
-                                var clearTime = DateTime.UtcNow.AddDays(-7);
-                                var clearList = await db.TUserToken.Where(t => t.CreateTime < clearTime).ToListAsync();
-                                db.TUserToken.RemoveRange(clearList);
-
-                                await db.SaveChangesAsync();
-                            }
-
-                            await distributedCache.SetAsync(tokenId + "newToken", newToken, TimeSpan.FromMinutes(10));
+                            await db.SaveChangesAsync();
                         }
 
-                        return newToken;
+                        await distributedCache.SetAsync(tokenId + "newToken", newToken, TimeSpan.FromMinutes(10));
                     }
+
+                    return newToken;
                 }
             }
 

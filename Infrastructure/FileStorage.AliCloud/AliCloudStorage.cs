@@ -30,10 +30,9 @@ namespace FileStorage.AliCloud
             {
                 Region = storageSetting.Region,
                 UseInternalEndpoint = storageSetting.UseInternalEndpoint,
-                CredentialsProvider = credentialsProvide
+                CredentialsProvider = credentialsProvide,
+                HttpTransport = new(httpClient)
             };
-
-            cfg.HttpTransport = new(httpClient);
 
             client = new(cfg);
         }

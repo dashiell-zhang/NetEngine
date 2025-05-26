@@ -1,4 +1,5 @@
 using Common;
+using DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
@@ -8,19 +9,17 @@ using WebAPI.Core.Libraries;
 namespace WebAPI.Core.Filters
 {
 
-
     /// <summary>
     /// 缓存过滤器
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-    public class CacheDataFilter : Attribute, IActionFilter
+    public class CacheDataFilter : Attribute, IAsyncActionFilter
     {
 
         /// <summary>
         /// 缓存时效有效期，单位 秒
         /// </summary>
         public int TTL { get; set; }
-
 
 
         /// <summary>
@@ -30,28 +29,28 @@ namespace WebAPI.Core.Filters
 
 
 
-        private string cacheKey;
-
-
-        void IActionFilter.OnActionExecuting(ActionExecutingContext context)
+        public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
+            var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
 
-            var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
-
-            cacheKey = parameters;
-
-            if (IsUseToken)
-            {
-                var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
-                cacheKey = cacheKey + "_" + token;
-            }
-
-            cacheKey = "CacheData_" + CryptoHelper.MD5HashData(cacheKey);
+            string cacheKey = "";
+            IDisposable? lockHandle = null;
 
             try
             {
-                var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-                var cacheInfo = distributedCache.Get<object>(cacheKey);
+                var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
+
+                cacheKey = parameters;
+
+                if (IsUseToken)
+                {
+                    var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
+                    cacheKey = cacheKey + "_" + token;
+                }
+
+                cacheKey = "CacheData_" + CryptoHelper.MD5HashData(cacheKey);
+
+                var cacheInfo = await distributedCache.GetAsync<object>(cacheKey);
 
                 if (cacheInfo != null)
                 {
@@ -63,6 +62,43 @@ namespace WebAPI.Core.Filters
                     {
                         context.Result = new ObjectResult(cacheInfo);
                     }
+
+                    return;
+                }
+                else
+                {
+                    var distributedLock = context.HttpContext.RequestServices.GetRequiredService<IDistributedLock>();
+
+                    while (true)
+                    {
+                        var expiryTime = TimeSpan.FromSeconds(60);
+
+                        lockHandle = await distributedLock.TryLockAsync(cacheKey, expiryTime);
+                        if (lockHandle != null)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            await Task.Delay(200);
+
+                            cacheInfo = await distributedCache.GetAsync<object>(cacheKey);
+
+                            if (cacheInfo != null)
+                            {
+                                if (((JsonElement)cacheInfo).ValueKind == JsonValueKind.String)
+                                {
+                                    context.Result = new ObjectResult(cacheInfo.ToString());
+                                }
+                                else
+                                {
+                                    context.Result = new ObjectResult(cacheInfo);
+                                }
+
+                                return;
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -70,24 +106,20 @@ namespace WebAPI.Core.Filters
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CacheDataFilter>>();
                 logger.LogError(ex, "缓存模块异常-In");
             }
-        }
 
+            var actionExecutedContext = await next();
 
-
-        void IActionFilter.OnActionExecuted(ActionExecutedContext context)
-        {
             try
             {
-                if (context.Result is ObjectResult objectResult && objectResult.Value != null)
+                if (actionExecutedContext.Result is ObjectResult objectResult && objectResult.Value != null)
                 {
                     if (objectResult.Value != null)
                     {
-                        var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                        distributedCache.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(TTL));
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+                        await distributedCache.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(TTL));
                     }
                 }
+
+                lockHandle?.Dispose();
             }
             catch (Exception ex)
             {

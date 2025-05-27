@@ -1,8 +1,7 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace TaskService.Core.ScheduleTask
 {
-
 
     /// <summary>
     /// 周期性定时任务信息模型
@@ -10,12 +9,10 @@ namespace TaskService.Core.ScheduleTask
     public class ScheduleTaskInfo
     {
 
-
         /// <summary>
         /// 任务名称
         /// </summary>
         public string Name { get; set; }
-
 
 
         /// <summary>
@@ -24,19 +21,16 @@ namespace TaskService.Core.ScheduleTask
         public string Cron { get; set; }
 
 
-
         /// <summary>
         /// 方法
         /// </summary>
         public MethodInfo Method { get; set; }
 
 
-
         /// <summary>
         /// 最后一次执行时间
         /// </summary>
         public DateTimeOffset? LastTime { get; set; }
-
 
 
         /// <summary>

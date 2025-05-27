@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace TaskService.Core.QueueTask
 {
@@ -9,12 +9,10 @@ namespace TaskService.Core.QueueTask
     public class QueueTaskInfo
     {
 
-
         /// <summary>
         /// 任务名称
         /// </summary>
         public string Name { get; set; }
-
 
 
         /// <summary>
@@ -29,17 +27,16 @@ namespace TaskService.Core.QueueTask
         public MethodInfo Method { get; set; }
 
 
-
         /// <summary>
         /// 是否启用
         /// </summary>
         public bool IsEnable { get; set; }
 
 
-
         /// <summary>
         /// 预期持续时间(单位：分)
         /// </summary>
         public int Duration { get; set; }
+
     }
 }

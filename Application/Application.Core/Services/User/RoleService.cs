@@ -61,7 +61,7 @@ namespace Application.Core.Services.User
             {
                 if (lockHandle != null)
                 {
-                    var isHaveRoleCode = db.TRole.Where(t => t.Code == role.Code).Any();
+                    var isHaveRoleCode = await db.TRole.Where(t => t.Code == role.Code).AnyAsync();
 
                     if (!isHaveRoleCode)
                     {
@@ -92,7 +92,7 @@ namespace Application.Core.Services.User
             {
                 if (lockHandle != null)
                 {
-                    var isHaveRoleCode = db.TRole.Where(t => t.Id != roleId && t.Code == role.Code).Any();
+                    var isHaveRoleCode = await db.TRole.Where(t => t.Id != roleId && t.Code == role.Code).AnyAsync();
 
                     if (!isHaveRoleCode)
                     {

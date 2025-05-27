@@ -48,7 +48,7 @@ namespace TaskService.Core.QueueTask
                             {
                                 var nowTime = DateTime.UtcNow;
 
-                                var queueTaskIdList = db.TQueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToList();
+                                var queueTaskIdList = await db.TQueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToListAsync();
 
                                 foreach (var queueTaskId in queueTaskIdList)
                                 {
@@ -94,7 +94,7 @@ namespace TaskService.Core.QueueTask
                 using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
                 if (lockActionState != null)
                 {
-                    var queueTask = db.TQueueTask.FirstOrDefault(t => t.Id == queueTaskId)!;
+                    var queueTask = await db.TQueueTask.FirstAsync(t => t.Id == queueTaskId);
 
                     if (queueTask.FirstTime == null)
                     {
@@ -160,7 +160,7 @@ namespace TaskService.Core.QueueTask
 
                     queueTask.SuccessTime = DateTime.UtcNow;
 
-                    var isHaveChild = db.TQueueTask.Where(t => t.ParentTaskId == queueTaskId).Any();
+                    var isHaveChild = await db.TQueueTask.Where(t => t.ParentTaskId == queueTaskId).AnyAsync();
 
                     if (!isHaveChild)
                     {
@@ -202,11 +202,11 @@ namespace TaskService.Core.QueueTask
                     using (await distLock.LockAsync(parentTaskId.ToString()))
                     {
                         //同级别是否全部执行完成
-                        var isSameLevelHaveWait = db.TQueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).Any();
+                        var isSameLevelHaveWait = await db.TQueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).AnyAsync();
 
                         if (!isSameLevelHaveWait)
                         {
-                            var parentTaskInfo = db.TQueueTask.Where(t => t.Id == parentTaskId).First();
+                            var parentTaskInfo = await db.TQueueTask.Where(t => t.Id == parentTaskId).FirstAsync();
 
                             parentTaskInfo.ChildSuccessTime = DateTimeOffset.UtcNow;
 

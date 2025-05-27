@@ -23,11 +23,11 @@ namespace TaskService.Core.QueueTask
                 }
 
 
-                string name = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Name" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).First()!;
+                string name = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).First().NamedArguments.Where(t => t.MemberName == "Name" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).First()!;
 
                 int semaphore = 1;
 
-                var semaphoreStr = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Semaphore" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault();
+                var semaphoreStr = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).First().NamedArguments.Where(t => t.MemberName == "Semaphore" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault();
 
                 if (semaphoreStr != null)
                 {
@@ -36,7 +36,7 @@ namespace TaskService.Core.QueueTask
 
                 int duration = 5;
 
-                var durationStr = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Duration" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault();
+                var durationStr = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).First().NamedArguments.Where(t => t.MemberName == "Duration" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault();
 
                 if (durationStr != null)
                 {

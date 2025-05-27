@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Repository.Database;
 using TaskService.Core;
 using TaskService.Core.QueueTask;
@@ -17,7 +18,7 @@ namespace TaskService.Tasks
 
                 await queueTaskService.CreateSingleAsync("ShowName", "张晓栋" + DateTime.Now.ToString("ssfff"), null, "ShowNameSuccess", null);
 
-                var firstUser = db.TUser.FirstOrDefault();
+                var firstUser = await db.TUser.FirstOrDefaultAsync();
 
             }
             catch (Exception ex)

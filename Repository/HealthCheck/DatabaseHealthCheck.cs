@@ -1,21 +1,22 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Repository.Database;
 
 namespace Repository.HealthCheck
 {
     public class DatabaseHealthCheck(DatabaseContext db) : IHealthCheck
     {
-        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
             try
             {
-                var isHealthy = db.TUser.Select(it => new { it.Id }).FirstOrDefault();
+                var isHealthy = await db.TUser.Select(it => new { it.Id }).FirstOrDefaultAsync();
 
-                return Task.FromResult(HealthCheckResult.Healthy("A healthy result."));
+                return HealthCheckResult.Healthy("A healthy result.");
             }
             catch
             {
-                return Task.FromResult(new HealthCheckResult(context.Registration.FailureStatus, "An unhealthy result."));
+                return new HealthCheckResult(context.Registration.FailureStatus, "An unhealthy result.");
             }
         }
     }

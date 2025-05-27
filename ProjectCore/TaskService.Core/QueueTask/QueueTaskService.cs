@@ -11,12 +11,10 @@ namespace TaskService.Core.QueueTask
     public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
     {
 
-
         /// <summary>
         /// 当前TaskId
         /// </summary>
         public long? CurrentTaskId { get; set; }
-
 
 
         /// <summary>

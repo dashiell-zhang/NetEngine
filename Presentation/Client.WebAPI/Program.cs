@@ -4,6 +4,7 @@ using DistributedLock.Redis;
 using IdentifierGenerator;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Npgsql;
 using Repository.Interceptors;
 using SMS.AliCloud;
@@ -69,6 +70,18 @@ namespace Client.WebAPI
             {
                 options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
                 options.InstanceName = "cache";
+            });
+
+            //注册混合缓存服务
+            builder.Services.AddHybridCache(options =>
+            {
+                options.MaximumPayloadBytes = 1024 * 1024 * 4;
+                options.MaximumKeyLength = 1024;
+                options.DefaultEntryOptions = new HybridCacheEntryOptions
+                {
+                    Expiration = TimeSpan.FromSeconds(300),
+                    LocalCacheExpiration = TimeSpan.FromSeconds(60)
+                };
             });
 
 

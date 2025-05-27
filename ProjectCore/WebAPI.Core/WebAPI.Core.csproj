@@ -20,6 +20,7 @@
 
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.5" />
+	  <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.5.0" />
 	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.5" />
 	  <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.5" />
 	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.11.0" />

@@ -136,7 +136,7 @@ namespace TaskService
                             Expiration = TimeSpan.FromSeconds(300),
                             LocalCacheExpiration = TimeSpan.FromSeconds(60)
                         };
-                    });
+                    }).AddSerializerFactory<HybridCacheJsonSerializerFactory>(); ;
 
 
                     //注册Id生成器

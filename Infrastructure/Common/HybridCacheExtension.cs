@@ -8,41 +8,37 @@ namespace Common
     public static class HybridCacheExtension
     {
 
-        public static async ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<ValueTask<T>>> factory, TimeSpan expiration)
+        public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<ValueTask<T>>> factory, TimeSpan expiration)
         {
-            var key = GenerateCacheKey(factory);
+            return cache.GetOrCreateInternalAsync(() => factory.Compile()(), factory, expiration);
+        }
+
+
+        public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<T>> factory, TimeSpan expiration)
+        {
+            return cache.GetOrCreateInternalAsync(() => new ValueTask<T>(factory.Compile()()), factory, expiration);
+        }
+
+
+        public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<Task<T>>> factory, TimeSpan expiration)
+        {
+            return cache.GetOrCreateInternalAsync(async () => await factory.Compile()(), factory, expiration);
+        }
+
+
+        private static ValueTask<T> GetOrCreateInternalAsync<T>(this HybridCache cache, Func<ValueTask<T>> compiledFactory, Expression expressionForKey, TimeSpan expiration)
+        {
+
+            var key = GenerateCacheKey(expressionForKey);
+
             HybridCacheEntryOptions options = new()
             {
                 Expiration = expiration,
                 LocalCacheExpiration = expiration
             };
-            return await cache.GetOrCreateAsync(key, async _ => await factory.Compile()(), options);
+
+            return cache.GetOrCreateAsync(key, _ => compiledFactory(), options);
         }
-
-
-        public static async ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<T>> factory, TimeSpan expiration)
-        {
-            var key = GenerateCacheKey(factory);
-            HybridCacheEntryOptions options = new()
-            {
-                Expiration = expiration,
-                LocalCacheExpiration = expiration
-            };
-            return await cache.GetOrCreateAsync(key, _ => new ValueTask<T>(factory.Compile()()), options);
-        }
-
-
-        public static async ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<Task<T>>> factory, TimeSpan expiration)
-        {
-            var key = GenerateCacheKey(factory);
-            HybridCacheEntryOptions options = new()
-            {
-                Expiration = expiration,
-                LocalCacheExpiration = expiration
-            };
-            return await cache.GetOrCreateAsync(key, async _ => await factory.Compile()(), options);
-        }
-
 
 
         /// <summary>
@@ -52,7 +48,7 @@ namespace Common
         /// <returns>生成的缓存键</returns>
         private static string GenerateCacheKey(Expression expression)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
 
             // 解析表达式
             if (expression is LambdaExpression lambda)
@@ -62,8 +58,25 @@ namespace Common
 
             if (expression is MethodCallExpression methodCall)
             {
-                // 添加类型全名（如果存在）
-                if (methodCall.Method.ReflectedType != null)
+
+                bool isGetInstanceType = false;
+
+                var instanceExpr = methodCall.Object;
+
+                if (instanceExpr != null)
+                {
+                    var instanceType = Expression.Lambda<Func<object>>(Expression.Convert(instanceExpr, typeof(object))).Compile()()?.GetType();
+
+                    if (instanceType != null)
+                    {
+                        sb.Append(instanceType.FullName);
+                        sb.Append('.');
+
+                        isGetInstanceType = true;
+                    }
+                }
+
+                if (isGetInstanceType == false && methodCall.Method.ReflectedType != null)
                 {
                     sb.Append(methodCall.Method.ReflectedType.FullName);
                     sb.Append('.');
@@ -91,7 +104,11 @@ namespace Common
                 sb.Append(expression.ToString());
             }
 
-            return sb.ToString();
+            string argsStr = sb.ToString();
+
+            string argsHash = CryptoHelper.SHA256HashData(argsStr);
+
+            return argsHash;
         }
 
 

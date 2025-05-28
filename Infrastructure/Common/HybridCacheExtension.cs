@@ -14,7 +14,55 @@ namespace Common
     {
 
         /// <summary>
-        /// 获取或创建同步方法返回值
+        /// 获取或创建同步方法返回值（委托版本）
+        /// </summary>
+        /// <typeparam name="T">返回类型</typeparam>
+        /// <param name="cache">HybridCache</param>
+        /// <param name="cacheKey">缓存键</param>
+        /// <param name="factory">执行委托</param>
+        /// <param name="ttl">缓存有效期</param>
+        /// <returns></returns>
+        /// <remarks>委托版本需要自己确保key的唯一性，首选表达式版本</remarks>
+        public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<T> factory, int ttl = 300)
+        {
+            return cache.GetOrCreateAsync(cacheKey, _ => new ValueTask<T>(factory()), GetHybridCacheEntryOptions(ttl));
+        }
+
+
+        /// <summary>
+        /// 获取或创建异步方法Task返回值（委托版本）
+        /// </summary>
+        /// <typeparam name="T">返回类型</typeparam>
+        /// <param name="cache">HybridCache</param>
+        /// <param name="cacheKey">缓存键</param>
+        /// <param name="factory">执行委托</param>
+        /// <param name="ttl">缓存有效期</param>
+        /// <returns></returns>
+        /// <remarks>委托版本需要自己确保key的唯一性，首选表达式版本</remarks>
+        public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<Task<T>> factory, int ttl = 300)
+        {
+            return cache.GetOrCreateAsync(cacheKey, async _ => await factory(), GetHybridCacheEntryOptions(ttl));
+        }
+
+
+        /// <summary>
+        /// 获取或创建异步方法ValueTask返回值（委托版本）
+        /// </summary>
+        /// <typeparam name="T">返回类型</typeparam>
+        /// <param name="cache">HybridCache</param>
+        /// <param name="cacheKey">缓存键</param>
+        /// <param name="factory">执行委托</param>
+        /// <param name="ttl">缓存有效期</param>
+        /// <returns></returns>
+        /// <remarks>委托版本需要自己确保key的唯一性，首选表达式版本</remarks>
+        public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<ValueTask<T>> factory, int ttl = 300)
+        {
+            return cache.GetOrCreateAsync(cacheKey, _ => factory(), GetHybridCacheEntryOptions(ttl));
+        }
+
+
+        /// <summary>
+        /// 获取或创建同步方法返回值（表达式版本）
         /// </summary>
         /// <typeparam name="T">返回类型</typeparam>
         /// <param name="cache">HybridCache</param>
@@ -30,7 +78,7 @@ namespace Common
 
 
         /// <summary>
-        /// 获取或创建异步方法Task返回值
+        /// 获取或创建异步方法Task返回值（表达式版本）
         /// </summary>
         /// <typeparam name="T">返回类型</typeparam>
         /// <param name="cache">HybridCache</param>
@@ -46,7 +94,7 @@ namespace Common
 
 
         /// <summary>
-        /// 获取或创建异步方法ValueTask返回值
+        /// 获取或创建异步方法ValueTask返回值（表达式版本）
         /// </summary>
         /// <typeparam name="T">返回类型</typeparam>
         /// <param name="cache">HybridCache</param>
@@ -65,15 +113,19 @@ namespace Common
         {
             var key = GenerateCacheKey(expression, keyPrefix);
 
+            return cache.GetOrCreateAsync(key, _ => compiledFactory(), GetHybridCacheEntryOptions(ttl));
+        }
+
+
+        private static HybridCacheEntryOptions GetHybridCacheEntryOptions(int ttl)
+        {
             var expiration = TimeSpan.FromSeconds(ttl);
 
-            HybridCacheEntryOptions options = new()
+            return new()
             {
                 Expiration = expiration,
-                LocalCacheExpiration = TimeSpan.FromSeconds(1)
+                LocalCacheExpiration = expiration
             };
-
-            return cache.GetOrCreateAsync(key, _ => compiledFactory(), options);
         }
 
 

@@ -1,11 +1,13 @@
 using Common;
 using DistributedLock.Redis;
+using FileStorage.AliCloud;
 using IdentifierGenerator;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Npgsql;
 using Repository.Interceptors;
+using SMS.AliCloud;
 using StackExchange.Redis;
 using System.Reflection;
 using TaskService.Core;
@@ -77,12 +79,12 @@ namespace TaskService
                     //});
 
 
-                    //services.AddAliCloudSMS(options =>
-                    //{
-                    //    var settings = hostContext.Configuration.GetRequiredSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>()!;
-                    //    options.AccessKeyId = settings.AccessKeyId;
-                    //    options.AccessKeySecret = settings.AccessKeySecret;
-                    //});
+                    services.AddAliCloudSMS(options =>
+                    {
+                        var settings = hostContext.Configuration.GetRequiredSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>()!;
+                        options.AccessKeyId = settings.AccessKeyId;
+                        options.AccessKeySecret = settings.AccessKeySecret;
+                    });
                     #endregion
 
                     #region 注册文件服务
@@ -97,16 +99,16 @@ namespace TaskService
                     //    options.Url = hostContext.Configuration.GetValue<string>("FileServerUrl")!;
                     //});
 
-                    //services.AddAliCloudStorage(options =>
-                    //{
-                    //    var settings = hostContext.Configuration.GetRequiredSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>()!;
-                    //    options.Region = settings.Region;
-                    //    options.UseInternalEndpoint = settings.UseInternalEndpoint;
-                    //    options.AccessKeyId = settings.AccessKeyId;
-                    //    options.AccessKeySecret = settings.AccessKeySecret;
-                    //    options.BucketName = settings.BucketName;
-                    //    options.Url = hostContext.Configuration.GetValue<string>("FileServerUrl")!;
-                    //});
+                    services.AddAliCloudStorage(options =>
+                    {
+                        var settings = hostContext.Configuration.GetRequiredSection("AliCloudFileStorage").Get<FileStorage.AliCloud.Models.FileStorageSetting>()!;
+                        options.Region = settings.Region;
+                        options.UseInternalEndpoint = settings.UseInternalEndpoint;
+                        options.AccessKeyId = settings.AccessKeyId;
+                        options.AccessKeySecret = settings.AccessKeySecret;
+                        options.BucketName = settings.BucketName;
+                        options.Url = hostContext.Configuration.GetValue<string>("FileServerUrl")!;
+                    });
                     #endregion
 
 

@@ -43,25 +43,6 @@ namespace TaskService.Tasks
         }
 
 
-        [QueueTask(Name = "SendEmail", Semaphore = 5, Duration = 5)]
-        public async Task SendEmail(string name)
-        {
-            Console.WriteLine(DateTime.Now + "姓名：" + name + ",邮件发送成功");
-
-            await queueTaskService.CreateSingleAsync("ClearEmail", name, null, null, null, true);
-
-        }
-
-
-        [QueueTask(Name = "ClearEmail", Semaphore = 5, Duration = 5)]
-        public void ClearEmail(string name)
-        {
-
-            Thread.Sleep(5000);
-
-            Console.WriteLine(DateTime.Now + "姓名：" + name + ",邮件清理成功");
-        }
-
 
         [QueueTask(Name = "SendSMS", Semaphore = 5, Duration = 5)]
         public void SendSMS(string name)

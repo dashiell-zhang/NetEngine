@@ -37,17 +37,17 @@ namespace Client.WebAPI
             NpgsqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
             int maxPoolSize = connectionStringBuilder.MaxPoolSize;
 
-            builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>(options =>
+            builder.Services.AddSingleton<QueryCountInterceptor>();
+
+            builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>((serviceProvider, options) =>
             {
                 options.UseNpgsql(dataSourceBuilder.Build());
                 options.AddInterceptors(new PostgresPatchInterceptor());
+                options.AddInterceptors(serviceProvider.GetRequiredService<QueryCountInterceptor>());
+
             }, maxPoolSize);
 
-            builder.Services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options =>
-            {
-                options.UseNpgsql(dataSourceBuilder.Build());
-                options.AddInterceptors(new PostgresPatchInterceptor());
-            }, maxPoolSize);
+            builder.Services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options => { }, maxPoolSize);
 
 
             builder.AddCommonServices();

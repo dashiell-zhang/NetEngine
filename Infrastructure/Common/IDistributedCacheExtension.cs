@@ -349,14 +349,7 @@ namespace Common
         /// <returns></returns>
         public static bool IsContainKey(this IDistributedCache distributedCache, string key)
         {
-            if (string.IsNullOrEmpty(distributedCache.GetString(key)))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return distributedCache.GetString(key) != null;
         }
 
 
@@ -368,14 +361,7 @@ namespace Common
         /// <returns></returns>
         public static async Task<bool> IsContainKeyAsync(this IDistributedCache distributedCache, string key)
         {
-            if (string.IsNullOrEmpty(await distributedCache.GetStringAsync(key)))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return (await distributedCache.GetStringAsync(key)) != null;
         }
 
     }

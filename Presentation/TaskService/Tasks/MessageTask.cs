@@ -57,39 +57,39 @@ namespace TaskService.Tasks
                 }
             }
 
-            using (SmtpClient smtpClient = new(smtpServer, 587))
+            using SmtpClient smtpClient = new(smtpServer, 587);
+            smtpClient.Credentials = new NetworkCredential(accountName, accountPassword);
+            smtpClient.EnableSsl = true;
+
+            using (MailMessage message = new())
             {
-                smtpClient.Credentials = new NetworkCredential(accountName, accountPassword);
-                smtpClient.EnableSsl = true;
-
-                using (MailMessage message = new())
-                {
-                    foreach (var filePath in filePaths)
-                    {
-                        Attachment data = new(filePath.Key, MediaTypeNames.Application.Octet);
-                        data.Name = filePath.Value;
-                        message.Attachments.Add(data);
-                    }
-
-                    message.From = new(accountName, email.FromDisplayName);
-
-                    foreach (var toAddress in email.ToAddresses)
-                    {
-                        message.To.Add(new MailAddress(toAddress));
-                    }
-
-                    message.Subject = email.Subject;
-                    message.Body = email.Body;
-
-                    message.IsBodyHtml = email.IsBodyHtml;
-
-                    await smtpClient.SendMailAsync(message);
-                }
-
                 foreach (var filePath in filePaths)
                 {
-                    IOHelper.DeleteFile(filePath.Key);
+                    Attachment data = new(filePath.Key, MediaTypeNames.Application.Octet)
+                    {
+                        Name = filePath.Value
+                    };
+                    message.Attachments.Add(data);
                 }
+
+                message.From = new(accountName, email.FromDisplayName);
+
+                foreach (var toAddress in email.ToAddresses)
+                {
+                    message.To.Add(new MailAddress(toAddress));
+                }
+
+                message.Subject = email.Subject;
+                message.Body = email.Body;
+
+                message.IsBodyHtml = email.IsBodyHtml;
+
+                await smtpClient.SendMailAsync(message);
+            }
+
+            foreach (var filePath in filePaths)
+            {
+                IOHelper.DeleteFile(filePath.Key);
             }
 
         }

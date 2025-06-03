@@ -49,9 +49,9 @@ namespace TaskService.Core
 
             var taskSettings = await db.TTaskSetting.ToListAsync();
 
-            var queueTaskSettings = taskSettings.Where(t => t.Category == "QueueTask" && queueMethodList.Keys.Contains(t.Name)).ToList();
+            var queueTaskSettings = taskSettings.Where(t => t.Category == "QueueTask" && queueMethodList.ContainsKey(t.Name)).ToList();
 
-            var scheduleTaskSettings = taskSettings.Where(t => t.Category == "ScheduleTask" && scheduleMethodList.Keys.Contains(t.Name)).ToList();
+            var scheduleTaskSettings = taskSettings.Where(t => t.Category == "ScheduleTask" && scheduleMethodList.ContainsKey(t.Name)).ToList();
 
 
             foreach (var item in queueMethodList)

@@ -10,7 +10,7 @@ namespace Repository.HealthCheck
         {
             try
             {
-                var isHealthy = await db.TUser.Select(it => new { it.Id }).FirstOrDefaultAsync();
+                var isHealthy = await db.TUser.Select(it => new { it.Id }).FirstOrDefaultAsync(cancellationToken);
 
                 return HealthCheckResult.Healthy("A healthy result.");
             }

@@ -27,14 +27,17 @@ namespace Application.Core.Services.User
 
             result.Total = await query.CountAsync();
 
-            result.List = await query.OrderBy(t => t.CreateTime).Select(t => new DtoRole
+            if (result.Total != 0)
             {
-                Id = t.Id,
-                Code = t.Code,
-                Name = t.Name,
-                Remarks = t.Remarks,
-                CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+                result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoRole
+                {
+                    Id = t.Id,
+                    Code = t.Code,
+                    Name = t.Name,
+                    Remarks = t.Remarks,
+                    CreateTime = t.CreateTime
+                }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            }
 
             return result;
         }

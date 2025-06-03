@@ -188,7 +188,7 @@ namespace Application.Core.Services.Basic
                 query = query.Where(t => t.Sign == sign);
             }
 
-            var fileList = await query.OrderBy(t => t.Sort).ThenBy(t => t.CreateTime).Select(t => new DtoFileInfo
+            var fileList = await query.OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoFileInfo
             {
                 Id = t.Id,
                 Name = t.Name,

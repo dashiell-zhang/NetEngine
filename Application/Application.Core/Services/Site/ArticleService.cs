@@ -27,17 +27,19 @@ namespace Application.Core.Services.Site
 
             result.Total = await query.CountAsync();
 
-            result.List = await query.OrderByDescending(t => t.CreateTime).Select(t => new DtoCategory
+            if (result.Total != 0)
             {
-                Id = t.Id,
-                Name = t.Name,
-                Remarks = t.Remarks,
-                Sort = t.Sort,
-                ParentId = t.ParentId,
-                ParentName = t.Parent!.Name,
-                CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
-
+                result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoCategory
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Remarks = t.Remarks,
+                    Sort = t.Sort,
+                    ParentId = t.ParentId,
+                    ParentName = t.Parent!.Name,
+                    CreateTime = t.CreateTime
+                }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            }
 
             return result;
         }
@@ -146,24 +148,27 @@ namespace Application.Core.Services.Site
 
             result.Total = await query.CountAsync();
 
-            result.List = await query.OrderByDescending(t => t.CreateTime).Select(t => new DtoArticle
+            if (result.Total != 0)
             {
-                Id = t.Id,
-                CategoryId = t.CategoryId,
-                CategoryName = t.Category.Name,
-                Title = t.Title,
-                Content = t.Content,
-                Digest = t.Digest,
-                IsRecommend = t.IsRecommend,
-                IsDisplay = t.IsDisplay,
-                Sort = t.Sort,
-                ClickCount = t.ClickCount,
-                CreateTime = t.CreateTime,
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+                result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoArticle
+                {
+                    Id = t.Id,
+                    CategoryId = t.CategoryId,
+                    CategoryName = t.Category.Name,
+                    Title = t.Title,
+                    Content = t.Content,
+                    Digest = t.Digest,
+                    IsRecommend = t.IsRecommend,
+                    IsDisplay = t.IsDisplay,
+                    Sort = t.Sort,
+                    ClickCount = t.ClickCount,
+                    CreateTime = t.CreateTime,
+                }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
 
-            foreach (var article in result.List)
-            {
-                article.CoverImageList = await fileService.GetFileListAsync("Article", "cover", article.Id, true);
+                foreach (var article in result.List)
+                {
+                    article.CoverImageList = await fileService.GetFileListAsync("Article", "cover", article.Id, true);
+                }
             }
 
             return result;

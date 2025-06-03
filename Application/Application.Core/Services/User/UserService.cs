@@ -87,18 +87,20 @@ namespace Application.Core.Services.User
 
             result.Total = await query.CountAsync();
 
-            result.List = await query.OrderByDescending(t => t.CreateTime).Select(t => new DtoUser
+            if (result.Total != 0)
             {
-                Id = t.Id,
-                Name = t.Name,
-                UserName = t.UserName,
-                Phone = t.Phone,
-                Email = t.Email,
-                Roles = string.Join("、", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Code).ToList()),
-                RoleIds = db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
-                CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
-
+                result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoUser
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    UserName = t.UserName,
+                    Phone = t.Phone,
+                    Email = t.Email,
+                    Roles = string.Join("、", db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Code).ToList()),
+                    RoleIds = db.TUserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
+                    CreateTime = t.CreateTime
+                }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            }
 
             return result;
         }

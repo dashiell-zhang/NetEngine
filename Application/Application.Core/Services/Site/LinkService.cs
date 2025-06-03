@@ -25,15 +25,17 @@ namespace Application.Core.Services.Site
 
             result.Total = await query.CountAsync();
 
-            result.List = await query.OrderByDescending(t => t.CreateTime).Select(t => new DtoLink
+            if (result.Total != 0)
             {
-                Id = t.Id,
-                Name = t.Name,
-                Url = t.Url,
-                Sort = t.Sort,
-                CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
-
+                result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoLink
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Url = t.Url,
+                    Sort = t.Sort,
+                    CreateTime = t.CreateTime
+                }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            }
 
             return result;
         }

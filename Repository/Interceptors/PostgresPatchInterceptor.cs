@@ -11,15 +11,16 @@ namespace Repository.Interceptors
         {
             command.CommandText = GetNewCommandText(command.CommandText);
 
-            return result;
+            return base.ReaderExecuting(command, eventData, result);
         }
+
 
 
         public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
         {
             command.CommandText = GetNewCommandText(command.CommandText);
 
-            return new ValueTask<InterceptionResult<DbDataReader>>(result);
+            return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
         }
 
 
@@ -32,22 +33,6 @@ namespace Repository.Interceptors
             }
 
             return commandText;
-        }
-
-
-
-        public override DbDataReader ReaderExecuted(DbCommand command, CommandExecutedEventData eventData, DbDataReader result)
-        {
-
-            //var runtime = eventData.Duration.TotalSeconds;
-
-            ////如果执行时间超过 5秒 则记录日志
-            //if (runtime > 5)
-            //{
-
-            //}
-
-            return result;
         }
 
     }

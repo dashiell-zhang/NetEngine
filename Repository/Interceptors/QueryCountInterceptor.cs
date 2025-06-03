@@ -7,7 +7,7 @@ using System.Data.Common;
 
 namespace Repository.Interceptors
 {
-    public class QueryCountInterceptor(IDistributedCache _distributedCache, ILogger<QueryCountInterceptor> _logger) : DbCommandInterceptor
+    public class QueryCountInterceptor(IDistributedCache distributedCache, ILogger<QueryCountInterceptor> logger) : DbCommandInterceptor
     {
 
         private const int CacheExpiration = 60;
@@ -26,18 +26,17 @@ namespace Repository.Interceptors
 
             try
             {
-                var cachedCount = _distributedCache.GetString(countCacheKey);
+                var cachedCount = distributedCache.GetString(countCacheKey);
 
                 if (cachedCount != null)
                 {
                     var reader = CreateDataReaderFromCount(cachedCount);
-                    Console.WriteLine($"使用缓存的查询计数结果: {cachedCount}, 缓存键: {countCacheKey}");
                     return InterceptionResult<DbDataReader>.SuppressWithResult(reader);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "读取缓存失败，将执行原始查询。缓存键: {CacheKey}", countCacheKey);
+                logger.LogError(ex, $"读取缓存失败，将执行原始查询。{command.CommandText}");
             }
 
             return result;
@@ -46,6 +45,7 @@ namespace Repository.Interceptors
 
         public override async ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
         {
+
             var countCacheKey = GetCountKeyFromCommand(command);
             if (countCacheKey == null)
             {
@@ -56,18 +56,17 @@ namespace Repository.Interceptors
 
             try
             {
-                var cachedCount = await _distributedCache.GetStringAsync(countCacheKey, cancellationToken);
+                var cachedCount = await distributedCache.GetStringAsync(countCacheKey, cancellationToken);
 
                 if (cachedCount != null)
                 {
                     var reader = CreateDataReaderFromCount(cachedCount);
-                    Console.WriteLine($"使用缓存的查询计数结果: {cachedCount}, 缓存键: {countCacheKey}");
                     return InterceptionResult<DbDataReader>.SuppressWithResult(reader);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "读取缓存失败，将执行原始查询。缓存键: {CacheKey}", countCacheKey);
+                logger.LogError(ex, $"读取缓存失败，将执行原始查询。{command.CommandText}");
             }
 
             return result;
@@ -89,13 +88,12 @@ namespace Repository.Interceptors
                 {
                     var count = result.GetInt32(0).ToString();
 
-                    var countCache = _distributedCache.GetString(countCacheKey);
+                    var countCache = distributedCache.GetString(countCacheKey);
 
                     if (countCache == null)
                     {
                         var pendingCacheKey = $"pending:{countCacheKey}";
-                        _ = _distributedCache.SetAsync(pendingCacheKey, count, TimeSpan.FromSeconds(PendingCacheExpiration));
-                        Console.WriteLine($"创建待激活缓存埋点: Count={count}, 缓存键={countCacheKey}");
+                        _ = distributedCache.SetAsync(pendingCacheKey, count, TimeSpan.FromSeconds(PendingCacheExpiration));
                     }
 
                     return CreateDataReaderFromCount(count);
@@ -103,7 +101,7 @@ namespace Repository.Interceptors
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"处理查询结果缓存时出错。缓存键: {countCacheKey}");
+                logger.LogError(ex, $"处理查询结果缓存时出错。{command.CommandText}");
             }
 
             return result;
@@ -125,14 +123,13 @@ namespace Repository.Interceptors
                 {
                     var count = result.GetInt32(0).ToString();
 
-                    var countCache = await _distributedCache.GetStringAsync(countCacheKey, cancellationToken);
+                    var countCache = await distributedCache.GetStringAsync(countCacheKey, cancellationToken);
 
                     if (countCache == null)
                     {
                         var pendingCacheKey = $"pending:{countCacheKey}";
-                        _ = _distributedCache.SetAsync(pendingCacheKey, count, TimeSpan.FromSeconds(PendingCacheExpiration));
+                        _ = distributedCache.SetAsync(pendingCacheKey, count, TimeSpan.FromSeconds(PendingCacheExpiration));
 
-                        Console.WriteLine($"创建待激活缓存埋点: Count={count}, 缓存键={countCacheKey}");
                     }
 
                     return CreateDataReaderFromCount(count);
@@ -140,21 +137,19 @@ namespace Repository.Interceptors
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"处理查询结果缓存时出错。缓存键: {countCacheKey}");
+                logger.LogError(ex, $"处理查询结果缓存时出错。{command.CommandText}");
             }
 
             return result;
         }
 
 
-
         private void TryActivatePendingCache(DbCommand command)
         {
             // 检查是否为分页查询，如果是则尝试激活待处理缓存
             var sql = command.CommandText;
-            var lastLine = sql.Split("\r\n").Last();
 
-            if (lastLine.StartsWith("LIMIT") && lastLine.Contains("OFFSET"))
+            if (sql.Contains("LIMIT") && sql.Contains("OFFSET"))
             {
                 var listCountCacheKey = GetCountKeyByListCommand(command);
                 if (listCountCacheKey != null)
@@ -168,15 +163,13 @@ namespace Repository.Interceptors
             {
                 var pendingCacheKey = $"pending:{countCacheKey}";
 
-                var pendingCache = await _distributedCache.GetStringAsync(pendingCacheKey);
+                var pendingCache = await distributedCache.GetStringAsync(pendingCacheKey);
 
                 if (pendingCache != null)
                 {
-                    await _distributedCache.SetAsync(countCacheKey, pendingCache, TimeSpan.FromSeconds(CacheExpiration));
+                    await distributedCache.SetAsync(countCacheKey, pendingCache, TimeSpan.FromSeconds(CacheExpiration));
 
-                    _distributedCache.Remove(pendingCacheKey);
-
-                    Console.WriteLine($"通过分页查询激活缓存: Count={pendingCache}, 缓存键={countCacheKey}");
+                    distributedCache.Remove(pendingCacheKey);
                 }
             }
         }
@@ -193,25 +186,20 @@ namespace Repository.Interceptors
 
             try
             {
-                //提取 FROM 语句
-                var fromIndex = sql.IndexOf("FROM ");
-                if (fromIndex == -1) return null;
-                var countSql = string.Concat("SELECT count(*)::int\r\n", sql.AsSpan(fromIndex));
-
-
-                //找到 ORDER BY 开始移除后面的内容
-                var orderByIndex = countSql.LastIndexOf("ORDER BY ");
-                if (orderByIndex > 0)
+                // 提取核心查询部分用于构建 count 查询
+                var coreQuery = ExtractCoreQueryForCount(sql);
+                if (string.IsNullOrEmpty(coreQuery))
                 {
-                    countSql = countSql[..orderByIndex];
+                    return null;
                 }
 
-                countSql = countSql.Trim();
+                var countSql = $"SELECT count(*)::int{Environment.NewLine}{coreQuery}";
 
                 // 构建参数字典
                 Dictionary<string, string?> paramDict = [];
                 foreach (DbParameter param in command.Parameters)
                 {
+                    // 只包含 count 查询中需要的参数
                     if (countSql.Contains(param.ParameterName))
                     {
                         paramDict[param.ParameterName] = param.Value?.ToString();
@@ -222,9 +210,114 @@ namespace Repository.Interceptors
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "从分页查询推断count缓存键失败");
+                logger.LogError(ex, $"从分页查询推断count缓存键失败。{sql}");
                 return null;
             }
+        }
+
+
+        /// <summary>
+        /// 从复杂的分页查询中提取用于 count 查询的核心部分
+        /// </summary>
+        /// <param name="sql">原始 SQL 查询</param>
+        /// <returns>用于 count 查询的核心 SQL 部分</returns>
+        private string? ExtractCoreQueryForCount(string sql)
+        {
+            try
+            {
+                // 查找最外层的 FROM 子句
+                var lines = sql.Split(Environment.NewLine);
+
+                // 寻找包含子查询的 FROM 语句
+                var fromLineIndex = -1;
+                var subQueryStartIndex = -1;
+
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    var line = lines[i].Trim();
+                    if (line.StartsWith("FROM ("))
+                    {
+                        fromLineIndex = i;
+                        subQueryStartIndex = i + 1;
+                        break;
+                    }
+                }
+
+                if (fromLineIndex == -1 || subQueryStartIndex == -1)
+                {
+                    // 如果没有找到子查询，使用原来的简单方法
+                    return ExtractSimpleQuery(sql);
+                }
+
+                // 提取子查询中的核心部分
+                List<string> subQueryLines = [];
+                var parenthesesCount = 0;
+                var foundCoreQuery = false;
+
+                for (int i = subQueryStartIndex; i < lines.Length; i++)
+                {
+                    var line = lines[i];
+
+                    // 计算括号层级
+                    parenthesesCount += line.Count(c => c == '(') - line.Count(c => c == ')');
+
+                    if (parenthesesCount < 0)
+                    {
+                        // 子查询结束
+                        break;
+                    }
+
+                    var trimmedLine = line.Trim();
+
+                    // 跳过 SELECT 字段列表，直接找 FROM 开始的部分
+                    if (!foundCoreQuery && trimmedLine.StartsWith("FROM "))
+                    {
+                        foundCoreQuery = true;
+                    }
+
+                    if (foundCoreQuery)
+                    {
+                        // 遇到 ORDER BY 和 LIMIT/OFFSET 直接阶段跳出
+                        if (trimmedLine.StartsWith("ORDER BY") || trimmedLine.StartsWith("LIMIT") || trimmedLine.StartsWith("OFFSET"))
+                        {
+                            break;
+                        }
+
+                        subQueryLines.Add(line);
+                    }
+                }
+
+                return string.Join(Environment.NewLine, subQueryLines).Trim();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"解析复杂查询失败。{sql}");
+            }
+
+            return null;
+        }
+
+
+        /// <summary>
+        /// 简单查询的提取方法
+        /// </summary>
+        /// <param name="sql">原始 SQL</param>
+        /// <returns>提取的查询部分</returns>
+        private static string? ExtractSimpleQuery(string sql)
+        {
+            var fromIndex = sql.IndexOf("FROM ");
+            if (fromIndex == -1) return null;
+
+            var queryPart = sql[fromIndex..];
+
+            // 移除 ORDER BY 及之后的内容
+            var orderByIndex = queryPart.LastIndexOf("ORDER BY ");
+            if (orderByIndex > 0)
+            {
+                queryPart = queryPart[..orderByIndex];
+            }
+
+            return queryPart.Trim();
         }
 
 
@@ -259,20 +352,21 @@ namespace Repository.Interceptors
         /// <returns>缓存键，如果不是count查询则返回null</returns>
         private static string? GetCountKey(string commandText, Dictionary<string, string?> parameters)
         {
+            commandText = string.Join("", [.. commandText.Split(Environment.NewLine).Select(t => t.Trim())]);
+
             string key = "queryCount:" + commandText;
 
             if (parameters.Count > 0)
             {
                 foreach (var param in parameters)
                 {
-                    var paramValue = param.Key + param.Value?.ToString() + "|-|";
+                    var paramValue = param.Key + param.Value?.ToString() + "*|r-r|*";
                     key += paramValue;
                 }
             }
 
             return CryptoHelper.SHA256HashData(key);
         }
-
 
 
         /// <summary>

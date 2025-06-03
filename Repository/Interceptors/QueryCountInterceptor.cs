@@ -21,7 +21,7 @@ namespace Repository.Interceptors
             {
                 TryActivatePendingCache(command);
 
-                return result;
+                return base.ReaderExecuting(command, eventData, result);
             }
 
             try
@@ -39,7 +39,7 @@ namespace Repository.Interceptors
                 logger.LogError(ex, $"读取缓存失败，将执行原始查询。{command.CommandText}");
             }
 
-            return result;
+            return base.ReaderExecuting(command, eventData, result);
         }
 
 
@@ -51,7 +51,7 @@ namespace Repository.Interceptors
             {
                 TryActivatePendingCache(command);
 
-                return result;
+                return await base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
             }
 
             try
@@ -69,7 +69,7 @@ namespace Repository.Interceptors
                 logger.LogError(ex, $"读取缓存失败，将执行原始查询。{command.CommandText}");
             }
 
-            return result;
+            return await base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
         }
 
 
@@ -79,7 +79,7 @@ namespace Repository.Interceptors
 
             if (countCacheKey == null)
             {
-                return result;
+                return base.ReaderExecuted(command, eventData, result);
             }
 
             try
@@ -104,7 +104,7 @@ namespace Repository.Interceptors
                 logger.LogError(ex, $"处理查询结果缓存时出错。{command.CommandText}");
             }
 
-            return result;
+            return base.ReaderExecuted(command, eventData, result);
         }
 
 
@@ -114,7 +114,7 @@ namespace Repository.Interceptors
 
             if (countCacheKey == null)
             {
-                return result;
+                return await base.ReaderExecutedAsync(command, eventData, result, cancellationToken);
             }
 
             try
@@ -140,7 +140,7 @@ namespace Repository.Interceptors
                 logger.LogError(ex, $"处理查询结果缓存时出错。{command.CommandText}");
             }
 
-            return result;
+            return await base.ReaderExecutedAsync(command, eventData, result, cancellationToken);
         }
 
 

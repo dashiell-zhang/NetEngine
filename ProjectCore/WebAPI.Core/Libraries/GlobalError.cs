@@ -1,5 +1,6 @@
 using Common;
 using Microsoft.AspNetCore.Diagnostics;
+using WebAPI.Core.Extensions;
 
 namespace WebAPI.Core.Libraries
 {

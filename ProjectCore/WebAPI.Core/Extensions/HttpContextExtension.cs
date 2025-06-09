@@ -2,7 +2,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using System.IO.Compression;
 using System.Text;
 
-namespace WebAPI.Core.Libraries
+namespace WebAPI.Core.Extensions
 {
 
     /// <summary>

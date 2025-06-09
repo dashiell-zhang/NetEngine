@@ -1,7 +1,7 @@
 using Common;
 using FileStorage;
 using System.Net;
-using WebAPI.Core.Libraries;
+using WebAPI.Core.Extensions;
 
 namespace Admin.WebAPI.Libraries.Ueditor
 {

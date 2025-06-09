@@ -23,8 +23,8 @@
 	  <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.5.0" />
 	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.5" />
 	  <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.5" />
-	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.11.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.2" />
+	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.12.0" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
 	</ItemGroup>
 
 	<ItemGroup>

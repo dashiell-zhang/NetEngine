@@ -1,7 +1,7 @@
 using Application.Core.Interfaces.Pay;
 using Application.Model.Pay.Pay;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Core.Libraries;
+using WebAPI.Core.Extensions;
 
 namespace Client.WebAPI.Controllers
 {

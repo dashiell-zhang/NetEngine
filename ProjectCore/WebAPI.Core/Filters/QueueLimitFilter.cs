@@ -2,7 +2,7 @@ using Common;
 using DistributedLock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using WebAPI.Core.Libraries;
+using WebAPI.Core.Extensions;
 
 namespace WebAPI.Core.Filters
 {

@@ -1,6 +1,6 @@
 using Common;
 using FileStorage;
-using WebAPI.Core.Libraries;
+using WebAPI.Core.Extensions;
 
 namespace Admin.WebAPI.Libraries.Ueditor
 {

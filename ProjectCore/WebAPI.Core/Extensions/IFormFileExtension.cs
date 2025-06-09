@@ -2,26 +2,26 @@ using Common;
 
 namespace WebAPI.Core.Services
 {
-    public class IFormFileSercice(IWebHostEnvironment webHostEnvironment)
+    public static class IFormFileExtension
     {
 
-        private readonly string rootPath = webHostEnvironment.ContentRootPath;
+        private static string baseDirectory = AppContext.BaseDirectory;
 
 
         /// <summary>
-        /// 从ExcelFile中提取List数据
+        /// 从Excel中提取List数据
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="file"></param>
         /// <returns></returns>
         /// <exception cref="CustomException"></exception>
-        public List<T> ExcelToList<T>(IFormFile file) where T : class
+        public static List<T> ExcelToList<T>(this IFormFile file) where T : class
         {
             var fileExtension = Path.GetExtension(file.FileName)?.ToLower();
 
             if (file.Length > 0 && fileExtension == ".xlsx")
             {
-                var tempPath = Path.Combine(rootPath, "files");
+                var tempPath = Path.Combine(baseDirectory, "files");
 
                 if (!Directory.Exists(tempPath))
                 {

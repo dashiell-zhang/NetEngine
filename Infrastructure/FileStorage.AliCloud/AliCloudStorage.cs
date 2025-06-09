@@ -74,7 +74,7 @@ namespace FileStorage.AliCloud
                 Bucket = storageSetting.BucketName,
                 Key = objectName,
                 Acl = isPublicRead ? "public-read" : "private",
-                ContentDisposition = fileName != null ? string.Format("attachment;filename*=utf-8''{0}", WebUtility.UrlEncode(fileName)) : null
+                ContentDisposition = fileName != null ? string.Format("attachment;filename*=UTF-8''{0}", Uri.EscapeDataString(fileName)) : null
             }, localPath);
 
             return result.StatusCode == 200;

@@ -85,7 +85,7 @@ namespace FileStorage.TencentCloud
 
             if (fileName != null)
             {
-                request.SetRequestHeader("Content-Disposition", string.Format("attachment;filename*=utf-8''{0}", HttpUtility.UrlEncode(fileName, Encoding.UTF8)));
+                request.SetRequestHeader("Content-Disposition", string.Format("attachment;filename*=UTF-8''{0}", Uri.EscapeDataString(fileName)));
             }
 
             if (isPublicRead)

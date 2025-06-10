@@ -1,6 +1,8 @@
 using Application.Core.Interfaces.Authorize;
+using Application.Core.Interfaces.Basic;
 using Application.Model.AppSetting;
 using Application.Model.Authorize.Authorize;
+using Application.Model.Task.Message;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;
@@ -12,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
-using SMS;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -21,7 +22,7 @@ namespace Application.Core.Services.Authorize
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, ISMS sms) : IAuthorizeService
+    public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, ITaskService taskService) : IAuthorizeService
     {
 
         private long UserId => userContext.UserId;
@@ -246,7 +247,15 @@ namespace Application.Core.Services.Authorize
                     { "code", code }
                 };
 
-                var sendSMSTask = sms.SendSMSAsync("短信签名", sendVerifyCode.Phone, "短信模板编号", templateParams);
+                DtoSendSMS sendSMS = new()
+                {
+                    SignName = "",
+                    Phone = sendVerifyCode.Phone,
+                    TemplateCode = "",
+                    TemplateParams = templateParams
+                };
+
+                var sendSMSTask = taskService.CreateSingleAsync("MessageTask.SendSMS", sendSMS);
 
                 var setCacheTask = distributedCache.SetAsync(key, code, new TimeSpan(0, 0, 5, 0));
 

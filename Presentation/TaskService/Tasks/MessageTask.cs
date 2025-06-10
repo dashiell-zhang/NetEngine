@@ -3,6 +3,7 @@ using Common;
 using FileStorage;
 using Microsoft.EntityFrameworkCore;
 using Repository.Database;
+using SMS;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
@@ -11,10 +12,18 @@ using TaskService.Core.QueueTask;
 
 namespace TaskService.Tasks
 {
-    public class MessageTask(IHostEnvironment hostEnvironment, ILogger<MessageTask> logger, DatabaseContext db, IFileStorage fileStorage) : TaskBase
+    public class MessageTask(IHostEnvironment hostEnvironment, ILogger<MessageTask> logger, DatabaseContext db, IFileStorage fileStorage, ISMS sms) : TaskBase
     {
 
         private readonly string rootPath = hostEnvironment.ContentRootPath;
+
+
+        [QueueTask(Name = "MessageTask.SendSMS", Semaphore = 1)]
+        public async Task SendSMS(DtoSendSMS sendSMS)
+        {
+            await sms.SendSMSAsync(sendSMS.SignName, sendSMS.Phone, sendSMS.TemplateCode, sendSMS.TemplateParams);
+        }
+
 
 
         [QueueTask(Name = "MessageTask.SendEmail", Semaphore = 1)]

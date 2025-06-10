@@ -34,7 +34,6 @@ namespace TaskService.Tasks
         {
             Console.WriteLine(DateTime.Now + "姓名：" + name);
 
-            await queueTaskService.CreateSingleAsync("SendEmail", name, null, null, null, true);
             await queueTaskService.CreateSingleAsync("SendSMS", name, null, null, null, true);
 
             await queueTaskService.CreateSingleAsync("CallPhone", name);

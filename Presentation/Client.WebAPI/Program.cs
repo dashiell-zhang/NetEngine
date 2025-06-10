@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Npgsql;
 using Repository.Interceptors;
-using SMS.AliCloud;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Extensions;
@@ -139,27 +138,6 @@ namespace Client.WebAPI
                 using X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(sslPath, "证书密码", X509KeyStorageFlags.MachineKeySet);
                 handler.ClientCertificates.Add(certificate);
                 return handler;
-            });
-
-            #endregion
-
-
-            #region 注册短信服务
-
-            //builder.Services.AddTencentCloudSMS(options =>
-            //{
-            //    var settings = builder.Configuration.GetRequiredSection("TencentCloudSMS").Get<SMS.TencentCloud.Models.SMSSetting>()!;
-            //    options.AppId = settings.AppId;
-            //    options.SecretId = settings.SecretId;
-            //    options.SecretKey = settings.SecretKey;
-            //});
-
-
-            builder.Services.AddAliCloudSMS(options =>
-            {
-                var settings = builder.Configuration.GetRequiredSection("AliCloudSMS").Get<SMS.AliCloud.Models.SMSSetting>()!;
-                options.AccessKeyId = settings.AccessKeyId;
-                options.AccessKeySecret = settings.AccessKeySecret;
             });
 
             #endregion

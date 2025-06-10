@@ -361,12 +361,13 @@ namespace Common
         {
             DataTable? dataTable = null;
 
+            IWorkbook? workbook = null;
+
             try
             {
                 using (var fs = File.OpenRead(filePath))
                 {
 
-                    IWorkbook? workbook = null;
                     ISheet? sheet = null;
 
                     if (filePath.IndexOf(".xlsx") > 0)
@@ -380,7 +381,7 @@ namespace Common
                     }
                     else
                     {
-                        throw new Exception("传入文件非 Excel 格式");
+                        throw new ArgumentException("文件格式不支持，仅支持.xls和.xlsx格式");
                     }
 
                     if (workbook != null)
@@ -487,6 +488,10 @@ namespace Common
             {
                 return null;
             }
+            finally
+            {
+                workbook?.Dispose();
+            }
 
 
             static int GetEffectiveColumnCount(IRow row)
@@ -515,7 +520,7 @@ namespace Common
         public static byte[] ListToExcel<T>(List<T> list) where T : notnull, new()
         {
             //创建Excel文件的对象
-            XSSFWorkbook book = new();
+            using XSSFWorkbook book = new();
 
             //添加一个sheet
             ISheet sheet1 = book.CreateSheet("Sheet1");
@@ -564,7 +569,7 @@ namespace Common
         public static byte[] ListToExcelDispalyName<T>(List<T> list) where T : notnull, new()
         {
             //创建Excel文件的对象
-            XSSFWorkbook book = new();
+            using XSSFWorkbook book = new();
 
             //添加一个sheet
             ISheet sheet1 = book.CreateSheet("Sheet1");
@@ -612,7 +617,7 @@ namespace Common
         /// <returns></returns>
         public static byte[] ListToExcel<T>(List<T> list, ExcelTemplate excelTemplate) where T : notnull, new()
         {
-            XSSFWorkbook book = new();
+            using XSSFWorkbook book = new();
             ISheet sheet = book.CreateSheet("Sheet1");
 
             // 添加表头

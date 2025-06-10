@@ -1,6 +1,6 @@
 using Common;
 
-namespace WebAPI.Core.Services
+namespace WebAPI.Core.Extensions
 {
     public static class IFormFileExtension
     {

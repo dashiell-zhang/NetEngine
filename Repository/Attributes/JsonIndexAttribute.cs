@@ -1,4 +1,4 @@
-﻿namespace Repository.Attributes
+namespace Repository.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class JsonIndexAttribute : Attribute

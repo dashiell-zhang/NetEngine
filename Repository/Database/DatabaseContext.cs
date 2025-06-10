@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Repository.Attributes;
 using Repository.Bases;
+using Repository.Column.Attributes;
 using Repository.ValueConverters;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;

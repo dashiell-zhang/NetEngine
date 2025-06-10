@@ -2,24 +2,24 @@
 
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<DebugType>embedded</DebugType>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>1591;8618</NoWarn>
+		<NoWarn>1591;8618;CA2254</NoWarn>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<NoWarn>1591;8618</NoWarn>
+		<NoWarn>1591;8618;CA2254</NoWarn>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Repository.Column\Repository.Column.csproj" />
+		<ProjectReference Include="..\Repository.Enum\Repository.Enum.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -36,24 +36,54 @@ namespace Common
 
                 Type? typeInterface = type.GetInterfaces().FirstOrDefault();
 
-                if (typeInterface == null)
+                var key = type.GetCustomAttribute<ServiceAttribute>()?.Key;
+
+                if (key == null)
                 {
-                    //服务非继承自接口的直接注入
-                    switch (serviceLifetime)
+
+                    if (typeInterface == null)
                     {
-                        case ServiceLifetime.Singleton: services.AddSingleton(type); break;
-                        case ServiceLifetime.Scoped: services.AddScoped(type); break;
-                        case ServiceLifetime.Transient: services.AddTransient(type); break;
+                        //服务非继承自接口的直接注入
+                        switch (serviceLifetime)
+                        {
+                            case ServiceLifetime.Singleton: services.AddSingleton(type); break;
+                            case ServiceLifetime.Scoped: services.AddScoped(type); break;
+                            case ServiceLifetime.Transient: services.AddTransient(type); break;
+                        }
                     }
+                    else
+                    {
+                        //服务继承自接口的和接口一起注入
+                        switch (serviceLifetime)
+                        {
+                            case ServiceLifetime.Singleton: services.AddSingleton(typeInterface, type); break;
+                            case ServiceLifetime.Scoped: services.AddScoped(typeInterface, type); break;
+                            case ServiceLifetime.Transient: services.AddTransient(typeInterface, type); break;
+                        }
+                    }
+
                 }
                 else
                 {
-                    //服务继承自接口的和接口一起注入
-                    switch (serviceLifetime)
+                    if (typeInterface == null)
                     {
-                        case ServiceLifetime.Singleton: services.AddSingleton(typeInterface, type); break;
-                        case ServiceLifetime.Scoped: services.AddScoped(typeInterface, type); break;
-                        case ServiceLifetime.Transient: services.AddTransient(typeInterface, type); break;
+                        //服务非继承自接口的直接注入
+                        switch (serviceLifetime)
+                        {
+                            case ServiceLifetime.Singleton: services.AddKeyedSingleton(type, key); break;
+                            case ServiceLifetime.Scoped: services.AddKeyedScoped(type, key); break;
+                            case ServiceLifetime.Transient: services.AddKeyedTransient(type, key); break;
+                        }
+                    }
+                    else
+                    {
+                        //服务继承自接口的和接口一起注入
+                        switch (serviceLifetime)
+                        {
+                            case ServiceLifetime.Singleton: services.AddKeyedSingleton(typeInterface, key, type); break;
+                            case ServiceLifetime.Scoped: services.AddKeyedScoped(typeInterface, key, type); break;
+                            case ServiceLifetime.Transient: services.AddKeyedTransient(typeInterface, key, type); break;
+                        }
                     }
                 }
 
@@ -125,6 +155,9 @@ namespace Common
     public class ServiceAttribute : Attribute
     {
         public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Transient;
+
+
+        public object? Key { get; set; }
 
     }
 }

@@ -1,8 +1,8 @@
 using AlibabaCloud.OSS.V2;
+using AlibabaCloud.OSS.V2.Credentials;
 using AlibabaCloud.OSS.V2.Models;
 using FileStorage.AliCloud.Models;
 using Microsoft.Extensions.Options;
-using System.Net;
 
 namespace FileStorage.AliCloud
 {
@@ -22,7 +22,7 @@ namespace FileStorage.AliCloud
         {
             storageSetting = config.CurrentValue;
 
-            AlibabaCloud.OSS.V2.Credentials.StaticCredentialsProvide credentialsProvide = new(config.CurrentValue.AccessKeyId, config.CurrentValue.AccessKeySecret);
+            StaticCredentialsProvider credentialsProvide = new(config.CurrentValue.AccessKeyId, config.CurrentValue.AccessKeySecret);
 
             var httpClient = httpClientFactory.CreateClient();
 

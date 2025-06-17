@@ -1,4 +1,4 @@
-﻿using Repository.Database.Bases;
+using Repository.Database.Bases;
 
 namespace Repository.Database
 {
@@ -9,12 +9,10 @@ namespace Repository.Database
     public class TTaskSetting : CUD_User
     {
 
-
         /// <summary>
         /// 任务名称
         /// </summary>
         public string Name { get; set; }
-
 
 
         /// <summary>
@@ -23,12 +21,16 @@ namespace Repository.Database
         public string Category { get; set; }
 
 
+        /// <summary>
+        /// 参数
+        /// </summary>
+        public string? Parameter { get; set; }
+
 
         /// <summary>
         /// 并发值
         /// </summary>
         public int? Semaphore { get; set; }
-
 
 
         /// <summary>
@@ -37,19 +39,16 @@ namespace Repository.Database
         public int? Duration { get; set; }
 
 
-
         /// <summary>
         /// Cron 表达式
         /// </summary>
         public string? Cron { get; set; }
 
 
-
         /// <summary>
         /// 是否启用
         /// </summary>
         public bool IsEnable { get; set; }
-
 
 
         /// <summary>

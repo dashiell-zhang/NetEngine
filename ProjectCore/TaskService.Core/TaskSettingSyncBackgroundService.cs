@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
+using TaskService.Core.ScheduleTask;
 using static TaskService.Core.QueueTask.QueueTaskBuilder;
 using static TaskService.Core.ScheduleTask.ScheduleTaskBuilder;
 
@@ -51,7 +52,7 @@ namespace TaskService.Core
 
             var queueTaskSettings = taskSettings.Where(t => t.Category == "QueueTask" && queueMethodList.ContainsKey(t.Name)).ToList();
 
-            var scheduleTaskSettings = taskSettings.Where(t => t.Category == "ScheduleTask" && scheduleMethodList.ContainsKey(t.Name)).ToList();
+            var scheduleTaskSettings = taskSettings.Where(t => t.Category == "ScheduleTask" && (scheduleMethodList.ContainsKey(t.Name) || argsScheduleMethodList.ContainsKey(t.Name))).ToList();
 
 
             foreach (var item in queueMethodList)
@@ -84,26 +85,78 @@ namespace TaskService.Core
 
             foreach (var item in scheduleMethodList)
             {
-                var task = scheduleTaskSettings.FirstOrDefault(t => t.Name == item.Key);
-                if (task != null)
+
+                if (item.Key.Contains(":") == false)
                 {
-                    if (task.Cron != null && task.Cron != item.Value.Cron)
+
+                    var task = scheduleTaskSettings.FirstOrDefault(t => t.Name == item.Key);
+                    if (task != null)
                     {
-                        item.Value.Cron = task.Cron;
+                        if (task.Cron != null && task.Cron != item.Value.Cron)
+                        {
+                            item.Value.Cron = task.Cron;
+                        }
+                        item.Value.IsEnable = task.IsEnable;
                     }
-                    item.Value.IsEnable = task.IsEnable;
+                    else
+                    {
+                        db.TTaskSetting.Add(new TTaskSetting
+                        {
+                            Id = idService.GetId(),
+                            Category = "ScheduleTask",
+                            Name = item.Key,
+                            Cron = item.Value.Cron
+                        });
+                    }
                 }
                 else
                 {
-                    db.TTaskSetting.Add(new TTaskSetting
+                    var task = scheduleTaskSettings.FirstOrDefault(t => t.Name + ":" + t.Id == item.Key);
+
+                    if (task != null)
                     {
-                        Id = idService.GetId(),
-                        Category = "ScheduleTask",
-                        Name = item.Key,
-                        Cron = item.Value.Cron
-                    });
+                        item.Value.Parameter = task.Parameter;
+
+                        if (task.Cron != null && task.Cron != item.Value.Cron)
+                        {
+                            item.Value.Cron = task.Cron;
+                        }
+                        item.Value.IsEnable = task.IsEnable;
+                    }
+                    else
+                    {
+                        //约等于删掉了
+                        item.Value.IsEnable = false;
+                    }
                 }
             }
+
+            var enableArgsTaskList = scheduleTaskSettings.Where(t => t.Parameter != null && t.IsEnable == true).ToList();
+
+            foreach (var item in enableArgsTaskList)
+            {
+                var scheduleTaskInfo = ScheduleTaskBuilder.argsScheduleMethodList.Where(t => t.Key == item.Name).Select(t => t.Value).FirstOrDefault();
+
+                if (scheduleTaskInfo != null)
+                {
+                    var taskName = item.Name + ":" + item.Id;
+
+                    if (!ScheduleTaskBuilder.scheduleMethodList.ContainsKey(taskName))
+                    {
+                        ScheduleTaskBuilder.scheduleMethodList.Add(taskName, new ScheduleTaskInfo
+                        {
+                            Name = taskName,
+                            Cron = item.Cron ?? scheduleTaskInfo.Cron,
+                            Method = scheduleTaskInfo.Method,
+                            Parameter = item.Parameter,
+                            IsEnable = item.IsEnable,
+                        });
+                    }
+
+
+                }
+            }
+
 
             await db.SaveChangesAsync();
         }

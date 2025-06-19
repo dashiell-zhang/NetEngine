@@ -3,7 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using static TaskService.Core.ScheduleTask.ScheduleTaskBuilder;
+using System.Reflection;
+
 
 namespace TaskService.Core.ScheduleTask
 {
@@ -22,14 +23,14 @@ namespace TaskService.Core.ScheduleTask
             await Task.Delay(10000, stoppingToken);
 #endif
 
-            if (scheduleMethodList.Count != 0)
+            if (ScheduleTaskBuilder.scheduleMethodList.Count != 0)
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     try
                     {
 
-                        foreach (var item in scheduleMethodList.Values.Where(t => t.IsEnable).ToList())
+                        foreach (var item in ScheduleTaskBuilder.scheduleMethodList.Values.Where(t => t.IsEnable).ToList())
                         {
                             var nowTime = DateTimeOffset.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss zzz"));
 
@@ -67,7 +68,7 @@ namespace TaskService.Core.ScheduleTask
             }
         }
 
-
+        private readonly MethodInfo jsonCloneObject = typeof(JsonHelper).GetMethod("JsonCloneObject", BindingFlags.Static | BindingFlags.Public)!;
 
         private async void RunAction(ScheduleTaskInfo scheduleTaskInfo, string key)
         {
@@ -79,7 +80,27 @@ namespace TaskService.Core.ScheduleTask
 
                 object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
 
-                var returnObject = scheduleTaskInfo.Method.Invoke(serviceInstance, null);
+                var parameterType = scheduleTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
+
+                Object? returnObject = null;
+
+                if (parameterType != null)
+                {
+                    if (scheduleTaskInfo.Parameter != null)
+                    {
+                        var parameter = jsonCloneObject.MakeGenericMethod(parameterType).Invoke(null, [scheduleTaskInfo.Parameter])!;
+
+                        returnObject = scheduleTaskInfo.Method.Invoke(serviceInstance, [parameter]);
+                    }
+                    else
+                    {
+                        logger.LogError(scheduleTaskInfo.Method + "方法要求有参数，但任务记录缺少参数");
+                    }
+                }
+                else
+                {
+                    returnObject = scheduleTaskInfo.Method.Invoke(serviceInstance, null);
+                }
 
                 if (returnObject is Task task)
                 {

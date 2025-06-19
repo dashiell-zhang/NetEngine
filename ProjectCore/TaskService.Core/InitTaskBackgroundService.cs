@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Repository.Database;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
 
 namespace TaskService.Core
 {
-    public class InitTaskBackgroundService : BackgroundService
+    public class InitTaskBackgroundService(IServiceProvider serviceProvider) : BackgroundService
     {
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -17,10 +19,17 @@ namespace TaskService.Core
                 .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(TaskBase)))
                 .ToList();
 
-            foreach (Type cls in taskClasses)
+            using (var scope = serviceProvider.CreateScope())
             {
-                ScheduleTaskBuilder.Builder(cls);
-                QueueTaskBuilder.Builder(cls);
+                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+
+                var argScheduleTaskList = db.TTaskSetting.Where(t => t.Category == "ScheduleTask" && t.Parameter != null).ToList();
+
+                foreach (Type cls in taskClasses)
+                {
+                    ScheduleTaskBuilder.Builder(cls, argScheduleTaskList);
+                    QueueTaskBuilder.Builder(cls);
+                }
             }
 
             await Task.CompletedTask;

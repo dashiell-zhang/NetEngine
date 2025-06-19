@@ -16,6 +16,12 @@ namespace TaskService.Core.ScheduleTask
 
 
         /// <summary>
+        /// 参数
+        /// </summary>
+        public string? Parameter { get; set; }
+
+
+        /// <summary>
         /// Cron 表达式
         /// </summary>
         public string Cron { get; set; }

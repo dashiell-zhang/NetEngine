@@ -1,3 +1,4 @@
+using Repository.Database;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -9,7 +10,10 @@ namespace TaskService.Core.ScheduleTask
         public static readonly Dictionary<string, ScheduleTaskInfo> scheduleMethodList = [];
 
 
-        public static void Builder(Type cls)
+        public static readonly Dictionary<string, ScheduleTaskInfo> argsScheduleMethodList = [];
+
+
+        public static void Builder(Type cls, List<TTaskSetting> taskSettings)
         {
             var taskList = cls.GetMethods().Where(t => t.GetCustomAttributes(typeof(ScheduleTaskAttribute), false).Length > 0).ToList();
 
@@ -26,12 +30,44 @@ namespace TaskService.Core.ScheduleTask
 
                 string cron = method.CustomAttributes.Where(t => t.AttributeType == typeof(ScheduleTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Cron" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
 
-                scheduleMethodList.Add(name, new ScheduleTaskInfo
+                var parameterType = method.GetParameters().FirstOrDefault()?.ParameterType;
+
+                if (parameterType == null)
                 {
-                    Name = name,
-                    Cron = cron,
-                    Method = method
-                });
+                    scheduleMethodList.Add(name, new ScheduleTaskInfo
+                    {
+                        Name = name,
+                        Cron = cron,
+                        Method = method
+                    });
+                }
+                else
+                {
+
+                    argsScheduleMethodList.Add(name, new ScheduleTaskInfo
+                    {
+                        Name = name,
+                        Cron = cron,
+                        Method = method
+                    });
+
+                    var argsTaskList = taskSettings.Where(t => t.Name == name).ToList();
+
+                    foreach (var item in argsTaskList)
+                    {
+                        string taskName = name + ":" + item.Id;
+
+                        scheduleMethodList.Add(taskName, new ScheduleTaskInfo
+                        {
+                            Name = taskName,
+                            Cron = item.Cron ?? cron,
+                            Method = method,
+                            Parameter = item.Parameter
+                        });
+                    }
+
+                }
+
             }
         }
 

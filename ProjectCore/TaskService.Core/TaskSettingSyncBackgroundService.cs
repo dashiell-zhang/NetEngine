@@ -4,9 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
+using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
-using static TaskService.Core.QueueTask.QueueTaskBuilder;
-using static TaskService.Core.ScheduleTask.ScheduleTaskBuilder;
 
 namespace TaskService.Core
 {
@@ -25,7 +24,7 @@ namespace TaskService.Core
 
             await Task.Delay(5000, stoppingToken);
 
-            if ((queueMethodList.Count != 0 || scheduleMethodList.Count != 0) && isDebug == false)
+            if ((QueueTaskBuilder.queueMethodList.Count != 0 || ScheduleTaskBuilder.scheduleMethodList.Count != 0) && isDebug == false)
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
@@ -50,12 +49,12 @@ namespace TaskService.Core
 
             var taskSettings = await db.TTaskSetting.ToListAsync();
 
-            var queueTaskSettings = taskSettings.Where(t => t.Category == "QueueTask" && queueMethodList.ContainsKey(t.Name)).ToList();
+            var queueTaskSettings = taskSettings.Where(t => t.Category == "QueueTask" && QueueTaskBuilder.queueMethodList.ContainsKey(t.Name)).ToList();
 
-            var scheduleTaskSettings = taskSettings.Where(t => t.Category == "ScheduleTask" && (scheduleMethodList.ContainsKey(t.Name) || argsScheduleMethodList.ContainsKey(t.Name))).ToList();
+            var scheduleTaskSettings = taskSettings.Where(t => t.Category == "ScheduleTask" && (ScheduleTaskBuilder.scheduleMethodList.ContainsKey(t.Name) || ScheduleTaskBuilder.argsScheduleMethodList.ContainsKey(t.Name))).ToList();
 
 
-            foreach (var item in queueMethodList)
+            foreach (var item in QueueTaskBuilder.queueMethodList)
             {
                 var task = queueTaskSettings.FirstOrDefault(t => t.Name == item.Key);
                 if (task != null)
@@ -83,7 +82,7 @@ namespace TaskService.Core
                 }
             }
 
-            foreach (var item in scheduleMethodList)
+            foreach (var item in ScheduleTaskBuilder.scheduleMethodList)
             {
 
                 if (item.Key.Contains(":") == false)
@@ -131,6 +130,24 @@ namespace TaskService.Core
                 }
             }
 
+            //添加带参任务默认值到任务配置表中
+            foreach (var item in ScheduleTaskBuilder.argsScheduleMethodList)
+            {
+                var isHave = await db.TTaskSetting.Where(t => t.Category == "ScheduleTask" && t.Name == item.Key && t.Parameter == null).AnyAsync();
+
+                if (!isHave)
+                {
+                    db.TTaskSetting.Add(new TTaskSetting
+                    {
+                        Id = idService.GetId(),
+                        Category = "ScheduleTask",
+                        Name = item.Key,
+                        Cron = item.Value.Cron
+                    });
+                }
+            }
+
+
             var enableArgsTaskList = scheduleTaskSettings.Where(t => t.Parameter != null && t.IsEnable == true).ToList();
 
             foreach (var item in enableArgsTaskList)
@@ -156,7 +173,6 @@ namespace TaskService.Core
 
                 }
             }
-
 
             await db.SaveChangesAsync();
         }

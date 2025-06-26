@@ -1,4 +1,4 @@
-﻿using WebAPI.Core.Libraries;
+using WebAPI.Core.Libraries;
 
 namespace WebAPI.Core.Extensions
 {

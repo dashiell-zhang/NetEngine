@@ -1,4 +1,4 @@
-﻿using IdentifierGenerator.Models;
+using IdentifierGenerator.Models;
 using IdentifierGenerator.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 

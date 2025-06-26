@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration.CommandLine;
+using Microsoft.Extensions.Configuration.CommandLine;
 
 namespace Common
 {

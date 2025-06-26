@@ -10,8 +10,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="9.0.6" />
-		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.12.0" />
-		<PackageReference Include="AlipaySDKNet.Standard" Version="4.9.600" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.12.1" />
+		<PackageReference Include="AlipaySDKNet.Standard" Version="4.9.627" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 

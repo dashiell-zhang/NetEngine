@@ -1,4 +1,4 @@
-﻿namespace IdentifierGenerator.Models
+namespace IdentifierGenerator.Models
 {
     public class IdSetting
     {

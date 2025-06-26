@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using IdentifierGenerator.Models;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Hosting;

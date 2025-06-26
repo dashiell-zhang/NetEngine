@@ -1,4 +1,4 @@
-﻿using Repository.Database.Bases;
+using Repository.Database.Bases;
 
 namespace Repository.Database
 {

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Repository.Bases;
 using System.ComponentModel.DataAnnotations.Schema;
 

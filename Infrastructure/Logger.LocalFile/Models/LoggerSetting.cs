@@ -1,4 +1,4 @@
-﻿namespace Logger.LocalFile.Models
+namespace Logger.LocalFile.Models
 {
     public class LoggerSetting
     {

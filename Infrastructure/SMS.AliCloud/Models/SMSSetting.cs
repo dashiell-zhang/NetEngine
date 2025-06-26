@@ -1,4 +1,4 @@
-﻿namespace SMS.AliCloud.Models
+namespace SMS.AliCloud.Models
 {
     public class SMSSetting
     {

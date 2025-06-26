@@ -1,4 +1,4 @@
-﻿using Logger.DataBase.Models;
+using Logger.DataBase.Models;
 using Logger.DataBase.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

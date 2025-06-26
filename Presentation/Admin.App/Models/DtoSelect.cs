@@ -1,4 +1,4 @@
-﻿namespace Admin.App.Models
+namespace Admin.App.Models
 {
     public class DtoSelect
     {

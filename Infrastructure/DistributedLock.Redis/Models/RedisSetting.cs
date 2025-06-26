@@ -1,4 +1,4 @@
-﻿namespace DistributedLock.Redis.Models
+namespace DistributedLock.Redis.Models
 {
     public class RedisSetting
     {

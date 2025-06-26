@@ -1,4 +1,4 @@
-﻿using Logger.LocalFile.Models;
+using Logger.LocalFile.Models;
 using Logger.LocalFile.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

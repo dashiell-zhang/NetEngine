@@ -1,4 +1,4 @@
-﻿namespace TaskService.Core.ScheduleTask
+namespace TaskService.Core.ScheduleTask
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class ScheduleTaskAttribute : Attribute

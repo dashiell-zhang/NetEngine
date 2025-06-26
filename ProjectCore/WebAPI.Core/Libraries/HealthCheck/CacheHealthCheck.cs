@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 

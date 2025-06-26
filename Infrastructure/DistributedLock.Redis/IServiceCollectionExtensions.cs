@@ -1,4 +1,4 @@
-﻿using DistributedLock.Redis.Models;
+using DistributedLock.Redis.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DistributedLock.Redis

@@ -19,13 +19,13 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.6" />
-		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.6" />
-		<PackageReference Include="NPOI" Version="2.7.3" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.7" />
+		<PackageReference Include="NPOI" Version="2.7.4" />
 		<PackageReference Include="SkiaSharp" Version="3.119.0" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.0" />
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.7.0" />

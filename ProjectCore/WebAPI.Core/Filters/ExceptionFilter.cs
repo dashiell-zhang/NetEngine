@@ -15,7 +15,7 @@ namespace WebAPI.Core.Filters
             if (context.Exception is CustomException customException)
             {
                 context.HttpContext.Response.StatusCode = 400;
-                context.Result = new JsonResult(new { errMsg = customException.Message });
+                context.Result = new JsonResult(new { errMsg = customException.Message }, JsonHelper.SerializeOpts);
             }
         }
     }

@@ -1,3 +1,4 @@
+using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Security.Cryptography;
@@ -80,13 +81,13 @@ namespace WebAPI.Core.Filters
                     {
                         context.HttpContext.Response.StatusCode = 401;
 
-                        context.Result = new JsonResult(new { errMsg = "非法 Token" });
+                        context.Result = new JsonResult(new { errMsg = "非法 Token" }, JsonHelper.SerializeOpts);
                     }
                 }
                 else
                 {
                     context.HttpContext.Response.StatusCode = 401;
-                    context.Result = new JsonResult(new { errMsg = "Token 已过期" });
+                    context.Result = new JsonResult(new { errMsg = "Token 已过期" }, JsonHelper.SerializeOpts);
                 }
             }
 #endif

@@ -202,7 +202,14 @@ namespace Repository.Interceptors
                     // 只包含 count 查询中需要的参数
                     if (countSql.Contains(param.ParameterName))
                     {
-                        paramDict[param.ParameterName] = param.Value?.ToString();
+                        string? pValue = null;
+
+                        if (param.Value != null)
+                        {
+                            pValue = JsonHelper.ObjectCloneJson(param.Value);
+                        }
+
+                        paramDict[param.ParameterName] = pValue;
                     }
                 }
 
@@ -337,7 +344,14 @@ namespace Repository.Interceptors
 
             foreach (DbParameter param in command.Parameters)
             {
-                paramDict[param.ParameterName] = param.Value?.ToString();
+                string? pValue = null;
+
+                if (param.Value != null)
+                {
+                    pValue = JsonHelper.ObjectCloneJson(param.Value);
+                }
+
+                paramDict[param.ParameterName] = pValue;
             }
 
             return GetCountKey(command.CommandText, paramDict);

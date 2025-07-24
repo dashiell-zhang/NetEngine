@@ -1,5 +1,5 @@
-using Application.Interface.Pay;
 using Application.Model.Pay.Pay;
+using Application.Service.Pay;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Extensions;
 
@@ -11,7 +11,7 @@ namespace Client.WebAPI.Controllers
     /// </summary>
     [Route("[controller]/[action]")]
     [ApiController]
-    public class PayController(IPayService payService, IHttpContextAccessor httpContextAccessor) : ControllerBase
+    public class PayController(PayService payService, IHttpContextAccessor httpContextAccessor) : ControllerBase
     {
 
 

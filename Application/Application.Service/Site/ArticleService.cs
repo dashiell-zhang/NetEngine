@@ -1,6 +1,5 @@
 using Application.Interface.Authorize;
 using Application.Interface.Basic;
-using Application.Interface.Site;
 using Application.Model.Shared;
 using Application.Model.Site.Article;
 using Common;
@@ -12,12 +11,17 @@ using Repository.Database;
 namespace Application.Service.Site
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, IFileService fileService) : IArticleService
+    public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, IFileService fileService)
     {
 
         private long UserId => userContext.UserId;
 
 
+        /// <summary>
+        /// 获取栏目列表
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public async Task<DtoPageList<DtoCategory>> GetCategoryListAsync(DtoPageRequest request)
         {
 
@@ -45,6 +49,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 获取栏目选择列表
+        /// </summary>
+        /// <param name="id">类型Id</param>
+        /// <returns></returns>
         public async Task<List<DtoCategorySelect>> GetCategorySelectListAsync(long? id = null)
         {
             var list = await db.TCategory.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoCategorySelect
@@ -62,6 +71,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 通过栏目Id 获取栏目信息 
+        /// </summary>
+        /// <param name="categoryId">栏目ID</param>
+        /// <returns></returns>
         public Task<DtoCategory?> GetCategoryAsync(long categoryId)
         {
             var category = db.TCategory.Where(t => t.Id == categoryId).Select(t => new DtoCategory
@@ -79,6 +93,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 创建栏目
+        /// </summary>
+        /// <param name="createCategory"></param>
+        /// <returns></returns>
         public async Task<long> CreateCategoryAsync(DtoEditCategory createCategory)
         {
             TCategory category = new()
@@ -99,6 +118,12 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 更新栏目信息
+        /// </summary>
+        /// <param name="categoryId"></param>
+        /// <param name="updateCategory"></param>
+        /// <returns></returns>
         public async Task<bool> UpdateCategoryAsync(long categoryId, DtoEditCategory updateCategory)
         {
             var category = await db.TCategory.Where(t => t.Id == categoryId).FirstOrDefaultAsync();
@@ -120,6 +145,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 删除栏目
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<bool> DeleteCategoryAsync(long id)
         {
             var category = await db.TCategory.Where(t => t.Id == id).FirstOrDefaultAsync();
@@ -140,6 +170,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 获取文章列表
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public async Task<DtoPageList<DtoArticle>> GetArticleListAsync(DtoPageRequest request)
         {
             DtoPageList<DtoArticle> result = new();
@@ -175,6 +210,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 通过文章ID 获取文章信息
+        /// </summary>
+        /// <param name="articleId">文章ID</param>
+        /// <returns></returns>
         public async Task<DtoArticle?> GetArticleAsync(long articleId)
         {
             var article = await db.TArticle.Where(t => t.Id == articleId).Select(t => new DtoArticle
@@ -201,6 +241,12 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 创建文章
+        /// </summary>
+        /// <param name="createArticle"></param>
+        /// <param name="fileKey">文件key</param>
+        /// <returns></returns>
         public async Task<long> CreateArticleAsync(DtoEditArticle createArticle, long fileKey)
         {
             TArticle article = new()
@@ -242,6 +288,12 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 更新文章信息
+        /// </summary>
+        /// <param name="articleId"></param>
+        /// <param name="updateArticle"></param>
+        /// <returns></returns>
         public async Task<bool> UpdateArticleAsync(long articleId, DtoEditArticle updateArticle)
         {
             var article = await db.TArticle.Where(t => t.Id == articleId).FirstOrDefaultAsync();
@@ -275,6 +327,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 删除文章
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<bool> DeleteArticleAsync(long id)
         {
             var article = await db.TArticle.Where(t => t.Id == id).FirstOrDefaultAsync();

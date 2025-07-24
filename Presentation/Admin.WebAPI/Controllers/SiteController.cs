@@ -1,6 +1,6 @@
-using Application.Interface.Site;
 using Application.Model.Shared;
 using Application.Model.Site.Site;
+using Application.Service.Site;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Filters;
@@ -15,7 +15,7 @@ namespace Admin.WebAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class SiteController(ISiteService siteService) : ControllerBase
+    public class SiteController(SiteService siteService) : ControllerBase
     {
 
 

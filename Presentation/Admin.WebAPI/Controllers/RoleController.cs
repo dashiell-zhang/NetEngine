@@ -1,6 +1,6 @@
-using Application.Interface.User;
 using Application.Model.Shared;
 using Application.Model.User.Role;
+using Application.Service.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Filters;
@@ -13,7 +13,7 @@ namespace Admin.WebAPI.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class RoleController(IRoleService roleService) : ControllerBase
+    public class RoleController(RoleService roleService) : ControllerBase
     {
 
 

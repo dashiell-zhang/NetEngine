@@ -1,5 +1,5 @@
-using Application.Interface.Basic;
 using Application.Model.Basic.Base;
+using Application.Service.Basic;
 using Common;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +13,7 @@ namespace Admin.WebAPI.Controllers
     [SignVerifyFilter]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class BaseController(IBaseService baseService, IdService idService) : ControllerBase
+    public class BaseController(BaseService baseService, IdService idService) : ControllerBase
     {
 
 

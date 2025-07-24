@@ -1,6 +1,6 @@
-using Application.Interface.Site;
 using Application.Model.Shared;
 using Application.Model.Site.Link;
+using Application.Service.Site;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Filters;
@@ -11,7 +11,7 @@ namespace Admin.WebAPI.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class LinkController(ILinkService linkService) : ControllerBase
+    public class LinkController(LinkService linkService) : ControllerBase
     {
 
         /// <summary>

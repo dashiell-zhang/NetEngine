@@ -1,6 +1,6 @@
-using Application.Interface.User;
 using Application.Model.Shared;
 using Application.Model.User.User;
+using Application.Service.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Filters;
@@ -15,7 +15,7 @@ namespace Admin.WebAPI.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class UserController(IUserService userService) : ControllerBase
+    public class UserController(UserService userService) : ControllerBase
     {
 
         /// <summary>

@@ -1,4 +1,3 @@
-using Application.Interface.Site;
 using Application.Model.Site.Site;
 using Common;
 using IdentifierGenerator;
@@ -9,10 +8,13 @@ using Repository.Database;
 namespace Application.Service.Site
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class SiteService(DatabaseContext db, IdService idService) : ISiteService
+    public class SiteService(DatabaseContext db, IdService idService)
     {
 
-
+        /// <summary>
+        /// 获取站点信息
+        /// </summary>
+        /// <returns></returns>
         public async Task<DtoSite> GetSiteAsync()
         {
             var kvList = await db.TAppSetting.Where(t => t.Module == "Site").Select(t => new
@@ -39,7 +41,11 @@ namespace Application.Service.Site
         }
 
 
-
+        /// <summary>
+        /// 编辑站点信息
+        /// </summary>
+        /// <param name="editSite"></param>
+        /// <returns></returns>
         public async Task<bool> EditSiteAsync(DtoSite editSite)
         {
             await SetSiteInfoAsync("WebUrl", editSite.WebUrl);
@@ -57,7 +63,12 @@ namespace Application.Service.Site
         }
 
 
-
+        /// <summary>
+        /// 设置站点信息
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public async Task<bool> SetSiteInfoAsync(string key, string? value)
         {
 

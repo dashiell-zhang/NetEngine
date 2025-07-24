@@ -1,5 +1,4 @@
 using Application.Interface.Authorize;
-using Application.Interface.User;
 using Application.Model.Shared;
 using Application.Model.User.User;
 using Common;
@@ -16,12 +15,17 @@ using System.Text;
 namespace Application.Service.User
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class UserService(DatabaseContext db, IDistributedCache distributedCache, IUserContext userContext, IDistributedLock distLock, IdService idService) : IUserService
+    public class UserService(DatabaseContext db, IDistributedCache distributedCache, IUserContext userContext, IDistributedLock distLock, IdService idService)
     {
 
         private long UserId => userContext.UserId;
 
 
+        /// <summary>
+        /// 通过 UserId 获取用户信息 
+        /// </summary>
+        /// <param name="userId">用户ID</param>
+        /// <returns></returns>
         public Task<DtoUser?> GetUserAsync(long? userId)
         {
             userId ??= UserId;
@@ -40,6 +44,11 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 通过短信验证码修改账户手机号
+        /// </summary>
+        /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
+        /// <returns></returns>
         public async Task<bool> EditUserPhoneBySmsAsync(DtoEditUserPhoneBySms request)
         {
             string key = "VerifyPhone_" + request.NewPhone;
@@ -79,6 +88,11 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 获取用户列表
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public async Task<DtoPageList<DtoUser>> GetUserListAsync(DtoPageRequest request)
         {
             DtoPageList<DtoUser> result = new();
@@ -106,6 +120,11 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 创建用户
+        /// </summary>
+        /// <param name="createUser"></param>
+        /// <returns></returns>
         public async Task<long?> CreateUserAsync(DtoEditUser createUser)
         {
             string key = "userName:" + createUser.UserName.ToLower();
@@ -156,6 +175,12 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 更新用户信息
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="updateUser"></param>
+        /// <returns></returns>
         public async Task<bool> UpdateUserAsync(long userId, DtoEditUser updateUser)
         {
             string key = "userName:" + updateUser.UserName.ToLower();
@@ -230,6 +255,11 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 删除用户
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<bool> DeleteUserAsync(long id)
         {
             var user = await db.TUser.Where(t => t.Id == id).FirstOrDefaultAsync();
@@ -246,6 +276,11 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 获取某个用户的功能权限
+        /// </summary>
+        /// <param name="userId">用户ID</param>
+        /// <returns></returns>
         public async Task<List<DtoUserFunction>> GetUserFunctionAsync(long userId)
         {
             var roleIds = await db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
@@ -274,6 +309,11 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 设置用户的功能
+        /// </summary>
+        /// <param name="setUserFunction"></param>
+        /// <returns></returns>
         public async Task<bool> SetUserFunctionAsync(DtoSetUserFunction setUserFunction)
         {
             var roleIds = await db.TUserRole.Where(t => t.UserId == setUserFunction.UserId).Select(t => t.RoleId).ToListAsync();
@@ -324,6 +364,11 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 获取用户角色列表
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
         public Task<List<DtoUserRole>> GetUserRoleListAsync(long userId)
         {
             var list = db.TRole.Select(t => new DtoUserRole
@@ -338,6 +383,11 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 设置用户角色
+        /// </summary>
+        /// <param name="setUserRole"></param>
+        /// <returns></returns>
         public async Task<bool> SetUserRoleAsync(DtoSetUserRole setUserRole)
         {
             var userRole = await db.TUserRole.Where(t => t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefaultAsync();
@@ -375,6 +425,13 @@ namespace Application.Service.User
         }
 
 
+        /// <summary>
+        /// 获取某个用户某个功能下的子集功能
+        /// </summary>
+        /// <param name="userId">用户ID</param>
+        /// <param name="parentId">功能父级ID</param>
+        /// <param name="roleIds">用户角色ID集合</param>
+        /// <returns></returns>
         public async Task<List<DtoUserFunction>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds)
         {
 

@@ -1,5 +1,4 @@
 using Application.Interface.Authorize;
-using Application.Interface.Site;
 using Application.Model.Shared;
 using Application.Model.Site.Link;
 using Common;
@@ -11,12 +10,17 @@ using Repository.Database;
 namespace Application.Service.Site
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class LinkService(DatabaseContext db, IdService idService, IUserContext userContext) : ILinkService
+    public class LinkService(DatabaseContext db, IdService idService, IUserContext userContext)
     {
 
         private long UserId => userContext.UserId;
 
 
+        /// <summary>
+        /// 获取友情链接列表
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public async Task<DtoPageList<DtoLink>> GetLinkListAsync(DtoPageRequest request)
         {
             DtoPageList<DtoLink> result = new();
@@ -41,6 +45,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 获取友情链接
+        /// </summary>
+        /// <param name="linkId">链接ID</param>
+        /// <returns></returns>
         public Task<DtoLink?> GetLinkAsync(long linkId)
         {
             var link = db.TLink.Where(t => t.Id == linkId).Select(t => new DtoLink
@@ -56,6 +65,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 创建友情链接
+        /// </summary>
+        /// <param name="createLink"></param>
+        /// <returns></returns>
         public async Task<long> CreateLinkAsync(DtoEditLink createLink)
         {
             TLink link = new()
@@ -75,6 +89,12 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 更新友情链接
+        /// </summary>
+        /// <param name="linkId"></param>
+        /// <param name="updateLink"></param>
+        /// <returns></returns>
         public async Task<bool> UpdateLinkAsync(long linkId, DtoEditLink updateLink)
         {
             var link = await db.TLink.Where(t => t.Id == linkId).FirstOrDefaultAsync();
@@ -95,6 +115,11 @@ namespace Application.Service.Site
         }
 
 
+        /// <summary>
+        /// 删除友情链接
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<bool> DeleteLinkAsync(long id)
         {
             var link = await db.TLink.Where(t => t.Id == id).FirstOrDefaultAsync();

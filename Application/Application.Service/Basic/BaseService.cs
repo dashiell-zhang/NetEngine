@@ -1,4 +1,3 @@
-using Application.Interface.Basic;
 using Application.Model.Basic.Base;
 using Common;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +8,16 @@ using Repository.Database;
 namespace Application.Service.Basic
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class BaseService(DatabaseContext db, IDistributedCache distributedCache) : IBaseService
+    public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
     {
+
+        /// <summary>
+        /// 获取省市级联地址数据
+        /// </summary>
+        /// <param name="provinceId">省份ID</param>
+        /// <param name="cityId">城市ID</param>
+        /// <returns></returns>
+        /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
         public async Task<List<DtoRegion>> GetRegionAsync(int provinceId, int cityId)
         {
             List<DtoRegion> list = [];
@@ -34,6 +41,10 @@ namespace Application.Service.Basic
         }
 
 
+        /// <summary>
+        /// 获取全部省市级联地址数据
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<DtoRegion>> GetRegionAllAsync()
         {
             var list = await db.TRegionProvince.Select(t => new DtoRegion
@@ -56,6 +67,11 @@ namespace Application.Service.Basic
         }
 
 
+        /// <summary>
+        /// 图像验证码生成
+        /// </summary>
+        /// <param name="sign">标记</param>
+        /// <returns></returns>
         public async Task<Dictionary<string, string>> GetValueListAsync(long groupId)
         {
             Dictionary<string, string> keyValuePairs = [];
@@ -75,6 +91,11 @@ namespace Application.Service.Basic
         }
 
 
+        /// <summary>
+        /// 获取指定组ID的KV键值对
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <returns></returns>
         public async Task<byte[]> GetVerifyCodeAsync(Guid sign)
         {
             var cacheKey = "VerifyCode" + sign.ToString();
@@ -87,7 +108,6 @@ namespace Application.Service.Basic
 
             return image;
         }
-
 
     }
 }

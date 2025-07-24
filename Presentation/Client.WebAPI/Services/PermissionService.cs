@@ -1,4 +1,4 @@
-using Application.Core.Interfaces.Authorize;
+using Application.Interface.Authorize;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;

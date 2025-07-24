@@ -1,4 +1,4 @@
-using Application.Core.Interfaces.Authorize;
+using Application.Interface.Authorize;
 using Common;
 using System.Security.Claims;
 

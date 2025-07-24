@@ -1,4 +1,4 @@
-using Application.Core.Interfaces.User;
+using Application.Interface.User;
 using Application.Model.Shared;
 using Application.Model.User.User;
 using Microsoft.AspNetCore.Authorization;

@@ -1,4 +1,4 @@
-using Application.Core.Interfaces.Site;
+using Application.Interface.Site;
 using Application.Model.Shared;
 using Application.Model.Site.Article;
 using Microsoft.AspNetCore.Authorization;

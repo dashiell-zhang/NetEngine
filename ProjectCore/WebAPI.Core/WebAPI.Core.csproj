@@ -23,12 +23,13 @@
 	  <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.7.0" />
 	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.7" />
 	  <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.7" />
-	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.12.1" />
+	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.13.0" />
 	  <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Application\Application.Core\Application.Core.csproj" />
+	  <ProjectReference Include="..\..\Application\Application.Interface\Application.Interface.csproj" />
+	  <ProjectReference Include="..\..\Repository\Repository.csproj" />
 	</ItemGroup>
 
 </Project>

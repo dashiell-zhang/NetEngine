@@ -1,4 +1,4 @@
-using Application.Core.Interfaces.Authorize;
+using Application.Interface.Authorize;
 using Application.Model.Authorize.Authorize;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;

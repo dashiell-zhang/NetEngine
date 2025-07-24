@@ -1,4 +1,4 @@
-using Application.Core.Interfaces.Pay;
+using Application.Interface.Pay;
 using Application.Model.Pay.Pay;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Extensions;

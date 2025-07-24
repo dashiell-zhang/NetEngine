@@ -1,4 +1,4 @@
-using Application.Core.Interfaces.Basic;
+using Application.Interface.Basic;
 using Application.Model.Basic.File;
 using Common;
 using Microsoft.AspNetCore.Authorization;

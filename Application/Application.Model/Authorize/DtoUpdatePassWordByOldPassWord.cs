@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.Model.Authorize.Authorize
+namespace Application.Model.Authorize
 {
     public class DtoUpdatePasswordByOldPassword
     {

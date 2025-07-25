@@ -1,4 +1,4 @@
-namespace Application.Model.Pay.Pay
+namespace Application.Model.Pay
 {
 #pragma warning disable IDE1006 // 命名样式
 

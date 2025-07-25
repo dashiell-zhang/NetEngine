@@ -1,4 +1,4 @@
-namespace Application.Model.Pay.Pay
+namespace Application.Model.Pay
 {
     public class DtoCreateWeiXinPayJSAPIRet
     {

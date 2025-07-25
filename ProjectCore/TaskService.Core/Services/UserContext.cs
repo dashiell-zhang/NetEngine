@@ -1,4 +1,4 @@
-using Application.Interface.Authorize;
+using Application.Interface;
 using Common;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;

@@ -3,7 +3,7 @@ using Aop.Api.Domain;
 using Aop.Api.Request;
 using Aop.Api.Response;
 using Aop.Api.Util;
-using Application.Model.Pay.Pay;
+using Application.Model.Pay;
 using Common;
 using DistributedLock;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +15,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
-namespace Application.Service.Pay
+namespace Application.Service
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
     public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock)

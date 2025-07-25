@@ -1,6 +1,6 @@
-using Application.Interface.Authorize;
+using Application.Interface;
 using Application.Model.AppSetting;
-using Application.Model.Authorize.Authorize;
+using Application.Model.Authorize;
 using Application.Model.Task.Message;
 using Application.Service.Basic;
 using Common;
@@ -18,7 +18,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Application.Service.Authorize
+namespace Application.Service
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]

@@ -1,4 +1,4 @@
-using Application.Interface.Authorize;
+using Application.Interface;
 using Application.Model.Basic.File;
 using Common;
 using FileStorage;

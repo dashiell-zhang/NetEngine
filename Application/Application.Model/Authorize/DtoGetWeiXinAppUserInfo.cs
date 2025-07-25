@@ -1,4 +1,4 @@
-namespace Application.Model.Authorize.Authorize
+namespace Application.Model.Authorize
 {
 
     /// <summary>

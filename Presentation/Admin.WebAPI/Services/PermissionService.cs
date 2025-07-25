@@ -1,4 +1,4 @@
-using Application.Service.Authorize;
+using Application.Service;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;

@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace Application.Interface.Authorize
+namespace Application.Interface
 {
     public interface IUserContext
     {

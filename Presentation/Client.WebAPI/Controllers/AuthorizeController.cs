@@ -1,5 +1,5 @@
-using Application.Model.Authorize.Authorize;
-using Application.Service.Authorize;
+using Application.Model.Authorize;
+using Application.Service;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

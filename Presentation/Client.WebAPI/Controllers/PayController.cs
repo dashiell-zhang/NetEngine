@@ -1,5 +1,5 @@
-using Application.Model.Pay.Pay;
-using Application.Service.Pay;
+using Application.Model.Pay;
+using Application.Service;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Extensions;
 

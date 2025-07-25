@@ -1,4 +1,4 @@
-using Application.Interface.Authorize;
+using Application.Interface;
 using Application.Model.Shared;
 using Application.Model.User.Role;
 using Common;

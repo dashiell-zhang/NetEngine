@@ -1,5 +1,5 @@
-using Application.Interface.Authorize;
 using Application.Model.Authorize.Authorize;
+using Application.Service.Authorize;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +19,7 @@ namespace Client.WebAPI.Controllers
     /// </summary>
     [Route("[controller]/[action]")]
     [ApiController]
-    public class AuthorizeController(IAuthorizeService authorizeService) : ControllerBase
+    public class AuthorizeController(AuthorizeService authorizeService) : ControllerBase
     {
 
 

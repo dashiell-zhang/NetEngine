@@ -1,8 +1,8 @@
 using Application.Interface.Authorize;
-using Application.Interface.Basic;
 using Application.Model.AppSetting;
 using Application.Model.Authorize.Authorize;
 using Application.Model.Task.Message;
+using Application.Service.Basic;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;
@@ -22,7 +22,7 @@ namespace Application.Service.Authorize
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, ITaskService taskService) : IAuthorizeService
+    public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, TaskService taskService)
     {
 
         private long UserId => userContext.UserId;
@@ -31,6 +31,10 @@ namespace Application.Service.Authorize
         private readonly HttpClient httpClient = httpClientFactory.CreateClient();
 
 
+        /// <summary>
+        /// 获取公钥
+        /// </summary>
+        /// <returns></returns>
         public string? GetPublicKey()
         {
             try
@@ -44,8 +48,6 @@ namespace Application.Service.Authorize
                 throw new CustomException("RSA公钥加载异常");
             }
         }
-
-
 
 
         /// <summary>
@@ -68,7 +70,6 @@ namespace Application.Service.Authorize
                 throw new CustomException("用户名或密码错误");
             }
         }
-
 
 
         /// <summary>
@@ -140,8 +141,6 @@ namespace Application.Service.Authorize
         }
 
 
-
-
         /// <summary>
         /// 利用手机号和短信验证码获取Token认证信息
         /// </summary>
@@ -194,8 +193,6 @@ namespace Application.Service.Authorize
         }
 
 
-
-
         /// <summary>
         /// 获取授权功能列表
         /// </summary>
@@ -223,8 +220,6 @@ namespace Application.Service.Authorize
 
             return keyValues;
         }
-
-
 
 
         /// <summary>
@@ -269,7 +264,6 @@ namespace Application.Service.Authorize
             }
 
         }
-
 
 
         /// <summary>
@@ -325,8 +319,6 @@ namespace Application.Service.Authorize
         }
 
 
-
-
         /// <summary>
         /// 通过老密码修改密码
         /// </summary>
@@ -358,7 +350,6 @@ namespace Application.Service.Authorize
                 throw new CustomException("账户异常，请联系后台工作人员");
             }
         }
-
 
 
         /// <summary>
@@ -405,7 +396,12 @@ namespace Application.Service.Authorize
         }
 
 
-
+        /// <summary>
+        /// 通过用户id获取 token
+        /// </summary>
+        /// <param name="userId">用户Id</param>
+        /// <param name="lastTokenId">上一次的TokenId</param>
+        /// <returns></returns>
         public async Task<string> GetTokenByUserIdAsync(long userId, long? lastTokenId = null)
         {
 
@@ -454,7 +450,12 @@ namespace Application.Service.Authorize
         }
 
 
-
+        /// <summary>
+        /// 获取微信小程序用户OpenId 和 SessionKey
+        /// </summary>
+        /// <param name="appId"></param>
+        /// <param name="code">登录时获取的 code，可通过wx.login获取</param>
+        /// <returns></returns>
         public async Task<(string openId, string sessionKey)> GetWeiXinMiniAppOpenIdAndSessionKeyAsync(string appId, string code)
         {
             var settingGroupId = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
@@ -486,7 +487,10 @@ namespace Application.Service.Authorize
         }
 
 
-
+        /// <summary>
+        /// 获取微信App AccessToken和OpenId
+        /// </summary>
+        /// <returns></returns>
         public async Task<(string accessToken, string openId)> GetWeiXinAppAccessTokenAndOpenIdAsync(string appId, string code)
         {
             var settingGroupId = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
@@ -518,7 +522,12 @@ namespace Application.Service.Authorize
         }
 
 
-
+        /// <summary>
+        /// 获取微信App 用户信息
+        /// </summary>
+        /// <param name="accessToken"></param>
+        /// <param name="openId"></param>
+        /// <returns></returns>
         public async Task<DtoGetWeiXinAppUserInfo> GetWeiXinAppUserInfoAsync(string accessToken, string openId)
         {
             string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
@@ -540,7 +549,10 @@ namespace Application.Service.Authorize
         }
 
 
-
+        /// <summary>
+        /// 用户功能授权检测
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> CheckFunctionAuthorizeAsync(string module, string route)
         {
 
@@ -570,7 +582,10 @@ namespace Application.Service.Authorize
         }
 
 
-
+        /// <summary>
+        /// 签发新的Token
+        /// </summary>
+        /// <returns></returns>
         public async Task<string?> IssueNewTokenAsync()
         {
             var nbf = long.Parse(userContext.Claims.First(t => t.Type == "nbf").Value);

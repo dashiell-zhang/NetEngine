@@ -1,7 +1,7 @@
 using Application.Interface.Authorize;
-using Application.Interface.Basic;
 using Application.Model.Shared;
 using Application.Model.Site.Article;
+using Application.Service.Basic;
 using Common;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +11,7 @@ using Repository.Database;
 namespace Application.Service.Site
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, IFileService fileService)
+    public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, FileService fileService)
     {
 
         private long UserId => userContext.UserId;

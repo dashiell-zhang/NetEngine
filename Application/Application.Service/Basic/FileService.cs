@@ -1,5 +1,4 @@
 using Application.Interface.Authorize;
-using Application.Interface.Basic;
 using Application.Model.Basic.File;
 using Common;
 using FileStorage;
@@ -12,10 +11,16 @@ using Repository.Database;
 namespace Application.Service.Basic
 {
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IConfiguration configuration, IFileStorage? fileStorage = null) : IFileService
+    public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IConfiguration configuration, IFileStorage? fileStorage = null)
     {
 
 
+        /// <summary>
+        /// 文件上传
+        /// </summary>
+        /// <param name="savePath">文件存储基础路径</param>
+        /// <param name="uploadFile"></param>
+        /// <returns></returns>
         public async Task<long> UploadFileAsync(string savePath, DtoUploadFile uploadFile)
         {
             var utcNow = DateTime.UtcNow;
@@ -83,7 +88,12 @@ namespace Application.Service.Basic
         }
 
 
-
+        /// <summary>
+        /// 远程单文件上传接口
+        /// </summary>
+        /// <param name="savePath">文件存储基础路径</param>
+        /// <param name="remoteUploadFile"></param>
+        /// <returns>文件ID</returns>
         public async Task<long> RemoteUploadFileAsync(string savePath, DtoRemoteUploadFile remoteUploadFile)
         {
 
@@ -117,8 +127,12 @@ namespace Application.Service.Basic
         }
 
 
-
-
+        /// <summary>
+        /// 通过文件ID获取文件静态访问路径
+        /// </summary>
+        /// <param name="fileId">文件ID</param>
+        /// <param name="isInline">是否在浏览器中打开</param>
+        /// <returns></returns>
         public async Task<string?> GetFileUrlAsync(long fileId, bool isInline = false)
         {
             var file = await db.TFile.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefaultAsync();
@@ -156,7 +170,11 @@ namespace Application.Service.Basic
         }
 
 
-
+        /// <summary>
+        /// 通过文件ID删除文件方法
+        /// </summary>
+        /// <param name="id">文件ID</param>
+        /// <returns></returns>
         public async Task<bool> DeleteFileAsync(long id)
         {
             var file = await db.TFile.Where(t => t.Id == id).FirstOrDefaultAsync();
@@ -177,7 +195,14 @@ namespace Application.Service.Basic
         }
 
 
-
+        /// <summary>
+        /// 获取文件列表
+        /// </summary>
+        /// <param name="business">业务领域</param>
+        /// <param name="sign">标记</param>
+        /// <param name="key">关联记录值</param>
+        /// <param name="isGetUrl">是否获取url</param>
+        /// <returns></returns>
         public async Task<List<DtoFileInfo>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl)
         {
 

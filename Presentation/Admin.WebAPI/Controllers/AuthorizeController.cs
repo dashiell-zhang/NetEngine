@@ -1,5 +1,5 @@
-using Application.Interface.Authorize;
 using Application.Model.Authorize.Authorize;
+using Application.Service.Authorize;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +19,7 @@ namespace Admin.WebAPI.Controllers
     /// </summary>
     [Route("[controller]/[action]")]
     [ApiController]
-    public class AuthorizeController(IAuthorizeService authorizeService, DatabaseContext db, IdService idService) : ControllerBase
+    public class AuthorizeController(AuthorizeService authorizeService, DatabaseContext db, IdService idService) : ControllerBase
     {
 
 
@@ -40,7 +40,7 @@ namespace Admin.WebAPI.Controllers
         [SignVerifyFilter]
         [Authorize]
         [HttpGet]
-        public Task<Dictionary<string, string>> GetFunctionList() => authorizeService.GetFunctionListAsync();
+        public Task<Dictionary<string, string>> GetFunctionList(string? sign) => authorizeService.GetFunctionListAsync(sign);
 
 
 

@@ -1,4 +1,4 @@
-using Application.Interface.Authorize;
+using Application.Service.Authorize;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -8,7 +8,7 @@ namespace Client.WebAPI.Services
 {
 
     [Service(Lifetime = ServiceLifetime.Scoped)]
-    public class PermissionService(IAuthorizeService authorizeService) : IPermissionService
+    public class PermissionService(AuthorizeService authorizeService) : IPermissionService
     {
 
         public async Task<bool> VerifyAuthorizationAsync(AuthorizationHandlerContext authorizationHandlerContext)

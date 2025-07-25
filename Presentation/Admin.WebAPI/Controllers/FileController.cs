@@ -1,5 +1,5 @@
-using Application.Interface.Basic;
 using Application.Model.Basic.File;
+using Application.Service.Basic;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +19,7 @@ namespace Admin.WebAPI.Controllers
     [Authorize]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class FileController(IFileService fileService, DatabaseContext db, IWebHostEnvironment webHostEnvironment) : ControllerBase
+    public class FileController(FileService fileService, DatabaseContext db, IWebHostEnvironment webHostEnvironment) : ControllerBase
     {
         private readonly string savePath = webHostEnvironment.WebRootPath;
 

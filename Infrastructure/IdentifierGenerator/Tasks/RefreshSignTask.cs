@@ -21,7 +21,7 @@ namespace IdentifierGenerator.Tasks
                 {
                     var key = "IdentifierGenerator-" + config.CurrentValue.DataCenterId + ":" + config.CurrentValue.MachineId;
 
-                    distributedCache.Set(key, "", TimeSpan.FromDays(7));
+                    distributedCache.Set(key, "", TimeSpan.FromHours(1));
                 }
                 catch
                 {

@@ -20,8 +20,17 @@ namespace IdentifierGenerator
 
                     string key = "";
 
+                    int tryCount = 0;
+
                     do
                     {
+                        tryCount++;
+
+                        if (tryCount > 10)
+                        {
+                            throw new Exception("Id生成器注册DataCenterId和MachineId失败");
+                        }
+
                         int combinedNumber = rand.Next(0, 1025);
 
                         config.CurrentValue.DataCenterId = (combinedNumber >> 5) & 31; //dataCenterId 取组合数右移5位后的低5位
@@ -31,7 +40,7 @@ namespace IdentifierGenerator
 
                     } while (distributedCache.IsContainKey(key));
 
-                    distributedCache.Set(key, "", TimeSpan.FromDays(7));
+                    distributedCache.Set(key, "", TimeSpan.FromHours(1));
                 }
             }
 

@@ -32,6 +32,7 @@ namespace Application.Service.User
 
             var user = db.TUser.Where(t => t.Id == userId).Select(t => new DtoUser
             {
+                Id = t.Id,
                 Name = t.Name,
                 UserName = t.UserName,
                 Phone = t.Phone,

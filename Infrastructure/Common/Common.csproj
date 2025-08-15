@@ -26,6 +26,10 @@
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.8" />
 		<PackageReference Include="NPOI" Version="2.7.4" />
+
+		<!--因为 npoi 依赖的最低版本存在安全漏洞，故手动引入最新版-->
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+		
 		<PackageReference Include="SkiaSharp" Version="3.119.0" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.0" />
 		<PackageReference Include="SkiaSharp.QrCode" Version="0.7.0" />

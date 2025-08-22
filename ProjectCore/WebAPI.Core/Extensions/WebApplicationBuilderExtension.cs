@@ -90,6 +90,7 @@ namespace WebAPI.Core.Extensions
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownNetworks.Add(new IPNetwork(System.Net.IPAddress.Parse("0.0.0.0"), 0));
             });
 
             builder.Services.AddResponseCompression(options =>

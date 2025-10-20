@@ -19,7 +19,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="AlibabaCloud.SDK.Dysmsapi20170525" Version="4.0.0" />
+		<PackageReference Include="AlibabaCloud.SDK.Dysmsapi20170525" Version="4.0.1" />
 		<PackageReference Include="aliyun-net-sdk-core" Version="1.6.2" />
 	</ItemGroup>
 

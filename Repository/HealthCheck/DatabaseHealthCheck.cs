@@ -1,10 +1,12 @@
+using Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
 using Repository.Database;
 
 namespace Repository.HealthCheck
 {
-    public class DatabaseHealthCheck(DatabaseContext db) : IHealthCheck
+    public class DatabaseHealthCheck(DatabaseContext db, ILogger<DatabaseHealthCheck> logger) : IHealthCheck
     {
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
@@ -14,8 +16,20 @@ namespace Repository.HealthCheck
 
                 return HealthCheckResult.Healthy("A healthy result.");
             }
-            catch
+            catch (Exception ex)
             {
+
+                var errorLog = new
+                {
+                    ex.Source,
+                    ex.Message,
+                    ex.StackTrace,
+                    InnerSource = ex.InnerException?.Source,
+                    InnerMessage = ex.InnerException?.Message,
+                    InnerStackTrace = ex.InnerException?.StackTrace,
+                };
+
+                logger.LogError(JsonHelper.ObjectToJson(errorLog));
                 return new HealthCheckResult(context.Registration.FailureStatus, "An unhealthy result.");
             }
         }

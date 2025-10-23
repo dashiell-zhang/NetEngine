@@ -8,8 +8,10 @@ USER root
 #修改镜像内部软件源采用阿里镜像
 RUN sed -i 's@http://deb.debian.org@https://mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
 
-#安装 libfontconfig1 以解决 SkiaSharp 在 linux 的依赖问题
-RUN apt-get update && apt-get -y install libfontconfig1
+# 安装 SkiaSharp 依赖（libfontconfig1）并清理缓存
+RUN apt-get update && apt-get -y install libfontconfig1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 #设置时区为中国上海
 ENV TZ=Asia/Shanghai

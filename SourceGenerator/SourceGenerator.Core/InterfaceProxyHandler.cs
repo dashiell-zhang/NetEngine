@@ -137,6 +137,8 @@ internal sealed class InterfaceProxyHandler
 
         var returnType = method.ReturnType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var methodName = method.Name;
+        var typeFullName = method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Replace("global::", string.Empty);
+        var methodFullName = typeFullName + "." + methodName;
         var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
         var paramList = string.Join(", ", method.Parameters.Select(FormatParameter));
         var argList = string.Join(", ", method.Parameters.Select(p => p.Name));
@@ -165,6 +167,8 @@ internal sealed class InterfaceProxyHandler
         {
             sb.AppendLine("        string? __args = null;");
         }
+        // Build log method name based on actual implementation type at runtime
+        sb.AppendLine("        var __logMethod = (__inner.GetType().FullName ?? \"" + typeFullName + "\") + \"." + methodName + "\";");
         var cacheAttr = method.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == CacheableAttributeMetadataName);
         var hasCache = cacheAttr is not null && !method.ReturnsVoid;
         var ttl = 60;
@@ -174,7 +178,7 @@ internal sealed class InterfaceProxyHandler
             {
                 if (kv.Key == "TtlSeconds" && kv.Value.Value is int i) ttl = i;
             }
-            sb.AppendLine("        var __cache = new global::SourceGenerator.Runtime.ProxyRuntime.CacheOptions { Seed = \"" + methodName + "\" + (__args is null ? string.Empty : __args), TtlSeconds = " + ttl + " };");
+            sb.AppendLine("        var __cache = new global::SourceGenerator.Runtime.ProxyRuntime.CacheOptions { Seed = \"" + methodFullName + "\" + (__args is null ? string.Empty : __args), TtlSeconds = " + ttl + " };");
         }
         else
         {
@@ -184,16 +188,16 @@ internal sealed class InterfaceProxyHandler
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
         if (isTask)
         {
-            sb.AppendLine($"        return {runtime}.InvokeTask(() => __inner.{methodName}{typeParams}({argList}), \"{methodName}\", {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
+            sb.AppendLine($"        return {runtime}.InvokeTask(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
         }
         else if (isGenericTask)
         {
             var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-            sb.AppendLine($"        return {runtime}.InvokeTask<{tArg}>(() => __inner.{methodName}{typeParams}({argList}), \"{methodName}\", {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp, __cache);");
+            sb.AppendLine($"        return {runtime}.InvokeTask<{tArg}>(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp, __cache);");
         }
         else if (isValueTask)
         {
-            sb.AppendLine($"        return {runtime}.InvokeValueTask(() => __inner.{methodName}{typeParams}({argList}), \"{methodName}\", {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
+            sb.AppendLine($"        return {runtime}.InvokeValueTask(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
         }
         else if (isGenericValueTask)
         {
@@ -202,12 +206,12 @@ internal sealed class InterfaceProxyHandler
         }
         else if (method.ReturnsVoid)
         {
-            sb.AppendLine($"        {runtime}.Invoke(() => __inner.{methodName}{typeParams}({argList}), \"{methodName}\", {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
+            sb.AppendLine($"        {runtime}.Invoke(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
             sb.AppendLine("        return;");
         }
         else
         {
-            sb.AppendLine($"        return {runtime}.Invoke<{returnType}>(() => __inner.{methodName}{typeParams}({argList}), \"{methodName}\", {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp, __cache);");
+            sb.AppendLine($"        return {runtime}.Invoke<{returnType}>(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp, __cache);");
         }
 
         sb.AppendLine("    }");

@@ -1,7 +1,4 @@
 using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
@@ -37,318 +34,164 @@ public static class ProxyRuntime
     /// 同步无返回值调用。
     /// 记录开始日志（含参数，可选）、可选计时并记录完成日志。
     /// </summary>
-    /// <param name="inner">实际执行的委托。</param>
-    /// <param name="method">方法全名（用于日志）。</param>
-    /// <param name="log">是否输出日志。</param>
-    /// <param name="measure">是否统计耗时。</param>
-    /// <param name="args">参数字符串（可为空）。</param>
-    /// <param name="sp">服务提供者，用于解析 <see cref="ILoggerFactory"/>。</param>
     public static void Invoke(Action inner, string method, bool log, bool measure, string? args, IServiceProvider? sp)
     {
         var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
-            else logger?.Info($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.LogInformation($"[Proxy] Executing {method} args: {args}");
+            else logger?.LogInformation($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.LogInformation($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
     }
 
     /// <summary>
     /// 同步有返回值调用，带可选分布式缓存。
-    /// 命中缓存时直接返回并记录命中日志；未命中则执行业务、记录日志并尝试写入缓存。
     /// </summary>
-    /// <typeparam name="T">返回值类型。</typeparam>
-    /// <param name="inner">实际执行的委托。</param>
-    /// <param name="method">方法全名（用于日志）。</param>
-    /// <param name="log">是否输出日志。</param>
-    /// <param name="measure">是否统计耗时。</param>
-    /// <param name="args">参数字符串（可为空）。</param>
-    /// <param name="sp">服务提供者，用于解析 <see cref="ILoggerFactory"/> 与 <see cref="IDistributedCache"/>。</param>
-    /// <param name="cache">缓存选项；null 表示不启用缓存。</param>
     public static T Invoke<T>(Func<T> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp, CacheOptions? cache)
     {
         var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
-        IDistributedCache? cacheSvc = null;
-        string? key = null;
-        if (cache is not null && sp is not null)
+        if (cache is not null)
         {
-            cacheSvc = sp.GetService(typeof(IDistributedCache)) as IDistributedCache;
-            key = BuildKey(cache.Seed);
-            if (cacheSvc is not null)
-            {
-                try
-                {
-                    var json = DistributedCacheExtensions.GetString(cacheSvc, key);
-                    if (json is not null)
-                    {
-                        if (log) logger?.Info($"[Proxy] Cache hit {method}");
-                        return JsonSerializer.Deserialize<T>(json)!;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (log) logger?.Info($"[Proxy] Cache read error {method}: {ex.Message}");
-                }
-            }
+            if (CacheRuntime.TryGet<T>(sp, cache, logger, log, method, out var cached)) return cached;
         }
-
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
-            else logger?.Info($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.LogInformation($"[Proxy] Executing {method} args: {args}");
+            else logger?.LogInformation($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         var result = inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.LogInformation($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
-        if (log) logger?.Info($"[Proxy] Return {method} = {result}");
-
-        if (cacheSvc is not null && key is not null)
+        if (log)
         {
-            try
-            {
-                var json = JsonSerializer.Serialize(result);
-                DistributedCacheExtensions.SetString(cacheSvc, key, json, new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache!.TtlSeconds)
-                });
-                if (log) logger?.Info($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
-            }
-            catch (Exception ex)
-            {
-                if (log) logger?.Info($"[Proxy] Cache write error {method}: {ex.Message}");
-            }
+            var __json = JsonUtil.ToJson(result);
+            logger?.LogInformation($"[Proxy] Return {method} = {__json}");
+        }
+        if (cache is not null)
+        {
+            CacheRuntime.Set(sp, cache, logger, log, method, result);
         }
         return result;
     }
 
     /// <summary>
     /// 异步无返回值调用（Task）。
-    /// 记录开始日志（含参数，可选）、可选计时并记录完成日志。
     /// </summary>
-    /// <param name="inner">实际执行的异步委托。</param>
-    /// <param name="method">方法全名（用于日志）。</param>
-    /// <param name="log">是否输出日志。</param>
-    /// <param name="measure">是否统计耗时。</param>
-    /// <param name="args">参数字符串（可为空）。</param>
-    /// <param name="sp">服务提供者，用于解析 <see cref="ILoggerFactory"/>。</param>
     public static async Task InvokeTask(Func<Task> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp)
     {
         var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
-            else logger?.Info($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.LogInformation($"[Proxy] Executing {method} args: {args}");
+            else logger?.LogInformation($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         await inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.LogInformation($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
     }
 
     /// <summary>
     /// 异步有返回值调用（Task&lt;T&gt;），带可选分布式缓存。
-    /// 命中缓存时直接返回并记录命中日志；未命中则执行业务、记录日志并尝试写入缓存。
     /// </summary>
-    /// <typeparam name="T">返回值类型。</typeparam>
-    /// <param name="inner">实际执行的异步委托。</param>
-    /// <param name="method">方法全名（用于日志）。</param>
-    /// <param name="log">是否输出日志。</param>
-    /// <param name="measure">是否统计耗时。</param>
-    /// <param name="args">参数字符串（可为空）。</param>
-    /// <param name="sp">服务提供者，用于解析 <see cref="ILoggerFactory"/> 与 <see cref="IDistributedCache"/>。</param>
-    /// <param name="cache">缓存选项；null 表示不启用缓存。</param>
     public static async Task<T> InvokeTask<T>(Func<Task<T>> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp, CacheOptions? cache)
     {
         var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
-        IDistributedCache? cacheSvc = null;
-        string? key = null;
-        if (cache is not null && sp is not null)
+        if (cache is not null)
         {
-            cacheSvc = sp.GetService(typeof(IDistributedCache)) as IDistributedCache;
-            key = BuildKey(cache.Seed);
-            if (cacheSvc is not null)
-            {
-                try
-                {
-                    var json = await DistributedCacheExtensions.GetStringAsync(cacheSvc, key);
-                    if (json is not null)
-                    {
-                        if (log) logger?.Info($"[Proxy] Cache hit {method}");
-                        return JsonSerializer.Deserialize<T>(json)!;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (log) logger?.Info($"[Proxy] Cache read error {method}: {ex.Message}");
-                }
-            }
+            var get = await CacheRuntime.TryGetAsync<T>(sp, cache, logger, log, method);
+            if (get.hit) return get.value;
         }
-
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
-            else logger?.Info($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.LogInformation($"[Proxy] Executing {method} args: {args}");
+            else logger?.LogInformation($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         var result = await inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.LogInformation($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
-        if (log) logger?.Info($"[Proxy] Return {method} = {result}");
-
-        if (cacheSvc is not null && key is not null)
+        if (log)
         {
-            try
-            {
-                var json = JsonSerializer.Serialize(result);
-                await DistributedCacheExtensions.SetStringAsync(cacheSvc, key, json, new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache!.TtlSeconds)
-                });
-                if (log) logger?.Info($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
-            }
-            catch (Exception ex)
-            {
-                if (log) logger?.Info($"[Proxy] Cache write error {method}: {ex.Message}");
-            }
+            var __json = JsonUtil.ToJson(result);
+            logger?.LogInformation($"[Proxy] Return {method} = {__json}");
+        }
+        if (cache is not null)
+        {
+            await CacheRuntime.SetAsync(sp, cache, logger, log, method, result);
         }
         return result;
     }
 
     /// <summary>
     /// 异步无返回值调用（ValueTask）。
-    /// 记录开始日志（含参数，可选）、可选计时并记录完成日志。
     /// </summary>
-    /// <param name="inner">实际执行的异步委托。</param>
-    /// <param name="method">方法全名（用于日志）。</param>
-    /// <param name="log">是否输出日志。</param>
-    /// <param name="measure">是否统计耗时。</param>
-    /// <param name="args">参数字符串（可为空）。</param>
-    /// <param name="sp">服务提供者，用于解析 <see cref="ILoggerFactory"/>。</param>
     public static async ValueTask InvokeValueTask(Func<ValueTask> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp)
     {
         var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
-            else logger?.Info($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.LogInformation($"[Proxy] Executing {method} args: {args}");
+            else logger?.LogInformation($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         await inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.LogInformation($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
     }
 
     /// <summary>
     /// 异步有返回值调用（ValueTask&lt;T&gt;），带可选分布式缓存。
-    /// 命中缓存时直接返回并记录命中日志；未命中则执行业务、记录日志并尝试写入缓存。
     /// </summary>
-    /// <typeparam name="T">返回值类型。</typeparam>
-    /// <param name="inner">实际执行的异步委托。</param>
-    /// <param name="method">方法全名（用于日志）。</param>
-    /// <param name="log">是否输出日志。</param>
-    /// <param name="measure">是否统计耗时。</param>
-    /// <param name="args">参数字符串（可为空）。</param>
-    /// <param name="sp">服务提供者，用于解析 <see cref="ILoggerFactory"/> 与 <see cref="IDistributedCache"/>。</param>
-    /// <param name="cache">缓存选项；null 表示不启用缓存。</param>
     public static async ValueTask<T> InvokeValueTask<T>(Func<ValueTask<T>> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp, CacheOptions? cache)
     {
         var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
-        IDistributedCache? cacheSvc = null;
-        string? key = null;
-        if (cache is not null && sp is not null)
+        if (cache is not null)
         {
-            cacheSvc = sp.GetService(typeof(IDistributedCache)) as IDistributedCache;
-            key = BuildKey(cache.Seed);
-            if (cacheSvc is not null)
-            {
-                try
-                {
-                    var json = await DistributedCacheExtensions.GetStringAsync(cacheSvc, key);
-                    if (json is not null)
-                    {
-                        if (log) logger?.Info($"[Proxy] Cache hit {method}");
-                        return JsonSerializer.Deserialize<T>(json)!;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (log) logger?.Info($"[Proxy] Cache read error {method}: {ex.Message}");
-                }
-            }
+            var get = await CacheRuntime.TryGetAsync<T>(sp, cache, logger, log, method);
+            if (get.hit) return get.value;
         }
-
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
-            else logger?.Info($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.LogInformation($"[Proxy] Executing {method} args: {args}");
+            else logger?.LogInformation($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         var result = await inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.LogInformation($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
-        if (log) logger?.Info($"[Proxy] Return {method} = {result}");
-
-        if (cacheSvc is not null && key is not null)
+        if (log)
         {
-            try
-            {
-                var json = JsonSerializer.Serialize(result);
-                await DistributedCacheExtensions.SetStringAsync(cacheSvc, key, json, new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache!.TtlSeconds)
-                });
-                if (log) logger?.Info($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
-            }
-            catch (Exception ex)
-            {
-                if (log) logger?.Info($"[Proxy] Cache write error {method}: {ex.Message}");
-            }
+            var __json = JsonUtil.ToJson(result);
+            logger?.LogInformation($"[Proxy] Return {method} = {__json}");
+        }
+        if (cache is not null)
+        {
+            await CacheRuntime.SetAsync(sp, cache, logger, log, method, result);
         }
         return result;
     }
-
-    /// <summary>
-    /// 生成分布式缓存键：前缀 <c>CacheData_</c> + <see cref="Md5Hex(string)"/>。
-    /// </summary>
-    /// <param name="seed">原始种子字符串。</param>
-    /// <returns>缓存键。</returns>
-    private static string BuildKey(string seed) => "CacheData_" + Md5Hex(seed);
-    /// <summary>
-    /// 计算字符串的 MD5 小写十六进制摘要（UTF-8）。
-    /// </summary>
-    /// <param name="s">输入字符串。</param>
-    /// <returns>32 位小写十六进制哈希。</returns>
-    private static string Md5Hex(string s)
-    {
-        using var md5 = MD5.Create();
-        var bytes = Encoding.UTF8.GetBytes(s);
-        var hash = md5.ComputeHash(bytes);
-        var sb = new StringBuilder(hash.Length * 2);
-        foreach (var b in hash) sb.Append(b.ToString("x2"));
-        return sb.ToString();
-    }
 }
-

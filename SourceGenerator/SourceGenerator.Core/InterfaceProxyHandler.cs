@@ -36,7 +36,10 @@ internal sealed class InterfaceProxyHandler
         sb.Append("namespace ").Append(ns).AppendLine(";");
         sb.AppendLine();
         sb.Append("file static class __ProxyHelpers_").Append(proxyName).AppendLine(" {");
-        sb.AppendLine("    internal static string ArgToString(object? o) => o?.ToString() ?? \"<null>\";");
+        sb.AppendLine("    internal static string ArgToString(object? o)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        return global::SourceGenerator.Runtime.JsonUtil.ToJson(o);");
+        sb.AppendLine("    }");
         sb.AppendLine("}");
         sb.AppendLine();
         sb.Append("public sealed class ").Append(proxyName).Append(" : ").Append(ifaceDisplay).AppendLine()

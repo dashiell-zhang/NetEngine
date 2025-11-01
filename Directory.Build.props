@@ -1,0 +1,18 @@
+<Project>
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      Condition="
+                        ('$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))' != '$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))') and
+                        ('$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))' != '$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))')
+                      " />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj"
+                      Condition="
+                        ('$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))' != '$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))') and
+                        ('$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))' != '$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))')
+                      " />
+  </ItemGroup>
+</Project>

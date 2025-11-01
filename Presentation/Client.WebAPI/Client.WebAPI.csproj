@@ -35,6 +35,7 @@
 		<ProjectReference Include="..\..\Infrastructure\Logger.DataBase\Logger.DataBase.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\Logger.LocalFile\Logger.LocalFile.csproj" />
 		<ProjectReference Include="..\..\ProjectCore\WebAPI.Core\WebAPI.Core.csproj" />
+		<ProjectReference Include="..\..\SourceGenerator\SourceGenerator.Abstraction\SourceGenerator.Abstraction.csproj" />
 	</ItemGroup>
 
 	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">

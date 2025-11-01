@@ -1,8 +1,9 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace SourceGenerator.Runtime;
 
@@ -17,23 +18,25 @@ public static class ProxyRuntime
     // Sync (void)
     public static void Invoke(Action inner, string method, bool log, bool measure, string? args, IServiceProvider? sp)
     {
+        var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) Console.WriteLine($"[Proxy] Executing {method} args: {args}");
-            else Console.WriteLine($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
+            else logger?.Info($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            Console.WriteLine($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
     }
 
     // Sync (T)
     public static T Invoke<T>(Func<T> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp, CacheOptions? cache)
     {
+        var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         IDistributedCache? cacheSvc = null;
         string? key = null;
         if (cache is not null && sp is not null)
@@ -47,30 +50,30 @@ public static class ProxyRuntime
                     var json = DistributedCacheExtensions.GetString(cacheSvc, key);
                     if (json is not null)
                     {
-                        if (log) Console.WriteLine($"[Proxy] Cache hit {method}");
+                        if (log) logger?.Info($"[Proxy] Cache hit {method}");
                         return JsonSerializer.Deserialize<T>(json)!;
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (log) Console.WriteLine($"[Proxy] Cache read error {method}: {ex.Message}");
+                    if (log) logger?.Info($"[Proxy] Cache read error {method}: {ex.Message}");
                 }
             }
         }
 
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) Console.WriteLine($"[Proxy] Executing {method} args: {args}");
-            else Console.WriteLine($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
+            else logger?.Info($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         var result = inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            Console.WriteLine($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
-        if (log) Console.WriteLine($"[Proxy] Return={result}");
+        if (log) logger?.Info($"[Proxy] Return={result}");
 
         if (cacheSvc is not null && key is not null)
         {
@@ -81,11 +84,11 @@ public static class ProxyRuntime
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache!.TtlSeconds)
                 });
-                if (log) Console.WriteLine($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
+                if (log) logger?.Info($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
             }
             catch (Exception ex)
             {
-                if (log) Console.WriteLine($"[Proxy] Cache write error {method}: {ex.Message}");
+                if (log) logger?.Info($"[Proxy] Cache write error {method}: {ex.Message}");
             }
         }
         return result;
@@ -94,23 +97,25 @@ public static class ProxyRuntime
     // Task (void)
     public static async Task InvokeTask(Func<Task> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp)
     {
+        var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) Console.WriteLine($"[Proxy] Executing {method} args: {args}");
-            else Console.WriteLine($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
+            else logger?.Info($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         await inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            Console.WriteLine($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
     }
 
     // Task<T>
     public static async Task<T> InvokeTask<T>(Func<Task<T>> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp, CacheOptions? cache)
     {
+        var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         IDistributedCache? cacheSvc = null;
         string? key = null;
         if (cache is not null && sp is not null)
@@ -124,30 +129,30 @@ public static class ProxyRuntime
                     var json = await DistributedCacheExtensions.GetStringAsync(cacheSvc, key);
                     if (json is not null)
                     {
-                        if (log) Console.WriteLine($"[Proxy] Cache hit {method}");
+                        if (log) logger?.Info($"[Proxy] Cache hit {method}");
                         return JsonSerializer.Deserialize<T>(json)!;
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (log) Console.WriteLine($"[Proxy] Cache read error {method}: {ex.Message}");
+                    if (log) logger?.Info($"[Proxy] Cache read error {method}: {ex.Message}");
                 }
             }
         }
 
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) Console.WriteLine($"[Proxy] Executing {method} args: {args}");
-            else Console.WriteLine($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
+            else logger?.Info($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         var result = await inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            Console.WriteLine($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
-        if (log) Console.WriteLine($"[Proxy] Return={result}");
+        if (log) logger?.Info($"[Proxy] Return={result}");
 
         if (cacheSvc is not null && key is not null)
         {
@@ -158,11 +163,11 @@ public static class ProxyRuntime
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache!.TtlSeconds)
                 });
-                if (log) Console.WriteLine($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
+                if (log) logger?.Info($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
             }
             catch (Exception ex)
             {
-                if (log) Console.WriteLine($"[Proxy] Cache write error {method}: {ex.Message}");
+                if (log) logger?.Info($"[Proxy] Cache write error {method}: {ex.Message}");
             }
         }
         return result;
@@ -171,23 +176,25 @@ public static class ProxyRuntime
     // ValueTask (void)
     public static async ValueTask InvokeValueTask(Func<ValueTask> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp)
     {
+        var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) Console.WriteLine($"[Proxy] Executing {method} args: {args}");
-            else Console.WriteLine($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
+            else logger?.Info($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         await inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            Console.WriteLine($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
     }
 
     // ValueTask<T>
     public static async ValueTask<T> InvokeValueTask<T>(Func<ValueTask<T>> inner, string method, bool log, bool measure, string? args, IServiceProvider? sp, CacheOptions? cache)
     {
+        var logger = (sp?.GetService(typeof(ILoggerFactory)) as ILoggerFactory)?.CreateLogger("SourceGenerator.Runtime.ProxyRuntime");
         IDistributedCache? cacheSvc = null;
         string? key = null;
         if (cache is not null && sp is not null)
@@ -201,30 +208,30 @@ public static class ProxyRuntime
                     var json = await DistributedCacheExtensions.GetStringAsync(cacheSvc, key);
                     if (json is not null)
                     {
-                        if (log) Console.WriteLine($"[Proxy] Cache hit {method}");
+                        if (log) logger?.Info($"[Proxy] Cache hit {method}");
                         return JsonSerializer.Deserialize<T>(json)!;
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (log) Console.WriteLine($"[Proxy] Cache read error {method}: {ex.Message}");
+                    if (log) logger?.Info($"[Proxy] Cache read error {method}: {ex.Message}");
                 }
             }
         }
 
         if (log)
         {
-            if (!string.IsNullOrEmpty(args)) Console.WriteLine($"[Proxy] Executing {method} args: {args}");
-            else Console.WriteLine($"[Proxy] Executing {method}");
+            if (!string.IsNullOrEmpty(args)) logger?.Info($"[Proxy] Executing {method} args: {args}");
+            else logger?.Info($"[Proxy] Executing {method}");
         }
         var sw = measure ? Stopwatch.StartNew() : null;
         var result = await inner();
         if (measure && sw is not null)
         {
             sw.Stop();
-            Console.WriteLine($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
+            logger?.Info($"[Proxy] Executed {method} in {sw.ElapsedMilliseconds}ms");
         }
-        if (log) Console.WriteLine($"[Proxy] Return={result}");
+        if (log) logger?.Info($"[Proxy] Return={result}");
 
         if (cacheSvc is not null && key is not null)
         {
@@ -235,11 +242,11 @@ public static class ProxyRuntime
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache!.TtlSeconds)
                 });
-                if (log) Console.WriteLine($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
+                if (log) logger?.Info($"[Proxy] Cache set {method} ttl={cache!.TtlSeconds}");
             }
             catch (Exception ex)
             {
-                if (log) Console.WriteLine($"[Proxy] Cache write error {method}: {ex.Message}");
+                if (log) logger?.Info($"[Proxy] Cache write error {method}: {ex.Message}");
             }
         }
         return result;

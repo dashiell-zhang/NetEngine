@@ -1,7 +1,7 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using SourceGenerator.Core.Abstractions;
+using SourceGenerator.Core.Internal;
 
 namespace SourceGenerator.Core;
 
@@ -10,7 +10,6 @@ public sealed class ProxyGenerator : IIncrementalGenerator
 {
     private const string AutoProxyAttributeMetadataName = "SourceGenerator.Abstraction.Attributes.AutoProxyAttribute";
 
-    // 单一处理器：接口代理
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

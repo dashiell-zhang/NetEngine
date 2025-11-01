@@ -1,4 +1,4 @@
-namespace SourceGenerator.Core.Abstractions;
+namespace SourceGenerator.Core.Internal;
 
 internal sealed class ProxyOptionsModel
 {

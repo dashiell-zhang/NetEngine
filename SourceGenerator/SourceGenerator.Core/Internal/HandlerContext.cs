@@ -1,6 +1,6 @@
 using Microsoft.CodeAnalysis;
 
-namespace SourceGenerator.Core.Abstractions;
+namespace SourceGenerator.Core.Internal;
 
 internal readonly struct HandlerContext
 {

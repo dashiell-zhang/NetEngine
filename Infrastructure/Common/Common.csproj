@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
@@ -32,7 +32,7 @@
 		
 		<PackageReference Include="SkiaSharp" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
-		<PackageReference Include="SkiaSharp.QrCode" Version="0.8.0" />
+		<PackageReference Include="SkiaSharp.QrCode" Version="0.9.0" />
 	</ItemGroup>
 
 </Project>

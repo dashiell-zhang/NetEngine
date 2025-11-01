@@ -13,8 +13,7 @@ namespace Common
         /// <returns></returns>
         public static byte[] GetQrCode(string text)
         {
-            using QRCodeGenerator generator = new();
-            using var qr = generator.CreateQrCode(text, ECCLevel.L);
+            var qr = QRCodeGenerator.CreateQrCode(text, ECCLevel.L);
             SKImageInfo info = new(500, 500);
 
             using var surface = SKSurface.Create(info);

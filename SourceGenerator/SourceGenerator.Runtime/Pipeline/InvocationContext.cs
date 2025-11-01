@@ -1,0 +1,15 @@
+using Microsoft.Extensions.Logging;
+
+namespace SourceGenerator.Runtime;
+
+public sealed class InvocationContext
+{
+    public required string Method { get; init; }
+    public string? ArgsJson { get; init; }
+    public bool Log { get; init; }
+    public bool Measure { get; init; }
+    public IServiceProvider? ServiceProvider { get; init; }
+    public ILogger? Logger { get; init; }
+    public ProxyRuntime.CacheOptions? Cache { get; init; }
+    public IReadOnlyList<IInvocationBehavior>? Behaviors { get; init; }
+}

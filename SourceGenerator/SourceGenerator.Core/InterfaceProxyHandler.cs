@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -129,7 +129,7 @@ internal sealed class InterfaceProxyHandler
         sb.AppendLine("    }");
     }
 
-        private static void AppendMethod(StringBuilder sb, IMethodSymbol method, ProxyOptionsModel options)
+                private static void AppendMethod(StringBuilder sb, IMethodSymbol method, ProxyOptionsModel options)
     {
         if (method.Parameters.Any(p => p.RefKind != RefKind.None)) return;
 
@@ -170,8 +170,9 @@ internal sealed class InterfaceProxyHandler
         {
             sb.AppendLine("        string? __args = null;");
         }
-        // Build log method name based on actual implementation type at runtime
+
         sb.AppendLine("        var __logMethod = (__inner.GetType().FullName ?? \"" + typeFullName + "\") + \"." + methodName + "\";");
+
         var cacheAttr = method.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == CacheableAttributeMetadataName);
         var hasCache = cacheAttr is not null && !method.ReturnsVoid;
         var ttl = 60;
@@ -188,33 +189,44 @@ internal sealed class InterfaceProxyHandler
             sb.AppendLine("        global::SourceGenerator.Runtime.ProxyRuntime.CacheOptions? __cache = null;");
         }
 
+        sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
+
+        var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.LoggingBehavior()" };
+        foreach (var a in method.GetAttributes())
+        {
+            if (a.AttributeClass?.ToDisplayString() == CacheableAttributeMetadataName && !method.ReturnsVoid)
+                behaviorSnippets.Add("new global::SourceGenerator.Runtime.CachingBehavior()");
+        }
+        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Log = " + (enableLogging ? "true" : "false") + ", Measure = " + (options.MeasureTime ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Cache = __cache, Behaviors = __behaviors };");
+
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
         if (isTask)
         {
-            sb.AppendLine($"        return {runtime}.InvokeTask(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
+            sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => __inner.{methodName}{typeParams}({argList}));");
         }
         else if (isGenericTask)
         {
             var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-            sb.AppendLine($"        return {runtime}.InvokeTask<{tArg}>(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp, __cache);");
+            sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArg}>( __inner.{methodName}{typeParams}({argList}) ) ).AsTask();");
         }
         else if (isValueTask)
         {
-            sb.AppendLine($"        return {runtime}.InvokeValueTask(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
+            sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask( {runtime}.ExecuteAsync<global::SourceGenerator.Runtime.Unit>(__ctx, () => __inner.{methodName}{typeParams}({argList}) ).AsTask() );");
         }
         else if (isGenericValueTask)
         {
             var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-            sb.AppendLine($"        return {runtime}.InvokeValueTask<{tArg}>(() => __inner.{methodName}{typeParams}({argList}), \"{methodName}\", {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp, __cache);");
+            sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<{tArg}>( {runtime}.ExecuteAsync<{tArg}>(__ctx, () => __inner.{methodName}{typeParams}({argList}) ).AsTask() );");
         }
         else if (method.ReturnsVoid)
         {
-            sb.AppendLine($"        {runtime}.Invoke(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp);");
+            sb.AppendLine($"        {runtime}.Execute<global::SourceGenerator.Runtime.Unit>(__ctx, () => {{ __inner.{methodName}{typeParams}({argList}); return global::System.Threading.Tasks.ValueTask.FromResult(global::SourceGenerator.Runtime.Unit.Value); }});");
             sb.AppendLine("        return;");
         }
         else
         {
-            sb.AppendLine($"        return {runtime}.Invoke<{returnType}>(() => __inner.{methodName}{typeParams}({argList}), __logMethod, {(enableLogging ? "true" : "false")}, {(options.MeasureTime ? "true" : "false")}, __args, __sp, __cache);");
+            sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => global::System.Threading.Tasks.ValueTask.FromResult(__inner.{methodName}{typeParams}({argList})));\n");
         }
 
         sb.AppendLine("    }");
@@ -234,6 +246,11 @@ internal sealed class InterfaceProxyHandler
         return ns + "__" + type.Name + "+Proxy";
     }
 }
+
+
+
+
+
 
 
 

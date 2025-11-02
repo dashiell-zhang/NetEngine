@@ -151,7 +151,7 @@ internal sealed class ClassProxyHandler
             {
                 if (kv.Key == "TtlSeconds" && kv.Value.Value is int i) ttl = i;
             }
-            sb.AppendLine("        var __cache = new global::SourceGenerator.Runtime.Options.CacheOptions { Seed = \"" + methodFullName + "\" + (__args is null ? string.Empty : __args), TtlSeconds = " + ttl + " };");
+            sb.AppendLine("        var __cache = new global::SourceGenerator.Runtime.Options.CacheOptions { TtlSeconds = " + ttl + " };");
         }
         else
         {

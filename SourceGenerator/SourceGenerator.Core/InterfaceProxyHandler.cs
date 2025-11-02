@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -172,7 +172,7 @@ internal sealed class InterfaceProxyHandler
             }
         }
         sb.AppendLine("        int ttl = " + ttl + ";");
-        // ¶¨Î»ÊµÏÖ·½·¨£¬ÒÔ±ã¶ÁÈ¡ÊµÏÖ·½·¨ÉÏµÄÐÐÎª£¨°üº¬ Cacheable£©
+        // ï¿½ï¿½Î»Êµï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô±ï¿½ï¿½È¡Êµï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Cacheableï¿½ï¿½
         if (method.Parameters.Length == 0)
         {
             sb.AppendLine("        var __mi = __inner.GetType().GetMethod(\"" + methodName + "\");");
@@ -200,7 +200,7 @@ internal sealed class InterfaceProxyHandler
             var attrClass = a.AttributeClass as INamedTypeSymbol;
             if (attrClass is null) continue;
 
-            // ½öÊÕ¼¯·Ç»º´æÐÐÎª£»»º´æÐÐÎªÍ³Ò»×·¼Ó£¬±ãÓÚÖ§³ÖÔÚÊµÏÖÀàÉÏ±ê×¢ Cacheable¡£
+            // ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½Ç»ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÍ³Ò»×·ï¿½Ó£ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½×¢ Cacheableï¿½ï¿½
             ITypeSymbol? behaviorTypeSymbol = null;
             for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
             {
@@ -243,7 +243,8 @@ internal sealed class InterfaceProxyHandler
         sb.AppendLine("                if (!__replaced) __behaviorsList.Add(__inst);");
         sb.AppendLine("            }");
         sb.AppendLine("        }");
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, Measure = true, ServiceProvider = __sp, Logger = __logger, Cache = __cache, Behaviors = __behaviorsList.ToArray() };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, Measure = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviorsList.ToArray() };");
+        sb.AppendLine("        if (__cache is not null) __ctx.SetFeature(__cache);");
 
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
         if (isTask)

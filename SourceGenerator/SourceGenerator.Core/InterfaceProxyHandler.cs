@@ -188,30 +188,25 @@ internal sealed class InterfaceProxyHandler
             var attrClass = a.AttributeClass as INamedTypeSymbol;
             if (attrClass is null) continue;
 
-            // 判断是否继承 ProxyBehaviorAttribute（支持用户自定义行为 Attribute）
-            var t = attrClass;
-            var isBehavior = false;
-            while (t is not null)
+            // 仅支持泛型基类 ProxyBehaviorAttribute<TBehavior>（不再兼容 typeof 旧写法）
+            ITypeSymbol? behaviorTypeSymbol = null;
+            for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
             {
-                if (t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Contains(ProxyBehaviorAttributeMetadataName, StringComparison.Ordinal))
+                var fullName = t.ConstructedFrom?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                               ?? t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                if (fullName.Contains(ProxyBehaviorAttributeMetadataName, StringComparison.Ordinal))
                 {
-                    isBehavior = true;
+                    if (t.IsGenericType && t.TypeArguments.Length == 1)
+                    {
+                        behaviorTypeSymbol = t.TypeArguments[0];
+                    }
                     break;
                 }
-                t = t.BaseType as INamedTypeSymbol;
             }
-            if (!isBehavior) continue;
 
-            // 从构造参数中读取行为类型：new BehaviorType()
-            if (a.ConstructorArguments.Length > 0)
-            {
-                var arg0 = a.ConstructorArguments[0];
-                if (arg0.Value is ITypeSymbol behaviorType)
-                {
-                    var full = behaviorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat); // 带 global::
-                    behaviorSnippets.Add($"new {full}()");
-                }
-            }
+            if (behaviorTypeSymbol is null) continue;
+            var full = behaviorTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            behaviorSnippets.Add($"new {full}()");
         }
         sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Log = true, Measure = true, ServiceProvider = __sp, Logger = __logger, Cache = __cache, Behaviors = __behaviors };");

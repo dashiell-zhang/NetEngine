@@ -1,19 +1,13 @@
 namespace SourceGenerator.Abstraction.Attributes;
 
 /// <summary>
-/// æ ‡è®°æŸä¸ªæ¥å£æ–¹æ³•å¯ç¼“å­˜ã€‚ä»…å¯¹æœ‰è¿”å›å€¼çš„æ–¹æ³•ç”Ÿæ•ˆã€‚
+/// ±ê¼ÇÄ³¸ö½Ó¿Ú·½·¨¿É»º´æ¡£½ö¶ÔÓĞ·µ»ØÖµµÄ·½·¨ÉúĞ§¡£
 /// </summary>
 [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-public sealed class CacheableAttribute : ProxyBehaviorAttribute
+public sealed class CacheableAttribute : ProxyBehaviorAttribute<SourceGenerator.Runtime.CachingBehavior>
 {
     /// <summary>
-    /// æ„é€ å‡½æ•°ï¼šä¼ å…¥è¿è¡Œæ—¶è¡Œä¸ºç±»å‹ï¼Œä¾‹å¦‚ typeof(SourceGenerator.Runtime.CachingBehavior)ã€‚
-    /// </summary>
-    public CacheableAttribute(Type behaviorType) : base(behaviorType) { }
-
-    /// <summary>
-    /// ç¼“å­˜æœ‰æ•ˆæœŸï¼ˆç§’ï¼‰
+    /// »º´æÓĞĞ§ÆÚ£¨Ãë£©¡£
     /// </summary>
     public int TtlSeconds { get; set; } = 60;
 }
-

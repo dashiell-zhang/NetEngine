@@ -243,7 +243,7 @@ internal sealed class InterfaceProxyHandler
         sb.AppendLine("                if (!__replaced) __behaviorsList.Add(__inst);");
         sb.AppendLine("            }");
         sb.AppendLine("        }");
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, Measure = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviorsList.ToArray() };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviorsList.ToArray() };");
         sb.AppendLine("        if (__cache is not null) __ctx.SetFeature(__cache);");
 
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";

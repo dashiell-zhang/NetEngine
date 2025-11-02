@@ -10,7 +10,6 @@ public sealed class InvocationContext
     public string? ArgsJson { get; init; }
     public required Guid TraceId { get; init; }
     public bool Log { get; init; }
-    public bool Measure { get; init; }
     public IServiceProvider? ServiceProvider { get; init; }
     public ILogger? Logger { get; init; }
     public IReadOnlyList<IInvocationBehavior>? Behaviors { get; init; }

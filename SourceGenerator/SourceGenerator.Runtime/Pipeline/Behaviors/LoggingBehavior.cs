@@ -87,7 +87,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
             }
         }
 
-        Stopwatch? sw = ctx.Measure ? Stopwatch.StartNew() : null;
+        Stopwatch? sw = Stopwatch.StartNew();
 
         var callerChain = BuildCallerChainArray();
         var hasArgs = !string.IsNullOrEmpty(ctx.ArgsJson);
@@ -105,7 +105,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
         {
             var result = await next();
 
-            if (ctx.Measure && sw is not null)
+            if (sw is not null)
             {
                 sw.Stop();
                 var payload2 = new Dictionary<string, object?>
@@ -136,7 +136,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
         }
         catch (Exception ex)
         {
-            if (ctx.Measure && sw is not null) sw.Stop();
+            if (sw is not null) sw.Stop();
             if (logError)
             {
                 var exPayload = new Dictionary<string, object?>

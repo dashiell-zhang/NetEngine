@@ -10,6 +10,7 @@ namespace SourceGenerator.Core;
 internal sealed class InterfaceProxyHandler 
 {
     private const string CacheableAttributeMetadataName = "SourceGenerator.Abstraction.Attributes.CacheableAttribute";
+    private const string ProxyBehaviorAttributeMetadataName = "SourceGenerator.Abstraction.Attributes.ProxyBehaviorAttribute";
 
     public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
         => type.TypeKind == TypeKind.Interface;
@@ -105,25 +106,15 @@ internal sealed class InterfaceProxyHandler
         if (prop.GetMethod is not null)
         {
             sb.Append("        get").AppendLine()
-              .AppendLine("        {");
-            /* logging always on */ if (true)
-            {
-                sb.Append("            global::System.Console.WriteLine(\"[Proxy] get ")
-                  .Append(prop.Name).AppendLine("\");");
-            }
-            sb.AppendLine("            return __inner." + prop.Name + ";")
+              .AppendLine("        {")
+              .AppendLine("            return __inner." + prop.Name + ";")
               .AppendLine("        }");
         }
         if (prop.SetMethod is not null)
         {
             sb.Append("        set").AppendLine()
-              .AppendLine("        {");
-            /* logging always on */ if (true)
-            {
-                sb.Append("            global::System.Console.WriteLine(\"[Proxy] set ")
-                  .Append(prop.Name).AppendLine("\");");
-            }
-            sb.AppendLine("            __inner." + prop.Name + " = value;")
+              .AppendLine("        {")
+              .AppendLine("            __inner." + prop.Name + " = value;")
               .AppendLine("        }");
         }
         sb.AppendLine("    }");
@@ -194,8 +185,33 @@ internal sealed class InterfaceProxyHandler
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.LoggingBehavior()" };
         foreach (var a in method.GetAttributes())
         {
-            if (a.AttributeClass?.ToDisplayString() == CacheableAttributeMetadataName && !method.ReturnsVoid)
-                behaviorSnippets.Add("new global::SourceGenerator.Runtime.CachingBehavior()");
+            var attrClass = a.AttributeClass as INamedTypeSymbol;
+            if (attrClass is null) continue;
+
+            // 判断是否继承 ProxyBehaviorAttribute（支持用户自定义行为 Attribute）
+            var t = attrClass;
+            var isBehavior = false;
+            while (t is not null)
+            {
+                if (t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Contains(ProxyBehaviorAttributeMetadataName, StringComparison.Ordinal))
+                {
+                    isBehavior = true;
+                    break;
+                }
+                t = t.BaseType as INamedTypeSymbol;
+            }
+            if (!isBehavior) continue;
+
+            // 从构造参数中读取行为类型：new BehaviorType()
+            if (a.ConstructorArguments.Length > 0)
+            {
+                var arg0 = a.ConstructorArguments[0];
+                if (arg0.Value is ITypeSymbol behaviorType)
+                {
+                    var full = behaviorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat); // 带 global::
+                    behaviorSnippets.Add($"new {full}()");
+                }
+            }
         }
         sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Log = true, Measure = true, ServiceProvider = __sp, Logger = __logger, Cache = __cache, Behaviors = __behaviors };");

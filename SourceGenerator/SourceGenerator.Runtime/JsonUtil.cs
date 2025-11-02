@@ -8,10 +8,15 @@ public static class JsonUtil
 {
     public static readonly JsonSerializerOptions JsonOpts = new()
     {
-        WriteIndented = false,
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
         ReferenceHandler = ReferenceHandler.Preserve,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    public static readonly JsonSerializerOptions LogJsonOpts = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
     public static string ToJson(object? value)
@@ -19,6 +24,18 @@ public static class JsonUtil
         try
         {
             return JsonSerializer.Serialize(value, JsonOpts);
+        }
+        catch
+        {
+            return value?.ToString() ?? "<null>";
+        }
+    }
+
+    public static string ToLogJson(object? value)
+    {
+        try
+        {
+            return JsonSerializer.Serialize(value, LogJsonOpts);
         }
         catch
         {

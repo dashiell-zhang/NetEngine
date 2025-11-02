@@ -89,7 +89,7 @@ internal sealed class InterfaceProxyHandler
 
     private static void AppendEvent(StringBuilder sb, IEventSymbol ev)
     {
-        var typeName = ev.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var typeName = ev.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         sb.Append("    public event ").Append(typeName).Append(' ').Append(ev.Name)
           .AppendLine()
           .AppendLine("    {")
@@ -100,7 +100,7 @@ internal sealed class InterfaceProxyHandler
 
     private static void AppendProperty(StringBuilder sb, IPropertySymbol prop)
     {
-        var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         sb.Append("    public ").Append(typeName).Append(' ').Append(prop.Name).AppendLine()
           .AppendLine("    {");
         if (prop.GetMethod is not null)
@@ -129,7 +129,9 @@ internal sealed class InterfaceProxyHandler
         var isGenericValueTask = method.ReturnType is INamedTypeSymbol nts2 && nts2.IsGenericType && IsType(nts2.ConstructedFrom, "System.Threading.Tasks.ValueTask");
         var isValueTask = method.ReturnType is INamedTypeSymbol nts3 && !nts3.IsGenericType && IsType(nts3, "System.Threading.Tasks.ValueTask");
 
-        var returnType = method.ReturnType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var returnType = method.ReturnType
+            .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier))
+            .Replace("global::", string.Empty);
         var methodName = method.Name;
         var typeFullName = method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Replace("global::", string.Empty);
         var methodFullName = typeFullName + "." + methodName;
@@ -255,7 +257,8 @@ internal sealed class InterfaceProxyHandler
         }
         else if (isGenericTask)
         {
-            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
+                .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
             sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArg}>( __inner.{methodName}{typeParams}({argList}) ) ).AsTask();");
         }
         else if (isValueTask)
@@ -264,7 +267,8 @@ internal sealed class InterfaceProxyHandler
         }
         else if (isGenericValueTask)
         {
-            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
+                .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
             sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<{tArg}>( {runtime}.ExecuteAsync<{tArg}>(__ctx, () => __inner.{methodName}{typeParams}({argList}) ).AsTask() );");
         }
         else if (method.ReturnsVoid)
@@ -280,7 +284,7 @@ internal sealed class InterfaceProxyHandler
         sb.AppendLine("    }");
     }private static string FormatParameter(IParameterSymbol p)
     {
-        var type = p.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var type = p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Replace("global::", string.Empty);
         var @default = p.HasExplicitDefaultValue ? " = " + (p.ExplicitDefaultValue is null ? "null" : p.ExplicitDefaultValue is string s ? "\"" + s.Replace("\"", "\\\"") + "\"" : p.ExplicitDefaultValue.ToString()) : string.Empty;
         return type + " " + p.Name + @default;
     }

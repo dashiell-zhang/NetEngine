@@ -95,7 +95,8 @@ internal sealed class ClassProxyHandler
 
     private static void AppendInterfaceMethod(StringBuilder sig, IMethodSymbol method)
     {
-        var returnType = method.ReturnType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var returnType = method.ReturnType
+            .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
         var methodName = method.Name;
         var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
         var paramList = string.Join(", ", method.Parameters.Select(FormatParameter));
@@ -112,7 +113,8 @@ internal sealed class ClassProxyHandler
         var isGenericValueTask = method.ReturnType is INamedTypeSymbol nts2 && nts2.IsGenericType && IsType(nts2.ConstructedFrom, "System.Threading.Tasks.ValueTask");
         var isValueTask = method.ReturnType is INamedTypeSymbol nts3 && !nts3.IsGenericType && IsType(nts3, "System.Threading.Tasks.ValueTask");
 
-        var returnType = method.ReturnType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var returnType = method.ReturnType
+            .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
         var methodName = method.Name;
         var typeFullName = method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Replace("global::", string.Empty);
         var methodFullName = typeFullName + "." + methodName;
@@ -196,7 +198,8 @@ internal sealed class ClassProxyHandler
         }
         else if (isGenericTask)
         {
-            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
+                .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
             sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArg}>( __inner.{methodName}{typeParams}({argList}) ) ).AsTask();");
         }
         else if (isValueTask)
@@ -205,7 +208,8 @@ internal sealed class ClassProxyHandler
         }
         else if (isGenericValueTask)
         {
-            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
+                .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
             sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<{tArg}>( {runtime}.ExecuteAsync<{tArg}>(__ctx, () => __inner.{methodName}{typeParams}({argList}) ).AsTask() );");
         }
         else if (method.ReturnsVoid)
@@ -226,7 +230,8 @@ internal sealed class ClassProxyHandler
 
     private static string FormatParameter(IParameterSymbol p)
     {
-        var type = p.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var type = p.Type
+            .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
         var @default = p.HasExplicitDefaultValue ? " = " + (p.ExplicitDefaultValue is null ? "null" : p.ExplicitDefaultValue is string s ? "\"" + s.Replace("\"", "\\\"") + "\"" : p.ExplicitDefaultValue.ToString()) : string.Empty;
         return type + " " + p.Name + @default;
     }

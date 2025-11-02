@@ -147,17 +147,12 @@ internal sealed class InterfaceProxyHandler
 
         if (method.Parameters.Length > 0)
         {
-            sb.AppendLine("        var __argsList = new string[" + method.Parameters.Length + "];");
-            int __i = 0;
+            sb.AppendLine("        var __argsDict = new global::System.Collections.Generic.Dictionary<string, object?>(" + method.Parameters.Length + ");");
             foreach (var p in method.Parameters)
             {
-                sb.Append("        __argsList[").Append(__i).Append("] = \"")
-                  .Append(p.Name).Append("=\" + __ProxyHelpers_")
-                  .Append(method.ContainingType.Name + "_Proxy")
-                  .Append(".ArgToString(").Append(p.Name).Append(");").AppendLine();
-                __i++;
+                sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append(p.Name).AppendLine(";");
             }
-            sb.AppendLine("        var __args = string.Join(\", \", __argsList);");
+            sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
         }
         else
         {

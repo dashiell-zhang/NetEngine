@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Client.WebAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]/[action]")]
 public sealed class DemoController : ControllerBase
 {
     private readonly Services.IDemoService _svc;

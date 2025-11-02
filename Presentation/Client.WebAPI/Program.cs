@@ -1,4 +1,5 @@
 using Client.WebAPI.Libraries.HttpHandler;
+using Client.WebAPI.Services;
 using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
@@ -87,6 +88,9 @@ namespace Client.WebAPI
             //注册 Redis 驱动
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")!));
 
+
+            builder.Services.AddScoped<Demo2Service>();
+            builder.Services.AddScoped<IDemo2Service,Demo2Service_Proxy>();
 
             #region 注册HttpClient
 

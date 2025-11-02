@@ -190,7 +190,7 @@ internal sealed class InterfaceProxyHandler
         sb.AppendLine("        var __implCacheAttr = __mi is null ? null : (global::SourceGenerator.Abstraction.Attributes.CacheableAttribute?)global::System.Attribute.GetCustomAttribute(__mi, typeof(global::SourceGenerator.Abstraction.Attributes.CacheableAttribute));");
         sb.AppendLine("        var __hasCache = __implCacheAttr is not null || " + (hasIfaceCache ? "true" : "false") + ";");
         sb.AppendLine("        if (__implCacheAttr is not null) ttl = __implCacheAttr.TtlSeconds;");
-        sb.AppendLine("        var __cache = __hasCache ? new global::SourceGenerator.Runtime.Options.CacheOptions { TtlSeconds = ttl } : null;");
+        sb.AppendLine("        var __cache = __hasCache ? new global::SourceGenerator.Runtime.Options.CacheableOptions { TtlSeconds = ttl } : null;");
 
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 

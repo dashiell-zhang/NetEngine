@@ -6,11 +6,11 @@ using Microsoft.Extensions.Logging;
 
 namespace SourceGenerator.Runtime;
 
-public sealed class CachingBehavior : IInvocationBehavior
+public sealed class CacheableBehavior : IInvocationBehavior
 {
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
-        var cache = ctx.GetFeature<SourceGenerator.Runtime.Options.CacheOptions>();
+        var cache = ctx.GetFeature<SourceGenerator.Runtime.Options.CacheableOptions>();
         if (cache is not null)
         {
             var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
@@ -31,7 +31,7 @@ public sealed class CachingBehavior : IInvocationBehavior
     private static string ComposeSeed(InvocationContext ctx)
         => (ctx.Method ?? string.Empty) + (ctx.ArgsJson ?? string.Empty);
 
-    private static async Task<(bool hit, T value)> TryGetAsync<T>(InvocationContext ctx, SourceGenerator.Runtime.Options.CacheOptions cache, ILogger? logger, bool log, string method)
+    private static async Task<(bool hit, T value)> TryGetAsync<T>(InvocationContext ctx, SourceGenerator.Runtime.Options.CacheableOptions cache, ILogger? logger, bool log, string method)
     {
         var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         if (cacheSvc is null) return (false, default!);
@@ -50,7 +50,7 @@ public sealed class CachingBehavior : IInvocationBehavior
         }
     }
 
-    private static async Task SetAsync<T>(InvocationContext ctx, SourceGenerator.Runtime.Options.CacheOptions cache, ILogger? logger, bool log, string method, T value)
+    private static async Task SetAsync<T>(InvocationContext ctx, SourceGenerator.Runtime.Options.CacheableOptions cache, ILogger? logger, bool log, string method, T value)
     {
         var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         if (cacheSvc is null) return;

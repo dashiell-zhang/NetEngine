@@ -20,7 +20,7 @@ public abstract class ProxyBehaviorAttribute : Attribute
 
 /// <summary>
 /// 泛型版本，便于在 Attribute 上省略 typeof(...) 的显式书写：
-/// 例如：sealed class CacheableAttribute : ProxyBehaviorAttribute<CachingBehavior> { }
+/// 例如：sealed class CacheableAttribute : ProxyBehaviorAttribute<CacheableBehavior> { }
 /// </summary>
 public abstract class ProxyBehaviorAttribute<TBehavior> : ProxyBehaviorAttribute
 {

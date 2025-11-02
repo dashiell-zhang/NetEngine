@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -151,11 +151,11 @@ internal sealed class ClassProxyHandler
             {
                 if (kv.Key == "TtlSeconds" && kv.Value.Value is int i) ttl = i;
             }
-            sb.AppendLine("        var __cache = new global::SourceGenerator.Runtime.ProxyRuntime.CacheOptions { Seed = \"" + methodFullName + "\" + (__args is null ? string.Empty : __args), TtlSeconds = " + ttl + " };");
+            sb.AppendLine("        var __cache = new global::SourceGenerator.Runtime.Options.CacheOptions { Seed = \"" + methodFullName + "\" + (__args is null ? string.Empty : __args), TtlSeconds = " + ttl + " };");
         }
         else
         {
-            sb.AppendLine("        global::SourceGenerator.Runtime.ProxyRuntime.CacheOptions? __cache = null;");
+            sb.AppendLine("        global::SourceGenerator.Runtime.Options.CacheOptions? __cache = null;");
         }
 
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");

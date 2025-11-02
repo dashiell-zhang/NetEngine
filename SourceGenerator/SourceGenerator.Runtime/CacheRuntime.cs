@@ -13,7 +13,7 @@ internal static class CacheRuntime
 {
     // JSON 处理已抽到 JsonUtil，便于其他 Runtime 复用。
 
-    public static bool TryGet<T>(IServiceProvider? sp, ProxyRuntime.CacheOptions cache, ILogger? logger, bool log, string method, out T value)
+    public static bool TryGet<T>(IServiceProvider? sp, SourceGenerator.Runtime.Options.CacheOptions cache, ILogger? logger, bool log, string method, out T value)
     {
         value = default!;
         var cacheSvc = sp?.GetService(typeof(IDistributedCache)) as IDistributedCache;
@@ -34,7 +34,7 @@ internal static class CacheRuntime
         }
     }
 
-    public static void Set<T>(IServiceProvider? sp, ProxyRuntime.CacheOptions cache, ILogger? logger, bool log, string method, T value)
+    public static void Set<T>(IServiceProvider? sp, SourceGenerator.Runtime.Options.CacheOptions cache, ILogger? logger, bool log, string method, T value)
     {
         var cacheSvc = sp?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         if (cacheSvc is null) return;
@@ -54,7 +54,7 @@ internal static class CacheRuntime
         }
     }
 
-    public static async Task<(bool hit, T value)> TryGetAsync<T>(IServiceProvider? sp, ProxyRuntime.CacheOptions cache, ILogger? logger, bool log, string method)
+    public static async Task<(bool hit, T value)> TryGetAsync<T>(IServiceProvider? sp, SourceGenerator.Runtime.Options.CacheOptions cache, ILogger? logger, bool log, string method)
     {
         var cacheSvc = sp?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         if (cacheSvc is null) return (false, default!);
@@ -73,7 +73,7 @@ internal static class CacheRuntime
         }
     }
 
-    public static async Task SetAsync<T>(IServiceProvider? sp, ProxyRuntime.CacheOptions cache, ILogger? logger, bool log, string method, T value)
+    public static async Task SetAsync<T>(IServiceProvider? sp, SourceGenerator.Runtime.Options.CacheOptions cache, ILogger? logger, bool log, string method, T value)
     {
         var cacheSvc = sp?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         if (cacheSvc is null) return;

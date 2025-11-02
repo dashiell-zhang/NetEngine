@@ -4,7 +4,7 @@ public sealed class CachingBehavior : IInvocationBehavior
 {
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
-        var cache = ctx.GetFeature<ProxyRuntime.CacheOptions>();
+        var cache = ctx.GetFeature<SourceGenerator.Runtime.Options.CacheOptions>();
         if (cache is not null)
         {
             var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();

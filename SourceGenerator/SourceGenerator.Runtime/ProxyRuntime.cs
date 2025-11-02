@@ -22,7 +22,7 @@ public static class ProxyRuntime
     {
         var behaviors = ctx.Behaviors ?? new IInvocationBehavior[] { new LoggingBehavior() };
         return InvocationPipeline
-            .ExecuteAsync<Unit>(ctx, () => new ValueTask<Unit>(inner().ContinueWith(_ => Unit.Value)), behaviors)
+            .ExecuteAsync<object?>(ctx, () => new ValueTask<object?>(inner().ContinueWith(_ => (object?)null)), behaviors)
             .AsTask()
             .ContinueWith(_ => { });
     }

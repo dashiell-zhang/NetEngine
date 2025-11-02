@@ -243,7 +243,8 @@ internal sealed class InterfaceProxyHandler
         sb.AppendLine("                if (!__replaced) __behaviorsList.Add(__inst);");
         sb.AppendLine("            }");
         sb.AppendLine("        }");
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviorsList.ToArray() };");
+        var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid);
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviorsList.ToArray() };");
         sb.AppendLine("        if (__cache is not null) __ctx.SetFeature(__cache);");
 
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
@@ -259,7 +260,7 @@ internal sealed class InterfaceProxyHandler
         }
         else if (isValueTask)
         {
-            sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask( {runtime}.ExecuteAsync<global::SourceGenerator.Runtime.Unit>(__ctx, () => __inner.{methodName}{typeParams}({argList}) ).AsTask() );");
+            sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask( {runtime}.ExecuteTask(__ctx, () => __inner.{methodName}{typeParams}({argList}).AsTask()) );");
         }
         else if (isGenericValueTask)
         {
@@ -269,7 +270,7 @@ internal sealed class InterfaceProxyHandler
         }
         else if (method.ReturnsVoid)
         {
-            sb.AppendLine($"        {runtime}.Execute<global::SourceGenerator.Runtime.Unit>(__ctx, () => {{ __inner.{methodName}{typeParams}({argList}); return global::System.Threading.Tasks.ValueTask.FromResult(global::SourceGenerator.Runtime.Unit.Value); }});");
+            sb.AppendLine($"        {runtime}.Execute<object?>(__ctx, () => {{ __inner.{methodName}{typeParams}({argList}); return global::System.Threading.Tasks.ValueTask.FromResult<object?>(null); }});");
             sb.AppendLine("        return;");
         }
         else
@@ -294,6 +295,7 @@ internal sealed class InterfaceProxyHandler
         return ns + "__" + type.Name + "+Proxy";
     }
 }
+
 
 
 

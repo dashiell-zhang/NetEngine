@@ -11,7 +11,7 @@ public sealed class CacheableBehavior : IInvocationBehavior
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
         var cache = ctx.GetFeature<SourceGenerator.Runtime.Options.CacheableOptions>();
-        if (cache is not null)
+        if (cache is not null && ctx.HasReturnValue)
         {
             var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
             var get = await TryGetAsync<T>(ctx, cache, ctx.Logger, ctx.Log, methodForLog);
@@ -20,7 +20,7 @@ public sealed class CacheableBehavior : IInvocationBehavior
 
         var result = await next();
 
-        if (cache is not null)
+        if (cache is not null && ctx.HasReturnValue)
         {
             var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
             await SetAsync(ctx, cache, ctx.Logger, ctx.Log, methodForLog, result);

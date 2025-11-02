@@ -119,7 +119,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
                 logger?.LogInformation(JsonUtil.ToLogJson(payload2));
             }
 
-            if (typeof(T) != typeof(Unit))
+            if (ctx.HasReturnValue)
             {
                 var payload3 = new Dictionary<string, object?>
                 {

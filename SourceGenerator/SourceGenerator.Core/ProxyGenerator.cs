@@ -28,37 +28,14 @@ public sealed class ProxyGenerator : IIncrementalGenerator
                 return;
 
             var attrData = ctx.Attributes.FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == AutoProxyAttributeMetadataName);
-            var options = ParseOptions(attrData);
-
             var handler = new InterfaceProxyHandler();
             if (handler.CanHandle(typeSymbol, attrData))
             {
-                handler.Execute(new HandlerContext(spc, typeSymbol, attrData, options));
+                handler.Execute(new HandlerContext(spc, typeSymbol, attrData));
             }
         });
     }
 
-    private static ProxyOptionsModel ParseOptions(AttributeData? attr)
-    {
-        var model = new ProxyOptionsModel();
-        if (attr == null) return model;
-        foreach (var arg in attr.NamedArguments)
-        {
-            switch (arg.Key)
-            {
-                case "EnableLogging":
-                    if (arg.Value.Value is bool b1) model.EnableLogging = b1;
-                    break;
-                case "CaptureArguments":
-                    if (arg.Value.Value is bool b2) model.CaptureArguments = b2;
-                    break;
-                case "MeasureTime":
-                    if (arg.Value.Value is bool b3) model.MeasureTime = b3;
-                    break;
-            }
-        }
-        return model;
-    }
 }
 
 

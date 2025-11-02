@@ -23,13 +23,13 @@ internal static class CacheRuntime
             var key = BuildKey(cache.Seed);
             var json = DistributedCacheExtensions.GetString(cacheSvc, key);
             if (json is null) return false;
-            if (log) logger?.LogInformation($"[Proxy] Cache hit {method}");
+            if (log) logger?.LogInformation($"Cache hit {method}");
             value = JsonSerializer.Deserialize<T>(json, JsonUtil.JsonOpts)!;
             return true;
         }
         catch (Exception ex)
         {
-            if (log) logger?.LogInformation($"[Proxy] Cache read error {method}: {ex.Message}");
+            if (log) logger?.LogInformation($"Cache read error {method}: {ex.Message}");
             return false;
         }
     }
@@ -46,11 +46,11 @@ internal static class CacheRuntime
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache.TtlSeconds)
             });
-            if (log) logger?.LogInformation($"[Proxy] Cache set {method} ttl={cache.TtlSeconds}");
+            if (log) logger?.LogInformation($"Cache set {method} ttl={cache.TtlSeconds}");
         }
         catch (Exception ex)
         {
-            if (log) logger?.LogInformation($"[Proxy] Cache write error {method}: {ex.Message}");
+            if (log) logger?.LogInformation($"Cache write error {method}: {ex.Message}");
         }
     }
 
@@ -63,12 +63,12 @@ internal static class CacheRuntime
             var key = BuildKey(cache.Seed);
             var json = await DistributedCacheExtensions.GetStringAsync(cacheSvc, key);
             if (json is null) return (false, default!);
-            if (log) logger?.LogInformation($"[Proxy] Cache hit {method}");
+            if (log) logger?.LogInformation($"Cache hit {method}");
             return (true, JsonSerializer.Deserialize<T>(json, JsonUtil.JsonOpts)!);
         }
         catch (Exception ex)
         {
-            if (log) logger?.LogInformation($"[Proxy] Cache read error {method}: {ex.Message}");
+            if (log) logger?.LogInformation($"Cache read error {method}: {ex.Message}");
             return (false, default!);
         }
     }
@@ -85,11 +85,11 @@ internal static class CacheRuntime
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache.TtlSeconds)
             });
-            if (log) logger?.LogInformation($"[Proxy] Cache set {method} ttl={cache.TtlSeconds}");
+            if (log) logger?.LogInformation($"Cache set {method} ttl={cache.TtlSeconds}");
         }
         catch (Exception ex)
         {
-            if (log) logger?.LogInformation($"[Proxy] Cache write error {method}: {ex.Message}");
+            if (log) logger?.LogInformation($"Cache write error {method}: {ex.Message}");
         }
     }
 

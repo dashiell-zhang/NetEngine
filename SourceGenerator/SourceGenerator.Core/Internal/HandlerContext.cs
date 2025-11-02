@@ -7,14 +7,11 @@ internal readonly struct HandlerContext
     public SourceProductionContext Context { get; }
     public INamedTypeSymbol Type { get; }
     public AttributeData? Attribute { get; }
-    public ProxyOptionsModel Options { get; }
-
-    public HandlerContext(SourceProductionContext context, INamedTypeSymbol type, AttributeData? attribute, ProxyOptionsModel options)
+    public HandlerContext(SourceProductionContext context, INamedTypeSymbol type, AttributeData? attribute)
     {
         Context = context;
         Type = type;
         Attribute = attribute;
-        Options = options;
     }
 }
 

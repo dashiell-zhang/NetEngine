@@ -16,12 +16,12 @@ internal sealed class InterfaceProxyHandler
 
     public void Execute(in HandlerContext ctx)
     {
-        var source = GenerateInterfaceProxy(ctx.Type, ctx.Options);
+        var source = GenerateInterfaceProxy(ctx.Type);
         var hintName = GetSafeHintName(ctx.Type) + ".g.cs";
         ctx.Context.AddSource(hintName, source);
     }
 
-    private static string GenerateInterfaceProxy(INamedTypeSymbol iface, ProxyOptionsModel options)
+    private static string GenerateInterfaceProxy(INamedTypeSymbol iface)
     {
         var ns = iface.ContainingNamespace.IsGlobalNamespace
             ? "NetEngine.Generated"
@@ -65,14 +65,14 @@ internal sealed class InterfaceProxyHandler
                 continue;
             if (member.DeclaredAccessibility != Accessibility.Public)
                 continue;
-            AppendMethod(sb, member, options);
+            AppendMethod(sb, member);
         }
 
         foreach (var prop in iface.GetMembers().OfType<IPropertySymbol>())
         {
             if (prop.DeclaredAccessibility != Accessibility.Public)
                 continue;
-            AppendProperty(sb, prop, options);
+            AppendProperty(sb, prop);
         }
 
         foreach (var ev in iface.GetMembers().OfType<IEventSymbol>())
@@ -97,7 +97,7 @@ internal sealed class InterfaceProxyHandler
           .AppendLine("    }");
     }
 
-    private static void AppendProperty(StringBuilder sb, IPropertySymbol prop, ProxyOptionsModel options)
+    private static void AppendProperty(StringBuilder sb, IPropertySymbol prop)
     {
         var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         sb.Append("    public ").Append(typeName).Append(' ').Append(prop.Name).AppendLine()
@@ -106,7 +106,7 @@ internal sealed class InterfaceProxyHandler
         {
             sb.Append("        get").AppendLine()
               .AppendLine("        {");
-            if (options.EnableLogging)
+            /* logging always on */ if (true)
             {
                 sb.Append("            global::System.Console.WriteLine(\"[Proxy] get ")
                   .Append(prop.Name).AppendLine("\");");
@@ -118,7 +118,7 @@ internal sealed class InterfaceProxyHandler
         {
             sb.Append("        set").AppendLine()
               .AppendLine("        {");
-            if (options.EnableLogging)
+            /* logging always on */ if (true)
             {
                 sb.Append("            global::System.Console.WriteLine(\"[Proxy] set ")
                   .Append(prop.Name).AppendLine("\");");
@@ -129,7 +129,7 @@ internal sealed class InterfaceProxyHandler
         sb.AppendLine("    }");
     }
 
-                private static void AppendMethod(StringBuilder sb, IMethodSymbol method, ProxyOptionsModel options)
+    private static void AppendMethod(StringBuilder sb, IMethodSymbol method)
     {
         if (method.Parameters.Any(p => p.RefKind != RefKind.None)) return;
 
@@ -146,13 +146,13 @@ internal sealed class InterfaceProxyHandler
         var paramList = string.Join(", ", method.Parameters.Select(FormatParameter));
         var argList = string.Join(", ", method.Parameters.Select(p => p.Name));
 
-        var enableLogging = options.EnableLogging;
+        // logging always on
 
         sb.Append("    public ").Append(returnType).Append(' ').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
           .AppendLine("    {");
 
-        if (options.CaptureArguments && method.Parameters.Length > 0)
+        if (method.Parameters.Length > 0)
         {
             sb.AppendLine("        var __argsList = new string[" + method.Parameters.Length + "];");
             int __i = 0;
@@ -198,7 +198,7 @@ internal sealed class InterfaceProxyHandler
                 behaviorSnippets.Add("new global::SourceGenerator.Runtime.CachingBehavior()");
         }
         sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Log = " + (enableLogging ? "true" : "false") + ", Measure = " + (options.MeasureTime ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Cache = __cache, Behaviors = __behaviors };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Log = true, Measure = true, ServiceProvider = __sp, Logger = __logger, Cache = __cache, Behaviors = __behaviors };");
 
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
         if (isTask)
@@ -246,6 +246,8 @@ internal sealed class InterfaceProxyHandler
         return ns + "__" + type.Name + "+Proxy";
     }
 }
+
+
 
 
 

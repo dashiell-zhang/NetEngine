@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -172,7 +172,7 @@ internal sealed class InterfaceProxyHandler
             }
         }
         sb.AppendLine("        int ttl = " + ttl + ";");
-        // å®šä½å®ç°æ–¹æ³•ï¼Œä»¥ä¾¿è¯»å–å®ç°æ–¹æ³•ä¸Šçš„è¡Œä¸ºï¼ˆåŒ…å« Cacheableï¼‰
+        // ¶¨Î»ÊµÏÖ·½·¨£¬ÒÔ±ã¶ÁÈ¡ÊµÏÖ·½·¨ÉÏµÄĞĞÎª£¨°üº¬ Cacheable£©
         if (method.Parameters.Length == 0)
         {
             sb.AppendLine("        var __mi = __inner.GetType().GetMethod(\"" + methodName + "\");");
@@ -200,7 +200,7 @@ internal sealed class InterfaceProxyHandler
             var attrClass = a.AttributeClass as INamedTypeSymbol;
             if (attrClass is null) continue;
 
-            // ä»…æ”¶é›†éç¼“å­˜è¡Œä¸ºï¼›ç¼“å­˜è¡Œä¸ºç»Ÿä¸€è¿½åŠ ï¼Œä¾¿äºæ”¯æŒåœ¨å®ç°ç±»ä¸Šæ ‡æ³¨ Cacheableã€‚
+            // ½öÊÕ¼¯·Ç»º´æĞĞÎª£»»º´æĞĞÎªÍ³Ò»×·¼Ó£¬±ãÓÚÖ§³ÖÔÚÊµÏÖÀàÉÏ±ê×¢ Cacheable¡£
             ITypeSymbol? behaviorTypeSymbol = null;
             for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
             {
@@ -243,7 +243,7 @@ internal sealed class InterfaceProxyHandler
         sb.AppendLine("                if (!__replaced) __behaviorsList.Add(__inst);");
         sb.AppendLine("            }");
         sb.AppendLine("        }");
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Log = true, Measure = true, ServiceProvider = __sp, Logger = __logger, Cache = __cache, Behaviors = __behaviorsList.ToArray() };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, Measure = true, ServiceProvider = __sp, Logger = __logger, Cache = __cache, Behaviors = __behaviorsList.ToArray() };");
 
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
         if (isTask)

@@ -14,7 +14,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
             var frames = st.GetFrames();
             if (frames is null || frames.Length == 0) return Array.Empty<string>();
 
-            var parts = new List<string>(8);
+            var parts = new List<string>(7);
             foreach (var frame in frames)
             {
                 var method = frame.GetMethod();
@@ -96,6 +96,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
             ["event"] = "executing",
             ["method"] = ctx.Method,
         };
+        payload["traceId"] = ctx.TraceId;
         if (hasArgs) payload["args"] = ctx.ArgsJson;
         if (callerChain.Length > 0) payload["caller"] = callerChain;
         logger?.LogInformation(JsonUtil.ToLogJson(payload));
@@ -113,6 +114,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
                     ["method"] = ctx.Method,
                     ["duration_ms"] = sw.ElapsedMilliseconds,
                 };
+                payload2["traceId"] = ctx.TraceId;
                 if (callerChain.Length > 0) payload2["caller"] = callerChain;
                 logger?.LogInformation(JsonUtil.ToLogJson(payload2));
             }
@@ -125,6 +127,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
                     ["method"] = ctx.Method,
                     ["result"] = result,
                 };
+                payload3["traceId"] = ctx.TraceId;
                 if (callerChain.Length > 0) payload3["caller"] = callerChain;
                 logger?.LogInformation(JsonUtil.ToLogJson(payload3));
             }
@@ -150,6 +153,7 @@ public sealed class LoggingBehavior : IInvocationBehavior
                         ["InnerStackTrace"] = ex.InnerException?.StackTrace,
                     }
                 };
+                exPayload["traceId"] = ctx.TraceId;
                 if (!string.IsNullOrEmpty(ctx.ArgsJson)) exPayload["args"] = ctx.ArgsJson;
                 if (callerChain.Length > 0) exPayload["caller"] = callerChain;
                 if (sw is not null) exPayload["duration_ms"] = sw.ElapsedMilliseconds;

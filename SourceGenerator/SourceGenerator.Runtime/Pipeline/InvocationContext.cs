@@ -13,7 +13,7 @@ public sealed class InvocationContext
     public bool HasReturnValue { get; init; }
     public IServiceProvider? ServiceProvider { get; init; }
     public ILogger? Logger { get; init; }
-    public IReadOnlyList<IInvocationBehavior>? Behaviors { get; init; }
+    public IReadOnlyList<IInvocationAsyncBehavior>? Behaviors { get; init; }
 
     // Feature bag for behavior-specific data/configuration
     public Dictionary<Type, object> Features { get; } = new();

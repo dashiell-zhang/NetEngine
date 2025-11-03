@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SourceGenerator.Runtime;
 
-public sealed class CacheableBehavior : IInvocationBehavior
+public sealed class CacheableBehavior : IInvocationAsyncBehavior
 {
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {

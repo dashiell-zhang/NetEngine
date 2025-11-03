@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace SourceGenerator.Runtime;
 
 
-public sealed class LoggingBehavior : IInvocationBehavior
+public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehavior
 {
     private static string[] BuildCallerChainArray(int maxDepth = 100)
     {
@@ -160,6 +160,71 @@ public sealed class LoggingBehavior : IInvocationBehavior
                 logger?.LogError(JsonUtil.ToLogJson(exPayload));
             }
             throw;
+        }
+    }
+
+    // Sync-friendly hooks for ref/out support
+    public void OnBefore(InvocationContext ctx)
+    {
+        var logger = ctx.Logger;
+        if (ctx.Log && logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            var callerChain = BuildCallerChainArray();
+            var payload = new Dictionary<string, object?>
+            {
+                ["event"] = "executing",
+                ["method"] = ctx.Method,
+            };
+            payload["traceId"] = ctx.TraceId;
+            if (!string.IsNullOrEmpty(ctx.ArgsJson)) payload["args"] = ctx.ArgsJson;
+            if (callerChain.Length > 0) payload["caller"] = callerChain;
+            logger?.LogInformation(JsonUtil.ToLogJson(payload));
+        }
+    }
+
+    public void OnAfter(InvocationContext ctx, object? result)
+    {
+        var logger = ctx.Logger;
+        if (ctx.Log && logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            var payload = new Dictionary<string, object?>
+            {
+                ["event"] = ctx.HasReturnValue ? "return" : "executed",
+                ["method"] = ctx.Method,
+            };
+            payload["traceId"] = ctx.TraceId;
+            if (ctx.HasReturnValue)
+            {
+                payload["result"] = result;
+            }
+            logger?.LogInformation(JsonUtil.ToLogJson(payload));
+        }
+    }
+
+    public void OnException(InvocationContext ctx, Exception ex)
+    {
+        var logger = ctx.Logger;
+        if (logger?.IsEnabled(LogLevel.Error) == true)
+        {
+            var callerOnly = BuildCallerChainArray();
+            var exPayload = new Dictionary<string, object?>
+            {
+                ["event"] = "exception",
+                ["method"] = ctx.Method,
+                ["exception"] = new Dictionary<string, object?>
+                {
+                    ["Source"] = ex.Source,
+                    ["Message"] = ex.Message,
+                    ["StackTrace"] = ex.StackTrace,
+                    ["InnerSource"] = ex.InnerException?.Source,
+                    ["InnerMessage"] = ex.InnerException?.Message,
+                    ["InnerStackTrace"] = ex.InnerException?.StackTrace,
+                }
+            };
+            exPayload["traceId"] = ctx.TraceId;
+            if (!string.IsNullOrEmpty(ctx.ArgsJson)) exPayload["args"] = ctx.ArgsJson;
+            if (callerOnly.Length > 0) exPayload["caller"] = callerOnly;
+            logger?.LogError(JsonUtil.ToLogJson(exPayload));
         }
     }
 }

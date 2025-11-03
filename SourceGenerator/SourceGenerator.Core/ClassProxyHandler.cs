@@ -94,8 +94,6 @@ internal sealed class ClassProxyHandler
                 continue;
             if (!(method.IsVirtual || method.IsAbstract || method.IsOverride))
                 continue;
-            if (method.Parameters.Any(p => p.RefKind != RefKind.None))
-                continue;
             AppendDerivedOverride(sb, method, classFull, callTarget: "base");
         }
 
@@ -108,8 +106,6 @@ internal sealed class ClassProxyHandler
                 {
                     case IMethodSymbol m:
                         if (m.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise)
-                            continue;
-                        if (m.Parameters.Any(p => p.RefKind != RefKind.None))
                             continue;
                         // find implementation in class
                         var impl = cls.FindImplementationForInterfaceMember(m) as IMethodSymbol;
@@ -141,7 +137,7 @@ internal sealed class ClassProxyHandler
         var methodName = method.Name;
         var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
         var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
-        var argList = string.Join(", ", method.Parameters.Select(p => p.Name));
+        var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
 
         sb.Append("    public override ").Append(returnType).Append(' ').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
@@ -164,50 +160,96 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
+        var hasByRef = method.Parameters.Any(p => p.RefKind != RefKind.None);
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
         {
             if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
             {
-                behaviorSnippets.Add($"new {behaviorFull}()");
-                if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                var include = !hasByRef || CanUseAsFilter(a);
+                if (include)
+                {
+                    behaviorSnippets.Add($"new {behaviorFull}()");
+                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                }
             }
         }
-        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid);
         sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
-        var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
-        if (isTask)
+        if (hasByRef)
         {
-            sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-        }
-        else if (isGenericTask)
-        {
-            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
-                .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-            sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArg}>( {callTarget}.{methodName}{typeParams}({argList}) ) ).AsTask();");
-        }
-        else if (isValueTask)
-        {
-            sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask( {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}).AsTask()) );");
-        }
-        else if (isGenericValueTask)
-        {
-            var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
-                .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-            sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<{tArg}>( {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) ).AsTask() );");
-        }
-        else if (method.ReturnsVoid)
-        {
-            sb.AppendLine($"        {runtime}.Execute<object?>(__ctx, () => {{ {callTarget}.{methodName}{typeParams}({argList}); return global::System.Threading.Tasks.ValueTask.FromResult<object?>(null); }});");
-            sb.AppendLine("        return;");
+            sb.AppendLine("        var __filters = new global::System.Collections.Generic.List<global::SourceGenerator.Runtime.IInvocationBehavior>();");
+            sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.IInvocationBehavior __f) __filters.Add(__f); }");
+            if (isTask)
+            {
+                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"        var __t = {callTarget}.{methodName}{typeParams}({argList});");
+                sb.AppendLine("        return __t.ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } foreach (var __f in __filters) __f.OnAfter(__ctx, null); });");
+            }
+            else if (isGenericTask)
+            {
+                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"        var __t = {callTarget}.{methodName}{typeParams}({argList});");
+                sb.AppendLine("        return __t.ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } var __res = __task.Result; foreach (var __f in __filters) __f.OnAfter(__ctx, __res); return __res; });");
+            }
+            else if (isValueTask)
+            {
+                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"        var __vt = {callTarget}.{methodName}{typeParams}({argList});");
+                sb.AppendLine("        return new global::System.Threading.Tasks.ValueTask( __vt.AsTask().ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } foreach (var __f in __filters) __f.OnAfter(__ctx, null); }) );");
+            }
+            else if (isGenericValueTask)
+            {
+                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"        var __vt = {callTarget}.{methodName}{typeParams}({argList});");
+                sb.AppendLine("        return new global::System.Threading.Tasks.ValueTask<" + ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier)) + ">( __vt.AsTask().ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } var __res = __task.Result; foreach (var __f in __filters) __f.OnAfter(__ctx, __res); return __res; }) );");
+            }
+            else if (method.ReturnsVoid)
+            {
+                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + callTarget + "." + methodName + typeParams + "(" + argList + "); foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                sb.AppendLine("        return;");
+            }
+            else
+            {
+                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + callTarget + "." + methodName + typeParams + "(" + argList + "); foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+            }
         }
         else
         {
-            sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => global::System.Threading.Tasks.ValueTask.FromResult({callTarget}.{methodName}{typeParams}({argList})));");
+            var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
+            if (isTask)
+            {
+                sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
+            }
+            else if (isGenericTask)
+            {
+                var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
+                    .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArg}>( {callTarget}.{methodName}{typeParams}({argList}) ) ).AsTask();");
+            }
+            else if (isValueTask)
+            {
+                sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask( {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}).AsTask()) );");
+            }
+            else if (isGenericValueTask)
+            {
+                var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
+                    .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<{tArg}>( {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) ).AsTask() );");
+            }
+            else if (method.ReturnsVoid)
+            {
+                sb.AppendLine($"        {runtime}.Execute<object?>(__ctx, () => {{ {callTarget}.{methodName}{typeParams}({argList}); return global::System.Threading.Tasks.ValueTask.FromResult<object?>(null); }});");
+                sb.AppendLine("        return;");
+            }
+            else
+            {
+                sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => global::System.Threading.Tasks.ValueTask.FromResult({callTarget}.{methodName}{typeParams}({argList})));");
+            }
         }
 
         sb.AppendLine("    }");
@@ -227,7 +269,7 @@ internal sealed class ClassProxyHandler
         var methodName = method.Name;
         var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
         var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
-        var argList = string.Join(", ", method.Parameters.Select(p => p.Name));
+        var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
 
         sb.Append("    ").Append(returnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
@@ -250,14 +292,19 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
+        var hasByRef2 = method.Parameters.Any(p => p.RefKind != RefKind.None);
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
         {
             if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
             {
-                behaviorSnippets.Add($"new {behaviorFull}()");
-                if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                var include = !hasByRef2 || CanUseAsFilter(a);
+                if (include)
+                {
+                    behaviorSnippets.Add($"new {behaviorFull}()");
+                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                }
             }
         }
         if (impl is not null)
@@ -266,12 +313,16 @@ internal sealed class ClassProxyHandler
             {
                 if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                 {
-                    behaviorSnippets.Add($"new {behaviorFull}()");
-                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                    var include = !hasByRef2 || CanUseAsFilter(a);
+                    if (include)
+                    {
+                        behaviorSnippets.Add($"new {behaviorFull}()");
+                        if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                    }
                 }
             }
         }
-        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid);
         sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
@@ -389,10 +440,41 @@ internal sealed class ClassProxyHandler
         return true;
     }
 
+    private static bool CanUseAsFilter(AttributeData a)
+    {
+        // Try to determine if the behavior type implements IInvocationBehavior (sync filter) so it can participate in by-ref sync path
+        var attrClass = a.AttributeClass as INamedTypeSymbol;
+        if (attrClass is null) return false;
+        INamedTypeSymbol? proxyBase = null;
+        for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
+        {
+            var constructed = t.ConstructedFrom ?? t;
+            var fullName = constructed.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            if (fullName.Contains(ProxyBehaviorAttributeMetadataName, StringComparison.Ordinal)) { proxyBase = t; break; }
+        }
+        if (proxyBase is null) return false;
+        ITypeSymbol? behaviorTypeSymbol = null;
+        if (proxyBase.IsGenericType && proxyBase.TypeArguments.Length >= 1)
+        {
+            behaviorTypeSymbol = proxyBase.TypeArguments[0];
+        }
+        if (behaviorTypeSymbol is INamedTypeSymbol nts)
+        {
+            foreach (var itf in nts.AllInterfaces)
+            {
+                var name = itf.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                if (name == "global::SourceGenerator.Runtime.IInvocationBehavior" || name.EndsWith("SourceGenerator.Runtime.IInvocationBehavior", StringComparison.Ordinal))
+                    return true;
+            }
+        }
+        return false;
+    }
+
     private static string FormatParameter(IParameterSymbol p, bool includeDefault)
     {
         var type = p.Type
             .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+        var mod = p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty;
         string @default = string.Empty;
         if (includeDefault && p.HasExplicitDefaultValue)
         {
@@ -422,7 +504,7 @@ internal sealed class ClassProxyHandler
                 @default = " = " + p.ExplicitDefaultValue.ToString();
             }
         }
-        return type + " " + p.Name + @default;
+        return mod + type + " " + p.Name + @default;
     }
 
     private static bool IsType(ITypeSymbol t, string metadataName)

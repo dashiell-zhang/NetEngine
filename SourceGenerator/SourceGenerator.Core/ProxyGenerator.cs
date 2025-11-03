@@ -28,16 +28,8 @@ public sealed class ProxyGenerator : IIncrementalGenerator
                 return;
 
             var attrData = ctx.Attributes.FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == AutoProxyAttributeMetadataName);
-            // 接口：生成接口代理；类：生成接口、代理和 DI 扩展
-            if (typeSymbol.TypeKind == TypeKind.Interface)
-            {
-                var ifaceHandler = new InterfaceProxyHandler();
-                if (ifaceHandler.CanHandle(typeSymbol, attrData))
-                {
-                    ifaceHandler.Execute(new HandlerContext(spc, typeSymbol, attrData));
-                }
-            }
-            else if (typeSymbol.TypeKind == TypeKind.Class)
+            // 仅对类生成继承式代理（子类重写/显式接口实现注入行为）
+            if (typeSymbol.TypeKind == TypeKind.Class)
             {
                 var classHandler = new ClassProxyHandler();
                 if (classHandler.CanHandle(typeSymbol, attrData))

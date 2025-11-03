@@ -89,8 +89,10 @@ namespace Client.WebAPI
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")!));
 
 
-            builder.Services.AddScoped<Demo2Service>();
-            builder.Services.AddScoped<IDemo2Service,Demo2Service_Proxy>();
+            builder.Services.AddScoped<IDemoService, DemoService_Proxy>();
+
+
+            builder.Services.AddScoped<Demo2Service,Demo2Service_Proxy>();
 
             #region 注册HttpClient
 

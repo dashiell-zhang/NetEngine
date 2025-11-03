@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 
 namespace Client.WebAPI.Services;
 
-public sealed class DemoService : IDemoService
+
+[AutoProxy]
+public class DemoService : IDemoService
 {
     public string Echo(string name) => $"hello, {name}";
 
-    
-    
+
+
     [Cacheable(TtlSeconds = 120)]
     public async Task<int> AddAsync(int a, int b)
     {

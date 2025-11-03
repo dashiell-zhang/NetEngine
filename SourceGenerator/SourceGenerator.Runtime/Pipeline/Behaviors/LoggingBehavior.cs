@@ -3,9 +3,13 @@ using System.Diagnostics;
 
 namespace SourceGenerator.Runtime;
 
-
 public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehavior
 {
+    private sealed class LoggingState
+    {
+        public long StartTicks { get; set; }
+    }
+
     private static string[] BuildCallerChainArray(int maxDepth = 100)
     {
         try
@@ -21,7 +25,6 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 if (method is null) continue;
                 var typeName = method.DeclaringType?.FullName ?? "<global>";
 
-                // Skip internal/framework/runtime frames
                 if (typeName.StartsWith("SourceGenerator.Runtime")) continue;
                 if (typeName.StartsWith("System.")) continue;
                 if (typeName.StartsWith("Microsoft.")) continue;
@@ -30,15 +33,10 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 if (typeName.StartsWith("<global>")) continue;
                 if (method.DeclaringType?.Name.EndsWith("_Proxy") == true) continue;
 
-
-                var name = typeName + "." + method.Name;
-                parts.Add(name);
+                parts.Add(typeName + "." + method.Name);
             }
             if (parts.Count == 0) return Array.Empty<string>();
-            if (parts.Count > maxDepth)
-            {
-                parts = parts.GetRange(parts.Count - maxDepth, maxDepth);
-            }
+            if (parts.Count > maxDepth) parts = parts.GetRange(parts.Count - maxDepth, maxDepth);
             parts.Reverse();
             return parts.ToArray();
         }
@@ -51,7 +49,6 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
         var logger = ctx.Logger;
-
         var logInfo = ctx.Log && logger?.IsEnabled(LogLevel.Information) == true;
         var logError = logger?.IsEnabled(LogLevel.Error) == true;
 
@@ -70,27 +67,25 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                     ["method"] = ctx.Method,
                     ["exception"] = new Dictionary<string, object?>
                     {
-                        ["Source"] = ex.Source,
-                        ["Message"] = ex.Message,
-                        ["StackTrace"] = ex.StackTrace,
-                        ["InnerSource"] = ex.InnerException?.Source,
-                        ["InnerMessage"] = ex.InnerException?.Message,
-                        ["InnerStackTrace"] = ex.InnerException?.StackTrace,
+                        ["source"] = ex.Source,
+                        ["message"] = ex.Message,
+                        ["stackTrace"] = ex.StackTrace,
+                        ["innerSource"] = ex.InnerException?.Source,
+                        ["innerMessage"] = ex.InnerException?.Message,
+                        ["innerStackTrace"] = ex.InnerException?.StackTrace,
                     }
                 };
-                // include args if present
                 if (!string.IsNullOrEmpty(ctx.ArgsJson)) exPayload["args"] = ctx.ArgsJson;
                 if (callerOnly.Length > 0) exPayload["caller"] = callerOnly;
                 logger?.LogError(JsonUtil.ToLogJson(exPayload));
-
                 throw;
             }
         }
 
-        Stopwatch? sw = Stopwatch.StartNew();
-
+        Stopwatch sw = Stopwatch.StartNew();
         var callerChain = BuildCallerChainArray();
         var hasArgs = !string.IsNullOrEmpty(ctx.ArgsJson);
+
         var payload = new Dictionary<string, object?>
         {
             ["event"] = "executing",
@@ -104,39 +99,24 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         try
         {
             var result = await next();
+            sw.Stop();
 
-            if (sw is not null)
+            var payload2 = new Dictionary<string, object?>
             {
-                sw.Stop();
-                var payload2 = new Dictionary<string, object?>
-                {
-                    ["event"] = "executed",
-                    ["method"] = ctx.Method,
-                    ["duration_ms"] = sw.ElapsedMilliseconds,
-                };
-                payload2["traceId"] = ctx.TraceId;
-                if (callerChain.Length > 0) payload2["caller"] = callerChain;
-                logger?.LogInformation(JsonUtil.ToLogJson(payload2));
-            }
-
-            if (ctx.HasReturnValue)
-            {
-                var payload3 = new Dictionary<string, object?>
-                {
-                    ["event"] = "return",
-                    ["method"] = ctx.Method,
-                    ["result"] = result,
-                };
-                payload3["traceId"] = ctx.TraceId;
-                if (callerChain.Length > 0) payload3["caller"] = callerChain;
-                logger?.LogInformation(JsonUtil.ToLogJson(payload3));
-            }
+                ["event"] = "executed",
+                ["method"] = ctx.Method,
+                ["durationMs"] = sw.ElapsedMilliseconds,
+            };
+            payload2["traceId"] = ctx.TraceId;
+            if (callerChain.Length > 0) payload2["caller"] = callerChain;
+            if (ctx.HasReturnValue) payload2["result"] = result;
+            logger?.LogInformation(JsonUtil.ToLogJson(payload2));
 
             return result;
         }
         catch (Exception ex)
         {
-            if (sw is not null) sw.Stop();
+            sw.Stop();
             if (logError)
             {
                 var exPayload = new Dictionary<string, object?>
@@ -145,28 +125,30 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                     ["method"] = ctx.Method,
                     ["exception"] = new Dictionary<string, object?>
                     {
-                        ["Source"] = ex.Source,
-                        ["Message"] = ex.Message,
-                        ["StackTrace"] = ex.StackTrace,
-                        ["InnerSource"] = ex.InnerException?.Source,
-                        ["InnerMessage"] = ex.InnerException?.Message,
-                        ["InnerStackTrace"] = ex.InnerException?.StackTrace,
+                        ["source"] = ex.Source,
+                        ["message"] = ex.Message,
+                        ["stackTrace"] = ex.StackTrace,
+                        ["innerSource"] = ex.InnerException?.Source,
+                        ["innerMessage"] = ex.InnerException?.Message,
+                        ["innerStackTrace"] = ex.InnerException?.StackTrace,
                     }
                 };
                 exPayload["traceId"] = ctx.TraceId;
                 if (!string.IsNullOrEmpty(ctx.ArgsJson)) exPayload["args"] = ctx.ArgsJson;
                 if (callerChain.Length > 0) exPayload["caller"] = callerChain;
-                if (sw is not null) exPayload["duration_ms"] = sw.ElapsedMilliseconds;
+                exPayload["durationMs"] = sw.ElapsedMilliseconds;
                 logger?.LogError(JsonUtil.ToLogJson(exPayload));
             }
             throw;
         }
     }
 
-    // Sync-friendly hooks for ref/out support
     public void OnBefore(InvocationContext ctx)
     {
         var logger = ctx.Logger;
+        // start timing for sync three-phase path
+        ctx.SetFeature(new LoggingState { StartTicks = Stopwatch.GetTimestamp() });
+
         if (ctx.Log && logger?.IsEnabled(LogLevel.Information) == true)
         {
             var callerChain = BuildCallerChainArray();
@@ -185,17 +167,21 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     public void OnAfter(InvocationContext ctx, object? result)
     {
         var logger = ctx.Logger;
+        var st = ctx.GetFeature<LoggingState>();
+
         if (ctx.Log && logger?.IsEnabled(LogLevel.Information) == true)
         {
             var payload = new Dictionary<string, object?>
             {
-                ["event"] = ctx.HasReturnValue ? "return" : "executed",
+                ["event"] = "executed",
                 ["method"] = ctx.Method,
             };
             payload["traceId"] = ctx.TraceId;
-            if (ctx.HasReturnValue)
+            if (ctx.HasReturnValue) payload["result"] = result;
+            if (st is not null)
             {
-                payload["result"] = result;
+                var elapsedMs = (Stopwatch.GetTimestamp() - st.StartTicks) * 1000.0 / Stopwatch.Frequency;
+                payload["durationMs"] = (long)elapsedMs;
             }
             logger?.LogInformation(JsonUtil.ToLogJson(payload));
         }
@@ -204,6 +190,8 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     public void OnException(InvocationContext ctx, Exception ex)
     {
         var logger = ctx.Logger;
+        var st = ctx.GetFeature<LoggingState>();
+
         if (logger?.IsEnabled(LogLevel.Error) == true)
         {
             var callerOnly = BuildCallerChainArray();
@@ -213,17 +201,22 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 ["method"] = ctx.Method,
                 ["exception"] = new Dictionary<string, object?>
                 {
-                    ["Source"] = ex.Source,
-                    ["Message"] = ex.Message,
-                    ["StackTrace"] = ex.StackTrace,
-                    ["InnerSource"] = ex.InnerException?.Source,
-                    ["InnerMessage"] = ex.InnerException?.Message,
-                    ["InnerStackTrace"] = ex.InnerException?.StackTrace,
+                    ["source"] = ex.Source,
+                    ["message"] = ex.Message,
+                    ["stackTrace"] = ex.StackTrace,
+                    ["innerSource"] = ex.InnerException?.Source,
+                    ["innerMessage"] = ex.InnerException?.Message,
+                    ["innerStackTrace"] = ex.InnerException?.StackTrace,
                 }
             };
             exPayload["traceId"] = ctx.TraceId;
             if (!string.IsNullOrEmpty(ctx.ArgsJson)) exPayload["args"] = ctx.ArgsJson;
             if (callerOnly.Length > 0) exPayload["caller"] = callerOnly;
+            if (st is not null)
+            {
+                var elapsedMs = (Stopwatch.GetTimestamp() - st.StartTicks) * 1000.0 / Stopwatch.Frequency;
+                exPayload["durationMs"] = (long)elapsedMs;
+            }
             logger?.LogError(JsonUtil.ToLogJson(exPayload));
         }
     }

@@ -1,4 +1,4 @@
-using SourceGenerator.Abstraction.Attributes;
+using SourceGenerator.Runtime.Attributes;
 
 namespace Client.WebAPI.Services;
 

@@ -1,4 +1,4 @@
-namespace SourceGenerator.Runtime;
+namespace SourceGenerator.Runtime.Pipeline;
 
 public static class InvocationPipeline
 {
@@ -9,7 +9,7 @@ public static class InvocationPipeline
         {
             var b = behaviors[i];
             var currentNext = next;
-            next = () => b.InvokeAsync<T>(ctx, currentNext);
+            next = () => b.InvokeAsync(ctx, currentNext);
         }
         return next();
     }

@@ -1,4 +1,4 @@
-namespace SourceGenerator.Abstraction.Attributes;
+namespace SourceGenerator.Runtime.Attributes;
 
 /// <summary>
 /// 统一的代理行为基类 Attribute。用于在编译期把方法上的行为按声明顺序拼装进运行时管道。

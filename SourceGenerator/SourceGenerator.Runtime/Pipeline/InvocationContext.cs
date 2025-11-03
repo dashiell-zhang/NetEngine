@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
-namespace SourceGenerator.Runtime;
+namespace SourceGenerator.Runtime.Pipeline;
 
 public sealed class InvocationContext
 {

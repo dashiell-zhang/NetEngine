@@ -4,13 +4,13 @@ using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
-namespace SourceGenerator.Runtime;
+namespace SourceGenerator.Runtime.Pipeline.Behaviors;
 
 public sealed class CacheableBehavior : IInvocationAsyncBehavior
 {
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
-        var cache = ctx.GetFeature<SourceGenerator.Runtime.Options.CacheableOptions>();
+        var cache = ctx.GetFeature<Options.CacheableOptions>();
         if (cache is not null && ctx.HasReturnValue)
         {
             var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
@@ -31,14 +31,14 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     private static string ComposeSeed(InvocationContext ctx)
         => (ctx.Method ?? string.Empty) + (ctx.ArgsJson ?? string.Empty);
 
-    private static async Task<(bool hit, T value)> TryGetAsync<T>(InvocationContext ctx, SourceGenerator.Runtime.Options.CacheableOptions cache, ILogger? logger, bool log, string method)
+    private static async Task<(bool hit, T value)> TryGetAsync<T>(InvocationContext ctx, Options.CacheableOptions cache, ILogger? logger, bool log, string method)
     {
         var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         if (cacheSvc is null) return (false, default!);
         try
         {
             var key = "CacheData_" + Md5Hex(ComposeSeed(ctx));
-            var json = await DistributedCacheExtensions.GetStringAsync(cacheSvc, key);
+            var json = await cacheSvc.GetStringAsync(key);
             if (json is null) return (false, default!);
             if (log) logger?.LogInformation($"Cache hit {method}");
             return (true, JsonSerializer.Deserialize<T>(json, JsonUtil.JsonOpts)!);
@@ -50,7 +50,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         }
     }
 
-    private static async Task SetAsync<T>(InvocationContext ctx, SourceGenerator.Runtime.Options.CacheableOptions cache, ILogger? logger, bool log, string method, T value)
+    private static async Task SetAsync<T>(InvocationContext ctx, Options.CacheableOptions cache, ILogger? logger, bool log, string method, T value)
     {
         var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         if (cacheSvc is null) return;
@@ -58,7 +58,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         {
             var key = "CacheData_" + Md5Hex(ComposeSeed(ctx));
             var json = JsonSerializer.Serialize(value, JsonUtil.JsonOpts);
-            await DistributedCacheExtensions.SetStringAsync(cacheSvc, key, json, new DistributedCacheEntryOptions
+            await cacheSvc.SetStringAsync(key, json, new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache.TtlSeconds)
             });

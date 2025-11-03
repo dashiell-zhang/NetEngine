@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace SourceGenerator.Runtime;
+namespace SourceGenerator.Runtime.Pipeline.Behaviors;
 
 public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehavior
 {

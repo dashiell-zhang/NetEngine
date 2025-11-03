@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +9,7 @@ namespace SourceGenerator.Core;
 
 internal sealed class ClassProxyHandler
 {
-    private const string ProxyBehaviorAttributeMetadataName = "SourceGenerator.Abstraction.Attributes.ProxyBehaviorAttribute";
+    private const string ProxyBehaviorAttributeMetadataName = "SourceGenerator.Runtime.Attributes.ProxyBehaviorAttribute";
 
     public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
         => type.TypeKind == TypeKind.Class;
@@ -163,7 +163,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
         var hasByRef = method.Parameters.Any(p => p.RefKind != RefKind.None);
-        var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.LoggingBehavior()" };
+        var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
         {
@@ -177,15 +177,15 @@ internal sealed class ClassProxyHandler
                 }
             }
         }
-        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid);
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, ArgsJson = __args, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
         if (hasByRef)
         {
-            sb.AppendLine("        var __filters = new global::System.Collections.Generic.List<global::SourceGenerator.Runtime.IInvocationBehavior>();");
-            sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.IInvocationBehavior __f) __filters.Add(__f); }");
+            sb.AppendLine("        var __filters = new global::System.Collections.Generic.List<global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior>();");
+            sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior __f) __filters.Add(__f); }");
             if (isTask)
             {
                 sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
@@ -297,7 +297,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
         var hasByRef2 = method.Parameters.Any(p => p.RefKind != RefKind.None);
-        var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.LoggingBehavior()" };
+        var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
         {
@@ -326,9 +326,9 @@ internal sealed class ClassProxyHandler
                 }
             }
         }
-        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+        sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid);
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, ArgsJson = __args, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
@@ -467,7 +467,7 @@ internal sealed class ClassProxyHandler
             foreach (var itf in nts.AllInterfaces)
             {
                 var name = itf.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (name == "global::SourceGenerator.Runtime.IInvocationBehavior" || name.EndsWith("SourceGenerator.Runtime.IInvocationBehavior", StringComparison.Ordinal))
+                if (name == "global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior" || name.EndsWith("SourceGenerator.Runtime.IInvocationBehavior", StringComparison.Ordinal))
                     return true;
             }
         }
@@ -536,3 +536,4 @@ internal sealed class ClassProxyHandler
         return ns + "__" + type.Name + "+Proxy";
     }
 }
+

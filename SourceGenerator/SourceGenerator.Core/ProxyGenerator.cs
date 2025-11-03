@@ -8,7 +8,7 @@ namespace SourceGenerator.Core;
 [Generator(LanguageNames.CSharp)]
 public sealed class ProxyGenerator : IIncrementalGenerator
 {
-    private const string AutoProxyAttributeMetadataName = "SourceGenerator.Abstraction.Attributes.AutoProxyAttribute";
+    private const string AutoProxyAttributeMetadataName = "SourceGenerator.Runtime.Attributes.AutoProxyAttribute";
 
 
     public void Initialize(IncrementalGeneratorInitializationContext context)

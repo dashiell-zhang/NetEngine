@@ -1,4 +1,4 @@
-namespace SourceGenerator.Runtime
+namespace SourceGenerator.Runtime.Pipeline
 {
     public interface IInvocationAsyncBehavior
     {

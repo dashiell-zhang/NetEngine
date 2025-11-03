@@ -1,5 +1,5 @@
 using Application.Model.Site.Article;
-using SourceGenerator.Abstraction.Attributes;
+using SourceGenerator.Runtime.Attributes;
 using System.Threading.Tasks;
 
 namespace Client.WebAPI.Services;

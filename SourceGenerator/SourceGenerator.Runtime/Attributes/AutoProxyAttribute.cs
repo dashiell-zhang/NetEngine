@@ -5,3 +5,4 @@ namespace SourceGenerator.Abstraction.Attributes
     {
     }
 }
+

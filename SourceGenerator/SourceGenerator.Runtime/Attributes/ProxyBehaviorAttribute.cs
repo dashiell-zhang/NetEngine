@@ -7,8 +7,7 @@ namespace SourceGenerator.Abstraction.Attributes;
 public abstract class ProxyBehaviorAttribute : Attribute
 {
     /// <summary>
-    /// 运行时行为类型（必须实现 IInvocationBehavior）。
-    /// 生成器主要通过泛型基类识别行为与可选项类型，BehaviorType 作为兜底。
+    /// 运行时行为类型（必须实现 IInvocationBehavior）。生成器主要通过泛型基类识别行为与可选项类型，BehaviorType 作为兜底。
     /// </summary>
     public Type BehaviorType { get; }
 
@@ -19,7 +18,7 @@ public abstract class ProxyBehaviorAttribute : Attribute
 }
 
 /// <summary>
-/// 无选项版本，便于在 Attribute 上省去 typeof(...) 的显式书写。
+/// 无选项版本，便于在 Attribute 上省略 typeof(...) 的显式书写。
 /// 例如：sealed class FooAttribute : ProxyBehaviorAttribute&lt;FooBehavior&gt; { }
 /// </summary>
 public abstract class ProxyBehaviorAttribute<TBehavior> : ProxyBehaviorAttribute
@@ -36,3 +35,4 @@ public abstract class ProxyBehaviorAttribute<TBehavior, TOptions> : ProxyBehavio
 {
     protected ProxyBehaviorAttribute() : base(typeof(TBehavior)) { }
 }
+

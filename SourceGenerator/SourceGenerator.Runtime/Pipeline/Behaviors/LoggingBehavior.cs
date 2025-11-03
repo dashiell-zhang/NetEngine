@@ -110,6 +110,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             payload2["traceId"] = ctx.TraceId;
             if (callerChain.Length > 0) payload2["caller"] = callerChain;
             if (ctx.HasReturnValue) payload2["result"] = result;
+            if (hasArgs) payload2["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
             logger?.LogInformation(JsonUtil.ToJson(payload2));
 
             return result;
@@ -178,6 +179,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             };
             payload["traceId"] = ctx.TraceId;
             if (ctx.HasReturnValue) payload["result"] = result;
+            if (ctx.Args is not null || !string.IsNullOrEmpty(ctx.ArgsJson)) payload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
             if (st is not null)
             {
                 var elapsedMs = (Stopwatch.GetTimestamp() - st.StartTicks) * 1000.0 / Stopwatch.Frequency;

@@ -13,11 +13,6 @@ public static class JsonUtil
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    public static readonly JsonSerializerOptions LogJsonOpts = new()
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
 
     public static string ToJson(object? value)
     {
@@ -31,15 +26,22 @@ public static class JsonUtil
         }
     }
 
-    public static string ToLogJson(object? value)
+
+
+    public static object ToObject(string? json)
     {
+        if (string.IsNullOrEmpty(json)) return json ?? string.Empty;
+
         try
         {
-            return JsonSerializer.Serialize(value, LogJsonOpts);
+            var obj = JsonSerializer.Deserialize<object>(json, JsonOpts);
+            if (obj != null) return obj;
         }
         catch
         {
-            return value?.ToString() ?? "<null>";
+
         }
+
+        return json;
     }
 }

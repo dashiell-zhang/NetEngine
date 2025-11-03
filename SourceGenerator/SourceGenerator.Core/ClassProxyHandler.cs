@@ -151,10 +151,12 @@ internal sealed class ClassProxyHandler
                 sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append(p.Name).AppendLine(";");
             }
             sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
+            sb.AppendLine("        object? __argsObj = __argsDict;");
         }
         else
         {
             sb.AppendLine("        string? __args = null;");
+            sb.AppendLine("        object? __argsObj = null;");
         }
 
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
@@ -177,7 +179,7 @@ internal sealed class ClassProxyHandler
         }
         sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid);
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
         if (hasByRef)
@@ -283,10 +285,12 @@ internal sealed class ClassProxyHandler
                 sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append(p.Name).AppendLine(";");
             }
             sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
+            sb.AppendLine("        object? __argsObj = __argsDict;");
         }
         else
         {
             sb.AppendLine("        string? __args = null;");
+            sb.AppendLine("        object? __argsObj = null;");
         }
 
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
@@ -324,7 +328,7 @@ internal sealed class ClassProxyHandler
         }
         sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid);
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";

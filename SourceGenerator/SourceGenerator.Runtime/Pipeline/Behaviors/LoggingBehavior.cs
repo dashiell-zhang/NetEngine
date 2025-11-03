@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace SourceGenerator.Runtime;
@@ -75,16 +75,16 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                         ["innerStackTrace"] = ex.InnerException?.StackTrace,
                     }
                 };
-                if (!string.IsNullOrEmpty(ctx.ArgsJson)) exPayload["args"] = ctx.ArgsJson;
+                if (!string.IsNullOrEmpty(ctx.ArgsJson) || ctx.Args is not null) exPayload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
                 if (callerOnly.Length > 0) exPayload["caller"] = callerOnly;
-                logger?.LogError(JsonUtil.ToLogJson(exPayload));
+                logger?.LogError(JsonUtil.ToJson(exPayload));
                 throw;
             }
         }
 
         Stopwatch sw = Stopwatch.StartNew();
         var callerChain = BuildCallerChainArray();
-        var hasArgs = !string.IsNullOrEmpty(ctx.ArgsJson);
+        var hasArgs = ctx.Args is not null || !string.IsNullOrEmpty(ctx.ArgsJson);
 
         var payload = new Dictionary<string, object?>
         {
@@ -92,9 +92,9 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             ["method"] = ctx.Method,
         };
         payload["traceId"] = ctx.TraceId;
-        if (hasArgs) payload["args"] = ctx.ArgsJson;
+        if (hasArgs) payload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
         if (callerChain.Length > 0) payload["caller"] = callerChain;
-        logger?.LogInformation(JsonUtil.ToLogJson(payload));
+        logger?.LogInformation(JsonUtil.ToJson(payload));
 
         try
         {
@@ -110,7 +110,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             payload2["traceId"] = ctx.TraceId;
             if (callerChain.Length > 0) payload2["caller"] = callerChain;
             if (ctx.HasReturnValue) payload2["result"] = result;
-            logger?.LogInformation(JsonUtil.ToLogJson(payload2));
+            logger?.LogInformation(JsonUtil.ToJson(payload2));
 
             return result;
         }
@@ -134,10 +134,10 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                     }
                 };
                 exPayload["traceId"] = ctx.TraceId;
-                if (!string.IsNullOrEmpty(ctx.ArgsJson)) exPayload["args"] = ctx.ArgsJson;
+                if (!string.IsNullOrEmpty(ctx.ArgsJson) || ctx.Args is not null) exPayload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
                 if (callerChain.Length > 0) exPayload["caller"] = callerChain;
                 exPayload["durationMs"] = sw.ElapsedMilliseconds;
-                logger?.LogError(JsonUtil.ToLogJson(exPayload));
+                logger?.LogError(JsonUtil.ToJson(exPayload));
             }
             throw;
         }
@@ -158,9 +158,9 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 ["method"] = ctx.Method,
             };
             payload["traceId"] = ctx.TraceId;
-            if (!string.IsNullOrEmpty(ctx.ArgsJson)) payload["args"] = ctx.ArgsJson;
+            if (!string.IsNullOrEmpty(ctx.ArgsJson) || ctx.Args is not null) payload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
             if (callerChain.Length > 0) payload["caller"] = callerChain;
-            logger?.LogInformation(JsonUtil.ToLogJson(payload));
+            logger?.LogInformation(JsonUtil.ToJson(payload));
         }
     }
 
@@ -183,7 +183,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 var elapsedMs = (Stopwatch.GetTimestamp() - st.StartTicks) * 1000.0 / Stopwatch.Frequency;
                 payload["durationMs"] = (long)elapsedMs;
             }
-            logger?.LogInformation(JsonUtil.ToLogJson(payload));
+            logger?.LogInformation(JsonUtil.ToJson(payload));
         }
     }
 
@@ -210,14 +210,15 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 }
             };
             exPayload["traceId"] = ctx.TraceId;
-            if (!string.IsNullOrEmpty(ctx.ArgsJson)) exPayload["args"] = ctx.ArgsJson;
+            if (!string.IsNullOrEmpty(ctx.ArgsJson) || ctx.Args is not null) exPayload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
             if (callerOnly.Length > 0) exPayload["caller"] = callerOnly;
             if (st is not null)
             {
                 var elapsedMs = (Stopwatch.GetTimestamp() - st.StartTicks) * 1000.0 / Stopwatch.Frequency;
                 exPayload["durationMs"] = (long)elapsedMs;
             }
-            logger?.LogError(JsonUtil.ToLogJson(exPayload));
+            logger?.LogError(JsonUtil.ToJson(exPayload));
         }
     }
 }
+

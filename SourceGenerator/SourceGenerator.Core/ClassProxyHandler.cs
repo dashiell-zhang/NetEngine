@@ -47,7 +47,8 @@ internal sealed class ClassProxyHandler
         sb.AppendLine();
 
         // proxy class derives from original implementation and re-lists implemented interfaces
-        var ifaceList = cls.AllInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", cls.AllInterfaces.Select(i => i.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
+        // use fully-qualified names to avoid cross-namespace resolution issues
+        var ifaceList = cls.AllInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", cls.AllInterfaces.Select(i => i.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
         sb.Append("public sealed class ").Append(proxyName).Append(" : ").Append(classDisplay).Append(ifaceList).AppendLine()
           .AppendLine("{")
           .AppendLine("    private readonly global::System.IServiceProvider? __sp;")
@@ -59,7 +60,7 @@ internal sealed class ClassProxyHandler
             if (ctor.DeclaredAccessibility != Accessibility.Public && ctor.DeclaredAccessibility != Accessibility.Protected)
                 continue;
 
-            var paramList = string.Join(", ", ctor.Parameters.Select(FormatParameter));
+            var paramList = string.Join(", ", ctor.Parameters.Select(p => FormatParameter(p, includeDefault: true)));
             var argList = string.Join(", ", ctor.Parameters.Select(p => p.Name));
             // plain mirror
             sb.Append("    public ").Append(proxyName).Append('(').Append(paramList).Append(')').AppendLine()
@@ -139,7 +140,7 @@ internal sealed class ClassProxyHandler
             .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
         var methodName = method.Name;
         var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
-        var paramList = string.Join(", ", method.Parameters.Select(FormatParameter));
+        var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
         var argList = string.Join(", ", method.Parameters.Select(p => p.Name));
 
         sb.Append("    public override ").Append(returnType).Append(' ').Append(methodName).Append(typeParams)
@@ -222,10 +223,10 @@ internal sealed class ClassProxyHandler
 
         var returnType = method.ReturnType
             .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-        var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var methodName = method.Name;
         var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
-        var paramList = string.Join(", ", method.Parameters.Select(FormatParameter));
+        var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
         var argList = string.Join(", ", method.Parameters.Select(p => p.Name));
 
         sb.Append("    ").Append(returnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
@@ -314,7 +315,7 @@ internal sealed class ClassProxyHandler
     private static void AppendExplicitInterfaceProperty(StringBuilder sb, INamedTypeSymbol iface, IPropertySymbol prop)
     {
         var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         sb.Append("    ").Append(typeName).Append(' ').Append(ifaceDisplay).Append('.').Append(prop.Name).AppendLine()
           .AppendLine("    {");
         if (prop.GetMethod is not null)
@@ -331,7 +332,7 @@ internal sealed class ClassProxyHandler
     private static void AppendExplicitInterfaceEvent(StringBuilder sb, INamedTypeSymbol iface, IEventSymbol ev)
     {
         var typeName = ev.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         sb.Append("    event ").Append(typeName).Append(' ').Append(ifaceDisplay).Append('.').Append(ev.Name).AppendLine()
           .AppendLine("    {")
           .AppendLine("        add => base." + ev.Name + " += value;")
@@ -388,11 +389,39 @@ internal sealed class ClassProxyHandler
         return true;
     }
 
-    private static string FormatParameter(IParameterSymbol p)
+    private static string FormatParameter(IParameterSymbol p, bool includeDefault)
     {
         var type = p.Type
             .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-        var @default = p.HasExplicitDefaultValue ? " = " + (p.ExplicitDefaultValue is null ? "null" : p.ExplicitDefaultValue is string s ? "\"" + s.Replace("\"", "\\\"") + "\"" : p.ExplicitDefaultValue.ToString()) : string.Empty;
+        string @default = string.Empty;
+        if (includeDefault && p.HasExplicitDefaultValue)
+        {
+            if (p.ExplicitDefaultValue is null)
+            {
+                @default = p.Type.IsReferenceType ? " = null" : " = default";
+            }
+            else if (p.ExplicitDefaultValue is string s)
+            {
+                @default = " = \"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+            }
+            else if (p.ExplicitDefaultValue is bool b)
+            {
+                @default = b ? " = true" : " = false";
+            }
+            else if (p.ExplicitDefaultValue is char ch)
+            {
+                var esc = ch == '\'' ? "\\'" : ch.ToString();
+                @default = " = '" + esc + "'";
+            }
+            else if (p.ExplicitDefaultValue is IFormattable f)
+            {
+                @default = " = " + f.ToString(null, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                @default = " = " + p.ExplicitDefaultValue.ToString();
+            }
+        }
         return type + " " + p.Name + @default;
     }
 

@@ -9,7 +9,6 @@ namespace SourceGenerator.Core;
 
 internal sealed class ClassProxyHandler
 {
-    private const string CacheableAttributeMetadataName = "SourceGenerator.Abstraction.Attributes.CacheableAttribute";
     private const string ProxyBehaviorAttributeMetadataName = "SourceGenerator.Abstraction.Attributes.ProxyBehaviorAttribute";
 
     public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
@@ -142,51 +141,62 @@ internal sealed class ClassProxyHandler
 
         sb.AppendLine("        var __logMethod = (__inner.GetType().FullName ?? \"" + typeFullName + "\") + \"." + methodName + "\";");
 
-        var cacheAttr = method.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == CacheableAttributeMetadataName);
-        var hasCache = cacheAttr is not null && !method.ReturnsVoid;
-        var ttl = 60;
-        if (hasCache)
-        {
-            foreach (var kv in cacheAttr!.NamedArguments)
-            {
-                if (kv.Key == "TtlSeconds" && kv.Value.Value is int i) ttl = i;
-            }
-            sb.AppendLine("        var __cache = new global::SourceGenerator.Runtime.Options.CacheableOptions { TtlSeconds = " + ttl + " };");
-        }
-        else
-        {
-            sb.AppendLine("        global::SourceGenerator.Runtime.Options.CacheableOptions? __cache = null;");
-        }
+        // collect compile-time behaviors and options (from class method attributes)
 
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.LoggingBehavior()" };
+        var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
         {
             var attrClass = a.AttributeClass as INamedTypeSymbol;
             if (attrClass is null) continue;
-            ITypeSymbol? behaviorTypeSymbol = null;
+            INamedTypeSymbol? proxyBase = null;
             for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
             {
-                var fullName = t.ConstructedFrom?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                               ?? t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (fullName.Contains(ProxyBehaviorAttributeMetadataName, StringComparison.Ordinal))
+                var constructed = t.ConstructedFrom ?? t;
+                var fullName = constructed.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                if (fullName.Contains(ProxyBehaviorAttributeMetadataName, StringComparison.Ordinal)) { proxyBase = t; break; }
+            }
+            if (proxyBase is null) continue;
+            ITypeSymbol? behaviorTypeSymbol = null;
+            INamedTypeSymbol? optionsTypeSymbol = null;
+            if (proxyBase.IsGenericType)
+            {
+                if (proxyBase.TypeArguments.Length == 1)
                 {
-                    if (t.IsGenericType && t.TypeArguments.Length == 1)
-                    {
-                        behaviorTypeSymbol = t.TypeArguments[0];
-                    }
-                    break;
+                    behaviorTypeSymbol = proxyBase.TypeArguments[0];
+                }
+                else if (proxyBase.TypeArguments.Length == 2)
+                {
+                    behaviorTypeSymbol = proxyBase.TypeArguments[0];
+                    optionsTypeSymbol = proxyBase.TypeArguments[1] as INamedTypeSymbol;
                 }
             }
             if (behaviorTypeSymbol is null) continue;
             var full = behaviorTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             behaviorSnippets.Add($"new {full}()");
+            if (optionsTypeSymbol is not null)
+            {
+                var assigns = new List<string>();
+                foreach (var kv in a.NamedArguments)
+                {
+                    var propName = kv.Key;
+                    var prop = optionsTypeSymbol.GetMembers().OfType<IPropertySymbol>().FirstOrDefault(p => p.Name == propName && !p.IsReadOnly);
+                    if (prop is null) continue;
+                    var lit = ToCSharpLiteral(kv.Value);
+                    if (lit is null) continue;
+                    assigns.Add(propName + " = " + lit);
+                }
+                var optFull = optionsTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                var init = assigns.Count > 0 ? " { " + string.Join(", ", assigns) + " }" : string.Empty;
+                optionsSetters.Add($"__ctx.SetFeature(new {optFull}{init});");
+            }
         }
         sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.IInvocationBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid);
         sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.InvocationContext { Method = __logMethod, ArgsJson = __args, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
-        sb.AppendLine("        if (__cache is not null) __ctx.SetFeature(__cache);");
+        sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
         var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
         if (isTask)
@@ -235,6 +245,22 @@ internal sealed class ClassProxyHandler
 
     private static bool IsType(ITypeSymbol t, string metadataName)
         => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Contains(metadataName, StringComparison.Ordinal);
+
+    private static string? ToCSharpLiteral(TypedConstant c)
+    {
+        if (c.IsNull) return "null";
+        if (c.Value is null) return null;
+        if (c.Value is string s) return "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        if (c.Value is bool b) return b ? "true" : "false";
+        if (c.Value is char ch) return "'" + (ch == '\'' ? "\\'" : ch.ToString()) + "'";
+        if (c.Type is INamedTypeSymbol nts && nts.TypeKind == TypeKind.Enum)
+        {
+            var named = nts.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            return named + "." + c.Value.ToString();
+        }
+        if (c.Value is IFormattable f) return f.ToString(null, System.Globalization.CultureInfo.InvariantCulture);
+        return c.Value.ToString();
+    }
 
     private static string GetSafeHintName(INamedTypeSymbol type)
     {

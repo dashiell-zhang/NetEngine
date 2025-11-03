@@ -15,7 +15,7 @@ public sealed class ProxyGenerator : IIncrementalGenerator
     {
         var candidates = context.SyntaxProvider.ForAttributeWithMetadataName(
             AutoProxyAttributeMetadataName,
-            static (node, _) => node is InterfaceDeclarationSyntax or ClassDeclarationSyntax,
+            static (node, _) => node is ClassDeclarationSyntax,
             static (syntaxContext, _) => syntaxContext
         );
 
@@ -28,7 +28,6 @@ public sealed class ProxyGenerator : IIncrementalGenerator
                 return;
 
             var attrData = ctx.Attributes.FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == AutoProxyAttributeMetadataName);
-            // 仅对类生成继承式代理（子类重写/显式接口实现注入行为）
             if (typeSymbol.TypeKind == TypeKind.Class)
             {
                 var classHandler = new ClassProxyHandler();

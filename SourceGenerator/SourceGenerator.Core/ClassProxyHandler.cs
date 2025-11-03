@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,14 +37,6 @@ internal sealed class ClassProxyHandler
         sb.Append("namespace ").Append(ns).AppendLine(";");
         sb.AppendLine();
 
-        // helpers
-        sb.Append("file static class __ProxyHelpers_").Append(proxyName).AppendLine(" {");
-        sb.AppendLine("    internal static string ArgToString(object? o)");
-        sb.AppendLine("    {");
-        sb.AppendLine("        return global::SourceGenerator.Runtime.JsonUtil.ToJson(o);");
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
-        sb.AppendLine();
 
         // proxy class derives from original implementation and re-lists implemented interfaces
         // use fully-qualified names to avoid cross-namespace resolution issues

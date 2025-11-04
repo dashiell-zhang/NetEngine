@@ -101,13 +101,27 @@ internal sealed class ClassProxyHandler
                             continue;
                         // find implementation in class
                         var impl = cls.FindImplementationForInterfaceMember(m) as IMethodSymbol;
+                        // If the implementation in the hierarchy is an explicit interface implementation,
+                        // we cannot forward using base.Method(...). Skip generating to avoid compile-time errors.
+                        if (impl is not null && impl.ExplicitInterfaceImplementations.Length > 0)
+                            break;
                         AppendExplicitInterfaceMethod(sb, iface, m, impl, classFull);
                         break;
                     case IPropertySymbol p:
-                        AppendExplicitInterfaceProperty(sb, iface, p);
+                        {
+                            var implProp = cls.FindImplementationForInterfaceMember(p) as IPropertySymbol;
+                            if (implProp is not null && implProp.ExplicitInterfaceImplementations.Length > 0)
+                                break;
+                            AppendExplicitInterfaceProperty(sb, iface, p, cls);
+                        }
                         break;
                     case IEventSymbol e:
-                        AppendExplicitInterfaceEvent(sb, iface, e);
+                        {
+                            var implEv = cls.FindImplementationForInterfaceMember(e) as IEventSymbol;
+                            if (implEv is not null && implEv.ExplicitInterfaceImplementations.Length > 0)
+                                break;
+                            AppendExplicitInterfaceEvent(sb, iface, e, cls);
+                        }
                         break;
                 }
             }
@@ -432,7 +446,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("    }");
     }
 
-    private static void AppendExplicitInterfaceProperty(StringBuilder sb, INamedTypeSymbol iface, IPropertySymbol prop)
+    private static void AppendExplicitInterfaceProperty(StringBuilder sb, INamedTypeSymbol iface, IPropertySymbol prop, INamedTypeSymbol cls)
     {
         var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -449,7 +463,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("    }");
     }
 
-    private static void AppendExplicitInterfaceEvent(StringBuilder sb, INamedTypeSymbol iface, IEventSymbol ev)
+    private static void AppendExplicitInterfaceEvent(StringBuilder sb, INamedTypeSymbol iface, IEventSymbol ev, INamedTypeSymbol cls)
     {
         var typeName = ev.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);

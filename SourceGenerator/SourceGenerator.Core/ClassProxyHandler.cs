@@ -775,6 +775,23 @@ internal sealed class ClassProxyHandler
         {
             var v = constant.Value;
             if (v is null) return "null";
+            // Preserve enum constants as fully-qualified Enum.Member when possible
+            if (constant.Type is INamedTypeSymbol enumType && enumType.TypeKind == TypeKind.Enum)
+            {
+                var fqEnum = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                var field = enumType.GetMembers()
+                    .OfType<IFieldSymbol>()
+                    .FirstOrDefault(f => f.HasConstantValue && Equals(f.ConstantValue, v));
+                if (field is not null)
+                {
+                    return fqEnum + "." + field.Name;
+                }
+                // Fallback: cast from numeric literal to enum type
+                var numText = (v is IFormattable ff)
+                    ? ff.ToString(null, System.Globalization.CultureInfo.InvariantCulture) ?? "0"
+                    : v.ToString() ?? "0";
+                return "(" + fqEnum + ")" + numText;
+            }
             return v switch
             {
                 string s => "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"",

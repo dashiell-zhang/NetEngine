@@ -84,9 +84,6 @@ internal sealed class ClassProxyHandler
                 continue;
             if (method.DeclaredAccessibility != Accessibility.Public || method.IsStatic)
                 continue;
-            // skip by-ref returns which cannot be proxied safely
-            if (method.ReturnsByRef || method.ReturnsByRefReadonly)
-                continue;
             if (!(method.IsVirtual || method.IsAbstract || method.IsOverride))
                 continue;
             AppendDerivedOverride(sb, method, classFull, callTarget: "base");
@@ -102,8 +99,6 @@ internal sealed class ClassProxyHandler
                     case IMethodSymbol m:
                         if (m.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise)
                             continue;
-                        // skip by-ref return interface members
-                        if (m.ReturnsByRef || m.ReturnsByRefReadonly) continue;
                         // find implementation in class
                         var impl = cls.FindImplementationForInterfaceMember(m) as IMethodSymbol;
                         AppendExplicitInterfaceMethod(sb, iface, m, impl, classFull);
@@ -136,7 +131,12 @@ internal sealed class ClassProxyHandler
         var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
         var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
 
-        var sigReturnType = method.ReturnsVoid ? "void" : returnType;
+        var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
+        var sigReturnType = method.ReturnsVoid
+            ? "void"
+            : isByRefReturn
+                ? (method.ReturnsByRefReadonly ? "ref readonly " : "ref ") + returnType
+                : returnType;
 
         sb.Append("    public override ").Append(sigReturnType).Append(' ').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
@@ -163,7 +163,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
-        var hasByRef = method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+        var hasByRef = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
@@ -214,6 +214,10 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine($"        var __vt = {callTarget}.{methodName}{typeParams}({argList});");
                 var updateSnippet = BuildArgsUpdateSnippet(method);
                 sb.AppendLine("        return new global::System.Threading.Tasks.ValueTask<" + ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier)) + ">( __vt.AsTask().ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } var __res = __task.Result; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __res); return __res; }) );");
+            }
+            else if (isByRefReturn)
+            {
+                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); ref var __ret = ref " + callTarget + "." + methodName + typeParams + "(" + argList + "); var __snap = __ret; foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             }
             else if (method.ReturnsVoid)
             {
@@ -280,7 +284,12 @@ internal sealed class ClassProxyHandler
         var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
         var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
 
-        var sigReturnType = method.ReturnsVoid ? "void" : returnType;
+        var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
+        var sigReturnType = method.ReturnsVoid
+            ? "void"
+            : isByRefReturn
+                ? (method.ReturnsByRefReadonly ? "ref readonly " : "ref ") + returnType
+                : returnType;
 
         sb.Append("    ").Append(sigReturnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
@@ -307,7 +316,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
-        var hasByRef2 = method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+        var hasByRef2 = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
@@ -371,6 +380,10 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
                 sb.AppendLine($"        var __vt = {call};");
                 sb.AppendLine("        return new global::System.Threading.Tasks.ValueTask<" + ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier)) + ">( __vt.AsTask().ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } var __res = __task.Result; " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, __res); return __res; }) );");
+            }
+            else if (isByRefReturn)
+            {
+                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); ref var __ret = ref " + call + "; var __snap = __ret; " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             }
             else if (method.ReturnsVoid)
             {

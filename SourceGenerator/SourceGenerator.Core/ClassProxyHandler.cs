@@ -689,16 +689,18 @@ internal sealed class ClassProxyHandler
     private static string GetSafeHintName(INamedTypeSymbol type)
     {
         var ns = type.ContainingNamespace.IsGlobalNamespace ? "global" : type.ContainingNamespace.ToDisplayString().Replace('.', '_');
-        // Include containing type chain with generic arity to avoid collisions
+        // Include containing type chain with generic arity and parameter names; avoid special characters in hint
         var parts = new List<string>();
         for (var t = type; t is not null; t = t.ContainingType)
         {
             var arity = t.TypeParameters.Length;
-            var name = t.Name + (arity > 0 ? "_g" + arity : string.Empty);
+            var tpNames = arity > 0 ? "_" + string.Join("_", t.TypeParameters.Select(tp => tp.Name)) : string.Empty;
+            var safeName = new string(t.Name.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_').ToArray());
+            var name = safeName + (arity > 0 ? "_g" + arity + tpNames : string.Empty);
             parts.Add(name);
         }
         parts.Reverse();
-        return ns + "__" + string.Join("_", parts) + "+Proxy";
+        return ns + "__" + string.Join("_", parts) + "__Proxy";
     }
 
     private static List<ITypeParameterSymbol> GetAllTypeParameters(INamedTypeSymbol type)

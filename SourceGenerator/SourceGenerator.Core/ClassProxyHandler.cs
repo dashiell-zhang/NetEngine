@@ -28,8 +28,9 @@ internal sealed class ClassProxyHandler
             ? "NetEngine.Generated"
             : cls.ContainingNamespace.ToDisplayString();
 
-        var classDisplay = cls.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        var classFull = cls.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Replace("global::", string.Empty);
+        // Fully qualified name with and without global:: prefix
+        var classFullFq = cls.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var classFull = classFullFq.Replace("global::", string.Empty);
         var proxyName = cls.Name + "_Proxy";
         var typeParamsDecl = BuildTypeParametersDecl(cls);
         var typeParamConstraints = BuildTypeParameterConstraints(cls);
@@ -44,7 +45,8 @@ internal sealed class ClassProxyHandler
         // proxy class derives from original implementation; only list interfaces that we will explicitly implement in this proxy
         var minimalInterfaces = GetInterfacesNeedingExplicitImplementations(cls);
         var ifaceList = minimalInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", minimalInterfaces);
-        sb.Append("public sealed class ").Append(proxyName).Append(typeParamsDecl).Append(" : ").Append(classDisplay).Append(ifaceList).AppendLine();
+        // Derive from fully-qualified base type to avoid resolution issues, especially for global namespace or nested types
+        sb.Append("public sealed class ").Append(proxyName).Append(typeParamsDecl).Append(" : ").Append(classFullFq).Append(ifaceList).AppendLine();
         if (!string.IsNullOrWhiteSpace(typeParamConstraints)) sb.Append(typeParamConstraints);
         sb.AppendLine("{")
           .AppendLine("    private readonly global::System.IServiceProvider? __sp;")
@@ -633,15 +635,19 @@ internal sealed class ClassProxyHandler
 
     private static string BuildTypeParametersDecl(INamedTypeSymbol cls)
     {
-        if (cls.TypeParameters.Length == 0) return string.Empty;
-        return "<" + string.Join(", ", cls.TypeParameters.Select(tp => tp.Name)) + ">";
+        // Hoist ALL outer + inner type parameters to the proxy class declaration
+        var allTps = GetAllTypeParameters(cls);
+        if (allTps.Count == 0) return string.Empty;
+        return "<" + string.Join(", ", allTps.Select(tp => tp.Name)) + ">";
     }
 
     private static string BuildTypeParameterConstraints(INamedTypeSymbol cls)
     {
-        if (cls.TypeParameters.Length == 0) return string.Empty;
+        // Apply constraints for ALL hoisted type parameters (including outer types)
+        var allTps = GetAllTypeParameters(cls);
+        if (allTps.Count == 0) return string.Empty;
         var sb = new StringBuilder();
-        foreach (var tp in cls.TypeParameters)
+        foreach (var tp in allTps)
         {
             var parts = new List<string>();
             // Primary constraints first
@@ -683,7 +689,28 @@ internal sealed class ClassProxyHandler
     private static string GetSafeHintName(INamedTypeSymbol type)
     {
         var ns = type.ContainingNamespace.IsGlobalNamespace ? "global" : type.ContainingNamespace.ToDisplayString().Replace('.', '_');
-        return ns + "__" + type.Name + "+Proxy";
+        // Include containing type chain with generic arity to avoid collisions
+        var parts = new List<string>();
+        for (var t = type; t is not null; t = t.ContainingType)
+        {
+            var arity = t.TypeParameters.Length;
+            var name = t.Name + (arity > 0 ? "_g" + arity : string.Empty);
+            parts.Add(name);
+        }
+        parts.Reverse();
+        return ns + "__" + string.Join("_", parts) + "+Proxy";
+    }
+
+    private static List<ITypeParameterSymbol> GetAllTypeParameters(INamedTypeSymbol type)
+    {
+        // Collect type parameters from outermost to innermost containing type
+        var stack = new Stack<INamedTypeSymbol>();
+        for (var t = type; t is not null; t = t.ContainingType)
+            stack.Push(t);
+        var list = new List<ITypeParameterSymbol>();
+        foreach (var t in stack)
+            list.AddRange(t.TypeParameters);
+        return list;
     }
 
     private static string[] GetInterfacesNeedingExplicitImplementations(INamedTypeSymbol cls)

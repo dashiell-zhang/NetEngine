@@ -249,6 +249,7 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        }");
                 sb.AppendLine("        catch (global::System.Exception __ex)");
                 sb.AppendLine("        {");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
@@ -266,6 +267,7 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        }");
                 sb.AppendLine("        catch (global::System.Exception __ex)");
                 sb.AppendLine("        {");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
@@ -283,6 +285,7 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        }");
                 sb.AppendLine("        catch (global::System.Exception __ex)");
                 sb.AppendLine("        {");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
@@ -300,6 +303,7 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        }");
                 sb.AppendLine("        catch (global::System.Exception __ex)");
                 sb.AppendLine("        {");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
@@ -480,6 +484,7 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        }");
                 sb.AppendLine("        catch (global::System.Exception __ex)");
                 sb.AppendLine("        {");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
@@ -497,6 +502,7 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        }");
                 sb.AppendLine("        catch (global::System.Exception __ex)");
                 sb.AppendLine("        {");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
@@ -514,6 +520,7 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        }");
                 sb.AppendLine("        catch (global::System.Exception __ex)");
                 sb.AppendLine("        {");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
@@ -531,22 +538,26 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("        }");
                 sb.AppendLine("        catch (global::System.Exception __ex)");
                 sb.AppendLine("        {");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
             }
             else if (isByRefReturn)
             {
-                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); ref var __ret = ref " + call + "; var __snap = __ret; " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                var updateSnippet = BuildArgsUpdateSnippet(method);
+                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); ref var __ret = ref " + call + "; var __snap = __ret; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (global::System.Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             }
             else if (method.ReturnsVoid)
             {
-                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + call + "; " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                var updateSnippet = BuildArgsUpdateSnippet(method);
+                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (global::System.Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 sb.AppendLine("        return;");
             }
             else
             {
-                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + call + "; " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                var updateSnippet = BuildArgsUpdateSnippet(method);
+                sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (global::System.Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             }
         }
         else
@@ -871,7 +882,8 @@ internal sealed class ClassProxyHandler
         {
             if (p.RefKind != RefKind.None)
             {
-                updates.Add($"__argsDict[\"{p.Name}\"] = {p.Name};");
+                // Refresh ref/out/in values in the args dict after call, using per-param ToJson with local fallback
+                updates.Add($"try {{ __argsDict[\"{p.Name}\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson({p.Name}); }} catch {{ __argsDict[\"{p.Name}\"] = global::System.Convert.ToString({p.Name}); }}");
             }
         }
         return updates.Count == 0 ? string.Empty : string.Join(" ", updates);

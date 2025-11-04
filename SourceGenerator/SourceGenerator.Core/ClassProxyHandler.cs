@@ -136,7 +136,9 @@ internal sealed class ClassProxyHandler
         var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
         var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
 
-        sb.Append("    public override ").Append(returnType).Append(' ').Append(methodName).Append(typeParams)
+        var sigReturnType = method.ReturnsVoid ? "void" : returnType;
+
+        sb.Append("    public override ").Append(sigReturnType).Append(' ').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
           .AppendLine("    {");
 
@@ -146,7 +148,8 @@ internal sealed class ClassProxyHandler
             foreach (var p in method.Parameters)
             {
                 var isOut = p.RefKind == RefKind.Out;
-                sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append(isOut ? "null" : p.Name).AppendLine(";");
+                var isRefLike = p.Type.IsRefLikeType;
+                sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append((isOut || isRefLike) ? "null" : p.Name).AppendLine(";");
             }
             sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
             sb.AppendLine("        object? __argsObj = __argsDict;");
@@ -160,7 +163,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
-        var hasByRef = method.Parameters.Any(p => p.RefKind != RefKind.None);
+        var hasByRef = method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
@@ -277,7 +280,9 @@ internal sealed class ClassProxyHandler
         var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
         var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
 
-        sb.Append("    ").Append(returnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
+        var sigReturnType = method.ReturnsVoid ? "void" : returnType;
+
+        sb.Append("    ").Append(sigReturnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
           .AppendLine("    {");
 
@@ -287,7 +292,8 @@ internal sealed class ClassProxyHandler
             foreach (var p in method.Parameters)
             {
                 var isOut = p.RefKind == RefKind.Out;
-                sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append(isOut ? "null" : p.Name).AppendLine(";");
+                var isRefLike = p.Type.IsRefLikeType;
+                sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append((isOut || isRefLike) ? "null" : p.Name).AppendLine(";");
             }
             sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
             sb.AppendLine("        object? __argsObj = __argsDict;");
@@ -301,7 +307,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
-        var hasByRef2 = method.Parameters.Any(p => p.RefKind != RefKind.None);
+        var hasByRef2 = method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())

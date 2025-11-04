@@ -511,8 +511,11 @@ internal sealed class ClassProxyHandler
         for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
         {
             var constructed = t.ConstructedFrom ?? t;
-            var fullName = constructed.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            if (fullName.Contains(ProxyBehaviorAttributeMetadataName, StringComparison.Ordinal)) { proxyBase = t; break; }
+            if (constructed is INamedTypeSymbol nt && IsNamedType(nt, "SourceGenerator.Runtime.Attributes", "ProxyBehaviorAttribute"))
+            {
+                proxyBase = t; // keep the concrete generic base to read TypeArguments
+                break;
+            }
         }
         if (proxyBase is null) return false;
         ITypeSymbol? behaviorTypeSymbol = null;
@@ -559,8 +562,11 @@ internal sealed class ClassProxyHandler
         for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
         {
             var constructed = t.ConstructedFrom ?? t;
-            var fullName = constructed.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            if (fullName.Contains(ProxyBehaviorAttributeMetadataName, StringComparison.Ordinal)) { proxyBase = t; break; }
+            if (constructed is INamedTypeSymbol nt && IsNamedType(nt, "SourceGenerator.Runtime.Attributes", "ProxyBehaviorAttribute"))
+            {
+                proxyBase = t;
+                break;
+            }
         }
         if (proxyBase is null) return false;
         ITypeSymbol? behaviorTypeSymbol = null;
@@ -572,9 +578,7 @@ internal sealed class ClassProxyHandler
         {
             foreach (var itf in nts.AllInterfaces)
             {
-                var name = itf.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (name == "global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior" || name.EndsWith("SourceGenerator.Runtime.IInvocationBehavior", StringComparison.Ordinal))
-                    return true;
+                if (IsType(itf, "SourceGenerator.Runtime.Pipeline.IInvocationBehavior")) return true;
             }
         }
         return false;
@@ -618,7 +622,46 @@ internal sealed class ClassProxyHandler
     }
 
     private static bool IsType(ITypeSymbol t, string metadataName)
-        => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Contains(metadataName, StringComparison.Ordinal);
+    {
+        // Compare fully-qualified names for exact match; handle generic by comparing the unconstructed definition
+        if (t is INamedTypeSymbol nt)
+        {
+            var open = nt.IsGenericType && nt.ConstructedFrom is INamedTypeSymbol cf ? cf : nt;
+            var fq = open.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            var expected = metadataName.StartsWith("global::", StringComparison.Ordinal)
+                ? metadataName
+                : "global::" + metadataName;
+            return string.Equals(fq, expected, StringComparison.Ordinal);
+        }
+        else
+        {
+            var fq = t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            var expected = metadataName.StartsWith("global::", StringComparison.Ordinal)
+                ? metadataName
+                : "global::" + metadataName;
+            return string.Equals(fq, expected, StringComparison.Ordinal);
+        }
+    }
+
+    private static bool IsNamedType(INamedTypeSymbol symbol, string @namespace, string name, int? arity = null)
+    {
+        var ns = GetFullNamespace(symbol.ContainingNamespace);
+        if (!string.Equals(ns, @namespace, StringComparison.Ordinal)) return false;
+        if (!string.Equals(symbol.Name, name, StringComparison.Ordinal)) return false;
+        if (arity.HasValue && symbol.Arity != arity.Value) return false;
+        return true;
+    }
+
+    private static string GetFullNamespace(INamespaceSymbol ns)
+    {
+        if (ns == null || ns.IsGlobalNamespace) return string.Empty;
+        var stack = new Stack<string>();
+        for (var n = ns; n is not null && !n.IsGlobalNamespace; n = n.ContainingNamespace)
+        {
+            stack.Push(n.Name);
+        }
+        return string.Join(".", stack);
+    }
 
     private static string BuildArgsUpdateSnippet(IMethodSymbol method)
     {

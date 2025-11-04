@@ -702,6 +702,8 @@ internal sealed class ClassProxyHandler
         var type = p.Type
             .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
         var mod = p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty;
+        // Preserve DI-relevant parameter attributes (e.g., FromKeyedServices/FromServices)
+        var attrPrefix = BuildParameterAttributesPrefix(p);
         string @default = string.Empty;
         if (includeDefault && p.HasExplicitDefaultValue)
         {
@@ -731,7 +733,62 @@ internal sealed class ClassProxyHandler
                 @default = " = " + p.ExplicitDefaultValue.ToString();
             }
         }
-        return mod + type + " " + p.Name + @default;
+        return attrPrefix + mod + type + " " + p.Name + @default;
+    }
+
+    private static string BuildParameterAttributesPrefix(IParameterSymbol p)
+    {
+        if (p is null) return string.Empty;
+        var attrs = p.GetAttributes();
+        if (attrs.Length == 0) return string.Empty;
+
+        var sb = new StringBuilder();
+        foreach (var attr in attrs)
+        {
+            if (attr.AttributeClass is not INamedTypeSymbol at) continue;
+            // Only forward DI-binding related attributes that affect parameter resolution
+            //  - Microsoft.Extensions.DependencyInjection.FromKeyedServicesAttribute(object key)
+            //  - Microsoft.Extensions.DependencyInjection.FromServicesAttribute()
+            if (IsNamedType(at, "Microsoft.Extensions.DependencyInjection", "FromKeyedServicesAttribute"))
+            {
+                // Single ctor arg: the key (object?)
+                var keyText = FormatTypedConstant(attr.ConstructorArguments.FirstOrDefault());
+                sb.Append("[global::Microsoft.Extensions.DependencyInjection.FromKeyedServices(")
+                  .Append(keyText)
+                  .Append(")] ");
+                // We'll append as raw later; for now continue
+            }
+            else if (IsNamedType(at, "Microsoft.Extensions.DependencyInjection", "FromServicesAttribute"))
+            {
+                sb.Append("[global::Microsoft.Extensions.DependencyInjection.FromServices] ");
+            }
+        }
+
+        var result = sb.ToString();
+        return result;
+    }
+
+    private static string FormatTypedConstant(TypedConstant constant)
+    {
+        if (constant.IsNull) return "null";
+        try
+        {
+            var v = constant.Value;
+            if (v is null) return "null";
+            return v switch
+            {
+                string s => "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"",
+                char ch => "'" + (ch == '\'' ? "\\'" : ch.ToString()) + "'",
+                bool b => b ? "true" : "false",
+                IFormattable f => f.ToString(null, System.Globalization.CultureInfo.InvariantCulture) ?? "null",
+                _ => v.ToString() ?? "null"
+            };
+        }
+        catch
+        {
+            // Fallback to a neutral representation
+            return "null";
+        }
     }
 
     private static bool IsType(ITypeSymbol t, string metadataName)

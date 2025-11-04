@@ -12,7 +12,8 @@ internal sealed class ClassProxyHandler
     private const string ProxyBehaviorAttributeMetadataName = "SourceGenerator.Runtime.Attributes.ProxyBehaviorAttribute";
 
     public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
-        => type.TypeKind == TypeKind.Class;
+        => type.TypeKind == TypeKind.Class
+           && type.Constructors.Any(c => c.DeclaredAccessibility == Accessibility.Public);
 
     public void Execute(in HandlerContext ctx)
     {
@@ -52,7 +53,8 @@ internal sealed class ClassProxyHandler
         // constructors: mirror base public/protected ctors; also add overloads with IServiceProvider if not already leading
         foreach (var ctor in cls.Constructors)
         {
-            if (ctor.DeclaredAccessibility != Accessibility.Public && ctor.DeclaredAccessibility != Accessibility.Protected)
+            // Only support DI-friendly public constructors
+            if (ctor.DeclaredAccessibility != Accessibility.Public)
                 continue;
 
             var paramList = string.Join(", ", ctor.Parameters.Select(p => FormatParameter(p, includeDefault: true)));

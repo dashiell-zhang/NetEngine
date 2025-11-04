@@ -75,7 +75,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                         ["innerStackTrace"] = ex.InnerException?.StackTrace,
                     }
                 };
-                if (!string.IsNullOrEmpty(ctx.ArgsJson) || ctx.Args is not null) exPayload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
+                if (ctx.Args is not null) exPayload["args"] = ctx.Args;
                 if (callerOnly.Length > 0) exPayload["caller"] = callerOnly;
                 logger?.LogError(JsonUtil.ToJson(exPayload));
                 throw;
@@ -84,7 +84,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
 
         Stopwatch sw = Stopwatch.StartNew();
         var callerChain = BuildCallerChainArray();
-        var hasArgs = ctx.Args is not null || !string.IsNullOrEmpty(ctx.ArgsJson);
+        var hasArgs = ctx.Args is not null;
 
         var payload = new Dictionary<string, object?>
         {
@@ -92,7 +92,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             ["method"] = ctx.Method,
         };
         payload["traceId"] = ctx.TraceId;
-        if (hasArgs) payload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
+        if (hasArgs) payload["args"] = ctx.Args;
         if (callerChain.Length > 0) payload["caller"] = callerChain;
         logger?.LogInformation(JsonUtil.ToJson(payload));
 
@@ -110,7 +110,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             payload2["traceId"] = ctx.TraceId;
             if (callerChain.Length > 0) payload2["caller"] = callerChain;
             if (ctx.HasReturnValue) payload2["result"] = result;
-            if (hasArgs) payload2["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
+            if (hasArgs) payload2["args"] = ctx.Args;
             logger?.LogInformation(JsonUtil.ToJson(payload2));
 
             return result;
@@ -135,7 +135,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                     }
                 };
                 exPayload["traceId"] = ctx.TraceId;
-                if (!string.IsNullOrEmpty(ctx.ArgsJson) || ctx.Args is not null) exPayload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
+                if (ctx.Args is not null) exPayload["args"] = ctx.Args;
                 if (callerChain.Length > 0) exPayload["caller"] = callerChain;
                 exPayload["durationMs"] = sw.ElapsedMilliseconds;
                 logger?.LogError(JsonUtil.ToJson(exPayload));
@@ -159,7 +159,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 ["method"] = ctx.Method,
             };
             payload["traceId"] = ctx.TraceId;
-            if (!string.IsNullOrEmpty(ctx.ArgsJson) || ctx.Args is not null) payload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
+            if (ctx.Args is not null) payload["args"] = ctx.Args;
             if (callerChain.Length > 0) payload["caller"] = callerChain;
             logger?.LogInformation(JsonUtil.ToJson(payload));
         }
@@ -179,7 +179,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             };
             payload["traceId"] = ctx.TraceId;
             if (ctx.HasReturnValue) payload["result"] = result;
-            if (ctx.Args is not null || !string.IsNullOrEmpty(ctx.ArgsJson)) payload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
+            if (ctx.Args is not null) payload["args"] = ctx.Args;
             if (st is not null)
             {
                 var elapsedMs = (Stopwatch.GetTimestamp() - st.StartTicks) * 1000.0 / Stopwatch.Frequency;
@@ -212,7 +212,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 }
             };
             exPayload["traceId"] = ctx.TraceId;
-            if (!string.IsNullOrEmpty(ctx.ArgsJson) || ctx.Args is not null) exPayload["args"] = ctx.Args is not null ? ctx.Args : JsonUtil.ToObject(ctx.ArgsJson);
+            if (ctx.Args is not null) exPayload["args"] = ctx.Args;
             if (callerOnly.Length > 0) exPayload["caller"] = callerOnly;
             if (st is not null)
             {

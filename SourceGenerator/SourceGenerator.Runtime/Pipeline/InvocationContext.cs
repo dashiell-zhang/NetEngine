@@ -7,7 +7,6 @@ namespace SourceGenerator.Runtime.Pipeline;
 public sealed class InvocationContext
 {
     public required string Method { get; init; }
-    public string? ArgsJson { get; init; }
     public object? Args { get; init; }
     public required Guid TraceId { get; init; }
     public bool Log { get; init; }

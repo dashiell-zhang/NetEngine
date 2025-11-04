@@ -29,7 +29,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     }
 
     private static string ComposeSeed(InvocationContext ctx)
-        => (ctx.Method ?? string.Empty) + (ctx.ArgsJson ?? string.Empty);
+        => (ctx.Method ?? string.Empty) + (ctx.Args is null ? string.Empty : JsonUtil.ToJson(ctx.Args));
 
     private static async Task<(bool hit, T value)> TryGetAsync<T>(InvocationContext ctx, Options.CacheableOptions cache, ILogger? logger, bool log, string method)
     {

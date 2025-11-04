@@ -22,9 +22,9 @@ public static class ProxyRuntime
     public static Task ExecuteTask(InvocationContext ctx, Func<Task> inner)
     {
         var behaviors = ctx.Behaviors ?? new IInvocationAsyncBehavior[] { new SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior() };
+        // Ensure exception and cancellation propagate to the returned Task
         return InvocationPipeline
-            .ExecuteAsync<object?>(ctx, () => new ValueTask<object?>(inner().ContinueWith(_ => (object?)null)), behaviors)
-            .AsTask()
-            .ContinueWith(_ => { });
+            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, behaviors)
+            .AsTask();
     }
 }

@@ -170,7 +170,7 @@ internal sealed class ClassProxyHandler
         var methodName = method.Name;
         var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
         var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
-        var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
+        var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name + (p.RefKind == RefKind.None ? "!" : string.Empty)));
 
         var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
         var hasByRefAny = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
@@ -187,15 +187,24 @@ internal sealed class ClassProxyHandler
 
         if (method.Parameters.Length > 0)
         {
-            sb.AppendLine("        var __argsDict = new global::System.Collections.Generic.Dictionary<string, object?>(" + method.Parameters.Length + ");");
+            sb.AppendLine("        var __argsDict = new global::System.Collections.Generic.Dictionary<string, string?>(" + method.Parameters.Length + ");");
             foreach (var p in method.Parameters)
             {
                 var isOut = p.RefKind == RefKind.Out;
                 var isRefLike = p.Type.IsRefLikeType;
-                sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append((isOut || isRefLike) ? "null" : p.Name).AppendLine(";");
+                if (isOut || isRefLike)
+                {
+                    sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = null;").AppendLine();
+                }
+                else
+                {
+                    sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson(")
+                      .Append(p.Name).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = global::System.Convert.ToString(")
+                      .Append(p.Name).Append("); }").AppendLine();
+                }
             }
-            sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
             sb.AppendLine("        object? __argsObj = __argsDict;");
+            sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
         }
         else
         {
@@ -378,7 +387,7 @@ internal sealed class ClassProxyHandler
         var methodName = method.Name;
         var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
         var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
-        var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
+        var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name + (p.RefKind == RefKind.None ? "!" : string.Empty)));
 
         var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
         var hasByRef2_head = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
@@ -395,15 +404,24 @@ internal sealed class ClassProxyHandler
 
         if (method.Parameters.Length > 0)
         {
-            sb.AppendLine("        var __argsDict = new global::System.Collections.Generic.Dictionary<string, object?>(" + method.Parameters.Length + ");");
+            sb.AppendLine("        var __argsDict = new global::System.Collections.Generic.Dictionary<string, string?>(" + method.Parameters.Length + ");");
             foreach (var p in method.Parameters)
             {
                 var isOut = p.RefKind == RefKind.Out;
                 var isRefLike = p.Type.IsRefLikeType;
-                sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = ").Append((isOut || isRefLike) ? "null" : p.Name).AppendLine(";");
+                if (isOut || isRefLike)
+                {
+                    sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = null;").AppendLine();
+                }
+                else
+                {
+                    sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson(")
+                      .Append(p.Name).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = global::System.Convert.ToString(")
+                      .Append(p.Name).Append("); }").AppendLine();
+                }
             }
-            sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
             sb.AppendLine("        object? __argsObj = __argsDict;");
+            sb.AppendLine("        var __args = global::SourceGenerator.Runtime.JsonUtil.ToJson(__argsDict);");
         }
         else
         {

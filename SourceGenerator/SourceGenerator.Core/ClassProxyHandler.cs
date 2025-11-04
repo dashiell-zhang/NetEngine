@@ -41,9 +41,9 @@ internal sealed class ClassProxyHandler
         sb.AppendLine();
 
 
-        // proxy class derives from original implementation and re-lists implemented interfaces
-        // use fully-qualified names to avoid cross-namespace resolution issues
-        var ifaceList = cls.AllInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", cls.AllInterfaces.Select(i => i.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
+        // proxy class derives from original implementation; only list interfaces that we will explicitly implement in this proxy
+        var minimalInterfaces = GetInterfacesNeedingExplicitImplementations(cls);
+        var ifaceList = minimalInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", minimalInterfaces);
         sb.Append("public sealed class ").Append(proxyName).Append(typeParamsDecl).Append(" : ").Append(classDisplay).Append(ifaceList).AppendLine();
         if (!string.IsNullOrWhiteSpace(typeParamConstraints)) sb.Append(typeParamConstraints);
         sb.AppendLine("{")
@@ -110,6 +110,10 @@ internal sealed class ClassProxyHandler
                         // we cannot forward using base.Method(...). Skip generating to avoid compile-time errors.
                         if (impl is not null && impl.ExplicitInterfaceImplementations.Length > 0)
                             break;
+                        // If the implementation is already overridable, the override path will intercept calls even via interface dispatch.
+                        // In that case, generating explicit implementation is redundant; skip it to avoid re-listing the interface.
+                        if (impl is not null && (impl.IsVirtual || impl.IsAbstract || impl.IsOverride))
+                            break;
                         AppendExplicitInterfaceMethod(sb, iface, m, impl, classFull);
                         break;
                     case IPropertySymbol p:
@@ -117,6 +121,14 @@ internal sealed class ClassProxyHandler
                             var implProp = cls.FindImplementationForInterfaceMember(p) as IPropertySymbol;
                             if (implProp is not null && implProp.ExplicitInterfaceImplementations.Length > 0)
                                 break;
+                            // If either accessor is overridable, the override path suffices.
+                            if (implProp is not null)
+                            {
+                                var gm = implProp.GetMethod; var sm = implProp.SetMethod;
+                                if ((gm is not null && (gm.IsVirtual || gm.IsAbstract || gm.IsOverride)) ||
+                                    (sm is not null && (sm.IsVirtual || sm.IsAbstract || sm.IsOverride)))
+                                    break;
+                            }
                             AppendExplicitInterfaceProperty(sb, iface, p, cls);
                         }
                         break;
@@ -125,6 +137,14 @@ internal sealed class ClassProxyHandler
                             var implEv = cls.FindImplementationForInterfaceMember(e) as IEventSymbol;
                             if (implEv is not null && implEv.ExplicitInterfaceImplementations.Length > 0)
                                 break;
+                            // If either accessor is overridable, override path suffices.
+                            if (implEv is not null)
+                            {
+                                var am = implEv.AddMethod; var rm = implEv.RemoveMethod;
+                                if ((am is not null && (am.IsVirtual || am.IsAbstract || am.IsOverride)) ||
+                                    (rm is not null && (rm.IsVirtual || rm.IsAbstract || rm.IsOverride)))
+                                    break;
+                            }
                             AppendExplicitInterfaceEvent(sb, iface, e, cls);
                         }
                         break;
@@ -664,6 +684,53 @@ internal sealed class ClassProxyHandler
     {
         var ns = type.ContainingNamespace.IsGlobalNamespace ? "global" : type.ContainingNamespace.ToDisplayString().Replace('.', '_');
         return ns + "__" + type.Name + "+Proxy";
+    }
+
+    private static string[] GetInterfacesNeedingExplicitImplementations(INamedTypeSymbol cls)
+    {
+        var set = new HashSet<string>();
+        foreach (var iface in cls.AllInterfaces)
+        {
+            foreach (var member in iface.GetMembers())
+            {
+                switch (member)
+                {
+                    case IMethodSymbol m:
+                        if (m.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise)
+                            continue;
+                        var implM = cls.FindImplementationForInterfaceMember(m) as IMethodSymbol;
+                        if (implM is not null && implM.ExplicitInterfaceImplementations.Length > 0) continue;
+                        if (implM is not null && (implM.IsVirtual || implM.IsAbstract || implM.IsOverride)) continue;
+                        set.Add(iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        break;
+                    case IPropertySymbol p:
+                        var implP = cls.FindImplementationForInterfaceMember(p) as IPropertySymbol;
+                        if (implP is not null && implP.ExplicitInterfaceImplementations.Length > 0) continue;
+                        if (implP is not null)
+                        {
+                            var gm = implP.GetMethod; var sm = implP.SetMethod;
+                            if ((gm is not null && (gm.IsVirtual || gm.IsAbstract || gm.IsOverride)) ||
+                                (sm is not null && (sm.IsVirtual || sm.IsAbstract || sm.IsOverride)))
+                                break;
+                        }
+                        set.Add(iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        break;
+                    case IEventSymbol e:
+                        var implE = cls.FindImplementationForInterfaceMember(e) as IEventSymbol;
+                        if (implE is not null && implE.ExplicitInterfaceImplementations.Length > 0) continue;
+                        if (implE is not null)
+                        {
+                            var am = implE.AddMethod; var rm = implE.RemoveMethod;
+                            if ((am is not null && (am.IsVirtual || am.IsAbstract || am.IsOverride)) ||
+                                (rm is not null && (rm.IsVirtual || rm.IsAbstract || rm.IsOverride)))
+                                break;
+                        }
+                        set.Add(iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        break;
+                }
+            }
+        }
+        return set.ToArray();
     }
 }
 

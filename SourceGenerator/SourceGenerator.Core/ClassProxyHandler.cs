@@ -173,13 +173,15 @@ internal sealed class ClassProxyHandler
         var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
 
         var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
+        var hasByRefAny = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+        var needsAsync = hasByRefAny && (isTask || isGenericTask || isValueTask || isGenericValueTask);
         var sigReturnType = method.ReturnsVoid
             ? "void"
             : isByRefReturn
                 ? (method.ReturnsByRefReadonly ? "ref readonly " : "ref ") + returnType
                 : returnType;
 
-        sb.Append("    public override ").Append(sigReturnType).Append(' ').Append(methodName).Append(typeParams)
+        sb.Append("    public override ").Append(needsAsync ? "async " : string.Empty).Append(sigReturnType).Append(' ').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
           .AppendLine("    {");
 
@@ -204,7 +206,7 @@ internal sealed class ClassProxyHandler
         sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + methodName + "\";");
         sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
-        var hasByRef = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+        var hasByRef = hasByRefAny;
         var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
         var optionsSetters = new List<string>();
         foreach (var a in method.GetAttributes())
@@ -230,31 +232,70 @@ internal sealed class ClassProxyHandler
             sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior __f) __filters.Add(__f); }");
             if (isTask)
             {
-                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                sb.AppendLine($"        var __t = {callTarget}.{methodName}{typeParams}({argList});");
                 var updateSnippet = BuildArgsUpdateSnippet(method);
-                sb.AppendLine("        return __t.ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); });");
+                sb.AppendLine("        try");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            await {callTarget}.{methodName}{typeParams}({argList});");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                sb.AppendLine("        }");
+                sb.AppendLine("        catch (global::System.Exception __ex)");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                sb.AppendLine("            throw;");
+                sb.AppendLine("        }");
             }
             else if (isGenericTask)
             {
-                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                sb.AppendLine($"        var __t = {callTarget}.{methodName}{typeParams}({argList});");
                 var updateSnippet = BuildArgsUpdateSnippet(method);
-                sb.AppendLine("        return __t.ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } var __res = __task.Result; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __res); return __res; });");
+                sb.AppendLine("        try");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            var __res = await {callTarget}.{methodName}{typeParams}({argList});");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
+                sb.AppendLine("            return __res;");
+                sb.AppendLine("        }");
+                sb.AppendLine("        catch (global::System.Exception __ex)");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                sb.AppendLine("            throw;");
+                sb.AppendLine("        }");
             }
             else if (isValueTask)
             {
-                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                sb.AppendLine($"        var __vt = {callTarget}.{methodName}{typeParams}({argList});");
                 var updateSnippet = BuildArgsUpdateSnippet(method);
-                sb.AppendLine("        return new global::System.Threading.Tasks.ValueTask( __vt.AsTask().ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); }) );");
+                sb.AppendLine("        try");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            await {callTarget}.{methodName}{typeParams}({argList});");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                sb.AppendLine("            return;");
+                sb.AppendLine("        }");
+                sb.AppendLine("        catch (global::System.Exception __ex)");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                sb.AppendLine("            throw;");
+                sb.AppendLine("        }");
             }
             else if (isGenericValueTask)
             {
-                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                sb.AppendLine($"        var __vt = {callTarget}.{methodName}{typeParams}({argList});");
                 var updateSnippet = BuildArgsUpdateSnippet(method);
-                sb.AppendLine("        return new global::System.Threading.Tasks.ValueTask<" + ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier)) + ">( __vt.AsTask().ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } var __res = __task.Result; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __res); return __res; }) );");
+                sb.AppendLine("        try");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            var __res = await {callTarget}.{methodName}{typeParams}({argList});");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
+                sb.AppendLine("            return __res;");
+                sb.AppendLine("        }");
+                sb.AppendLine("        catch (global::System.Exception __ex)");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                sb.AppendLine("            throw;");
+                sb.AppendLine("        }");
             }
             else if (isByRefReturn)
             {
@@ -326,13 +367,15 @@ internal sealed class ClassProxyHandler
         var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name));
 
         var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
+        var hasByRef2_head = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+        var needsAsync2 = hasByRef2_head && (isTask || isGenericTask || isValueTask || isGenericValueTask);
         var sigReturnType = method.ReturnsVoid
             ? "void"
             : isByRefReturn
                 ? (method.ReturnsByRefReadonly ? "ref readonly " : "ref ") + returnType
                 : returnType;
 
-        sb.Append("    ").Append(sigReturnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
+        sb.Append("    ").Append(needsAsync2 ? "async " : string.Empty).Append(sigReturnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
           .Append('(').Append(paramList).Append(')').AppendLine()
           .AppendLine("    {");
 
@@ -399,28 +442,70 @@ internal sealed class ClassProxyHandler
             sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior __f) __filters.Add(__f); }");
             if (isTask)
             {
-                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                sb.AppendLine($"        var __t = {call};");
-                sb.AppendLine("        var __update = \"" + BuildArgsUpdateSnippet(method) + "\";");
-                sb.AppendLine("        return __t.ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); });");
+                var updateSnippet = BuildArgsUpdateSnippet(method);
+                sb.AppendLine("        try");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            await {call};");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                sb.AppendLine("        }");
+                sb.AppendLine("        catch (global::System.Exception __ex)");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                sb.AppendLine("            throw;");
+                sb.AppendLine("        }");
             }
             else if (isGenericTask)
             {
-                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                sb.AppendLine($"        var __t = {call};");
-                sb.AppendLine("        return __t.ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } var __res = __task.Result; " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, __res); return __res; });");
+                var updateSnippet = BuildArgsUpdateSnippet(method);
+                sb.AppendLine("        try");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            var __res = await {call};");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
+                sb.AppendLine("            return __res;");
+                sb.AppendLine("        }");
+                sb.AppendLine("        catch (global::System.Exception __ex)");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                sb.AppendLine("            throw;");
+                sb.AppendLine("        }");
             }
             else if (isValueTask)
             {
-                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                sb.AppendLine($"        var __vt = {call};");
-                sb.AppendLine("        return new global::System.Threading.Tasks.ValueTask( __vt.AsTask().ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); }) );");
+                var updateSnippet = BuildArgsUpdateSnippet(method);
+                sb.AppendLine("        try");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            await {call};");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                sb.AppendLine("            return;");
+                sb.AppendLine("        }");
+                sb.AppendLine("        catch (global::System.Exception __ex)");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                sb.AppendLine("            throw;");
+                sb.AppendLine("        }");
             }
             else if (isGenericValueTask)
             {
-                sb.AppendLine("        foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                sb.AppendLine($"        var __vt = {call};");
-                sb.AppendLine("        return new global::System.Threading.Tasks.ValueTask<" + ((INamedTypeSymbol)method.ReturnType).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier)) + ">( __vt.AsTask().ContinueWith(__task => { if (__task.IsFaulted) { var __ex = __task.Exception?.InnerException ?? __task.Exception!; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw __ex; } var __res = __task.Result; " + BuildArgsUpdateSnippet(method) + " foreach (var __f in __filters) __f.OnAfter(__ctx, __res); return __res; }) );");
+                var updateSnippet = BuildArgsUpdateSnippet(method);
+                sb.AppendLine("        try");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            var __res = await {call};");
+                if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
+                sb.AppendLine("            return __res;");
+                sb.AppendLine("        }");
+                sb.AppendLine("        catch (global::System.Exception __ex)");
+                sb.AppendLine("        {");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                sb.AppendLine("            throw;");
+                sb.AppendLine("        }");
             }
             else if (isByRefReturn)
             {

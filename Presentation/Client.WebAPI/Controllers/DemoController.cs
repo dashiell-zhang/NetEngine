@@ -8,7 +8,7 @@ namespace Client.WebAPI.Controllers;
 [Route("api/[controller]/[action]")]
 public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : ControllerBase
 {
- 
+
 
     [HttpGet]
     public ActionResult<string> Echo([FromQuery] string name = "world")
@@ -24,7 +24,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
         => _svc2.Echo(name);
 
     [HttpPost]
-    public async Task<ActionResult<int>> Add2([FromQuery] int a, [FromQuery] int b,[FromBody] DtoArticle dtoArticle)
+    public async Task<ActionResult<int>> Add2([FromQuery] int a, [FromQuery] int b, [FromBody] DtoArticle dtoArticle)
         => await _svc2.AddAsync(a, b, dtoArticle);
 
 
@@ -35,4 +35,19 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
 
         return s;
     }
+
+
+    [HttpGet]
+    public IAsyncEnumerable<int> StreamNumbers([FromQuery] int count = 5)
+    {
+        return _svc2.StreamNumbers(count);
+    }
+
+
+    [HttpGet]
+    public Task<IAsyncEnumerable<int>> StreamNumbers2([FromQuery] int count = 5)
+    {
+        return _svc2.StreamNumbersAsync(count);
+    }
+
 }

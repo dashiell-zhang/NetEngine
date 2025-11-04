@@ -29,9 +29,35 @@ public class Demo2Service
         return s;
     }
 
+    public virtual async IAsyncEnumerable<int> StreamNumbers(int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            await Task.Delay(50); // 模拟异步生产
+            yield return i;
+        }
+    }
 
 
-    
+    public virtual async Task<IAsyncEnumerable<int>> StreamNumbersAsync(int count)
+    {
+        // 模拟异步准备阶段，例如远程 IO、DB、权限检查等
+        await Task.Delay(100);
+
+        async IAsyncEnumerable<int> Iterator()
+        {
+            for (var i = 0; i < count; i++)
+            {
+                await Task.Delay(30);
+                yield return i;
+            }
+        }
+
+        return Iterator();
+    }
+
+
+
 
 }
 

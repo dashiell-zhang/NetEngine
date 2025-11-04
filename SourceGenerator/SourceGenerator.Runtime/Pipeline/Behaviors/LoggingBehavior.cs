@@ -109,7 +109,14 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             };
             payload2["traceId"] = ctx.TraceId;
             if (callerChain.Length > 0) payload2["caller"] = callerChain;
-            if (ctx.HasReturnValue) payload2["result"] = result;
+            if (ctx.HasReturnValue)
+            {
+                var r = (object?)result;
+                if (r is not null && IsAsyncEnumerableType(r.GetType()))
+                    payload2["result"] = "<async-stream>";
+                else
+                    payload2["result"] = r;
+            }
             if (hasArgs) payload2["args"] = ctx.Args;
             logger?.LogInformation(JsonUtil.ToJson(payload2));
 
@@ -178,7 +185,13 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 ["method"] = ctx.Method,
             };
             payload["traceId"] = ctx.TraceId;
-            if (ctx.HasReturnValue) payload["result"] = result;
+            if (ctx.HasReturnValue)
+            {
+                if (result is not null && IsAsyncEnumerableType(result.GetType()))
+                    payload["result"] = "<async-stream>";
+                else
+                    payload["result"] = result;
+            }
             if (ctx.Args is not null) payload["args"] = ctx.Args;
             if (st is not null)
             {
@@ -187,6 +200,13 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             }
             logger?.LogInformation(JsonUtil.ToJson(payload));
         }
+    }
+
+    private static bool IsAsyncEnumerableType(Type t)
+    {
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
+            return true;
+        return t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
     }
 
     public void OnException(InvocationContext ctx, Exception ex)

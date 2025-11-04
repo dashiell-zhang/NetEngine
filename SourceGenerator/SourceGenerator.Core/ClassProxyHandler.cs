@@ -84,6 +84,9 @@ internal sealed class ClassProxyHandler
                 continue;
             if (method.DeclaredAccessibility != Accessibility.Public || method.IsStatic)
                 continue;
+            // skip by-ref returns which cannot be proxied safely
+            if (method.ReturnsByRef || method.ReturnsByRefReadonly)
+                continue;
             if (!(method.IsVirtual || method.IsAbstract || method.IsOverride))
                 continue;
             AppendDerivedOverride(sb, method, classFull, callTarget: "base");
@@ -99,6 +102,8 @@ internal sealed class ClassProxyHandler
                     case IMethodSymbol m:
                         if (m.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise)
                             continue;
+                        // skip by-ref return interface members
+                        if (m.ReturnsByRef || m.ReturnsByRefReadonly) continue;
                         // find implementation in class
                         var impl = cls.FindImplementationForInterfaceMember(m) as IMethodSymbol;
                         AppendExplicitInterfaceMethod(sb, iface, m, impl, classFull);

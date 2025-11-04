@@ -343,7 +343,21 @@ internal sealed class ClassProxyHandler
             }
             else
             {
-                sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => global::System.Threading.Tasks.ValueTask.FromResult({callTarget}.{methodName}{typeParams}({argList})));");
+                // Fallback guard: if compile-time detection missed Task/Task<T>, switch based on returnType text
+                if (returnType.StartsWith("global::System.Threading.Tasks.Task<", StringComparison.Ordinal))
+                {
+                    var tArgText = returnType.Substring("global::System.Threading.Tasks.Task<".Length);
+                    tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
+                    sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArgText}>( {callTarget}.{methodName}{typeParams}({argList}) ) ).AsTask();");
+                }
+                else if (string.Equals(returnType, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
+                {
+                    sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
+                }
+                else
+                {
+                    sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => global::System.Threading.Tasks.ValueTask.FromResult({callTarget}.{methodName}{typeParams}({argList})));");
+                }
             }
         }
 
@@ -551,7 +565,21 @@ internal sealed class ClassProxyHandler
             }
             else
             {
-                sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => global::System.Threading.Tasks.ValueTask.FromResult({call}));");
+                // Fallback guard: if compile-time detection missed Task/Task<T>, switch based on returnType text
+                if (returnType.StartsWith("global::System.Threading.Tasks.Task<", StringComparison.Ordinal))
+                {
+                    var tArgText = returnType.Substring("global::System.Threading.Tasks.Task<".Length);
+                    tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
+                    sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArgText}>( {call} ) ).AsTask();");
+                }
+                else if (string.Equals(returnType, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
+                {
+                    sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {call});");
+                }
+                else
+                {
+                    sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => global::System.Threading.Tasks.ValueTask.FromResult({call}));");
+                }
             }
         }
 

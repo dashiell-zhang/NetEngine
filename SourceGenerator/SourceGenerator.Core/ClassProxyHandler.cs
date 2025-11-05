@@ -1,9 +1,9 @@
+using SourceGenerator.Core.Internal;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.CodeAnalysis;
-using SourceGenerator.Core.Internal;
 
 namespace SourceGenerator.Core;
 
@@ -441,17 +441,17 @@ internal sealed class ClassProxyHandler
             {
                 var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                     .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-                sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArg}>( {callTarget}.{methodName}{typeParams}({argList}) ) ).AsTask();");
+                sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => ( {callTarget}.{methodName}{typeParams}({argList}) ) ).AsTask();");
             }
             else if (isValueTask)
             {
-                sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask( {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}).AsTask()) );");
+                sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
             }
             else if (isGenericValueTask)
             {
                 var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                     .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-                sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<{tArg}>( {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) ).AsTask() );");
+                sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) );");
             }
             else if (method.ReturnsVoid)
             {
@@ -470,6 +470,17 @@ internal sealed class ClassProxyHandler
                 else if (string.Equals(returnType, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
                 {
                     sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
+                }
+                // Fallback guard: if compile-time detection missed ValueTask/ValueTask<T>, switch based on returnType text
+                else if (returnType.StartsWith("global::System.Threading.Tasks.ValueTask<", StringComparison.Ordinal))
+                {
+                    var tArgText = returnType.Substring("global::System.Threading.Tasks.ValueTask<".Length);
+                    tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
+                    sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) );");
+                }
+                else if (string.Equals(returnType, "global::System.Threading.Tasks.ValueTask", StringComparison.Ordinal))
+                {
+                    sb.AppendLine($"        return global::System.Threading.Tasks.ValueTask({runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList})));");
                 }
                 else
                 {
@@ -750,7 +761,7 @@ internal sealed class ClassProxyHandler
             {
                 var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                     .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-                sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<{tArg}>( {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {call} ).AsTask() );");
+                sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {call} );");
             }
             else if (method.ReturnsVoid)
             {
@@ -765,6 +776,17 @@ internal sealed class ClassProxyHandler
                     var tArgText = returnType.Substring("global::System.Threading.Tasks.Task<".Length);
                     tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
                     sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => new global::System.Threading.Tasks.ValueTask<{tArgText}>( {call} ) ).AsTask();");
+                }
+                else if (string.Equals(returnType, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
+                {
+                    sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {call});");
+                }
+                // Fallback guard: if compile-time detection missed ValueTask/ValueTask<T>, switch based on returnType text
+                else if (returnType.StartsWith("global::System.Threading.Tasks.ValueTask<", StringComparison.Ordinal))
+                {
+                    var tArgText = returnType.Substring("global::System.Threading.Tasks.ValueTask<".Length);
+                    tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
+                    sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {call} );");
                 }
                 else if (string.Equals(returnType, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
                 {

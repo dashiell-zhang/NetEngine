@@ -111,7 +111,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             if (callerChain.Length > 0) payload2["caller"] = callerChain;
             if (ctx.HasReturnValue)
             {
-                var r = (object?)result;
+                var r = (T?)result;
                 if (r is not null && IsAsyncEnumerableType(r.GetType()))
                     payload2["result"] = "<async-stream>";
                 else

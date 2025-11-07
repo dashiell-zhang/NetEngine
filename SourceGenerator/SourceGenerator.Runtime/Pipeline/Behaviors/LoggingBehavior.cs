@@ -1,5 +1,9 @@
 using Microsoft.Extensions.Logging;
+using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
+using System.Linq.Expressions;
+using System.Security.Claims;
 
 namespace SourceGenerator.Runtime.Pipeline.Behaviors;
 
@@ -18,7 +22,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             var frames = st.GetFrames();
             if (frames is null || frames.Length == 0) return Array.Empty<string>();
 
-            var parts = new List<string>(7);
+            var parts = new List<string>(8);
             foreach (var frame in frames)
             {
                 var method = frame.GetMethod();
@@ -30,6 +34,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 if (typeName.StartsWith("Microsoft.")) continue;
                 if (typeName.StartsWith("Swashbuckle.")) continue;
                 if (typeName.StartsWith("WebAPI.Core.")) continue;
+                if (typeName.StartsWith("Npgsql.")) continue;
                 if (typeName.StartsWith("<global>")) continue;
                 if (method.DeclaringType?.Name.EndsWith("_Proxy") == true) continue;
 
@@ -115,7 +120,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 if (r is not null && IsAsyncEnumerableType(r.GetType()))
                     payload2["result"] = "<async-stream>";
                 else
-                    payload2["result"] = r;
+                    payload2["result"] = Sanitize(r);
             }
             if (hasArgs) payload2["args"] = ctx.Args;
             logger?.LogInformation(JsonUtil.ToJson(payload2));
@@ -190,7 +195,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 if (result is not null && IsAsyncEnumerableType(result.GetType()))
                     payload["result"] = "<async-stream>";
                 else
-                    payload["result"] = result;
+                    payload["result"] = Sanitize(result);
             }
             if (ctx.Args is not null) payload["args"] = ctx.Args;
             if (st is not null)
@@ -202,12 +207,6 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         }
     }
 
-    private static bool IsAsyncEnumerableType(Type t)
-    {
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
-            return true;
-        return t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
-    }
 
     public void OnException(InvocationContext ctx, Exception ex)
     {
@@ -242,5 +241,43 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             logger?.LogError(JsonUtil.ToJson(exPayload));
         }
     }
+
+
+    private static bool IsAsyncEnumerableType(Type t)
+    {
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
+            return true;
+        return t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
+    }
+
+    private static object? Sanitize(object? value)
+    {
+        if (value is null) return null;
+        if (value is string || value.GetType().IsPrimitive) return value;
+        if (value is System.Threading.CancellationToken) return "<cancellation-token>";
+        if (value is System.Threading.CancellationTokenSource) return "<cancellation-token-source>";
+        if (value is Stream) return "<stream>";
+        if (value is TextReader) return "<text-reader>";
+        if (value is TextWriter) return "<text-writer>";
+        var fn = value.GetType().FullName ?? string.Empty;
+        if (fn.StartsWith("System.Threading.Channels.ChannelReader`", StringComparison.Ordinal)) return "<channel-reader>";
+        if (fn.StartsWith("System.Threading.Channels.ChannelWriter`", StringComparison.Ordinal)) return "<channel-writer>";
+        if (fn.StartsWith("System.IO.Pipelines.PipeReader", StringComparison.Ordinal)) return "<pipe-reader>";
+        if (fn.StartsWith("System.IO.Pipelines.PipeWriter", StringComparison.Ordinal)) return "<pipe-writer>";
+        if (value is ClaimsPrincipal || value is System.Security.Principal.IPrincipal) return "<principal>";
+        if (value is DbConnection || value is IDbConnection) return "<db-connection>";
+        if (value is DbTransaction) return "<db-transaction>";
+        if (value is DbCommand) return "<db-command>";
+        if (value is HttpClient) return "<http-client>";
+        if (value is HttpRequestMessage) return "<http-request>";
+        if (value is HttpResponseMessage) return "<http-response>";
+        if (value is Delegate) return "<delegate>";
+        if (value is Expression) return "<expression>";
+        if (value is byte[] bytes) return new Dictionary<string, object> { ["kind"] = "bytes", ["length"] = bytes.Length };
+        if (value is ReadOnlyMemory<byte> rom) return new Dictionary<string, object> { ["kind"] = "bytes", ["length"] = rom.Length };
+        if (value is Memory<byte> mem) return new Dictionary<string, object> { ["kind"] = "bytes", ["length"] = mem.Length };
+        return value;
+    }
+
 }
 

@@ -114,13 +114,13 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             };
             payload2["traceId"] = ctx.TraceId;
             if (callerChain.Length > 0) payload2["caller"] = callerChain;
-            if (ctx.HasReturnValue)
+            if (ctx.HasReturnValue && ctx.AllowReturnSerialization)
             {
                 var r = (T?)result;
                 if (r is not null && IsAsyncEnumerableType(r.GetType()))
                     payload2["result"] = "<async-stream>";
                 else
-                    payload2["result"] = Sanitize(r);
+                    payload2["result"] = r;
             }
             if (hasArgs) payload2["args"] = ctx.Args;
             logger?.LogInformation(JsonUtil.ToJson(payload2));
@@ -190,12 +190,12 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 ["method"] = ctx.Method,
             };
             payload["traceId"] = ctx.TraceId;
-            if (ctx.HasReturnValue)
+            if (ctx.HasReturnValue && ctx.AllowReturnSerialization)
             {
                 if (result is not null && IsAsyncEnumerableType(result.GetType()))
                     payload["result"] = "<async-stream>";
                 else
-                    payload["result"] = Sanitize(result);
+                    payload["result"] = result;
             }
             if (ctx.Args is not null) payload["args"] = ctx.Args;
             if (st is not null)
@@ -250,34 +250,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         return t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
     }
 
-    private static object? Sanitize(object? value)
-    {
-        if (value is null) return null;
-        if (value is string || value.GetType().IsPrimitive) return value;
-        if (value is System.Threading.CancellationToken) return "<cancellation-token>";
-        if (value is System.Threading.CancellationTokenSource) return "<cancellation-token-source>";
-        if (value is Stream) return "<stream>";
-        if (value is TextReader) return "<text-reader>";
-        if (value is TextWriter) return "<text-writer>";
-        var fn = value.GetType().FullName ?? string.Empty;
-        if (fn.StartsWith("System.Threading.Channels.ChannelReader`", StringComparison.Ordinal)) return "<channel-reader>";
-        if (fn.StartsWith("System.Threading.Channels.ChannelWriter`", StringComparison.Ordinal)) return "<channel-writer>";
-        if (fn.StartsWith("System.IO.Pipelines.PipeReader", StringComparison.Ordinal)) return "<pipe-reader>";
-        if (fn.StartsWith("System.IO.Pipelines.PipeWriter", StringComparison.Ordinal)) return "<pipe-writer>";
-        if (value is ClaimsPrincipal || value is System.Security.Principal.IPrincipal) return "<principal>";
-        if (value is DbConnection || value is IDbConnection) return "<db-connection>";
-        if (value is DbTransaction) return "<db-transaction>";
-        if (value is DbCommand) return "<db-command>";
-        if (value is HttpClient) return "<http-client>";
-        if (value is HttpRequestMessage) return "<http-request>";
-        if (value is HttpResponseMessage) return "<http-response>";
-        if (value is Delegate) return "<delegate>";
-        if (value is Expression) return "<expression>";
-        if (value is byte[] bytes) return new Dictionary<string, object> { ["kind"] = "bytes", ["length"] = bytes.Length };
-        if (value is ReadOnlyMemory<byte> rom) return new Dictionary<string, object> { ["kind"] = "bytes", ["length"] = rom.Length };
-        if (value is Memory<byte> mem) return new Dictionary<string, object> { ["kind"] = "bytes", ["length"] = mem.Length };
-        return value;
-    }
+    
 
 }
 

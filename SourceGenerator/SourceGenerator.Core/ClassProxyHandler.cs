@@ -247,7 +247,8 @@ internal sealed class ClassProxyHandler
         }
         sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid) || isAsyncEnumerable;
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+        var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
         if (hasByRef || isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable)
@@ -601,7 +602,8 @@ internal sealed class ClassProxyHandler
         }
         sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
         var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid) || isAsyncEnumerable;
-        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+        var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
+        sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
         var call = "base." + methodName + typeParams + "(" + argList + ")";
@@ -1162,6 +1164,55 @@ internal sealed class ClassProxyHandler
             if (i is INamedTypeSymbol nt && IsNamedType(nt, @namespace, name, arity)) return true;
         }
         return false;
+    }
+
+    private static bool IsAllowReturnSerialization(IMethodSymbol method)
+    {
+        var rt = method.ReturnType;
+        // Async streams: logged as placeholder, considered loggable
+        if ((rt is INamedTypeSymbol nts4 && nts4.IsGenericType && IsType(nts4.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable"))
+            || rt.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
+            return true;
+
+        // Task / ValueTask with no result
+        if (rt is INamedTypeSymbol ntsTask && !ntsTask.IsGenericType && IsType(ntsTask, "System.Threading.Tasks.Task"))
+            return false;
+        if (rt is INamedTypeSymbol ntsVt && !ntsVt.IsGenericType && IsType(ntsVt, "System.Threading.Tasks.ValueTask"))
+            return false;
+
+        // Unwrap Task<T> / ValueTask<T>
+        if (rt is INamedTypeSymbol ntsG && ntsG.IsGenericType)
+        {
+            if (IsType(ntsG.ConstructedFrom, "System.Threading.Tasks.Task") || IsType(ntsG.ConstructedFrom, "System.Threading.Tasks.ValueTask"))
+            {
+                var tArg = ntsG.TypeArguments[0];
+                return IsReturnTypeLoggableCore(tArg);
+            }
+        }
+
+        if (method.ReturnsVoid) return false;
+        return IsReturnTypeLoggableCore(rt);
+    }
+
+    private static bool IsReturnTypeLoggableCore(ITypeSymbol type)
+    {
+        if (IsOrDerivedFrom(type, "System.IO.Stream")) return false;
+        if (IsOrDerivedFrom(type, "System.IO.TextReader")) return false;
+        if (IsOrDerivedFrom(type, "System.IO.TextWriter")) return false;
+        if (IsType(type, "System.IO.Pipelines.PipeReader")) return false;
+        if (IsType(type, "System.IO.Pipelines.PipeWriter")) return false;
+        if (IsOrDerivedFromGeneric(type, "System.Threading.Channels", "ChannelReader", 1)) return false;
+        if (IsOrDerivedFromGeneric(type, "System.Threading.Channels", "ChannelWriter", 1)) return false;
+        if (IsOrDerivedFrom(type, "System.Data.Common.DbConnection") || ImplementsInterface(type, "System.Data.IDbConnection")) return false;
+        if (IsOrDerivedFrom(type, "System.Data.Common.DbTransaction")) return false;
+        if (IsOrDerivedFrom(type, "System.Data.Common.DbCommand")) return false;
+        if (IsType(type, "System.Net.Http.HttpRequestMessage")) return false;
+        if (IsType(type, "System.Net.Http.HttpResponseMessage")) return false;
+        if (IsType(type, "System.Net.Http.HttpClient")) return false;
+        if (type.TypeKind == TypeKind.Delegate) return false;
+        if (IsOrDerivedFrom(type, "System.Linq.Expressions.Expression")) return false;
+        if (IsType(type, "System.Security.Claims.ClaimsPrincipal") || ImplementsInterface(type, "System.Security.Principal.IPrincipal")) return false;
+        return true;
     }
     private static string GetFullNamespace(INamespaceSymbol ns)
     {

@@ -206,9 +206,18 @@ internal sealed class ClassProxyHandler
                 }
                 else
                 {
-                    sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson(")
-                      .Append(p.Name).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = global::System.Convert.ToString(")
-                      .Append(p.Name).Append("); }").AppendLine();
+                    if (TryGetSkipPlaceholder(p.Type, out var __ph))
+                    {
+                        sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = \"")
+                          .Append(__ph.Replace("\\", "\\\\").Replace("\"", "\\\"") )
+                          .Append("\";").AppendLine();
+                    }
+                    else
+                    {
+                        sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson(")
+                          .Append(p.Name).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = global::System.Convert.ToString(")
+                          .Append(p.Name).Append("); }").AppendLine();
+                    }
                 }
             }
             sb.AppendLine("        object? __argsObj = __argsDict;");
@@ -536,9 +545,18 @@ internal sealed class ClassProxyHandler
                 }
                 else
                 {
-                    sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson(")
-                      .Append(p.Name).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = global::System.Convert.ToString(")
-                      .Append(p.Name).Append("); }").AppendLine();
+                    if (TryGetSkipPlaceholder(p.Type, out var __ph))
+                    {
+                        sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = \"")
+                          .Append(__ph.Replace("\\", "\\\\").Replace("\"", "\\\"") )
+                          .Append("\";").AppendLine();
+                    }
+                    else
+                    {
+                        sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson(")
+                          .Append(p.Name).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = global::System.Convert.ToString(")
+                          .Append(p.Name).Append("); }").AppendLine();
+                    }
                 }
             }
             sb.AppendLine("        object? __argsObj = __argsDict;");
@@ -1055,6 +1073,96 @@ internal sealed class ClassProxyHandler
         return true;
     }
 
+    // Decide at compile-time whether a parameter type should be skipped from JSON serialization and replaced with a placeholder
+    private static bool TryGetSkipPlaceholder(ITypeSymbol type, out string placeholder)
+    {
+        placeholder = "<skipped>";
+
+        // Cancellation
+        if (IsType(type, "System.Threading.CancellationToken")) { placeholder = "<cancellation-token>"; return true; }
+        if (IsType(type, "System.Threading.CancellationTokenSource")) { placeholder = "<cancellation-token-source>"; return true; }
+
+        // Delegates
+        if (type.TypeKind == TypeKind.Delegate) { placeholder = "<delegate>"; return true; }
+
+        // Streams / Readers / Writers
+        if (IsOrDerivedFrom(type, "System.IO.Stream")) { placeholder = "<stream>"; return true; }
+        if (IsOrDerivedFrom(type, "System.IO.TextReader")) { placeholder = "<text-reader>"; return true; }
+        if (IsOrDerivedFrom(type, "System.IO.TextWriter")) { placeholder = "<text-writer>"; return true; }
+
+        // Pipelines
+        if (IsType(type, "System.IO.Pipelines.PipeReader")) { placeholder = "<pipe-reader>"; return true; }
+        if (IsType(type, "System.IO.Pipelines.PipeWriter")) { placeholder = "<pipe-writer>"; return true; }
+
+        // Channels (generic definitions)
+        if (IsOrDerivedFromGeneric(type, "System.Threading.Channels", "ChannelReader", 1)) { placeholder = "<channel-reader>"; return true; }
+        if (IsOrDerivedFromGeneric(type, "System.Threading.Channels", "ChannelWriter", 1)) { placeholder = "<channel-writer>"; return true; }
+
+        // ASP.NET Core Http*
+        var ns = GetFullNamespace(type.ContainingNamespace);
+        if (ns.StartsWith("Microsoft.AspNetCore.Http", StringComparison.Ordinal)) { placeholder = "<http-context>"; return true; }
+
+        // Security principals
+        if (IsType(type, "System.Security.Claims.ClaimsPrincipal") || ImplementsInterface(type, "System.Security.Principal.IPrincipal"))
+        { placeholder = "<principal>"; return true; }
+
+        // DI / Logging
+        if (ImplementsInterface(type, "System.IServiceProvider")) { placeholder = "<service-provider>"; return true; }
+        if (ImplementsInterfaceNamed(type, "Microsoft.Extensions.Logging", "ILogger")) { placeholder = "<logger>"; return true; }
+
+        // Database
+        if (IsOrDerivedFrom(type, "System.Data.Common.DbConnection") || ImplementsInterface(type, "System.Data.IDbConnection"))
+        { placeholder = "<db-connection>"; return true; }
+        if (IsOrDerivedFrom(type, "System.Data.Common.DbTransaction")) { placeholder = "<db-transaction>"; return true; }
+        if (IsOrDerivedFrom(type, "System.Data.Common.DbCommand")) { placeholder = "<db-command>"; return true; }
+
+        // HTTP
+        if (IsType(type, "System.Net.Http.HttpClient")) { placeholder = "<http-client>"; return true; }
+        if (IsType(type, "System.Net.Http.HttpRequestMessage")) { placeholder = "<http-request>"; return true; }
+        if (IsType(type, "System.Net.Http.HttpResponseMessage")) { placeholder = "<http-response>"; return true; }
+
+        // Expressions
+        if (IsOrDerivedFrom(type, "System.Linq.Expressions.Expression")) { placeholder = "<expression>"; return true; }
+
+        return false;
+    }
+
+    private static bool IsOrDerivedFrom(ITypeSymbol type, string metadataName)
+    {
+        for (var t = type; t is not null; t = t.BaseType)
+        {
+            if (IsType(t, metadataName)) return true;
+        }
+        return false;
+    }
+
+    private static bool IsOrDerivedFromGeneric(ITypeSymbol type, string @namespace, string name, int arity)
+    {
+        for (var t = type; t is not null; t = t.BaseType)
+        {
+            if (t is INamedTypeSymbol nt && nt.IsGenericType && IsNamedType(nt.ConstructedFrom, @namespace, name, arity))
+                return true;
+        }
+        return false;
+    }
+
+    private static bool ImplementsInterface(ITypeSymbol type, string metadataName)
+    {
+        foreach (var i in type.AllInterfaces)
+        {
+            if (IsType(i, metadataName)) return true;
+        }
+        return false;
+    }
+
+    private static bool ImplementsInterfaceNamed(ITypeSymbol type, string @namespace, string name, int? arity = null)
+    {
+        foreach (var i in type.AllInterfaces)
+        {
+            if (i is INamedTypeSymbol nt && IsNamedType(nt, @namespace, name, arity)) return true;
+        }
+        return false;
+    }
     private static string GetFullNamespace(INamespaceSymbol ns)
     {
         if (ns == null || ns.IsGlobalNamespace) return string.Empty;
@@ -1073,8 +1181,16 @@ internal sealed class ClassProxyHandler
         {
             if (p.RefKind != RefKind.None)
             {
-                // Refresh ref/out/in values in the args dict after call, using per-param ToJson with local fallback
-                updates.Add($"try {{ __argsDict[\"{p.Name}\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson({p.Name}); }} catch {{ __argsDict[\"{p.Name}\"] = global::System.Convert.ToString({p.Name}); }}");
+                // Refresh ref/out/in values in the args dict after call
+                if (TryGetSkipPlaceholder(p.Type, out var ph))
+                {
+                    var escaped = ph.Replace("\\", "\\\\").Replace("\"", "\\\"");
+                    updates.Add($"__argsDict[\"{p.Name}\"] = \"{escaped}\";");
+                }
+                else
+                {
+                    updates.Add($"try {{ __argsDict[\"{p.Name}\"] = global::SourceGenerator.Runtime.JsonUtil.ToJson({p.Name}); }} catch {{ __argsDict[\"{p.Name}\"] = global::System.Convert.ToString({p.Name}); }}");
+                }
             }
         }
         return updates.Count == 0 ? string.Empty : string.Join(" ", updates);

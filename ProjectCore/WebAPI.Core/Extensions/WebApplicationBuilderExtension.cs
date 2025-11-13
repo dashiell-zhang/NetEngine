@@ -9,8 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Repository.HealthCheck;
 using System.Net;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Filters;
@@ -180,29 +182,29 @@ namespace WebAPI.Core.Extensions
 
 
             #region 注册 Swagger
-            //builder.Services.AddSwaggerGen(options =>
-            //{
-            //    options.SwaggerDoc("v1", null);
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", null);
 
-            //    var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
-            //    options.SchemaGeneratorOptions = new() { SchemaIdSelector = type => type.ToString()[(type.ToString().IndexOf("Models.") + 7)..].Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
+                var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
+                options.SchemaGeneratorOptions = new() { SchemaIdSelector = type => type.ToString()[(type.ToString().IndexOf("Models.") + 7)..].Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
 
-            //    options.MapType<long>(() => new OpenApiSchema { Type = "string", Format = "long" });
+                options.MapType<long>(() => new OpenApiSchema { Type = JsonSchemaType.String, Format = "long" });
 
-            //    var xmlPaths = IOHelper.GetFolderAllFiles(AppContext.BaseDirectory).Where(t => t.EndsWith(".xml")).ToList();
-            //    foreach (var xmlPath in xmlPaths)
-            //    {
-            //        options.IncludeXmlComments(xmlPath, true);
-            //    }
+                var xmlPaths = IOHelper.GetFolderAllFiles(AppContext.BaseDirectory).Where(t => t.EndsWith(".xml")).ToList();
+                foreach (var xmlPath in xmlPaths)
+                {
+                    options.IncludeXmlComments(xmlPath, true);
+                }
 
-            //    options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
-            //    {
-            //        Type = SecuritySchemeType.Http,
-            //        Scheme = "bearer",
-            //        BearerFormat = "JWT"
-            //    });
-            //    options.OperationFilter<SecurityRequirementsOperationFilter>();
-            //});
+                options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                });
+                //options.OperationFilter<SecurityRequirementsOperationFilter>();
+            });
             #endregion
 
 

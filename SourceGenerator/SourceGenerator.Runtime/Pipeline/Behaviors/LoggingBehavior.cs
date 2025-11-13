@@ -1,9 +1,5 @@
 using Microsoft.Extensions.Logging;
-using System.Data;
-using System.Data.Common;
 using System.Diagnostics;
-using System.Linq.Expressions;
-using System.Security.Claims;
 
 namespace SourceGenerator.Runtime.Pipeline.Behaviors;
 
@@ -116,11 +112,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             if (callerChain.Length > 0) payload2["caller"] = callerChain;
             if (ctx.HasReturnValue && ctx.AllowReturnSerialization)
             {
-                var r = (T?)result;
-                if (r is not null && IsAsyncEnumerableType(r.GetType()))
-                    payload2["result"] = "<async-stream>";
-                else
-                    payload2["result"] = r;
+                payload2["result"] = result;
             }
             if (hasArgs) payload2["args"] = ctx.Args;
             logger?.LogInformation(JsonUtil.ToJson(payload2));
@@ -159,7 +151,6 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     public void OnBefore(InvocationContext ctx)
     {
         var logger = ctx.Logger;
-        // start timing for sync three-phase path
         ctx.SetFeature(new LoggingState { StartTicks = Stopwatch.GetTimestamp() });
 
         if (ctx.Log && logger?.IsEnabled(LogLevel.Information) == true)
@@ -192,10 +183,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             payload["traceId"] = ctx.TraceId;
             if (ctx.HasReturnValue && ctx.AllowReturnSerialization)
             {
-                if (result is not null && IsAsyncEnumerableType(result.GetType()))
-                    payload["result"] = "<async-stream>";
-                else
-                    payload["result"] = result;
+                payload["result"] = result;
             }
             if (ctx.Args is not null) payload["args"] = ctx.Args;
             if (st is not null)
@@ -242,15 +230,6 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         }
     }
 
-
-    private static bool IsAsyncEnumerableType(Type t)
-    {
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
-            return true;
-        return t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
-    }
-
-    
 
 }
 

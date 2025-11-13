@@ -19,6 +19,7 @@ using WebAPI.Core.Filters;
 using WebAPI.Core.Interfaces;
 using WebAPI.Core.Libraries.HealthCheck;
 using WebAPI.Core.Libraries.JsonConverters;
+using WebAPI.Core.Libraries.Swagger;
 using WebAPI.Core.Libraries.Validators;
 using IPNetwork = System.Net.IPNetwork;
 
@@ -166,7 +167,6 @@ namespace WebAPI.Core.Extensions
             #endregion
 
 
-
             #region 注册 Json 序列化配置
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
@@ -178,7 +178,6 @@ namespace WebAPI.Core.Extensions
             });
 
             #endregion
-
 
 
             #region 注册 Swagger
@@ -203,7 +202,8 @@ namespace WebAPI.Core.Extensions
                     Scheme = "bearer",
                     BearerFormat = "JWT"
                 });
-                //options.OperationFilter<SecurityRequirementsOperationFilter>();
+
+                options.OperationFilter<SecurityRequirementsOperationFilter>();
             });
             #endregion
 

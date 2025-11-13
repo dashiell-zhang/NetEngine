@@ -172,6 +172,18 @@ internal sealed class ClassProxyHandler
         var isValueTaskOfAsyncEnumerable = isGenericValueTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t2 && (
             (t2.IsGenericType && IsType(t2.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
             t2.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
+        if (!isTaskOfAsyncEnumerable)
+        {
+            var rtText2 = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            if (rtText2.StartsWith("global::System.Threading.Tasks.Task<global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
+                isTaskOfAsyncEnumerable = true;
+        }
+        if (!isValueTaskOfAsyncEnumerable)
+        {
+            var rtText2 = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            if (rtText2.StartsWith("global::System.Threading.Tasks.ValueTask<global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
+                isValueTaskOfAsyncEnumerable = true;
+        }
 
         var returnType = method.ReturnType
             .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
@@ -412,7 +424,7 @@ internal sealed class ClassProxyHandler
                     .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
                 var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                 sb.AppendLine($"        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] {{ new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior() }};")
-                  .AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+                  .AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                 sb.AppendLine("        var __filters = new global::System.Collections.Generic.List<global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior>();");
                 sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior __f) __filters.Add(__f); }");
                 sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tArg}> __streamWrapper(){{");
@@ -511,6 +523,12 @@ internal sealed class ClassProxyHandler
         var isValueTask = method.ReturnType is INamedTypeSymbol nts3 && !nts3.IsGenericType && IsType(nts3, "System.Threading.Tasks.ValueTask");
         var isAsyncEnumerable = (method.ReturnType is INamedTypeSymbol nts4 && nts4.IsGenericType && IsType(nts4.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable"))
             || method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal);
+        var isTaskOfAsyncEnumerable = isGenericTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t1 && (
+            (t1.IsGenericType && IsType(t1.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
+            t1.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
+        var isValueTaskOfAsyncEnumerable = isGenericValueTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t2 && (
+            (t2.IsGenericType && IsType(t2.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
+            t2.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
 
         var returnType = method.ReturnType
             .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
@@ -607,7 +625,7 @@ internal sealed class ClassProxyHandler
         if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
         var call = "base." + methodName + typeParams + "(" + argList + ")";
-        if (hasByRef2 || isAsyncEnumerable)
+        if (hasByRef2 || isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable)
         {
             sb.AppendLine("        var __filters = new global::System.Collections.Generic.List<global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior>();");
             sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior __f) __filters.Add(__f); }");
@@ -659,6 +677,35 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
             }
+            else if (isTaskOfAsyncEnumerable)
+            {
+                var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
+                    .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tItem}> __streamWrapper(){{");
+                sb.AppendLine("            var __items = new global::System.Collections.Generic.List<object?>(16);");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            var __s = await {call};");
+                sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
+                sb.AppendLine("            try");
+                sb.AppendLine("            {");
+                sb.AppendLine("                while (true)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    bool __moved;");
+                sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                sb.AppendLine("                    if (!__moved) break;");
+                sb.AppendLine("                    var __item = __e.Current;");
+                sb.AppendLine("                    try { __items.Add(global::SourceGenerator.Runtime.JsonUtil.ToObject(global::SourceGenerator.Runtime.JsonUtil.ToJson(__item))); } catch { __items.Add(global::System.Convert.ToString(__item)); }");
+                sb.AppendLine("                    yield return __item;");
+                sb.AppendLine("                }");
+                sb.AppendLine("                foreach (var __f in __filters) __f.OnAfter(__ctx, __items);");
+                sb.AppendLine("            }");
+                sb.AppendLine("            finally");
+                sb.AppendLine("            {");
+                sb.AppendLine("                await __e.DisposeAsync();");
+                sb.AppendLine("            }");
+                sb.AppendLine("        }");
+                sb.AppendLine($"        return global::System.Threading.Tasks.Task.FromResult<global::System.Collections.Generic.IAsyncEnumerable<{tItem}>>(__streamWrapper());");
+            }
             else if (isGenericTask)
             {
                 var updateSnippet = BuildArgsUpdateSnippet(method);
@@ -676,6 +723,35 @@ internal sealed class ClassProxyHandler
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                 sb.AppendLine("            throw;");
                 sb.AppendLine("        }");
+            }
+            else if (isValueTaskOfAsyncEnumerable)
+            {
+                var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
+                    .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tItem}> __streamWrapper(){{");
+                sb.AppendLine("            var __items = new global::System.Collections.Generic.List<object?>(16);");
+                sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                sb.AppendLine($"            var __s = await {call};");
+                sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
+                sb.AppendLine("            try");
+                sb.AppendLine("            {");
+                sb.AppendLine("                while (true)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    bool __moved;");
+                sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                sb.AppendLine("                    if (!__moved) break;");
+                sb.AppendLine("                    var __item = __e.Current;");
+                sb.AppendLine("                    try { __items.Add(global::SourceGenerator.Runtime.JsonUtil.ToObject(global::SourceGenerator.Runtime.JsonUtil.ToJson(__item))); } catch { __items.Add(global::System.Convert.ToString(__item)); }");
+                sb.AppendLine("                    yield return __item;");
+                sb.AppendLine("                }");
+                sb.AppendLine("                foreach (var __f in __filters) __f.OnAfter(__ctx, __items);");
+                sb.AppendLine("            }");
+                sb.AppendLine("            finally");
+                sb.AppendLine("            {");
+                sb.AppendLine("                await __e.DisposeAsync();");
+                sb.AppendLine("            }");
+                sb.AppendLine("        }");
+                sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<global::System.Collections.Generic.IAsyncEnumerable<{tItem}>>(__streamWrapper());");
             }
             else if (isValueTask)
             {
@@ -738,18 +814,20 @@ internal sealed class ClassProxyHandler
                     .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
                 var callExpr3 = "base." + methodName + typeParams + "(" + argList + ")";
                 sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] { new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior() };")
-                  .AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = false, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+                  .AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                 sb.AppendLine("        var __filters = new global::System.Collections.Generic.List<global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior>();");
                 sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior __f) __filters.Add(__f); }");
                 sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                sb.AppendLine("            var __items = new global::System.Collections.Generic.List<object?>(16);");
                 sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                 sb.AppendLine("            try");
                 sb.AppendLine("            {");
                 sb.AppendLine($"                await foreach (var __item in {callExpr3})");
                 sb.AppendLine("                {");
+                sb.AppendLine("                    try { __items.Add(global::SourceGenerator.Runtime.JsonUtil.ToObject(global::SourceGenerator.Runtime.JsonUtil.ToJson(__item))); } catch { __items.Add(global::System.Convert.ToString(__item)); }");
                 sb.AppendLine("                    yield return __item;");
                 sb.AppendLine("                }");
-                sb.AppendLine("                foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                sb.AppendLine("                foreach (var __f in __filters) __f.OnAfter(__ctx, __items);");
                 sb.AppendLine("            }");
                 sb.AppendLine("            catch (global::System.Exception __ex)");
                 sb.AppendLine("            {");

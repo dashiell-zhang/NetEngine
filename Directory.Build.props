@@ -1,4 +1,8 @@
 <Project>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>obj/Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj"
                       OutputItemType="Analyzer"

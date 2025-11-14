@@ -1,0 +1,44 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Application/">
+    <Project Path="Application/Application.Interface/Application.Interface.csproj" />
+    <Project Path="Application/Application.Model/Application.Model.csproj" />
+    <Project Path="Application/Application.Service/Application.Service.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/Common/Common.csproj" />
+    <Project Path="Infrastructure/DistributedLock.Redis/DistributedLock.Redis.csproj" />
+    <Project Path="Infrastructure/DistributedLock/DistributedLock.csproj" />
+    <Project Path="Infrastructure/FileStorage.AliCloud/FileStorage.AliCloud.csproj" />
+    <Project Path="Infrastructure/FileStorage.TencentCloud/FileStorage.TencentCloud.csproj" />
+    <Project Path="Infrastructure/FileStorage/FileStorage.csproj" />
+    <Project Path="Infrastructure/IdentifierGenerator/IdentifierGenerator.csproj" />
+    <Project Path="Infrastructure/Logger.DataBase/Logger.DataBase.csproj" />
+    <Project Path="Infrastructure/Logger.LocalFile/Logger.LocalFile.csproj" />
+    <Project Path="Infrastructure/SMS.AliCloud/SMS.AliCloud.csproj" />
+    <Project Path="Infrastructure/SMS.TencentCloud/SMS.TencentCloud.csproj" />
+    <Project Path="Infrastructure/SMS/SMS.csproj" />
+  </Folder>
+  <Folder Name="/Presentation/">
+    <Project Path="Presentation/Admin.App/Admin.App.csproj" />
+    <Project Path="Presentation/Admin.WebAPI/Admin.WebAPI.csproj" />
+    <Project Path="Presentation/Client.WebAPI/Client.WebAPI.csproj" />
+    <Project Path="Presentation/TaskService/TaskService.csproj" />
+  </Folder>
+  <Folder Name="/ProjectCore/">
+    <Project Path="ProjectCore/TaskService.Core/TaskService.Core.csproj" />
+    <Project Path="ProjectCore/WebAPI.Core/WebAPI.Core.csproj" />
+  </Folder>
+  <Folder Name="/SourceGenerator/">
+    <Project Path="SourceGenerator/SourceGenerator.Core/SourceGenerator.Core.csproj" />
+    <Project Path="SourceGenerator/SourceGenerator.Runtime/SourceGenerator.Runtime.csproj" />
+  </Folder>
+  <Project Path="Repository.Column/Repository.Column.csproj" />
+  <Project Path="Repository.Enum/Repository.Enum.csproj" />
+  <Project Path="Repository.Tool/Repository.Tool.csproj" />
+  <Project Path="Repository/Repository.csproj" />
+</Solution>

@@ -13,6 +13,7 @@ using System.Reflection;
 using TaskService.Core;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
+using NetEngine.Generated;
 
 namespace TaskService
 {
@@ -58,7 +59,8 @@ namespace TaskService
                     services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options => { }, maxPoolSize);
 
 
-                    services.BatchRegisterServices();
+                    services.AddTaskService_CoreRegisterServices();
+                    services.AddTaskService_CoreBackgroundServices();
 
 
                     //注册所有 TaskBase的子类

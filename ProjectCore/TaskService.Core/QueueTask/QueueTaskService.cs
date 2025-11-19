@@ -3,11 +3,12 @@ using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
+using SourceGenerator.Runtime.Attributes;
 
 namespace TaskService.Core.QueueTask
 {
 
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
     {
 

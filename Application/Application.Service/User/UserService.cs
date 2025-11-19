@@ -10,11 +10,12 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Repository.Enum;
+using SourceGenerator.Runtime.Attributes;
 using System.Text;
 
 namespace Application.Service.User
 {
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class UserService(DatabaseContext db, IDistributedCache distributedCache, IUserContext userContext, IDistributedLock distLock, IdService idService)
     {
 

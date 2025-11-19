@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NetEngine.Generated;
 using Npgsql;
 using Repository.Database;
-using Repository.Tool.Tasks;
 
 namespace Repository.Tool
 {
@@ -23,7 +23,9 @@ namespace Repository.Tool
 
                             options.UseNpgsql(dataSourceBuilder.Build(), x => x.MigrationsAssembly("Repository.Tool"));
                         });
-                        services.AddHostedService<SyncJsonIndexTask>();
+
+                        services.AddRepository_ToolBackgroundServices();
+
                     }).Build();
 
             host.Run();

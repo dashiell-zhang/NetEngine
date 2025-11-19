@@ -4,10 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
+using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Basic
 {
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
     {
 

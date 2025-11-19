@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using NetEngine.Generated;
 using Repository.HealthCheck;
 using System.Net;
 using System.Reflection;
@@ -229,9 +230,7 @@ namespace WebAPI.Core.Extensions
             });
 
 
-            builder.Services.BatchRegisterServices();
-
-
+            builder.Services.AddWebAPI_CoreRegisterServices();
 
             #region 注册健康检测服务
             builder.Services.AddHealthChecks()

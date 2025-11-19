@@ -2,12 +2,13 @@ using Application.Service;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using SourceGenerator.Runtime.Attributes;
 using WebAPI.Core.Interfaces;
 
 namespace Client.WebAPI.Services
 {
 
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class PermissionService(AuthorizeService authorizeService) : IPermissionService
     {
 

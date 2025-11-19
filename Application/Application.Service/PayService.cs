@@ -11,13 +11,14 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
+using SourceGenerator.Runtime.Attributes;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace Application.Service
 {
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock)
     {
 

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 namespace Client.WebAPI.Services;
 
 
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
 [AutoProxy]
 public class Demo2Service
 {

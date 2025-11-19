@@ -11,6 +11,7 @@ using Repository.Interceptors;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Extensions;
+using NetEngine.Generated;
 
 namespace Client.WebAPI
 {
@@ -51,6 +52,10 @@ namespace Client.WebAPI
 
 
             builder.AddCommonServices();
+
+            builder.Services.AddApplication_ServiceRegisterServices();
+   
+            builder.Services.AddClient_WebAPIRegisterServices();
 
 
             //注册Id生成器

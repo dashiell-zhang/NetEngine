@@ -1,11 +1,12 @@
 using Application.Interface;
 using Common;
 using Microsoft.Extensions.DependencyInjection;
+using SourceGenerator.Runtime.Attributes;
 using System.Security.Claims;
 
 namespace TaskService.Core.Services
 {
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class UserContext : IUserContext
     {
         public bool IsAuthenticated => false;

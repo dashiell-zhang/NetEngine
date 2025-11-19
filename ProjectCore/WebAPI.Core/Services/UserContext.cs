@@ -1,10 +1,11 @@
 using Application.Interface;
 using Common;
+using SourceGenerator.Runtime.Attributes;
 using System.Security.Claims;
 
 namespace WebAPI.Core.Services
 {
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class UserContext : IUserContext
     {
 

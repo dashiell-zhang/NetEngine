@@ -8,10 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using Repository.Enum;
+using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.User
 {
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class RoleService(DatabaseContext db, IdService idService, IUserContext userContext, IDistributedLock distLock)
     {
 

@@ -22,7 +22,6 @@
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
 		<PackageReference Include="NPOI" Version="2.7.5" />
@@ -32,7 +31,7 @@
 		
 		<PackageReference Include="SkiaSharp" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
-		<PackageReference Include="SkiaSharp.QrCode" Version="0.9.0" />
+		<PackageReference Include="SkiaSharp.QrCode" Version="0.11.0" />
 	</ItemGroup>
 
 </Project>

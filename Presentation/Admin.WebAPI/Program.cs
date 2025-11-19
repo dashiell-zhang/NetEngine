@@ -8,6 +8,7 @@ using Npgsql;
 using Repository.Interceptors;
 using StackExchange.Redis;
 using WebAPI.Core.Extensions;
+using NetEngine.Generated;
 
 namespace Admin.WebAPI
 {
@@ -46,6 +47,10 @@ namespace Admin.WebAPI
 
 
             builder.AddCommonServices();
+
+            builder.Services.AddApplication_ServiceRegisterServices();
+
+            builder.Services.AddAdmin_WebAPIRegisterServices();
 
 
             //注册Id生成器

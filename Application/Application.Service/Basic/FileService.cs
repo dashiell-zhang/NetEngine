@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
+using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Basic
 {
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IConfiguration configuration, IFileStorage? fileStorage = null)
     {
 

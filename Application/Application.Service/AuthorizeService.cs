@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Database;
+using SourceGenerator.Runtime.Attributes;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -21,7 +22,7 @@ using System.Text;
 namespace Application.Service
 {
 
-    [Service(Lifetime = ServiceLifetime.Scoped)]
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, TaskService taskService)
     {
 

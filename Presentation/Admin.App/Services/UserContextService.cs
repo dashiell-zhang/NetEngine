@@ -1,9 +1,11 @@
 using Admin.App.Libraries;
 using Application.Model.User.User;
+using SourceGenerator.Runtime.Attributes;
 using System.Net.Http.Json;
 
 namespace Admin.App.Services
 {
+    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
     public class UserContextService
     {
         private readonly HttpClient _httpClient;

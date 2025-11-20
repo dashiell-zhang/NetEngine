@@ -48,9 +48,7 @@ namespace Admin.WebAPI
 
             builder.AddCommonServices();
 
-            builder.Services.AddApplication_ServiceRegisterServices();
-
-            builder.Services.AddAdmin_WebAPIRegisterServices();
+            builder.Services.RegisterServices();
 
 
             //注册Id生成器

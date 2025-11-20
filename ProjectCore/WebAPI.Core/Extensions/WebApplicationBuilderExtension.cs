@@ -230,8 +230,6 @@ namespace WebAPI.Core.Extensions
             });
 
 
-            builder.Services.AddWebAPI_CoreRegisterServices();
-
             #region 注册健康检测服务
             builder.Services.AddHealthChecks()
                 .AddCheck<CacheHealthCheck>("CacheHealthCheck")

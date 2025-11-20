@@ -1,8 +1,8 @@
 using Admin.App.Libraries;
-using Admin.App.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using NetEngine.Generated;
 using System.Globalization;
 
 namespace Admin.App
@@ -17,7 +17,6 @@ namespace Admin.App
 
             var appApiUrl = "https://localhost:9833/";
             //var appApiUrl = builder.HostEnvironment.BaseAddress.ToLower();
-
 
 
             CultureInfo.DefaultThreadCurrentCulture = new("zh-CN");
@@ -37,7 +36,8 @@ namespace Admin.App
 
             builder.Services.AddAntDesign();
 
-            builder.Services.AddScoped<UserContextService>();
+            builder.Services.RegisterServices();
+
 
             await using WebAssemblyHost host = builder.Build();
 

@@ -1,10 +1,10 @@
 using SourceGenerator.Runtime.Attributes;
-using System.Threading.Tasks;
 
 namespace Client.WebAPI.Services;
 
 
 [AutoProxy]
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class DemoService : IDemoService
 {
     public string Echo(string name) => $"hello, {name}";

@@ -1,17 +1,16 @@
 using Client.WebAPI.Libraries.HttpHandler;
-using Client.WebAPI.Services;
 using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using NetEngine.Generated;
 using Npgsql;
 using Repository.Interceptors;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Extensions;
-using NetEngine.Generated;
 
 namespace Client.WebAPI
 {
@@ -92,11 +91,6 @@ namespace Client.WebAPI
             //注册 Redis 驱动
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")!));
 
-
-            builder.Services.AddScoped<IDemoService, DemoService_Proxy>();
-
-
-            builder.Services.AddScoped<Demo2Service,Demo2Service_Proxy>();
 
             #region 注册HttpClient
 

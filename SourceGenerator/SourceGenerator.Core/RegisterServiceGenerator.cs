@@ -15,6 +15,7 @@ namespace SourceGenerator.Core;
 public sealed class RegisterServiceGenerator : IIncrementalGenerator
 {
     private const string RegisterServiceAttributeMetadataName = "SourceGenerator.Runtime.Attributes.RegisterServiceAttribute";
+    private const string AutoProxyAttributeMetadataName = "SourceGenerator.Runtime.Attributes.AutoProxyAttribute";
 
     private sealed class ServiceCandidate
     {
@@ -26,6 +27,17 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             Type = type;
             Attribute = attribute;
         }
+    }
+
+    private static bool HasAutoProxy(INamedTypeSymbol typeSymbol)
+    {
+        foreach (var attr in typeSymbol.GetAttributes())
+        {
+            if (attr.AttributeClass?.ToDisplayString() == AutoProxyAttributeMetadataName)
+                return true;
+        }
+
+        return false;
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -67,11 +79,35 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 var lifetime = GetLifetime(attrData) ?? "Transient";
                 var keyExpr = GetKeyExpression(attrData);
 
-                var iface = typeSymbol.AllInterfaces.FirstOrDefault();
-                var typeDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                var ifaceDisplay = iface?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型。
+                string implDisplay;
+                if (HasAutoProxy(typeSymbol))
+                {
+                    var proxyNs = typeSymbol.ContainingNamespace is { IsGlobalNamespace: true }
+                        ? "NetEngine.Generated"
+                        : typeSymbol.ContainingNamespace.ToDisplayString();
 
-                var call = BuildRegistrationCall(lifetime, keyExpr, ifaceDisplay, typeDisplay);
+                    implDisplay = $"global::{proxyNs}.{typeSymbol.Name}_Proxy";
+                }
+                else
+                {
+                    implDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                }
+
+                var iface = typeSymbol.AllInterfaces.FirstOrDefault();
+
+                // serviceDisplay: 作为泛型 TService 使用的类型
+                // 1. 优先使用第一个接口（典型接口编程场景）；
+                // 2. 如果没有接口但带 [AutoProxy]，则使用原始类类型，形成
+                //    AddScoped<Demo2Service, Demo2Service_Proxy>() 这样的注册；
+                // 3. 否则为 null，走 self 注册。
+                string? serviceDisplay = iface?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                if (serviceDisplay is null && HasAutoProxy(typeSymbol))
+                {
+                    serviceDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                }
+
+                var call = BuildRegistrationCall(lifetime, keyExpr, serviceDisplay, implDisplay);
                 registrations.Append("        ").AppendLine(call);
             }
 

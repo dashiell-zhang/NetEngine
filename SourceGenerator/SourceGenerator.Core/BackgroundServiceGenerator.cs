@@ -30,16 +30,16 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
             var (classNodes, compilation) = (tuple.Left, tuple.Right);
 
             var bgServiceSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.Hosting.BackgroundService");
-            var hostedServiceSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.Hosting.IHostedService");
             var servicesSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.DependencyInjection.IServiceCollection");
 
-            if (bgServiceSymbol is null || hostedServiceSymbol is null || servicesSymbol is null)
+            if (bgServiceSymbol is null || servicesSymbol is null)
             {
                 // 目标项目没有引用 Hosting，直接跳过
                 return;
             }
 
             var registrations = new StringBuilder();
+            var seenTypes = new System.Collections.Generic.HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
 
             foreach (var node in classNodes)
             {
@@ -59,6 +59,9 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                     continue;
 
                 if (!InheritsFrom(typeSymbol, bgServiceSymbol))
+                    continue;
+
+                if (!seenTypes.Add(typeSymbol))
                     continue;
 
                 var implDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);

@@ -79,9 +79,11 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 var lifetime = GetLifetime(attrData) ?? "Transient";
                 var keyExpr = GetKeyExpression(attrData);
 
+                var hasAutoProxy = HasAutoProxy(typeSymbol);
+
                 // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型。
                 string implDisplay;
-                if (HasAutoProxy(typeSymbol))
+                if (hasAutoProxy)
                 {
                     var proxyNs = typeSymbol.ContainingNamespace is { IsGlobalNamespace: true }
                         ? "NetEngine.Generated"
@@ -102,7 +104,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 //    AddScoped<Demo2Service, Demo2Service_Proxy>() 这样的注册；
                 // 3. 否则为 null，走 self 注册。
                 string? serviceDisplay = iface?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (serviceDisplay is null && HasAutoProxy(typeSymbol))
+                if (serviceDisplay is null && hasAutoProxy)
                 {
                     serviceDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 }

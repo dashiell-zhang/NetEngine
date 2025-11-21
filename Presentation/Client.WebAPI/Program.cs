@@ -53,7 +53,7 @@ namespace Client.WebAPI
 
             builder.AddCommonServices();
 
-            builder.Services.RegisterServices();
+            builder.Services.BatchRegisterServices();
 
 
             //注册Id生成器

@@ -36,7 +36,7 @@ namespace Admin.App
 
             builder.Services.AddAntDesign();
 
-            builder.Services.RegisterServices();
+            builder.Services.BatchRegisterServices();
 
 
             await using WebAssemblyHost host = builder.Build();

@@ -69,10 +69,10 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             var assemblyName = compilation.AssemblyName ?? "Assembly";
             var safeAssemblyName = SanitizeIdentifier(assemblyName);
             // 命名空间统一为 NetEngine.Generated，通过不同的方法名区分不同程序集：
-            // Add{AssemblyName}RegisterServices
+            // RegisterServices_{AssemblyName}
             var ns = "NetEngine.Generated";
             var extClassName = "ServiceCollectionExtensions";
-            var methodName = "Add" + safeAssemblyName + "RegisterServices";
+            var methodName = "RegisterServices_" + safeAssemblyName;
 
             var isStartupLike = compilation.Options.OutputKind is OutputKind.ConsoleApplication
                                 or OutputKind.WindowsApplication
@@ -100,8 +100,8 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             sb.AppendLine("        return services;");
             sb.AppendLine("    }");
 
-            // 对于启动项目，额外生成一个聚合的 RegisterServices 方法，
-            // 自动调用当前项目及所有引用项目的 Add{Assembly}RegisterServices。
+            // 对于启动项目，额外生成一个聚合的 BatchRegisterServices 方法，
+            // 自动调用当前项目及所有引用项目的 RegisterServices_{AssemblyName}。
             if (isStartupLike)
             {
                 var methodNamesToInvoke = new System.Collections.Generic.List<string>
@@ -123,7 +123,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                         continue;
 
                     var referencedSafeName = SanitizeIdentifier(asm.Name);
-                    var refMethodName = "Add" + referencedSafeName + "RegisterServices";
+                    var refMethodName = "RegisterServices_" + referencedSafeName;
 
                     var hasMethod = extType
                         .GetMembers(refMethodName)
@@ -141,7 +141,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 }
 
                 sb.AppendLine();
-                sb.AppendLine("    public static Microsoft.Extensions.DependencyInjection.IServiceCollection RegisterServices(this Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
+                sb.AppendLine("    public static Microsoft.Extensions.DependencyInjection.IServiceCollection BatchRegisterServices(this Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
                 sb.AppendLine("    {");
                 foreach (var name in methodNamesToInvoke)
                 {
@@ -187,17 +187,19 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         {
             sb.Append(lifetime switch
             {
-                "Singleton" => "KeyedServiceCollectionExtensions.AddKeyedSingleton",
-                "Scoped" => "KeyedServiceCollectionExtensions.AddKeyedScoped",
-                _ => "KeyedServiceCollectionExtensions.AddKeyedTransient"
+                "Singleton" => "ServiceCollectionServiceExtensions.AddKeyedSingleton",
+                "Scoped" => "ServiceCollectionServiceExtensions.AddKeyedScoped",
+                _ => "ServiceCollectionServiceExtensions.AddKeyedTransient"
             });
 
             if (hasInterface)
             {
-                sb.Append("<").Append(ifaceDisplay).Append(">(services, ").Append(keyExpr).Append(", typeof(").Append(implDisplay).Append("));");
+                // AddKeyedXxx<TService, TImplementation>(services, key)
+                sb.Append("<").Append(ifaceDisplay).Append(", ").Append(implDisplay).Append(">(services, ").Append(keyExpr).Append(");");
             }
             else
             {
+                // AddKeyedXxx<TService>(services, key)
                 sb.Append("<").Append(implDisplay).Append(">(services, ").Append(keyExpr).Append(");");
             }
         }

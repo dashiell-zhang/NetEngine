@@ -8,20 +8,35 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace SourceGenerator.Core;
 
 /// <summary>
-/// 根据 RegisterServiceAttribute 生成 DI 注册扩展方法。
-/// 每个项目独立生成一份。
+/// 根据 RegisterServiceAttribute 生成 DI 注册扩展方法
+/// 每个项目独立生成一份
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class RegisterServiceGenerator : IIncrementalGenerator
 {
     private const string RegisterServiceAttributeMetadataName = "SourceGenerator.Runtime.Attributes.RegisterServiceAttribute";
 
+    private sealed class ServiceCandidate
+    {
+        public INamedTypeSymbol Type { get; }
+        public AttributeData Attribute { get; }
+
+        public ServiceCandidate(INamedTypeSymbol type, AttributeData attribute)
+        {
+            Type = type;
+            Attribute = attribute;
+        }
+    }
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var candidates = context.SyntaxProvider.ForAttributeWithMetadataName(
             RegisterServiceAttributeMetadataName,
             static (node, _) => node is ClassDeclarationSyntax,
-            static (syntaxContext, _) => syntaxContext
+            static (syntaxContext, _) =>
+                new ServiceCandidate(
+                    (INamedTypeSymbol)syntaxContext.TargetSymbol!,
+                    syntaxContext.Attributes[0])
         );
 
         // 收集本次编译中所有 [RegisterService] 目标
@@ -29,7 +44,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(collected, static (spc, tuple) =>
         {
-            var (attrContexts, compilation) = (tuple.Left, tuple.Right);
+            var (serviceCandidates, compilation) = (tuple.Left, tuple.Right);
 
             var servicesSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.DependencyInjection.IServiceCollection");
             if (servicesSymbol is null)
@@ -37,24 +52,18 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
             var registrations = new StringBuilder();
 
-            foreach (var ctx in attrContexts)
+            foreach (var candidate in serviceCandidates)
             {
-                if (ctx.TargetSymbol is not INamedTypeSymbol typeSymbol)
-                    continue;
+                var typeSymbol = candidate.Type;
 
                 // 只处理当前项目源码中的类型，避免跨项目“公共库”被自动注册
                 if (!typeSymbol.Locations.Any(l => l.IsInSource))
                     continue;
 
-                var attrData = ctx.Attributes.FirstOrDefault(a =>
-                    a.AttributeClass?.ToDisplayString() == RegisterServiceAttributeMetadataName);
-
-                if (attrData is null)
-                    continue;
-
                 if (typeSymbol.TypeKind != TypeKind.Class || typeSymbol.IsAbstract)
                     continue;
 
+                var attrData = candidate.Attribute;
                 var lifetime = GetLifetime(attrData) ?? "Transient";
                 var keyExpr = GetKeyExpression(attrData);
 
@@ -233,22 +242,24 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
     {
         foreach (var pair in attr.NamedArguments)
         {
-            var key = pair.Key;
-            var value = pair.Value;
+            if (pair.Key != "Key")
+                continue;
 
-            if (key == "Key")
-            {
-                if (value.Value is null)
-                    return null;
+            var typedConstant = pair.Value;
 
-                return value.Value switch
-                {
-                    string s => SymbolDisplay.FormatPrimitive(s, quoteStrings: true, useHexadecimalNumbers: false),
-                    int i => i.ToString(),
-                    long l => l.ToString(),
-                    _ => null
-                };
-            }
+            // 显式为 null，则视为没有 Key
+            if (typedConstant.Value is null)
+                return null;
+
+            // 使用 Roslyn 自带的 ToCSharpString 生成常量/typeof/枚举等表达式，
+            // 这样可以支持 string、数字、bool、enum、typeof(...) 等所有合法属性值。
+            var expr = typedConstant.ToCSharpString();
+
+            // 保险起见，防止出现字面量 "null"
+            if (string.Equals(expr, "null", StringComparison.Ordinal))
+                return null;
+
+            return expr;
         }
 
         return null;

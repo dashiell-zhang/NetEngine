@@ -137,23 +137,28 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             sb.Append("public static partial class ").Append(extClassName).AppendLine();
             sb.AppendLine("{");
 
-            // 每个项目统一生成自己的 Add{Assembly}RegisterServices 扩展方法
-            sb.Append("    public static IServiceCollection ")
-              .Append(methodName)
-              .AppendLine("(this IServiceCollection services)");
-            sb.AppendLine("    {");
-            sb.Append(registrations);
-            sb.AppendLine("        return services;");
-            sb.AppendLine("    }");
+            var hasLocalRegistrations = registrations.Length > 0;
+            if (hasLocalRegistrations)
+            {
+                // 每个项目统一生成自己的 Add{Assembly}RegisterServices 扩展方法
+                sb.Append("    public static IServiceCollection ")
+                  .Append(methodName)
+                  .AppendLine("(this IServiceCollection services)");
+                sb.AppendLine("    {");
+                sb.Append(registrations);
+                sb.AppendLine("        return services;");
+                sb.AppendLine("    }");
+            }
 
             // 对于启动项目，额外生成一个聚合的 BatchRegisterServices 方法，
             // 自动调用当前项目及所有引用项目的 RegisterServices_{AssemblyName}。
             if (isStartupLike)
             {
-                var methodNamesToInvoke = new System.Collections.Generic.List<string>
+                var methodNamesToInvoke = new System.Collections.Generic.List<string>();
+                if (hasLocalRegistrations)
                 {
-                    methodName
-                };
+                    methodNamesToInvoke.Add(methodName);
+                }
 
                 foreach (var reference in compilation.References)
                 {

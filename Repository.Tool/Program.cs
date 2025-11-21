@@ -24,7 +24,7 @@ namespace Repository.Tool
                             options.UseNpgsql(dataSourceBuilder.Build(), x => x.MigrationsAssembly("Repository.Tool"));
                         });
 
-                        services.AddRepository_ToolBackgroundServices();
+                        services.BatchRegisterBackgroundServices();
 
                     }).Build();
 

@@ -59,6 +59,7 @@ namespace TaskService
                     services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options => { }, maxPoolSize);
 
                     services.BatchRegisterServices();
+                    services.BatchRegisterBackgroundServices();
 
 
                     //注册所有 TaskBase的子类

@@ -49,6 +49,7 @@ namespace Admin.WebAPI
             builder.AddCommonServices();
 
             builder.Services.BatchRegisterServices();
+            builder.Services.BatchRegisterBackgroundServices();
 
 
             //注册Id生成器

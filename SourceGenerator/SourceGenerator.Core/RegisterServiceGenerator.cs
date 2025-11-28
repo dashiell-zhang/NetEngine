@@ -1,9 +1,9 @@
-using System;
-using System.Linq;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
+using System.Linq;
+using System.Text;
 
 namespace SourceGenerator.Core;
 
@@ -15,13 +15,22 @@ namespace SourceGenerator.Core;
 public sealed class RegisterServiceGenerator : IIncrementalGenerator
 {
     private const string RegisterServiceAttributeMetadataName = "SourceGenerator.Runtime.Attributes.RegisterServiceAttribute";
+
     private const string AutoProxyAttributeMetadataName = "SourceGenerator.Runtime.Attributes.AutoProxyAttribute";
 
     private sealed class ServiceCandidate
     {
+
         public INamedTypeSymbol Type { get; }
+
         public AttributeData Attribute { get; }
 
+
+        /// <summary>
+        /// 使用类型符号和特性数据初始化服务候选项
+        /// </summary>
+        /// <param name="type">标记了 RegisterService 的类型</param>
+        /// <param name="attribute">该类型上的 RegisterService 特性</param>
         public ServiceCandidate(INamedTypeSymbol type, AttributeData attribute)
         {
             Type = type;
@@ -29,19 +38,35 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         }
     }
 
-    private static bool HasAutoProxy(INamedTypeSymbol typeSymbol)
+
+    /// <summary>
+    /// 判断某个类型是否标记了 AutoProxy 特性
+    /// </summary>
+    /// <param name="typeSymbol">要检查的类型</param>
+    /// <param name="autoProxyAttributeSymbol">AutoProxy 特性的类型符号</param>
+    /// <returns>如果类型上存在 AutoProxy 特性则返回 true</returns>
+    private static bool HasAutoProxy(INamedTypeSymbol typeSymbol, INamedTypeSymbol? autoProxyAttributeSymbol)
     {
+
+        if (autoProxyAttributeSymbol is null)
+            return false;
+
         foreach (var attr in typeSymbol.GetAttributes())
         {
-            if (attr.AttributeClass?.ToDisplayString() == AutoProxyAttributeMetadataName)
+            if (SymbolEqualityComparer.Default.Equals(attr.AttributeClass, autoProxyAttributeSymbol))
                 return true;
         }
 
         return false;
     }
 
+
+    /// <summary>
+    /// 初始化增量生成器，配置基于 RegisterService 特性生成 DI 注册代码的管道
+    /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        // 使用 ForAttributeWithMetadataName 直接筛选出带有 [RegisterService] 的类型，避免手动遍历语法树
         var candidates = context.SyntaxProvider.ForAttributeWithMetadataName(
             RegisterServiceAttributeMetadataName,
             static (node, _) => node is ClassDeclarationSyntax,
@@ -56,11 +81,17 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(collected, static (spc, tuple) =>
         {
+            // serviceCandidates 为本次编译中所有打了 [RegisterService] 的类型及其特性数据
             var (serviceCandidates, compilation) = (tuple.Left, tuple.Right);
 
+            // 没有引用依赖注入扩展包时无需生成任何代码
             var servicesSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.DependencyInjection.IServiceCollection");
+
             if (servicesSymbol is null)
                 return;
+
+            // 通过 MetadataName 获取 AutoProxy 特性类型符号，用于后续符号级比较
+            var autoProxyAttributeSymbol = compilation.GetTypeByMetadataName(AutoProxyAttributeMetadataName);
 
             var registrations = new StringBuilder();
 
@@ -79,9 +110,9 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 var lifetime = GetLifetime(attrData) ?? "Transient";
                 var keyExpr = GetKeyExpression(attrData);
 
-                var hasAutoProxy = HasAutoProxy(typeSymbol);
+                var hasAutoProxy = HasAutoProxy(typeSymbol, autoProxyAttributeSymbol);
 
-                // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型。
+                // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型
                 string implDisplay;
                 if (hasAutoProxy)
                 {
@@ -114,13 +145,16 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             }
 
             var assemblyName = compilation.AssemblyName ?? "Assembly";
+
             var safeAssemblyName = SanitizeIdentifier(assemblyName);
+
             // 命名空间统一为 NetEngine.Generated，通过不同的方法名区分不同程序集：
             // RegisterServices_{AssemblyName}
             var ns = "NetEngine.Generated";
             var extClassName = "ServiceCollectionExtensions";
             var methodName = "RegisterServices_" + safeAssemblyName;
 
+            // 启动项目（控制台 / 桌面应用等）才会生成聚合的 BatchRegisterServices
             var isStartupLike = compilation.Options.OutputKind is OutputKind.ConsoleApplication
                                 or OutputKind.WindowsApplication
                                 or OutputKind.WindowsRuntimeApplication;
@@ -140,6 +174,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             sb.AppendLine("{");
 
             var hasLocalRegistrations = registrations.Length > 0;
+
             if (hasLocalRegistrations)
             {
                 // 每个项目统一生成自己的 Add{Assembly}RegisterServices 扩展方法
@@ -157,6 +192,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             if (isStartupLike)
             {
                 var methodNamesToInvoke = new System.Collections.Generic.List<string>();
+
                 if (hasLocalRegistrations)
                 {
                     methodNamesToInvoke.Add(methodName);
@@ -211,15 +247,26 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         });
     }
 
+
+    /// <summary>
+    /// 根据生命周期、Key、服务接口和实现类型构造 DI 注册调用代码
+    /// </summary>
+    /// <param name="lifetime">服务生命周期字符串：Singleton / Scoped / Transient</param>
+    /// <param name="keyExpr">Key 对应的 C# 表达式（用于 Keyed 服务）</param>
+    /// <param name="ifaceDisplay">作为 TService 使用的类型显示名，可为空表示自注册</param>
+    /// <param name="implDisplay">实现类型的完全限定名</param>
+    /// <returns>完整的扩展方法调用代码字符串</returns>
     private static string BuildRegistrationCall(string lifetime, string? keyExpr, string? ifaceDisplay, string implDisplay)
     {
         var hasInterface = !string.IsNullOrWhiteSpace(ifaceDisplay);
+
         var hasKey = !string.IsNullOrWhiteSpace(keyExpr);
 
         var sb = new StringBuilder("services.");
 
         if (!hasKey)
         {
+            // 普通（非 Keyed）注册：AddSingleton/AddScoped/AddTransient
             sb.Append(lifetime switch
             {
                 "Singleton" => "AddSingleton",
@@ -238,6 +285,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         }
         else
         {
+            // Keyed 注册：AddKeyedSingleton/AddKeyedScoped/AddKeyedTransient
             sb.Append(lifetime switch
             {
                 "Singleton" => "AddKeyedSingleton",
@@ -260,6 +308,12 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
+
+    /// <summary>
+    /// 从 RegisterService 特性中读取并转换 ServiceLifetime 枚举值
+    /// </summary>
+    /// <param name="attr">RegisterService 特性数据</param>
+    /// <returns>生命周期字符串，或在未指定时返回 null</returns>
     private static string? GetLifetime(AttributeData attr)
     {
         foreach (var pair in attr.NamedArguments)
@@ -282,6 +336,12 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         return null;
     }
 
+
+    /// <summary>
+    /// 从特性的命名参数中提取 Key，并生成对应的 C# 表达式字符串
+    /// </summary>
+    /// <param name="attr">RegisterService 特性数据</param>
+    /// <returns>Key 的 C# 表达式字符串；未设置或显式为 null 时返回 null</returns>
     private static string? GetKeyExpression(AttributeData attr)
     {
         foreach (var pair in attr.NamedArguments)
@@ -309,8 +369,15 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         return null;
     }
 
+
+    /// <summary>
+    /// 将给定名称转换为合法的 C# 标识符，用于生成方法名后缀
+    /// </summary>
+    /// <param name="name">原始名称（通常为程序集名）</param>
+    /// <returns>可安全用于标识符的位置的名称</returns>
     private static string SanitizeIdentifier(string name)
     {
+        // 将程序集名称转换为合法的 C# 标识符，用于生成方法名后缀
         var builder = new StringBuilder(name.Length);
         if (name.Length == 0)
             return "_";
@@ -327,4 +394,5 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
         return builder.ToString();
     }
+
 }

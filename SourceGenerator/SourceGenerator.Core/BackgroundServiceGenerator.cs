@@ -1,9 +1,9 @@
-using System;
-using System.Linq;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
+using System.Linq;
+using System.Text;
 
 namespace SourceGenerator.Core;
 
@@ -14,22 +14,47 @@ namespace SourceGenerator.Core;
 [Generator(LanguageNames.CSharp)]
 public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 {
+
+    /// <summary>
+    /// 初始化增量生成器，配置语法筛选与源代码输出管道
+    /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // 只关心类声明
-        var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider(
-            static (node, _) => node is ClassDeclarationSyntax,
-            static (syntaxContext, _) => syntaxContext.Node as ClassDeclarationSyntax
-        );
+        // 语法阶段只关心类声明，并尽早做语义过滤，减少后续处理量
+        var candidateTypes = context.SyntaxProvider.CreateSyntaxProvider(
+                static (node, _) => node is ClassDeclarationSyntax,
+                static (syntaxContext, _) =>
+                {
+                    if (syntaxContext.Node is not ClassDeclarationSyntax classDeclaration)
+                        return null;
 
-        // 将类声明与编译对象组合，便于在输出阶段做语义分析
-        var collected = classDeclarations.Collect().Combine(context.CompilationProvider);
+                    if (syntaxContext.SemanticModel.GetDeclaredSymbol(classDeclaration) is not INamedTypeSymbol typeSymbol)
+                        return null;
 
-        context.RegisterSourceOutput(collected, static (spc, tuple) =>
+                    // 只处理当前项目源码中的 public 非抽象类（保持与原逻辑一致）
+                    if (!typeSymbol.Locations.Any(l => l.IsInSource))
+                        return null;
+                    if (typeSymbol.TypeKind != TypeKind.Class || typeSymbol.IsAbstract)
+                        return null;
+                    if (typeSymbol.DeclaredAccessibility != Accessibility.Public)
+                        return null;
+
+                    return typeSymbol;
+                })
+            .Where(static type => type is not null)!
+            .Select(static (type, _) => type!)
+            .Collect()
+            .Combine(context.CompilationProvider);
+
+
+        context.RegisterSourceOutput(candidateTypes, static (spc, tuple) =>
         {
-            var (classNodes, compilation) = (tuple.Left, tuple.Right);
 
+            var (typeSymbols, compilation) = (tuple.Left, tuple.Right);
+
+            // 通过 MetadataName 拿到需要用到的框架类型符号
             var bgServiceSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.Hosting.BackgroundService");
+
             var servicesSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.DependencyInjection.IServiceCollection");
 
             if (bgServiceSymbol is null || servicesSymbol is null)
@@ -38,26 +63,14 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                 return;
             }
 
+            // registrations 负责收集最终生成代码中的 services.AddHostedService<T>() 调用
             var registrations = new StringBuilder();
+
+            // seenTypes 用于避免同一个符号被重复注册（例如多次局部声明等极端情况）
             var seenTypes = new System.Collections.Generic.HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
 
-            foreach (var node in classNodes)
+            foreach (var typeSymbol in typeSymbols)
             {
-                if (node is null)
-                    continue;
-
-                var model = compilation.GetSemanticModel(node.SyntaxTree);
-                if (model.GetDeclaredSymbol(node) is not INamedTypeSymbol typeSymbol)
-                    continue;
-
-                // 只处理当前项目源码中的 public 非抽象类
-                if (!typeSymbol.Locations.Any(l => l.IsInSource))
-                    continue;
-                if (typeSymbol.TypeKind != TypeKind.Class || typeSymbol.IsAbstract)
-                    continue;
-                if (typeSymbol.DeclaredAccessibility != Accessibility.Public)
-                    continue;
-
                 if (!InheritsFrom(typeSymbol, bgServiceSymbol))
                     continue;
 
@@ -65,17 +78,24 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                     continue;
 
                 var implDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
                 var call = BuildBackgroundRegistrationCall(implDisplay);
+
                 registrations.Append("        ").AppendLine(call);
             }
 
             var assemblyName = compilation.AssemblyName ?? "Assembly";
+
             var safeAssemblyName = SanitizeIdentifier(assemblyName);
+
             var ns = "NetEngine.Generated";
+
             var extClassName = "ServiceCollectionExtensions";
+
             // 每个模块统一生成 RegisterBackgroundServices_{AssemblyName}
             var methodName = "RegisterBackgroundServices_" + safeAssemblyName;
 
+            // 仅在“可作为启动入口”的项目中生成聚合的 BatchRegisterBackgroundServices
             var isStartupLike = compilation.Options.OutputKind is OutputKind.ConsoleApplication
                                 or OutputKind.WindowsApplication
                                 or OutputKind.WindowsRuntimeApplication;
@@ -118,6 +138,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                     methodNamesToInvoke.Add(methodName);
                 }
 
+                // 遍历所有引用的程序集，尝试发现它们是否也生成了对应的 RegisterBackgroundServices_xxx 扩展方法
                 foreach (var reference in compilation.References)
                 {
                     if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol asm)
@@ -132,6 +153,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                         continue;
 
                     var referencedSafeName = SanitizeIdentifier(asm.Name);
+
                     var refMethodName = "RegisterBackgroundServices_" + referencedSafeName;
 
                     var hasMethod = extType
@@ -145,6 +167,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
                     if (hasMethod)
                     {
+                        // 把存在注册扩展方法的引用程序集记录下来，稍后统一调用
                         methodNamesToInvoke.Add(refMethodName);
                     }
                 }
@@ -166,8 +189,16 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
         });
     }
 
+
+    /// <summary>
+    /// 判断给定类型是否继承自指定的基类类型
+    /// </summary>
+    /// <param name="type">要检查的类型。</param>
+    /// <param name="baseType">目标基类类型</param>
+    /// <returns>如果 <paramref name="type"/> 沿继承链继承自 <paramref name="baseType"/>，则返回 true</returns>
     private static bool InheritsFrom(INamedTypeSymbol type, INamedTypeSymbol baseType)
     {
+        // 沿着 BaseType 链向上查找，判断是否继承自指定基类
         for (var current = type.BaseType; current is not null; current = current.BaseType)
         {
             if (SymbolEqualityComparer.Default.Equals(current, baseType))
@@ -176,6 +207,12 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
         return false;
     }
 
+
+    /// <summary>
+    /// 构造注册后台服务的 AddHostedService 调用代码片段
+    /// </summary>
+    /// <param name="implDisplay">实现类型的完全限定名</param>
+    /// <returns>形如 <c>services.AddHostedService&lt;Impl&gt;();</c> 的代码字符串</returns>
     private static string BuildBackgroundRegistrationCall(string implDisplay)
     {
         // 使用 services.AddHostedService<Impl>() 语法注册后台服务
@@ -184,8 +221,15 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
+
+    /// <summary>
+    /// 将任意字符串转换为合法的 C# 标识符，用于生成方法名等
+    /// </summary>
+    /// <param name="name">原始名称</param>
+    /// <returns>可作为标识符使用的安全名称</returns>
     private static string SanitizeIdentifier(string name)
     {
+        // 将任意程序集名称转换为合法的 C# 标识符，用于方法名的一部分
         if (string.IsNullOrEmpty(name))
             return "_";
 
@@ -202,5 +246,6 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
         return builder.ToString();
     }
+
 }
 

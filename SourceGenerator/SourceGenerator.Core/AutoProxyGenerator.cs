@@ -7,12 +7,19 @@ using System.Text;
 
 namespace SourceGenerator.Core;
 
+/// <summary>
+/// 根据 AutoProxy 特性为目标类型生成派生代理类 支持拦截调用并注入行为管道
+/// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class AutoProxyGenerator : IIncrementalGenerator
 {
+
     private const string AutoProxyAttributeMetadataName = "SourceGenerator.Runtime.Attributes.AutoProxyAttribute";
 
 
+    /// <summary>
+    /// 配置增量生成管道 注册对标记 AutoProxy 特性的类型的处理逻辑
+    /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var candidates = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -30,9 +37,11 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 return;
 
             var attrData = ctx.Attributes.FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == AutoProxyAttributeMetadataName);
+
             if (typeSymbol.TypeKind == TypeKind.Class)
             {
                 var classHandler = new ClassProxyHandler();
+
                 if (classHandler.CanHandle(typeSymbol, attrData))
                 {
                     classHandler.Execute(new HandlerContext(spc, typeSymbol, attrData));
@@ -42,11 +51,18 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 处理器执行上下文 保存生成时的编译上下文 目标类型及相关特性信息
+    /// </summary>
     private readonly struct HandlerContext
     {
         public SourceProductionContext Context { get; }
+
         public INamedTypeSymbol Type { get; }
+
         public AttributeData? Attribute { get; }
+
+
         public HandlerContext(SourceProductionContext context, INamedTypeSymbol type, AttributeData? attribute)
         {
             Context = context;
@@ -56,15 +72,26 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
     }
 
 
-
+    /// <summary>
+    /// 针对类类型的代理生成处理器 负责生成派生代理类源码
+    /// </summary>
     private sealed class ClassProxyHandler
     {
+
         private const string ProxyBehaviorAttributeMetadataName = "SourceGenerator.Runtime.Attributes.ProxyBehaviorAttribute";
 
+
+        /// <summary>
+        /// 判断当前处理器是否可以处理给定类型
+        /// </summary>
         public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
             => type.TypeKind == TypeKind.Class
                && type.Constructors.Any(c => c.DeclaredAccessibility == Accessibility.Public);
 
+
+        /// <summary>
+        /// 执行代理生成逻辑 并将生成结果输出到编译上下文
+        /// </summary>
         public void Execute(in HandlerContext ctx)
         {
             var src = GenerateDerivedProxy(ctx.Type);
@@ -72,13 +99,17 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             ctx.Context.AddSource(hint, src);
         }
 
+
+        /// <summary>
+        /// 为指定类生成派生代理类的完整源码
+        /// </summary>
         private static string GenerateDerivedProxy(INamedTypeSymbol cls)
         {
             var ns = cls.ContainingNamespace.IsGlobalNamespace
                 ? "NetEngine.Generated"
                 : cls.ContainingNamespace.ToDisplayString();
 
-            // Fully qualified name with and without global:: prefix
+            // 使用包含和不包含 global:: 前缀的完全限定类型名
             var classFullFq = cls.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var classFull = classFullFq.Replace("global::", string.Empty);
             var proxyName = cls.Name + "_Proxy";
@@ -92,39 +123,45 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine();
 
 
-            // proxy class derives from original implementation; only list interfaces that we will explicitly implement in this proxy
+            // 代理类继承原始实现类型 只列出需要在代理中显式实现的接口
             var minimalInterfaces = GetInterfacesNeedingExplicitImplementations(cls);
             var ifaceList = minimalInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", minimalInterfaces);
-            // Derive from fully-qualified base type to avoid resolution issues, especially for global namespace or nested types
+            
+            // 使用完全限定的基类类型 避免全局命名空间或嵌套类型的解析问题
             sb.Append("public sealed class ").Append(proxyName).Append(typeParamsDecl).Append(" : ").Append(classFullFq).Append(ifaceList).AppendLine();
+            
             if (!string.IsNullOrWhiteSpace(typeParamConstraints)) sb.Append(typeParamConstraints);
+            
             sb.AppendLine("{")
               .AppendLine("    private readonly global::System.IServiceProvider? __sp;")
               .AppendLine();
 
-            // constructors: mirror base public/protected ctors; also add overloads with IServiceProvider if not already leading
+            // 构造函数生成规则 镜像基类公开构造函数 并在必要时添加以 IServiceProvider 开头的重载
             foreach (var ctor in cls.Constructors)
             {
-                // Only support DI-friendly public constructors
+                // 仅支持适合依赖注入的 public 构造函数
                 if (ctor.DeclaredAccessibility != Accessibility.Public)
                     continue;
 
                 var paramList = string.Join(", ", ctor.Parameters.Select(p => FormatParameter(p, includeDefault: true)));
                 var argList = string.Join(", ", ctor.Parameters.Select(p => p.Name));
-                // plain mirror
+                
+                // 纯粹镜像基类构造函数
                 sb.Append("    public ").Append(proxyName).Append('(').Append(paramList).Append(')').AppendLine()
                   .AppendLine("        : base(" + argList + ")")
                   .AppendLine("    {")
                   .AppendLine("    }")
                   .AppendLine();
 
-                // IServiceProvider-leading overload if first param is not IServiceProvider
+                // 如果第一个参数不是 IServiceProvider 则生成以 IServiceProvider 作为首参的重载构造函数
                 var firstIsSp = ctor.Parameters.FirstOrDefault() is IParameterSymbol fp && IsType(fp.Type, "System.IServiceProvider");
+                
                 if (!firstIsSp)
                 {
                     var withSpParams = (ctor.Parameters.Length == 0)
                         ? "global::System.IServiceProvider sp"
                         : "global::System.IServiceProvider sp, " + paramList;
+                    
                     sb.Append("    public ").Append(proxyName).Append('(').Append(withSpParams).Append(')').AppendLine()
                       .AppendLine("        : base(" + argList + ")")
                       .AppendLine("    {")
@@ -134,19 +171,22 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
             }
 
-            // override virtual/abstract public instance methods
+            // 为虚方法 抽象方法和已重写的公开实例方法生成重写实现
             foreach (var method in cls.GetMembers().OfType<IMethodSymbol>())
             {
                 if (method.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise or MethodKind.StaticConstructor or MethodKind.Constructor)
                     continue;
+                
                 if (method.DeclaredAccessibility != Accessibility.Public || method.IsStatic)
                     continue;
+                
                 if (!(method.IsVirtual || method.IsAbstract || method.IsOverride))
                     continue;
+                
                 AppendDerivedOverride(sb, method, classFull, callTarget: "base");
             }
 
-            // explicit interface implementations to intercept when used via interface
+            // 为接口成员生成显式实现 使通过接口调用时也能被拦截
             foreach (var iface in cls.AllInterfaces)
             {
                 foreach (var member in iface.GetMembers())
@@ -156,24 +196,26 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         case IMethodSymbol m:
                             if (m.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise)
                                 continue;
-                            // find implementation in class
+                            // 在当前类层次结构中查找此接口成员的实现
                             var impl = cls.FindImplementationForInterfaceMember(m) as IMethodSymbol;
-                            // If the implementation in the hierarchy is an explicit interface implementation,
-                            // we cannot forward using base.Method(...). Skip generating to avoid compile-time errors.
+                            // 如果在继承层次中实现是显式接口实现
+                            // 无法通过 base.Method(...) 转发 否则会产生编译错误
+                            // 因此跳过生成对应代码
                             if (impl is not null && impl.ExplicitInterfaceImplementations.Length > 0)
                                 break;
-                            // If the implementation is already overridable, the override path will intercept calls even via interface dispatch.
-                            // In that case, generating explicit implementation is redundant; skip it to avoid re-listing the interface.
+                            // 如果实现方法本身已可被重写 通过 override 路径在接口调用时也能被拦截
+                            // 此时再生成显式接口实现是冗余的 为避免重复列出接口选择跳过
                             if (impl is not null && (impl.IsVirtual || impl.IsAbstract || impl.IsOverride))
                                 break;
                             AppendExplicitInterfaceMethod(sb, iface, m, impl, classFull);
                             break;
+                        
                         case IPropertySymbol p:
                             {
                                 var implProp = cls.FindImplementationForInterfaceMember(p) as IPropertySymbol;
                                 if (implProp is not null && implProp.ExplicitInterfaceImplementations.Length > 0)
                                     break;
-                                // If either accessor is overridable, the override path suffices.
+                                // 如果任一访问器可被重写 则通过 override 路径即可满足需求
                                 if (implProp is not null)
                                 {
                                     var gm = implProp.GetMethod; var sm = implProp.SetMethod;
@@ -184,12 +226,13 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                                 AppendExplicitInterfaceProperty(sb, iface, p, cls);
                             }
                             break;
+                        
                         case IEventSymbol e:
                             {
                                 var implEv = cls.FindImplementationForInterfaceMember(e) as IEventSymbol;
                                 if (implEv is not null && implEv.ExplicitInterfaceImplementations.Length > 0)
                                     break;
-                                // If either accessor is overridable, override path suffices.
+                                // 如果 Add 或 Remove 访问器可被重写 则仅依赖 override 路径即可
                                 if (implEv is not null)
                                 {
                                     var am = implEv.AddMethod; var rm = implEv.RemoveMethod;
@@ -208,26 +251,39 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             return sb.ToString();
         }
 
+
+        /// <summary>
+        /// 为可重写的实例方法生成派生类中的 override 方法实现 并注入日志和行为管道
+        /// </summary>
         private static void AppendDerivedOverride(StringBuilder sb, IMethodSymbol method, string typeFullName, string callTarget)
         {
+            
             var isGenericTask = method.ReturnType is INamedTypeSymbol nts && nts.IsGenericType && IsType(nts.ConstructedFrom, "System.Threading.Tasks.Task");
+            
             var isTask = method.ReturnType is INamedTypeSymbol nts0 && !nts0.IsGenericType && IsType(nts0, "System.Threading.Tasks.Task");
+            
             var isGenericValueTask = method.ReturnType is INamedTypeSymbol nts2 && nts2.IsGenericType && IsType(nts2.ConstructedFrom, "System.Threading.Tasks.ValueTask");
+            
             var isValueTask = method.ReturnType is INamedTypeSymbol nts3 && !nts3.IsGenericType && IsType(nts3, "System.Threading.Tasks.ValueTask");
+            
             var isAsyncEnumerable = (method.ReturnType is INamedTypeSymbol nts4 && nts4.IsGenericType && IsType(nts4.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable"))
                 || method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal);
+            
             var isTaskOfAsyncEnumerable = isGenericTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t1 && (
                 (t1.IsGenericType && IsType(t1.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
                 t1.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
+            
             var isValueTaskOfAsyncEnumerable = isGenericValueTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t2 && (
                 (t2.IsGenericType && IsType(t2.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
                 t2.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
+            
             if (!isTaskOfAsyncEnumerable)
             {
                 var rtText2 = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 if (rtText2.StartsWith("global::System.Threading.Tasks.Task<global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
                     isTaskOfAsyncEnumerable = true;
             }
+            
             if (!isValueTaskOfAsyncEnumerable)
             {
                 var rtText2 = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -237,14 +293,21 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var returnType = method.ReturnType
                 .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+            
             var methodName = method.Name;
+            
             var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
+            
             var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
+            
             var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name + (p.RefKind == RefKind.None ? "!" : string.Empty)));
 
             var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
+            
             var hasByRefAny = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+            
             var needsAsync = hasByRefAny && (isTask || isGenericTask || isValueTask || isGenericValueTask);
+            
             var sigReturnType = method.ReturnsVoid
                 ? "void"
                 : isByRefReturn
@@ -258,9 +321,11 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             if (method.Parameters.Length > 0)
             {
                 sb.AppendLine("        var __argsDict = new global::System.Collections.Generic.Dictionary<string, string?>(" + method.Parameters.Length + ");");
+                
                 foreach (var p in method.Parameters)
                 {
                     var isOut = p.RefKind == RefKind.Out;
+                    
                     var isRefLike = p.Type.IsRefLikeType;
                     if (isOut || isRefLike)
                     {
@@ -293,8 +358,11 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
             var hasByRef = hasByRefAny;
+            
             var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
+            
             var optionsSetters = new List<string>();
+            
             foreach (var a in method.GetAttributes())
             {
                 if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
@@ -307,22 +375,28 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     }
                 }
             }
+            
             sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+            
             var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid) || isAsyncEnumerable;
             var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
+            
             sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+            
             if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
             if (hasByRef || isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable)
             {
                 sb.AppendLine("        var __filters = new global::System.Collections.Generic.List<global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior>();");
                 sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior __f) __filters.Add(__f); }");
+                
                 if (isAsyncEnumerable)
                 {
-                    // stream wrapper around enumeration; collect per-item JSON and log aggregated result after completion
+                    // 对异步枚举结果进行包装 在迭代过程中收集每个元素的 JSON 并在完成后统一记录日志
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
+                    
                     sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tArg}> __streamWrapper(){{");
                     sb.AppendLine("            var __items = new global::System.Collections.Generic.List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
@@ -347,21 +421,26 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("        }");
                     sb.AppendLine($"        return __streamWrapper();");
                     sb.AppendLine("    }");
-                    return; // early return from method codegen since we emitted body
+                    return; // 方法体已经在前面生成 此处直接返回结束代码生成
                 }
                 if (isTask)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
+                    
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            await {callTarget}.{methodName}{typeParams}({argList});");
+                    
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (global::System.Exception __ex)");
                     sb.AppendLine("        {");
+                    
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
@@ -371,6 +450,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
+                    
                     sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tItem}> __streamWrapper(){{");
                     sb.AppendLine("            var __items = new global::System.Collections.Generic.List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
@@ -399,17 +479,22 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 else if (isGenericTask)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
+                    
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            var __res = await {callTarget}.{methodName}{typeParams}({argList});");
+                    
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (global::System.Exception __ex)");
                     sb.AppendLine("        {");
+                    
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
@@ -417,17 +502,23 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 else if (isValueTask)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
+                    
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            await {callTarget}.{methodName}{typeParams}({argList});");
+                    
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
                     sb.AppendLine("            return;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (global::System.Exception __ex)");
+                    
                     sb.AppendLine("        {");
+                    
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
@@ -439,13 +530,17 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            var __res = await {callTarget}.{methodName}{typeParams}({argList});");
+                    
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (global::System.Exception __ex)");
                     sb.AppendLine("        {");
+                    
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
@@ -457,12 +552,14 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 else if (method.ReturnsVoid)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
+                    
                     sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("        return;");
                 }
                 else
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
+                    
                     sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 }
             }
@@ -472,6 +569,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     sb.AppendLine($"        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] {{ new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior() }};")
                       .AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
@@ -505,6 +603,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
 
                 var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
+                
                 if (isTask)
                 {
                     sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
@@ -528,26 +627,31 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 else if (method.ReturnsVoid)
                 {
                     sb.AppendLine($"        {runtime}.Execute<object?>(__ctx, () => {{ {callTarget}.{methodName}{typeParams}({argList}); return global::System.Threading.Tasks.ValueTask.FromResult<object?>(null); }});");
+                    
                     sb.AppendLine("        return;");
                 }
                 else
                 {
-                    // Fallback guard: if compile-time detection missed Task/Task<T>, switch based on returnType text
+                    // 兜底保护 如果编译期检测未识别为 Task 或 Task<T> 则根据返回类型字符串进行判断
                     if (returnType.StartsWith("global::System.Threading.Tasks.Task<", StringComparison.Ordinal))
                     {
                         var tArgText = returnType.Substring("global::System.Threading.Tasks.Task<".Length);
+                        
                         tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
+                        
                         sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
                     }
                     else if (string.Equals(returnType, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
                     {
                         sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
                     }
-                    // Fallback guard: if compile-time detection missed ValueTask/ValueTask<T>, switch based on returnType text
+                    // 兜底保护 如果编译期检测未识别为 ValueTask 或 ValueTask<T> 则根据返回类型字符串进行判断
                     else if (returnType.StartsWith("global::System.Threading.Tasks.ValueTask<", StringComparison.Ordinal))
                     {
                         var tArgText = returnType.Substring("global::System.Threading.Tasks.ValueTask<".Length);
+                        
                         tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
+                        
                         sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) );");
                     }
                     else if (string.Equals(returnType, "global::System.Threading.Tasks.ValueTask", StringComparison.Ordinal))
@@ -564,33 +668,52 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("    }");
         }
 
+
+        /// <summary>
+        /// 为接口方法生成在代理类中的显式接口实现 并注入行为管道和日志逻辑
+        /// </summary>
         private static void AppendExplicitInterfaceMethod(StringBuilder sb, INamedTypeSymbol iface, IMethodSymbol method, IMethodSymbol? impl, string typeFullName)
         {
-            // Build compile-time behaviors from both interface method and implementation method attributes
+            // 在编译期根据接口方法和实现方法上的特性构建行为管道配置
             var isGenericTask = method.ReturnType is INamedTypeSymbol nts && nts.IsGenericType && IsType(nts.ConstructedFrom, "System.Threading.Tasks.Task");
+
             var isTask = method.ReturnType is INamedTypeSymbol nts0 && !nts0.IsGenericType && IsType(nts0, "System.Threading.Tasks.Task");
+
             var isGenericValueTask = method.ReturnType is INamedTypeSymbol nts2 && nts2.IsGenericType && IsType(nts2.ConstructedFrom, "System.Threading.Tasks.ValueTask");
+
             var isValueTask = method.ReturnType is INamedTypeSymbol nts3 && !nts3.IsGenericType && IsType(nts3, "System.Threading.Tasks.ValueTask");
+
             var isAsyncEnumerable = (method.ReturnType is INamedTypeSymbol nts4 && nts4.IsGenericType && IsType(nts4.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable"))
                 || method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal);
+
             var isTaskOfAsyncEnumerable = isGenericTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t1 && (
                 (t1.IsGenericType && IsType(t1.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
                 t1.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
+
             var isValueTaskOfAsyncEnumerable = isGenericValueTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t2 && (
                 (t2.IsGenericType && IsType(t2.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
                 t2.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
 
             var returnType = method.ReturnType
                 .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+
             var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
             var methodName = method.Name;
+
             var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => tp.Name)) + ">" : string.Empty;
+
             var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false)));
+
             var argList = string.Join(", ", method.Parameters.Select(p => (p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty) + p.Name + (p.RefKind == RefKind.None ? "!" : string.Empty)));
 
+
             var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
+
             var hasByRef2_head = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+
             var needsAsync2 = hasByRef2_head && (isTask || isGenericTask || isValueTask || isGenericValueTask);
+
             var sigReturnType = method.ReturnsVoid
                 ? "void"
                 : isByRefReturn
@@ -604,10 +727,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             if (method.Parameters.Length > 0)
             {
                 sb.AppendLine("        var __argsDict = new global::System.Collections.Generic.Dictionary<string, string?>(" + method.Parameters.Length + ");");
+
                 foreach (var p in method.Parameters)
                 {
                     var isOut = p.RefKind == RefKind.Out;
                     var isRefLike = p.Type.IsRefLikeType;
+
                     if (isOut || isRefLike)
                     {
                         sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = null;").AppendLine();
@@ -628,6 +753,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         }
                     }
                 }
+
                 sb.AppendLine("        object? __argsObj = __argsDict;");
             }
             else
@@ -639,20 +765,26 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("        var __logger = (__sp?.GetService(typeof(global::Microsoft.Extensions.Logging.ILoggerFactory)) as global::Microsoft.Extensions.Logging.ILoggerFactory)?.CreateLogger(\"SourceGenerator.Runtime.ProxyRuntime\");");
 
             var hasByRef2 = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+
             var behaviorSnippets = new List<string> { "new global::SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior()" };
+
             var optionsSetters = new List<string>();
+
             foreach (var a in method.GetAttributes())
             {
                 if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                 {
                     var include = !hasByRef2 || CanUseAsFilter(a);
+
                     if (include)
                     {
                         behaviorSnippets.Add($"new {behaviorFull}()");
+
                         if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
                     }
                 }
             }
+
             if (impl is not null)
             {
                 foreach (var a in impl.GetAttributes())
@@ -660,25 +792,34 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                     {
                         var include = !hasByRef2 || CanUseAsFilter(a);
+
                         if (include)
                         {
                             behaviorSnippets.Add($"new {behaviorFull}()");
+
                             if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
                         }
                     }
                 }
             }
+
             sb.AppendLine("        var __behaviors = new global::SourceGenerator.Runtime.Pipeline.IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+
             var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid) || isAsyncEnumerable;
+
             var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
+
             sb.AppendLine("        var __ctx = new global::SourceGenerator.Runtime.Pipeline.InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = global::System.Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+            
             if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
             var call = "base." + methodName + typeParams + "(" + argList + ")";
+            
             if (hasByRef2 || isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable)
             {
                 sb.AppendLine("        var __filters = new global::System.Collections.Generic.List<global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior>();");
                 sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is global::SourceGenerator.Runtime.Pipeline.IInvocationBehavior __f) __filters.Add(__f); }");
+                
                 if (isAsyncEnumerable)
                 {
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
@@ -710,6 +851,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("    }");
                     return;
                 }
+                
                 if (isTask)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
@@ -891,6 +1033,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
 
                 var runtime = "global::SourceGenerator.Runtime.ProxyRuntime";
+                
                 if (isTask)
                 {
                     sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {call});");
@@ -899,6 +1042,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    
                     sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {call});");
                 }
                 else if (isValueTask)
@@ -909,6 +1053,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    
                     sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {call} );");
                 }
                 else if (method.ReturnsVoid)
@@ -918,22 +1063,26 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else
                 {
-                    // Fallback guard: if compile-time detection missed Task/Task<T>, switch based on returnType text
+                    // 兜底保护 如果编译期检测未识别为 Task 或 Task<T> 则根据返回类型字符串进行判断
                     if (returnType.StartsWith("global::System.Threading.Tasks.Task<", StringComparison.Ordinal))
                     {
                         var tArgText = returnType.Substring("global::System.Threading.Tasks.Task<".Length);
+                       
                         tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
+                       
                         sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {call});");
                     }
                     else if (string.Equals(returnType, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
                     {
                         sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {call});");
                     }
-                    // Fallback guard: if compile-time detection missed ValueTask/ValueTask<T>, switch based on returnType text
+                    // 兜底保护 如果编译期检测未识别为 ValueTask 或 ValueTask<T> 则根据返回类型字符串进行判断
                     else if (returnType.StartsWith("global::System.Threading.Tasks.ValueTask<", StringComparison.Ordinal))
                     {
                         var tArgText = returnType.Substring("global::System.Threading.Tasks.ValueTask<".Length);
+                        
                         tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
+                        
                         sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {call} );");
                     }
                     else if (string.Equals(returnType, "global::System.Threading.Tasks.ValueTask", StringComparison.Ordinal))
@@ -950,27 +1099,42 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("    }");
         }
 
+
+        /// <summary>
+        /// 为接口属性生成在代理类中的显式接口实现 直接转发到基类属性
+        /// </summary>
         private static void AppendExplicitInterfaceProperty(StringBuilder sb, INamedTypeSymbol iface, IPropertySymbol prop, INamedTypeSymbol cls)
         {
             var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
             var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
             sb.Append("    ").Append(typeName).Append(' ').Append(ifaceDisplay).Append('.').Append(prop.Name).AppendLine()
               .AppendLine("    {");
+
             if (prop.GetMethod is not null)
             {
                 sb.AppendLine("        get => base." + prop.Name + ";");
             }
+
             if (prop.SetMethod is not null)
             {
                 sb.AppendLine("        set => base." + prop.Name + " = value;");
             }
+
             sb.AppendLine("    }");
         }
 
+
+        /// <summary>
+        /// 为接口事件生成在代理类中的显式接口实现 直接转发到基类事件
+        /// </summary>
         private static void AppendExplicitInterfaceEvent(StringBuilder sb, INamedTypeSymbol iface, IEventSymbol ev, INamedTypeSymbol cls)
         {
             var typeName = ev.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
             var ifaceDisplay = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
             sb.Append("    event ").Append(typeName).Append(' ').Append(ifaceDisplay).Append('.').Append(ev.Name).AppendLine()
               .AppendLine("    {")
               .AppendLine("        add => base." + ev.Name + " += value;")
@@ -978,25 +1142,35 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
               .AppendLine("    }");
         }
 
+
+        /// <summary>
+        /// 从行为特性中提取行为类型和可选配置初始化代码
+        /// </summary>
         private static bool TryGetBehaviorSpec(AttributeData a, out string behaviorFull, out string? optSetter)
         {
             behaviorFull = string.Empty;
             optSetter = null;
             var attrClass = a.AttributeClass as INamedTypeSymbol;
+
             if (attrClass is null) return false;
+
             INamedTypeSymbol? proxyBase = null;
+
             for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
             {
                 var constructed = t.ConstructedFrom ?? t;
                 if (constructed is INamedTypeSymbol nt && IsNamedType(nt, "SourceGenerator.Runtime.Attributes", "ProxyBehaviorAttribute"))
                 {
-                    proxyBase = t; // keep the concrete generic base to read TypeArguments
+                    proxyBase = t; // 保留具体泛型基类 以便读取 TypeArguments 信息
                     break;
                 }
             }
+
             if (proxyBase is null) return false;
+
             ITypeSymbol? behaviorTypeSymbol = null;
             INamedTypeSymbol? optionsTypeSymbol = null;
+
             if (proxyBase.IsGenericType)
             {
                 if (proxyBase.TypeArguments.Length == 1)
@@ -1009,8 +1183,11 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     optionsTypeSymbol = proxyBase.TypeArguments[1] as INamedTypeSymbol;
                 }
             }
+
             if (behaviorTypeSymbol is null) return false;
+
             behaviorFull = behaviorTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
             if (optionsTypeSymbol is not null)
             {
                 var assigns = new List<string>();
@@ -1027,15 +1204,23 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 var init = assigns.Count > 0 ? " { " + string.Join(", ", assigns) + " }" : string.Empty;
                 optSetter = $"__ctx.SetFeature(new {optFull}{init});";
             }
+
             return true;
         }
 
+
+        /// <summary>
+        /// 判断行为特性对应的行为类型是否实现同步过滤接口 从而可参与带 ref 的同步调用管道
+        /// </summary>
         private static bool CanUseAsFilter(AttributeData a)
         {
-            // Try to determine if the behavior type implements IInvocationBehavior (sync filter) so it can participate in by-ref sync path
+            // 尝试判断行为类型是否实现 IInvocationBehavior 以便在带 ref 的同步调用路径中参与过滤
             var attrClass = a.AttributeClass as INamedTypeSymbol;
+
             if (attrClass is null) return false;
+
             INamedTypeSymbol? proxyBase = null;
+
             for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
             {
                 var constructed = t.ConstructedFrom ?? t;
@@ -1045,12 +1230,16 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     break;
                 }
             }
+
             if (proxyBase is null) return false;
+
             ITypeSymbol? behaviorTypeSymbol = null;
+
             if (proxyBase.IsGenericType && proxyBase.TypeArguments.Length >= 1)
             {
                 behaviorTypeSymbol = proxyBase.TypeArguments[0];
             }
+
             if (behaviorTypeSymbol is INamedTypeSymbol nts)
             {
                 foreach (var itf in nts.AllInterfaces)
@@ -1058,17 +1247,26 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     if (IsType(itf, "SourceGenerator.Runtime.Pipeline.IInvocationBehavior")) return true;
                 }
             }
+
             return false;
         }
 
+
+        /// <summary>
+        /// 将 Roslyn 参数符号格式化为 C# 方法参数文本 可选择是否包含默认值
+        /// </summary>
         private static string FormatParameter(IParameterSymbol p, bool includeDefault)
         {
             var type = p.Type
                 .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+
             var mod = p.RefKind == RefKind.Ref ? "ref " : p.RefKind == RefKind.Out ? "out " : p.RefKind == RefKind.In ? "in " : string.Empty;
-            // Preserve DI-relevant parameter attributes (e.g., FromKeyedServices/FromServices)
+
+            // 保留与依赖注入相关的参数特性 例如 FromKeyedServices 和 FromServices
             var attrPrefix = BuildParameterAttributesPrefix(p);
+
             string @default = string.Empty;
+
             if (includeDefault && p.HasExplicitDefaultValue)
             {
                 if (p.ExplicitDefaultValue is null)
@@ -1097,30 +1295,41 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     @default = " = " + p.ExplicitDefaultValue.ToString();
                 }
             }
+
             return attrPrefix + mod + type + " " + p.Name + @default;
         }
 
+
+        /// <summary>
+        /// 构建参数前缀中的特性文本 主要用于保留依赖注入相关的绑定特性
+        /// </summary>
         private static string BuildParameterAttributesPrefix(IParameterSymbol p)
         {
             if (p is null) return string.Empty;
+
             var attrs = p.GetAttributes();
+
             if (attrs.Length == 0) return string.Empty;
 
             var sb = new StringBuilder();
+
             foreach (var attr in attrs)
             {
                 if (attr.AttributeClass is not INamedTypeSymbol at) continue;
-                // Only forward DI-binding related attributes that affect parameter resolution
-                //  - Microsoft.Extensions.DependencyInjection.FromKeyedServicesAttribute(object key)
-                //  - Microsoft.Extensions.DependencyInjection.FromServicesAttribute()
+
+                // 仅转发影响参数解析的依赖注入绑定特性
+                //  - 表示按键解析服务的 Microsoft.Extensions.DependencyInjection.FromKeyedServicesAttribute(object key)
+                //  - 表示从容器解析服务的 Microsoft.Extensions.DependencyInjection.FromServicesAttribute()
                 if (IsNamedType(at, "Microsoft.Extensions.DependencyInjection", "FromKeyedServicesAttribute"))
                 {
-                    // Single ctor arg: the key (object?)
+
+                    // 构造函数只有一个参数 作为键值 object?
                     var keyText = FormatTypedConstant(attr.ConstructorArguments.FirstOrDefault());
                     sb.Append("[global::Microsoft.Extensions.DependencyInjection.FromKeyedServices(")
                       .Append(keyText)
                       .Append(")] ");
-                    // We'll append as raw later; for now continue
+
+                    // 具体初始化代码稍后直接拼接 此处先跳过
                 }
                 else if (IsNamedType(at, "Microsoft.Extensions.DependencyInjection", "FromServicesAttribute"))
                 {
@@ -1129,143 +1338,188 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
 
             var result = sb.ToString();
+
             return result;
         }
 
+
+        /// <summary>
+        /// 将 TypedConstant 转换为对应的 C# 字面量字符串
+        /// </summary>
         private static string FormatTypedConstant(TypedConstant constant)
         {
             if (constant.IsNull) return "null";
+
             try
             {
                 var v = constant.Value;
+
                 if (v is null) return "null";
-                // Preserve enum constants as fully-qualified Enum.Member when possible
+
+                // 尽量将枚举常量序列化为完全限定的 Enum.Member 形式
                 if (constant.Type is INamedTypeSymbol enumType && enumType.TypeKind == TypeKind.Enum)
                 {
                     var fqEnum = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
                     var field = enumType.GetMembers()
                         .OfType<IFieldSymbol>()
                         .FirstOrDefault(f => f.HasConstantValue && Equals(f.ConstantValue, v));
+
                     if (field is not null)
                     {
                         return fqEnum + "." + field.Name;
                     }
-                    // Fallback: cast from numeric literal to enum type
+
+                    // 兜底方案 将数值字面量强制转换为枚举类型
                     var numText = (v is IFormattable ff)
                         ? ff.ToString(null, System.Globalization.CultureInfo.InvariantCulture) ?? "0"
                         : v.ToString() ?? "0";
+
                     return "(" + fqEnum + ")" + numText;
                 }
                 return v switch
                 {
                     string s => "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"",
+
                     char ch => "'" + (ch == '\'' ? "\\'" : ch.ToString()) + "'",
+
                     bool b => b ? "true" : "false",
+
                     IFormattable f => f.ToString(null, System.Globalization.CultureInfo.InvariantCulture) ?? "null",
+
                     _ => v.ToString() ?? "null"
                 };
             }
             catch
             {
-                // Fallback to a neutral representation
+                // 发生异常时回退到通用的中性表示
                 return "null";
             }
         }
 
+
+        /// <summary>
+        /// 判断给定类型在完全限定名层面是否等于指定元数据名称
+        /// </summary>
         private static bool IsType(ITypeSymbol t, string metadataName)
         {
-            // Compare fully-qualified names for exact match; handle generic by comparing the unconstructed definition
+            // 通过完全限定名进行精确比较 对泛型类型使用未构造的泛型定义进行比较
             if (t is INamedTypeSymbol nt)
             {
                 var open = nt.IsGenericType && nt.ConstructedFrom is INamedTypeSymbol cf ? cf : nt;
+
                 var fq = open.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
                 var expected = metadataName.StartsWith("global::", StringComparison.Ordinal)
                     ? metadataName
                     : "global::" + metadataName;
+
                 return string.Equals(fq, expected, StringComparison.Ordinal);
             }
             else
             {
                 var fq = t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
                 var expected = metadataName.StartsWith("global::", StringComparison.Ordinal)
                     ? metadataName
                     : "global::" + metadataName;
+
                 return string.Equals(fq, expected, StringComparison.Ordinal);
             }
         }
 
+
+        /// <summary>
+        /// 判断命名类型是否匹配指定的命名空间 名称以及可选泛型参数个数
+        /// </summary>
         private static bool IsNamedType(INamedTypeSymbol symbol, string @namespace, string name, int? arity = null)
         {
             var ns = GetFullNamespace(symbol.ContainingNamespace);
+
             if (!string.Equals(ns, @namespace, StringComparison.Ordinal)) return false;
+
             if (!string.Equals(symbol.Name, name, StringComparison.Ordinal)) return false;
+
             if (arity.HasValue && symbol.Arity != arity.Value) return false;
+
             return true;
         }
 
-        // Decide at compile-time whether a parameter type should be skipped from JSON serialization and replaced with a placeholder
+
+        /// <summary>
+        /// 在编译期判断参数类型是否需要跳过 JSON 序列化并用占位字符串替代
+        /// </summary>
         private static bool TryGetSkipPlaceholder(ITypeSymbol type, out string placeholder)
         {
             placeholder = "<skipped>";
 
-            // Cancellation
+            // 取消相关类型
             if (IsType(type, "System.Threading.CancellationToken")) { placeholder = "<cancellation-token>"; return true; }
             if (IsType(type, "System.Threading.CancellationTokenSource")) { placeholder = "<cancellation-token-source>"; return true; }
 
-            // Delegates
+            // 委托类型
             if (type.TypeKind == TypeKind.Delegate) { placeholder = "<delegate>"; return true; }
 
-            // Streams / Readers / Writers
+            // 流与文本读写相关类型
             if (IsOrDerivedFrom(type, "System.IO.Stream")) { placeholder = "<stream>"; return true; }
             if (IsOrDerivedFrom(type, "System.IO.TextReader")) { placeholder = "<text-reader>"; return true; }
             if (IsOrDerivedFrom(type, "System.IO.TextWriter")) { placeholder = "<text-writer>"; return true; }
 
-            // Pipelines
+            // 管道相关类型 System.IO.Pipelines
             if (IsType(type, "System.IO.Pipelines.PipeReader")) { placeholder = "<pipe-reader>"; return true; }
             if (IsType(type, "System.IO.Pipelines.PipeWriter")) { placeholder = "<pipe-writer>"; return true; }
 
-            // Channels (generic definitions)
+            // 通道相关泛型类型 System.Threading.Channels
             if (IsOrDerivedFromGeneric(type, "System.Threading.Channels", "ChannelReader", 1)) { placeholder = "<channel-reader>"; return true; }
             if (IsOrDerivedFromGeneric(type, "System.Threading.Channels", "ChannelWriter", 1)) { placeholder = "<channel-writer>"; return true; }
 
-            // ASP.NET Core Http*
+            // ASP.NET Core Http 相关类型
             var ns = GetFullNamespace(type.ContainingNamespace);
             if (ns.StartsWith("Microsoft.AspNetCore.Http", StringComparison.Ordinal)) { placeholder = "<http-context>"; return true; }
 
-            // Security principals
+            // 安全主体相关类型
             if (IsType(type, "System.Security.Claims.ClaimsPrincipal") || ImplementsInterface(type, "System.Security.Principal.IPrincipal"))
             { placeholder = "<principal>"; return true; }
 
-            // DI / Logging
+            // 依赖注入和日志相关类型
             if (ImplementsInterface(type, "System.IServiceProvider")) { placeholder = "<service-provider>"; return true; }
             if (ImplementsInterfaceNamed(type, "Microsoft.Extensions.Logging", "ILogger")) { placeholder = "<logger>"; return true; }
 
-            // Database
+            // 数据库访问相关类型
             if (IsOrDerivedFrom(type, "System.Data.Common.DbConnection") || ImplementsInterface(type, "System.Data.IDbConnection"))
             { placeholder = "<db-connection>"; return true; }
             if (IsOrDerivedFrom(type, "System.Data.Common.DbTransaction")) { placeholder = "<db-transaction>"; return true; }
             if (IsOrDerivedFrom(type, "System.Data.Common.DbCommand")) { placeholder = "<db-command>"; return true; }
 
-            // HTTP
+            // HTTP 通信相关类型
             if (IsType(type, "System.Net.Http.HttpClient")) { placeholder = "<http-client>"; return true; }
             if (IsType(type, "System.Net.Http.HttpRequestMessage")) { placeholder = "<http-request>"; return true; }
             if (IsType(type, "System.Net.Http.HttpResponseMessage")) { placeholder = "<http-response>"; return true; }
 
-            // Expressions
+            // 表达式树相关类型
             if (IsOrDerivedFrom(type, "System.Linq.Expressions.Expression")) { placeholder = "<expression>"; return true; }
 
             return false;
         }
 
+
+        /// <summary>
+        /// 判断类型本身或其继承链上是否存在指定元数据名称的类型
+        /// </summary>
         private static bool IsOrDerivedFrom(ITypeSymbol type, string metadataName)
         {
             for (var t = type; t is not null; t = t.BaseType)
             {
                 if (IsType(t, metadataName)) return true;
             }
+
             return false;
         }
 
+
+        /// <summary>
+        /// 判断类型本身或其继承链上是否存在指定命名空间 名称和泛型参数个数的泛型类型
+        /// </summary>
         private static bool IsOrDerivedFromGeneric(ITypeSymbol type, string @namespace, string name, int arity)
         {
             for (var t = type; t is not null; t = t.BaseType)
@@ -1273,42 +1527,59 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 if (t is INamedTypeSymbol nt && nt.IsGenericType && IsNamedType(nt.ConstructedFrom, @namespace, name, arity))
                     return true;
             }
+
             return false;
         }
 
+
+        /// <summary>
+        /// 判断类型是否实现给定元数据名称的接口
+        /// </summary>
         private static bool ImplementsInterface(ITypeSymbol type, string metadataName)
         {
             foreach (var i in type.AllInterfaces)
             {
                 if (IsType(i, metadataName)) return true;
             }
+
             return false;
         }
 
+
+        /// <summary>
+        /// 判断类型是否实现指定命名空间和名称以及可选泛型参数个数的接口
+        /// </summary>
         private static bool ImplementsInterfaceNamed(ITypeSymbol type, string @namespace, string name, int? arity = null)
         {
             foreach (var i in type.AllInterfaces)
             {
                 if (i is INamedTypeSymbol nt && IsNamedType(nt, @namespace, name, arity)) return true;
             }
+
             return false;
         }
 
+
+        /// <summary>
+        /// 判断方法返回值类型在日志中是否允许进行序列化输出
+        /// </summary>
         private static bool IsAllowReturnSerialization(IMethodSymbol method)
         {
             var rt = method.ReturnType;
-            // Async streams: logged as placeholder, considered loggable
+
+            // 异步流类型使用占位符记录日志 视为可记录类型
             if ((rt is INamedTypeSymbol nts4 && nts4.IsGenericType && IsType(nts4.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable"))
                 || rt.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
                 return true;
 
-            // Task / ValueTask with no result
+            // 无返回值的 Task 或 ValueTask
             if (rt is INamedTypeSymbol ntsTask && !ntsTask.IsGenericType && IsType(ntsTask, "System.Threading.Tasks.Task"))
                 return false;
+
             if (rt is INamedTypeSymbol ntsVt && !ntsVt.IsGenericType && IsType(ntsVt, "System.Threading.Tasks.ValueTask"))
                 return false;
 
-            // Unwrap Task<T> / ValueTask<T>
+            // 对 Task<T> 和 ValueTask<T> 进行解包 使用其泛型参数做判断
             if (rt is INamedTypeSymbol ntsG && ntsG.IsGenericType)
             {
                 if (IsType(ntsG.ConstructedFrom, "System.Threading.Tasks.Task") || IsType(ntsG.ConstructedFrom, "System.Threading.Tasks.ValueTask"))
@@ -1319,48 +1590,82 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
 
             if (method.ReturnsVoid) return false;
+
             return IsReturnTypeLoggableCore(rt);
         }
 
+
+        /// <summary>
+        /// 判断具体类型在日志中是否适合作为返回值进行序列化记录
+        /// </summary>
         private static bool IsReturnTypeLoggableCore(ITypeSymbol type)
         {
             if (IsOrDerivedFrom(type, "System.IO.Stream")) return false;
+
             if (IsOrDerivedFrom(type, "System.IO.TextReader")) return false;
+
             if (IsOrDerivedFrom(type, "System.IO.TextWriter")) return false;
+
             if (IsType(type, "System.IO.Pipelines.PipeReader")) return false;
+
             if (IsType(type, "System.IO.Pipelines.PipeWriter")) return false;
+
             if (IsOrDerivedFromGeneric(type, "System.Threading.Channels", "ChannelReader", 1)) return false;
+
             if (IsOrDerivedFromGeneric(type, "System.Threading.Channels", "ChannelWriter", 1)) return false;
+
             if (IsOrDerivedFrom(type, "System.Data.Common.DbConnection") || ImplementsInterface(type, "System.Data.IDbConnection")) return false;
+
             if (IsOrDerivedFrom(type, "System.Data.Common.DbTransaction")) return false;
+
             if (IsOrDerivedFrom(type, "System.Data.Common.DbCommand")) return false;
+
             if (IsType(type, "System.Net.Http.HttpRequestMessage")) return false;
+
             if (IsType(type, "System.Net.Http.HttpResponseMessage")) return false;
+
             if (IsType(type, "System.Net.Http.HttpClient")) return false;
+
             if (type.TypeKind == TypeKind.Delegate) return false;
+
             if (IsOrDerivedFrom(type, "System.Linq.Expressions.Expression")) return false;
+
             if (IsType(type, "System.Security.Claims.ClaimsPrincipal") || ImplementsInterface(type, "System.Security.Principal.IPrincipal")) return false;
+
             return true;
         }
+
+
+        /// <summary>
+        /// 获取命名空间的完整限定名 对全局命名空间返回空字符串
+        /// </summary>
         private static string GetFullNamespace(INamespaceSymbol ns)
         {
             if (ns == null || ns.IsGlobalNamespace) return string.Empty;
+
             var stack = new Stack<string>();
+
             for (var n = ns; n is not null && !n.IsGlobalNamespace; n = n.ContainingNamespace)
             {
                 stack.Push(n.Name);
             }
+
             return string.Join(".", stack);
         }
 
+
+        /// <summary>
+        /// 为带 ref 或 out 参数的方法构建调用后刷新参数快照的代码片段
+        /// </summary>
         private static string BuildArgsUpdateSnippet(IMethodSymbol method)
         {
             var updates = new List<string>();
+
             foreach (var p in method.Parameters)
             {
                 if (p.RefKind != RefKind.None)
                 {
-                    // Refresh ref/out/in values in the args dict after call
+                    // 调用完成后刷新 ref out in 参数在参数字典中的值
                     if (TryGetSkipPlaceholder(p.Type, out var ph))
                     {
                         var escaped = ph.Replace("\\", "\\\\").Replace("\"", "\\\"");
@@ -1372,37 +1677,51 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     }
                 }
             }
+
             return updates.Count == 0 ? string.Empty : string.Join(" ", updates);
         }
 
+
+        /// <summary>
+        /// 构建代理类的类型参数声明部分 并统一包含外层和内层所有类型参数
+        /// </summary>
         private static string BuildTypeParametersDecl(INamedTypeSymbol cls)
         {
-            // Hoist ALL outer + inner type parameters to the proxy class declaration
+            // 将所有外层和内层类型参数统一提升到代理类声明上
             var allTps = GetAllTypeParameters(cls);
+
             if (allTps.Count == 0) return string.Empty;
             return "<" + string.Join(", ", allTps.Select(tp => tp.Name)) + ">";
         }
 
+
+        /// <summary>
+        /// 构建代理类的类型参数约束部分 为所有提升的类型参数添加约束
+        /// </summary>
         private static string BuildTypeParameterConstraints(INamedTypeSymbol cls)
         {
-            // Apply constraints for ALL hoisted type parameters (including outer types)
+            // 为所有提升后的类型参数应用约束 包含外层类型的参数
             var allTps = GetAllTypeParameters(cls);
+
             if (allTps.Count == 0) return string.Empty;
             var sb = new StringBuilder();
             foreach (var tp in allTps)
             {
                 var parts = new List<string>();
-                // Primary constraints first
+
+                // 先输出 primary 约束 值类型 结构体等
                 if (tp.HasReferenceTypeConstraint) parts.Add("class");
                 if (tp.HasUnmanagedTypeConstraint) parts.Add("unmanaged");
                 if (tp.HasValueTypeConstraint) parts.Add("struct");
                 if (tp.HasNotNullConstraint) parts.Add("notnull");
-                // Specific type/interface constraints
+
+                // 然后输出具体的类型或接口约束
                 foreach (var ct in tp.ConstraintTypes)
                 {
                     parts.Add(ct.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                 }
-                // new() last
+
+                // 最后输出 new() 约束
                 if (tp.HasConstructorConstraint) parts.Add("new()");
                 if (parts.Count > 0)
                 {
@@ -1412,6 +1731,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             return sb.ToString();
         }
 
+
+        /// <summary>
+        /// 将 TypedConstant 安全地转换为 C# 源码中的字面量片段
+        /// </summary>
         private static string? ToCSharpLiteral(TypedConstant c)
         {
             if (c.IsNull) return "null";
@@ -1428,10 +1751,15 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             return c.Value?.ToString();
         }
 
+
+        /// <summary>
+        /// 为给定类型生成适合作为 AddSource 提示名的安全字符串
+        /// </summary>
         private static string GetSafeHintName(INamedTypeSymbol type)
         {
             var ns = type.ContainingNamespace.IsGlobalNamespace ? "global" : type.ContainingNamespace.ToDisplayString().Replace('.', '_');
-            // Include containing type chain with generic arity and parameter names; avoid special characters in hint
+
+            // 提示名中包含包含类型链及泛型个数和参数名 并避免使用特殊字符
             var parts = new List<string>();
             for (var t = type; t is not null; t = t.ContainingType)
             {
@@ -1445,9 +1773,13 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             return ns + "__" + string.Join("_", parts) + "__Proxy";
         }
 
+
+        /// <summary>
+        /// 收集包含类型链上的全部类型参数 按从外到内的顺序返回
+        /// </summary>
         private static List<ITypeParameterSymbol> GetAllTypeParameters(INamedTypeSymbol type)
         {
-            // Collect type parameters from outermost to innermost containing type
+            // 从最外层到最内层依次收集所有包含类型的类型参数
             var stack = new Stack<INamedTypeSymbol>();
             for (var t = type; t is not null; t = t.ContainingType)
                 stack.Push(t);
@@ -1457,6 +1789,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             return list;
         }
 
+
+        /// <summary>
+        /// 获取需要在代理类中生成显式实现的接口列表
+        /// </summary>
         private static string[] GetInterfacesNeedingExplicitImplementations(INamedTypeSymbol cls)
         {
             var set = new HashSet<string>();

@@ -1,5 +1,6 @@
 namespace SourceGenerator.Runtime.Attributes;
 
+
 /// <summary>
 /// 统一的代理行为基类 Attribute。用于在编译期把方法上的行为按声明顺序拼装进运行时管道。
 /// </summary>
@@ -17,6 +18,7 @@ public abstract class ProxyBehaviorAttribute : Attribute
     }
 }
 
+
 /// <summary>
 /// 无选项版本，便于在 Attribute 上省略 typeof(...) 的显式书写。
 /// 例如：sealed class FooAttribute : ProxyBehaviorAttribute&lt;FooBehavior&gt; { }
@@ -25,6 +27,7 @@ public abstract class ProxyBehaviorAttribute<TBehavior> : ProxyBehaviorAttribute
 {
     protected ProxyBehaviorAttribute() : base(typeof(TBehavior)) { }
 }
+
 
 /// <summary>
 /// 带选项版本。TOptions 会被生成器映射 Attribute 的同名命名参数到对应可写属性，

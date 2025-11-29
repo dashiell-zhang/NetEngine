@@ -2,6 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -52,9 +53,11 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
             var (typeSymbols, compilation) = (tuple.Left, tuple.Right);
 
-            var usingNamespaces = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+            var usingNamespaces = new HashSet<string>(StringComparer.Ordinal);
+            var nameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var registrationsInfo = new List<DisplayInfo>();
 
-            static void CollectNamespaces(System.Collections.Generic.HashSet<string> nsSet, ITypeSymbol symbol)
+            static void CollectNamespaces(HashSet<string> nsSet, ITypeSymbol symbol)
             {
                 // 处理数组类型的元素命名空间
                 if (symbol is IArrayTypeSymbol arrayType)
@@ -106,7 +109,19 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
             var registrations = new StringBuilder();
 
             // seenTypes 用于避免同一个符号被重复注册（例如多次局部声明等极端情况）
-            var seenTypes = new System.Collections.Generic.HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            var seenTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+
+            void AddCount(string name)
+            {
+                if (nameCounts.TryGetValue(name, out var count))
+                {
+                    nameCounts[name] = count + 1;
+                }
+                else
+                {
+                    nameCounts[name] = 1;
+                }
+            }
 
             foreach (var typeSymbol in typeSymbols)
             {
@@ -118,10 +133,15 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
                 CollectNamespaces(usingNamespaces, typeSymbol);
 
-                var implDisplay = GetMinimalDisplay(typeSymbol);
+                var implDisplay = GetDisplay(typeSymbol);
+                AddCount(implDisplay.Minimal);
+                registrationsInfo.Add(implDisplay);
+            }
 
-                var call = BuildBackgroundRegistrationCall(implDisplay);
-
+            foreach (var impl in registrationsInfo)
+            {
+                var display = nameCounts[impl.Minimal] > 1 ? impl.Full : impl.Minimal;
+                var call = BuildBackgroundRegistrationCall(display);
                 registrations.Append("        ").AppendLine(call);
             }
 
@@ -180,7 +200,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
             // 自动调用当前项目及所有引用项目的 RegisterBackgroundServices_{AssemblyName}。
             if (isStartupLike)
             {
-                var methodNamesToInvoke = new System.Collections.Generic.List<string>();
+                var methodNamesToInvoke = new List<string>();
 
                 // 当前程序集如果有后台服务，则优先调用本地的 RegisterBackgroundServices_{AssemblyName}
                 if (registrations.Length > 0)
@@ -272,10 +292,34 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
     }
 
 
-    private static string GetMinimalDisplay(INamedTypeSymbol typeSymbol)
+    private static DisplayInfo GetDisplay(INamedTypeSymbol typeSymbol)
     {
-        // 生成最小限定名，配合 using 输出短名称
-        return typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        // 生成最小限定名和命名空间限定名（不加 global::），供冲突时回退
+        var minimal = typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var full = typeSymbol.ToDisplayString(
+            SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
+        var ns = typeSymbol.ContainingNamespace is { IsGlobalNamespace: false }
+            ? typeSymbol.ContainingNamespace.ToDisplayString()
+            : null;
+
+        return new DisplayInfo(minimal, full, ns);
+    }
+
+
+    private sealed class DisplayInfo
+    {
+        public DisplayInfo(string minimal, string full, string? ns)
+        {
+            Minimal = minimal;
+            Full = full;
+            Namespace = ns;
+        }
+
+        public string Minimal { get; }
+
+        public string Full { get; }
+
+        public string? Namespace { get; }
     }
 
 

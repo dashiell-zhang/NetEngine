@@ -2,6 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -84,9 +85,11 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             // serviceCandidates 为本次编译中所有打了 [RegisterService] 的类型及其特性数据
             var (serviceCandidates, compilation) = (tuple.Left, tuple.Right);
 
-            var usingNamespaces = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+            var usingNamespaces = new HashSet<string>(StringComparer.Ordinal);
+            var nameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var registrationInfos = new List<RegistrationInfo>();
 
-            static void AddNamespace(System.Collections.Generic.HashSet<string> nsSet, string? nsValue)
+            static void AddNamespace(HashSet<string> nsSet, string? nsValue)
             {
                 // 收集单个命名空间，避免空字符串污染
                 if (!string.IsNullOrWhiteSpace(nsValue))
@@ -95,7 +98,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 }
             }
 
-            static void CollectNamespaces(System.Collections.Generic.HashSet<string> nsSet, ITypeSymbol symbol)
+            static void CollectNamespaces(HashSet<string> nsSet, ITypeSymbol symbol)
             {
                 // 数组类型递归到元素类型
                 if (symbol is IArrayTypeSymbol arrayType)
@@ -143,6 +146,20 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
             var registrations = new StringBuilder();
 
+            void AddCount(string? name)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                    return;
+                if (nameCounts.TryGetValue(name, out var count))
+                {
+                    nameCounts[name] = count + 1;
+                }
+                else
+                {
+                    nameCounts[name] = 1;
+                }
+            }
+
             foreach (var candidate in serviceCandidates)
             {
                 var typeSymbol = candidate.Type;
@@ -162,9 +179,9 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 CollectNamespaces(usingNamespaces, typeSymbol);
 
                 // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型
-                var (implDisplay, implNamespace) = hasAutoProxy
+                var implInfo = hasAutoProxy
                     ? GetProxyDisplay(typeSymbol)
-                    : GetMinimalDisplay(typeSymbol);
+                    : GetDisplay(typeSymbol);
 
                 var iface = typeSymbol.AllInterfaces.FirstOrDefault();
                 if (iface is not null)
@@ -172,25 +189,41 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                     CollectNamespaces(usingNamespaces, iface);
                 }
 
+                DisplayInfo? serviceInfo = null;
+                if (iface is not null)
+                {
+                    serviceInfo = GetDisplay(iface);
+                }
+
                 // serviceDisplay: 作为泛型 TService 使用的类型
                 // 1. 优先使用第一个接口（典型接口编程场景）；
                 // 2. 如果没有接口但带 [AutoProxy]，则使用原始类类型，形成
                 //    AddScoped<Demo2Service, Demo2Service_Proxy>() 这样的注册；
                 // 3. 否则为 null，走 self 注册。
-                string? serviceDisplay = iface?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-                string? serviceNamespace = iface?.ContainingNamespace is { IsGlobalNamespace: false }
-                    ? iface.ContainingNamespace.ToDisplayString()
-                    : null;
-
-                if (serviceDisplay is null && hasAutoProxy)
+                if (serviceInfo is null && hasAutoProxy)
                 {
-                    (serviceDisplay, serviceNamespace) = GetMinimalDisplay(typeSymbol);
+                    serviceInfo = GetDisplay(typeSymbol);
                 }
 
-                AddNamespace(usingNamespaces, serviceNamespace);
-                AddNamespace(usingNamespaces, implNamespace);
+                AddNamespace(usingNamespaces, serviceInfo?.Namespace);
+                AddNamespace(usingNamespaces, implInfo.Namespace);
 
-                var call = BuildRegistrationCall(lifetime, keyExpr, serviceDisplay, implDisplay);
+                AddCount(implInfo.Minimal);
+                AddCount(serviceInfo?.Minimal);
+
+                registrationInfos.Add(new RegistrationInfo(lifetime, keyExpr, implInfo, serviceInfo));
+            }
+
+            foreach (var info in registrationInfos)
+            {
+                var implDisplay = nameCounts[info.Impl.Minimal] > 1 ? info.Impl.Full : info.Impl.Minimal;
+                var serviceDisplay = info.Service is null
+                    ? null
+                    : nameCounts[info.Service.Minimal] > 1
+                        ? info.Service.Full
+                        : info.Service.Minimal;
+
+                var call = BuildRegistrationCall(info.Lifetime, info.KeyExpr, serviceDisplay, implDisplay);
                 registrations.Append("        ").AppendLine(call);
             }
 
@@ -250,7 +283,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             // 自动调用当前项目及所有引用项目的 RegisterServices_{AssemblyName}。
             if (isStartupLike)
             {
-                var methodNamesToInvoke = new System.Collections.Generic.List<string>();
+                var methodNamesToInvoke = new List<string>();
 
                 if (hasLocalRegistrations)
                 {
@@ -307,26 +340,67 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
     }
 
 
-    private static (string Display, string? Namespace) GetMinimalDisplay(INamedTypeSymbol typeSymbol)
+    private static DisplayInfo GetDisplay(INamedTypeSymbol typeSymbol)
     {
-        // 生成最小限定名，配合 using 使用短名
-        var display = typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        // 生成最小限定名和命名空间限定名（不加 global::），供冲突时回退
+        var minimal = typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var full = typeSymbol.ToDisplayString(
+            SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
         var ns = typeSymbol.ContainingNamespace is { IsGlobalNamespace: false }
             ? typeSymbol.ContainingNamespace.ToDisplayString()
             : null;
 
-        return (display, ns);
+        return new DisplayInfo(minimal, full, ns);
     }
 
 
-    private static (string Display, string Namespace) GetProxyDisplay(INamedTypeSymbol typeSymbol)
+    private static DisplayInfo GetProxyDisplay(INamedTypeSymbol typeSymbol)
     {
         // AutoProxy 场景下的代理类型名称和命名空间
         var proxyNs = typeSymbol.ContainingNamespace is { IsGlobalNamespace: true }
             ? "NetEngine.Generated"
             : typeSymbol.ContainingNamespace.ToDisplayString();
 
-        return ($"{typeSymbol.Name}_Proxy", proxyNs);
+        var minimal = $"{typeSymbol.Name}_Proxy";
+        var full = $"{proxyNs}.{typeSymbol.Name}_Proxy";
+        return new DisplayInfo(minimal, full, proxyNs);
+    }
+
+
+    private sealed class DisplayInfo
+    {
+        public DisplayInfo(string minimal, string full, string? ns)
+        {
+            Minimal = minimal;
+            Full = full;
+            Namespace = ns;
+        }
+
+        public string Minimal { get; }
+
+        public string Full { get; }
+
+        public string? Namespace { get; }
+    }
+
+
+    private sealed class RegistrationInfo
+    {
+        public RegistrationInfo(string lifetime, string? keyExpr, DisplayInfo impl, DisplayInfo? service)
+        {
+            Lifetime = lifetime;
+            KeyExpr = keyExpr;
+            Impl = impl;
+            Service = service;
+        }
+
+        public string Lifetime { get; }
+
+        public string? KeyExpr { get; }
+
+        public DisplayInfo Impl { get; }
+
+        public DisplayInfo? Service { get; }
     }
 
 

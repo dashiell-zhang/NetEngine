@@ -1,12 +1,10 @@
-namespace DistributedLock.Redis.Models
+namespace DistributedLock.Redis.Models;
+public class RedisSetting
 {
-    public class RedisSetting
-    {
 
-        public string Configuration { get; set; }
+    public string Configuration { get; set; }
 
 
-        public string InstanceName { get; set; }
+    public string InstanceName { get; set; }
 
-    }
 }

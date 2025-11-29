@@ -5,53 +5,51 @@ using Common;
 using Microsoft.Extensions.Options;
 using SMS.AliCloud.Models;
 
-namespace SMS.AliCloud
+namespace SMS.AliCloud;
+public class AliCloudSMS(IOptionsMonitor<SMSSetting> config) : ISMS
 {
-    public class AliCloudSMS(IOptionsMonitor<SMSSetting> config) : ISMS
+
+
+    private readonly string accessKeyId = config.CurrentValue.AccessKeyId;
+
+
+    private readonly string accessKeySecret = config.CurrentValue.AccessKeySecret;
+
+
+
+    public async Task<bool> SendSMSAsync(string signName, string phone, string templateCode, Dictionary<string, string> templateParams)
     {
-
-
-        private readonly string accessKeyId = config.CurrentValue.AccessKeyId;
-
-
-        private readonly string accessKeySecret = config.CurrentValue.AccessKeySecret;
-
-
-
-        public async Task<bool> SendSMSAsync(string signName, string phone, string templateCode, Dictionary<string, string> templateParams)
+        try
         {
-            try
+            string templateParamsJson = JsonHelper.ObjectToJson(templateParams);
+
+            Config config = new()
             {
-                string templateParamsJson = JsonHelper.ObjectToJson(templateParams);
+                AccessKeyId = accessKeyId,
+                AccessKeySecret = accessKeySecret,
+                Endpoint = "dysmsapi.aliyuncs.com"
+            };
 
-                Config config = new()
-                {
-                    AccessKeyId = accessKeyId,
-                    AccessKeySecret = accessKeySecret,
-                    Endpoint = "dysmsapi.aliyuncs.com"
-                };
+            Client client = new(config);
 
-                Client client = new(config);
-
-                SendSmsRequest sendSmsRequest = new()
-                {
-                    PhoneNumbers = phone,
-                    SignName = signName,
-                    TemplateCode = templateCode,
-                    TemplateParam = templateParamsJson,
-                };
-
-                AlibabaCloud.TeaUtil.Models.RuntimeOptions runtime = new();
-
-
-                await client.SendSmsAsync(sendSmsRequest);
-
-                return true;
-            }
-            catch
+            SendSmsRequest sendSmsRequest = new()
             {
-                return false;
-            }
+                PhoneNumbers = phone,
+                SignName = signName,
+                TemplateCode = templateCode,
+                TemplateParam = templateParamsJson,
+            };
+
+            AlibabaCloud.TeaUtil.Models.RuntimeOptions runtime = new();
+
+
+            await client.SendSmsAsync(sendSmsRequest);
+
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

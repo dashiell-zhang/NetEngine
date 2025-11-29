@@ -4,117 +4,115 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using WebAPI.Core.Extensions;
 
-namespace WebAPI.Core.Filters
+namespace WebAPI.Core.Filters;
+
+
+/// <summary>
+/// 队列过滤器
+/// </summary>
+/// 
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public class QueueLimitFilter : Attribute, IAsyncActionFilter
 {
 
 
     /// <summary>
-    /// 队列过滤器
+    /// 是否使用 参数
     /// </summary>
-    /// 
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-    public class QueueLimitFilter : Attribute, IAsyncActionFilter
+    public bool IsUseParameter { get; set; }
+
+
+    /// <summary>
+    /// 是否使用 Token
+    /// </summary>
+    public bool IsUseToken { get; set; }
+
+
+    /// <summary>
+    /// 是否阻断重复请求
+    /// </summary>
+    public bool IsBlock { get; set; }
+
+
+
+    /// <summary>
+    /// 失效时长（单位秒）
+    /// </summary>
+    public int Expiry { get; set; }
+
+
+
+    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+        IDisposable? lockHandle = null;
 
-
-        /// <summary>
-        /// 是否使用 参数
-        /// </summary>
-        public bool IsUseParameter { get; set; }
-
-
-        /// <summary>
-        /// 是否使用 Token
-        /// </summary>
-        public bool IsUseToken { get; set; }
-
-
-        /// <summary>
-        /// 是否阻断重复请求
-        /// </summary>
-        public bool IsBlock { get; set; }
-
-
-
-        /// <summary>
-        /// 失效时长（单位秒）
-        /// </summary>
-        public int Expiry { get; set; }
-
-
-
-        public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        try
         {
-            IDisposable? lockHandle = null;
+            string key = context.ActionDescriptor.DisplayName!;
 
-            try
+            if (IsUseToken)
             {
-                string key = context.ActionDescriptor.DisplayName!;
+                var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
+                key = key + "_" + token;
+            }
 
-                if (IsUseToken)
+            if (IsUseParameter)
+            {
+                var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
+                key = key + "_" + parameters;
+            }
+
+            key = "QueueLimit_" + CryptoHelper.MD5HashData(key);
+
+            var distLock = context.HttpContext.RequestServices.GetRequiredService<IDistributedLock>();
+
+            while (true)
+            {
+                var expiryTime = TimeSpan.FromSeconds(60);
+
+                if (Expiry > 0)
                 {
-                    var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
-                    key = key + "_" + token;
+                    expiryTime = TimeSpan.FromSeconds(Expiry);
                 }
 
-                if (IsUseParameter)
+                lockHandle = await distLock.TryLockAsync(key, expiryTime);
+                if (lockHandle != null)
                 {
-                    var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
-                    key = key + "_" + parameters;
+                    break;
                 }
-
-                key = "QueueLimit_" + CryptoHelper.MD5HashData(key);
-
-                var distLock = context.HttpContext.RequestServices.GetRequiredService<IDistributedLock>();
-
-                while (true)
+                else
                 {
-                    var expiryTime = TimeSpan.FromSeconds(60);
-
-                    if (Expiry > 0)
+                    if (IsBlock)
                     {
-                        expiryTime = TimeSpan.FromSeconds(Expiry);
-                    }
-
-                    lockHandle = await distLock.TryLockAsync(key, expiryTime);
-                    if (lockHandle != null)
-                    {
-                        break;
+                        context.Result = new BadRequestObjectResult(new { errMsg = "请勿频繁操作" });
+                        return;
                     }
                     else
                     {
-                        if (IsBlock)
-                        {
-                            context.Result = new BadRequestObjectResult(new { errMsg = "请勿频繁操作" });
-                            return;
-                        }
-                        else
-                        {
-                            await Task.Delay(200);
-                        }
+                        await Task.Delay(200);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<QueueLimitFilter>>();
-                logger.LogError(ex, "队列限制模块异常-In");
-            }
+        }
+        catch (Exception ex)
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<QueueLimitFilter>>();
+            logger.LogError(ex, "队列限制模块异常-In");
+        }
 
-            await next();
+        await next();
 
-            try
+        try
+        {
+            if (Expiry <= 0)
             {
-                if (Expiry <= 0)
-                {
-                    lockHandle?.Dispose();
-                }
+                lockHandle?.Dispose();
             }
-            catch (Exception ex)
-            {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<QueueLimitFilter>>();
-                logger.LogError(ex, "队列限制模块异常-Out");
-            }
+        }
+        catch (Exception ex)
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<QueueLimitFilter>>();
+            logger.LogError(ex, "队列限制模块异常-Out");
         }
     }
 }

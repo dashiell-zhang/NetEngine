@@ -1,17 +1,15 @@
 using System.Security.Claims;
 
-namespace Application.Interface
+namespace Application.Interface;
+public interface IUserContext
 {
-    public interface IUserContext
-    {
 
-        public bool IsAuthenticated { get; }
+    public bool IsAuthenticated { get; }
 
 
-        public long UserId { get; }
+    public long UserId { get; }
 
 
-        public IEnumerable<Claim> Claims { get; }
+    public IEnumerable<Claim> Claims { get; }
 
-    }
 }

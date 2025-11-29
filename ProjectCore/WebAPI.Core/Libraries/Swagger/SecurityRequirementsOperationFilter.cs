@@ -2,27 +2,25 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace WebAPI.Core.Libraries.Swagger
+namespace WebAPI.Core.Libraries.Swagger;
+public class SecurityRequirementsOperationFilter : IOperationFilter
 {
-    public class SecurityRequirementsOperationFilter : IOperationFilter
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        var isHaveAuthorize = context.MethodInfo.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any() || (context.MethodInfo.DeclaringType?.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any() ?? false);
+
+        var isHaveAllowAnonymous = context.MethodInfo.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any() || (context.MethodInfo.DeclaringType?.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any() ?? false);
+
+        if (isHaveAuthorize && !isHaveAllowAnonymous)
         {
-            var isHaveAuthorize = context.MethodInfo.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any() || (context.MethodInfo.DeclaringType?.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any() ?? false);
-
-            var isHaveAllowAnonymous = context.MethodInfo.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any() || (context.MethodInfo.DeclaringType?.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any() ?? false);
-
-            if (isHaveAuthorize && !isHaveAllowAnonymous)
-            {
-                operation.Security =
-                [
-                    new() {
-                        {
-                           new OpenApiSecuritySchemeReference("bearerAuth", context.Document),[]
-                        }
+            operation.Security =
+            [
+                new() {
+                    {
+                       new OpenApiSecuritySchemeReference("bearerAuth", context.Document),[]
                     }
-                ];
-            }
+                }
+            ];
         }
     }
 }

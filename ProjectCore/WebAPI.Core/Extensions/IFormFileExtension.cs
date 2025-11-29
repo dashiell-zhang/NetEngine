@@ -1,65 +1,63 @@
 using Common;
 
-namespace WebAPI.Core.Extensions
+namespace WebAPI.Core.Extensions;
+public static class IFormFileExtension
 {
-    public static class IFormFileExtension
+
+    private static string baseDirectory = AppContext.BaseDirectory;
+
+
+    /// <summary>
+    /// 从Excel中提取List数据
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="file"></param>
+    /// <returns></returns>
+    /// <exception cref="CustomException"></exception>
+    public static List<T> ExcelToList<T>(this IFormFile file) where T : class
     {
+        var fileExtension = Path.GetExtension(file.FileName)?.ToLower();
 
-        private static string baseDirectory = AppContext.BaseDirectory;
-
-
-        /// <summary>
-        /// 从Excel中提取List数据
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="file"></param>
-        /// <returns></returns>
-        /// <exception cref="CustomException"></exception>
-        public static List<T> ExcelToList<T>(this IFormFile file) where T : class
+        if (file.Length > 0 && fileExtension == ".xlsx")
         {
-            var fileExtension = Path.GetExtension(file.FileName)?.ToLower();
+            var tempPath = Path.Combine(baseDirectory, "files");
 
-            if (file.Length > 0 && fileExtension == ".xlsx")
+            if (!Directory.Exists(tempPath))
             {
-                var tempPath = Path.Combine(baseDirectory, "files");
+                Directory.CreateDirectory(tempPath);
+            }
 
-                if (!Directory.Exists(tempPath))
+            var fullPath = Path.Combine(tempPath, string.Format("{0}{1}", Guid.NewGuid(), fileExtension));
+
+            try
+            {
+                using (FileStream fs = File.Create(fullPath))
                 {
-                    Directory.CreateDirectory(tempPath);
+                    file.CopyTo(fs);
+                    fs.Flush();
                 }
 
-                var fullPath = Path.Combine(tempPath, string.Format("{0}{1}", Guid.NewGuid(), fileExtension));
+                var dataTable = DataHelper.ExcelToDataTable(fullPath, true);
 
-                try
+                if (dataTable != null)
                 {
-                    using (FileStream fs = File.Create(fullPath))
-                    {
-                        file.CopyTo(fs);
-                        fs.Flush();
-                    }
+                    var dataList = DataHelper.DataTableToListDisplayName<T>(dataTable);
 
-                    var dataTable = DataHelper.ExcelToDataTable(fullPath, true);
-
-                    if (dataTable != null)
-                    {
-                        var dataList = DataHelper.DataTableToListDisplayName<T>(dataTable);
-
-                        return dataList;
-                    }
-                    else
-                    {
-                        throw new CustomException($"文件内容解析失败");
-                    }
+                    return dataList;
                 }
-                finally
+                else
                 {
-                    IOHelper.DeleteFile(fullPath);
+                    throw new CustomException($"文件内容解析失败");
                 }
             }
-            else
+            finally
             {
-                throw new CustomException($"文件格式不正确或文件内容为空");
+                IOHelper.DeleteFile(fullPath);
             }
+        }
+        else
+        {
+            throw new CustomException($"文件格式不正确或文件内容为空");
         }
     }
 }

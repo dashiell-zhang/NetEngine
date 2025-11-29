@@ -1,18 +1,16 @@
-namespace Application.Model.Authorize
+namespace Application.Model.Authorize;
+public class DtoGetTokenBySMS
 {
-    public class DtoGetTokenBySMS
-    {
 
-        /// <summary>
-        /// 手机号
-        /// </summary>
-        public string Phone { get; set; }
+    /// <summary>
+    /// 手机号
+    /// </summary>
+    public string Phone { get; set; }
 
 
 
-        /// <summary>
-        /// 验证码
-        /// </summary>
-        public string VerifyCode { get; set; }
-    }
+    /// <summary>
+    /// 验证码
+    /// </summary>
+    public string VerifyCode { get; set; }
 }

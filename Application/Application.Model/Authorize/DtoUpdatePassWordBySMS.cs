@@ -1,27 +1,25 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.Model.Authorize
+namespace Application.Model.Authorize;
+
+/// <summary>
+/// 通过短信修改账户密码入参
+/// </summary>
+public class DtoUpdatePasswordBySMS
 {
 
     /// <summary>
-    /// 通过短信修改账户密码入参
+    /// 短信验证码
     /// </summary>
-    public class DtoUpdatePasswordBySMS
-    {
-
-        /// <summary>
-        /// 短信验证码
-        /// </summary>
-        [Required(ErrorMessage = "短信验证码不可以为空")]
-        public string SmsCode { get; set; }
+    [Required(ErrorMessage = "短信验证码不可以为空")]
+    public string SmsCode { get; set; }
 
 
 
-        /// <summary>
-        /// 新密码
-        /// </summary>
-        [Required(ErrorMessage = "新密码不可以为空")]
-        public string NewPassword { get; set; }
+    /// <summary>
+    /// 新密码
+    /// </summary>
+    [Required(ErrorMessage = "新密码不可以为空")]
+    public string NewPassword { get; set; }
 
-    }
 }

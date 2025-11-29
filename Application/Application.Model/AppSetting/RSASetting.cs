@@ -1,11 +1,9 @@
-namespace Application.Model.AppSetting
+namespace Application.Model.AppSetting;
+public class RSASetting
 {
-    public class RSASetting
-    {
 
-        public string PublicKey { get; set; }
+    public string PublicKey { get; set; }
 
 
-        public string PrivateKey { get; set; }
-    }
+    public string PrivateKey { get; set; }
 }

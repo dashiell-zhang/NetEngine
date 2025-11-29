@@ -3,63 +3,61 @@ using Common;
 using SourceGenerator.Runtime.Attributes;
 using System.Security.Claims;
 
-namespace WebAPI.Core.Services
+namespace WebAPI.Core.Services;
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
+public class UserContext : IUserContext
 {
-    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-    public class UserContext : IUserContext
+
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+
+    private readonly Lazy<long> _userId;
+
+    private readonly Lazy<bool> _isAuthenticated;
+
+    private readonly Lazy<IEnumerable<Claim>> _claims;
+
+
+    public UserContext(IHttpContextAccessor httpContextAccessor)
     {
+        _httpContextAccessor = httpContextAccessor;
 
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        // 使用 Lazy 仅在首次访问时处理赋值
 
-
-        private readonly Lazy<long> _userId;
-
-        private readonly Lazy<bool> _isAuthenticated;
-
-        private readonly Lazy<IEnumerable<Claim>> _claims;
-
-
-        public UserContext(IHttpContextAccessor httpContextAccessor)
+        _isAuthenticated = new Lazy<bool>(() =>
         {
-            _httpContextAccessor = httpContextAccessor;
+            var isAuthenticated = _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated;
 
-            // 使用 Lazy 仅在首次访问时处理赋值
+            return isAuthenticated != null && isAuthenticated.Value;
+        });
 
-            _isAuthenticated = new Lazy<bool>(() =>
+        _userId = new Lazy<long>(() =>
+        {
+
+            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirstValue("userId");
+
+            if (long.TryParse(userIdClaim, out var userId))
             {
-                var isAuthenticated = _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated;
-
-                return isAuthenticated != null && isAuthenticated.Value;
-            });
-
-            _userId = new Lazy<long>(() =>
+                return userId;
+            }
+            else
             {
+                throw new Exception("当前上下文中无有效的 UserId");
+            }
+        });
 
-                var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirstValue("userId");
-
-                if (long.TryParse(userIdClaim, out var userId))
-                {
-                    return userId;
-                }
-                else
-                {
-                    throw new Exception("当前上下文中无有效的 UserId");
-                }
-            });
-
-            _claims = new Lazy<IEnumerable<Claim>>(() =>
-                _httpContextAccessor.HttpContext?.User.Claims ?? []);
-        }
-
-
-
-        public bool IsAuthenticated => _isAuthenticated.Value;
-
-
-        public long UserId => _userId.Value;
-
-
-        public IEnumerable<Claim> Claims => _claims.Value;
-
+        _claims = new Lazy<IEnumerable<Claim>>(() =>
+            _httpContextAccessor.HttpContext?.User.Claims ?? []);
     }
+
+
+
+    public bool IsAuthenticated => _isAuthenticated.Value;
+
+
+    public long UserId => _userId.Value;
+
+
+    public IEnumerable<Claim> Claims => _claims.Value;
+
 }

@@ -1,27 +1,25 @@
-namespace Admin.App.Models
+namespace Admin.App.Models;
+public class DtoSelect
 {
-    public class DtoSelect
-    {
 
 
 
-        /// <summary>
-        /// 值
-        /// </summary>
-        public long Value { get; set; }
+    /// <summary>
+    /// 值
+    /// </summary>
+    public long Value { get; set; }
 
 
-        /// <summary>
-        /// 标签
-        /// </summary>
-        public string? Label { get; set; }
+    /// <summary>
+    /// 标签
+    /// </summary>
+    public string? Label { get; set; }
 
 
-        /// <summary>
-        /// 是否禁用
-        /// </summary>
-        public bool IsDisabled { get; set; }
+    /// <summary>
+    /// 是否禁用
+    /// </summary>
+    public bool IsDisabled { get; set; }
 
 
-    }
 }

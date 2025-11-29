@@ -4,36 +4,34 @@ using Repository.Database;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
 
-namespace TaskService.Core
+namespace TaskService.Core;
+public class InitTaskBackgroundService(IServiceProvider serviceProvider) : BackgroundService
 {
-    public class InitTaskBackgroundService(IServiceProvider serviceProvider) : BackgroundService
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        // 查找所有继承自 TaskBase 的具体类
+        var taskClasses = assemblies
+            .SelectMany(assembly => assembly.GetTypes())
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(TaskBase)))
+            .ToList();
+
+        using (var scope = serviceProvider.CreateScope())
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-            // 查找所有继承自 TaskBase 的具体类
-            var taskClasses = assemblies
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(TaskBase)))
-                .ToList();
+            var argScheduleTaskList = db.TTaskSetting.Where(t => t.Category == "ScheduleTask" && t.Parameter != null).ToList();
 
-            using (var scope = serviceProvider.CreateScope())
+            foreach (Type cls in taskClasses)
             {
-                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-                var argScheduleTaskList = db.TTaskSetting.Where(t => t.Category == "ScheduleTask" && t.Parameter != null).ToList();
-
-                foreach (Type cls in taskClasses)
-                {
-                    ScheduleTaskBuilder.Builder(cls, argScheduleTaskList);
-                    QueueTaskBuilder.Builder(cls);
-                }
+                ScheduleTaskBuilder.Builder(cls, argScheduleTaskList);
+                QueueTaskBuilder.Builder(cls);
             }
-
-            await Task.CompletedTask;
         }
 
+        await Task.CompletedTask;
     }
+
 }

@@ -5,54 +5,52 @@ using Microsoft.Extensions.Hosting;
 using Repository.Database;
 using System.Text;
 
-namespace Logger.DataBase.Tasks
+namespace Logger.DataBase.Tasks;
+internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
 {
-    internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
+                string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+
+                if (Directory.Exists(basePath))
                 {
-                    string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+                    List<string> logPaths = [.. IOHelper.GetFolderAllFiles(basePath).Take(10)];
 
-                    if (Directory.Exists(basePath))
+                    if (logPaths.Count != 0)
                     {
-                        List<string> logPaths = [.. IOHelper.GetFolderAllFiles(basePath).Take(10)];
+                        using var scope = serviceProvider.CreateScope();
+                        var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-                        if (logPaths.Count != 0)
+                        foreach (var logPath in logPaths)
                         {
-                            using var scope = serviceProvider.CreateScope();
-                            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                            var logStr = File.ReadAllText(logPath, Encoding.UTF8);
+                            var log = JsonHelper.JsonToObject<TLog>(logStr);
 
-                            foreach (var logPath in logPaths)
+
+                            var isHave = await db.TLog.Where(t => t.Id == log.Id).AnyAsync(cancellationToken: stoppingToken);
+
+                            if (!isHave)
                             {
-                                var logStr = File.ReadAllText(logPath, Encoding.UTF8);
-                                var log = JsonHelper.JsonToObject<TLog>(logStr);
-
-
-                                var isHave = await db.TLog.Where(t => t.Id == log.Id).AnyAsync(cancellationToken: stoppingToken);
-
-                                if (!isHave)
-                                {
-                                    db.TLog.Add(log);
-                                    await db.SaveChangesAsync(stoppingToken);
-                                }
-
-                                File.Delete(logPath);
-
+                                db.TLog.Add(log);
+                                await db.SaveChangesAsync(stoppingToken);
                             }
+
+                            File.Delete(logPath);
+
                         }
                     }
                 }
-                catch
-                {
-                }
-
-                await Task.Delay(1000 * 5, stoppingToken);
             }
-        }
+            catch
+            {
+            }
 
+            await Task.Delay(1000 * 5, stoppingToken);
+        }
     }
+
 }

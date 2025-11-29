@@ -4,15 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 using SourceGenerator.Runtime.Attributes;
 using System.Security.Claims;
 
-namespace TaskService.Core.Services
+namespace TaskService.Core.Services;
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
+public class UserContext : IUserContext
 {
-    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-    public class UserContext : IUserContext
-    {
-        public bool IsAuthenticated => false;
+    public bool IsAuthenticated => false;
 
-        public long UserId => throw new NotImplementedException();
+    public long UserId => throw new NotImplementedException();
 
-        public IEnumerable<Claim> Claims => throw new NotImplementedException();
-    }
+    public IEnumerable<Claim> Claims => throw new NotImplementedException();
 }

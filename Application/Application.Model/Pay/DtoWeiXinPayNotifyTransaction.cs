@@ -1,5 +1,4 @@
-namespace Application.Model.Pay
-{
+namespace Application.Model.Pay;
 #pragma warning disable IDE1006 // 命名样式
 
     /// <summary>
@@ -36,4 +35,3 @@ namespace Application.Model.Pay
 
     }
 
-}

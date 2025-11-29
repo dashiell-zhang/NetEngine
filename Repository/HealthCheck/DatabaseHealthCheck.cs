@@ -4,34 +4,32 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
 
-namespace Repository.HealthCheck
+namespace Repository.HealthCheck;
+public class DatabaseHealthCheck(DatabaseContext db, ILogger<DatabaseHealthCheck> logger) : IHealthCheck
 {
-    public class DatabaseHealthCheck(DatabaseContext db, ILogger<DatabaseHealthCheck> logger) : IHealthCheck
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        try
         {
-            try
+            var isHealthy = await db.TUser.Select(it => new { it.Id }).FirstOrDefaultAsync(cancellationToken);
+
+            return HealthCheckResult.Healthy("A healthy result.");
+        }
+        catch (Exception ex)
+        {
+
+            var errorLog = new
             {
-                var isHealthy = await db.TUser.Select(it => new { it.Id }).FirstOrDefaultAsync(cancellationToken);
+                ex.Source,
+                ex.Message,
+                ex.StackTrace,
+                InnerSource = ex.InnerException?.Source,
+                InnerMessage = ex.InnerException?.Message,
+                InnerStackTrace = ex.InnerException?.StackTrace,
+            };
 
-                return HealthCheckResult.Healthy("A healthy result.");
-            }
-            catch (Exception ex)
-            {
-
-                var errorLog = new
-                {
-                    ex.Source,
-                    ex.Message,
-                    ex.StackTrace,
-                    InnerSource = ex.InnerException?.Source,
-                    InnerMessage = ex.InnerException?.Message,
-                    InnerStackTrace = ex.InnerException?.StackTrace,
-                };
-
-                logger.LogError(JsonHelper.ObjectToJson(errorLog));
-                return new HealthCheckResult(context.Registration.FailureStatus, "An unhealthy result.");
-            }
+            logger.LogError(JsonHelper.ObjectToJson(errorLog));
+            return new HealthCheckResult(context.Registration.FailureStatus, "An unhealthy result.");
         }
     }
 }

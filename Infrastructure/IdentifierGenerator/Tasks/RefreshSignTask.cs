@@ -5,31 +5,29 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 
-namespace IdentifierGenerator.Tasks
+namespace IdentifierGenerator.Tasks;
+
+internal class RefreshSignTask(IDistributedCache distributedCache, IdService idService, IOptionsMonitor<IdSetting> config) : BackgroundService
 {
 
-    internal class RefreshSignTask(IDistributedCache distributedCache, IdService idService, IOptionsMonitor<IdSetting> config) : BackgroundService
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        idService.GetId();
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            idService.GetId();
-
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
-                {
-                    var key = "IdentifierGenerator-" + config.CurrentValue.DataCenterId + ":" + config.CurrentValue.MachineId;
+                var key = "IdentifierGenerator-" + config.CurrentValue.DataCenterId + ":" + config.CurrentValue.MachineId;
 
-                    distributedCache.Set(key, "", TimeSpan.FromHours(1));
-                }
-                catch
-                {
-                }
-
-                await Task.Delay(1000 * 60 * 60 * 24, stoppingToken);
+                distributedCache.Set(key, "", TimeSpan.FromHours(1));
             }
-        }
+            catch
+            {
+            }
 
+            await Task.Delay(1000 * 60 * 60 * 24, stoppingToken);
+        }
     }
+
 }

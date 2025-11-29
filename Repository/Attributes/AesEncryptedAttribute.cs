@@ -1,9 +1,7 @@
-namespace Repository.Attributes
+namespace Repository.Attributes;
+[AttributeUsage(AttributeTargets.Property)]
+public class AesEncryptedAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class AesEncryptedAttribute : Attribute
-    {
 
 
-    }
 }

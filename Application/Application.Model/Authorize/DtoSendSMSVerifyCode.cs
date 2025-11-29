@@ -1,12 +1,10 @@
-namespace Application.Model.Authorize
+namespace Application.Model.Authorize;
+public class DtoSendSMSVerifyCode
 {
-    public class DtoSendSMSVerifyCode
-    {
 
-        /// <summary>
-        /// 手机号
-        /// </summary>
-        public string Phone { get; set; }
+    /// <summary>
+    /// 手机号
+    /// </summary>
+    public string Phone { get; set; }
 
-    }
 }

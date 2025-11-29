@@ -5,118 +5,116 @@ using Microsoft.Extensions.DependencyInjection;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 
-namespace TaskService.Core.QueueTask
+namespace TaskService.Core.QueueTask;
+
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
+public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
 {
 
-    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-    public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
+    /// <summary>
+    /// 当前TaskId
+    /// </summary>
+    public long? CurrentTaskId { get; set; }
+
+
+    /// <summary>
+    /// 创建队列
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="parameter"></param>
+    /// <param name="planTime"></param>
+    /// <param name="callbackName"></param>
+    /// <param name="callbackParameter"></param>
+    /// <param name="isChild"></param>
+    /// <remarks>需要外部开启事务</remarks>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
+    public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
     {
-
-        /// <summary>
-        /// 当前TaskId
-        /// </summary>
-        public long? CurrentTaskId { get; set; }
-
-
-        /// <summary>
-        /// 创建队列
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="parameter"></param>
-        /// <param name="planTime"></param>
-        /// <param name="callbackName"></param>
-        /// <param name="callbackParameter"></param>
-        /// <param name="isChild"></param>
-        /// <remarks>需要外部开启事务</remarks>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
+        if (db.Database.CurrentTransaction != null)
         {
-            if (db.Database.CurrentTransaction != null)
+            TQueueTask queueTask = new()
             {
-                TQueueTask queueTask = new()
-                {
-                    Id = idService.GetId(),
-                    Name = name,
-                    Parameter = parameter != null ? JsonHelper.ObjectToJson(parameter) : null,
-                    PlanTime = planTime,
-                    CallbackName = callbackName,
-                    CallbackParameter = callbackName != null ? callbackParameter != null ? JsonHelper.ObjectToJson(callbackParameter) : null : null,
-                };
+                Id = idService.GetId(),
+                Name = name,
+                Parameter = parameter != null ? JsonHelper.ObjectToJson(parameter) : null,
+                PlanTime = planTime,
+                CallbackName = callbackName,
+                CallbackParameter = callbackName != null ? callbackParameter != null ? JsonHelper.ObjectToJson(callbackParameter) : null : null,
+            };
 
-                if (isChild)
+            if (isChild)
+            {
+                if (CurrentTaskId != null)
                 {
-                    if (CurrentTaskId != null)
-                    {
-                        queueTask.ParentTaskId = CurrentTaskId;
-                    }
-                    else
-                    {
-                        throw new Exception("CurrentTaskId 无有效信息，无法创建子队列");
-                    }
+                    queueTask.ParentTaskId = CurrentTaskId;
                 }
+                else
+                {
+                    throw new Exception("CurrentTaskId 无有效信息，无法创建子队列");
+                }
+            }
 
-                db.TQueueTask.Add(queueTask);
-                return true;
-            }
-            else
-            {
-                throw new Exception("请开启一个显式的事务");
-            }
+            db.TQueueTask.Add(queueTask);
+            return true;
         }
-
-
-
-        /// <summary>
-        /// 单独创建队列
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="parameter"></param>
-        /// <param name="planTime"></param>
-        /// <param name="callbackName"></param>
-        /// <param name="callbackParameter"></param>
-        /// <param name="isChild"></param>
-        /// <returns></returns>
-        public async Task<bool> CreateSingleAsync(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
+        else
         {
-            try
-            {
-                var db = dbFactory.CreateDbContext();
-
-                TQueueTask queueTask = new()
-                {
-                    Id = idService.GetId(),
-                    Name = name,
-                    Parameter = parameter != null ? JsonHelper.ObjectToJson(parameter) : null,
-                    PlanTime = planTime,
-                    CallbackName = callbackName,
-                    CallbackParameter = callbackName != null ? callbackParameter != null ? JsonHelper.ObjectToJson(callbackParameter) : null : null
-                };
-
-                if (isChild)
-                {
-                    if (CurrentTaskId != null)
-                    {
-                        queueTask.ParentTaskId = CurrentTaskId;
-                    }
-                    else
-                    {
-                        throw new Exception("CurrentTaskId 无有效信息，无法创建子队列");
-                    }
-                }
-
-                db.TQueueTask.Add(queueTask);
-
-                await db.SaveChangesAsync();
-
-                return true;
-            }
-            catch
-            {
-                throw new Exception("创建队列异常");
-            }
+            throw new Exception("请开启一个显式的事务");
         }
-
-
     }
+
+
+
+    /// <summary>
+    /// 单独创建队列
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="parameter"></param>
+    /// <param name="planTime"></param>
+    /// <param name="callbackName"></param>
+    /// <param name="callbackParameter"></param>
+    /// <param name="isChild"></param>
+    /// <returns></returns>
+    public async Task<bool> CreateSingleAsync(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
+    {
+        try
+        {
+            var db = dbFactory.CreateDbContext();
+
+            TQueueTask queueTask = new()
+            {
+                Id = idService.GetId(),
+                Name = name,
+                Parameter = parameter != null ? JsonHelper.ObjectToJson(parameter) : null,
+                PlanTime = planTime,
+                CallbackName = callbackName,
+                CallbackParameter = callbackName != null ? callbackParameter != null ? JsonHelper.ObjectToJson(callbackParameter) : null : null
+            };
+
+            if (isChild)
+            {
+                if (CurrentTaskId != null)
+                {
+                    queueTask.ParentTaskId = CurrentTaskId;
+                }
+                else
+                {
+                    throw new Exception("CurrentTaskId 无有效信息，无法创建子队列");
+                }
+            }
+
+            db.TQueueTask.Add(queueTask);
+
+            await db.SaveChangesAsync();
+
+            return true;
+        }
+        catch
+        {
+            throw new Exception("创建队列异常");
+        }
+    }
+
+
 }

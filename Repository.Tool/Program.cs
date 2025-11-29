@@ -5,30 +5,28 @@ using NetEngine.Generated;
 using Npgsql;
 using Repository.Database;
 
-namespace Repository.Tool
+namespace Repository.Tool;
+
+internal class Program
 {
-
-    internal class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            IHost host = Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
+        IHost host = Host.CreateDefaultBuilder(args)
+            .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddDbContext<DatabaseContext>(options =>
                     {
-                        services.AddDbContext<DatabaseContext>(options =>
-                        {
-                            var connectionString = "Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456";
+                        var connectionString = "Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456";
 
-                            NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
+                        NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
 
-                            options.UseNpgsql(dataSourceBuilder.Build(), x => x.MigrationsAssembly("Repository.Tool"));
-                        });
+                        options.UseNpgsql(dataSourceBuilder.Build(), x => x.MigrationsAssembly("Repository.Tool"));
+                    });
 
-                        services.BatchRegisterBackgroundServices();
+                    services.BatchRegisterBackgroundServices();
 
-                    }).Build();
+                }).Build();
 
-            host.Run();
-        }
+        host.Run();
     }
 }

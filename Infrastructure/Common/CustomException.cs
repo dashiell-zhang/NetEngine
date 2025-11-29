@@ -1,19 +1,17 @@
-namespace Common
+namespace Common;
+public class CustomException : Exception
 {
-    public class CustomException : Exception
+    public CustomException()
     {
-        public CustomException()
-        {
-        }
-
-        public CustomException(string? message) : base(message)
-        {
-        }
-
-        public CustomException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-
-
     }
+
+    public CustomException(string? message) : base(message)
+    {
+    }
+
+    public CustomException(string? message, Exception? innerException) : base(message, innerException)
+    {
+    }
+
+
 }

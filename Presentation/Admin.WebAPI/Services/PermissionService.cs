@@ -5,43 +5,41 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using SourceGenerator.Runtime.Attributes;
 using WebAPI.Core.Interfaces;
 
-namespace Admin.WebAPI.Services
+namespace Admin.WebAPI.Services;
+
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
+public class PermissionService(AuthorizeService authorizeService) : IPermissionService
 {
 
-    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-    public class PermissionService(AuthorizeService authorizeService) : IPermissionService
+    public async Task<bool> VerifyAuthorizationAsync(AuthorizationHandlerContext authorizationHandlerContext)
     {
-
-        public async Task<bool> VerifyAuthorizationAsync(AuthorizationHandlerContext authorizationHandlerContext)
+        if (authorizationHandlerContext.User.Identity!.IsAuthenticated)
         {
-            if (authorizationHandlerContext.User.Identity!.IsAuthenticated)
+            if (authorizationHandlerContext.Resource is HttpContext httpContext)
             {
-                if (authorizationHandlerContext.Resource is HttpContext httpContext)
+                var newToken = await authorizeService.IssueNewTokenAsync();
+
+                if (newToken != null)
                 {
-                    var newToken = await authorizeService.IssueNewTokenAsync();
-
-                    if (newToken != null)
-                    {
-                        httpContext.Response.Headers.Append("NewToken", newToken);
-                        httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");
-                    }
-
-                    var module = typeof(Program).Assembly.GetName().Name!;
-
-                    Endpoint endpoint = httpContext.GetEndpoint()!;
-
-                    ControllerActionDescriptor actionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>()!;
-
-                    var route = actionDescriptor.AttributeRouteInfo?.Template!;
-
-                    var checkResult = await authorizeService.CheckFunctionAuthorizeAsync(module, route);
-
-                    return checkResult;
+                    httpContext.Response.Headers.Append("NewToken", newToken);
+                    httpContext.Response.Headers.Append("Access-Control-Expose-Headers", "NewToken");
                 }
-            }
 
-            return false;
+                var module = typeof(Program).Assembly.GetName().Name!;
+
+                Endpoint endpoint = httpContext.GetEndpoint()!;
+
+                ControllerActionDescriptor actionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>()!;
+
+                var route = actionDescriptor.AttributeRouteInfo?.Template!;
+
+                var checkResult = await authorizeService.CheckFunctionAuthorizeAsync(module, route);
+
+                return checkResult;
+            }
         }
 
+        return false;
     }
+
 }

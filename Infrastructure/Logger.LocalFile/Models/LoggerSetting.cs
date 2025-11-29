@@ -1,15 +1,13 @@
-namespace Logger.LocalFile.Models
+namespace Logger.LocalFile.Models;
+public class LoggerSetting
 {
-    public class LoggerSetting
-    {
 
 
-        /// <summary>
-        /// 保存天数
-        /// </summary>
-        /// <remarks>永久保存：-1</remarks>
-        public int SaveDays { get; set; } = 14;
+    /// <summary>
+    /// 保存天数
+    /// </summary>
+    /// <remarks>永久保存：-1</remarks>
+    public int SaveDays { get; set; } = 14;
 
 
-    }
 }

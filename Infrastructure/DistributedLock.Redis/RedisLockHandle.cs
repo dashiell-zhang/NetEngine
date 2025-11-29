@@ -1,19 +1,17 @@
 using StackExchange.Redis;
 
-namespace DistributedLock.Redis
+namespace DistributedLock.Redis;
+public sealed class RedisLockHandle : IDisposable
 {
-    public sealed class RedisLockHandle : IDisposable
+
+    public IDatabase Database { get; set; }
+
+
+    public string LockKey { get; set; }
+
+    public void Dispose()
     {
-
-        public IDatabase Database { get; set; }
-
-
-        public string LockKey { get; set; }
-
-        public void Dispose()
-        {
-            Database.LockReleaseAsync(LockKey, "123456");
-        }
-
+        Database.LockReleaseAsync(LockKey, "123456");
     }
+
 }

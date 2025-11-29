@@ -1,34 +1,32 @@
-namespace Application.Model.User.User
+namespace Application.Model.User.User;
+public class DtoUserRole
 {
-    public class DtoUserRole
-    {
 
-        /// <summary>
-        /// 角色id
-        /// </summary>
-        public long Id { get; set; }
+    /// <summary>
+    /// 角色id
+    /// </summary>
+    public long Id { get; set; }
 
 
 
-        /// <summary>
-        /// 名称
-        /// </summary>
-        public string Name { get; set; }
+    /// <summary>
+    /// 名称
+    /// </summary>
+    public string Name { get; set; }
 
 
 
-        /// <summary>
-        /// 备注
-        /// </summary>
-        public string? Remarks { get; set; }
+    /// <summary>
+    /// 备注
+    /// </summary>
+    public string? Remarks { get; set; }
 
 
 
-        /// <summary>
-        /// 是否选中
-        /// </summary>
-        public bool IsCheck { get; set; }
+    /// <summary>
+    /// 是否选中
+    /// </summary>
+    public bool IsCheck { get; set; }
 
 
-    }
 }

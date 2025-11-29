@@ -11,247 +11,245 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using static TaskService.Core.QueueTask.QueueTaskBuilder;
 
-namespace TaskService.Core.QueueTask
+namespace TaskService.Core.QueueTask;
+public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock) : BackgroundService
 {
-    public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock) : BackgroundService
-    {
-        private readonly ILogger logger = logger;
-        private readonly ConcurrentDictionary<long, string> runingTaskList = new();
+    private readonly ILogger logger = logger;
+    private readonly ConcurrentDictionary<long, string> runingTaskList = new();
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
 #if DEBUG
-            await Task.Delay(5000, stoppingToken);
+        await Task.Delay(5000, stoppingToken);
 #else
-            await Task.Delay(10000, stoppingToken);
+        await Task.Delay(10000, stoppingToken);
 #endif
 
-            using var scope = serviceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+        using var scope = serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-            if (queueMethodList.Count != 0)
+        if (queueMethodList.Count != 0)
+        {
+            while (!stoppingToken.IsCancellationRequested)
             {
-                while (!stoppingToken.IsCancellationRequested)
+                try
                 {
-                    try
+                    foreach (var item in queueMethodList.Values.Where(t => t.IsEnable).ToList())
                     {
-                        foreach (var item in queueMethodList.Values.Where(t => t.IsEnable).ToList())
+
+                        var runingTaskIdList = runingTaskList.Where(t => t.Value == item.Name).Select(t => t.Key).ToList();
+
+                        int skipSize = runingTaskIdList.Count;
+
+                        int taskSize = item.Semaphore - runingTaskIdList.Count;
+
+                        if (taskSize > 0)
                         {
+                            var nowTime = DateTime.UtcNow;
 
-                            var runingTaskIdList = runingTaskList.Where(t => t.Value == item.Name).Select(t => t.Key).ToList();
+                            var queueTaskIdList = await db.TQueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToListAsync(stoppingToken);
 
-                            int skipSize = runingTaskIdList.Count;
-
-                            int taskSize = item.Semaphore - runingTaskIdList.Count;
-
-                            if (taskSize > 0)
+                            foreach (var queueTaskId in queueTaskIdList)
                             {
-                                var nowTime = DateTime.UtcNow;
-
-                                var queueTaskIdList = await db.TQueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToListAsync(stoppingToken);
-
-                                foreach (var queueTaskId in queueTaskIdList)
+                                if (runingTaskList.TryAdd(queueTaskId, item.Name))
                                 {
-                                    if (runingTaskList.TryAdd(queueTaskId, item.Name))
-                                    {
-                                        RunAction(item, queueTaskId);
-                                    }
+                                    RunAction(item, queueTaskId);
                                 }
                             }
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        logger.LogError($"ExecuteAsync：{ex.Message}");
-                    }
-
-                    await Task.Delay(1000, stoppingToken);
                 }
+                catch (Exception ex)
+                {
+                    logger.LogError($"ExecuteAsync：{ex.Message}");
+                }
+
+                await Task.Delay(1000, stoppingToken);
             }
         }
+    }
 
 
-        private readonly MethodInfo jsonCloneObject = typeof(JsonHelper).GetMethod("JsonCloneObject", BindingFlags.Static | BindingFlags.Public)!;
+    private readonly MethodInfo jsonCloneObject = typeof(JsonHelper).GetMethod("JsonCloneObject", BindingFlags.Static | BindingFlags.Public)!;
 
 
 
-        private async void RunAction(QueueTaskInfo queueTaskInfo, long queueTaskId)
+    private async void RunAction(QueueTaskInfo queueTaskInfo, long queueTaskId)
+    {
+        try
         {
-            try
+            using var scope = serviceProvider.CreateScope();
+
+            var queueTaskService = scope.ServiceProvider.GetRequiredService<QueueTaskService>();
+
+            queueTaskService.CurrentTaskId = queueTaskId;
+
+            var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
+
+            using var db = factory.CreateDbContext();
+
+            var idService = scope.ServiceProvider.GetRequiredService<IdService>();
+
+            using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
+            if (lockActionState != null)
             {
-                using var scope = serviceProvider.CreateScope();
+                var queueTask = await db.TQueueTask.FirstAsync(t => t.Id == queueTaskId);
 
-                var queueTaskService = scope.ServiceProvider.GetRequiredService<QueueTaskService>();
-
-                queueTaskService.CurrentTaskId = queueTaskId;
-
-                var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
-
-                using var db = factory.CreateDbContext();
-
-                var idService = scope.ServiceProvider.GetRequiredService<IdService>();
-
-                using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
-                if (lockActionState != null)
+                if (queueTask.FirstTime == null)
                 {
-                    var queueTask = await db.TQueueTask.FirstAsync(t => t.Id == queueTaskId);
+                    queueTask.FirstTime = DateTime.UtcNow;
+                }
 
-                    if (queueTask.FirstTime == null)
+                queueTask.LastTime = DateTime.UtcNow;
+
+                queueTask.Count++;
+
+                await db.SaveChangesAsync();
+
+                var isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
+
+                var parameterType = queueTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
+
+                object? returnObject = null;
+
+                Type serviceType = queueTaskInfo.Method.DeclaringType!;
+
+                object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
+
+                if (parameterType != null)
+                {
+                    if (queueTask.Parameter != null)
                     {
-                        queueTask.FirstTime = DateTime.UtcNow;
-                    }
+                        var parameter = jsonCloneObject.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
 
-                    queueTask.LastTime = DateTime.UtcNow;
-
-                    queueTask.Count++;
-
-                    await db.SaveChangesAsync();
-
-                    var isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
-
-                    var parameterType = queueTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
-
-                    object? returnObject = null;
-
-                    Type serviceType = queueTaskInfo.Method.DeclaringType!;
-
-                    object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
-
-                    if (parameterType != null)
-                    {
-                        if (queueTask.Parameter != null)
-                        {
-                            var parameter = jsonCloneObject.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
-
-                            returnObject = queueTaskInfo.Method.Invoke(serviceInstance, [parameter]);
-                        }
-                        else
-                        {
-                            logger.LogError(queueTaskInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
-                        }
+                        returnObject = queueTaskInfo.Method.Invoke(serviceInstance, [parameter]);
                     }
                     else
                     {
-                        returnObject = queueTaskInfo.Method.Invoke(serviceInstance, null);
+                        logger.LogError(queueTaskInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
+                    }
+                }
+                else
+                {
+                    returnObject = queueTaskInfo.Method.Invoke(serviceInstance, null);
+                }
+
+
+                if (returnObject is Task task)
+                {
+                    await task;
+
+                    var resultProperty = task.GetType().GetProperty("Result");
+
+                    if (resultProperty == null)
+                    {
+                        throw new Exception("无法获取到Task.Result");
+                    }
+                    else
+                    {
+                        returnObject = resultProperty?.GetValue(task);
+
+                        if (returnObject?.GetType().FullName == "System.Threading.Tasks.VoidTaskResult")
+                        {
+                            returnObject = null;
+                        }
+                    }
+                }
+
+
+                queueTask.SuccessTime = DateTime.UtcNow;
+
+                var isHaveChild = await db.TQueueTask.Where(t => t.ParentTaskId == queueTaskId).AnyAsync();
+
+                if (!isHaveChild)
+                {
+                    queueTask.ChildSuccessTime = queueTask.SuccessTime;
+                }
+
+                if (queueTask.CallbackName != null)
+                {
+
+                    if (queueTask.CallbackParameter == null && isReturnVoid == false && returnObject != null)
+                    {
+                        queueTask.CallbackParameter = JsonHelper.ObjectToJson(returnObject);
                     }
 
-
-                    if (returnObject is Task task)
+                    if (queueTask.ChildSuccessTime != null)
                     {
-                        await task;
-
-                        var resultProperty = task.GetType().GetProperty("Result");
-
-                        if (resultProperty == null)
+                        TQueueTask callbackTask = new()
                         {
-                            throw new Exception("无法获取到Task.Result");
-                        }
-                        else
-                        {
-                            returnObject = resultProperty?.GetValue(task);
+                            Id = idService.GetId(),
+                            Name = queueTask.CallbackName,
+                            Parameter = queueTask.CallbackParameter
+                        };
 
-                            if (returnObject?.GetType().FullName == "System.Threading.Tasks.VoidTaskResult")
-                            {
-                                returnObject = null;
-                            }
-                        }
+                        db.TQueueTask.Add(callbackTask);
                     }
+                }
+
+                if (queueTask.ParentTaskId != null && queueTask.ChildSuccessTime != null)
+                {
+                    await UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
+                }
+
+                await db.SaveChangesAsync();
+            }
 
 
-                    queueTask.SuccessTime = DateTime.UtcNow;
+            async Task UpdateParentState(long parentTaskId, long currentTaskId)
+            {
+                using (await distLock.LockAsync(parentTaskId.ToString()))
+                {
+                    //同级别是否全部执行完成
+                    var isSameLevelHaveWait = await db.TQueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).AnyAsync();
 
-                    var isHaveChild = await db.TQueueTask.Where(t => t.ParentTaskId == queueTaskId).AnyAsync();
-
-                    if (!isHaveChild)
+                    if (!isSameLevelHaveWait)
                     {
-                        queueTask.ChildSuccessTime = queueTask.SuccessTime;
-                    }
+                        var parentTaskInfo = await db.TQueueTask.Where(t => t.Id == parentTaskId).FirstAsync();
 
-                    if (queueTask.CallbackName != null)
-                    {
+                        parentTaskInfo.ChildSuccessTime = DateTimeOffset.UtcNow;
 
-                        if (queueTask.CallbackParameter == null && isReturnVoid == false && returnObject != null)
-                        {
-                            queueTask.CallbackParameter = JsonHelper.ObjectToJson(returnObject);
-                        }
-
-                        if (queueTask.ChildSuccessTime != null)
+                        if (parentTaskInfo.CallbackName != null)
                         {
                             TQueueTask callbackTask = new()
                             {
                                 Id = idService.GetId(),
-                                Name = queueTask.CallbackName,
-                                Parameter = queueTask.CallbackParameter
+                                Name = parentTaskInfo.CallbackName,
+                                Parameter = parentTaskInfo.CallbackParameter
                             };
 
                             db.TQueueTask.Add(callbackTask);
                         }
-                    }
 
-                    if (queueTask.ParentTaskId != null && queueTask.ChildSuccessTime != null)
-                    {
-                        await UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
-                    }
-
-                    await db.SaveChangesAsync();
-                }
-
-
-                async Task UpdateParentState(long parentTaskId, long currentTaskId)
-                {
-                    using (await distLock.LockAsync(parentTaskId.ToString()))
-                    {
-                        //同级别是否全部执行完成
-                        var isSameLevelHaveWait = await db.TQueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).AnyAsync();
-
-                        if (!isSameLevelHaveWait)
+                        if (parentTaskInfo.ParentTaskId != null)
                         {
-                            var parentTaskInfo = await db.TQueueTask.Where(t => t.Id == parentTaskId).FirstAsync();
-
-                            parentTaskInfo.ChildSuccessTime = DateTimeOffset.UtcNow;
-
-                            if (parentTaskInfo.CallbackName != null)
-                            {
-                                TQueueTask callbackTask = new()
-                                {
-                                    Id = idService.GetId(),
-                                    Name = parentTaskInfo.CallbackName,
-                                    Parameter = parentTaskInfo.CallbackParameter
-                                };
-
-                                db.TQueueTask.Add(callbackTask);
-                            }
-
-                            if (parentTaskInfo.ParentTaskId != null)
-                            {
-                                await UpdateParentState(parentTaskInfo.ParentTaskId.Value, parentTaskInfo.Id);
-                            }
+                            await UpdateParentState(parentTaskInfo.ParentTaskId.Value, parentTaskInfo.Id);
                         }
                     }
-
-
                 }
 
-            }
-            catch (Exception ex)
-            {
-                var errorLog = new
-                {
-                    ex?.Source,
-                    ex?.Message,
-                    ex?.StackTrace,
-                    InnerSource = ex?.InnerException?.Source,
-                    InnerMessage = ex?.InnerException?.Message,
-                    InnerStackTrace = ex?.InnerException?.StackTrace,
-                };
 
-                logger.LogError($"QueueTaskRunAction-{queueTaskInfo.Name};{JsonHelper.ObjectToJson(errorLog)}");
             }
-            finally
-            {
-                runingTaskList.TryRemove(queueTaskId, out _);
-            }
+
         }
+        catch (Exception ex)
+        {
+            var errorLog = new
+            {
+                ex?.Source,
+                ex?.Message,
+                ex?.StackTrace,
+                InnerSource = ex?.InnerException?.Source,
+                InnerMessage = ex?.InnerException?.Message,
+                InnerStackTrace = ex?.InnerException?.StackTrace,
+            };
 
+            logger.LogError($"QueueTaskRunAction-{queueTaskInfo.Name};{JsonHelper.ObjectToJson(errorLog)}");
+        }
+        finally
+        {
+            runingTaskList.TryRemove(queueTaskId, out _);
+        }
     }
+
 }

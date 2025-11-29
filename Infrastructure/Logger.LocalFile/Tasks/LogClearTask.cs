@@ -3,56 +3,54 @@ using Logger.LocalFile.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace Logger.LocalFile.Tasks
+namespace Logger.LocalFile.Tasks;
+internal class LogClearTask(IOptionsMonitor<LoggerSetting> config) : BackgroundService
 {
-    internal class LogClearTask(IOptionsMonitor<LoggerSetting> config) : BackgroundService
+
+    private readonly int saveDays = config.CurrentValue.SaveDays;
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-
-        private readonly int saveDays = config.CurrentValue.SaveDays;
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        if (saveDays != -1)
         {
-            if (saveDays != -1)
+            while (!stoppingToken.IsCancellationRequested)
             {
-                while (!stoppingToken.IsCancellationRequested)
+                try
                 {
-                    try
+
+                    string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+
+                    if (Directory.Exists(basePath))
                     {
+                        List<string> logPaths = [.. IOHelper.GetFolderAllFiles(basePath)];
 
-                        string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+                        var deleteTime = DateTime.UtcNow.AddDays(-1 * saveDays);
 
-                        if (Directory.Exists(basePath))
+                        if (logPaths.Count != 0)
                         {
-                            List<string> logPaths = [.. IOHelper.GetFolderAllFiles(basePath)];
-
-                            var deleteTime = DateTime.UtcNow.AddDays(-1 * saveDays);
-
-                            if (logPaths.Count != 0)
+                            foreach (var logPath in logPaths)
                             {
-                                foreach (var logPath in logPaths)
+                                FileInfo fileInfo = new(logPath);
+
+                                if (fileInfo.CreationTimeUtc < deleteTime)
                                 {
-                                    FileInfo fileInfo = new(logPath);
-
-                                    if (fileInfo.CreationTimeUtc < deleteTime)
-                                    {
-                                        File.Delete(logPath);
-                                    }
-
+                                    File.Delete(logPath);
                                 }
+
                             }
                         }
-
-                    }
-                    catch
-                    {
                     }
 
-                    await Task.Delay(1000 * 60 * 60 * 24, stoppingToken);
                 }
+                catch
+                {
+                }
+
+                await Task.Delay(1000 * 60 * 60 * 24, stoppingToken);
             }
-
-
         }
 
+
     }
+
 }

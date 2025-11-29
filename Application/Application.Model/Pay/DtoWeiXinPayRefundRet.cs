@@ -1,5 +1,4 @@
-namespace Application.Model.Pay
-{
+namespace Application.Model.Pay;
 #pragma warning disable IDE1006 // 命名样式
     /// <summary>
     /// 微信支付退款结果
@@ -34,4 +33,3 @@ namespace Application.Model.Pay
 
     }
 
-}

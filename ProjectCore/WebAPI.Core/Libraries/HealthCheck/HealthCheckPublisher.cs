@@ -1,19 +1,17 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace WebAPI.Core.Libraries.HealthCheck
+namespace WebAPI.Core.Libraries.HealthCheck;
+public class HealthCheckPublisher : IHealthCheckPublisher
 {
-    public class HealthCheckPublisher : IHealthCheckPublisher
+    public Task PublishAsync(HealthReport report, CancellationToken cancellationToken)
     {
-        public Task PublishAsync(HealthReport report, CancellationToken cancellationToken)
+        if (report.Status == HealthStatus.Healthy)
         {
-            if (report.Status == HealthStatus.Healthy)
-            {
-            }
-            else
-            {
-            }
-
-            return Task.CompletedTask;
         }
+        else
+        {
+        }
+
+        return Task.CompletedTask;
     }
 }

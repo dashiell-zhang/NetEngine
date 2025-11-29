@@ -1,22 +1,20 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-namespace WebAPI.Core.Libraries.Validators
+namespace WebAPI.Core.Libraries.Validators;
+public class EnumValidationProvider : IModelValidatorProvider
 {
-    public class EnumValidationProvider : IModelValidatorProvider
+    public void CreateValidators(ModelValidatorProviderContext context)
     {
-        public void CreateValidators(ModelValidatorProviderContext context)
+        var modelType = context.ModelMetadata.ModelType;
+
+        if (modelType.IsEnum || Nullable.GetUnderlyingType(modelType)?.IsEnum == true)
         {
-            var modelType = context.ModelMetadata.ModelType;
-
-            if (modelType.IsEnum || Nullable.GetUnderlyingType(modelType)?.IsEnum == true)
+            context.Results.Add(new ValidatorItem
             {
-                context.Results.Add(new ValidatorItem
-                {
-                    Validator = new EnumValidator(),
-                    IsReusable = true
-                });
-            }
-
+                Validator = new EnumValidator(),
+                IsReusable = true
+            });
         }
+
     }
 }

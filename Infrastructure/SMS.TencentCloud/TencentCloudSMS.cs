@@ -4,65 +4,63 @@ using TencentCloud.Common;
 using TencentCloud.Sms.V20190711;
 using TencentCloud.Sms.V20190711.Models;
 
-namespace SMS.TencentCloud
+namespace SMS.TencentCloud;
+public class TencentCloudSMS(IOptionsMonitor<SMSSetting> config) : ISMS
 {
-    public class TencentCloudSMS(IOptionsMonitor<SMSSetting> config) : ISMS
+
+    /// <summary>
+    /// SDK AppId (非账号APPId)
+    /// </summary>
+    private readonly string appId = config.CurrentValue.AppId;
+
+
+    /// <summary>
+    /// 账号密钥ID
+    /// </summary>
+    private readonly string secretId = config.CurrentValue.SecretId;
+
+
+    /// <summary>
+    /// 账号密钥Key
+    /// </summary>
+    private readonly string secretKey = config.CurrentValue.SecretKey;
+
+
+    public async Task<bool> SendSMSAsync(string signName, string phone, string templateCode, Dictionary<string, string> templateParams)
     {
-
-        /// <summary>
-        /// SDK AppId (非账号APPId)
-        /// </summary>
-        private readonly string appId = config.CurrentValue.AppId;
-
-
-        /// <summary>
-        /// 账号密钥ID
-        /// </summary>
-        private readonly string secretId = config.CurrentValue.SecretId;
-
-
-        /// <summary>
-        /// 账号密钥Key
-        /// </summary>
-        private readonly string secretKey = config.CurrentValue.SecretKey;
-
-
-        public async Task<bool> SendSMSAsync(string signName, string phone, string templateCode, Dictionary<string, string> templateParams)
+        try
         {
-            try
+            var templateParamsArray = templateParams.Select(t => t.Value).ToArray();
+
+            Credential cred = new()
             {
-                var templateParamsArray = templateParams.Select(t => t.Value).ToArray();
+                SecretId = secretId,
+                SecretKey = secretKey
+            };
 
-                Credential cred = new()
-                {
-                    SecretId = secretId,
-                    SecretKey = secretKey
-                };
+            SmsClient client = new(cred, "ap-guangzhou");
 
-                SmsClient client = new(cred, "ap-guangzhou");
-
-                SendSmsRequest req = new()
-                {
-                    SmsSdkAppid = appId,
-
-                    Sign = signName,
-
-                    PhoneNumberSet = ["+86" + phone],
-
-                    TemplateID = templateCode,
-
-                    TemplateParamSet = templateParamsArray
-                };
-
-
-                await client.SendSms(req);
-
-                return true;
-            }
-            catch
+            SendSmsRequest req = new()
             {
-                return false;
-            }
+                SmsSdkAppid = appId,
+
+                Sign = signName,
+
+                PhoneNumberSet = ["+86" + phone],
+
+                TemplateID = templateCode,
+
+                TemplateParamSet = templateParamsArray
+            };
+
+
+            await client.SendSms(req);
+
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

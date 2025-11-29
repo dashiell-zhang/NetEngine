@@ -24,229 +24,227 @@ using WebAPI.Core.Libraries.Swagger;
 using WebAPI.Core.Libraries.Validators;
 using IPNetwork = System.Net.IPNetwork;
 
-namespace WebAPI.Core.Extensions
+namespace WebAPI.Core.Extensions;
+public static class WebApplicationBuilderExtension
 {
-    public static class WebApplicationBuilderExtension
+
+    /// <summary>
+    /// 设置 Kestrel 配置
+    /// </summary>
+    /// <param name="builder"></param>
+    public static void SetKestrelConfig(this WebApplicationBuilder builder)
+    {
+        builder.WebHost.UseKestrel((context, options) =>
+        {
+            options.ConfigureHttpsDefaults(options =>
+            {
+                var certConf = context.Configuration.GetSection("Kestrel:Certificates:Default");
+
+                if (certConf.Value != null)
+                {
+                    X509Certificate2Collection x509Certificate2s = [];
+
+                    var sslPath = certConf.GetValue<string>("Path")!;
+
+                    if (sslPath.EndsWith("pfx", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string password = certConf.GetValue<string>("Password")!;
+
+                        x509Certificate2s = X509CertificateLoader.LoadPkcs12CollectionFromFile(sslPath, password);
+                    }
+                    else if (sslPath.EndsWith("pem", StringComparison.OrdinalIgnoreCase) || sslPath.EndsWith("crt", StringComparison.OrdinalIgnoreCase))
+                    {
+                        x509Certificate2s.ImportFromPemFile(sslPath);
+                    }
+                    options.ServerCertificateChain = x509Certificate2s;
+                }
+            });
+        });
+    }
+
+
+
+    public static void AddCommonServices(this WebApplicationBuilder builder)
     {
 
-        /// <summary>
-        /// 设置 Kestrel 配置
-        /// </summary>
-        /// <param name="builder"></param>
-        public static void SetKestrelConfig(this WebApplicationBuilder builder)
+        #region 基础 Server 配置
+
+        builder.Services.Configure<FormOptions>(options =>
         {
-            builder.WebHost.UseKestrel((context, options) =>
+            options.MultipartBodyLengthLimit = long.MaxValue;
+        });
+
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.AllowSynchronousIO = true;
+        });
+
+        builder.Services.Configure<IISServerOptions>(options =>
+        {
+            options.AllowSynchronousIO = true;
+        });
+
+        builder.Services.AddHsts(options =>
+        {
+            options.MaxAge = TimeSpan.FromDays(365);
+        });
+
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("0.0.0.0"), 0));
+        });
+
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+        });
+
+        #endregion
+
+
+        builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+
+        builder.Services.AddMvc(options =>
+        {
+            options.ModelValidatorProviders.Add(new EnumValidationProvider());
+            options.Filters.Add(new ExceptionFilter());
+        });
+
+
+        //注册跨域信息
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("cors", policy =>
             {
-                options.ConfigureHttpsDefaults(options =>
+                policy.SetIsOriginAllowed(origin => true)
+                   .AllowAnyHeader()
+                   .AllowAnyMethod()
+                   .AllowCredentials()
+                   .SetPreflightMaxAge(TimeSpan.FromSeconds(7200));
+            });
+        });
+
+        #region 注册 JWT 认证机制
+
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            var jwtSetting = builder.Configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
+            var issuerSigningKey = ECDsa.Create();
+            issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
+
+            options.TokenValidationParameters = new()
+            {
+                ValidIssuer = jwtSetting.Issuer,
+                ValidAudience = jwtSetting.Audience,
+                IssuerSigningKey = new ECDsaSecurityKey(issuerSigningKey)
+            };
+        });
+
+
+        builder.Services.AddAuthorizationBuilder()
+            .SetDefaultPolicy(new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .RequireAssertion(async context =>
                 {
-                    var certConf = context.Configuration.GetSection("Kestrel:Certificates:Default");
-
-                    if (certConf.Value != null)
+                    if (context.Resource is HttpContext httpContext)
                     {
-                        X509Certificate2Collection x509Certificate2s = [];
+                        var permissionService = httpContext.RequestServices.GetService<IPermissionService>();
 
-                        var sslPath = certConf.GetValue<string>("Path")!;
-
-                        if (sslPath.EndsWith("pfx", StringComparison.OrdinalIgnoreCase))
-                        {
-                            string password = certConf.GetValue<string>("Password")!;
-
-                            x509Certificate2s = X509CertificateLoader.LoadPkcs12CollectionFromFile(sslPath, password);
-                        }
-                        else if (sslPath.EndsWith("pem", StringComparison.OrdinalIgnoreCase) || sslPath.EndsWith("crt", StringComparison.OrdinalIgnoreCase))
-                        {
-                            x509Certificate2s.ImportFromPemFile(sslPath);
-                        }
-                        options.ServerCertificateChain = x509Certificate2s;
+                        return permissionService != null && await permissionService.VerifyAuthorizationAsync(context);
                     }
-                });
-            });
-        }
+                    else
+                    {
+                        return false;
+                    }
+                })
+                .Build());
+        #endregion
 
 
-
-        public static void AddCommonServices(this WebApplicationBuilder builder)
+        #region 注册 Json 序列化配置
+        builder.Services.AddControllers().AddJsonOptions(options =>
         {
+            //options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+            //options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
+            options.JsonSerializerOptions.Converters.Add(new LongConverter());
+            options.JsonSerializerOptions.Converters.Add(new StringConverter());
+            options.JsonSerializerOptions.Converters.Add(new NullableStructConverterFactory());
+        });
 
-            #region 基础 Server 配置
+        #endregion
 
-            builder.Services.Configure<FormOptions>(options =>
+
+        #region 注册 Swagger
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", null);
+
+            var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
+            options.SchemaGeneratorOptions = new() { SchemaIdSelector = type => type.ToString()[(type.ToString().IndexOf("Models.") + 7)..].Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
+
+            options.MapType<long>(() => new OpenApiSchema { Type = JsonSchemaType.String, Format = "long" });
+
+            var xmlPaths = IOHelper.GetFolderAllFiles(AppContext.BaseDirectory).Where(t => t.EndsWith(".xml")).ToList();
+            foreach (var xmlPath in xmlPaths)
             {
-                options.MultipartBodyLengthLimit = long.MaxValue;
+                options.IncludeXmlComments(xmlPath, true);
+            }
+
+            options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
             });
 
-            builder.Services.Configure<KestrelServerOptions>(options =>
+            options.OperationFilter<SecurityRequirementsOperationFilter>();
+        });
+        #endregion
+
+
+        //注册统一模型验证
+        builder.Services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.InvalidModelStateResponseFactory = actionContext =>
             {
-                options.AllowSynchronousIO = true;
-            });
+                //获取验证失败的模型字段 
+                var errors = actionContext.ModelState.Where(e => e.Value?.Errors.Count > 0).Select(e => e.Key + " : " + e.Value?.Errors.First().ErrorMessage).ToList();
 
-            builder.Services.Configure<IISServerOptions>(options =>
-            {
-                options.AllowSynchronousIO = true;
-            });
+                var dataStr = string.Join(" | ", errors);
 
-            builder.Services.AddHsts(options =>
-            {
-                options.MaxAge = TimeSpan.FromDays(365);
-            });
-
-            builder.Services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-                options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("0.0.0.0"), 0));
-            });
-
-            builder.Services.AddResponseCompression(options =>
-            {
-                options.EnableForHttps = true;
-            });
-
-            #endregion
-
-
-            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
-
-            builder.Services.AddMvc(options =>
-            {
-                options.ModelValidatorProviders.Add(new EnumValidationProvider());
-                options.Filters.Add(new ExceptionFilter());
-            });
-
-
-            //注册跨域信息
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("cors", policy =>
+                //设置返回内容
+                var result = new
                 {
-                    policy.SetIsOriginAllowed(origin => true)
-                       .AllowAnyHeader()
-                       .AllowAnyMethod()
-                       .AllowCredentials()
-                       .SetPreflightMaxAge(TimeSpan.FromSeconds(7200));
-                });
-            });
-
-            #region 注册 JWT 认证机制
-
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
-            {
-                var jwtSetting = builder.Configuration.GetRequiredSection("JWT").Get<JWTSetting>()!;
-                var issuerSigningKey = ECDsa.Create();
-                issuerSigningKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtSetting.PublicKey), out int i);
-
-                options.TokenValidationParameters = new()
-                {
-                    ValidIssuer = jwtSetting.Issuer,
-                    ValidAudience = jwtSetting.Audience,
-                    IssuerSigningKey = new ECDsaSecurityKey(issuerSigningKey)
+                    errMsg = dataStr
                 };
-            });
+
+                return new BadRequestObjectResult(result);
+            };
+        });
 
 
-            builder.Services.AddAuthorizationBuilder()
-                .SetDefaultPolicy(new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .RequireAssertion(async context =>
-                    {
-                        if (context.Resource is HttpContext httpContext)
-                        {
-                            var permissionService = httpContext.RequestServices.GetService<IPermissionService>();
-
-                            return permissionService != null && await permissionService.VerifyAuthorizationAsync(context);
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    })
-                    .Build());
-            #endregion
+        #region 注册健康检测服务
+        builder.Services.AddHealthChecks()
+            .AddCheck<CacheHealthCheck>("CacheHealthCheck")
+            .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck");
 
 
-            #region 注册 Json 序列化配置
-            builder.Services.AddControllers().AddJsonOptions(options =>
-            {
-                //options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
-                //options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
-                options.JsonSerializerOptions.Converters.Add(new LongConverter());
-                options.JsonSerializerOptions.Converters.Add(new StringConverter());
-                options.JsonSerializerOptions.Converters.Add(new NullableStructConverterFactory());
-            });
+        builder.Services.Configure<HealthCheckPublisherOptions>(options =>
+        {
+            options.Delay = TimeSpan.FromSeconds(10);
+            options.Period = TimeSpan.FromSeconds(60);
+        });
 
-            #endregion
-
-
-            #region 注册 Swagger
-            builder.Services.AddSwaggerGen(options =>
-            {
-                options.SwaggerDoc("v1", null);
-
-                var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
-                options.SchemaGeneratorOptions = new() { SchemaIdSelector = type => type.ToString()[(type.ToString().IndexOf("Models.") + 7)..].Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
-
-                options.MapType<long>(() => new OpenApiSchema { Type = JsonSchemaType.String, Format = "long" });
-
-                var xmlPaths = IOHelper.GetFolderAllFiles(AppContext.BaseDirectory).Where(t => t.EndsWith(".xml")).ToList();
-                foreach (var xmlPath in xmlPaths)
-                {
-                    options.IncludeXmlComments(xmlPath, true);
-                }
-
-                options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
-                {
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT"
-                });
-
-                options.OperationFilter<SecurityRequirementsOperationFilter>();
-            });
-            #endregion
-
-
-            //注册统一模型验证
-            builder.Services.Configure<ApiBehaviorOptions>(options =>
-            {
-                options.InvalidModelStateResponseFactory = actionContext =>
-                {
-                    //获取验证失败的模型字段 
-                    var errors = actionContext.ModelState.Where(e => e.Value?.Errors.Count > 0).Select(e => e.Key + " : " + e.Value?.Errors.First().ErrorMessage).ToList();
-
-                    var dataStr = string.Join(" | ", errors);
-
-                    //设置返回内容
-                    var result = new
-                    {
-                        errMsg = dataStr
-                    };
-
-                    return new BadRequestObjectResult(result);
-                };
-            });
-
-
-            #region 注册健康检测服务
-            builder.Services.AddHealthChecks()
-                .AddCheck<CacheHealthCheck>("CacheHealthCheck")
-                .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck");
-
-
-            builder.Services.Configure<HealthCheckPublisherOptions>(options =>
-            {
-                options.Delay = TimeSpan.FromSeconds(10);
-                options.Period = TimeSpan.FromSeconds(60);
-            });
-
-            builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
-            #endregion
-
-        }
-
+        builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
+        #endregion
 
     }
+
+
 }

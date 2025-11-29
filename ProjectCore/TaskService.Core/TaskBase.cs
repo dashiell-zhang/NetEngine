@@ -1,8 +1,6 @@
-namespace TaskService.Core
+namespace TaskService.Core;
+
+public class TaskBase
 {
 
-    public class TaskBase
-    {
-
-    }
 }

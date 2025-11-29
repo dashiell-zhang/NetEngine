@@ -161,6 +161,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                   .AppendLine("        : base(" + argList + ")")
                   .AppendLine("    {")
                   .AppendLine("    }")
+                  .AppendLine()
                   .AppendLine();
 
                 // 如果第一个参数不是 IServiceProvider 则生成以 IServiceProvider 作为首参的重载构造函数
@@ -177,6 +178,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                       .AppendLine("    {")
                       .AppendLine("        __sp = sp;")
                       .AppendLine("    }")
+                      .AppendLine()
                       .AppendLine();
                 }
             }
@@ -409,9 +411,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     // 对异步枚举结果进行包装 在迭代过程中收集每个元素的 JSON 并在完成后统一记录日志
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    tArg = TrimCurrentNamespace(tArg, currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     
-                    sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper(){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            var __e = {callExpr}.GetAsyncEnumerator();");
@@ -420,7 +423,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                while (true)");
                     sb.AppendLine("                {");
                     sb.AppendLine("                    bool __moved;");
-                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("                    if (!__moved) break;");
                     sb.AppendLine("                    var __item = __e.Current;");
                     sb.AppendLine("                    try { __items.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __items.Add(Convert.ToString(__item)); }");
@@ -434,7 +437,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
                     sb.AppendLine($"        return __streamWrapper();");
-                    sb.AppendLine("    }");
+                    sb.AppendLine("    }").AppendLine().AppendLine();
                     return; // 方法体已经在前面生成 此处直接返回结束代码生成
                 }
                 if (isTask)
@@ -450,7 +453,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
                     sb.AppendLine("        }");
-                    sb.AppendLine("        catch (global::System.Exception __ex)");
+                    sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
@@ -463,9 +466,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    tItem = TrimCurrentNamespace(tItem, currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     
-                    sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tItem}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            var __s = await {callExpr};");
@@ -475,7 +479,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                while (true)");
                     sb.AppendLine("                {");
                     sb.AppendLine("                    bool __moved;");
-                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("                    if (!__moved) break;");
                     sb.AppendLine("                    var __item = __e.Current;");
                     sb.AppendLine("                    try { __items.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __items.Add(Convert.ToString(__item)); }");
@@ -488,7 +492,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                await __e.DisposeAsync();");
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
-                    sb.AppendLine($"        return global::System.Threading.Tasks.Task.FromResult<global::System.Collections.Generic.IAsyncEnumerable<{tItem}>>(__streamWrapper());");
+                    sb.AppendLine($"        return Task.FromResult<IAsyncEnumerable<{tItem}>>(__streamWrapper());");
                 }
                 else if (isGenericTask)
                 {
@@ -504,7 +508,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
-                    sb.AppendLine("        catch (global::System.Exception __ex)");
+                    sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
@@ -527,7 +531,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
                     sb.AppendLine("            return;");
                     sb.AppendLine("        }");
-                    sb.AppendLine("        catch (global::System.Exception __ex)");
+                    sb.AppendLine("        catch (Exception __ex)");
                     
                     sb.AppendLine("        {");
                     
@@ -550,7 +554,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
-                    sb.AppendLine("        catch (global::System.Exception __ex)");
+                    sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
@@ -561,20 +565,20 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isByRefReturn)
                 {
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); ref var __ret = ref " + callTarget + "." + methodName + typeParams + "(" + argList + "); var __snap = __ret; foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); ref var __ret = ref " + callTarget + "." + methodName + typeParams + "(" + argList + "); var __snap = __ret; foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 }
                 else if (method.ReturnsVoid)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
                     
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("        return;");
                 }
                 else
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
                     
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 }
             }
             else
@@ -583,13 +587,14 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    tArg = TrimCurrentNamespace(tArg, currentNamespace);
                     
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     sb.AppendLine($"        var __behaviors = new IInvocationAsyncBehavior[] {{ new LoggingBehavior() }};")
                       .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
-                    sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper(){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            var __e = {callExpr}.GetAsyncEnumerator();");
@@ -598,7 +603,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                while (true)");
                     sb.AppendLine("                {");
                     sb.AppendLine("                    bool __moved;");
-                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("                    if (!__moved) break;");
                     sb.AppendLine("                    var __item = __e.Current;");
                     sb.AppendLine("                    try { __items.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __items.Add(Convert.ToString(__item)); }");
@@ -612,7 +617,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
                     sb.AppendLine($"        return __streamWrapper();");
-                    sb.AppendLine("    }");
+                    sb.AppendLine("    }").AppendLine().AppendLine();
                     return;
                 }
 
@@ -681,7 +686,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
             }
 
-            sb.AppendLine("    }");
+            sb.AppendLine("    }").AppendLine().AppendLine();
         }
 
 
@@ -842,8 +847,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    tArg = TrimCurrentNamespace(tArg, currentNamespace);
                     var callExpr2 = "base." + methodName + typeParams + "(" + argList + ")";
-                    sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper(){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            var __e = {callExpr2}.GetAsyncEnumerator();");
@@ -852,7 +858,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                while (true)");
                     sb.AppendLine("                {");
                     sb.AppendLine("                    bool __moved;");
-                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("                    if (!__moved) break;");
                     sb.AppendLine("                    var __item = __e.Current;");
                     sb.AppendLine("                    try { __items.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __items.Add(Convert.ToString(__item)); }");
@@ -866,7 +872,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
                     sb.AppendLine($"        return __streamWrapper();");
-                    sb.AppendLine("    }");
+                    sb.AppendLine("    }").AppendLine().AppendLine();
                     return;
                 }
                 
@@ -880,7 +886,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
                     sb.AppendLine("        }");
-                    sb.AppendLine("        catch (global::System.Exception __ex)");
+                    sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
@@ -891,8 +897,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-                    sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tItem}> __streamWrapper(){{");
-                    sb.AppendLine("            var __items = new global::System.Collections.Generic.List<object?>(16);");
+                    tItem = TrimCurrentNamespace(tItem, currentNamespace);
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(){{");
+                    sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            var __s = await {call};");
                     sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
@@ -901,7 +908,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                while (true)");
                     sb.AppendLine("                {");
                     sb.AppendLine("                    bool __moved;");
-                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("                    if (!__moved) break;");
                     sb.AppendLine("                    var __item = __e.Current;");
                     sb.AppendLine("                    try { __items.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __items.Add(Convert.ToString(__item)); }");
@@ -914,7 +921,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                await __e.DisposeAsync();");
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
-                    sb.AppendLine($"        return global::System.Threading.Tasks.Task.FromResult<global::System.Collections.Generic.IAsyncEnumerable<{tItem}>>(__streamWrapper());");
+                    sb.AppendLine($"        return Task.FromResult<IAsyncEnumerable<{tItem}>>(__streamWrapper());");
                 }
                 else if (isGenericTask)
                 {
@@ -927,7 +934,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
-                    sb.AppendLine("        catch (global::System.Exception __ex)");
+                    sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
@@ -938,8 +945,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-                    sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tItem}> __streamWrapper(){{");
-                    sb.AppendLine("            var __items = new global::System.Collections.Generic.List<object?>(16);");
+                    tItem = TrimCurrentNamespace(tItem, currentNamespace);
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(){{");
+                    sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine($"            var __s = await {call};");
                     sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
@@ -948,7 +956,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                while (true)");
                     sb.AppendLine("                {");
                     sb.AppendLine("                    bool __moved;");
-                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (global::System.Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("                    if (!__moved) break;");
                     sb.AppendLine("                    var __item = __e.Current;");
                     sb.AppendLine("                    try { __items.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __items.Add(Convert.ToString(__item)); }");
@@ -961,7 +969,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                await __e.DisposeAsync();");
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
-                    sb.AppendLine($"        return new global::System.Threading.Tasks.ValueTask<global::System.Collections.Generic.IAsyncEnumerable<{tItem}>>(__streamWrapper());");
+                    sb.AppendLine($"        return new ValueTask<IAsyncEnumerable<{tItem}>>(__streamWrapper());");
                 }
                 else if (isValueTask)
                 {
@@ -974,7 +982,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
                     sb.AppendLine("            return;");
                     sb.AppendLine("        }");
-                    sb.AppendLine("        catch (global::System.Exception __ex)");
+                    sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
@@ -992,7 +1000,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
-                    sb.AppendLine("        catch (global::System.Exception __ex)");
+                    sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
@@ -1002,18 +1010,18 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 else if (isByRefReturn)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); ref var __ret = ref " + call + "; var __snap = __ret; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (global::System.Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); ref var __ret = ref " + call + "; var __snap = __ret; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 }
                 else if (method.ReturnsVoid)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (global::System.Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("        return;");
                 }
                 else
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method);
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (global::System.Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 }
             }
             else
@@ -1022,12 +1030,13 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tArg = ((INamedTypeSymbol)method.ReturnType).TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    tArg = TrimCurrentNamespace(tArg, currentNamespace);
                     var callExpr3 = "base." + methodName + typeParams + "(" + argList + ")";
                     sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { new LoggingBehavior() };")
                       .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
-                    sb.AppendLine($"        async global::System.Collections.Generic.IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper(){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine("            try");
@@ -1039,14 +1048,14 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                }");
                     sb.AppendLine("                foreach (var __f in __filters) __f.OnAfter(__ctx, __items);");
                     sb.AppendLine("            }");
-                    sb.AppendLine("            catch (global::System.Exception __ex)");
+                    sb.AppendLine("            catch (Exception __ex)");
                     sb.AppendLine("            {");
                     sb.AppendLine("                foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                     sb.AppendLine("                throw;");
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
                     sb.AppendLine($"        return __streamWrapper();");
-                    sb.AppendLine("    }");
+                    sb.AppendLine("    }").AppendLine().AppendLine();
                     return;
                 }
 
@@ -1116,7 +1125,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
             }
 
-            sb.AppendLine("    }");
+            sb.AppendLine("    }").AppendLine().AppendLine();
         }
 
 

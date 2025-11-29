@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Repository.Attributes;
-using Repository.Bases;
 using Repository.Column.Attributes;
+using Repository.Database.Generated;
 using Repository.ValueConverters;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -157,12 +157,10 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
         }
         #endregion
 
+        modelBuilder.ApplySoftDeleteFilters();
+
         foreach (var entity in modelBuilder.Model.GetEntityTypes().Where(t => t.IsMappedToJson() == false))
         {
-
-            //添加全局过滤器
-            globalHasQueryFilter.MakeGenericMethod(entity.ClrType).Invoke(null, [modelBuilder]);
-
 #if DEBUG
             //关闭表外键的级联删除功能
             entity.GetForeignKeys().ToList().ForEach(t => t.DeleteBehavior = DeleteBehavior.Restrict);
@@ -428,19 +426,6 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
             });
         }
     }
-
-    #endregion
-
-
-    #region 全局逻辑删除过滤器
-
-    private static void GlobalHasQueryFilter<T>(ModelBuilder builder) where T : CD
-    {
-        builder.Entity<T>().HasQueryFilter(e => e.IsDelete == false);
-    }
-
-
-    private static readonly MethodInfo globalHasQueryFilter = typeof(DatabaseContext).GetMethod("GlobalHasQueryFilter", BindingFlags.Static | BindingFlags.NonPublic)!;
 
     #endregion
 

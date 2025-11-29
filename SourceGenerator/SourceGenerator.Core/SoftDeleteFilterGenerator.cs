@@ -110,10 +110,22 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
         sb.AppendLine("#nullable enable");
         sb.AppendLine("using Microsoft.EntityFrameworkCore;");
         sb.AppendLine("using Microsoft.EntityFrameworkCore.Metadata.Builders;");
-        sb.AppendLine("using System;");
-        sb.AppendLine("using Repository.Database;");
-        sb.AppendLine("using Repository.Database.Bases;");
-        sb.AppendLine("using Repository.Bases;");
+
+        var namespaces = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var entity in entities)
+        {
+            var ns = entity.ContainingNamespace?.ToDisplayString();
+            if (!string.IsNullOrWhiteSpace(ns))
+            {
+                namespaces.Add(ns);
+            }
+        }
+
+        foreach (var ns in namespaces.OrderBy(n => n, StringComparer.Ordinal))
+        {
+            sb.Append("using ").Append(ns).AppendLine(";");
+        }
+
         sb.AppendLine();
         sb.AppendLine("namespace Repository.Database.Generated;");
         sb.AppendLine();

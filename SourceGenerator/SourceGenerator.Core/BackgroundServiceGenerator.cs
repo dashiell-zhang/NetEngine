@@ -155,7 +155,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                 if (string.Equals(nsToUse, ns, StringComparison.Ordinal))
                     continue;
 
-                sb.Append("using global::").Append(nsToUse).AppendLine(";");
+                sb.Append("using ").Append(nsToUse).AppendLine(";");
             }
             
             sb.Append("namespace ").Append(ns).AppendLine(";");

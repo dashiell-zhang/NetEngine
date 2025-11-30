@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Repository.Attributes;
-using Repository.Column.Attributes;
 using Repository.Database.Generated;
 using Repository.ValueConverters;
 using System.ComponentModel;
@@ -100,42 +98,7 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
-        #region Json列映射关系维护
-
-        List<JsonColumnOwnedNavigation> jsonBuilders = [];
-
-        var tableEntityTypes = this.GetType().GetProperties().Where(t => t.PropertyType.Name == "DbSet`1").Select(t => t.PropertyType.GetGenericArguments()[0]).ToList();
-
-
-        foreach (var entityType in tableEntityTypes)
-        {
-            jsonBuilders.AddRange(GetJsonColumnOwnedNavigationList(entityType.GetProperties()));
-        }
-
-        foreach (var jsonBuilder in jsonBuilders)
-        {
-            modelBuilder.Entity(jsonBuilder.EntityTypeName, builder =>
-            {
-                if (jsonBuilder.IsOwnsMany)
-                {
-                    builder.OwnsMany(jsonBuilder.OwnedTypeName, jsonBuilder.NavigationName, b =>
-                    {
-                        b.ToJson();
-                        jsonBuilder.ChildList.ForEach(c => JsonOwnedNavigationBuilder(b, c));
-                    });
-                }
-                else
-                {
-                    builder.OwnsOne(jsonBuilder.OwnedTypeName, jsonBuilder.NavigationName, b =>
-                    {
-                        b.ToJson();
-                        jsonBuilder.ChildList.ForEach(c => JsonOwnedNavigationBuilder(b, c));
-                    });
-                }
-            });
-        }
-
-        #endregion
+        modelBuilder.ApplyJsonColumns();
 
         #region 为所有实体的 AesEncrypted 字段添加转换器
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
@@ -357,76 +320,5 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
         return base.SaveChangesAsync(cancellationToken);
     }
-
-
-    #region Json列映射逻辑
-
-    private class JsonColumnOwnedNavigation
-    {
-        public string EntityTypeName { get; set; }
-
-        public string OwnedTypeName { get; set; }
-
-        public string NavigationName { get; set; }
-
-        public bool IsOwnsMany { get; set; }
-
-        public List<JsonColumnOwnedNavigation> ChildList { get; set; }
-    }
-
-
-    private static List<JsonColumnOwnedNavigation> GetJsonColumnOwnedNavigationList(PropertyInfo[] propertyInfos)
-    {
-        List<JsonColumnOwnedNavigation> jsonColumnOwnedNavigations = [];
-
-        foreach (var propertyInfo in propertyInfos)
-        {
-            var jsonColumnAttribute = propertyInfo.GetCustomAttribute<JsonColumnAttribute>();
-
-            if (jsonColumnAttribute != null)
-            {
-
-                var isOwnsMany = propertyInfo.PropertyType.Name == "List`1";
-
-                JsonColumnOwnedNavigation jsonColumnOwnedNavigation = new()
-                {
-                    EntityTypeName = propertyInfo.DeclaringType!.FullName!,
-                    OwnedTypeName = isOwnsMany ? propertyInfo.PropertyType.GetGenericArguments().First().FullName! : propertyInfo.PropertyType.FullName!,
-                    NavigationName = propertyInfo.Name,
-                    IsOwnsMany = isOwnsMany
-                };
-
-                var clrType = isOwnsMany ? propertyInfo.PropertyType.GetGenericArguments().First() : propertyInfo.PropertyType;
-
-                jsonColumnOwnedNavigation.ChildList = GetJsonColumnOwnedNavigationList(clrType.GetProperties());
-
-                jsonColumnOwnedNavigations.Add(jsonColumnOwnedNavigation);
-
-            }
-        }
-
-        return jsonColumnOwnedNavigations;
-    }
-
-
-    private static void JsonOwnedNavigationBuilder(OwnedNavigationBuilder ownedNavigationBuilder, JsonColumnOwnedNavigation jsonColumnOwnedNavigation)
-    {
-        if (jsonColumnOwnedNavigation.IsOwnsMany)
-        {
-            ownedNavigationBuilder.OwnsMany(jsonColumnOwnedNavigation.OwnedTypeName, jsonColumnOwnedNavigation.NavigationName, b =>
-            {
-                jsonColumnOwnedNavigation.ChildList.ForEach(c => JsonOwnedNavigationBuilder(b, c));
-            });
-        }
-        else
-        {
-            ownedNavigationBuilder.OwnsOne(jsonColumnOwnedNavigation.OwnedTypeName, jsonColumnOwnedNavigation.NavigationName, b =>
-            {
-                jsonColumnOwnedNavigation.ChildList.ForEach(c => JsonOwnedNavigationBuilder(b, c));
-            });
-        }
-    }
-
-    #endregion
 
 }

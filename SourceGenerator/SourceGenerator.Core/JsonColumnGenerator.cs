@@ -1,0 +1,311 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
+
+namespace SourceGenerator.Core;
+
+/// <summary>
+/// 基于 JsonColumn 特性生成 JSON 列的 owns 配置，替代运行时反射
+/// </summary>
+[Generator(LanguageNames.CSharp)]
+public sealed class JsonColumnGenerator : IIncrementalGenerator
+{
+    private const string JsonColumnAttributeMetadataName = "Repository.Column.Attributes.JsonColumnAttribute";
+    private const string DbContextMetadataName = "Microsoft.EntityFrameworkCore.DbContext";
+    private const string DbSetMetadataName = "Microsoft.EntityFrameworkCore.DbSet`1";
+    private const string ListMetadataName = "System.Collections.Generic.List`1";
+
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var configs = context.CompilationProvider.Select((compilation, _) =>
+        {
+            var jsonAttribute = compilation.GetTypeByMetadataName(JsonColumnAttributeMetadataName);
+            var modelBuilder = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.ModelBuilder");
+            var dbSetEntities = GetDbSetEntityTypes(compilation);
+            var listSymbol = compilation.GetTypeByMetadataName(ListMetadataName);
+
+            var canEmit = jsonAttribute is not null && modelBuilder is not null && dbSetEntities.Count > 0;
+
+            var builder = ImmutableArray.CreateBuilder<JsonEntityConfig>();
+
+            foreach (var entity in dbSetEntities)
+            {
+                var navigations = GetJsonNavigations(entity, jsonAttribute!, listSymbol, includeAllChildren: false);
+                if (!navigations.IsDefaultOrEmpty)
+                {
+                    builder.Add(new JsonEntityConfig(entity, navigations));
+                }
+            }
+
+            return new JsonConfigResult(canEmit, builder.ToImmutable());
+        });
+
+        context.RegisterSourceOutput(configs, static (spc, configs) =>
+        {
+            if (!configs.CanEmit)
+                return;
+
+            var source = BuildSource(configs.Configs);
+            spc.AddSource("JsonColumnMappings.g.cs", source);
+        });
+    }
+
+
+    private static ImmutableArray<JsonNavigation> GetJsonNavigations(INamedTypeSymbol type, INamedTypeSymbol jsonAttribute, INamedTypeSymbol? listSymbol, bool includeAllChildren)
+    {
+        var builder = ImmutableArray.CreateBuilder<JsonNavigation>();
+
+        foreach (var property in EnumerateProperties(type))
+        {
+            var isJsonColumn = includeAllChildren || HasJsonColumnAttribute(property, jsonAttribute);
+            if (!isJsonColumn)
+                continue;
+
+            var (ownedType, isCollection) = GetOwnedType(property.Type, listSymbol);
+            if (ownedType is null || ownedType.SpecialType != SpecialType.None)
+                continue;
+
+            var childNavigations = GetJsonNavigations(ownedType, jsonAttribute, listSymbol, includeAllChildren: true);
+
+            builder.Add(new JsonNavigation(property.Name, ownedType, isCollection, childNavigations));
+        }
+
+        return builder.ToImmutable();
+    }
+
+
+    private static (INamedTypeSymbol? ownedType, bool isCollection) GetOwnedType(ITypeSymbol type, INamedTypeSymbol? listSymbol)
+    {
+        if (listSymbol is not null && type is INamedTypeSymbol named &&
+            SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, listSymbol) &&
+            named.TypeArguments.Length == 1 &&
+            named.TypeArguments[0] is INamedTypeSymbol listElement)
+        {
+            return (listElement, true);
+        }
+
+        return type is INamedTypeSymbol namedType ? (namedType, false) : (null, false);
+    }
+
+
+    private static bool HasJsonColumnAttribute(IPropertySymbol property, INamedTypeSymbol jsonAttribute)
+    {
+        foreach (var attribute in property.GetAttributes())
+        {
+            var attrClass = attribute.AttributeClass;
+            if (attrClass is not null && SymbolEqualityComparer.Default.Equals(attrClass, jsonAttribute))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    private static IEnumerable<IPropertySymbol> EnumerateProperties(INamedTypeSymbol type)
+    {
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                if (member is IPropertySymbol property &&
+                    !property.IsStatic &&
+                    visited.Add(property.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))
+                {
+                    yield return property;
+                }
+            }
+        }
+    }
+
+
+    private static string BuildSource(ImmutableArray<JsonEntityConfig> configs)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("// <auto-generated />");
+        sb.AppendLine("#nullable enable");
+        sb.AppendLine("using Microsoft.EntityFrameworkCore;");
+
+        var namespaces = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var config in configs)
+        {
+            var ns = config.EntityType.ContainingNamespace?.ToDisplayString();
+            if (!string.IsNullOrWhiteSpace(ns))
+            {
+                namespaces.Add(ns!);
+            }
+        }
+
+        foreach (var ns in namespaces.OrderBy(n => n, StringComparer.Ordinal))
+        {
+            sb.Append("using ").Append(ns).AppendLine(";");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("namespace Repository.Database.Generated;");
+        sb.AppendLine();
+        sb.AppendLine("public static class JsonColumnModelBuilderExtensions");
+        sb.AppendLine("{");
+        sb.AppendLine("    public static void ApplyJsonColumns(this ModelBuilder modelBuilder)");
+        sb.AppendLine("    {");
+
+        foreach (var config in configs.OrderBy(c => c.EntityType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), StringComparer.Ordinal))
+        {
+            AppendEntityMapping(sb, config);
+        }
+
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
+
+        return sb.ToString();
+    }
+
+
+    private static void AppendEntityMapping(StringBuilder sb, JsonEntityConfig config)
+    {
+        var entityName = config.EntityType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+
+        sb.Append("        modelBuilder.Entity<").Append(entityName).AppendLine(">(builder =>");
+        sb.AppendLine("        {");
+
+        foreach (var navigation in config.Navigations)
+        {
+            AppendNavigation(sb, navigation, "builder", "e", "            ", isRoot: true);
+        }
+
+        sb.AppendLine("        });");
+        sb.AppendLine();
+    }
+
+
+    private static void AppendNavigation(StringBuilder sb, JsonNavigation navigation, string builderName, string lambdaParam, string indent, bool isRoot)
+    {
+        var methodName = navigation.IsCollection ? "OwnsMany" : "OwnsOne";
+
+        sb.Append(indent).Append(builderName).Append('.').Append(methodName)
+          .Append("(").Append(lambdaParam).Append(" => ").Append(lambdaParam).Append('.').Append(navigation.PropertyName)
+          .AppendLine(", owned =>");
+        sb.Append(indent).AppendLine("{");
+
+        if (isRoot)
+        {
+            sb.Append(indent).AppendLine("    owned.ToJson();");
+        }
+
+        foreach (var child in navigation.Children)
+        {
+            AppendNavigation(sb, child, "owned", "o", indent + "    ", isRoot: false);
+        }
+
+        sb.Append(indent).AppendLine("});");
+    }
+
+
+    private sealed class JsonEntityConfig
+    {
+        public JsonEntityConfig(INamedTypeSymbol entityType, ImmutableArray<JsonNavigation> navigations)
+        {
+            EntityType = entityType;
+            Navigations = navigations;
+        }
+
+        public INamedTypeSymbol EntityType { get; }
+
+        public ImmutableArray<JsonNavigation> Navigations { get; }
+    }
+
+
+    private sealed class JsonNavigation
+    {
+        public JsonNavigation(string propertyName, INamedTypeSymbol ownedType, bool isCollection, ImmutableArray<JsonNavigation> children)
+        {
+            PropertyName = propertyName;
+            OwnedType = ownedType;
+            IsCollection = isCollection;
+            Children = children;
+        }
+
+        public string PropertyName { get; }
+
+        public INamedTypeSymbol OwnedType { get; }
+
+        public bool IsCollection { get; }
+
+        public ImmutableArray<JsonNavigation> Children { get; }
+    }
+
+
+    private sealed class JsonConfigResult
+    {
+        public JsonConfigResult(bool canEmit, ImmutableArray<JsonEntityConfig> configs)
+        {
+            CanEmit = canEmit;
+            Configs = configs;
+        }
+
+        public bool CanEmit { get; }
+
+        public ImmutableArray<JsonEntityConfig> Configs { get; }
+    }
+
+
+    private static ImmutableHashSet<INamedTypeSymbol> GetDbSetEntityTypes(Compilation compilation)
+    {
+        var dbContextSymbol = compilation.GetTypeByMetadataName(DbContextMetadataName);
+        var dbSetSymbol = compilation.GetTypeByMetadataName(DbSetMetadataName);
+
+        if (dbContextSymbol is null || dbSetSymbol is null)
+            return ImmutableHashSet<INamedTypeSymbol>.Empty;
+
+        var result = ImmutableHashSet.CreateBuilder<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+
+        foreach (var tree in compilation.SyntaxTrees)
+        {
+            var semanticModel = compilation.GetSemanticModel(tree);
+            var root = tree.GetRoot();
+
+            foreach (var classDecl in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+            {
+                if (semanticModel.GetDeclaredSymbol(classDecl) is not INamedTypeSymbol typeSymbol)
+                    continue;
+
+                if (!InheritsFrom(typeSymbol, dbContextSymbol))
+                    continue;
+
+                foreach (var prop in typeSymbol.GetMembers().OfType<IPropertySymbol>())
+                {
+                    if (prop.Type is not INamedTypeSymbol namedType)
+                        continue;
+
+                    if (!SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, dbSetSymbol))
+                        continue;
+
+                    if (namedType.TypeArguments.Length == 1 && namedType.TypeArguments[0] is INamedTypeSymbol entityType)
+                    {
+                        result.Add(entityType);
+                    }
+                }
+            }
+        }
+
+        return result.ToImmutable();
+    }
+
+
+    private static bool InheritsFrom(INamedTypeSymbol type, INamedTypeSymbol baseType)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            if (SymbolEqualityComparer.Default.Equals(current, baseType))
+                return true;
+        }
+        return false;
+    }
+}

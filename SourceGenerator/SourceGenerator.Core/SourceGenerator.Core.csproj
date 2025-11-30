@@ -1,11 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
-		<LangVersion>preview</LangVersion>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<Optimize>true</Optimize>
-		<AssemblyName>SourceGenerator.Core</AssemblyName>
 		<IsPackable>true</IsPackable>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
@@ -13,7 +11,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<NoWarn>RS2008</NoWarn>
+		<NoWarn>RS1041;RS2008</NoWarn>
 	</PropertyGroup>
 
 

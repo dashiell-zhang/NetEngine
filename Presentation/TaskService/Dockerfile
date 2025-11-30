@@ -3,6 +3,14 @@
 
 # 此阶段用于在快速模式(默认为调试配置)下从 VS 运行时
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS base
+
+USER root
+
+# 修改镜像内部软件源采用阿里云 Ubuntu 镜像
+RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|https://mirrors.aliyun.com/ubuntu/|g; \
+            s|http://security.ubuntu.com/ubuntu/|https://mirrors.aliyun.com/ubuntu/|g' \
+    /etc/apt/sources.list.d/ubuntu.sources
+
 USER $APP_UID
 WORKDIR /app
 

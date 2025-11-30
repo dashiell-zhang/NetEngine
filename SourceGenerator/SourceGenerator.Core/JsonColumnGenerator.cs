@@ -14,11 +14,29 @@ namespace SourceGenerator.Core;
 [Generator(LanguageNames.CSharp)]
 public sealed class JsonColumnGenerator : IIncrementalGenerator
 {
+    /// <summary>
+    /// JsonColumn 特性的完整元数据名称
+    /// </summary>
     private const string JsonColumnAttributeMetadataName = "Repository.Column.Attributes.JsonColumnAttribute";
+
+    /// <summary>
+    /// DbContext 的完整元数据名称
+    /// </summary>
     private const string DbContextMetadataName = "Microsoft.EntityFrameworkCore.DbContext";
+
+    /// <summary>
+    /// DbSet&lt;T&gt; 的完整元数据名称
+    /// </summary>
     private const string DbSetMetadataName = "Microsoft.EntityFrameworkCore.DbSet`1";
+
+    /// <summary>
+    /// List&lt;T&gt; 的完整元数据名称
+    /// </summary>
     private const string ListMetadataName = "System.Collections.Generic.List`1";
 
+    /// <summary>
+    /// 增量生成入口 配置对编译对象的扫描与源码输出
+    /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var configs = context.CompilationProvider.Select((compilation, _) =>
@@ -28,20 +46,22 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             var dbSetEntities = GetDbSetEntityTypes(compilation);
             var listSymbol = compilation.GetTypeByMetadataName(ListMetadataName);
 
+            // 只有同时存在 JsonColumn 特性 和 EFCore ModelBuilder 且当前编译单元中存在 DbSet 实体时才尝试生成
             var canEmit = jsonAttribute is not null && modelBuilder is not null && dbSetEntities.Count > 0;
 
             var builder = ImmutableArray.CreateBuilder<JsonEntityConfig>();
+            var diagnostics = new List<Diagnostic>();
 
             foreach (var entity in dbSetEntities)
             {
-                var navigations = GetJsonNavigations(entity, jsonAttribute!, listSymbol, includeAllChildren: false);
+                var navigations = GetJsonNavigations(entity, jsonAttribute!, listSymbol, includeAllChildren: false, path: new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default), diagnostics);
                 if (!navigations.IsDefaultOrEmpty)
                 {
                     builder.Add(new JsonEntityConfig(entity, navigations));
                 }
             }
 
-            return new JsonConfigResult(canEmit, builder.ToImmutable());
+            return new JsonConfigResult(canEmit, builder.ToImmutable(), diagnostics.ToImmutableArray());
         });
 
         context.RegisterSourceOutput(configs, static (spc, configs) =>
@@ -49,15 +69,32 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             if (!configs.CanEmit)
                 return;
 
+            if (!configs.Diagnostics.IsDefaultOrEmpty)
+            {
+                foreach (var diagnostic in configs.Diagnostics)
+                {
+                    spc.ReportDiagnostic(diagnostic);
+                }
+
+                if (configs.Diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
+                    return;
+            }
+
             var source = BuildSource(configs.Configs);
             spc.AddSource("JsonColumnMappings.g.cs", source);
         });
     }
 
 
-    private static ImmutableArray<JsonNavigation> GetJsonNavigations(INamedTypeSymbol type, INamedTypeSymbol jsonAttribute, INamedTypeSymbol? listSymbol, bool includeAllChildren)
+    /// <summary>
+    /// 基于实体类型递归收集 JSON 拥有者导航信息
+    /// includeAllChildren 为 false 时只接受带 JsonColumn 的属性
+    /// 为 true 时表示在 JSON 根对象内部继续向下收集所有导航
+    /// </summary>
+    private static ImmutableArray<JsonNavigation> GetJsonNavigations(INamedTypeSymbol type, INamedTypeSymbol jsonAttribute, INamedTypeSymbol? listSymbol, bool includeAllChildren, HashSet<INamedTypeSymbol> path, List<Diagnostic> diagnostics)
     {
         var builder = ImmutableArray.CreateBuilder<JsonNavigation>();
+        path.Add(type);
 
         foreach (var property in EnumerateProperties(type))
         {
@@ -69,15 +106,30 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             if (ownedType is null || ownedType.SpecialType != SpecialType.None)
                 continue;
 
-            var childNavigations = GetJsonNavigations(ownedType, jsonAttribute, listSymbol, includeAllChildren: true);
+            if (!path.Add(ownedType))
+            {
+                diagnostics.Add(Diagnostic.Create(
+                    CycleDetectedDescriptor,
+                    property.Locations.FirstOrDefault(),
+                    string.Join(" -> ", path.Select(t => t.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)).Concat(new[] { ownedType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) }))));
+                continue;
+            }
+
+            var childNavigations = GetJsonNavigations(ownedType, jsonAttribute, listSymbol, includeAllChildren: true, path, diagnostics);
+            path.Remove(ownedType);
 
             builder.Add(new JsonNavigation(property.Name, ownedType, isCollection, childNavigations));
         }
 
+        path.Remove(type);
         return builder.ToImmutable();
     }
 
 
+    /// <summary>
+    /// 从属性类型解析拥有者类型和是否集合
+    /// 目前支持 List&lt;T&gt; 集合类型 与普通引用类型
+    /// </summary>
     private static (INamedTypeSymbol? ownedType, bool isCollection) GetOwnedType(ITypeSymbol type, INamedTypeSymbol? listSymbol)
     {
         if (listSymbol is not null && type is INamedTypeSymbol named &&
@@ -92,6 +144,9 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 判断属性是否带有 JsonColumn 特性
+    /// </summary>
     private static bool HasJsonColumnAttribute(IPropertySymbol property, INamedTypeSymbol jsonAttribute)
     {
         foreach (var attribute in property.GetAttributes())
@@ -107,6 +162,9 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 枚举类型及其基类上的所有实例属性 去除重复
+    /// </summary>
     private static IEnumerable<IPropertySymbol> EnumerateProperties(INamedTypeSymbol type)
     {
         var visited = new HashSet<string>(StringComparer.Ordinal);
@@ -126,6 +184,9 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 根据收集到的实体配置生成 JsonColumn 映射扩展方法源码
+    /// </summary>
     private static string BuildSource(ImmutableArray<JsonEntityConfig> configs)
     {
         var sb = new StringBuilder();
@@ -168,6 +229,9 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 为单个实体生成 Entity 级 JSON 拥有者配置
+    /// </summary>
     private static void AppendEntityMapping(StringBuilder sb, JsonEntityConfig config)
     {
         var entityName = config.EntityType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
@@ -185,6 +249,10 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 为单个导航属性生成 OwnsOne 或 OwnsMany 配置
+    /// isRoot 为 true 时表示 Json 列根节点 需要调用 ToJson
+    /// </summary>
     private static void AppendNavigation(StringBuilder sb, JsonNavigation navigation, string builderName, string lambdaParam, string indent, bool isRoot)
     {
         var methodName = navigation.IsCollection ? "OwnsMany" : "OwnsOne";
@@ -242,20 +310,29 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// Json 映射生成结果 包含是否可生成 标记的实体配置以及诊断信息
+    /// </summary>
     private sealed class JsonConfigResult
     {
-        public JsonConfigResult(bool canEmit, ImmutableArray<JsonEntityConfig> configs)
+        public JsonConfigResult(bool canEmit, ImmutableArray<JsonEntityConfig> configs, ImmutableArray<Diagnostic> diagnostics)
         {
             CanEmit = canEmit;
             Configs = configs;
+            Diagnostics = diagnostics;
         }
 
         public bool CanEmit { get; }
 
         public ImmutableArray<JsonEntityConfig> Configs { get; }
+
+        public ImmutableArray<Diagnostic> Diagnostics { get; }
     }
 
 
+    /// <summary>
+    /// 扫描编译单元中所有继承自 DbContext 的类型 收集其 DbSet&lt;T&gt; 声明的实体类型
+    /// </summary>
     private static ImmutableHashSet<INamedTypeSymbol> GetDbSetEntityTypes(Compilation compilation)
     {
         var dbContextSymbol = compilation.GetTypeByMetadataName(DbContextMetadataName);
@@ -299,6 +376,9 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 判断类型是否在继承链上派生自指定基类
+    /// </summary>
     private static bool InheritsFrom(INamedTypeSymbol type, INamedTypeSymbol baseType)
     {
         for (var current = type; current is not null; current = current.BaseType)
@@ -308,4 +388,17 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         }
         return false;
     }
+
+
+    /// <summary>
+    /// 当 JsonColumn 导航之间存在循环引用时抛出的诊断定义
+    /// messageFormat 中会给出完整类型路径
+    /// </summary>
+    private static readonly DiagnosticDescriptor CycleDetectedDescriptor = new(
+        id: "JSON001",
+        title: "JsonColumn 映射存在循环引用",
+        messageFormat: "JsonColumn 映射存在循环引用：{0}",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }

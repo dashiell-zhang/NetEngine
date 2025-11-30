@@ -104,12 +104,26 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
         foreach (var property in EnumerateProperties(type))
         {
-            var isJsonColumn = includeAllChildren || HasJsonColumnAttribute(property, jsonAttribute);
+            var hasJsonColumnAttribute = HasJsonColumnAttribute(property, jsonAttribute);
+            var isJsonColumn = includeAllChildren || hasJsonColumnAttribute;
             if (!isJsonColumn)
                 continue;
 
             var (ownedType, isCollection) = GetOwnedType(property.Type, listSymbol, dictionarySymbol);
-            if (ownedType is null || ownedType.SpecialType != SpecialType.None)
+            if (ownedType is null)
+            {
+                if (hasJsonColumnAttribute)
+                {
+                    diagnostics.Add(Diagnostic.Create(
+                        UnsupportedTypeDescriptor,
+                        property.Locations.FirstOrDefault(),
+                        property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        property.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                }
+                continue;
+            }
+
+            if (ownedType.SpecialType != SpecialType.None)
                 continue;
 
             if (!path.Add(ownedType))
@@ -400,6 +414,18 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         }
         return false;
     }
+
+
+    /// <summary>
+    /// 当 JsonColumn 属性类型不受支持时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor UnsupportedTypeDescriptor = new(
+        id: "JSON002",
+        title: "JsonColumn 属性类型不受支持",
+        messageFormat: "JsonColumn 属性 {0} 的类型 {1} 不受支持，仅支持复杂类型或 List<T>。",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 
 
     /// <summary>

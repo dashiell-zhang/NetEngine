@@ -9,7 +9,7 @@ using System.Text;
 namespace SourceGenerator.Core;
 
 /// <summary>
-/// 基于 JsonColumn 特性生成 JSON 列的 owns 配置，替代运行时反射
+/// 基于 JsonColumn 特性生成 JSON 列的 ComplexProperty / ComplexCollection 配置，替代运行时反射
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class JsonColumnGenerator : IIncrementalGenerator
@@ -35,6 +35,11 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     private const string ListMetadataName = "System.Collections.Generic.List`1";
 
     /// <summary>
+    /// Dictionary&lt;TKey,TValue&gt; 的完整元数据名称
+    /// </summary>
+    private const string DictionaryMetadataName = "System.Collections.Generic.Dictionary`2";
+
+    /// <summary>
     /// 增量生成入口 配置对编译对象的扫描与源码输出
     /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -45,6 +50,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             var modelBuilder = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.ModelBuilder");
             var dbSetEntities = GetDbSetEntityTypes(compilation);
             var listSymbol = compilation.GetTypeByMetadataName(ListMetadataName);
+            var dictionarySymbol = compilation.GetTypeByMetadataName(DictionaryMetadataName);
 
             // 只有同时存在 JsonColumn 特性 和 EFCore ModelBuilder 且当前编译单元中存在 DbSet 实体时才尝试生成
             var canEmit = jsonAttribute is not null && modelBuilder is not null && dbSetEntities.Count > 0;
@@ -54,7 +60,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
             foreach (var entity in dbSetEntities)
             {
-                var navigations = GetJsonNavigations(entity, jsonAttribute!, listSymbol, includeAllChildren: false, path: new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default), diagnostics);
+                var navigations = GetJsonNavigations(entity, jsonAttribute!, listSymbol, dictionarySymbol, includeAllChildren: false, path: new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default), diagnostics);
                 if (!navigations.IsDefaultOrEmpty)
                 {
                     builder.Add(new JsonEntityConfig(entity, navigations));
@@ -91,7 +97,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// includeAllChildren 为 false 时只接受带 JsonColumn 的属性
     /// 为 true 时表示在 JSON 根对象内部继续向下收集所有导航
     /// </summary>
-    private static ImmutableArray<JsonNavigation> GetJsonNavigations(INamedTypeSymbol type, INamedTypeSymbol jsonAttribute, INamedTypeSymbol? listSymbol, bool includeAllChildren, HashSet<INamedTypeSymbol> path, List<Diagnostic> diagnostics)
+    private static ImmutableArray<JsonNavigation> GetJsonNavigations(INamedTypeSymbol type, INamedTypeSymbol jsonAttribute, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol, bool includeAllChildren, HashSet<INamedTypeSymbol> path, List<Diagnostic> diagnostics)
     {
         var builder = ImmutableArray.CreateBuilder<JsonNavigation>();
         path.Add(type);
@@ -102,7 +108,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             if (!isJsonColumn)
                 continue;
 
-            var (ownedType, isCollection) = GetOwnedType(property.Type, listSymbol);
+            var (ownedType, isCollection) = GetOwnedType(property.Type, listSymbol, dictionarySymbol);
             if (ownedType is null || ownedType.SpecialType != SpecialType.None)
                 continue;
 
@@ -115,7 +121,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                 continue;
             }
 
-            var childNavigations = GetJsonNavigations(ownedType, jsonAttribute, listSymbol, includeAllChildren: true, path, diagnostics);
+            var childNavigations = GetJsonNavigations(ownedType, jsonAttribute, listSymbol, dictionarySymbol, includeAllChildren: true, path, diagnostics);
             path.Remove(ownedType);
 
             builder.Add(new JsonNavigation(property.Name, ownedType, isCollection, childNavigations));
@@ -130,7 +136,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// 从属性类型解析拥有者类型和是否集合
     /// 目前支持 List&lt;T&gt; 集合类型 与普通引用类型
     /// </summary>
-    private static (INamedTypeSymbol? ownedType, bool isCollection) GetOwnedType(ITypeSymbol type, INamedTypeSymbol? listSymbol)
+    private static (INamedTypeSymbol? ownedType, bool isCollection) GetOwnedType(ITypeSymbol type, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol)
     {
         if (listSymbol is not null && type is INamedTypeSymbol named &&
             SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, listSymbol) &&
@@ -138,6 +144,12 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             named.TypeArguments[0] is INamedTypeSymbol listElement)
         {
             return (listElement, true);
+        }
+
+        if (dictionarySymbol is not null && type is INamedTypeSymbol namedDict &&
+            SymbolEqualityComparer.Default.Equals(namedDict.OriginalDefinition, dictionarySymbol))
+        {
+            return (null, false);
         }
 
         return type is INamedTypeSymbol namedType ? (namedType, false) : (null, false);
@@ -241,7 +253,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
         foreach (var navigation in config.Navigations)
         {
-            AppendNavigation(sb, navigation, "builder", "e", "            ", isRoot: true);
+            AppendNavigation(sb, navigation, "builder", "            ", isRoot: true);
         }
 
         sb.AppendLine("        });");
@@ -250,26 +262,26 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
 
     /// <summary>
-    /// 为单个导航属性生成 OwnsOne 或 OwnsMany 配置
+    /// 为单个导航属性生成 ComplexProperty 或 ComplexCollection 配置
     /// isRoot 为 true 时表示 Json 列根节点 需要调用 ToJson
     /// </summary>
-    private static void AppendNavigation(StringBuilder sb, JsonNavigation navigation, string builderName, string lambdaParam, string indent, bool isRoot)
+    private static void AppendNavigation(StringBuilder sb, JsonNavigation navigation, string builderName, string indent, bool isRoot)
     {
-        var methodName = navigation.IsCollection ? "OwnsMany" : "OwnsOne";
+        var methodName = navigation.IsCollection ? "ComplexCollection" : "ComplexProperty";
+        var lambdaParam = navigation.IsCollection ? "collection" : "complex";
 
         sb.Append(indent).Append(builderName).Append('.').Append(methodName)
-          .Append("(").Append(lambdaParam).Append(" => ").Append(lambdaParam).Append('.').Append(navigation.PropertyName)
-          .AppendLine(", owned =>");
+          .Append("(\"").Append(navigation.PropertyName).Append("\", ").Append(lambdaParam).AppendLine(" =>");
         sb.Append(indent).AppendLine("{");
 
         if (isRoot)
         {
-            sb.Append(indent).AppendLine("    owned.ToJson();");
+            sb.Append(indent).AppendLine("    " + lambdaParam + ".ToJson();");
         }
 
         foreach (var child in navigation.Children)
         {
-            AppendNavigation(sb, child, "owned", "o", indent + "    ", isRoot: false);
+            AppendNavigation(sb, child, lambdaParam, indent + "    ", isRoot: false);
         }
 
         sb.Append(indent).AppendLine("});");

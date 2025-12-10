@@ -21,7 +21,15 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
         isDebug = true;
 #endif
 
-        await Task.Delay(5000, stoppingToken);
+        var initTaskBackgroundService = serviceProvider.GetServices<IHostedService>().OfType<InitTaskBackgroundService>().First();
+
+        while (true)
+        {
+            if (initTaskBackgroundService.ExecuteTask!.IsCompletedSuccessfully)
+            {
+                break;
+            }
+        }
 
         if ((QueueTaskBuilder.queueMethodList.Count != 0 || ScheduleTaskBuilder.scheduleMethodList.Count != 0) && isDebug == false)
         {

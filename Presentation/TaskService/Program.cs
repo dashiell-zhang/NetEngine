@@ -5,6 +5,7 @@ using IdentifierGenerator;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using NetEngine.Generated;
 using Npgsql;
 using Repository.Interceptors;
 using SMS.AliCloud;
@@ -13,9 +14,9 @@ using System.Reflection;
 using TaskService.Core;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
-using NetEngine.Generated;
 
 namespace TaskService;
+
 class Program
 {
     static void Main(string[] args)
@@ -172,7 +173,18 @@ class Program
         //初始化所有不包含开放泛型的单例服务
         initSingletonServiceTypes.ForEach(t => host.Services.GetService(t));
         initSingletonServiceTypes = null;
+
 #if DEBUG
+
+        var initTaskBackgroundService = host.Services.GetServices<IHostedService>().OfType<InitTaskBackgroundService>().First();
+
+        while (true)
+        {
+            if (initTaskBackgroundService.ExecuteTask!.IsCompletedSuccessfully)
+            {
+                break;
+            }
+        }
 
         var queueMethodList = QueueTaskBuilder.queueMethodList;
 

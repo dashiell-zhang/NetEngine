@@ -7,6 +7,7 @@ using System.Reflection;
 
 
 namespace TaskService.Core.ScheduleTask;
+
 public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILogger<ScheduleTaskBackgroundService> logger) : BackgroundService
 {
 
@@ -16,11 +17,16 @@ public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILo
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-#if DEBUG
-        await Task.Delay(5000, stoppingToken);
-#else
-        await Task.Delay(10000, stoppingToken);
-#endif
+
+        var initTaskBackgroundService = serviceProvider.GetServices<IHostedService>().OfType<InitTaskBackgroundService>().First();
+
+        while (true)
+        {
+            if (initTaskBackgroundService.ExecuteTask!.IsCompletedSuccessfully)
+            {
+                break;
+            }
+        }
 
         if (ScheduleTaskBuilder.scheduleMethodList.Count != 0)
         {

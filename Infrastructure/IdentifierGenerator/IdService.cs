@@ -3,6 +3,7 @@ using DistributedLock;
 using IdentifierGenerator.Models;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
 
 namespace IdentifierGenerator;
 public class IdService
@@ -12,24 +13,34 @@ public class IdService
     {
         if (config.CurrentValue.DataCenterId == null || config.CurrentValue.MachineId == null)
         {
-            using (distributedLock.LockAsync("IdentifierGenerator").Result)
+            using var handle = distributedLock.LockAsync("IdentifierGenerator").GetAwaiter().GetResult();
             {
-                Random rand = new();
+                const int maxCombinations = 1024; // 32 * 32
+                var start = RandomNumberGenerator.GetInt32(0, maxCombinations);
+
                 string key = "";
-                int tryCount = 0;
-                do
+                bool allocated = false;
+
+                for (int offset = 0; offset < maxCombinations; offset++)
                 {
-                    tryCount++;
-                    if (tryCount > 10)
-                    {
-                        throw new Exception("Id生成器注册DataCenterId和MachineId失败");
-                    }
-                    int combinedNumber = rand.Next(0, 1025); // 1024 = 2^10
+                    int combinedNumber = (start + offset) % maxCombinations; // 0..1023
                     config.CurrentValue.DataCenterId = (combinedNumber >> 5) & 31; // dataCenterId 取组合数右移5位后的低5位
                     config.CurrentValue.MachineId = combinedNumber & 31; // machineId 取组合数的低5位
                     key = "IdentifierGenerator-" + config.CurrentValue.DataCenterId + ":" + config.CurrentValue.MachineId;
-                } while (distributedCache.IsContainKey(key));
-                distributedCache.Set(key, "", TimeSpan.FromHours(1));
+
+                    if (!distributedCache.IsContainKey(key))
+                    {
+                        allocated = true;
+                        break;
+                    }
+                }
+
+                if (!allocated)
+                {
+                    throw new Exception("Id生成器注册DataCenterId和MachineId失败：可用组合已耗尽");
+                }
+
+                distributedCache.Set(key, "", TimeSpan.FromDays(2));
             }
         }
 

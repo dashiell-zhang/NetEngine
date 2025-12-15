@@ -40,7 +40,7 @@ public static class HttpClientExtension
     /// <param name="type">json,xml</param>
     /// <param name="headers">自定义Header集合</param>
     /// <returns></returns>
-    public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
+    public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default, CancellationToken cancellationToken = default)
     {
         HttpRequestMessage request = new()
         {
@@ -65,7 +65,7 @@ public static class HttpClientExtension
 
         request.Content = new StringContent(data, Encoding.UTF8, mediaType);
 
-        return httpClient.SendAsync(request);
+        return httpClient.SendAsync(request, cancellationToken);
     }
 
 

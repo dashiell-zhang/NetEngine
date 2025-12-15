@@ -1,5 +1,6 @@
 using Common;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -15,7 +16,8 @@ public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFact
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var authorization = GetToken();
+        var authorization = await GetTokenAsync(cancellationToken);
+
 
         var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
         var privateKey = authorization.Split(".").ToList().LastOrDefault();
@@ -27,7 +29,7 @@ public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFact
         {
             if (request.Content.Headers.ContentType.MediaType == "application/json")
             {
-                var requestBody = request.Content?.ReadAsStringAsync(cancellationToken).Result;
+                var requestBody = await request.Content.ReadAsStringAsync(cancellationToken);
 
                 if (requestBody != null)
                 {
@@ -40,15 +42,23 @@ public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFact
 
                 foreach (var item in dataContents!.Where(t => t.Headers.ContentType?.MediaType == "text/plain").OrderBy(t => t.Headers.ContentDisposition?.Name).ToList())
                 {
-                    dataStr = dataStr + item.Headers.ContentDisposition?.Name + item.ReadAsStringAsync(cancellationToken).Result;
+                    var value = await item.ReadAsStringAsync(cancellationToken);
+                    dataStr = dataStr + item.Headers.ContentDisposition?.Name + value;
                 }
 
                 foreach (var item in dataContents!.Where(t => t.Headers.ContentType == null).OrderBy(t => t.Headers.ContentDisposition?.Name).ToList())
                 {
                     using SHA256 sha256 = SHA256.Create();
-                    var fileSign = Convert.ToHexString(sha256.ComputeHash(item.ReadAsStream(cancellationToken)));
+                    var fileStream = await item.ReadAsStreamAsync(cancellationToken);
 
-                    item.ReadAsStream(cancellationToken).Position = 0;
+                    if (!fileStream.CanSeek)
+                    {
+                        throw new InvalidOperationException("multipart/form-data 文件流不支持 Seek，HttpSignHandler 无法在读取签名后复位流位置，请改为使用可 Seek 的流（如 FileStream/MemoryStream）");
+                    }
+
+                    var fileSign = Convert.ToHexString(sha256.ComputeHash(fileStream));
+
+                    fileStream.Position = 0;
 
                     dataStr = dataStr + item.Headers.ContentDisposition?.Name + fileSign;
                 }
@@ -56,7 +66,7 @@ public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFact
         }
         string dataSign = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(dataStr)));
 
-        request.Headers.Add("Authorization", "Bearer " + authorization);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authorization);
         request.Headers.Add("Token", dataSign);
         request.Headers.Add("Time", timeStr);
 
@@ -69,7 +79,7 @@ public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFact
 
             if (!string.IsNullOrEmpty(newToken))
             {
-                distributedCache.SetString("token", newToken);
+                await distributedCache.SetStringAsync("token", newToken, cancellationToken);
             }
         }
 
@@ -78,9 +88,9 @@ public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFact
     }
 
 
-    private string GetToken()
+    private async Task<string> GetTokenAsync(CancellationToken cancellationToken)
     {
-        var token = distributedCache.GetString("token");
+        var token = await distributedCache.GetStringAsync("token", cancellationToken);
 
         if (string.IsNullOrEmpty(token))
         {
@@ -92,9 +102,19 @@ public class HttpSignHandler(IDistributedCache distributedCache, IHttpClientFact
 
             var getTKStr = JsonHelper.ObjectToJson(getTK);
 
-            token = httpClient.PostAsync("https://localhost:9833/api/Authorize/GetToken", getTKStr, "json").Result.Content.ReadAsStringAsync().Result;
+            using var content = new StringContent(getTKStr, Encoding.UTF8, "application/json");
+            using var httpResponseMessage = await httpClient.PostAsync("https://localhost:9833/api/Authorize/GetToken", getTKStr, "json", cancellationToken: cancellationToken);
 
-            distributedCache.SetString("token", token);
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                token = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+                await distributedCache.SetStringAsync("token", token, cancellationToken);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            throw new Exception("token获取失败");
         }
 
         return token;

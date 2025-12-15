@@ -23,12 +23,9 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
         var initTaskBackgroundService = serviceProvider.GetServices<IHostedService>().OfType<InitTaskBackgroundService>().First();
 
-        while (true)
+        if (!await initTaskBackgroundService.TryWaitForInitializationAsync(logger, stoppingToken))
         {
-            if (initTaskBackgroundService.ExecuteTask!.IsCompletedSuccessfully)
-            {
-                break;
-            }
+            return;
         }
 
         using var scope = serviceProvider.CreateScope();

@@ -178,12 +178,14 @@ class Program
 
         var initTaskBackgroundService = host.Services.GetServices<IHostedService>().OfType<InitTaskBackgroundService>().First();
 
-        while (true)
+        try
         {
-            if (initTaskBackgroundService.ExecuteTask!.IsCompletedSuccessfully)
-            {
-                break;
-            }
+            initTaskBackgroundService.WaitForInitializationAsync(CancellationToken.None).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("InitTaskBackgroundService 初始化失败：" + ex);
+            return;
         }
 
         var queueMethodList = QueueTaskBuilder.queueMethodList;

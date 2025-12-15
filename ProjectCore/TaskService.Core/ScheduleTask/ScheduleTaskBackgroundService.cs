@@ -20,12 +20,9 @@ public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILo
 
         var initTaskBackgroundService = serviceProvider.GetServices<IHostedService>().OfType<InitTaskBackgroundService>().First();
 
-        while (true)
+        if (!await initTaskBackgroundService.TryWaitForInitializationAsync(logger, stoppingToken))
         {
-            if (initTaskBackgroundService.ExecuteTask!.IsCompletedSuccessfully)
-            {
-                break;
-            }
+            return;
         }
 
         if (ScheduleTaskBuilder.scheduleMethodList.Count != 0)

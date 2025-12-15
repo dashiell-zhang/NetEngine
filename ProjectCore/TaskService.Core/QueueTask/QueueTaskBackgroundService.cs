@@ -12,6 +12,7 @@ using System.Reflection;
 using static TaskService.Core.QueueTask.QueueTaskBuilder;
 
 namespace TaskService.Core.QueueTask;
+
 public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock) : BackgroundService
 {
     private readonly ILogger logger = logger;
@@ -145,19 +146,11 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
                     await task;
 
                     var resultProperty = task.GetType().GetProperty("Result");
+                    returnObject = resultProperty?.GetValue(task);
 
-                    if (resultProperty == null)
+                    if (returnObject?.GetType().FullName == "System.Threading.Tasks.VoidTaskResult")
                     {
-                        throw new Exception("无法获取到Task.Result");
-                    }
-                    else
-                    {
-                        returnObject = resultProperty?.GetValue(task);
-
-                        if (returnObject?.GetType().FullName == "System.Threading.Tasks.VoidTaskResult")
-                        {
-                            returnObject = null;
-                        }
+                        returnObject = null;
                     }
                 }
 

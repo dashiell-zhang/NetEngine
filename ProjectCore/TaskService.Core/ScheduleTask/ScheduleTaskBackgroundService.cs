@@ -10,6 +10,8 @@ namespace TaskService.Core.ScheduleTask;
 
 public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILogger<ScheduleTaskBackgroundService> logger) : BackgroundService
 {
+    private static readonly TimeSpan ScheduleGraceWindow = TimeSpan.FromMilliseconds(256);
+    private static readonly TimeSpan SchedulePollInterval = TimeSpan.FromMilliseconds(128);
 
     private readonly ConcurrentDictionary<string, string?> runingTaskList = new();
 
@@ -27,36 +29,39 @@ public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILo
 
         if (ScheduleTaskBuilder.scheduleMethodList.Count != 0)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            using PeriodicTimer timer = new(SchedulePollInterval);
+
+            while (await timer.WaitForNextTickAsync(stoppingToken))
             {
                 try
                 {
 
                     foreach (var item in ScheduleTaskBuilder.scheduleMethodList.Values.Where(t => t.IsEnable).ToList())
                     {
-                        var nowTime = DateTimeOffset.Parse(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss zzz"));
+                        var nowTime = DateTimeOffset.UtcNow;
 
                         if (item.LastTime == null)
                         {
                             item.LastTime = nowTime.AddSeconds(5);
                         }
 
-                        var nextTime = DateTimeOffset.Parse(CronHelper.GetNextOccurrence(item.Cron, item.LastTime.Value).ToString("yyyy-MM-dd HH:mm:ss zzz"));
+                        var nextTime = CronHelper.GetNextOccurrence(item.Cron, item.LastTime.Value);
 
-                        if (nextTime < nowTime)
-                        {
-                            item.LastTime = null;
-                        }
+                        var lateBy = nowTime - nextTime;
 
-                        if (nextTime == nowTime)
+                        if (lateBy >= TimeSpan.Zero && lateBy <= ScheduleGraceWindow)
                         {
-                            string key = nowTime.ToUnixTimeSeconds() + item.Name;
+                            string key = nextTime.ToUnixTimeMilliseconds() + item.Name;
 
                             if (runingTaskList.TryAdd(key, null))
                             {
-                                item.LastTime = nowTime;
+                                item.LastTime = nextTime;
                                 RunAction(item, key);
                             }
+                        }
+                        else if (lateBy > ScheduleGraceWindow)
+                        {
+                            item.LastTime = nowTime;
                         }
                     }
                 }
@@ -64,8 +69,6 @@ public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILo
                 {
                     logger.LogError($"ExecuteAsync：{ex.Message}");
                 }
-
-                await Task.Delay(900, stoppingToken);
             }
         }
     }

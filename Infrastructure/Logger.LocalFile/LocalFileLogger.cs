@@ -1,28 +1,21 @@
 using Common;
 using Microsoft.Extensions.Logging;
-using System.Text;
 
 namespace Logger.LocalFile;
+
 public class LocalFileLogger : ILogger
 {
 
     private readonly string categoryName;
 
+    private readonly LocalFileLogWriter logWriter;
 
-    private readonly string basePath;
 
-    public LocalFileLogger(string categoryName)
+    public LocalFileLogger(string categoryName, LocalFileLogWriter logWriter)
     {
         this.categoryName = categoryName;
-
-        basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
-
-        if (Directory.Exists(basePath) == false)
-        {
-            Directory.CreateDirectory(basePath);
-        }
+        this.logWriter = logWriter;
     }
-
 
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
@@ -37,7 +30,7 @@ public class LocalFileLogger : ILogger
     }
 
 
-    public async void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
 
         if (IsEnabled(logLevel))
@@ -74,14 +67,12 @@ public class LocalFileLogger : ILogger
                     };
 
                     string logStr = JsonHelper.ObjectToJson(log);
-
-                    var logPath = Path.Combine(basePath, DateTime.UtcNow.ToString("yyyyMMddHH") + ".log");
-
-                    await File.AppendAllTextAsync(logPath, logStr + Environment.NewLine, Encoding.UTF8);
+                    logWriter.Enqueue(logStr);
 
                 }
             }
 
         }
     }
+
 }

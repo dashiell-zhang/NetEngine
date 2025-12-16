@@ -96,16 +96,14 @@
 - Redis
 - （可选）阿里云 OSS / 腾讯云 COS、阿里云 / 腾讯云短信
 
-### 3.2 克隆与构建
+### 3.2 构建
 
 ```bash
-git clone https://github.com/xxx/NetEngine.git
-cd NetEngine
 dotnet restore
 dotnet build NetEngine.slnx
 ```
 
-> `xxx/NetEngine.git` 请替换为你实际仓库地址。
+> 在仓库根目录执行上述命令即可。
 
 ### 3.3 基本配置
 
@@ -517,4 +515,3 @@ group by CODE_TOWN, NAME_TOWN, CODE_COUN;
 
 本项目基于 MIT License 开源，详情见根目录 `LICENSE` 文件。  
 你可以在商业或非商业项目中自由使用、修改和分发本项目，但需保留原始版权声明。
-

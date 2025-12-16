@@ -5,11 +5,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System.Diagnostics;
-using System.Text;
 
 namespace Logger.DataBase;
-public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IServiceProvider serviceProvider) : ILogger
+
+public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IServiceProvider serviceProvider, DataBaseLogWriter logWriter) : ILogger
 {
+
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
         return default;
@@ -94,20 +95,11 @@ public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IS
 
 
                     string logStr = JsonHelper.ObjectToJson(log);
-
-
-                    string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
-
-                    if (Directory.Exists(basePath) == false)
-                    {
-                        Directory.CreateDirectory(basePath);
-                    }
-
-                    var logPath = Path.Combine(basePath, log.Id + ".log");
-                    File.WriteAllTextAsync(logPath, logStr, Encoding.UTF8);
+                    logWriter.Enqueue(logStr);
                 }
             }
 
         }
     }
+
 }

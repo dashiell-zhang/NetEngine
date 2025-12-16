@@ -1,13 +1,14 @@
-using Common;
 using Logger.LocalFile.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Logger.LocalFile.Tasks;
+
 internal class LogClearTask(IOptionsMonitor<LoggerSetting> config) : BackgroundService
 {
 
     private readonly int saveDays = config.CurrentValue.SaveDays;
+
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -17,12 +18,11 @@ internal class LogClearTask(IOptionsMonitor<LoggerSetting> config) : BackgroundS
             {
                 try
                 {
-
                     string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
 
                     if (Directory.Exists(basePath))
                     {
-                        List<string> logPaths = [.. IOHelper.GetFolderAllFiles(basePath)];
+                        List<string> logPaths = [.. Directory.EnumerateFiles(basePath, "*.log")];
 
                         var deleteTime = DateTime.UtcNow.AddDays(-1 * saveDays);
 

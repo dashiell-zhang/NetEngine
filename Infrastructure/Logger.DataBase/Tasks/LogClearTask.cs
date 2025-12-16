@@ -6,10 +6,12 @@ using Microsoft.Extensions.Options;
 using Repository.Database;
 
 namespace Logger.DataBase.Tasks;
+
 internal class LogClearTask(IOptionsMonitor<LoggerSetting> config, IServiceProvider serviceProvider) : BackgroundService
 {
 
     private readonly int saveDays = config.CurrentValue.SaveDays;
+
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {

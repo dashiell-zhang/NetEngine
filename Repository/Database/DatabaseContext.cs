@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Xml;
 
 namespace Repository.Database;
+
 public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbContext(options)
 {
 
@@ -98,10 +99,18 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
+        var dbSetTypeList = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p =>
+                 p.PropertyType.IsGenericType &&
+                 p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
+             .Select(p => p.PropertyType.GetGenericArguments()[0])
+             .ToList();
+
+        var entityTypesInDbSet = modelBuilder.Model.GetEntityTypes().Where(e => dbSetTypeList.Contains(e.ClrType)).ToList();
+
         modelBuilder.ApplyJsonColumns();
 
         #region 为所有实体的 AesEncrypted 字段添加转换器
-        foreach (var entity in modelBuilder.Model.GetEntityTypes())
+        foreach (var entity in entityTypesInDbSet)
         {
             foreach (var property in entity.GetProperties())
             {
@@ -122,7 +131,7 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
         modelBuilder.ApplySoftDeleteFilters();
 
-        foreach (var entity in modelBuilder.Model.GetEntityTypes().Where(t => t.IsMappedToJson() == false))
+        foreach (var entity in entityTypesInDbSet)
         {
 #if DEBUG
             //关闭表外键的级联删除功能

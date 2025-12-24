@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
@@ -415,7 +416,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         var lambdaParam = navigation.IsCollection ? "collection" : "complex";
 
         sb.Append(indent).Append(builderName).Append('.').Append(methodName)
-          .Append("(\"").Append(navigation.PropertyName).Append("\", ").Append(lambdaParam).AppendLine(" =>");
+          .Append("(p => p.").Append(EscapeIdentifier(navigation.PropertyName)).Append(", ").Append(lambdaParam).AppendLine(" =>");
         sb.Append(indent).AppendLine("{");
 
         if (isRoot)
@@ -425,9 +426,9 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
         foreach (var encryptedProperty in navigation.EncryptedScalarProperties.OrderBy(p => p, StringComparer.Ordinal))
         {
-            sb.Append(indent).Append("    ").Append(lambdaParam).Append(".Property(\"")
-              .Append(encryptedProperty)
-              .AppendLine("\").HasConversion(AesValueConverter.aesConverter);");
+            sb.Append(indent).Append("    ").Append(lambdaParam).Append(".Property(p => p.")
+              .Append(EscapeIdentifier(encryptedProperty))
+              .AppendLine(").HasConversion(AesValueConverter.aesConverter);");
         }
 
         foreach (var child in navigation.Children)
@@ -555,6 +556,19 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         }
 
         return false;
+    }
+
+
+    private static string EscapeIdentifier(string identifier)
+    {
+        // 若是关键字/上下文关键字，使用 @ 前缀以避免生成非法代码
+        if (SyntaxFacts.GetKeywordKind(identifier) != SyntaxKind.None ||
+            SyntaxFacts.GetContextualKeywordKind(identifier) != SyntaxKind.None)
+        {
+            return "@" + identifier;
+        }
+
+        return identifier;
     }
 
 

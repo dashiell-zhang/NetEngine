@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
@@ -169,10 +170,9 @@ public sealed class AesEncryptedValueConverterGenerator : IIncrementalGenerator
 
             foreach (var propertyName in config.EncryptedProperties.OrderBy(p => p, StringComparer.Ordinal))
             {
-                // 使用字符串重载以支持非 public 属性或字段映射场景，并保持与 EF Model 中属性名一致
-                sb.Append("            builder.Property(\"")
-                  .Append(propertyName)
-                  .AppendLine("\").HasConversion(AesValueConverter.aesConverter);");
+                sb.Append("            builder.Property(p => p.")
+                  .Append(EscapeIdentifier(propertyName))
+                  .AppendLine(").HasConversion(AesValueConverter.aesConverter);");
             }
 
             sb.AppendLine("        });");
@@ -285,6 +285,17 @@ public sealed class AesEncryptedValueConverterGenerator : IIncrementalGenerator
         return false;
     }
 
+    private static string EscapeIdentifier(string identifier)
+    {
+        // 若是关键字/上下文关键字，使用 @ 前缀以避免生成非法代码
+        if (SyntaxFacts.GetKeywordKind(identifier) != SyntaxKind.None ||
+            SyntaxFacts.GetContextualKeywordKind(identifier) != SyntaxKind.None)
+        {
+            return "@" + identifier;
+        }
+
+        return identifier;
+    }
 
     private sealed class EntityEncryptionConfig
     {

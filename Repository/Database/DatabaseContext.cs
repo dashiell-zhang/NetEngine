@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Repository.Attributes;
 using Repository.Database.Generated;
-using Repository.ValueConverters;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
@@ -109,25 +107,7 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
         modelBuilder.ApplyJsonColumns();
 
-        #region 为所有实体的 AesEncrypted 字段添加转换器
-        foreach (var entity in entityTypesInDbSet)
-        {
-            foreach (var property in entity.GetProperties())
-            {
-                if (property.PropertyInfo?.GetCustomAttribute<AesEncryptedAttribute>() != null)
-                {
-                    if (property.ClrType == typeof(string))
-                    {
-                        property.SetValueConverter(AesValueConverter.aesConverter);
-                    }
-                    else
-                    {
-                        throw new Exception("非 string 类型的字段无法添加 AesEncrypted");
-                    }
-                }
-            }
-        }
-        #endregion
+        modelBuilder.ApplyAesEncryptedConverters();
 
         modelBuilder.ApplySoftDeleteFilters();
 

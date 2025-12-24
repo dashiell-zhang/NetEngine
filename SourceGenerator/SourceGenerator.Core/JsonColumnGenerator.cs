@@ -17,7 +17,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// <summary>
     /// JsonColumn 特性的完整元数据名称
     /// </summary>
-    private const string JsonColumnAttributeMetadataName = "Repository.Column.Attributes.JsonColumnAttribute";
+    private const string JsonColumnAttributeMetadataName = "Repository.Attributes.JsonColumnAttribute";
 
     /// <summary>
     /// DbContext 的完整元数据名称

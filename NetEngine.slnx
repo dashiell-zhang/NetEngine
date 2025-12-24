@@ -37,7 +37,6 @@
     <Project Path="SourceGenerator/SourceGenerator.Core/SourceGenerator.Core.csproj" />
     <Project Path="SourceGenerator/SourceGenerator.Runtime/SourceGenerator.Runtime.csproj" />
   </Folder>
-  <Project Path="Repository.Column/Repository.Column.csproj" />
   <Project Path="Repository.Enum/Repository.Enum.csproj" />
   <Project Path="Repository.Tool/Repository.Tool.csproj" />
   <Project Path="Repository/Repository.csproj" />

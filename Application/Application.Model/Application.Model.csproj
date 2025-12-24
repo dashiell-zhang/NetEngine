@@ -18,8 +18,4 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\..\Repository.Column\Repository.Column.csproj" />
-	</ItemGroup>
-
 </Project>

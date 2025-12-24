@@ -40,6 +40,16 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     private const string DictionaryMetadataName = "System.Collections.Generic.Dictionary`2";
 
     /// <summary>
+    /// AesEncrypted 特性的完整元数据名称
+    /// </summary>
+    private const string AesEncryptedAttributeMetadataName = "Repository.Attributes.AesEncryptedAttribute";
+
+    /// <summary>
+    /// AesValueConverter 的完整元数据名称
+    /// </summary>
+    private const string AesValueConverterMetadataName = "Repository.ValueConverters.AesValueConverter";
+
+    /// <summary>
     /// 这些类型在 EFCore 中应被视为标量（即便其 SpecialType 为 None），不应在 JSON 拥有者里继续展开为 ComplexProperty
     /// </summary>
     private static readonly ImmutableHashSet<string> EfScalarLikeTypeMetadataNames = ImmutableHashSet.Create(
@@ -58,6 +68,8 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         var configs = context.CompilationProvider.Select((compilation, _) =>
         {
             var jsonAttribute = compilation.GetTypeByMetadataName(JsonColumnAttributeMetadataName);
+            var aesEncryptedAttribute = compilation.GetTypeByMetadataName(AesEncryptedAttributeMetadataName);
+            var aesValueConverter = compilation.GetTypeByMetadataName(AesValueConverterMetadataName);
             var modelBuilder = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.ModelBuilder");
             var dbSetEntities = GetDbSetEntityTypes(compilation);
             var listSymbol = compilation.GetTypeByMetadataName(ListMetadataName);
@@ -65,20 +77,30 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
             // 只有同时存在 JsonColumn 特性 和 EFCore ModelBuilder 且当前编译单元中存在 DbSet 实体时才尝试生成
             var canEmit = jsonAttribute is not null && modelBuilder is not null && dbSetEntities.Count > 0;
+            var canEmitAesConversions = aesEncryptedAttribute is not null && aesValueConverter is not null;
 
             var builder = ImmutableArray.CreateBuilder<JsonEntityConfig>();
             var diagnostics = new List<Diagnostic>();
 
             foreach (var entity in dbSetEntities)
             {
-                var navigations = GetJsonNavigations(entity, jsonAttribute!, listSymbol, dictionarySymbol, includeAllChildren: false, path: new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default), diagnostics);
-                if (!navigations.IsDefaultOrEmpty)
+                var typeConfig = GetJsonTypeConfig(
+                    entity,
+                    jsonAttribute!,
+                    canEmitAesConversions ? aesEncryptedAttribute : null,
+                    listSymbol,
+                    dictionarySymbol,
+                    includeAllChildren: false,
+                    path: new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default),
+                    diagnostics);
+
+                if (!typeConfig.Navigations.IsDefaultOrEmpty)
                 {
-                    builder.Add(new JsonEntityConfig(entity, navigations));
+                    builder.Add(new JsonEntityConfig(entity, typeConfig.Navigations));
                 }
             }
 
-            return new JsonConfigResult(canEmit, builder.ToImmutable(), diagnostics.ToImmutableArray());
+            return new JsonConfigResult(canEmit, builder.ToImmutable(), diagnostics.ToImmutableArray(), canEmitAesConversions);
         });
 
         context.RegisterSourceOutput(configs, static (spc, configs) =>
@@ -97,7 +119,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                     return;
             }
 
-            var source = BuildSource(configs.Configs);
+            var source = BuildSource(configs.Configs, configs.CanEmitAesConversions);
             spc.AddSource("JsonColumnMappings.g.cs", source);
         });
     }
@@ -108,10 +130,12 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// includeAllChildren 为 false 时只接受带 JsonColumn 的属性
     /// 为 true 时表示在 JSON 根对象内部继续向下收集所有导航
     /// </summary>
-    private static ImmutableArray<JsonNavigation> GetJsonNavigations(INamedTypeSymbol type, INamedTypeSymbol jsonAttribute, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol, bool includeAllChildren, HashSet<INamedTypeSymbol> path, List<Diagnostic> diagnostics)
+    private static JsonTypeConfig GetJsonTypeConfig(INamedTypeSymbol type, INamedTypeSymbol jsonAttribute, INamedTypeSymbol? aesEncryptedAttribute, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol, bool includeAllChildren, HashSet<INamedTypeSymbol> path, List<Diagnostic> diagnostics)
     {
         var builder = ImmutableArray.CreateBuilder<JsonNavigation>();
         path.Add(type);
+
+        var encryptedScalarProperties = ImmutableArray.CreateBuilder<string>();
 
         foreach (var property in EnumerateProperties(type))
         {
@@ -119,6 +143,24 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             var isJsonColumn = includeAllChildren || hasJsonColumnAttribute;
             if (!isJsonColumn)
                 continue;
+
+            // 仅在 JSON owned graph 内处理加密标记（根实体上的字段由 AesEncryptedValueConverterGenerator 负责）
+            if (includeAllChildren && aesEncryptedAttribute is not null && HasAttribute(property, aesEncryptedAttribute))
+            {
+                // 与原反射逻辑保持一致：仅允许 string 字段标记 [AesEncrypted]
+                if (property.Type.SpecialType != SpecialType.System_String)
+                {
+                    diagnostics.Add(Diagnostic.Create(
+                        NonStringEncryptedPropertyDescriptor,
+                        property.Locations.FirstOrDefault(),
+                        property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        property.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                }
+                else
+                {
+                    encryptedScalarProperties.Add(property.Name);
+                }
+            }
 
             var (ownedType, isCollection) = GetOwnedType(property.Type, listSymbol, dictionarySymbol);
             if (ownedType is null)
@@ -159,14 +201,14 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                 continue;
             }
 
-            var childNavigations = GetJsonNavigations(ownedType, jsonAttribute, listSymbol, dictionarySymbol, includeAllChildren: true, path, diagnostics);
+            var childConfig = GetJsonTypeConfig(ownedType, jsonAttribute, aesEncryptedAttribute, listSymbol, dictionarySymbol, includeAllChildren: true, path, diagnostics);
             path.Remove(ownedType);
 
-            builder.Add(new JsonNavigation(property.Name, ownedType, isCollection, childNavigations));
+            builder.Add(new JsonNavigation(property.Name, ownedType, isCollection, childConfig.Navigations, childConfig.EncryptedScalarProperties));
         }
 
         path.Remove(type);
-        return builder.ToImmutable();
+        return new JsonTypeConfig(builder.ToImmutable(), encryptedScalarProperties.ToImmutable());
     }
 
 
@@ -296,12 +338,17 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// <summary>
     /// 根据收集到的实体配置生成 JsonColumn 映射扩展方法源码
     /// </summary>
-    private static string BuildSource(ImmutableArray<JsonEntityConfig> configs)
+    private static string BuildSource(ImmutableArray<JsonEntityConfig> configs, bool canEmitAesConversions)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// <auto-generated />");
         sb.AppendLine("#nullable enable");
         sb.AppendLine("using Microsoft.EntityFrameworkCore;");
+
+        if (canEmitAesConversions && HasAnyEncryptedScalar(configs))
+        {
+            sb.AppendLine("using Repository.ValueConverters;");
+        }
 
         var namespaces = new HashSet<string>(StringComparer.Ordinal);
         foreach (var config in configs)
@@ -376,6 +423,13 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             sb.Append(indent).AppendLine("    " + lambdaParam + ".ToJson();");
         }
 
+        foreach (var encryptedProperty in navigation.EncryptedScalarProperties.OrderBy(p => p, StringComparer.Ordinal))
+        {
+            sb.Append(indent).Append("    ").Append(lambdaParam).Append(".Property(\"")
+              .Append(encryptedProperty)
+              .AppendLine("\").HasConversion(AesValueConverter.aesConverter);");
+        }
+
         foreach (var child in navigation.Children)
         {
             AppendNavigation(sb, child, lambdaParam, indent + "    ", isRoot: false);
@@ -401,12 +455,13 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
     private sealed class JsonNavigation
     {
-        public JsonNavigation(string propertyName, INamedTypeSymbol ownedType, bool isCollection, ImmutableArray<JsonNavigation> children)
+        public JsonNavigation(string propertyName, INamedTypeSymbol ownedType, bool isCollection, ImmutableArray<JsonNavigation> children, ImmutableArray<string> encryptedScalarProperties)
         {
             PropertyName = propertyName;
             OwnedType = ownedType;
             IsCollection = isCollection;
             Children = children;
+            EncryptedScalarProperties = encryptedScalarProperties;
         }
 
         public string PropertyName { get; }
@@ -416,6 +471,8 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         public bool IsCollection { get; }
 
         public ImmutableArray<JsonNavigation> Children { get; }
+
+        public ImmutableArray<string> EncryptedScalarProperties { get; }
     }
 
 
@@ -424,11 +481,12 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// </summary>
     private sealed class JsonConfigResult
     {
-        public JsonConfigResult(bool canEmit, ImmutableArray<JsonEntityConfig> configs, ImmutableArray<Diagnostic> diagnostics)
+        public JsonConfigResult(bool canEmit, ImmutableArray<JsonEntityConfig> configs, ImmutableArray<Diagnostic> diagnostics, bool canEmitAesConversions)
         {
             CanEmit = canEmit;
             Configs = configs;
             Diagnostics = diagnostics;
+            CanEmitAesConversions = canEmitAesConversions;
         }
 
         public bool CanEmit { get; }
@@ -436,6 +494,67 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         public ImmutableArray<JsonEntityConfig> Configs { get; }
 
         public ImmutableArray<Diagnostic> Diagnostics { get; }
+
+        public bool CanEmitAesConversions { get; }
+    }
+
+
+    private sealed class JsonTypeConfig
+    {
+        public JsonTypeConfig(ImmutableArray<JsonNavigation> navigations, ImmutableArray<string> encryptedScalarProperties)
+        {
+            Navigations = navigations;
+            EncryptedScalarProperties = encryptedScalarProperties;
+        }
+
+        public ImmutableArray<JsonNavigation> Navigations { get; }
+
+        public ImmutableArray<string> EncryptedScalarProperties { get; }
+    }
+
+
+    private static bool HasAnyEncryptedScalar(ImmutableArray<JsonEntityConfig> configs)
+    {
+        foreach (var config in configs)
+        {
+            foreach (var navigation in config.Navigations)
+            {
+                if (HasAnyEncryptedScalar(navigation))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    private static bool HasAnyEncryptedScalar(JsonNavigation navigation)
+    {
+        if (!navigation.EncryptedScalarProperties.IsDefaultOrEmpty && navigation.EncryptedScalarProperties.Length > 0)
+            return true;
+
+        foreach (var child in navigation.Children)
+        {
+            if (HasAnyEncryptedScalar(child))
+                return true;
+        }
+
+        return false;
+    }
+
+
+    private static bool HasAttribute(IPropertySymbol property, INamedTypeSymbol attributeSymbol)
+    {
+        foreach (var attribute in property.GetAttributes())
+        {
+            var attrClass = attribute.AttributeClass;
+            if (attrClass is not null && SymbolEqualityComparer.Default.Equals(attrClass, attributeSymbol))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
@@ -519,6 +638,15 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         id: "JSON001",
         title: "JsonColumn 映射存在循环引用",
         messageFormat: "JsonColumn 映射存在循环引用：{0}",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    private static readonly DiagnosticDescriptor NonStringEncryptedPropertyDescriptor = new(
+        id: "JSON003",
+        title: "AesEncrypted 只能用于 string 字段",
+        messageFormat: "属性 {0} 标记了 [AesEncrypted]，但其类型为 {1}；仅允许 string 类型使用 AesEncrypted。",
         category: "JsonColumnGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

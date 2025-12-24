@@ -105,11 +105,12 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
         var entityTypesInDbSet = modelBuilder.Model.GetEntityTypes().Where(e => dbSetTypeList.Contains(e.ClrType)).ToList();
 
-        modelBuilder.ApplyJsonColumns();
-
         modelBuilder.ApplyAesEncryptedConverters();
 
         modelBuilder.ApplySoftDeleteFilters();
+
+        modelBuilder.ApplyJsonColumns();
+
 
         foreach (var entity in entityTypesInDbSet)
         {

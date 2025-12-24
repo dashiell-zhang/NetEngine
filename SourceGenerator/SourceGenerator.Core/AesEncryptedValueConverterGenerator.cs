@@ -9,7 +9,7 @@ using System.Text;
 namespace SourceGenerator.Core;
 
 /// <summary>
-/// 基于 <c>[AesEncrypted]</c> 特性生成 EFCore 的 ValueConverter 配置代码，避免运行时反射扫描
+/// 基于 <c>[AesEncrypted]</c> 特性为实体的 string 属性生成 EFCore ValueConverter 配置代码，替代运行时反射扫描
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class AesEncryptedValueConverterGenerator : IIncrementalGenerator
@@ -89,7 +89,10 @@ public sealed class AesEncryptedValueConverterGenerator : IIncrementalGenerator
                         encryptedProperties.Add(property.Name);
                     }
 
-                    builder.Add(new EntityEncryptionConfig(entity, encryptedProperties.ToImmutable()));
+                    if (encryptedProperties.Count > 0)
+                    {
+                        builder.Add(new EntityEncryptionConfig(entity, encryptedProperties.ToImmutable()));
+                    }
                 }
             }
 

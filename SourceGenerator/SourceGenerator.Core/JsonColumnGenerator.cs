@@ -40,6 +40,17 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     private const string DictionaryMetadataName = "System.Collections.Generic.Dictionary`2";
 
     /// <summary>
+    /// 这些类型在 EFCore 中应被视为标量（即便其 SpecialType 为 None），不应在 JSON 拥有者里继续展开为 ComplexProperty
+    /// </summary>
+    private static readonly ImmutableHashSet<string> EfScalarLikeTypeMetadataNames = ImmutableHashSet.Create(
+        StringComparer.Ordinal,
+        "System.DateTimeOffset",
+        "System.Guid",
+        "System.TimeSpan",
+        "System.DateOnly",
+        "System.TimeOnly");
+
+    /// <summary>
     /// 增量生成入口 配置对编译对象的扫描与源码输出
     /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -123,8 +134,21 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                 continue;
             }
 
-            if (ownedType.SpecialType != SpecialType.None)
+            // JSON 列内部的属性可能是标量类型；此时不应生成 ComplexProperty 递归配置
+            // 只有复杂类型（可拥有者）才需要继续收集 children
+            if (IsScalarLikeJsonPropertyType(ownedType))
+            {
+                // 根节点（带 JsonColumn 特性）若不是复杂类型，属于不支持的用法：发出诊断提醒
+                if (hasJsonColumnAttribute)
+                {
+                    diagnostics.Add(Diagnostic.Create(
+                        UnsupportedTypeDescriptor,
+                        property.Locations.FirstOrDefault(),
+                        property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        property.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                }
                 continue;
+            }
 
             if (!path.Add(ownedType))
             {
@@ -143,6 +167,65 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
         path.Remove(type);
         return builder.ToImmutable();
+    }
+
+
+    /// <summary>
+    /// 判断某个属性类型是否应被视为“标量/叶子类型”
+    /// 这些类型在 EFCore 映射中不会作为 owned/complex 类型展开，因此源生成器也应停止递归
+    /// </summary>
+    private static bool IsScalarLikeJsonPropertyType(ITypeSymbol type)
+    {
+        // 处理 Nullable<T>，例如 DateTimeOffset? / Guid? 这种可空标量
+        type = UnwrapNullable(type);
+
+        // int/string/bool 等基础类型：Roslyn 会给出 SpecialType，直接视为标量
+        if (type.SpecialType != SpecialType.None)
+            return true;
+
+        // 枚举：在 EFCore 中通常也是标量存储（底层数值）
+        if (type.TypeKind == TypeKind.Enum)
+            return true;
+
+        // 其它“常见标量但 SpecialType=None”的类型使用白名单判断
+        if (type is INamedTypeSymbol named)
+        {
+            var metadataName = GetFullyQualifiedMetadataName(named);
+            if (EfScalarLikeTypeMetadataNames.Contains(metadataName))
+                return true;
+        }
+
+        return false;
+    }
+
+
+    /// <summary>
+    /// 若类型是 Nullable&lt;T&gt;，则返回其 T；否则原样返回
+    /// </summary>
+    private static ITypeSymbol UnwrapNullable(ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol named &&
+            named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T &&
+            named.TypeArguments.Length == 1)
+        {
+            return named.TypeArguments[0];
+        }
+
+        return type;
+    }
+
+
+    /// <summary>
+    /// 获取类型的完整限定名（不带 global:: 前缀）
+    /// 用于与元数据名称白名单进行稳定匹配
+    /// </summary>
+    private static string GetFullyQualifiedMetadataName(INamedTypeSymbol type)
+    {
+        // FullyQualifiedFormat 形如：global::System.DateTimeOffset
+        var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        const string globalPrefix = "global::";
+        // netstandard2.0 目标下避免使用范围运算符/Index/Range，使用 Substring 以兼容旧框架编译
+        return fullName.StartsWith(globalPrefix, StringComparison.Ordinal) ? fullName.Substring(globalPrefix.Length) : fullName;
     }
 
 
@@ -422,7 +505,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor UnsupportedTypeDescriptor = new(
         id: "JSON002",
         title: "JsonColumn 属性类型不受支持",
-        messageFormat: "JsonColumn 属性 {0} 的类型 {1} 不受支持，仅支持复杂类型或 List<T>。",
+        messageFormat: "JsonColumn 属性 {0} 的类型 {1} 不受支持，仅支持复杂类型或 List<T>",
         category: "JsonColumnGenerator",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);

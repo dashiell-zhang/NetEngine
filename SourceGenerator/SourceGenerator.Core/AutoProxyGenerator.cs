@@ -380,7 +380,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var hasByRef = hasByRefAny;
             
-            var behaviorSnippets = new List<string> { "new LoggingBehavior()" };
+            var behaviorSnippets = new List<string>();
             
             var optionsSetters = new List<string>();
             
@@ -595,7 +595,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     tArg = TrimCurrentNamespace(tArg, currentNamespace);
                     
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
-                    sb.AppendLine($"        var __behaviors = new IInvocationAsyncBehavior[] {{ new LoggingBehavior() }};")
+                    sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
                       .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
@@ -813,7 +813,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var hasByRef2 = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
 
-            var behaviorSnippets = new List<string> { "new LoggingBehavior()" };
+            var behaviorSnippets = new List<string>();
 
             var optionsSetters = new List<string>();
 
@@ -1056,7 +1056,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
                     tArg = TrimCurrentNamespace(tArg, currentNamespace);
                     var callExpr3 = "base." + methodName + typeParams + "(" + argList + ")";
-                    sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { new LoggingBehavior() };")
+                    sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
                       .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");

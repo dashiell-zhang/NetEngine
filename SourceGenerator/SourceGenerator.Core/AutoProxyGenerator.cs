@@ -183,13 +183,17 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
             }
 
-            // 为虚方法 抽象方法和已重写的公开实例方法生成重写实现
+            // 为虚方法/抽象方法/已重写的可访问实例方法生成重写实现（支持 public/protected/internal）
             foreach (var method in cls.GetMembers().OfType<IMethodSymbol>())
             {
                 if (method.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise or MethodKind.StaticConstructor or MethodKind.Constructor)
                     continue;
                 
-                if (method.DeclaredAccessibility != Accessibility.Public || method.IsStatic)
+                if (!IsSupportedOverrideAccessibility(method.DeclaredAccessibility) || method.IsStatic)
+                    continue;
+
+                // sealed override 不能再被重写
+                if (method.IsSealed)
                     continue;
                 
                 if (!(method.IsVirtual || method.IsAbstract || method.IsOverride))
@@ -329,7 +333,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     ? (method.ReturnsByRefReadonly ? "ref readonly " : "ref ") + returnType
                     : returnType;
 
-            sb.Append("    public override ").Append(needsAsync ? "async " : string.Empty).Append(sigReturnType).Append(' ').Append(methodName).Append(typeParams)
+            var accessibilityText = GetOverrideAccessibilityText(method.DeclaredAccessibility);
+            sb.Append("    ").Append(accessibilityText).Append(" override ").Append(needsAsync ? "async " : string.Empty).Append(sigReturnType).Append(' ').Append(methodName).Append(typeParams)
               .Append('(').Append(paramList).Append(')').AppendLine()
               .AppendLine("    {");
 
@@ -688,6 +693,25 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             sb.AppendLine("    }").AppendLine().AppendLine();
         }
+
+
+        private static bool IsSupportedOverrideAccessibility(Accessibility accessibility)
+            => accessibility is Accessibility.Public
+                or Accessibility.Protected
+                or Accessibility.Internal
+                or Accessibility.ProtectedOrInternal
+                or Accessibility.ProtectedAndInternal;
+
+
+        private static string GetOverrideAccessibilityText(Accessibility accessibility) => accessibility switch
+        {
+            Accessibility.Public => "public",
+            Accessibility.Protected => "protected",
+            Accessibility.Internal => "internal",
+            Accessibility.ProtectedOrInternal => "protected internal",
+            Accessibility.ProtectedAndInternal => "private protected",
+            _ => "public"
+        };
 
 
         /// <summary>

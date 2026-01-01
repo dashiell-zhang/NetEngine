@@ -1,4 +1,11 @@
 <Project>
+  <PropertyGroup>
+    <NetEngineProjectFullPath>$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))</NetEngineProjectFullPath>
+    <NetEngineSourceGeneratorCoreFullPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))</NetEngineSourceGeneratorCoreFullPath>
+    <NetEngineSourceGeneratorRuntimeFullPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))</NetEngineSourceGeneratorRuntimeFullPath>
+    <NetEngineInfrastructureRootFullPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)Infrastructure\))</NetEngineInfrastructureRootFullPath>
+    <NetEngineIsInfrastructureProject>$([System.String]::Copy('$(NetEngineProjectFullPath)').StartsWith('$(NetEngineInfrastructureRootFullPath)'))</NetEngineIsInfrastructureProject>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>obj/Generated</CompilerGeneratedFilesOutputPath>
@@ -8,15 +15,17 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false"
                       Condition="
-                        ('$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))' != '$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))') and
-                        ('$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))' != '$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))')
+                        ('$(NetEngineProjectFullPath)' != '$(NetEngineSourceGeneratorCoreFullPath)') and
+                        ('$(NetEngineProjectFullPath)' != '$(NetEngineSourceGeneratorRuntimeFullPath)') and
+                        ('$(NetEngineIsInfrastructureProject)' != 'True')
                       " />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj"
                       Condition="
-                        ('$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))' != '$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))') and
-                        ('$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))' != '$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))')
+                        ('$(NetEngineProjectFullPath)' != '$(NetEngineSourceGeneratorRuntimeFullPath)') and
+                        ('$(NetEngineProjectFullPath)' != '$(NetEngineSourceGeneratorCoreFullPath)') and
+                        ('$(NetEngineIsInfrastructureProject)' != 'True')
                       " />
   </ItemGroup>
   <!-- Clean CompilerGeneratedFilesOutputPath (obj/Generated) for Debug to avoid stale files mixing -->

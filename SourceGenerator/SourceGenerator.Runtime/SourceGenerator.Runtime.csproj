@@ -9,4 +9,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\\..\\Infrastructure\\DistributedLock\\DistributedLock.csproj" />
+  </ItemGroup>
 </Project>

@@ -193,6 +193,18 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                 continue;
             }
 
+            // 递归类型（如 TreeNode.Children: List<TreeNode>）属于合理用法；此处仅截断展开避免无限递归。
+            if (SymbolEqualityComparer.Default.Equals(ownedType, type))
+            {
+                builder.Add(new JsonNavigation(
+                    property.Name,
+                    ownedType,
+                    isCollection,
+                    ImmutableArray<JsonNavigation>.Empty,
+                    includeAllChildren ? CollectEncryptedScalarProperties(ownedType, aesEncryptedAttribute, diagnostics) : ImmutableArray<string>.Empty));
+                continue;
+            }
+
             if (!path.Add(ownedType))
             {
                 diagnostics.Add(Diagnostic.Create(
@@ -210,6 +222,41 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
         path.Remove(type);
         return new JsonTypeConfig(builder.ToImmutable(), encryptedScalarProperties.ToImmutable());
+    }
+
+
+    /// <summary>
+    /// 当遇到“自引用递归类型”需要截断展开时，仍然需要为该 owned type 收集其直接声明的加密标量字段，
+    /// 以便生成的 ComplexProperty/ComplexCollection 能对这些字段正确配置 HasConversion(AesValueConverter)。
+    /// </summary>
+    /// <remarks>
+    /// 该方法只用于 JSON owned graph 内（includeAllChildren=true）的属性扫描；根实体字段的加密由其它生成器负责。
+    /// </remarks>
+    private static ImmutableArray<string> CollectEncryptedScalarProperties(INamedTypeSymbol type, INamedTypeSymbol? aesEncryptedAttribute, List<Diagnostic> diagnostics)
+    {
+        if (aesEncryptedAttribute is null)
+            return ImmutableArray<string>.Empty;
+
+        var encryptedScalarProperties = ImmutableArray.CreateBuilder<string>();
+        foreach (var property in EnumerateProperties(type))
+        {
+            if (!HasAttribute(property, aesEncryptedAttribute))
+                continue;
+
+            if (property.Type.SpecialType != SpecialType.System_String)
+            {
+                diagnostics.Add(Diagnostic.Create(
+                    NonStringEncryptedPropertyDescriptor,
+                    property.Locations.FirstOrDefault(),
+                    property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                    property.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                continue;
+            }
+
+            encryptedScalarProperties.Add(property.Name);
+        }
+
+        return encryptedScalarProperties.ToImmutable();
     }
 
 

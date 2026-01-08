@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Repository.Database.Generated;
-using System.ComponentModel;
 using System.Reflection;
 using System.Xml;
 
@@ -14,96 +13,59 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
     public DbSet<AppSetting> AppSetting { get; set; }
 
-
     public DbSet<Article> Article { get; set; }
-
 
     public DbSet<Category> Category { get; set; }
 
-
-
     public DbSet<DataUpdateLog> DataUpdateLog { get; set; }
-
-
 
     public DbSet<File> File { get; set; }
 
-
     public DbSet<Function> Function { get; set; }
-
 
     public DbSet<FunctionAuthorize> FunctionAuthorize { get; set; }
 
-
     public DbSet<FunctionRoute> FunctionRoute { get; set; }
-
 
     public DbSet<Link> Link { get; set; }
 
-
     public DbSet<Log> Log { get; set; }
-
 
     public DbSet<Order> Order { get; set; }
 
-
     public DbSet<OrderDetail> OrderDetail { get; set; }
-
 
     public DbSet<Product> Product { get; set; }
 
-
     public DbSet<QueueTask> QueueTask { get; set; }
-
 
     public DbSet<RegionArea> RegionArea { get; set; }
 
-
     public DbSet<RegionCity> RegionCity { get; set; }
-
 
     public DbSet<RegionProvince> RegionProvince { get; set; }
 
-
     public DbSet<RegionTown> RegionTown { get; set; }
-
 
     public DbSet<Role> Role { get; set; }
 
-
     public DbSet<TaskSetting> TaskSetting { get; set; }
-
 
     public DbSet<User> User { get; set; }
 
-
     public DbSet<UserBindExternal> UserBindExternal { get; set; }
-
 
     public DbSet<UserInfo> UserInfo { get; set; }
 
-
     public DbSet<UserRole> UserRole { get; set; }
 
-
     public DbSet<UserToken> UserToken { get; set; }
-
 
     #endregion
 
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
-        var dbSetTypeList = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p =>
-                 p.PropertyType.IsGenericType &&
-                 p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
-             .Select(p => p.PropertyType.GetGenericArguments()[0])
-             .ToList();
-
-        var entityTypesInDbSet = modelBuilder.Model.GetEntityTypes().Where(e => dbSetTypeList.Contains(e.ClrType)).ToList();
-
         modelBuilder.ApplyAesEncryptedConverters();
 
         modelBuilder.ApplySoftDeleteFilters();
@@ -111,17 +73,25 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
         modelBuilder.ApplyJsonColumns();
 
 
+#if DEBUG
+
+        var dbSetTypeList = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p =>
+         p.PropertyType.IsGenericType &&
+         p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
+     .Select(p => p.PropertyType.GetGenericArguments()[0])
+     .ToList();
+
+        var entityTypesInDbSet = modelBuilder.Model.GetEntityTypes().Where(e => dbSetTypeList.Contains(e.ClrType)).ToList();
+
         foreach (var entity in entityTypesInDbSet)
         {
-#if DEBUG
-            //关闭表外键的级联删除功能
+
+            // 关闭表外键的级联删除功能
             entity.GetForeignKeys().ToList().ForEach(t => t.DeleteBehavior = DeleteBehavior.Restrict);
-#endif
 
             modelBuilder.Entity(entity.Name, builder =>
             {
-#if DEBUG
-                //设置表的备注
+                // 设置表的备注
                 builder.ToTable(t => t.HasComment(GetEntityComment(entity.Name)));
 
                 List<string> baseTypeNames = [];
@@ -134,29 +104,14 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
                 foreach (var property in entity.GetProperties())
                 {
-                    //设置字段的备注
+                    // 设置字段的备注
                     property.SetComment(GetEntityComment(entity.Name, property.Name, baseTypeNames));
-
-                    //设置字段的默认值 
-                    var defaultValueAttribute = property.PropertyInfo?.GetCustomAttribute<DefaultValueAttribute>();
-                    if (defaultValueAttribute != null)
-                    {
-                        property.SetDefaultValue(defaultValueAttribute.Value);
-                    }
-
-                    //为所有 tableid 列添加索引
-                    if (property.Name.Equals("tableid", StringComparison.OrdinalIgnoreCase))
-                    {
-                        builder.HasIndex(property.Name);
-                    }
                 }
-#endif
 
             });
         }
+#endif
     }
-
-
 
 
     public static string GetEntityComment(string typeName, string? fieldName = null, List<string>? baseTypeNames = null)
@@ -288,7 +243,6 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
         }
     }
-
 
 
     public override int SaveChanges()

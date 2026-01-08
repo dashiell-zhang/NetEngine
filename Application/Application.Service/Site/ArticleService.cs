@@ -27,7 +27,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
 
         DtoPageList<DtoCategory> result = new();
 
-        var query = db.TCategory.AsQueryable();
+        var query = db.Category.AsQueryable();
 
         result.Total = await query.CountAsync();
 
@@ -56,7 +56,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public async Task<List<DtoCategorySelect>> GetCategorySelectListAsync(long? id = null)
     {
-        var list = await db.TCategory.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoCategorySelect
+        var list = await db.Category.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoCategorySelect
         {
             Id = t.Id,
             Name = t.Name
@@ -78,7 +78,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public Task<DtoCategory?> GetCategoryAsync(long categoryId)
     {
-        var category = db.TCategory.Where(t => t.Id == categoryId).Select(t => new DtoCategory
+        var category = db.Category.Where(t => t.Id == categoryId).Select(t => new DtoCategory
         {
             Id = t.Id,
             Name = t.Name,
@@ -100,7 +100,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public async Task<long> CreateCategoryAsync(DtoEditCategory createCategory)
     {
-        TCategory category = new()
+        Category category = new()
         {
             Id = idService.GetId(),
             CreateUserId = UserId,
@@ -110,7 +110,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
             Sort = createCategory.Sort
         };
 
-        db.TCategory.Add(category);
+        db.Category.Add(category);
 
         await db.SaveChangesAsync();
 
@@ -126,7 +126,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public async Task<bool> UpdateCategoryAsync(long categoryId, DtoEditCategory updateCategory)
     {
-        var category = await db.TCategory.Where(t => t.Id == categoryId).FirstOrDefaultAsync();
+        var category = await db.Category.Where(t => t.Id == categoryId).FirstOrDefaultAsync();
 
         if (category != null)
         {
@@ -152,7 +152,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public async Task<bool> DeleteCategoryAsync(long id)
     {
-        var category = await db.TCategory.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var category = await db.Category.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (category != null)
         {
@@ -179,7 +179,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     {
         DtoPageList<DtoArticle> result = new();
 
-        var query = db.TArticle.AsQueryable();
+        var query = db.Article.AsQueryable();
 
         result.Total = await query.CountAsync();
 
@@ -217,7 +217,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public async Task<DtoArticle?> GetArticleAsync(long articleId)
     {
-        var article = await db.TArticle.Where(t => t.Id == articleId).Select(t => new DtoArticle
+        var article = await db.Article.Where(t => t.Id == articleId).Select(t => new DtoArticle
         {
             Id = t.Id,
             CategoryId = t.CategoryId,
@@ -249,7 +249,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public async Task<long> CreateArticleAsync(DtoEditArticle createArticle, long fileKey)
     {
-        TArticle article = new()
+        Article article = new()
         {
             Id = idService.GetId(),
             CreateUserId = UserId,
@@ -272,10 +272,10 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
             article.Digest = createArticle.Digest!;
         }
 
-        db.TArticle.Add(article);
+        db.Article.Add(article);
 
 
-        var fileList = await db.TFile.Where(t => t.Table == "TArticle" && t.TableId == fileKey).ToListAsync();
+        var fileList = await db.File.Where(t => t.Table == "Article" && t.TableId == fileKey).ToListAsync();
 
         foreach (var file in fileList)
         {
@@ -296,7 +296,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public async Task<bool> UpdateArticleAsync(long articleId, DtoEditArticle updateArticle)
     {
-        var article = await db.TArticle.Where(t => t.Id == articleId).FirstOrDefaultAsync();
+        var article = await db.Article.Where(t => t.Id == articleId).FirstOrDefaultAsync();
 
         if (article != null)
         {
@@ -334,7 +334,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <returns></returns>
     public async Task<bool> DeleteArticleAsync(long id)
     {
-        var article = await db.TArticle.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var article = await db.Article.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (article != null)
         {

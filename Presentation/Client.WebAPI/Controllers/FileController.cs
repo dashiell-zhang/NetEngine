@@ -101,7 +101,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
     {
         string rootPath = webHostEnvironment.ContentRootPath;
 
-        var file = await db.TFile.Where(t => t.Id == fileid).FirstOrDefaultAsync();
+        var file = await db.File.Where(t => t.Id == fileid).FirstOrDefaultAsync();
 
         if (file != null)
         {
@@ -140,7 +140,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
 
         string rootPath = webHostEnvironment.ContentRootPath;
 
-        var file = await db.TFile.Where(t => t.Id == fileId).FirstOrDefaultAsync();
+        var file = await db.File.Where(t => t.Id == fileId).FirstOrDefaultAsync();
 
         if (file != null)
         {

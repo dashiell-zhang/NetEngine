@@ -8,7 +8,7 @@ namespace Repository.Database;
 /// 系统配置信息表
 /// </summary>
 [Index(nameof(Module))]
-public class TAppSetting : CD
+public class AppSetting : CD
 {
 
 

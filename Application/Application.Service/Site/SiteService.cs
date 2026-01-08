@@ -17,7 +17,7 @@ public class SiteService(DatabaseContext db, IdService idService)
     /// <returns></returns>
     public async Task<DtoSite> GetSiteAsync()
     {
-        var kvList = await db.TAppSetting.Where(t => t.Module == "Site").Select(t => new
+        var kvList = await db.AppSetting.Where(t => t.Module == "Site").Select(t => new
         {
             t.Key,
             t.Value
@@ -75,7 +75,7 @@ public class SiteService(DatabaseContext db, IdService idService)
         if (value != null)
         {
 
-            var appSetting = await db.TAppSetting.Where(t => t.Module == "Site" && t.Key == key).FirstOrDefaultAsync();
+            var appSetting = await db.AppSetting.Where(t => t.Module == "Site" && t.Key == key).FirstOrDefaultAsync();
 
             if (appSetting == null)
             {
@@ -86,7 +86,7 @@ public class SiteService(DatabaseContext db, IdService idService)
                     Key = key,
                     Value = value
                 };
-                db.TAppSetting.Add(appSetting);
+                db.AppSetting.Add(appSetting);
             }
             else
             {

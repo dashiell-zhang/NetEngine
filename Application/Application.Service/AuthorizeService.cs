@@ -57,7 +57,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <returns></returns>
     public async Task<string?> GetTokenAsync(DtoGetToken login)
     {
-        var userList = await db.TUser.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.Password }).ToListAsync();
+        var userList = await db.User.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.Password }).ToListAsync();
 
         var user = userList.Where(t => t.Password == Convert.ToBase64String(KeyDerivation.Pbkdf2(login.Password, Encoding.UTF8.GetBytes(t.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32))).FirstOrDefault();
 
@@ -81,7 +81,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     {
         var (openId, sessionKey) = await GetWeiXinMiniAppOpenIdAndSessionKeyAsync(login.AppId, login.Code);
 
-        var userIdQuery = db.TUserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == login.AppId && t.OpenId == login.AppId).Select(t => t.User.Id);
+        var userIdQuery = db.UserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == login.AppId && t.OpenId == login.AppId).Select(t => t.User.Id);
 
         var userId = await userIdQuery.FirstOrDefaultAsync();
 
@@ -98,7 +98,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                     string userName = DateTime.UtcNow.ToString() + "微信小程序新用户";
 
                     //注册一个只有基本信息的账户出来
-                    TUser user = new()
+                    Repository.Database.User user = new()
                     {
                         Id = idService.GetId(),
                         Name = userName,
@@ -107,9 +107,9 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                     };
                     user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
-                    db.TUser.Add(user);
+                    db.User.Add(user);
 
-                    TUserBindExternal userBind = new()
+                    UserBindExternal userBind = new()
                     {
                         Id = idService.GetId(),
                         UserId = user.Id,
@@ -118,7 +118,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                         OpenId = openId
                     };
 
-                    db.TUserBindExternal.Add(userBind);
+                    db.UserBindExternal.Add(userBind);
 
                     await db.SaveChangesAsync();
 
@@ -154,14 +154,14 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
         if (string.IsNullOrEmpty(code) == false && code == login.VerifyCode)
         {
-            var userId = await db.TUser.Where(t => t.Phone == login.Phone).Select(t => t.Id).FirstOrDefaultAsync();
+            var userId = await db.User.Where(t => t.Phone == login.Phone).Select(t => t.Id).FirstOrDefaultAsync();
 
             if (userId == default)
             {
                 //注册一个只有基本信息的账户出来
                 string userName = DateTime.UtcNow.ToString() + "手机短信新用户";
 
-                TUser user = new()
+                Repository.Database.User user = new()
                 {
                     Id = idService.GetId(),
                     Name = userName,
@@ -170,7 +170,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                 };
                 user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
-                db.TUser.Add(user);
+                db.User.Add(user);
 
                 await db.SaveChangesAsync();
 
@@ -201,9 +201,9 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     public async Task<Dictionary<string, string>> GetFunctionListAsync(string? sign)
     {
 
-        var roleIds = await db.TUserRole.AsNoTracking().Where(t => t.UserId == UserId).Select(t => t.RoleId).ToListAsync();
+        var roleIds = await db.UserRole.AsNoTracking().Where(t => t.UserId == UserId).Select(t => t.RoleId).ToListAsync();
 
-        var query = db.TFunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == UserId);
+        var query = db.FunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == UserId);
 
         if (sign != null)
         {
@@ -279,7 +279,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
         if (userInfo.NickName != null)
         {
-            var user = await db.TUserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == login.AppId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefaultAsync();
+            var user = await db.UserBindExternal.AsNoTracking().Where(t => t.AppName == "WeiXinApp" && t.AppId == login.AppId && t.OpenId == userInfo.OpenId).Select(t => t.User).FirstOrDefaultAsync();
 
             if (user == null)
             {
@@ -294,9 +294,9 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                 };
                 user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(Guid.NewGuid().ToString(), Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
 
-                db.TUser.Add(user);
+                db.User.Add(user);
 
-                TUserBindExternal bind = new()
+                UserBindExternal bind = new()
                 {
                     Id = idService.GetId(),
                     AppName = "WeiXinApp",
@@ -306,7 +306,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                     UserId = user.Id
                 };
 
-                db.TUserBindExternal.Add(bind);
+                db.UserBindExternal.Add(bind);
 
                 await db.SaveChangesAsync();
             }
@@ -327,7 +327,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     public async Task<bool> UpdatePasswordByOldPasswordAsync(DtoUpdatePasswordByOldPassword updatePassword)
     {
 
-        var user = await db.TUser.Where(t => t.Id == UserId).FirstOrDefaultAsync();
+        var user = await db.User.Where(t => t.Id == UserId).FirstOrDefaultAsync();
 
         if (user != null)
         {
@@ -359,7 +359,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     public async Task<bool> UpdatePasswordBySMSAsync(DtoUpdatePasswordBySMS updatePassword)
     {
 
-        string phone = await db.TUser.Where(t => t.Id == UserId).Select(t => t.Phone).FirstAsync();
+        string phone = await db.User.Where(t => t.Id == UserId).Select(t => t.Phone).FirstAsync();
 
         string key = "VerifyPhone_" + phone;
 
@@ -368,16 +368,16 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
         if (string.IsNullOrEmpty(code) == false && code == updatePassword.SmsCode)
         {
-            var user = await db.TUser.Where(t => t.Id == UserId).FirstOrDefaultAsync();
+            var user = await db.User.Where(t => t.Id == UserId).FirstOrDefaultAsync();
 
             if (user != null)
             {
                 user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.NewPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
                 user.UpdateUserId = UserId;
 
-                var tokenList = await db.TUserToken.Where(t => t.UserId == UserId).ToListAsync();
+                var tokenList = await db.UserToken.Where(t => t.UserId == UserId).ToListAsync();
 
-                db.TUserToken.RemoveRange(tokenList);
+                db.UserToken.RemoveRange(tokenList);
 
                 await db.SaveChangesAsync();
 
@@ -405,14 +405,14 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     public async Task<string> GetTokenByUserIdAsync(long userId, long? lastTokenId = null)
     {
 
-        TUserToken userToken = new()
+        UserToken userToken = new()
         {
             Id = idService.GetId(),
             UserId = userId,
             LastId = lastTokenId
         };
 
-        db.TUserToken.Add(userToken);
+        db.UserToken.Add(userToken);
 
         await db.SaveChangesAsync();
 
@@ -458,9 +458,9 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <returns></returns>
     public async Task<(string openId, string sessionKey)> GetWeiXinMiniAppOpenIdAndSessionKeyAsync(string appId, string code)
     {
-        var settingGroupId = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
+        var settingGroupId = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
 
-        var appSecret = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefaultAsync();
+        var appSecret = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinMiniApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefaultAsync();
 
         if (appSecret != null)
         {
@@ -493,9 +493,9 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <returns></returns>
     public async Task<(string accessToken, string openId)> GetWeiXinAppAccessTokenAndOpenIdAsync(string appId, string code)
     {
-        var settingGroupId = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
+        var settingGroupId = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
 
-        var appSecret = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefaultAsync();
+        var appSecret = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinApp" && t.GroupId == settingGroupId && t.Key == "AppSecret").Select(t => t.Value).FirstOrDefaultAsync();
 
         if (appSecret != null)
         {
@@ -558,13 +558,13 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
         var userId = userContext.UserId;
 
-        var functionId = await db.TFunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefaultAsync();
+        var functionId = await db.FunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefaultAsync();
 
         if (functionId != default)
         {
-            var roleIds = await db.TUserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
+            var roleIds = await db.UserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
 
-            var functionAuthorizeId = await db.TFunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefaultAsync();
+            var functionAuthorizeId = await db.FunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefaultAsync();
 
             if (functionAuthorizeId != default)
             {
@@ -617,8 +617,8 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                     if (await distLock.TryLockAsync("ClearExpireToken") != null)
                     {
                         var clearTime = DateTime.UtcNow.AddDays(-7);
-                        var clearList = await db.TUserToken.Where(t => t.CreateTime < clearTime).ToListAsync();
-                        db.TUserToken.RemoveRange(clearList);
+                        var clearList = await db.UserToken.Where(t => t.CreateTime < clearTime).ToListAsync();
+                        db.UserToken.RemoveRange(clearList);
 
                         await db.SaveChangesAsync();
                     }

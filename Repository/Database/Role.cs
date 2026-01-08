@@ -6,7 +6,7 @@ namespace Repository.Database;
 /// <summary>
 /// 角色信息表
 /// </summary>
-public class TRole : CD
+public class Role : CD
 {
 
     /// <summary>

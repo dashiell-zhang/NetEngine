@@ -24,17 +24,17 @@ public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
 
         if (provinceId == 0 && cityId == 0)
         {
-            list = await db.TRegionProvince.Select(t => new DtoRegion { Id = t.Id, Name = t.Province }).ToListAsync();
+            list = await db.RegionProvince.Select(t => new DtoRegion { Id = t.Id, Name = t.Province }).ToListAsync();
         }
 
         if (provinceId != 0)
         {
-            list = await db.TRegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new DtoRegion { Id = t.Id, Name = t.City }).ToListAsync();
+            list = await db.RegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new DtoRegion { Id = t.Id, Name = t.City }).ToListAsync();
         }
 
         if (cityId != 0)
         {
-            list = await db.TRegionArea.Where(t => t.CityId == cityId).Select(t => new DtoRegion { Id = t.Id, Name = t.Area }).ToListAsync();
+            list = await db.RegionArea.Where(t => t.CityId == cityId).Select(t => new DtoRegion { Id = t.Id, Name = t.Area }).ToListAsync();
         }
 
         return list;
@@ -47,7 +47,7 @@ public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
     /// <returns></returns>
     public async Task<List<DtoRegion>> GetRegionAllAsync()
     {
-        var list = await db.TRegionProvince.Select(t => new DtoRegion
+        var list = await db.RegionProvince.Select(t => new DtoRegion
         {
             Id = t.Id,
             Name = t.Province,
@@ -76,7 +76,7 @@ public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
     {
         Dictionary<string, string> keyValuePairs = [];
 
-        var list = await db.TAppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new
+        var list = await db.AppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new
         {
             t.Key,
             t.Value

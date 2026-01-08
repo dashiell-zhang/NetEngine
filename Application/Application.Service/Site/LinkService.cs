@@ -25,7 +25,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     {
         DtoPageList<DtoLink> result = new();
 
-        var query = db.TLink.AsQueryable();
+        var query = db.Link.AsQueryable();
 
         result.Total = await query.CountAsync();
 
@@ -52,7 +52,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// <returns></returns>
     public Task<DtoLink?> GetLinkAsync(long linkId)
     {
-        var link = db.TLink.Where(t => t.Id == linkId).Select(t => new DtoLink
+        var link = db.Link.Where(t => t.Id == linkId).Select(t => new DtoLink
         {
             Id = t.Id,
             Name = t.Name,
@@ -72,7 +72,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// <returns></returns>
     public async Task<long> CreateLinkAsync(DtoEditLink createLink)
     {
-        TLink link = new()
+        Repository.Database.Link link = new()
         {
             Id = idService.GetId(),
             Name = createLink.Name,
@@ -81,7 +81,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
             Sort = createLink.Sort
         };
 
-        db.TLink.Add(link);
+        db.Link.Add(link);
 
         await db.SaveChangesAsync();
 
@@ -97,7 +97,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// <returns></returns>
     public async Task<bool> UpdateLinkAsync(long linkId, DtoEditLink updateLink)
     {
-        var link = await db.TLink.Where(t => t.Id == linkId).FirstOrDefaultAsync();
+        var link = await db.Link.Where(t => t.Id == linkId).FirstOrDefaultAsync();
 
         if (link != null)
         {
@@ -122,7 +122,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// <returns></returns>
     public async Task<bool> DeleteLinkAsync(long id)
     {
-        var link = await db.TLink.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var link = await db.Link.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (link != null)
         {

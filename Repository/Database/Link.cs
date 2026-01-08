@@ -3,18 +3,25 @@ using Repository.Database.Bases;
 
 namespace Repository.Database;
 
+
 /// <summary>
-/// 栏目信息表
+/// 友情链接表
 /// </summary>
-[Index(nameof(Name))]
-public class TCategory : CD_User
+[Index(nameof(Sort))]
+public class Link : CD_User
 {
 
 
     /// <summary>
-    /// 栏目名目
+    /// 名称
     /// </summary>
     public string Name { get; set; }
+
+
+    /// <summary>
+    /// 地址
+    /// </summary>
+    public string Url { get; set; }
 
 
     /// <summary>
@@ -24,17 +31,7 @@ public class TCategory : CD_User
 
 
     /// <summary>
-    /// 父级栏目ID
-    /// </summary>
-    public long? ParentId { get; set; }
-    public virtual TCategory? Parent { get; set; }
-
-
-    /// <summary>
     /// 备注
     /// </summary>
     public string? Remarks { get; set; }
-
-
-    public virtual List<TArticle>? TArticle { get; set; }
 }

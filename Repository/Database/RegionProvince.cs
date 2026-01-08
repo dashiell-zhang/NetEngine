@@ -3,8 +3,12 @@ using Repository.Bases;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database;
-[Index(nameof(Town))]
-public class TRegionTown : CD
+
+/// <summary>
+/// 省份信息表
+/// </summary>
+[Index(nameof(Province))]
+public class RegionProvince : CD
 {
 
 
@@ -14,17 +18,15 @@ public class TRegionTown : CD
 
 
     /// <summary>
-    /// 街道名称
+    /// 省份
     /// </summary>
-    public string Town { get; set; }
+    public string Province { get; set; }
 
 
 
     /// <summary>
-    /// 所属区域ID
+    /// 省份下包含的所有城市信息
     /// </summary>
-    public int AreaId { get; set; }
-    public virtual TRegionArea Area { get; set; }
-
+    public virtual List<RegionCity>? TRegionCity { get; set; }
 
 }

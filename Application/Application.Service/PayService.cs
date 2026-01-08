@@ -39,11 +39,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
         if (ret == null)
         {
-            var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
+            var order = await db.Order.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
 
             if (order != null)
             {
-                var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
+                var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
                 var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                 var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -129,11 +129,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
         if (ret == null)
         {
-            var order = await db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
+            var order = await db.Order.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
 
             if (order != null)
             {
-                var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
+                var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
                 var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                 var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -215,11 +215,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
         if (string.IsNullOrEmpty(h5Url))
         {
-            var order = await db.TOrder.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
+            var order = await db.Order.AsNoTracking().Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
 
             if (order != null)
             {
-                var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
+                var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
                 var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                 var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -291,11 +291,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
         if (string.IsNullOrEmpty(codeUrl))
         {
-            var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
+            var order = await db.Order.Where(t => t.OrderNo == orderNo).Select(t => new { t.Id, t.OrderNo, t.Price }).FirstOrDefaultAsync();
 
             if (order != null)
             {
-                var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
+                var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
                 var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
                 var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -368,7 +368,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
                 //支付成功异步回调
                 if (weiXinPayNotify.event_type == "TRANSACTION.SUCCESS")
                 {
-                    var mchApiV3Key = await db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).FirstAsync();
+                    var mchApiV3Key = await db.AppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).FirstAsync();
 
                     var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
 
@@ -376,7 +376,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
                     if (resource.trade_state == "SUCCESS")
                     {
-                        var order = await db.TOrder.Where(t => t.OrderNo == resource.out_trade_no).FirstOrDefaultAsync();
+                        var order = await db.Order.Where(t => t.OrderNo == resource.out_trade_no).FirstOrDefaultAsync();
 
                         if (order != null)
                         {
@@ -407,7 +407,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
                 //退款异步回调
                 if (weiXinPayNotify.resource.original_type == "refund")
                 {
-                    var mchApiV3Key = await db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).FirstAsync();
+                    var mchApiV3Key = await db.AppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchApiV3Key").Select(t => t.Value).FirstAsync();
 
                     var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
 
@@ -471,7 +471,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// </summary>
     public async Task WeiXinPayRefundAsync()
     {
-        var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
+        var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
         var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
         var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
@@ -528,7 +528,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// </summary>
     public async Task WeiXinPayRefundSelectAsync()
     {
-        var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
+        var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "WeiXinPay").ToListAsync();
 
         var mchId = settings.Where(t => t.Key == "MchId").Select(t => t.Value).FirstOrDefault();
 
@@ -563,7 +563,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <returns>TradeNo</returns>
     public async Task<string?> CreateAliPayMiniAppAsync(string orderNo, string notifyUrl)
     {
-        var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp").ToListAsync();
+        var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "AliPayMiniApp").ToListAsync();
 
         var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
         var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -571,11 +571,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
         if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
         {
-            var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
+            var order = await db.Order.Where(t => t.OrderNo == orderNo).Select(t => new
             {
                 t.OrderNo,
                 t.Price,
-                AliPayUserId = db.TUserBindExternal.Where(a => a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
+                AliPayUserId = db.UserBindExternal.Where(a => a.UserId == t.CreateUserId && a.AppName == "AliPayMiniApp" && a.AppId == appId).Select(a => a.OpenId).FirstOrDefault(),
                 t.CreateTime
             }).FirstOrDefaultAsync();
 
@@ -633,7 +633,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <returns>支付宝支付Url</returns>
     public async Task<string?> CreateAliPayPCAsync(string orderNo, string notifyUrl, string? returnUrl)
     {
-        var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
+        var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
 
         var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
         var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -641,7 +641,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
         if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
         {
-            var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new
+            var order = await db.Order.Where(t => t.OrderNo == orderNo).Select(t => new
             {
                 t.OrderNo,
                 t.Price,
@@ -701,7 +701,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <returns>支付宝支付Url</returns>
     public async Task<string?> CreateAliPayH5Async(string orderNo, string notifyUrl, string returnUrl, string quitUrl)
     {
-        var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
+        var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
 
         var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
         var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -709,7 +709,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
         if (appId != null && appPrivateKey != null && aliPayPublicKey != null)
         {
-            var order = await db.TOrder.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, t.CreateTime }).FirstOrDefaultAsync();
+            var order = await db.Order.Where(t => t.OrderNo == orderNo).Select(t => new { t.OrderNo, t.Price, t.State, t.CreateTime }).FirstOrDefaultAsync();
 
             if (order != null && order.State == "待支付")
             {
@@ -766,9 +766,9 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
         {
             var appId = parameters.GetValueOrDefault("app_id");
 
-            var appIdSettingGroupId = await db.TAppSetting.Where(t => t.Module.StartsWith("AliPay") && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
+            var appIdSettingGroupId = await db.AppSetting.Where(t => t.Module.StartsWith("AliPay") && t.Key == "AppId" && t.Value == appId).Select(t => t.GroupId).FirstOrDefaultAsync();
 
-            var settings = await db.TAppSetting.AsNoTracking().Where(t => t.GroupId == appIdSettingGroupId).ToListAsync();
+            var settings = await db.AppSetting.AsNoTracking().Where(t => t.GroupId == appIdSettingGroupId).ToListAsync();
 
             var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
             var aliPayPublicKey = settings.Where(t => t.Key == "AliPayPublicKey").Select(t => t.Value).FirstOrDefault();
@@ -780,7 +780,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
             {
                 var orderno = parameters.GetValueOrDefault("out_trade_no");
 
-                var order = await db.TOrder.Where(t => t.OrderNo == orderno).FirstOrDefaultAsync();
+                var order = await db.Order.Where(t => t.OrderNo == orderno).FirstOrDefaultAsync();
 
                 if (order != null)
                 {
@@ -818,7 +818,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <returns></returns>
     public async Task AliPayRefundAsync()
     {
-        var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
+        var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
 
         var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
         var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -865,7 +865,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <returns></returns>
     public async Task AliPayRefundSelectAsync()
     {
-        var settings = await db.TAppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
+        var settings = await db.AppSetting.AsNoTracking().Where(t => t.Module == "AliPayWeb").ToListAsync();
 
         var appId = settings.Where(t => t.Key == "AppId").Select(t => t.Value).FirstOrDefault();
         var appPrivateKey = settings.Where(t => t.Key == "AppPrivateKey").Select(t => t.Value).FirstOrDefault();
@@ -913,9 +913,9 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <returns></returns>
     public async Task<string> WeiXinPayHttpAsync(string mchId, string url, object? data = null)
     {
-        var weiXinPayGroupId = await db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchId" && t.Value == mchId).Select(t => t.GroupId).FirstOrDefaultAsync();
+        var weiXinPayGroupId = await db.AppSetting.Where(t => t.Module == "WeiXinPay" && t.Key == "MchId" && t.Value == mchId).Select(t => t.GroupId).FirstOrDefaultAsync();
 
-        var settings = await db.TAppSetting.Where(t => t.Module == "WeiXinPay" && t.GroupId == weiXinPayGroupId).ToListAsync();
+        var settings = await db.AppSetting.Where(t => t.Module == "WeiXinPay" && t.GroupId == weiXinPayGroupId).ToListAsync();
 
         string mchApiCertId = settings.Where(t => t.Key == "MchApiCertId").Select(t => t.Value).First();
         string mchApiCertKey = settings.Where(t => t.Key == "MchApiCertKey").Select(t => t.Value).First();

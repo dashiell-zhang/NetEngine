@@ -8,7 +8,7 @@ namespace Repository.Database;
 /// 城市信息表
 /// </summary>
 [Index(nameof(City))]
-public class TRegionCity : CD
+public class RegionCity : CD
 {
 
 
@@ -26,11 +26,11 @@ public class TRegionCity : CD
     /// 所属省份ID
     /// </summary>
     public int ProvinceId { get; set; }
-    public virtual TRegionProvince Province { get; set; }
+    public virtual RegionProvince Province { get; set; }
 
 
     /// <summary>
     /// 城市下所有区域信息
     /// </summary>
-    public virtual List<TRegionArea>? TRegionArea { get; set; }
+    public virtual List<RegionArea>? TRegionArea { get; set; }
 }

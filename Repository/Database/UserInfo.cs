@@ -5,7 +5,7 @@ namespace Repository.Database;
 /// <summary>
 /// 用户详细信息表
 /// </summary>
-public class TUserInfo : CUD
+public class UserInfo : CUD
 {
 
 
@@ -16,14 +16,14 @@ public class TUserInfo : CUD
     public long UserId { get; set; }
 
     [ForeignKey("UserId")]
-    public virtual TUser User { get; set; }
+    public virtual User User { get; set; }
 
 
     /// <summary>
     /// 地址区域ID
     /// </summary>
     public int? RegionAreaId { get; set; }
-    public virtual TRegionArea? RegionArea { get; set; }
+    public virtual RegionArea? RegionArea { get; set; }
 
 
 
@@ -47,7 +47,7 @@ public class TUserInfo : CUD
     public long? UpdateUserId { get; set; }
 
     [ForeignKey("UpdateUserId")]
-    public virtual TUser? UpdateUser { get; set; }
+    public virtual User? UpdateUser { get; set; }
 
 
 }

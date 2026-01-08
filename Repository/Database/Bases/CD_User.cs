@@ -15,7 +15,7 @@ public class CD_User : CD
     public long? CreateUserId { get; set; }
 
     [ForeignKey("CreateUserId")]
-    public virtual TUser? CreateUser { get; set; }
+    public virtual User? CreateUser { get; set; }
 
 
 
@@ -25,5 +25,5 @@ public class CD_User : CD
     public long? DeleteUserId { get; set; }
 
     [ForeignKey("DeleteUserId")]
-    public virtual TUser? DeleteUser { get; set; }
+    public virtual User? DeleteUser { get; set; }
 }

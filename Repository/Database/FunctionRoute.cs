@@ -5,7 +5,7 @@ namespace Repository.Database;
 /// <summary>
 /// 功能模块对应路由记录表
 /// </summary>
-public class TFunctionRoute : CD
+public class FunctionRoute : CD
 {
 
 
@@ -13,7 +13,7 @@ public class TFunctionRoute : CD
     /// 功能信息
     /// </summary>
     public long? FunctionId { get; set; }
-    public virtual TFunction? Function { get; set; }
+    public virtual Function? Function { get; set; }
 
 
 

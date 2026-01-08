@@ -33,7 +33,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
     {
         if (db.Database.CurrentTransaction != null)
         {
-            TQueueTask queueTask = new()
+            Repository.Database.QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
                 Name = name,
@@ -55,7 +55,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
                 }
             }
 
-            db.TQueueTask.Add(queueTask);
+            db.QueueTask.Add(queueTask);
             return true;
         }
         else
@@ -82,7 +82,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
         {
             var db = dbFactory.CreateDbContext();
 
-            TQueueTask queueTask = new()
+            Repository.Database.QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
                 Name = name,
@@ -104,7 +104,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
                 }
             }
 
-            db.TQueueTask.Add(queueTask);
+            db.QueueTask.Add(queueTask);
 
             await db.SaveChangesAsync();
 

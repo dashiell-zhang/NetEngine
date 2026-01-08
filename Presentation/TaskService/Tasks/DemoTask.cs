@@ -17,7 +17,7 @@ public class DemoTask(ILogger<DemoTask> logger, DatabaseContext db, QueueTaskSer
 
             await queueTaskService.CreateSingleAsync("ShowName", "张晓栋" + DateTime.Now.ToString("ssfff"), null, "ShowNameSuccess", null);
 
-            var firstUser = await db.TUser.FirstOrDefaultAsync();
+            var firstUser = await db.User.FirstOrDefaultAsync();
 
         }
         catch (Exception ex)

@@ -7,7 +7,7 @@ namespace Repository.Database;
 /// 文章表
 /// </summary>
 [Index(nameof(Title))]
-public class TArticle : CD_User
+public class Article : CD_User
 {
 
 
@@ -15,7 +15,7 @@ public class TArticle : CD_User
     /// 类别ID
     /// </summary>
     public long CategoryId { get; set; }
-    public virtual TCategory Category { get; set; }
+    public virtual Category Category { get; set; }
 
 
     /// <summary>

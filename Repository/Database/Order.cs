@@ -8,7 +8,7 @@ namespace Repository.Database;
 /// 订单表
 /// </summary>
 [Index(nameof(OrderNo))]
-public class TOrder : CUD_User
+public class Order : CUD_User
 {
 
 
@@ -74,5 +74,5 @@ public class TOrder : CUD_User
     /// <summary>
     /// 订单详情
     /// </summary>
-    public virtual List<TOrderDetail>? OrderDetails { get; set; }
+    public virtual List<OrderDetail>? OrderDetails { get; set; }
 }

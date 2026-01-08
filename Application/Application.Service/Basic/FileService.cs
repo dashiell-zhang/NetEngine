@@ -40,7 +40,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
 
         var isSuccess = true;
 
-        File.Move(uploadFile.TempFilePath, filePath);
+        System.IO.File.Move(uploadFile.TempFilePath, filePath);
 
         long fileLength = new FileInfo(filePath).Length;
 
@@ -63,7 +63,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
 
             filePath = Path.Combine(basePath, fileName).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-            TFile f = new()
+            Repository.Database.File f = new()
             {
                 Id = idService.GetId(),
                 Name = uploadFile.FileName,
@@ -76,7 +76,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
                 CreateUserId = userContext.UserId
             };
 
-            db.TFile.Add(f);
+            db.File.Add(f);
             await db.SaveChangesAsync();
 
             return f.Id;
@@ -135,7 +135,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <returns></returns>
     public async Task<string?> GetFileUrlAsync(long fileId, bool isInline = false)
     {
-        var file = await db.TFile.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefaultAsync();
+        var file = await db.File.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefaultAsync();
 
         if (file != null)
         {
@@ -177,7 +177,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <returns></returns>
     public async Task<bool> DeleteFileAsync(long id)
     {
-        var file = await db.TFile.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var file = await db.File.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (file != null)
         {
@@ -206,7 +206,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     public async Task<List<DtoFileInfo>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl)
     {
 
-        var query = db.TFile.Where(t => t.Table == business && t.TableId == key);
+        var query = db.File.Where(t => t.Table == business && t.TableId == key);
 
         if (sign != null)
         {

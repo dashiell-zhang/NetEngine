@@ -8,7 +8,7 @@ namespace Repository.Database;
 /// 产品表
 /// </summary>
 [Index(nameof(SKU)), Index(nameof(Name))]
-public class TProduct : CUD_User
+public class Product : CUD_User
 {
 
 

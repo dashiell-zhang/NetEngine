@@ -43,7 +43,7 @@ public class TaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> 
 
         if (db.Database.CurrentTransaction != null)
         {
-            TQueueTask queueTask = new()
+            QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
                 Name = name,
@@ -61,7 +61,7 @@ public class TaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> 
                 queueTask.CallbackParameter = JsonHelper.ObjectCloneJson(callbackParameter);
             }
 
-            db.TQueueTask.Add(queueTask);
+            db.QueueTask.Add(queueTask);
 
             return true;
         }
@@ -103,7 +103,7 @@ public class TaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> 
         {
             var db = await dbFactory.CreateDbContextAsync();
 
-            TQueueTask queueTask = new()
+            QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
                 Name = name,
@@ -121,7 +121,7 @@ public class TaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> 
                 queueTask.CallbackParameter = JsonHelper.ObjectCloneJson(callbackParameter);
             }
 
-            db.TQueueTask.Add(queueTask);
+            db.QueueTask.Add(queueTask);
 
             await db.SaveChangesAsync();
 

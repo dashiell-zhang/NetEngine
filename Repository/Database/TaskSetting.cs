@@ -5,7 +5,7 @@ namespace Repository.Database;
 /// <summary>
 /// 任务配置
 /// </summary>
-public class TTaskSetting : CUD_User
+public class TaskSetting : CUD_User
 {
 
     /// <summary>

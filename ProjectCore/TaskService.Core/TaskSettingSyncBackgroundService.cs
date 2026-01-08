@@ -51,7 +51,7 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
         using var scope = serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-        var taskSettings = await db.TTaskSetting.ToListAsync();
+        var taskSettings = await db.TaskSetting.ToListAsync();
 
         var queueTaskSettings = taskSettings.Where(t => t.Category == "QueueTask" && QueueTaskBuilder.queueMethodList.ContainsKey(t.Name)).ToList();
 
@@ -75,7 +75,7 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
             }
             else
             {
-                db.TTaskSetting.Add(new TTaskSetting
+                db.TaskSetting.Add(new TaskSetting
                 {
                     Id = idService.GetId(),
                     Category = "QueueTask",
@@ -103,7 +103,7 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
                 }
                 else
                 {
-                    db.TTaskSetting.Add(new TTaskSetting
+                    db.TaskSetting.Add(new TaskSetting
                     {
                         Id = idService.GetId(),
                         Category = "ScheduleTask",
@@ -137,11 +137,11 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
         //添加带参任务默认值到任务配置表中
         foreach (var item in ScheduleTaskBuilder.argsScheduleMethodList)
         {
-            var isHave = await db.TTaskSetting.Where(t => t.Category == "ScheduleTask" && t.Name == item.Key && t.Parameter == null).AnyAsync();
+            var isHave = await db.TaskSetting.Where(t => t.Category == "ScheduleTask" && t.Name == item.Key && t.Parameter == null).AnyAsync();
 
             if (!isHave)
             {
-                db.TTaskSetting.Add(new TTaskSetting
+                db.TaskSetting.Add(new TaskSetting
                 {
                     Id = idService.GetId(),
                     Category = "ScheduleTask",

@@ -5,7 +5,7 @@ namespace Repository.Database;
 /// <summary>
 /// 用户Token记录表
 /// </summary>
-public class TUserToken : CD
+public class UserToken : CD
 {
 
 
@@ -13,7 +13,7 @@ public class TUserToken : CD
     /// 用户ID
     /// </summary>
     public long UserId { get; set; }
-    public virtual TUser User { get; set; }
+    public virtual User User { get; set; }
 
 
 

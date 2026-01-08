@@ -9,7 +9,7 @@ namespace Repository.Database;
 /// 系统功能配置表
 /// </summary>
 [Index(nameof(Sign))]
-public class TFunction : CD
+public class Function : CD
 {
 
     /// <summary>
@@ -34,7 +34,7 @@ public class TFunction : CD
     /// 父级信息
     /// </summary>
     public long? ParentId { get; set; }
-    public virtual TFunction? Parent { get; set; }
+    public virtual Function? Parent { get; set; }
 
 
     /// <summary>
@@ -43,6 +43,6 @@ public class TFunction : CD
     public EnumFunctionType Type { get; set; }
 
 
-    public virtual List<TFunctionRoute>? TFunctionRoute { get; set; }
+    public virtual List<FunctionRoute>? TFunctionRoute { get; set; }
 
 }

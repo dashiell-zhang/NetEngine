@@ -5,7 +5,7 @@ namespace Repository.Database;
 /// <summary>
 /// 日志表
 /// </summary>
-public class TLog : CD
+public class Log : CD
 {
 
 

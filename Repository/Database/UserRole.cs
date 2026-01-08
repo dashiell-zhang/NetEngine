@@ -1,7 +1,7 @@
 using Repository.Database.Bases;
 
 namespace Repository.Database;
-public class TUserRole : CUD_User
+public class UserRole : CUD_User
 {
 
 
@@ -9,7 +9,7 @@ public class TUserRole : CUD_User
     /// 角色信息
     /// </summary>
     public long RoleId { get; set; }
-    public virtual TRole Role { get; set; }
+    public virtual Role Role { get; set; }
 
 
 
@@ -17,7 +17,7 @@ public class TUserRole : CUD_User
     /// 用户信息
     /// </summary>
     public long UserId { get; set; }
-    public virtual TUser User { get; set; }
+    public virtual User User { get; set; }
 
 
 }

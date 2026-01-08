@@ -27,7 +27,7 @@ internal class LogClearTask(IOptionsMonitor<LoggerSetting> config, IServiceProvi
 
                     var delTime = DateTime.UtcNow.AddDays(-1 * saveDays);
 
-                    await db.TLog.Where(t => t.CreateTime <= delTime).ExecuteDeleteAsync(cancellationToken);
+                    await db.Log.Where(t => t.CreateTime <= delTime).ExecuteDeleteAsync(cancellationToken);
                 }
                 catch
                 {

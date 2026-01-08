@@ -249,7 +249,7 @@ public static class DatabaseContextExtension
 
 
 
-                TDataUpdateLog osLog = new()
+                DataUpdateLog osLog = new()
                 {
                     Id = idService.GetId(),
                     Table = tableName,
@@ -260,7 +260,7 @@ public static class DatabaseContextExtension
                     ActionUserId = actionUserId
                 };
 
-                db.TDataUpdateLog.Add(osLog);
+                db.DataUpdateLog.Add(osLog);
             }
 
         }

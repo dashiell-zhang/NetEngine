@@ -10,7 +10,7 @@ namespace Repository.Database;
 [Index(nameof(UserName))]
 [Index(nameof(Phone))]
 [Index(nameof(Email))]
-public class TUser : CUD_User
+public class User : CUD_User
 {
 
 
@@ -49,18 +49,18 @@ public class TUser : CUD_User
     /// 用户信息
     /// </summary>
     [InverseProperty("User")]
-    public virtual TUserInfo? UserInfo { get; set; }
+    public virtual UserInfo? UserInfo { get; set; }
 
 
     [InverseProperty("CreateUser")]
-    public virtual List<TUser>? InverseCreateUserList { get; set; }
+    public virtual List<User>? InverseCreateUserList { get; set; }
 
 
     [InverseProperty("DeleteUser")]
-    public virtual List<TUser>? InverseDeleteUserList { get; set; }
+    public virtual List<User>? InverseDeleteUserList { get; set; }
 
 
     [InverseProperty("UpdateUser")]
-    public virtual List<TUser>? InverseUpdateUserList { get; set; }
+    public virtual List<User>? InverseUpdateUserList { get; set; }
 
 }

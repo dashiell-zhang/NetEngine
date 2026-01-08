@@ -104,7 +104,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
         actionList = [.. actionList.Where(t => t.IsAuthorize == true).Distinct()];
 
 
-        var functionRoutes = await db.TFunctionRoute.Where(t => t.Module == projectName).ToListAsync();
+        var functionRoutes = await db.FunctionRoute.Where(t => t.Module == projectName).ToListAsync();
 
         var delList = functionRoutes.Where(t => actionList.Select(t => t.Route).ToList().Contains(t.Route) == false).ToList();
 
@@ -125,7 +125,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
             }
             else
             {
-                TFunctionRoute functionRoute = new()
+                FunctionRoute functionRoute = new()
                 {
                     Id = idService.GetId(),
                     Module = projectName,
@@ -133,7 +133,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
                     Remarks = remarks
                 };
 
-                db.TFunctionRoute.Add(functionRoute);
+                db.FunctionRoute.Add(functionRoute);
             }
         }
 

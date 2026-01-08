@@ -7,7 +7,7 @@ namespace Repository.Database;
 /// 区域信息表
 /// </summary>
 [Index(nameof(Area))]
-public class TRegionArea : CD
+public class RegionArea : CD
 {
 
 
@@ -28,14 +28,14 @@ public class TRegionArea : CD
     /// 所属城市ID
     /// </summary>
     public int CityId { get; set; }
-    public virtual TRegionCity City { get; set; }
+    public virtual RegionCity City { get; set; }
 
 
 
     /// <summary>
     /// 城市下所有乡镇信息
     /// </summary>
-    public virtual List<TRegionTown>? TRegionTown { get; set; }
+    public virtual List<RegionTown>? TRegionTown { get; set; }
 
 
 }

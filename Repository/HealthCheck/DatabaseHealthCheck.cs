@@ -11,7 +11,7 @@ public class DatabaseHealthCheck(DatabaseContext db, ILogger<DatabaseHealthCheck
     {
         try
         {
-            var isHealthy = await db.TUser.Select(it => new { it.Id }).FirstOrDefaultAsync(cancellationToken);
+            var isHealthy = await db.User.Select(it => new { it.Id }).FirstOrDefaultAsync(cancellationToken);
 
             return HealthCheckResult.Healthy("A healthy result.");
         }

@@ -50,7 +50,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
                         {
                             var nowTime = DateTime.UtcNow;
 
-                            var queueTaskIdList = await db.TQueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToListAsync(stoppingToken);
+                            var queueTaskIdList = await db.QueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToListAsync(stoppingToken);
 
                             foreach (var queueTaskId in queueTaskIdList)
                             {
@@ -96,7 +96,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
             using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
             if (lockActionState != null)
             {
-                var queueTask = await db.TQueueTask.FirstAsync(t => t.Id == queueTaskId);
+                var queueTask = await db.QueueTask.FirstAsync(t => t.Id == queueTaskId);
 
                 if (queueTask.FirstTime == null)
                 {
@@ -154,7 +154,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
                 queueTask.SuccessTime = DateTime.UtcNow;
 
-                var isHaveChild = await db.TQueueTask.Where(t => t.ParentTaskId == queueTaskId).AnyAsync();
+                var isHaveChild = await db.QueueTask.Where(t => t.ParentTaskId == queueTaskId).AnyAsync();
 
                 if (!isHaveChild)
                 {
@@ -171,14 +171,14 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
                     if (queueTask.ChildSuccessTime != null)
                     {
-                        TQueueTask callbackTask = new()
+                        Repository.Database.QueueTask callbackTask = new()
                         {
                             Id = idService.GetId(),
                             Name = queueTask.CallbackName,
                             Parameter = queueTask.CallbackParameter
                         };
 
-                        db.TQueueTask.Add(callbackTask);
+                        db.QueueTask.Add(callbackTask);
                     }
                 }
 
@@ -196,24 +196,24 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
                 using (await distLock.LockAsync(parentTaskId.ToString()))
                 {
                     //同级别是否全部执行完成
-                    var isSameLevelHaveWait = await db.TQueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).AnyAsync();
+                    var isSameLevelHaveWait = await db.QueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).AnyAsync();
 
                     if (!isSameLevelHaveWait)
                     {
-                        var parentTaskInfo = await db.TQueueTask.Where(t => t.Id == parentTaskId).FirstAsync();
+                        var parentTaskInfo = await db.QueueTask.Where(t => t.Id == parentTaskId).FirstAsync();
 
                         parentTaskInfo.ChildSuccessTime = DateTimeOffset.UtcNow;
 
                         if (parentTaskInfo.CallbackName != null)
                         {
-                            TQueueTask callbackTask = new()
+                            Repository.Database.QueueTask callbackTask = new()
                             {
                                 Id = idService.GetId(),
                                 Name = parentTaskInfo.CallbackName,
                                 Parameter = parentTaskInfo.CallbackParameter
                             };
 
-                            db.TQueueTask.Add(callbackTask);
+                            db.QueueTask.Add(callbackTask);
                         }
 
                         if (parentTaskInfo.ParentTaskId != null)

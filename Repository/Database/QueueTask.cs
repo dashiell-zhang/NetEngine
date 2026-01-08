@@ -5,7 +5,7 @@ namespace Repository.Database;
 /// <summary>
 /// 队列任务表
 /// </summary>
-public class TQueueTask : CD
+public class QueueTask : CD
 {
 
     /// <summary>
@@ -66,7 +66,7 @@ public class TQueueTask : CD
     /// 父级任务Id
     /// </summary>
     public long? ParentTaskId { get; set; }
-    public virtual TQueueTask ParentTask { get; set; }
+    public virtual QueueTask ParentTask { get; set; }
 
 
     /// <summary>

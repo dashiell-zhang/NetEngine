@@ -1,7 +1,7 @@
 using Repository.Bases;
 
 namespace Repository.Database;
-public class TUserBindExternal : CD
+public class UserBindExternal : CD
 {
 
 
@@ -10,7 +10,7 @@ public class TUserBindExternal : CD
     /// 用户信息
     /// </summary>
     public long UserId { get; set; }
-    public virtual TUser User { get; set; }
+    public virtual User User { get; set; }
 
 
 

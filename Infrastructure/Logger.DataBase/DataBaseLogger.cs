@@ -82,7 +82,7 @@ public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IS
 
                     var idService = serviceProvider.GetRequiredService<IdService>();
 
-                    TLog log = new()
+                    Log log = new()
                     {
                         Id = idService.GetId(),
                         CreateTime = DateTimeOffset.UtcNow,

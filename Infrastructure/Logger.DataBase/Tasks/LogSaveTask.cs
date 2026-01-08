@@ -36,7 +36,7 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
 
                         foreach (var logPath in logPaths)
                         {
-                            var logs = new List<TLog>();
+                            var logs = new List<Log>();
 
                             using (var stream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous))
                             using (var reader = new StreamReader(stream, Encoding.UTF8))
@@ -56,7 +56,7 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
 
                                     try
                                     {
-                                        logs.Add(JsonHelper.JsonToObject<TLog>(line));
+                                        logs.Add(JsonHelper.JsonToObject<Log>(line));
                                     }
                                     catch
                                     {
@@ -68,17 +68,17 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
                             if (logs.Count != 0)
                             {
                                 var ids = logs.Select(x => x.Id).ToList();
-                                var existingIds = await db.TLog.Where(x => ids.Contains(x.Id)).Select(x => x.Id).ToHashSetAsync(stoppingToken);
+                                var existingIds = await db.Log.Where(x => ids.Contains(x.Id)).Select(x => x.Id).ToHashSetAsync(stoppingToken);
 
                                 var newLogs = logs.Where(x => !existingIds.Contains(x.Id)).ToList();
                                 if (newLogs.Count != 0)
                                 {
-                                    db.TLog.AddRange(newLogs);
+                                    db.Log.AddRange(newLogs);
                                     await db.SaveChangesAsync(stoppingToken);
                                 }
                             }
 
-                            File.Delete(logPath);
+                            System.IO.File.Delete(logPath);
 
                         }
                     }
@@ -104,7 +104,7 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
         {
             try
             {
-                var lastWriteUtc = File.GetLastWriteTimeUtc(tmpPath);
+                var lastWriteUtc = System.IO.File.GetLastWriteTimeUtc(tmpPath);
                 if (DateTime.UtcNow - lastWriteUtc < TmpRecoverAge)
                 {
                     continue;
@@ -116,13 +116,13 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
                 }
 
                 var finalPath = tmpPath[..^4]; // remove ".tmp"
-                if (File.Exists(finalPath))
+                if (System.IO.File.Exists(finalPath))
                 {
-                    File.Delete(tmpPath);
+                    System.IO.File.Delete(tmpPath);
                 }
                 else
                 {
-                    File.Move(tmpPath, finalPath);
+                    System.IO.File.Move(tmpPath, finalPath);
                 }
             }
             catch

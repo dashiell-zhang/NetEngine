@@ -37,7 +37,7 @@ public class MessageTask(IHostEnvironment hostEnvironment, ILogger<MessageTask> 
 
         if (email.FileIdList != null)
         {
-            var files = await db.TFile.Where(t => email.FileIdList.Contains(t.Id)).Select(t => new { t.Id, t.Name, t.Path }).ToListAsync();
+            var files = await db.File.Where(t => email.FileIdList.Contains(t.Id)).Select(t => new { t.Id, t.Name, t.Path }).ToListAsync();
 
             foreach (var fileId in email.FileIdList)
             {

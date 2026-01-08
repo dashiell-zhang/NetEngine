@@ -4,7 +4,7 @@ namespace Repository.Database;
 /// <summary>
 /// 订单详情表
 /// </summary>
-public class TOrderDetail : CD
+public class OrderDetail : CD
 {
 
 
@@ -12,14 +12,14 @@ public class TOrderDetail : CD
     /// 订单ID
     /// </summary>
     public long OrderId { get; set; }
-    public virtual TOrder Order { get; set; }
+    public virtual Order Order { get; set; }
 
 
     /// <summary>
     /// 产品ID
     /// </summary>
     public long ProductId { get; set; }
-    public virtual TProduct Product { get; set; }
+    public virtual Product Product { get; set; }
 
 
     /// <summary>

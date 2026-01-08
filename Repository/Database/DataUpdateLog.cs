@@ -7,7 +7,7 @@ namespace Repository.Database;
 /// 数据更新日志表
 /// </summary>
 [Index(nameof(Table)), Index(nameof(TableId))]
-public class TDataUpdateLog : CD
+public class DataUpdateLog : CD
 {
 
     /// <summary>
@@ -32,7 +32,7 @@ public class TDataUpdateLog : CD
     /// 操作人信息
     /// </summary>
     public long? ActionUserId { get; set; }
-    public virtual TUser? ActionUser { get; set; }
+    public virtual User? ActionUser { get; set; }
 
 
     /// <summary>

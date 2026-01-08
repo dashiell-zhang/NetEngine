@@ -24,7 +24,7 @@ public class CUD_User : CD_User
     public long? UpdateUserId { get; set; }
 
     [ForeignKey("UpdateUserId")]
-    public virtual TUser? UpdateUser { get; set; }
+    public virtual User? UpdateUser { get; set; }
 
 
 }

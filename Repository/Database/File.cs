@@ -8,7 +8,7 @@ namespace Repository.Database;
 /// 文件表
 /// </summary>
 [Index(nameof(Table)), Index(nameof(TableId)), Index(nameof(Sign))]
-public class TFile : CD_User
+public class File : CD_User
 {
 
 

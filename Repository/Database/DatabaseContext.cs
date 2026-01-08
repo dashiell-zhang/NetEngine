@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Repository.Database.Generated;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Xml;
 
@@ -13,81 +12,81 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
     #region 表实体声明
 
-    public DbSet<TAppSetting> TAppSetting { get; set; }
+    public DbSet<AppSetting> AppSetting { get; set; }
 
 
-    public DbSet<TArticle> TArticle { get; set; }
+    public DbSet<Article> Article { get; set; }
 
 
-    public DbSet<TCategory> TCategory { get; set; }
-
-
-
-    public DbSet<TDataUpdateLog> TDataUpdateLog { get; set; }
+    public DbSet<Category> Category { get; set; }
 
 
 
-    public DbSet<TFile> TFile { get; set; }
+    public DbSet<DataUpdateLog> DataUpdateLog { get; set; }
 
 
-    public DbSet<TFunction> TFunction { get; set; }
+
+    public DbSet<File> File { get; set; }
 
 
-    public DbSet<TFunctionAuthorize> TFunctionAuthorize { get; set; }
+    public DbSet<Function> Function { get; set; }
 
 
-    public DbSet<TFunctionRoute> TFunctionRoute { get; set; }
+    public DbSet<FunctionAuthorize> FunctionAuthorize { get; set; }
 
 
-    public DbSet<TLink> TLink { get; set; }
+    public DbSet<FunctionRoute> FunctionRoute { get; set; }
 
 
-    public DbSet<TLog> TLog { get; set; }
+    public DbSet<Link> Link { get; set; }
 
 
-    public DbSet<TOrder> TOrder { get; set; }
+    public DbSet<Log> Log { get; set; }
 
 
-    public DbSet<TOrderDetail> TOrderDetail { get; set; }
+    public DbSet<Order> Order { get; set; }
 
 
-    public DbSet<TProduct> TProduct { get; set; }
+    public DbSet<OrderDetail> OrderDetail { get; set; }
 
 
-    public DbSet<TQueueTask> TQueueTask { get; set; }
+    public DbSet<Product> Product { get; set; }
 
 
-    public DbSet<TRegionArea> TRegionArea { get; set; }
+    public DbSet<QueueTask> QueueTask { get; set; }
 
 
-    public DbSet<TRegionCity> TRegionCity { get; set; }
+    public DbSet<RegionArea> RegionArea { get; set; }
 
 
-    public DbSet<TRegionProvince> TRegionProvince { get; set; }
+    public DbSet<RegionCity> RegionCity { get; set; }
 
 
-    public DbSet<TRegionTown> TRegionTown { get; set; }
+    public DbSet<RegionProvince> RegionProvince { get; set; }
 
 
-    public DbSet<TRole> TRole { get; set; }
+    public DbSet<RegionTown> RegionTown { get; set; }
 
 
-    public DbSet<TTaskSetting> TTaskSetting { get; set; }
+    public DbSet<Role> Role { get; set; }
 
 
-    public DbSet<TUser> TUser { get; set; }
+    public DbSet<TaskSetting> TaskSetting { get; set; }
 
 
-    public DbSet<TUserBindExternal> TUserBindExternal { get; set; }
+    public DbSet<User> User { get; set; }
 
 
-    public DbSet<TUserInfo> TUserInfo { get; set; }
+    public DbSet<UserBindExternal> UserBindExternal { get; set; }
 
 
-    public DbSet<TUserRole> TUserRole { get; set; }
+    public DbSet<UserInfo> UserInfo { get; set; }
 
 
-    public DbSet<TUserToken> TUserToken { get; set; }
+    public DbSet<UserRole> UserRole { get; set; }
+
+
+    public DbSet<UserToken> UserToken { get; set; }
 
 
     #endregion
@@ -121,10 +120,6 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
             modelBuilder.Entity(entity.Name, builder =>
             {
-                //设置生成数据库时的表名移除前缀T
-                var tableName = builder.Metadata.ClrType.GetCustomAttribute<TableAttribute>()?.Name ?? (entity.ClrType.Name[1..]);
-                builder.ToTable(tableName);
-
 #if DEBUG
                 //设置表的备注
                 builder.ToTable(t => t.HasComment(GetEntityComment(entity.Name)));

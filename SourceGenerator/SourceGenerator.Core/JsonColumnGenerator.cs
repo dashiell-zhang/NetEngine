@@ -45,94 +45,120 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var configs = context.CompilationProvider.Select((compilation, _) =>
+        var symbols = context.CompilationProvider.Select(static (compilation, _) =>
         {
-            var jsonAttribute = compilation.GetTypeByMetadataName(JsonColumnAttributeMetadataName);
-            var modelBuilder = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.ModelBuilder");
-            var dbSetEntities = GetDbSetEntityTypes(compilation);
-            var listSymbol = compilation.GetTypeByMetadataName(ListMetadataName);
-            var dictionarySymbol = compilation.GetTypeByMetadataName(DictionaryMetadataName);
-
-            // 只有同时存在 JsonColumn 特性 和 EFCore ModelBuilder 且当前编译单元中存在 DbSet 实体时才尝试生成
-            var canEmit = jsonAttribute is not null && modelBuilder is not null && dbSetEntities.Count > 0;
-
-            var builder = ImmutableArray.CreateBuilder<JsonEntityConfig>();
-            var diagnostics = new List<Diagnostic>();
-
-            foreach (var entity in dbSetEntities)
-            {
-                var navigations = GetJsonNavigations(entity, jsonAttribute!, listSymbol, dictionarySymbol, diagnostics);
-
-                if (!navigations.IsDefaultOrEmpty)
-                {
-                    builder.Add(new JsonEntityConfig(entity, navigations));
-                }
-            }
-
-            return new JsonConfigResult(canEmit, builder.ToImmutable(), diagnostics.ToImmutableArray());
+            return new GeneratorSymbols(
+                compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.ModelBuilder"),
+                compilation.GetTypeByMetadataName(DbContextMetadataName),
+                compilation.GetTypeByMetadataName(DbSetMetadataName),
+                compilation.GetTypeByMetadataName(ListMetadataName),
+                compilation.GetTypeByMetadataName(DictionaryMetadataName));
         });
 
-        context.RegisterSourceOutput(configs, static (spc, configs) =>
+        // 以 DbContext 为入口增量收集 DbSet<T> 中的实体类型，避免每次改动都扫描所有语法树
+        var dbContextCandidates = context.SyntaxProvider.CreateSyntaxProvider(
+                static (node, _) => node is ClassDeclarationSyntax cds && cds.BaseList is not null,
+                static (ctx, _) => ctx.SemanticModel.GetDeclaredSymbol((ClassDeclarationSyntax)ctx.Node) as INamedTypeSymbol)
+            .Where(static t => t is not null)!;
+
+        var dbSetEntities = dbContextCandidates
+            .Combine(symbols)
+            .Select(static (t, _) => GetDbSetEntityTypesFromDbContext(t.Left!, t.Right.DbContext, t.Right.DbSet))
+            .Collect()
+            .Select(static (arrays, _) => MergeEntityTypes(arrays));
+
+        // 从 [JsonColumn] 属性本身出发增量收集，避免遍历所有实体属性
+        var jsonColumnProperties = context.SyntaxProvider.ForAttributeWithMetadataName(
+                JsonColumnAttributeMetadataName,
+                static (node, _) => node is PropertyDeclarationSyntax,
+                static (ctx, _) => ctx.TargetSymbol as IPropertySymbol)
+            .Where(static p => p is not null)!;
+
+        var jsonColumnAnalyses = jsonColumnProperties
+            .Combine(dbSetEntities)
+            .Combine(symbols)
+            .Select(static (t, _) => AnalyzeJsonColumnProperty(t.Left.Left!, t.Left.Right, t.Right))
+            .Where(static r => r is not null)!
+            .Select(static (r, _) => r!);
+
+        context.RegisterSourceOutput(jsonColumnAnalyses.Collect().Combine(symbols), static (spc, t) =>
         {
-            if (!configs.CanEmit)
+            var analyses = t.Left;
+            var symbols = t.Right;
+
+            if (symbols.ModelBuilder is null)
                 return;
 
-            if (!configs.Diagnostics.IsDefaultOrEmpty)
+            if (analyses.IsDefaultOrEmpty)
+                return;
+
+            var entityMap = new Dictionary<INamedTypeSymbol, ImmutableArray<JsonNavigation>.Builder>(SymbolEqualityComparer.Default);
+            var entityNavVisited = new Dictionary<INamedTypeSymbol, HashSet<string>>(SymbolEqualityComparer.Default);
+
+            foreach (var analysis in analyses)
             {
-                foreach (var diagnostic in configs.Diagnostics)
+                if (analysis.Diagnostic is not null)
                 {
-                    spc.ReportDiagnostic(diagnostic);
+                    spc.ReportDiagnostic(analysis.Diagnostic);
+                    continue;
                 }
 
-                if (configs.Diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
-                    return;
+                if (analysis.Navigation is null)
+                    continue;
+
+                if (!entityMap.TryGetValue(analysis.EntityType, out var navBuilder))
+                {
+                    navBuilder = ImmutableArray.CreateBuilder<JsonNavigation>();
+                    entityMap.Add(analysis.EntityType, navBuilder);
+                    entityNavVisited.Add(analysis.EntityType, new HashSet<string>(StringComparer.Ordinal));
+                }
+
+                var visited = entityNavVisited[analysis.EntityType];
+                if (visited.Add(analysis.Navigation.PropertyName))
+                {
+                    navBuilder.Add(analysis.Navigation);
+                }
             }
 
-            var source = BuildSource(configs.Configs);
+            if (entityMap.Count == 0)
+                return;
+
+            var configsBuilder = ImmutableArray.CreateBuilder<JsonEntityConfig>(entityMap.Count);
+            foreach (var kv in entityMap)
+            {
+                configsBuilder.Add(new JsonEntityConfig(kv.Key, kv.Value.ToImmutable()));
+            }
+
+            var source = BuildSource(configsBuilder.ToImmutable());
             spc.AddSource("JsonColumnMappings.g.cs", source);
         });
     }
 
 
     /// <summary>
-    /// 基于实体类型收集 JSON 列根导航信息（仅生成到 ToJson，不展开内部层级）
+    /// 分析单个带 [JsonColumn] 的属性是否能生成映射
     /// </summary>
-    private static ImmutableArray<JsonNavigation> GetJsonNavigations(INamedTypeSymbol type, INamedTypeSymbol jsonAttribute, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol, List<Diagnostic> diagnostics)
+    private static JsonColumnAnalysis? AnalyzeJsonColumnProperty(IPropertySymbol property, ImmutableHashSet<INamedTypeSymbol> dbSetEntities, GeneratorSymbols symbols)
     {
-        var builder = ImmutableArray.CreateBuilder<JsonNavigation>();
+        if (property.ContainingType is not INamedTypeSymbol entityType)
+            return null;
 
-        foreach (var property in EnumerateProperties(type))
+        if (!dbSetEntities.Contains(entityType))
+            return null;
+
+        var (ownedType, isCollection) = GetOwnedType(property.Type, symbols.List, symbols.Dictionary);
+        if (ownedType is null || !IsSupportedJsonColumnRootType(ownedType))
         {
-            var hasJsonColumnAttribute = HasJsonColumnAttribute(property, jsonAttribute);
-            if (!hasJsonColumnAttribute)
-                continue;
+            var diagnostic = Diagnostic.Create(
+                UnsupportedTypeDescriptor,
+                property.Locations.FirstOrDefault(),
+                property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                property.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
 
-            var (ownedType, isCollection) = GetOwnedType(property.Type, listSymbol, dictionarySymbol);
-            if (ownedType is null)
-            {
-                diagnostics.Add(Diagnostic.Create(
-                    UnsupportedTypeDescriptor,
-                    property.Locations.FirstOrDefault(),
-                    property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                    property.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
-                continue;
-            }
-
-            // 根节点（带 JsonColumn 特性）必须是可拥有的复杂类型（通常为引用类型）；标量类型不支持
-            if (!IsSupportedJsonColumnRootType(ownedType))
-            {
-                diagnostics.Add(Diagnostic.Create(
-                    UnsupportedTypeDescriptor,
-                    property.Locations.FirstOrDefault(),
-                    property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                    property.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
-                continue;
-            }
-
-            builder.Add(new JsonNavigation(property.Name, isCollection));
+            return new JsonColumnAnalysis(entityType, null, diagnostic);
         }
 
-        return builder.ToImmutable();
+        return new JsonColumnAnalysis(entityType, new JsonNavigation(property.Name, isCollection), null);
     }
 
 
@@ -171,46 +197,6 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         }
 
         return type is INamedTypeSymbol namedType ? (namedType, false) : (null, false);
-    }
-
-
-    /// <summary>
-    /// 判断属性是否带有 JsonColumn 特性
-    /// </summary>
-    private static bool HasJsonColumnAttribute(IPropertySymbol property, INamedTypeSymbol jsonAttribute)
-    {
-        foreach (var attribute in property.GetAttributes())
-        {
-            var attrClass = attribute.AttributeClass;
-            if (attrClass is not null && SymbolEqualityComparer.Default.Equals(attrClass, jsonAttribute))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-    /// <summary>
-    /// 枚举类型及其基类上的所有实例属性 去除重复
-    /// </summary>
-    private static IEnumerable<IPropertySymbol> EnumerateProperties(INamedTypeSymbol type)
-    {
-        var visited = new HashSet<string>(StringComparer.Ordinal);
-
-        for (var current = type; current is not null; current = current.BaseType)
-        {
-            foreach (var member in current.GetMembers())
-            {
-                if (member is IPropertySymbol property &&
-                    !property.IsStatic &&
-                    visited.Add(property.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))
-                {
-                    yield return property;
-                }
-            }
-        }
     }
 
 
@@ -325,26 +311,6 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
-    /// <summary>
-    /// Json 映射生成结果 包含是否可生成 标记的实体配置以及诊断信息
-    /// </summary>
-    private sealed class JsonConfigResult
-    {
-        public JsonConfigResult(bool canEmit, ImmutableArray<JsonEntityConfig> configs, ImmutableArray<Diagnostic> diagnostics)
-        {
-            CanEmit = canEmit;
-            Configs = configs;
-            Diagnostics = diagnostics;
-        }
-
-        public bool CanEmit { get; }
-
-        public ImmutableArray<JsonEntityConfig> Configs { get; }
-
-        public ImmutableArray<Diagnostic> Diagnostics { get; }
-    }
-
-
     private static string EscapeIdentifier(string identifier)
     {
         // 若是关键字/上下文关键字，使用 @ 前缀以避免生成非法代码
@@ -359,48 +325,58 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
 
     /// <summary>
-    /// 扫描编译单元中所有继承自 DbContext 的类型 收集其 DbSet&lt;T&gt; 声明的实体类型
+    /// 从单个 DbContext 类型（及其基类链）中收集 DbSet&lt;T&gt; 声明的实体类型
     /// </summary>
-    private static ImmutableHashSet<INamedTypeSymbol> GetDbSetEntityTypes(Compilation compilation)
+    private static ImmutableArray<INamedTypeSymbol> GetDbSetEntityTypesFromDbContext(INamedTypeSymbol dbContextType, INamedTypeSymbol? dbContextSymbol, INamedTypeSymbol? dbSetSymbol)
     {
-        var dbContextSymbol = compilation.GetTypeByMetadataName(DbContextMetadataName);
-        var dbSetSymbol = compilation.GetTypeByMetadataName(DbSetMetadataName);
-
         if (dbContextSymbol is null || dbSetSymbol is null)
-            return ImmutableHashSet<INamedTypeSymbol>.Empty;
+            return ImmutableArray<INamedTypeSymbol>.Empty;
 
-        var result = ImmutableHashSet.CreateBuilder<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+        if (!InheritsFrom(dbContextType, dbContextSymbol))
+            return ImmutableArray<INamedTypeSymbol>.Empty;
 
-        foreach (var tree in compilation.SyntaxTrees)
+        var builder = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var current = dbContextType; current is not null; current = current.BaseType)
         {
-            var semanticModel = compilation.GetSemanticModel(tree);
-            var root = tree.GetRoot();
-
-            foreach (var classDecl in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+            foreach (var prop in current.GetMembers().OfType<IPropertySymbol>())
             {
-                if (semanticModel.GetDeclaredSymbol(classDecl) is not INamedTypeSymbol typeSymbol)
+                if (prop.Type is not INamedTypeSymbol namedType)
                     continue;
 
-                if (!InheritsFrom(typeSymbol, dbContextSymbol))
+                if (!SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, dbSetSymbol))
                     continue;
 
-                foreach (var prop in typeSymbol.GetMembers().OfType<IPropertySymbol>())
+                if (namedType.TypeArguments.Length == 1 && namedType.TypeArguments[0] is INamedTypeSymbol entityType)
                 {
-                    if (prop.Type is not INamedTypeSymbol namedType)
-                        continue;
-
-                    if (!SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, dbSetSymbol))
-                        continue;
-
-                    if (namedType.TypeArguments.Length == 1 && namedType.TypeArguments[0] is INamedTypeSymbol entityType)
+                    var key = entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    if (visited.Add(key))
                     {
-                        result.Add(entityType);
+                        builder.Add(entityType);
                     }
                 }
             }
         }
 
-        return result.ToImmutable();
+        return builder.ToImmutable();
+    }
+
+
+    private static ImmutableHashSet<INamedTypeSymbol> MergeEntityTypes(ImmutableArray<ImmutableArray<INamedTypeSymbol>> entityTypeGroups)
+    {
+        if (entityTypeGroups.IsDefaultOrEmpty)
+            return ImmutableHashSet<INamedTypeSymbol>.Empty;
+
+        var builder = ImmutableHashSet.CreateBuilder<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+        foreach (var group in entityTypeGroups)
+        {
+            foreach (var entityType in group)
+            {
+                builder.Add(entityType);
+            }
+        }
+        return builder.ToImmutable();
     }
 
 
@@ -428,4 +404,44 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         category: "JsonColumnGenerator",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+
+    private sealed class GeneratorSymbols
+    {
+        public GeneratorSymbols(INamedTypeSymbol? modelBuilder, INamedTypeSymbol? dbContext, INamedTypeSymbol? dbSet, INamedTypeSymbol? list, INamedTypeSymbol? dictionary)
+        {
+            ModelBuilder = modelBuilder;
+            DbContext = dbContext;
+            DbSet = dbSet;
+            List = list;
+            Dictionary = dictionary;
+        }
+
+        public INamedTypeSymbol? ModelBuilder { get; }
+
+        public INamedTypeSymbol? DbContext { get; }
+
+        public INamedTypeSymbol? DbSet { get; }
+
+        public INamedTypeSymbol? List { get; }
+
+        public INamedTypeSymbol? Dictionary { get; }
+    }
+
+
+    private sealed class JsonColumnAnalysis
+    {
+        public JsonColumnAnalysis(INamedTypeSymbol entityType, JsonNavigation? navigation, Diagnostic? diagnostic)
+        {
+            EntityType = entityType;
+            Navigation = navigation;
+            Diagnostic = diagnostic;
+        }
+
+        public INamedTypeSymbol EntityType { get; }
+
+        public JsonNavigation? Navigation { get; }
+
+        public Diagnostic? Diagnostic { get; }
+    }
 }

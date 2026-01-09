@@ -90,7 +90,10 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                 return;
 
             if (analyses.IsDefaultOrEmpty)
+            {
+                spc.AddSource("JsonColumnMappings.g.cs", BuildSource(ImmutableArray<JsonEntityConfig>.Empty));
                 return;
+            }
 
             var entityMap = new Dictionary<INamedTypeSymbol, ImmutableArray<JsonNavigation>.Builder>(SymbolEqualityComparer.Default);
             var entityNavVisited = new Dictionary<INamedTypeSymbol, HashSet<string>>(SymbolEqualityComparer.Default);
@@ -120,14 +123,9 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                 }
             }
 
-            if (entityMap.Count == 0)
-                return;
-
             var configsBuilder = ImmutableArray.CreateBuilder<JsonEntityConfig>(entityMap.Count);
             foreach (var kv in entityMap)
-            {
                 configsBuilder.Add(new JsonEntityConfig(kv.Key, kv.Value.ToImmutable()));
-            }
 
             var source = BuildSource(configsBuilder.ToImmutable());
             spc.AddSource("JsonColumnMappings.g.cs", source);

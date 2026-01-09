@@ -158,6 +158,18 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             return new JsonColumnAnalysis(entityType, null, diagnostic);
         }
 
+        if (TryFindCyclicNesting(ownedType, symbols.List, symbols.Dictionary, out var cycle))
+        {
+            var diagnostic = Diagnostic.Create(
+                CyclicNestingDescriptor,
+                cycle.TriggerProperty.Locations.FirstOrDefault() ?? property.Locations.FirstOrDefault(),
+                property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                ownedType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                cycle.Path);
+
+            return new JsonColumnAnalysis(entityType, null, diagnostic);
+        }
+
         return new JsonColumnAnalysis(entityType, new JsonNavigation(property.Name, isCollection), null);
     }
 
@@ -197,6 +209,171 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         }
 
         return type is INamedTypeSymbol namedType ? (namedType, false) : (null, false);
+    }
+
+
+    private sealed class CycleInfo
+    {
+        public CycleInfo(IPropertySymbol triggerProperty, string path)
+        {
+            TriggerProperty = triggerProperty;
+            Path = path;
+        }
+
+        public IPropertySymbol TriggerProperty { get; }
+
+        public string Path { get; }
+    }
+
+
+    private static bool TryFindCyclicNesting(INamedTypeSymbol rootType, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol, out CycleInfo cycle)
+    {
+        // 仅对复杂类型做循环检测：基础类型/值类型/枚举在前面已被过滤
+        var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
+        var recursionStack = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
+        var parentEdge = new Dictionary<ITypeSymbol, (ITypeSymbol Parent, IPropertySymbol ViaProperty)>(SymbolEqualityComparer.Default);
+
+        var remainingDepth = 128; // 保护：避免极端情况下递归过深
+        CycleInfo? foundCycle = null;
+
+        bool Dfs(INamedTypeSymbol type)
+        {
+            if (remainingDepth-- <= 0)
+                return false;
+
+            visited.Add(type);
+            recursionStack.Add(type);
+
+            foreach (var prop in GetAllInstanceProperties(type))
+            {
+                var next = TryGetNestedComplexType(prop.Type, listSymbol, dictionarySymbol);
+                if (next is null)
+                    continue;
+
+                if (!visited.Contains(next))
+                {
+                    parentEdge[next] = (type, prop);
+                    if (Dfs(next))
+                        return true;
+                }
+                else if (recursionStack.Contains(next))
+                {
+                    foundCycle = BuildCycleInfo(type, prop, next, parentEdge);
+                    return true;
+                }
+            }
+
+            recursionStack.Remove(type);
+            return false;
+        }
+
+        if (Dfs(rootType) && foundCycle is not null)
+        {
+            cycle = foundCycle;
+            return true;
+        }
+
+        cycle = null!;
+        return false;
+    }
+
+
+    private static CycleInfo BuildCycleInfo(
+        INamedTypeSymbol currentType,
+        IPropertySymbol triggerProperty,
+        INamedTypeSymbol targetType,
+        Dictionary<ITypeSymbol, (ITypeSymbol Parent, IPropertySymbol ViaProperty)> parentEdge)
+    {
+        var edges = new List<(INamedTypeSymbol From, IPropertySymbol Property, INamedTypeSymbol To)>();
+
+        // 回边：currentType --triggerProperty--> targetType
+        edges.Add((currentType, triggerProperty, targetType));
+
+        // 沿 parentEdge 追溯 currentType 到 targetType 的 DFS 树路径，构造 targetType -> ... -> currentType
+        ITypeSymbol cursor = currentType;
+        while (!SymbolEqualityComparer.Default.Equals(cursor, targetType))
+        {
+            if (!parentEdge.TryGetValue(cursor, out var edge))
+                break;
+
+            edges.Add(((INamedTypeSymbol)edge.Parent, edge.ViaProperty, (INamedTypeSymbol)cursor));
+            cursor = edge.Parent;
+        }
+
+        edges.Reverse();
+
+        var parts = new List<string>(edges.Count + 1);
+        foreach (var e in edges)
+        {
+            parts.Add($"{e.From.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)}.{e.Property.Name}");
+        }
+        parts.Add(edges[edges.Count - 1].To.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
+
+        return new CycleInfo(triggerProperty, string.Join(" -> ", parts));
+    }
+
+
+    private static IEnumerable<IPropertySymbol> GetAllInstanceProperties(INamedTypeSymbol type)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            foreach (var prop in current.GetMembers().OfType<IPropertySymbol>())
+            {
+                if (prop.IsStatic || prop.IsIndexer)
+                    continue;
+
+                yield return prop;
+            }
+        }
+    }
+
+
+    private static INamedTypeSymbol? TryGetNestedComplexType(ITypeSymbol type, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol)
+    {
+        if (type is IArrayTypeSymbol arrayType)
+        {
+            return TryGetNestedComplexType(arrayType.ElementType, listSymbol, dictionarySymbol);
+        }
+
+        if (type is not INamedTypeSymbol namedType)
+            return null;
+
+        // List<T>：展开元素类型
+        if (listSymbol is not null &&
+            SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, listSymbol) &&
+            namedType.TypeArguments.Length == 1)
+        {
+            return namedType.TypeArguments[0] as INamedTypeSymbol;
+        }
+
+        // Dictionary<TKey, TValue>：当前生成器不支持作为 JsonColumn 根类型，这里也不继续展开，避免深入 BCL
+        if (dictionarySymbol is not null &&
+            SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, dictionarySymbol))
+        {
+            return null;
+        }
+
+        if (!IsSupportedJsonColumnNodeType(namedType))
+            return null;
+
+        // 避免深入常见集合实现（除了显式支持的 List<T>）
+        if (namedType.ContainingNamespace is { IsGlobalNamespace: false } ns)
+        {
+            var nsName = ns.ToDisplayString();
+            if (nsName.StartsWith("System.Collections", StringComparison.Ordinal))
+                return null;
+        }
+
+        return namedType;
+    }
+
+
+    private static bool IsSupportedJsonColumnNodeType(INamedTypeSymbol type)
+    {
+        if (type.SpecialType != SpecialType.None)
+            return false;
+
+        return type.TypeKind == TypeKind.Class;
     }
 
 
@@ -398,11 +575,23 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// 当 JsonColumn 属性类型不受支持时抛出的诊断定义
     /// </summary>
     private static readonly DiagnosticDescriptor UnsupportedTypeDescriptor = new(
-        id: "JSON002",
+        id: "JsonColumn001",
         title: "JsonColumn 属性类型不受支持",
         messageFormat: "JsonColumn 属性 {0} 的类型 {1} 不受支持，仅支持复杂类型或 List<T>",
         category: "JsonColumnGenerator",
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当 JsonColumn 内部类型存在循环嵌套时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor CyclicNestingDescriptor = new(
+        id: "JsonColumn002",
+        title: "JsonColumn 类型存在循环嵌套",
+        messageFormat: "JsonColumn 属性 {0} 的类型 {1} 存在循环嵌套：{2}",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
 

@@ -21,6 +21,11 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     private const string JsonColumnAttributeMetadataName = "Repository.Attributes.JsonColumnAttribute";
 
     /// <summary>
+    /// 仅在包含该 DbContext 的项目中输出生成文件，避免在无关项目里产生空的 g.cs
+    /// </summary>
+    private const string DatabaseContextTypeMetadataName = "Repository.Database.DatabaseContext";
+
+    /// <summary>
     /// DbContext 的完整元数据名称
     /// </summary>
     private const string DbContextMetadataName = "Microsoft.EntityFrameworkCore.DbContext";
@@ -45,6 +50,13 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var isDatabaseProject = context.CompilationProvider.Select(static (compilation, _) =>
+        {
+            var databaseContextType = compilation.GetTypeByMetadataName(DatabaseContextTypeMetadataName);
+            return databaseContextType is not null &&
+                   SymbolEqualityComparer.Default.Equals(databaseContextType.ContainingAssembly, compilation.Assembly);
+        });
+
         var symbols = context.CompilationProvider.Select(static (compilation, _) =>
         {
             return new GeneratorSymbols(
@@ -81,10 +93,13 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             .Where(static r => r is not null)!
             .Select(static (r, _) => r!);
 
-        context.RegisterSourceOutput(jsonColumnAnalyses.Collect().Combine(symbols), static (spc, t) =>
+        context.RegisterSourceOutput(jsonColumnAnalyses.Collect().Combine(symbols).Combine(isDatabaseProject), static (spc, t) =>
         {
-            var analyses = t.Left;
-            var symbols = t.Right;
+            if (!t.Right)
+                return;
+
+            var analyses = t.Left.Left;
+            var symbols = t.Left.Right;
 
             if (symbols.ModelBuilder is null)
                 return;

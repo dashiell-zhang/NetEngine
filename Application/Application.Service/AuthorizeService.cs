@@ -2,7 +2,7 @@ using Application.Interface;
 using Application.Model.AppSetting;
 using Application.Model.Authorize;
 using Application.Model.Task.Message;
-using Application.Service.Basic;
+using Application.Service.QueueTask;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;
@@ -23,7 +23,7 @@ using System.Text;
 namespace Application.Service;
 
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, TaskService taskService)
+public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, QueueTaskService queueTaskService)
 {
 
     private long UserId => userContext.UserId;
@@ -251,7 +251,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                 TemplateParams = templateParams
             };
 
-            var sendSMSTask = taskService.CreateSingleAsync("MessageTask.SendSMS", sendSMS);
+            var sendSMSTask = queueTaskService.CreateSingleAsync("MessageTask.SendSMS", sendSMS);
 
             var setCacheTask = distributedCache.SetAsync(key, code, new TimeSpan(0, 0, 5, 0));
 

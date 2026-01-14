@@ -9,7 +9,6 @@ namespace Repository;
 public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbContext(options)
 {
 
-
     #region 表实体声明
 
     public DbSet<AppSetting> AppSetting { get; set; }
@@ -19,8 +18,6 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
     public DbSet<Category> Category { get; set; }
 
     public DbSet<DataUpdateLog> DataUpdateLog { get; set; }
-
-    public DbSet<Database.File> File { get; set; }
 
     public DbSet<Function> Function { get; set; }
 
@@ -49,6 +46,8 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
     public DbSet<RegionTown> RegionTown { get; set; }
 
     public DbSet<Role> Role { get; set; }
+
+    public DbSet<StoredFile> StoredFile { get; set; }
 
     public DbSet<TaskSetting> TaskSetting { get; set; }
 

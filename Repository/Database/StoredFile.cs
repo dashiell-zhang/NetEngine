@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Repository.Database.Bases;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database;
 
@@ -8,7 +9,8 @@ namespace Repository.Database;
 /// 文件表
 /// </summary>
 [Index(nameof(Table)), Index(nameof(TableId)), Index(nameof(Sign))]
-public class File : CD_User
+[Table("File")]
+public class StoredFile : CD_User
 {
 
 

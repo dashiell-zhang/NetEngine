@@ -276,7 +276,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
         db.Article.Add(article);
 
 
-        var fileList = await db.File.Where(t => t.Table == "Article" && t.TableId == fileKey).ToListAsync();
+        var fileList = await db.StoredFile.Where(t => t.Table == "Article" && t.TableId == fileKey).ToListAsync();
 
         foreach (var file in fileList)
         {

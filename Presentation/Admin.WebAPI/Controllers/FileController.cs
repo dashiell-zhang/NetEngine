@@ -89,7 +89,7 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
     [HttpGet]
     public async Task<FileResult?> GetFile(long fileid)
     {
-        var file = await db.File.Where(t => t.Id == fileid).FirstOrDefaultAsync();
+        var file = await db.StoredFile.Where(t => t.Id == fileid).FirstOrDefaultAsync();
 
         if (file != null)
         {
@@ -124,7 +124,7 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
     public async Task<FileResult?> GetImage(long fileId, int width, int height)
     {
 
-        var file = await db.File.Where(t => t.Id == fileId).FirstOrDefaultAsync();
+        var file = await db.StoredFile.Where(t => t.Id == fileId).FirstOrDefaultAsync();
 
         if (file != null)
         {

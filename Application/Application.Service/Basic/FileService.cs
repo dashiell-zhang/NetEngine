@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
+using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Basic;
@@ -63,7 +64,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
 
             filePath = Path.Combine(basePath, fileName).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-            Repository.Database.File f = new()
+            StoredFile f = new()
             {
                 Id = idService.GetId(),
                 Name = uploadFile.FileName,
@@ -76,7 +77,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
                 CreateUserId = userContext.UserId
             };
 
-            db.File.Add(f);
+            db.StoredFile.Add(f);
             await db.SaveChangesAsync();
 
             return f.Id;
@@ -135,7 +136,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <returns></returns>
     public async Task<string?> GetFileUrlAsync(long fileId, bool isInline = false)
     {
-        var file = await db.File.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefaultAsync();
+        var file = await db.StoredFile.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefaultAsync();
 
         if (file != null)
         {
@@ -177,7 +178,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <returns></returns>
     public async Task<bool> DeleteFileAsync(long id)
     {
-        var file = await db.File.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var file = await db.StoredFile.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (file != null)
         {
@@ -206,7 +207,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     public async Task<List<FileInfoDto>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl)
     {
 
-        var query = db.File.Where(t => t.Table == business && t.TableId == key);
+        var query = db.StoredFile.Where(t => t.Table == business && t.TableId == key);
 
         if (sign != null)
         {

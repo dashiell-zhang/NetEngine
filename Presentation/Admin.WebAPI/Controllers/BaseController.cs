@@ -24,7 +24,7 @@ public class BaseController(BaseService baseService, IdService idService) : Cont
     /// <returns></returns>
     /// <remarks>不传递任何参数返回省份数据，传入省份ID返回城市数据，传入城市ID返回区域数据</remarks>
     [HttpGet]
-    public Task<List<DtoRegion>> GetRegion(int provinceId, int cityId) => baseService.GetRegionAsync(provinceId, cityId);
+    public Task<List<RegionDto>> GetRegion(int provinceId, int cityId) => baseService.GetRegionAsync(provinceId, cityId);
 
 
 
@@ -33,7 +33,7 @@ public class BaseController(BaseService baseService, IdService idService) : Cont
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public Task<List<DtoRegion>> GetRegionAll() => baseService.GetRegionAllAsync();
+    public Task<List<RegionDto>> GetRegionAll() => baseService.GetRegionAllAsync();
 
 
 

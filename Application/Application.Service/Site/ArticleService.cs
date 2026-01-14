@@ -22,10 +22,10 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<DtoPageList<DtoCategory>> GetCategoryListAsync(DtoPageRequest request)
+    public async Task<PageListDto<CategoryDto>> GetCategoryListAsync(PageRequestDto request)
     {
 
-        DtoPageList<DtoCategory> result = new();
+        PageListDto<CategoryDto> result = new();
 
         var query = db.Category.AsQueryable();
 
@@ -33,7 +33,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
 
         if (result.Total != 0)
         {
-            result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoCategory
+            result.List = await query.OrderByDescending(t => t.Id).Select(t => new CategoryDto
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -54,9 +54,9 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="id">类型Id</param>
     /// <returns></returns>
-    public async Task<List<DtoCategorySelect>> GetCategorySelectListAsync(long? id = null)
+    public async Task<List<CategorySelectDto>> GetCategorySelectListAsync(long? id = null)
     {
-        var list = await db.Category.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoCategorySelect
+        var list = await db.Category.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new CategorySelectDto
         {
             Id = t.Id,
             Name = t.Name
@@ -76,9 +76,9 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="categoryId">栏目ID</param>
     /// <returns></returns>
-    public Task<DtoCategory?> GetCategoryAsync(long categoryId)
+    public Task<CategoryDto?> GetCategoryAsync(long categoryId)
     {
-        var category = db.Category.Where(t => t.Id == categoryId).Select(t => new DtoCategory
+        var category = db.Category.Where(t => t.Id == categoryId).Select(t => new CategoryDto
         {
             Id = t.Id,
             Name = t.Name,
@@ -98,7 +98,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="createCategory"></param>
     /// <returns></returns>
-    public async Task<long> CreateCategoryAsync(DtoEditCategory createCategory)
+    public async Task<long> CreateCategoryAsync(EditCategoryDto createCategory)
     {
         Category category = new()
         {
@@ -124,7 +124,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <param name="categoryId"></param>
     /// <param name="updateCategory"></param>
     /// <returns></returns>
-    public async Task<bool> UpdateCategoryAsync(long categoryId, DtoEditCategory updateCategory)
+    public async Task<bool> UpdateCategoryAsync(long categoryId, EditCategoryDto updateCategory)
     {
         var category = await db.Category.Where(t => t.Id == categoryId).FirstOrDefaultAsync();
 
@@ -175,9 +175,9 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<DtoPageList<DtoArticle>> GetArticleListAsync(DtoPageRequest request)
+    public async Task<PageListDto<ArticleDto>> GetArticleListAsync(PageRequestDto request)
     {
-        DtoPageList<DtoArticle> result = new();
+        PageListDto<ArticleDto> result = new();
 
         var query = db.Article.AsQueryable();
 
@@ -185,7 +185,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
 
         if (result.Total != 0)
         {
-            result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoArticle
+            result.List = await query.OrderByDescending(t => t.Id).Select(t => new ArticleDto
             {
                 Id = t.Id,
                 CategoryId = t.CategoryId,
@@ -215,9 +215,9 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="articleId">文章ID</param>
     /// <returns></returns>
-    public async Task<DtoArticle?> GetArticleAsync(long articleId)
+    public async Task<ArticleDto?> GetArticleAsync(long articleId)
     {
-        var article = await db.Article.Where(t => t.Id == articleId).Select(t => new DtoArticle
+        var article = await db.Article.Where(t => t.Id == articleId).Select(t => new ArticleDto
         {
             Id = t.Id,
             CategoryId = t.CategoryId,
@@ -247,7 +247,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <param name="createArticle"></param>
     /// <param name="fileKey">文件key</param>
     /// <returns></returns>
-    public async Task<long> CreateArticleAsync(DtoEditArticle createArticle, long fileKey)
+    public async Task<long> CreateArticleAsync(EditArticleDto createArticle, long fileKey)
     {
         Article article = new()
         {
@@ -294,7 +294,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <param name="articleId"></param>
     /// <param name="updateArticle"></param>
     /// <returns></returns>
-    public async Task<bool> UpdateArticleAsync(long articleId, DtoEditArticle updateArticle)
+    public async Task<bool> UpdateArticleAsync(long articleId, EditArticleDto updateArticle)
     {
         var article = await db.Article.Where(t => t.Id == articleId).FirstOrDefaultAsync();
 

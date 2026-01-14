@@ -31,11 +31,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <param name="openId">用户OpenId</param>
     /// <param name="notifyUrl">异步回调Url</param>
     /// <returns></returns>
-    public async Task<DtoCreateWeiXinPayJSAPIRet?> CreateWeiXinPayJSAPIAsync(string orderNo, string openId, string notifyUrl)
+    public async Task<CreateWeiXinPayJSAPIRetDto?> CreateWeiXinPayJSAPIAsync(string orderNo, string openId, string notifyUrl)
     {
         string key = "wxpayJSAPI" + orderNo;
 
-        var ret = await distributedCache.GetAsync<DtoCreateWeiXinPayJSAPIRet>(key);
+        var ret = await distributedCache.GetAsync<CreateWeiXinPayJSAPIRetDto>(key);
 
         if (ret == null)
         {
@@ -121,11 +121,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <param name="orderNo">订单号</param>
     /// <param name="notifyUrl">异步回调Url</param>
     /// <returns></returns>
-    public async Task<DtoCreateWeiXinPayAppRet?> CreateWeiXinPayAppAsync(string orderNo, string notifyUrl)
+    public async Task<CreateWeiXinPayAppRetDto?> CreateWeiXinPayAppAsync(string orderNo, string notifyUrl)
     {
         string key = "wxpayApp" + orderNo;
 
-        var ret = await distributedCache.GetAsync<DtoCreateWeiXinPayAppRet>(key);
+        var ret = await distributedCache.GetAsync<CreateWeiXinPayAppRetDto>(key);
 
         if (ret == null)
         {
@@ -353,7 +353,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     /// <param name="headers"HttpHeader></param>
     /// <param name="requestBody">bodyjson数据</param>
     /// <returns></returns>
-    public async Task<DtoWeiXinPayNotifyRet?> WeiXinPayNotifyAsync(string mchId, DtoWeiXinPayNotify weiXinPayNotify, Dictionary<string, string> headers, string requestBody)
+    public async Task<WeiXinPayNotifyRetDto?> WeiXinPayNotifyAsync(string mchId, WeiXinPayNotifyDto weiXinPayNotify, Dictionary<string, string> headers, string requestBody)
     {
         bool isSuccess = false;
 
@@ -372,7 +372,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
                     var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
 
-                    var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyTransaction>(resourceJson);
+                    var resource = JsonHelper.JsonToObject<WeiXinPayNotifyTransactionDto>(resourceJson);
 
                     if (resource.trade_state == "SUCCESS")
                     {
@@ -411,7 +411,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
                     var resourceJson = CryptoHelper.AesGcmDecrypt(weiXinPayNotify.resource.ciphertext, mchApiV3Key, weiXinPayNotify.resource.nonce, weiXinPayNotify.resource.associated_data, "base64");
 
-                    var resource = JsonHelper.JsonToObject<DtoWeiXinPayNotifyRefund>(resourceJson);
+                    var resource = JsonHelper.JsonToObject<WeiXinPayNotifyRefundDto>(resourceJson);
 
                     if (resource.refund_status == "SUCCESS")
                     {
@@ -450,7 +450,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
             logger.LogError("WeiXinPayNotify：{content}", JsonHelper.ObjectToJson(content));
         }
 
-        DtoWeiXinPayNotifyRet retValue = new();
+        WeiXinPayNotifyRetDto retValue = new();
 
         if (!isSuccess)
         {
@@ -508,7 +508,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
             {
                 //refundId 有值则说明退款请求发起成功，至于退款结果交由异步通知接口或者主动查询退款方法处理
 
-                var result = JsonHelper.JsonToObject<DtoWeiXinPayRefundRet>(resultJson);
+                var result = JsonHelper.JsonToObject<WeiXinPayRefundRetDto>(resultJson);
 
             }
             else
@@ -541,7 +541,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
             var resultJson = await WeiXinPayHttpAsync(mchId, wxUrl);
 
-            var result = JsonHelper.JsonToObject<DtoWeiXinPayRefundRet>(resultJson);
+            var result = JsonHelper.JsonToObject<WeiXinPayRefundRetDto>(resultJson);
 
             if (result.status == "SUCCESS")
             {
@@ -961,11 +961,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
         string responseBody = await responseMessage.Content.ReadAsStringAsync();
 
 
-        DtoWeiXinPayCertificates weiXinPayCertificates = new();
+        WeiXinPayCertificatesDto weiXinPayCertificates = new();
 
         if (url == "https://api.mch.weixin.qq.com/v3/certificates")
         {
-            weiXinPayCertificates = JsonHelper.JsonToObject<DtoWeiXinPayCertificates>(responseBody);
+            weiXinPayCertificates = JsonHelper.JsonToObject<WeiXinPayCertificatesDto>(responseBody);
 
             foreach (var weiXinPayCert in weiXinPayCertificates.data)
             {
@@ -996,11 +996,11 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     }
 
 
-    public async Task<DtoWeiXinPayCertificates> GetWeiXinPayCertificatesAsync(string mchId)
+    public async Task<WeiXinPayCertificatesDto> GetWeiXinPayCertificatesAsync(string mchId)
     {
         var cacheKey = mchId + "GetWeiXinPayCertificates";
 
-        var weiXinPayCertificates = await distributedCache.GetAsync<DtoWeiXinPayCertificates>(cacheKey);
+        var weiXinPayCertificates = await distributedCache.GetAsync<WeiXinPayCertificatesDto>(cacheKey);
 
         if (weiXinPayCertificates != null)
         {
@@ -1010,7 +1010,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
         {
             using (await distributedLock.LockAsync(mchId + "GetWeiXinPayCertificates" + "lock"))
             {
-                weiXinPayCertificates = await distributedCache.GetAsync<DtoWeiXinPayCertificates>(cacheKey);
+                weiXinPayCertificates = await distributedCache.GetAsync<WeiXinPayCertificatesDto>(cacheKey);
 
                 if (weiXinPayCertificates != null)
                 {
@@ -1023,7 +1023,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
 
                     if (certificatesRetData != null)
                     {
-                        weiXinPayCertificates = await distributedCache.GetAsync<DtoWeiXinPayCertificates>(cacheKey);
+                        weiXinPayCertificates = await distributedCache.GetAsync<WeiXinPayCertificatesDto>(cacheKey);
                     }
 
                     if (weiXinPayCertificates != null)
@@ -1040,7 +1040,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
     }
 
 
-    public bool VerifySign(Dictionary<string, string> headers, string body, DtoWeiXinPayCertificates weiXinPayCertificates)
+    public bool VerifySign(Dictionary<string, string> headers, string body, WeiXinPayCertificatesDto weiXinPayCertificates)
     {
         string wechatPayNonce = headers.First(t => t.Key == "Wechatpay-Nonce").Value.ToString();
         string wechatpaySignature = headers.First(t => t.Key == "Wechatpay-Signature").Value.ToString();

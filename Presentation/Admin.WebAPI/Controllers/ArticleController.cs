@@ -20,7 +20,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoPageList<DtoCategory>> GetCategoryList([FromQuery] DtoPageRequest request) => articleService.GetCategoryListAsync(request);
+    public Task<PageListDto<CategoryDto>> GetCategoryList([FromQuery] PageRequestDto request) => articleService.GetCategoryListAsync(request);
 
 
 
@@ -30,7 +30,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="id">栏目Id</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<List<DtoCategorySelect>> GetCategorySelectList(long? id = null) => articleService.GetCategorySelectListAsync(id);
+    public Task<List<CategorySelectDto>> GetCategorySelectList(long? id = null) => articleService.GetCategorySelectListAsync(id);
 
 
 
@@ -40,7 +40,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="categoryId">栏目ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoCategory?> GetCategory(long categoryId) => articleService.GetCategoryAsync(categoryId);
+    public Task<CategoryDto?> GetCategory(long categoryId) => articleService.GetCategoryAsync(categoryId);
 
 
 
@@ -50,7 +50,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="createCategory"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<long> CreateCategory(DtoEditCategory createCategory) => articleService.CreateCategoryAsync(createCategory);
+    public Task<long> CreateCategory(EditCategoryDto createCategory) => articleService.CreateCategoryAsync(createCategory);
 
 
 
@@ -61,7 +61,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="updateCategory"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> UpdateCategory(long categoryId, DtoEditCategory updateCategory) => articleService.UpdateCategoryAsync(categoryId, updateCategory);
+    public Task<bool> UpdateCategory(long categoryId, EditCategoryDto updateCategory) => articleService.UpdateCategoryAsync(categoryId, updateCategory);
 
 
 
@@ -81,7 +81,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoPageList<DtoArticle>> GetArticleList([FromQuery] DtoPageRequest request) => articleService.GetArticleListAsync(request);
+    public Task<PageListDto<ArticleDto>> GetArticleList([FromQuery] PageRequestDto request) => articleService.GetArticleListAsync(request);
 
 
 
@@ -91,7 +91,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="articleId">文章ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoArticle?> GetArticle(long articleId) => articleService.GetArticleAsync(articleId);
+    public Task<ArticleDto?> GetArticle(long articleId) => articleService.GetArticleAsync(articleId);
 
 
 
@@ -102,7 +102,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="fileKey">文件key</param>
     /// <returns></returns>
     [HttpPost]
-    public Task<long> CreateArticle(DtoEditArticle createArticle, long fileKey) => articleService.CreateArticleAsync(createArticle, fileKey);
+    public Task<long> CreateArticle(EditArticleDto createArticle, long fileKey) => articleService.CreateArticleAsync(createArticle, fileKey);
 
 
 
@@ -113,7 +113,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="updateArticle"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> UpdateArticle(long articleId, DtoEditArticle updateArticle) => articleService.UpdateArticleAsync(articleId, updateArticle);
+    public Task<bool> UpdateArticle(long articleId, EditArticleDto updateArticle) => articleService.UpdateArticleAsync(articleId, updateArticle);
 
 
 

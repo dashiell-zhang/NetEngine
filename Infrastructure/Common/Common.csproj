@@ -19,11 +19,11 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
 		<PackageReference Include="NPOI" Version="2.7.5" />
 
 		<!--因为 npoi 依赖的最低版本存在安全漏洞，故手动引入最新版-->

@@ -55,7 +55,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// </summary>
     /// <param name="login"></param>
     /// <returns></returns>
-    public async Task<string?> GetTokenAsync(DtoGetToken login)
+    public async Task<string?> GetTokenAsync(GetTokenDto login)
     {
         var userList = await db.User.Where(t => t.UserName == login.UserName).Select(t => new { t.Id, t.Password }).ToListAsync();
 
@@ -77,7 +77,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// </summary>
     /// <param name="login"></param>
     /// <returns></returns>
-    public async Task<string?> GetTokenByWeiXinMiniAppAsync(DtoGetTokenByWeiXinApp login)
+    public async Task<string?> GetTokenByWeiXinMiniAppAsync(GetTokenByWeiXinAppDto login)
     {
         var (openId, sessionKey) = await GetWeiXinMiniAppOpenIdAndSessionKeyAsync(login.AppId, login.Code);
 
@@ -146,7 +146,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// </summary>
     /// <param name="login"></param>
     /// <returns></returns>
-    public async Task<string?> GetTokenBySMSAsync(DtoGetTokenBySMS login)
+    public async Task<string?> GetTokenBySMSAsync(GetTokenBySMSDto login)
     {
         string key = "VerifyPhone_" + login.Phone;
 
@@ -228,7 +228,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <param name="sms"></param>
     /// <param name="sendVerifyCode"></param>
     /// <returns></returns>
-    public async Task<bool> SendSMSVerifyCodeAsync(DtoSendSMSVerifyCode sendVerifyCode)
+    public async Task<bool> SendSMSVerifyCodeAsync(SendSMSVerifyCodeDto sendVerifyCode)
     {
         string key = "VerifyPhone_" + sendVerifyCode.Phone;
 
@@ -242,7 +242,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                 { "code", code }
             };
 
-            DtoSendSMS sendSMS = new()
+            SendSMSDto sendSMS = new()
             {
                 SignName = "",
                 Phone = sendVerifyCode.Phone,
@@ -271,7 +271,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// </summary>
     /// <param name="login"></param>
     /// <returns></returns>
-    public async Task<string?> GetTokenByWeiXinAppAsync(DtoGetTokenByWeiXinApp login)
+    public async Task<string?> GetTokenByWeiXinAppAsync(GetTokenByWeiXinAppDto login)
     {
         var (accessToken, openId) = await GetWeiXinAppAccessTokenAndOpenIdAsync(login.AppId, login.Code);
 
@@ -324,7 +324,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// </summary>
     /// <param name="updatePassword"></param>
     /// <returns></returns>
-    public async Task<bool> UpdatePasswordByOldPasswordAsync(DtoUpdatePasswordByOldPassword updatePassword)
+    public async Task<bool> UpdatePasswordByOldPasswordAsync(UpdatePasswordByOldPasswordDto updatePassword)
     {
 
         var user = await db.User.Where(t => t.Id == UserId).FirstOrDefaultAsync();
@@ -356,7 +356,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// 通过短信验证码修改账户密码</summary>
     /// <param name="updatePassword"></param>
     /// <returns></returns>
-    public async Task<bool> UpdatePasswordBySMSAsync(DtoUpdatePasswordBySMS updatePassword)
+    public async Task<bool> UpdatePasswordBySMSAsync(UpdatePasswordBySMSDto updatePassword)
     {
 
         string phone = await db.User.Where(t => t.Id == UserId).Select(t => t.Phone).FirstAsync();
@@ -528,7 +528,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <param name="accessToken"></param>
     /// <param name="openId"></param>
     /// <returns></returns>
-    public async Task<DtoGetWeiXinAppUserInfo> GetWeiXinAppUserInfoAsync(string accessToken, string openId)
+    public async Task<GetWeiXinAppUserInfoDto> GetWeiXinAppUserInfoAsync(string accessToken, string openId)
     {
         string url = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openId;
 
@@ -538,7 +538,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
         {
             var returnJson = await httpResponseMessage.Content.ReadAsStringAsync();
 
-            var userInfo = JsonHelper.JsonToObject<DtoGetWeiXinAppUserInfo>(returnJson);
+            var userInfo = JsonHelper.JsonToObject<GetWeiXinAppUserInfoDto>(returnJson);
 
             return userInfo;
         }

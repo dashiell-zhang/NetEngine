@@ -27,7 +27,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
     /// </summary>
     /// <returns>文件ID</returns>
     [HttpPost]
-    public Task<long> RemoteUploadFile(DtoRemoteUploadFile uploadFile) => fileService.RemoteUploadFileAsync(savePath, uploadFile);
+    public Task<long> RemoteUploadFile(RemoteUploadFileDto uploadFile) => fileService.RemoteUploadFileAsync(savePath, uploadFile);
 
 
 
@@ -62,7 +62,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
                     await file.CopyToAsync(fileStream);
                 }
 
-                DtoUploadFile uploadFile = new()
+                UploadFileDto uploadFile = new()
                 {
                     Business = business,
                     Key = key,

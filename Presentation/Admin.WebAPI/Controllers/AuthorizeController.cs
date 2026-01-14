@@ -28,7 +28,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
     /// <param name="login">登录信息集合</param>
     /// <returns></returns>
     [HttpPost]
-    public Task<string?> GetToken(DtoGetToken login) => authorizeService.GetTokenAsync(login);
+    public Task<string?> GetToken(GetTokenDto login) => authorizeService.GetTokenAsync(login);
 
 
 

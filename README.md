@@ -1,4 +1,4 @@
-﻿# NetEngine 项目框架
+﻿﻿# NetEngine 项目框架
 
 基于最新 .NET 平台（.NET 10）搭建的通用项目框架，包含 Web API、Blazor 管理后台、定时任务服务、分布式锁、文件存储、短信、支付等常用基础能力，帮助你在启动新项目时快速进入业务开发阶段。
 
@@ -183,7 +183,7 @@ public async Task ShowTime()
 
 ```csharp
 [QueueTask(Name = "SendSMS", Semaphore = 5, Duration = 5)]
-public async Task SendSMS(DtoSendSMS dto)
+public async Task SendSMS(SendSMSDto dto)
 {
     // 真正的队列任务逻辑
 }
@@ -208,7 +208,7 @@ using var tran = await db.Database.BeginTransactionAsync();
 
 queueTaskService.Create(
     name: "SendSMS",
-    parameter: new DtoSendSMS { /* ... */ },
+    parameter: new SendSMSDto { /* ... */ },
     planTime: null,
     callbackName: null,
     callbackParameter: null,
@@ -223,7 +223,7 @@ await tran.CommitAsync();
 ```csharp
 await queueTaskService.CreateSingleAsync(
     name: "SendSMS",
-    parameter: new DtoSendSMS { /* ... */ });
+    parameter: new SendSMSDto { /* ... */ });
 ```
 
 参数说明：
@@ -268,7 +268,7 @@ public Task<UserInfo> GetUserInfo() => userService.GetUserInfoAsync();
 
 ```csharp
 [QueueLimitFilter(IsBlock = true, IsUseParameter = true, IsUseToken = true, Expiry = 3)]
-public Task<IActionResult> SubmitOrder(DtoSubmitOrder dto) => orderService.SubmitAsync(dto);
+public Task<IActionResult> SubmitOrder(SubmitOrderDto dto) => orderService.SubmitAsync(dto);
 ```
 
 - 关键参数：

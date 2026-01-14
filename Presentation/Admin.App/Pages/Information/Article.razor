@@ -18,7 +18,7 @@
             }
 
         </div>
-        <Table TItem="DtoArticle" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="ArticleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
                 <PropertyColumn Property="c=>c.Title" Title="标题"></PropertyColumn>
@@ -85,7 +85,7 @@
             <TabPane Key="1" Tab="基本信息">
 
                 <FormItem Label="所属栏目">
-                    <TreeSelect TItem="DtoTreeSelect" TItemValue="string" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
+                    <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
                 </FormItem>
 
                 <FormItem Label="标题">
@@ -264,7 +264,7 @@
     }
 
 
-    private Form<DtoEditArticle>? _editArticleForm;
+    private Form<EditArticleDto>? _editArticleForm;
 
     Dictionary<string, string> headers = new();
 
@@ -277,7 +277,7 @@
     [Parameter]
     public string? channelId { get; set; }
 
-    List<DtoTreeSelect>? selectCategoryList;
+    List<TreeSelectDto>? selectCategoryList;
 
 
     List<string> functionList = new();
@@ -303,9 +303,9 @@
 
     async Task GetCategorySelectList()
     {
-        List<DtoCategorySelect> parentKVList = new();
+        List<CategorySelectDto> parentKVList = new();
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList?channelId=" + channelId, JsonHelper.DeserializeOpts);
+        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectList?channelId=" + channelId, JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -316,9 +316,9 @@
 
     }
 
-    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoCategorySelect>? keyValueChildren)
+    private IEnumerable<TreeSelectDto>? CategoryTreeConvert(List<CategorySelectDto>? keyValueChildren)
     {
-        return keyValueChildren?.Select(t => new DtoTreeSelect
+        return keyValueChildren?.Select(t => new TreeSelectDto
             {
                 Key = t.Id.ToString()!,
                 Title = t.Name!.ToString()!,
@@ -330,12 +330,12 @@
     bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
-    DtoPageList<DtoArticle> pageList = new();
+    PageListDto<ArticleDto> pageList = new();
 
     async Task GetArticleList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoArticle>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<ArticleDto>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -364,11 +364,11 @@
 
 
     bool isShowEditArticle = false;
-    DtoEditArticle editArticle = new();
+    EditArticleDto editArticle = new();
     long articleId;
 
 
-    async Task EditArticle(DtoArticle? article = null)
+    async Task EditArticle(ArticleDto? article = null)
     {
 
         editArticle = new();
@@ -444,7 +444,7 @@
 
             if (articleId == default)
             {
-                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/CreateArticle?fileKey=" + fileKey, editArticle, JsonHelper.SerializeOpts);
+                using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/CreateArticle?fileKey=" + fileKey, editArticle, JsonHelper.SerializeOpts);
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
@@ -453,7 +453,7 @@
             }
             else
             {
-                using var httpResponse = await Http.PostAsJsonAsync<DtoEditArticle>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.SerializeOpts);
+                using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.SerializeOpts);
                 if (httpResponse.IsSuccessStatusCode)
                 {
                     Message.Success("编辑成功");

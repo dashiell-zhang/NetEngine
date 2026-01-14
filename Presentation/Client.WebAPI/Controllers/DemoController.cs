@@ -24,7 +24,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
         => _svc2.Echo(name);
 
     [HttpPost]
-    public async Task<ActionResult<int>> Add2([FromQuery] int a, [FromQuery] int b, [FromBody] DtoArticle dtoArticle)
+    public async Task<ActionResult<int>> Add2([FromQuery] int a, [FromQuery] int b, [FromBody] ArticleDto dtoArticle)
         => await _svc2.AddAsync(a, b, dtoArticle);
 
 

@@ -14,7 +14,7 @@
             }
 
         </div>
-        <Table TItem="DtoCategory" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="CategoryDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
 
@@ -75,7 +75,7 @@
 
             <FormItem>
                 <Text>父级栏目</Text>
-                <TreeSelect TItem="DtoTreeSelect" TItemValue="string" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
+                <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
             </FormItem>
 
 
@@ -108,7 +108,7 @@
 
     string parentId = "0";
 
-    List<DtoTreeSelect>? selectCategoryList = new();
+    List<TreeSelectDto>? selectCategoryList = new();
 
     List<string> functionList = new();
 
@@ -128,14 +128,14 @@
 
     async Task GetCategorySelectList()
     {
-        List<DtoCategorySelect> parentKVList = new();
+        List<CategorySelectDto> parentKVList = new();
 
 
-        parentKVList.Add(new DtoCategorySelect { Id = 0, Name = "无父级栏目" });
+        parentKVList.Add(new CategorySelectDto { Id = 0, Name = "无父级栏目" });
 
 
 
-        var kvList = await Http.GetFromJsonAsync<List<DtoCategorySelect>>("Article/GetCategorySelectList", JsonHelper.DeserializeOpts);
+        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectList", JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -146,9 +146,9 @@
 
     }
 
-    private IEnumerable<DtoTreeSelect>? CategoryTreeConvert(List<DtoCategorySelect>? keyValueChildren)
+    private IEnumerable<TreeSelectDto>? CategoryTreeConvert(List<CategorySelectDto>? keyValueChildren)
     {
-        return keyValueChildren?.Select(t => new DtoTreeSelect
+        return keyValueChildren?.Select(t => new TreeSelectDto
             {
                 Key = t.Id.ToString()!,
                 Title = t.Name!.ToString()!,
@@ -163,12 +163,12 @@
     bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
-    DtoPageList<DtoCategory> pageList = new();
+    PageListDto<CategoryDto> pageList = new();
 
     async Task GetCategoryList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoCategory>>("Article/GetCategoryList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<CategoryDto>>("Article/GetCategoryList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -198,11 +198,11 @@
 
 
     bool isShowEditCategory = false;
-    DtoEditCategory editCategory = new();
+    EditCategoryDto editCategory = new();
     long categoryId;
 
 
-    async Task EditCategory(DtoCategory? category = null)
+    async Task EditCategory(CategoryDto? category = null)
     {
         editCategory = new();
         categoryId = default;
@@ -254,7 +254,7 @@
 
         if (categoryId == default)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/CreateCategory", editCategory, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditCategoryDto>("Article/CreateCategory", editCategory, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("添加成功");
@@ -262,7 +262,7 @@
         }
         else
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditCategory>("Article/UpdateCategory?categoryId=" + categoryId, editCategory, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditCategoryDto>("Article/UpdateCategory?categoryId=" + categoryId, editCategory, JsonHelper.SerializeOpts);
 
             if (httpResponse.IsSuccessStatusCode)
             {

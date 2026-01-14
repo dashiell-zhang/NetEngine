@@ -22,9 +22,9 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<DtoPageList<DtoRole>> GetRoleListAsync(DtoPageRequest request)
+    public async Task<PageListDto<RoleDto>> GetRoleListAsync(PageRequestDto request)
     {
-        DtoPageList<DtoRole> result = new();
+        PageListDto<RoleDto> result = new();
 
         var query = db.Role.AsQueryable();
 
@@ -32,7 +32,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
 
         if (result.Total != 0)
         {
-            result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoRole
+            result.List = await query.OrderByDescending(t => t.Id).Select(t => new RoleDto
             {
                 Id = t.Id,
                 Code = t.Code,
@@ -51,9 +51,9 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// </summary>
     /// <param name="roleId">角色ID</param>
     /// <returns></returns>
-    public Task<DtoRole?> GetRoleAsync(long roleId)
+    public Task<RoleDto?> GetRoleAsync(long roleId)
     {
-        var role = db.Role.Where(t => t.Id == roleId).Select(t => new DtoRole
+        var role = db.Role.Where(t => t.Id == roleId).Select(t => new RoleDto
         {
             Id = t.Id,
             Code = t.Code,
@@ -71,7 +71,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// </summary>
     /// <param name="role"></param>
     /// <returns></returns>
-    public async Task<long> CreateRoleAsync(DtoEditRole role)
+    public async Task<long> CreateRoleAsync(EditRoleDto role)
     {
         using (var lockHandle = await distLock.TryLockAsync("roleCode" + role.Code))
         {
@@ -108,7 +108,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// <param name="roleId"></param>
     /// <param name="role"></param>
     /// <returns></returns>
-    public async Task<bool> UpdateRoleAsync(long roleId, DtoEditRole role)
+    public async Task<bool> UpdateRoleAsync(long roleId, EditRoleDto role)
     {
         using (var lockHandle = await distLock.TryLockAsync("roleCode" + role.Code))
         {
@@ -173,15 +173,15 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// </summary>
     /// <param name="roleId">角色ID</param>
     /// <returns></returns>
-    public async Task<List<DtoRoleFunction>> GetRoleFunctionAsync(long roleId)
+    public async Task<List<RoleFunctionDto>> GetRoleFunctionAsync(long roleId)
     {
-        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == EnumFunctionType.Module).Select(t => new DtoRoleFunction
+        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == EnumFunctionType.Module).Select(t => new RoleFunctionDto
         {
             Id = t.Id,
             Name = t.Name.Replace(t.Parent!.Name + "-", ""),
             Sign = t.Sign,
             IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new DtoRoleFunction
+            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new RoleFunctionDto
             {
                 Id = f.Id,
                 Name = f.Name.Replace(f.Parent!.Name + "-", ""),
@@ -204,7 +204,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// </summary>
     /// <param name="setRoleFunction"></param>
     /// <returns></returns>
-    public async Task<bool> SetRoleFunctionAsync(DtoSetRoleFunction setRoleFunction)
+    public async Task<bool> SetRoleFunctionAsync(SetRoleFunctionDto setRoleFunction)
     {
 
         var functionAuthorize = await db.FunctionAuthorize.Where(t => t.RoleId == setRoleFunction.RoleId && t.FunctionId == setRoleFunction.FunctionId).FirstOrDefaultAsync() ?? new FunctionAuthorize();
@@ -241,9 +241,9 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// 获取角色键值对
     /// </summary>
     /// <returns></returns>
-    public Task<List<DtoKeyValue>> GetRoleKVAsync()
+    public Task<List<KeyValueDto>> GetRoleKVAsync()
     {
-        var list = db.Role.Select(t => new DtoKeyValue
+        var list = db.Role.Select(t => new KeyValueDto
         {
             Key = t.Id,
             Value = t.Name
@@ -259,16 +259,16 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// <param name="roleId">角色ID</param>
     /// <param name="parentId">功能父级ID</param>
     /// <returns></returns>
-    public async Task<List<DtoRoleFunction>> GetRoleFunctionChildListAsync(long roleId, long parentId)
+    public async Task<List<RoleFunctionDto>> GetRoleFunctionChildListAsync(long roleId, long parentId)
     {
 
-        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == EnumFunctionType.Module).Select(t => new DtoRoleFunction
+        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == EnumFunctionType.Module).Select(t => new RoleFunctionDto
         {
             Id = t.Id,
             Name = t.Name.Replace(t.Parent!.Name + "-", ""),
             Sign = t.Sign,
             IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new DtoRoleFunction
+            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new RoleFunctionDto
             {
                 Id = f.Id,
                 Name = f.Name.Replace(f.Parent!.Name + "-", ""),

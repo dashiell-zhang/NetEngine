@@ -19,11 +19,11 @@
 
 @code {
 
-    List<DtoKeyValue> serverInfos = new();
+    List<KeyValueDto> serverInfos = new();
 
     async override protected void OnInitialized()
     {
-        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Site/GetServerInfo", JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<KeyValueDto>>("Site/GetServerInfo", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {

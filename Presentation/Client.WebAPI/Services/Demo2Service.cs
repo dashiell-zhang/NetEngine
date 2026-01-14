@@ -13,7 +13,7 @@ public class Demo2Service
 
 
     [Cacheable(TtlSeconds = 120)]
-    public virtual async Task<int> AddAsync(int a, int b,DtoArticle dtoArticle)
+    public virtual async Task<int> AddAsync(int a, int b,ArticleDto dtoArticle)
     {
         await Task.Delay(10);
         return a + b;

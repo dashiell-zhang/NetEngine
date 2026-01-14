@@ -15,7 +15,7 @@
             }
 
         </div>
-        <Table TItem="DtoRole" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="RoleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
                 <PropertyColumn Property="c=>c.Code" Title="编码"></PropertyColumn>
@@ -142,14 +142,14 @@
     bool isShowEditAuthority = false;
 
 
-    DtoPageList<DtoRole> pageList = new();
+    PageListDto<RoleDto> pageList = new();
 
-    List<DtoRoleFunction> roleFunctionList = new();
+    List<RoleFunctionDto> roleFunctionList = new();
 
     async Task GetRoleList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoRole>>("Role/GetRoleList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<RoleDto>>("Role/GetRoleList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -181,12 +181,12 @@
     bool isShowEditRole = false;
 
     long roleId;
-    DtoEditRole editRole = new();
+    EditRoleDto editRole = new();
 
-    void EditRole(DtoRole? role = null)
+    void EditRole(RoleDto? role = null)
     {
         roleId = default;
-        editRole = new DtoEditRole();
+        editRole = new EditRoleDto();
 
         if (role != null)
         {
@@ -207,7 +207,7 @@
         saveLoading = true;
         if (roleId == default)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditRole>("Role/CreateRole", editRole, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditRoleDto>("Role/CreateRole", editRole, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("添加成功");
@@ -215,7 +215,7 @@
         }
         else
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditRole>("Role/UpdateRole?roleId=" + roleId, editRole, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditRoleDto>("Role/UpdateRole?roleId=" + roleId, editRole, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("编辑成功");
@@ -243,7 +243,7 @@
     {
         this.roleId = roleId;
 
-        var retData = await Http.GetFromJsonAsync<List<DtoRoleFunction>>("Role/GetRoleFunction?roleId=" + roleId, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<RoleFunctionDto>>("Role/GetRoleFunction?roleId=" + roleId, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -258,14 +258,14 @@
 
     async Task SetRoleFunction(long functionId, bool isCheck)
     {
-        DtoSetRoleFunction setRoleFunction = new()
+        SetRoleFunctionDto setRoleFunction = new()
             {
                 RoleId = roleId,
                 FunctionId = functionId,
                 IsCheck = isCheck
             };
 
-        using var httpResponse = await Http.PostAsJsonAsync<DtoSetRoleFunction>("Role/SetRoleFunction", setRoleFunction, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync<SetRoleFunctionDto>("Role/SetRoleFunction", setRoleFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("设置成功");

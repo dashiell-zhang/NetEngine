@@ -19,7 +19,7 @@ public class LinkController(LinkService linkService) : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoPageList<DtoLink>> GetLinkList([FromQuery] DtoPageRequest request) => linkService.GetLinkListAsync(request);
+    public Task<PageListDto<LinkDto>> GetLinkList([FromQuery] PageRequestDto request) => linkService.GetLinkListAsync(request);
 
 
     /// <summary>
@@ -28,7 +28,7 @@ public class LinkController(LinkService linkService) : ControllerBase
     /// <param name="linkId">链接ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoLink?> GetLink(long linkId) => linkService.GetLinkAsync(linkId);
+    public Task<LinkDto?> GetLink(long linkId) => linkService.GetLinkAsync(linkId);
 
 
     /// <summary>
@@ -37,7 +37,7 @@ public class LinkController(LinkService linkService) : ControllerBase
     /// <param name="createLink"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<long> CreateLink(DtoEditLink createLink) => linkService.CreateLinkAsync(createLink);
+    public Task<long> CreateLink(EditLinkDto createLink) => linkService.CreateLinkAsync(createLink);
 
 
     /// <summary>
@@ -47,7 +47,7 @@ public class LinkController(LinkService linkService) : ControllerBase
     /// <param name="updateLink"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> UpdateLink(long linkId, DtoEditLink updateLink) => linkService.UpdateLinkAsync(linkId, updateLink);
+    public Task<bool> UpdateLink(long linkId, EditLinkDto updateLink) => linkService.UpdateLinkAsync(linkId, updateLink);
 
 
     /// <summary>

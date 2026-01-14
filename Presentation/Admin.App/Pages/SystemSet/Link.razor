@@ -14,7 +14,7 @@
             }
 
         </div>
-        <Table TItem="DtoLink" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="LinkDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
                 <PropertyColumn Property="c=>c.Name" Title="名称"></PropertyColumn>
@@ -109,12 +109,12 @@
     int pageNum = 1;
     int pageSize = 10;
 
-    DtoPageList<DtoLink> pageList = new();
+    PageListDto<LinkDto> pageList = new();
 
     async Task GetLinkList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoLink>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<LinkDto>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -146,12 +146,12 @@
     bool isShowEditLink = false;
 
     long linkId;
-    DtoEditLink editLink = new();
+    EditLinkDto editLink = new();
 
-    void EditLink(DtoLink? link = null)
+    void EditLink(LinkDto? link = null)
     {
         linkId = default;
-        editLink = new DtoEditLink();
+        editLink = new EditLinkDto();
 
         if (link != null)
         {
@@ -175,7 +175,7 @@
         saveLoading = true;
         if (linkId == default)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/CreateLink", editLink, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditLinkDto>("Link/CreateLink", editLink, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("添加成功");
@@ -183,7 +183,7 @@
         }
         else
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditLink>("Link/UpdateLink?linkId=" + linkId, editLink, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditLinkDto>("Link/UpdateLink?linkId=" + linkId, editLink, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("编辑成功");

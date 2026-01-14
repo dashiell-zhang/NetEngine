@@ -23,7 +23,7 @@ public class SiteController(SiteService siteService) : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoSite> GetSite() => siteService.GetSiteAsync();
+    public Task<SiteDto> GetSite() => siteService.GetSiteAsync();
 
 
 
@@ -33,7 +33,7 @@ public class SiteController(SiteService siteService) : ControllerBase
     /// <param name="editSite"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> EditSite(DtoSite editSite) => siteService.EditSiteAsync(editSite);
+    public Task<bool> EditSite(SiteDto editSite) => siteService.EditSiteAsync(editSite);
 
 
 
@@ -42,47 +42,47 @@ public class SiteController(SiteService siteService) : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public List<DtoKeyValue> GetServerInfo()
+    public List<KeyValueDto> GetServerInfo()
     {
-        List<DtoKeyValue> list =
+        List<KeyValueDto> list =
         [
-            new DtoKeyValue
+            new KeyValueDto
             {
                 Key = "服务器名称",
                 Value = Environment.MachineName
             },
 
-            new DtoKeyValue
+            new KeyValueDto
             {
                 Key = "服务器IP",
                 Value = HttpContext.Connection.LocalIpAddress!.ToString()
             },
 
-            new DtoKeyValue
+            new KeyValueDto
             {
                 Key = "操作系统",
                 Value = Environment.OSVersion.ToString()
             },
 
-            new DtoKeyValue
+            new KeyValueDto
             {
                 Key = "外部端口",
                 Value = HttpContext.Connection.LocalPort.ToString()
             },
 
-            new DtoKeyValue
+            new KeyValueDto
             {
                 Key = "目录物理路径",
                 Value = Environment.CurrentDirectory
             },
 
-            new DtoKeyValue
+            new KeyValueDto
             {
                 Key = "服务器CPU",
                 Value = Environment.ProcessorCount.ToString() + "核"
             },
 
-            new DtoKeyValue
+            new KeyValueDto
             {
                 Key = "本网站占用内存",
                 Value = ((double)GC.GetTotalMemory(false) / 1048576).ToString("N2") + "M"

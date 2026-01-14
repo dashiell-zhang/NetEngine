@@ -26,11 +26,11 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <returns></returns>
-    public Task<DtoUser?> GetUserAsync(long? userId)
+    public Task<UserDto?> GetUserAsync(long? userId)
     {
         userId ??= UserId;
 
-        var user = db.User.Where(t => t.Id == userId).Select(t => new DtoUser
+        var user = db.User.Where(t => t.Id == userId).Select(t => new UserDto
         {
             Id = t.Id,
             Name = t.Name,
@@ -50,7 +50,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
     /// <returns></returns>
-    public async Task<bool> EditUserPhoneBySmsAsync(DtoEditUserPhoneBySms request)
+    public async Task<bool> EditUserPhoneBySmsAsync(EditUserPhoneBySmsDto request)
     {
         string key = "VerifyPhone_" + request.NewPhone;
 
@@ -94,9 +94,9 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<DtoPageList<DtoUser>> GetUserListAsync(DtoPageRequest request)
+    public async Task<PageListDto<UserDto>> GetUserListAsync(PageRequestDto request)
     {
-        DtoPageList<DtoUser> result = new();
+        PageListDto<UserDto> result = new();
 
         var query = db.User.AsSplitQuery();
 
@@ -104,7 +104,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
 
         if (result.Total != 0)
         {
-            result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoUser
+            result.List = await query.OrderByDescending(t => t.Id).Select(t => new UserDto
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -126,7 +126,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="createUser"></param>
     /// <returns></returns>
-    public async Task<long?> CreateUserAsync(DtoEditUser createUser)
+    public async Task<long?> CreateUserAsync(EditUserDto createUser)
     {
         string key = "userName:" + createUser.UserName.ToLower();
 
@@ -182,7 +182,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <param name="userId"></param>
     /// <param name="updateUser"></param>
     /// <returns></returns>
-    public async Task<bool> UpdateUserAsync(long userId, DtoEditUser updateUser)
+    public async Task<bool> UpdateUserAsync(long userId, EditUserDto updateUser)
     {
         string key = "userName:" + updateUser.UserName.ToLower();
 
@@ -282,17 +282,17 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <returns></returns>
-    public async Task<List<DtoUserFunction>> GetUserFunctionAsync(long userId)
+    public async Task<List<UserFunctionDto>> GetUserFunctionAsync(long userId)
     {
         var roleIds = await db.UserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
 
-        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == EnumFunctionType.Module).Select(t => new DtoUserFunction
+        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == EnumFunctionType.Module).Select(t => new UserFunctionDto
         {
             Id = t.Id,
             Name = t.Name.Replace(t.Parent!.Name + "-", ""),
             Sign = t.Sign,
             IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new DtoUserFunction
+            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new UserFunctionDto
             {
                 Id = f.Id,
                 Name = f.Name.Replace(f.Parent!.Name + "-", ""),
@@ -315,7 +315,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="setUserFunction"></param>
     /// <returns></returns>
-    public async Task<bool> SetUserFunctionAsync(DtoSetUserFunction setUserFunction)
+    public async Task<bool> SetUserFunctionAsync(SetUserFunctionDto setUserFunction)
     {
         var roleIds = await db.UserRole.Where(t => t.UserId == setUserFunction.UserId).Select(t => t.RoleId).ToListAsync();
 
@@ -370,9 +370,9 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="userId"></param>
     /// <returns></returns>
-    public Task<List<DtoUserRole>> GetUserRoleListAsync(long userId)
+    public Task<List<UserRoleDto>> GetUserRoleListAsync(long userId)
     {
-        var list = db.Role.Select(t => new DtoUserRole
+        var list = db.Role.Select(t => new UserRoleDto
         {
             Id = t.Id,
             Name = t.Name,
@@ -389,7 +389,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="setUserRole"></param>
     /// <returns></returns>
-    public async Task<bool> SetUserRoleAsync(DtoSetUserRole setUserRole)
+    public async Task<bool> SetUserRoleAsync(SetUserRoleDto setUserRole)
     {
         var userRole = await db.UserRole.Where(t => t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefaultAsync();
 
@@ -433,16 +433,16 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <param name="parentId">功能父级ID</param>
     /// <param name="roleIds">用户角色ID集合</param>
     /// <returns></returns>
-    public async Task<List<DtoUserFunction>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds)
+    public async Task<List<UserFunctionDto>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds)
     {
 
-        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == EnumFunctionType.Module).Select(t => new DtoUserFunction
+        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == EnumFunctionType.Module).Select(t => new UserFunctionDto
         {
             Id = t.Id,
             Name = t.Name.Replace(t.Parent!.Name + "-", ""),
             Sign = t.Sign,
             IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new DtoUserFunction
+            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new UserFunctionDto
             {
                 Id = f.Id,
                 Name = f.Name.Replace(f.Parent!.Name + "-", ""),

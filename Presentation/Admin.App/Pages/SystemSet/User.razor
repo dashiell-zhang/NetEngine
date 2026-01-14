@@ -14,7 +14,7 @@
             }
 
         </div>
-        <Table TItem="DtoUser" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+        <Table TItem="UserDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
             <ColumnDefinitions>
                 <PropertyColumn Property="c=>c.Name" Title="名称"></PropertyColumn>
@@ -165,17 +165,17 @@
     bool tableLoading = false;
     int pageNum = 1;
     int pageSize = 10;
-    DtoPageList<DtoUser> pageList = new();
+    PageListDto<UserDto> pageList = new();
 
     bool isShowEditAuthority = false;
 
-    List<DtoKeyValue> roleList = new();
+    List<KeyValueDto> roleList = new();
 
-    List<DtoUserFunction> userFunctionList = new();
+    List<UserFunctionDto> userFunctionList = new();
 
     async Task GetRoleKV()
     {
-        var retData = await Http.GetFromJsonAsync<List<DtoKeyValue>>("Role/GetRoleKV", JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<KeyValueDto>>("Role/GetRoleKV", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -186,7 +186,7 @@
     async Task GetUserList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<DtoPageList<DtoUser>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<UserDto>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -215,7 +215,7 @@
 
 
     bool isShowEditUser = false;
-    DtoEditUser editUser = new();
+    EditUserDto editUser = new();
     long userId;
 
     async Task SaveUser()
@@ -224,7 +224,7 @@
 
         if (userId == default)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/CreateUser", editUser, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditUserDto>("User/CreateUser", editUser, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("添加成功");
@@ -233,7 +233,7 @@
         }
         else
         {
-            using var httpResponse = await Http.PostAsJsonAsync<DtoEditUser>("User/UpdateUser?userId=" + userId, editUser, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditUserDto>("User/UpdateUser?userId=" + userId, editUser, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("编辑成功");
@@ -252,9 +252,9 @@
     }
 
 
-    void EditUser(DtoUser? user = null)
+    void EditUser(UserDto? user = null)
     {
-        editUser = new DtoEditUser();
+        editUser = new EditUserDto();
         userId = default;
         if (user != null)
         {
@@ -292,7 +292,7 @@
     {
         this.userId = roleId;
 
-        var retData = await Http.GetFromJsonAsync<List<DtoUserFunction>>("User/GetUserFunction?userId=" + userId, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<UserFunctionDto>>("User/GetUserFunction?userId=" + userId, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -305,16 +305,16 @@
     }
 
 
-    async Task SetUserFunction(bool isCheck, DtoUserFunction userFunction)
+    async Task SetUserFunction(bool isCheck, UserFunctionDto userFunction)
     {
-        DtoSetUserFunction setUserFunction = new()
+        SetUserFunctionDto setUserFunction = new()
             {
                 UserId = userId,
                 FunctionId = userFunction.Id,
                 IsCheck = isCheck
             };
 
-        using var httpResponse = await Http.PostAsJsonAsync<DtoSetUserFunction>("User/SetUserFunction", setUserFunction, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync<SetUserFunctionDto>("User/SetUserFunction", setUserFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("设置成功");

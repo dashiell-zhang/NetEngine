@@ -15,7 +15,7 @@ public class SiteService(DatabaseContext db, IdService idService)
     /// 获取站点信息
     /// </summary>
     /// <returns></returns>
-    public async Task<DtoSite> GetSiteAsync()
+    public async Task<SiteDto> GetSiteAsync()
     {
         var kvList = await db.AppSetting.Where(t => t.Module == "Site").Select(t => new
         {
@@ -23,7 +23,7 @@ public class SiteService(DatabaseContext db, IdService idService)
             t.Value
         }).ToListAsync();
 
-        DtoSite site = new()
+        SiteDto site = new()
         {
             WebUrl = kvList.Where(t => t.Key == "WebUrl").Select(t => t.Value).FirstOrDefault(),
             ManagerName = kvList.Where(t => t.Key == "ManagerName").Select(t => t.Value).FirstOrDefault(),
@@ -46,7 +46,7 @@ public class SiteService(DatabaseContext db, IdService idService)
     /// </summary>
     /// <param name="editSite"></param>
     /// <returns></returns>
-    public async Task<bool> EditSiteAsync(DtoSite editSite)
+    public async Task<bool> EditSiteAsync(SiteDto editSite)
     {
         await SetSiteInfoAsync("WebUrl", editSite.WebUrl);
         await SetSiteInfoAsync("ManagerName", editSite.ManagerName);

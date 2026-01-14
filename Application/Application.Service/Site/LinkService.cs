@@ -21,9 +21,9 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<DtoPageList<DtoLink>> GetLinkListAsync(DtoPageRequest request)
+    public async Task<PageListDto<LinkDto>> GetLinkListAsync(PageRequestDto request)
     {
-        DtoPageList<DtoLink> result = new();
+        PageListDto<LinkDto> result = new();
 
         var query = db.Link.AsQueryable();
 
@@ -31,7 +31,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
 
         if (result.Total != 0)
         {
-            result.List = await query.OrderByDescending(t => t.Id).Select(t => new DtoLink
+            result.List = await query.OrderByDescending(t => t.Id).Select(t => new LinkDto
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -50,9 +50,9 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// </summary>
     /// <param name="linkId">链接ID</param>
     /// <returns></returns>
-    public Task<DtoLink?> GetLinkAsync(long linkId)
+    public Task<LinkDto?> GetLinkAsync(long linkId)
     {
-        var link = db.Link.Where(t => t.Id == linkId).Select(t => new DtoLink
+        var link = db.Link.Where(t => t.Id == linkId).Select(t => new LinkDto
         {
             Id = t.Id,
             Name = t.Name,
@@ -70,7 +70,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// </summary>
     /// <param name="createLink"></param>
     /// <returns></returns>
-    public async Task<long> CreateLinkAsync(DtoEditLink createLink)
+    public async Task<long> CreateLinkAsync(EditLinkDto createLink)
     {
         Repository.Database.Link link = new()
         {
@@ -95,7 +95,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// <param name="linkId"></param>
     /// <param name="updateLink"></param>
     /// <returns></returns>
-    public async Task<bool> UpdateLinkAsync(long linkId, DtoEditLink updateLink)
+    public async Task<bool> UpdateLinkAsync(long linkId, EditLinkDto updateLink)
     {
         var link = await db.Link.Where(t => t.Id == linkId).FirstOrDefaultAsync();
 

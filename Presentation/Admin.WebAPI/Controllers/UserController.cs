@@ -23,7 +23,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoPageList<DtoUser>> GetUserList([FromQuery] DtoPageRequest request) => userService.GetUserListAsync(request);
+    public Task<PageListDto<UserDto>> GetUserList([FromQuery] PageRequestDto request) => userService.GetUserListAsync(request);
 
 
     /// <summary>
@@ -32,7 +32,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="userId">用户ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoUser?> GetUser(long? userId) => userService.GetUserAsync(userId);
+    public Task<UserDto?> GetUser(long? userId) => userService.GetUserAsync(userId);
 
 
     /// <summary>
@@ -41,7 +41,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="createUser"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<long?> CreateUser(DtoEditUser createUser) => userService.CreateUserAsync(createUser);
+    public Task<long?> CreateUser(EditUserDto createUser) => userService.CreateUserAsync(createUser);
 
 
     /// <summary>
@@ -51,7 +51,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="updateUser"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> UpdateUser(long userId, DtoEditUser updateUser) => userService.UpdateUserAsync(userId, updateUser);
+    public Task<bool> UpdateUser(long userId, EditUserDto updateUser) => userService.UpdateUserAsync(userId, updateUser);
 
 
     /// <summary>
@@ -69,7 +69,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="userId">用户ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<List<DtoUserFunction>> GetUserFunction(long userId) => userService.GetUserFunctionAsync(userId);
+    public Task<List<UserFunctionDto>> GetUserFunction(long userId) => userService.GetUserFunctionAsync(userId);
 
 
     /// <summary>
@@ -79,7 +79,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <returns></returns>
     [QueueLimitFilter()]
     [HttpPost]
-    public Task<bool> SetUserFunction(DtoSetUserFunction setUserFunction) => userService.SetUserFunctionAsync(setUserFunction);
+    public Task<bool> SetUserFunction(SetUserFunctionDto setUserFunction) => userService.SetUserFunctionAsync(setUserFunction);
 
 
     /// <summary>
@@ -88,7 +88,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="userId"></param>
     /// <returns></returns>
     [HttpGet]
-    public Task<List<DtoUserRole>> GetUserRoleList(long userId) => userService.GetUserRoleListAsync(userId);
+    public Task<List<UserRoleDto>> GetUserRoleList(long userId) => userService.GetUserRoleListAsync(userId);
 
 
     /// <summary>
@@ -98,6 +98,6 @@ public class UserController(UserService userService) : ControllerBase
     /// <returns></returns>
     [QueueLimitFilter()]
     [HttpPost]
-    public Task<bool> SetUserRole(DtoSetUserRole setUserRole) => userService.SetUserRoleAsync(setUserRole);
+    public Task<bool> SetUserRole(SetUserRoleDto setUserRole) => userService.SetUserRoleAsync(setUserRole);
 
 }

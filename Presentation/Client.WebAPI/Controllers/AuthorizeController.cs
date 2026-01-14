@@ -38,7 +38,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     /// <param name="login"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<string?> GetToken(DtoGetToken login) => authorizeService.GetTokenAsync(login);
+    public Task<string?> GetToken(GetTokenDto login) => authorizeService.GetTokenAsync(login);
 
 
 
@@ -48,7 +48,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     /// <param name="login"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<string?> GetTokenByWeiXinMiniApp([FromBody] DtoGetTokenByWeiXinApp login) => authorizeService.GetTokenByWeiXinMiniAppAsync(login);
+    public Task<string?> GetTokenByWeiXinMiniApp([FromBody] GetTokenByWeiXinAppDto login) => authorizeService.GetTokenByWeiXinMiniAppAsync(login);
 
 
 
@@ -58,7 +58,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     /// <param name="login"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<string?> GetTokenBySMS(DtoGetTokenBySMS login) => authorizeService.GetTokenBySMSAsync(login);
+    public Task<string?> GetTokenBySMS(GetTokenBySMSDto login) => authorizeService.GetTokenBySMSAsync(login);
 
 
 
@@ -80,7 +80,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     /// <param name="sendVerifyCode"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> SendSMSVerifyCode(DtoSendSMSVerifyCode sendVerifyCode) => authorizeService.SendSMSVerifyCodeAsync(sendVerifyCode);
+    public Task<bool> SendSMSVerifyCode(SendSMSVerifyCodeDto sendVerifyCode) => authorizeService.SendSMSVerifyCodeAsync(sendVerifyCode);
 
 
 
@@ -90,7 +90,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     /// <param name="login"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<string?> GetTokenByWeiXinApp(DtoGetTokenByWeiXinApp login) => authorizeService.GetTokenByWeiXinAppAsync(login);
+    public Task<string?> GetTokenByWeiXinApp(GetTokenByWeiXinAppDto login) => authorizeService.GetTokenByWeiXinAppAsync(login);
 
 
 
@@ -102,7 +102,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     [Authorize]
     [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
     [HttpPost]
-    public Task<bool> UpdatePasswordByOldPassword(DtoUpdatePasswordByOldPassword updatePassword) => authorizeService.UpdatePasswordByOldPasswordAsync(updatePassword);
+    public Task<bool> UpdatePasswordByOldPassword(UpdatePasswordByOldPasswordDto updatePassword) => authorizeService.UpdatePasswordByOldPasswordAsync(updatePassword);
 
 
 
@@ -113,7 +113,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     [Authorize]
     [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
     [HttpPost]
-    public Task<bool> UpdatePasswordBySMS(DtoUpdatePasswordBySMS updatePassword) => authorizeService.UpdatePasswordBySMSAsync(updatePassword);
+    public Task<bool> UpdatePasswordBySMS(UpdatePasswordBySMSDto updatePassword) => authorizeService.UpdatePasswordBySMSAsync(updatePassword);
 
 
 

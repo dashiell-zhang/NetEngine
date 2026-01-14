@@ -55,7 +55,7 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
                     await file.CopyToAsync(fileStream);
                 }
 
-                DtoUploadFile uploadFile = new()
+                UploadFileDto uploadFile = new()
                 {
                     Business = business,
                     Key = key,

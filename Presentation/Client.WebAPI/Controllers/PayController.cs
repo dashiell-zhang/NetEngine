@@ -21,7 +21,7 @@ public class PayController(PayService payService, IHttpContextAccessor httpConte
     /// <param name="openId">用户OpenId</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoCreateWeiXinPayJSAPIRet?> CreateWeiXinPayJSAPI(string orderNo, string openId)
+    public Task<CreateWeiXinPayJSAPIRetDto?> CreateWeiXinPayJSAPI(string orderNo, string openId)
     {
         var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
@@ -36,7 +36,7 @@ public class PayController(PayService payService, IHttpContextAccessor httpConte
     /// <param name="orderNo">订单号</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoCreateWeiXinPayAppRet?> CreateWeiXinPayApp(string orderNo)
+    public Task<CreateWeiXinPayAppRetDto?> CreateWeiXinPayApp(string orderNo)
     {
 
         var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
@@ -82,7 +82,7 @@ public class PayController(PayService payService, IHttpContextAccessor httpConte
     /// 微信支付异步通知接口
     /// </summary>
     [HttpPost("{mchid}")]
-    public async Task<DtoWeiXinPayNotifyRet?> WeiXinPayNotify(string mchId, DtoWeiXinPayNotify weiXinPayNotify)
+    public async Task<WeiXinPayNotifyRetDto?> WeiXinPayNotify(string mchId, WeiXinPayNotifyDto weiXinPayNotify)
     {
         string requestBody = HttpContext.GetRequestBody();
 

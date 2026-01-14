@@ -18,7 +18,7 @@ public class MessageTask(IHostEnvironment hostEnvironment, ILogger<MessageTask> 
 
 
     [QueueTask(Name = "MessageTask.SendSMS", Semaphore = 1)]
-    public async Task SendSMS(DtoSendSMS sendSMS)
+    public async Task SendSMS(SendSMSDto sendSMS)
     {
         await sms.SendSMSAsync(sendSMS.SignName, sendSMS.Phone, sendSMS.TemplateCode, sendSMS.TemplateParams);
     }
@@ -26,7 +26,7 @@ public class MessageTask(IHostEnvironment hostEnvironment, ILogger<MessageTask> 
 
 
     [QueueTask(Name = "MessageTask.SendEmail", Semaphore = 1)]
-    public async Task SendEmail(DtoSendEmail email)
+    public async Task SendEmail(SendEmailDto email)
     {
 
         var smtpServer = "";    //如：网易 smtp.qiye.163.com

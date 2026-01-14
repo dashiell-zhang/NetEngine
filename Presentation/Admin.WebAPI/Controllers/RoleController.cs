@@ -22,7 +22,7 @@ public class RoleController(RoleService roleService) : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoPageList<DtoRole>> GetRoleList([FromQuery] DtoPageRequest request) => roleService.GetRoleListAsync(request);
+    public Task<PageListDto<RoleDto>> GetRoleList([FromQuery] PageRequestDto request) => roleService.GetRoleListAsync(request);
 
 
 
@@ -32,7 +32,7 @@ public class RoleController(RoleService roleService) : ControllerBase
     /// <param name="roleId">角色ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<DtoRole?> GetRole(long roleId) => roleService.GetRoleAsync(roleId);
+    public Task<RoleDto?> GetRole(long roleId) => roleService.GetRoleAsync(roleId);
 
 
 
@@ -43,7 +43,7 @@ public class RoleController(RoleService roleService) : ControllerBase
     /// <returns></returns>
     [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
     [HttpPost]
-    public Task<long> CreateRole(DtoEditRole role) => roleService.CreateRoleAsync(role);
+    public Task<long> CreateRole(EditRoleDto role) => roleService.CreateRoleAsync(role);
 
 
 
@@ -55,7 +55,7 @@ public class RoleController(RoleService roleService) : ControllerBase
     /// <returns></returns>
     [QueueLimitFilter(IsBlock = true, IsUseToken = true)]
     [HttpPost]
-    public Task<bool> UpdateRole(long roleId, DtoEditRole role) => roleService.UpdateRoleAsync(roleId, role);
+    public Task<bool> UpdateRole(long roleId, EditRoleDto role) => roleService.UpdateRoleAsync(roleId, role);
 
 
 
@@ -75,7 +75,7 @@ public class RoleController(RoleService roleService) : ControllerBase
     /// <param name="roleId">角色ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<List<DtoRoleFunction>> GetRoleFunction(long roleId) => roleService.GetRoleFunctionAsync(roleId);
+    public Task<List<RoleFunctionDto>> GetRoleFunction(long roleId) => roleService.GetRoleFunctionAsync(roleId);
 
 
 
@@ -85,7 +85,7 @@ public class RoleController(RoleService roleService) : ControllerBase
     /// <param name="setRoleFunction"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> SetRoleFunction(DtoSetRoleFunction setRoleFunction) => roleService.SetRoleFunctionAsync(setRoleFunction);
+    public Task<bool> SetRoleFunction(SetRoleFunctionDto setRoleFunction) => roleService.SetRoleFunctionAsync(setRoleFunction);
 
 
 
@@ -94,6 +94,6 @@ public class RoleController(RoleService roleService) : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public Task<List<DtoKeyValue>> GetRoleKV() => roleService.GetRoleKVAsync();
+    public Task<List<KeyValueDto>> GetRoleKV() => roleService.GetRoleKVAsync();
 
 }

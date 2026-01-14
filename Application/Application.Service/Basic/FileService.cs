@@ -21,7 +21,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <param name="savePath">文件存储基础路径</param>
     /// <param name="uploadFile"></param>
     /// <returns></returns>
-    public async Task<long> UploadFileAsync(string savePath, DtoUploadFile uploadFile)
+    public async Task<long> UploadFileAsync(string savePath, UploadFileDto uploadFile)
     {
         var utcNow = DateTime.UtcNow;
 
@@ -94,7 +94,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <param name="savePath">文件存储基础路径</param>
     /// <param name="remoteUploadFile"></param>
     /// <returns>文件ID</returns>
-    public async Task<long> RemoteUploadFileAsync(string savePath, DtoRemoteUploadFile remoteUploadFile)
+    public async Task<long> RemoteUploadFileAsync(string savePath, RemoteUploadFileDto remoteUploadFile)
     {
 
         var tempDirPath = Path.Combine(savePath, "temps");
@@ -110,7 +110,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
 
         if (tempFilePath != null)
         {
-            DtoUploadFile uploadFile = new()
+            UploadFileDto uploadFile = new()
             {
                 Business = remoteUploadFile.Business,
                 Key = remoteUploadFile.Key,
@@ -203,7 +203,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <param name="key">关联记录值</param>
     /// <param name="isGetUrl">是否获取url</param>
     /// <returns></returns>
-    public async Task<List<DtoFileInfo>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl)
+    public async Task<List<FileInfoDto>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl)
     {
 
         var query = db.File.Where(t => t.Table == business && t.TableId == key);
@@ -213,7 +213,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
             query = query.Where(t => t.Sign == sign);
         }
 
-        var fileList = await query.OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new DtoFileInfo
+        var fileList = await query.OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new FileInfoDto
         {
             Id = t.Id,
             Name = t.Name,

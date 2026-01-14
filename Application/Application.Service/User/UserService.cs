@@ -10,7 +10,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using Repository.Database;
-using Repository.Enum;
+using Repository.Database.Enums;
 using SourceGenerator.Runtime.Attributes;
 using System.Text;
 
@@ -287,13 +287,13 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     {
         var roleIds = await db.UserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
 
-        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == EnumFunctionType.Module).Select(t => new UserFunctionDto
+        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == FunctionType.Module).Select(t => new UserFunctionDto
         {
             Id = t.Id,
             Name = t.Name.Replace(t.Parent!.Name + "-", ""),
             Sign = t.Sign,
             IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new UserFunctionDto
+            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == FunctionType.Function).Select(f => new UserFunctionDto
             {
                 Id = f.Id,
                 Name = f.Name.Replace(f.Parent!.Name + "-", ""),
@@ -437,13 +437,13 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     public async Task<List<UserFunctionDto>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds)
     {
 
-        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == EnumFunctionType.Module).Select(t => new UserFunctionDto
+        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == FunctionType.Module).Select(t => new UserFunctionDto
         {
             Id = t.Id,
             Name = t.Name.Replace(t.Parent!.Name + "-", ""),
             Sign = t.Sign,
             IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new UserFunctionDto
+            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == FunctionType.Function).Select(f => new UserFunctionDto
             {
                 Id = f.Id,
                 Name = f.Name.Replace(f.Parent!.Name + "-", ""),

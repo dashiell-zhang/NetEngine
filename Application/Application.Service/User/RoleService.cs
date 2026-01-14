@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using Repository.Database;
-using Repository.Enum;
+using Repository.Database.Enums;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.User;
@@ -176,13 +176,13 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// <returns></returns>
     public async Task<List<RoleFunctionDto>> GetRoleFunctionAsync(long roleId)
     {
-        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == EnumFunctionType.Module).Select(t => new RoleFunctionDto
+        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == FunctionType.Module).Select(t => new RoleFunctionDto
         {
             Id = t.Id,
             Name = t.Name.Replace(t.Parent!.Name + "-", ""),
             Sign = t.Sign,
             IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new RoleFunctionDto
+            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == FunctionType.Function).Select(f => new RoleFunctionDto
             {
                 Id = f.Id,
                 Name = f.Name.Replace(f.Parent!.Name + "-", ""),
@@ -263,13 +263,13 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     public async Task<List<RoleFunctionDto>> GetRoleFunctionChildListAsync(long roleId, long parentId)
     {
 
-        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == EnumFunctionType.Module).Select(t => new RoleFunctionDto
+        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == FunctionType.Module).Select(t => new RoleFunctionDto
         {
             Id = t.Id,
             Name = t.Name.Replace(t.Parent!.Name + "-", ""),
             Sign = t.Sign,
             IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == EnumFunctionType.Function).Select(f => new RoleFunctionDto
+            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == FunctionType.Function).Select(f => new RoleFunctionDto
             {
                 Id = f.Id,
                 Name = f.Name.Replace(f.Parent!.Name + "-", ""),

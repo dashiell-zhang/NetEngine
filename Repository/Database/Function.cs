@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Repository.Bases;
-using Repository.Enum;
+using Repository.Database.Enums;
 
 namespace Repository.Database;
 
@@ -40,7 +40,7 @@ public class Function : CD
     /// <summary>
     /// 功能类型
     /// </summary>
-    public EnumFunctionType Type { get; set; }
+    public FunctionType Type { get; set; }
 
 
     public virtual List<FunctionRoute>? TFunctionRoute { get; set; }

@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 using System.Security.Claims;

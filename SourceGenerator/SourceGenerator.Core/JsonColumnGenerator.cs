@@ -23,7 +23,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// <summary>
     /// 仅在包含该 DbContext 的项目中输出生成文件，避免在无关项目里产生空的 g.cs
     /// </summary>
-    private const string DatabaseContextTypeMetadataName = "Repository.Database.DatabaseContext";
+    private const string DatabaseContextTypeMetadataName = "Repository.DatabaseContext";
 
     /// <summary>
     /// DbContext 的完整元数据名称

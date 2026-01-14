@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Repository.Database;
 using Repository.Database.Generated;
 using System.Reflection;
 using System.Xml;
 
-namespace Repository.Database;
+namespace Repository;
 
 public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbContext(options)
 {
@@ -19,7 +20,7 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
     public DbSet<DataUpdateLog> DataUpdateLog { get; set; }
 
-    public DbSet<File> File { get; set; }
+    public DbSet<Database.File> File { get; set; }
 
     public DbSet<Function> Function { get; set; }
 

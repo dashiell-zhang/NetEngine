@@ -31,4 +31,9 @@
 		<ProjectReference Include="..\Repository.Enum\Repository.Enum.csproj" />
 	</ItemGroup>
 
+
+	<ItemGroup>
+	  <Folder Include="Database\Enums\" />
+	</ItemGroup>
+
 </Project>

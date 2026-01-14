@@ -2,6 +2,7 @@ using Common;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 

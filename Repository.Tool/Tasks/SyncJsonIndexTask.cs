@@ -2,7 +2,6 @@ using Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository.Attributes;
-using Repository.Database;
 using Repository.Extensions;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;

@@ -6,7 +6,7 @@ using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Repository.Database;
+using Repository;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Basic;

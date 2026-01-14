@@ -2,7 +2,6 @@ using Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
-using Repository.Database;
 
 namespace Repository.HealthCheck;
 public class DatabaseHealthCheck(DatabaseContext db, ILogger<DatabaseHealthCheck> logger) : IHealthCheck

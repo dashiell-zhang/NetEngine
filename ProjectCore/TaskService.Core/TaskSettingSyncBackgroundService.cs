@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Repository;
 using Repository.Database;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;

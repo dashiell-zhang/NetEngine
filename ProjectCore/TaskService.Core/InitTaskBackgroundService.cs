@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Repository.Database;
+using Repository;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
 

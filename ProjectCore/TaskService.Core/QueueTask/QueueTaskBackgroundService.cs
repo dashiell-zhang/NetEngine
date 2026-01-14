@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Repository.Database;
+using Repository;
 using System.Collections.Concurrent;
 using System.Reflection;
 using static TaskService.Core.QueueTask.QueueTaskBuilder;

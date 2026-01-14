@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NetEngine.Generated;
 using Npgsql;
-using Repository.Database;
 
 namespace Repository.Tool;
 

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Repository.Database;
+using Repository;
 using SourceGenerator.Runtime.Attributes;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
-using Repository.Database;
+using Repository;
 using SkiaSharp;
 
 namespace Client.WebAPI.Controllers;

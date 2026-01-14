@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using NetEngine.Generated;
 using Npgsql;
+using Repository;
 using Repository.Interceptors;
 using SMS.AliCloud;
 using StackExchange.Redis;
@@ -48,7 +49,7 @@ class Program
 
                 services.AddSingleton<QueryCountInterceptor>();
 
-                services.AddDbContextPool<Repository.Database.DatabaseContext>((serviceProvider, options) =>
+                services.AddDbContextPool<DatabaseContext>((serviceProvider, options) =>
                 {
                     options.UseNpgsql(dataSourceBuilder.Build());
                     options.AddInterceptors(new PostgresPatchInterceptor());
@@ -56,7 +57,7 @@ class Program
 
                 }, maxPoolSize);
 
-                services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options => { }, maxPoolSize);
+                services.AddPooledDbContextFactory<DatabaseContext>(options => { }, maxPoolSize);
 
                 services.BatchRegisterServices();
                 services.BatchRegisterBackgroundServices();

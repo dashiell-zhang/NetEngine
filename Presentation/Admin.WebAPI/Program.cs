@@ -9,6 +9,7 @@ using Repository.Interceptors;
 using StackExchange.Redis;
 using WebAPI.Core.Extensions;
 using NetEngine.Generated;
+using Repository;
 
 namespace Admin.WebAPI;
 public class Program
@@ -34,7 +35,7 @@ public class Program
 
         builder.Services.AddSingleton<QueryCountInterceptor>();
 
-        builder.Services.AddDbContextPool<Repository.Database.DatabaseContext>((serviceProvider, options) =>
+        builder.Services.AddDbContextPool<DatabaseContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(dataSourceBuilder.Build());
             options.AddInterceptors(new PostgresPatchInterceptor());
@@ -42,7 +43,7 @@ public class Program
 
         }, maxPoolSize);
 
-        builder.Services.AddPooledDbContextFactory<Repository.Database.DatabaseContext>(options => { }, maxPoolSize);
+        builder.Services.AddPooledDbContextFactory<DatabaseContext>(options => { }, maxPoolSize);
 
 
         builder.AddCommonServices();

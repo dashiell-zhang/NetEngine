@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Repository;
 using Repository.Database;
 using TaskService.Core;
 using TaskService.Core.QueueTask;

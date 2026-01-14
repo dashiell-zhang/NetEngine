@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Repository;
 using Repository.Database;
 using Repository.Enum;
 using SourceGenerator.Runtime.Attributes;

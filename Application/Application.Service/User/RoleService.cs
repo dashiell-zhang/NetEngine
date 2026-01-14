@@ -6,6 +6,7 @@ using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Repository;
 using Repository.Database;
 using Repository.Enum;
 using SourceGenerator.Runtime.Attributes;

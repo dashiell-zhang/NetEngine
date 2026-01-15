@@ -14,6 +14,7 @@ public class ExceptionFilter : IExceptionFilter
         if (context.Exception is CustomException customException)
         {
             context.HttpContext.Response.StatusCode = 400;
+            context.ExceptionHandled = true;
             context.Result = new JsonResult(new { errMsg = customException.Message }, JsonHelper.SerializeOpts);
         }
     }

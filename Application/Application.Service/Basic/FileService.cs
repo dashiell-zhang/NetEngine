@@ -11,10 +11,10 @@ using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Basic;
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IConfiguration configuration, IFileStorage? fileStorage = null)
-{
 
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
+public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IConfiguration configuration, IHttpClientFactory httpClientFactory, IFileStorage? fileStorage = null)
+{
 
     /// <summary>
     /// 文件上传
@@ -107,7 +107,9 @@ public class FileService(IdService idService, IUserContext userContext, Database
 
         var tempFileName = Guid.NewGuid().ToString() + Path.GetExtension(remoteUploadFile.FileName);
 
-        var tempFilePath = IOHelper.DownloadFile(remoteUploadFile.FileUrl, tempDirPath, tempFileName);
+        var httpClient = httpClientFactory.CreateClient();
+
+        var tempFilePath = await httpClient.DownloadFileAsync(remoteUploadFile.FileUrl, tempDirPath, tempFileName);
 
         if (tempFilePath != null)
         {
@@ -235,4 +237,5 @@ public class FileService(IdService idService, IUserContext userContext, Database
 
         return fileList;
     }
+
 }

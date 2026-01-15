@@ -10,6 +10,39 @@ public static class HttpClientExtension
 
 
     /// <summary>
+    /// 下载远程文件保存到本地（异步）
+    /// </summary>
+    public static async Task<string?> DownloadFileAsync(this HttpClient httpClient, string url, string folderPath, string? fileName = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            fileName ??= System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
+
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
+
+            using var httpResponse = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            httpResponse.EnsureSuccessStatusCode();
+
+            string filePath = Path.Combine(folderPath, fileName);
+
+            await using var fileStream = File.Create(filePath);
+            await using var contentStream = await httpResponse.Content.ReadAsStreamAsync(cancellationToken);
+            await contentStream.CopyToAsync(fileStream, cancellationToken);
+
+            return filePath;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
+
+    /// <summary>
     /// Get方式获取远程资源
     /// </summary>
     /// <param name="url">请求地址</param>

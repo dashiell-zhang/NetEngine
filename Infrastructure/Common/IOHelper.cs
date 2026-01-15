@@ -1,6 +1,7 @@
 using System.IO.Compression;
 
 namespace Common;
+
 public class IOHelper
 {
 
@@ -30,7 +31,6 @@ public class IOHelper
     }
 
 
-
     /// <summary>
     /// 删除指定文件夹
     /// </summary>
@@ -58,44 +58,6 @@ public class IOHelper
     }
 
 
-
-    /// <summary>
-    /// 下载远程文件保存到本地
-    /// </summary>
-    /// <param name="url">文件Url</param>
-    /// <param name="folderPath">保存文件夹路径</param>
-    /// <param name="fileName">保存文件名称,不传则自动通过 url 获取名称</param>
-    /// <returns></returns>
-    public static string? DownloadFile(string url, string folderPath, string? fileName = null)
-    {
-        try
-        {
-            fileName ??= System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
-
-            //检查目标路径文件夹是否存在不存在则创建
-            if (!Directory.Exists(folderPath))
-            {
-                Directory.CreateDirectory(folderPath);
-            }
-
-            using HttpClient client = new();
-            client.DefaultRequestVersion = new("2.0");
-
-            using var httpResponse = client.GetAsync(url).Result;
-            string filePath = Path.Combine(folderPath, fileName);
-
-            File.WriteAllBytes(filePath, httpResponse.Content.ReadAsByteArrayAsync().Result);
-
-            return filePath;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-
-
     /// <summary>
     /// 获取指定文件的大小
     /// </summary>
@@ -106,7 +68,6 @@ public class IOHelper
         FileInfo fileInfo = new(path);
         return FileLengthToString(fileInfo.Length);
     }
-
 
 
     /// <summary>
@@ -140,7 +101,6 @@ public class IOHelper
     }
 
 
-
     /// <summary>
     /// 获取文件夹下所有文件
     /// </summary>
@@ -167,7 +127,6 @@ public class IOHelper
 
         return list;
     }
-
 
 
     /// <summary>
@@ -219,7 +178,6 @@ public class IOHelper
     }
 
 
-
     /// <summary>
     /// 解压Zip文件到指定目录
     /// </summary>
@@ -236,6 +194,5 @@ public class IOHelper
 
         ZipFile.ExtractToDirectory(zipPath, folderPath);
     }
-
 
 }

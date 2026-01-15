@@ -6,7 +6,7 @@ using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 
-namespace Application.Service.QueueTask;
+namespace Application.Service.TaskCenter;
 
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
@@ -44,7 +44,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
 
         if (db.Database.CurrentTransaction != null)
         {
-            Repository.Database.QueueTask queueTask = new()
+            QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
                 Name = name,
@@ -104,7 +104,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
         {
             var db = await dbFactory.CreateDbContextAsync();
 
-            Repository.Database.QueueTask queueTask = new()
+            QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
                 Name = name,

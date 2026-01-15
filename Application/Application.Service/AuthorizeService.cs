@@ -2,7 +2,7 @@ using Application.Interface;
 using Application.Model.AppSetting;
 using Application.Model.Authorize;
 using Application.Model.Task.Message;
-using Application.Service.QueueTask;
+using Application.Service.TaskCenter;
 using Common;
 using DistributedLock;
 using IdentifierGenerator;

@@ -1,4 +1,4 @@
-namespace Application.Model.Task.Message;
+namespace Application.Model.Message;
 /// <summary>
 /// 邮件发送模型
 /// </summary>

@@ -1,4 +1,4 @@
-namespace Application.Model.Task.Message;
+namespace Application.Model.Message;
 public class SendSMSDto
 {
 

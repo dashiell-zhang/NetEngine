@@ -75,7 +75,8 @@
 
     <Layout Class="site-layout" Style=@leftLayoutStyle>
         <Content Style="margin:0 0px;margin-top:4px;">
-            <ReuseTabs Class="MainTab"></ReuseTabs>
+            <ReuseTabs Class="MainTab" TabPaneTemplate="@tabPaneTemplate">
+            </ReuseTabs>
         </Content>
     </Layout>
 
@@ -105,6 +106,13 @@
         <span>资讯管理</span>
     </span>
     ;
+
+    RenderFragment<AntDesign.ReuseTabsPageItem> tabPaneTemplate = context =>
+    @<div style="padding-top:30px;">
+        <div Class="site-layout-background">
+            @context.Body
+        </div>
+    </div>;
 
     bool collapsed;
 

@@ -2,65 +2,58 @@
 @using Application.Model.Site.Link
 @attribute [ReuseTabsPageTitle("友链管理")]
 
-<Layout Style="padding-top:30px;">
+<div style="margin-bottom:10px">
 
-    <Content Class="site-layout-background">
+    @if (functionList.Contains("link-add"))
+    {
+        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditLink()">添加</Button>
+    }
 
-        <div style="margin-bottom:10px">
+</div>
+<Table TItem="LinkDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
-            @if (functionList.Contains("link-add"))
-            {
-                <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditLink()">添加</Button>
-            }
+    <ColumnDefinitions>
+        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
+        <PropertyColumn Property="c => c.Url" Title="Url"></PropertyColumn>
+        <PropertyColumn Property="c => c.Sort" Title="排序"></PropertyColumn>
+        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
+        <ActionColumn Title="操作">
+            <Space>
 
+                @if (functionList.Contains("link-edit"))
+                {
+                    <SpaceItem>
+                        <a @onclick="() => EditLink(context)">编辑</a>
+                    </SpaceItem>
+                }
+
+                @if (functionList.Contains("link-delete"))
+                {
+                    <SpaceItem>
+                        <Popconfirm Title="确认要删除吗？"
+                                    OnConfirm="_=>DeleteLink(context.Id)"
+                                    OkText="Yes"
+                                    CancelText="No">
+                            <a style="color:red">删除</a>
+                        </Popconfirm>
+
+                    </SpaceItem>
+                }
+
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
         </div>
-        <Table TItem="LinkDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+    </PaginationTemplate>
 
-            <ColumnDefinitions>
-                <PropertyColumn Property="c=>c.Name" Title="名称"></PropertyColumn>
-                <PropertyColumn Property="c=>c.Url" Title="Url"></PropertyColumn>
-                <PropertyColumn Property="c=>c.Sort" Title="排序"></PropertyColumn>
-                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-                <ActionColumn Title="操作">
-                    <Space>
-
-                        @if (functionList.Contains("link-edit"))
-                        {
-                            <SpaceItem>
-                                <a @onclick="()=>EditLink(context)">编辑</a>
-                            </SpaceItem>
-                        }
-
-                        @if (functionList.Contains("link-delete"))
-                        {
-                            <SpaceItem>
-                                <Popconfirm Title="确认要删除吗？"
-                                            OnConfirm="_=>DeleteLink(context.Id)"
-                                            OkText="Yes"
-                                            CancelText="No">
-                                    <a style="color:red">删除</a>
-                                </Popconfirm>
-
-                            </SpaceItem>
-                        }
-
-                    </Space>
-                </ActionColumn>
-            </ColumnDefinitions>
-
-            <PaginationTemplate>
-                <div style="margin:15px 0;float:right">
-                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
-                </div>
-            </PaginationTemplate>
-
-        </Table>
-
-    </Content>
-</Layout>
+</Table>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowEditLink" Title='("友情链接信息")' OnClose="()=>isShowEditLink=false">
+<Drawer Closable="true" Width="380" Visible="isShowEditLink" Title='("友情链接信息")' OnClose="() => isShowEditLink = false">
     <Template style="height:90%">
 
         <Form Model="@editLink" OnFinish="SaveLink">
@@ -84,7 +77,7 @@
                 <AntDesign.Col Span="24">
                     <div style="float:right">
                         <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditLink=false">取消</Button>
+                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditLink = false">取消</Button>
                     </div>
                 </AntDesign.Col>
             </Row>

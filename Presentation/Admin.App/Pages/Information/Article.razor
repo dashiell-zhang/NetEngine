@@ -6,77 +6,70 @@
 @using System.Net.Http.Headers;
 @attribute [ReuseTabsPageTitle("文章管理")]
 
-<Layout Style="padding-top:30px;">
+<div style="margin-bottom:10px">
 
-    <Content Class="site-layout-background">
+    @if (functionList.Contains("article-add"))
+    {
+        <Button Icon="plus" Type="@ButtonType.Primary" OnClick="() => EditArticle()">添加</Button>
+    }
 
-        <div style="margin-bottom:10px">
+</div>
+<Table TItem="ArticleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
-            @if (functionList.Contains("article-add"))
-            {
-                <Button Icon="plus" Type="@ButtonType.Primary" OnClick="()=>EditArticle()">添加</Button>
-            }
+    <ColumnDefinitions>
+        <PropertyColumn Property="c => c.Title" Title="标题"></PropertyColumn>
+        <PropertyColumn Property="c => c.CategoryName" Title="类别"></PropertyColumn>
+        <PropertyColumn Property="c => c.IsRecommend" Title="是否推荐"></PropertyColumn>
+        <PropertyColumn Property="c => c.IsDisplay" Title="显示状态"></PropertyColumn>
+        <PropertyColumn Property="c => c.ClickCount" Title="点击量"></PropertyColumn>
+        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
 
+        <ActionColumn Title="操作">
+            <Space>
+
+                @if (functionList.Contains("article-edit"))
+                {
+
+                    <SpaceItem>
+                        <a @onclick="() => EditArticle(context)">编辑</a>
+                    </SpaceItem>
+                }
+
+                @if (functionList.Contains("article-delete"))
+                {
+                    <SpaceItem>
+                        <Popconfirm Title="确认要删除吗？"
+                                    OnConfirm="_=>DeleteArticle(context.Id)"
+                                    OkText="Yes"
+                                    CancelText="No">
+                            <a style="color:red">删除</a>
+                        </Popconfirm>
+
+                    </SpaceItem>
+                }
+
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
         </div>
-        <Table TItem="ArticleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+    </PaginationTemplate>
 
-            <ColumnDefinitions>
-                <PropertyColumn Property="c=>c.Title" Title="标题"></PropertyColumn>
-                <PropertyColumn Property="c=>c.CategoryName" Title="类别"></PropertyColumn>
-                <PropertyColumn Property="c=>c.IsRecommend" Title="是否推荐"></PropertyColumn>
-                <PropertyColumn Property="c=>c.IsDisplay" Title="显示状态"></PropertyColumn>
-                <PropertyColumn Property="c=>c.ClickCount" Title="点击量"></PropertyColumn>
-                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-
-                <ActionColumn Title="操作">
-                    <Space>
-
-                        @if (functionList.Contains("article-edit"))
-                        {
-
-                            <SpaceItem>
-                                <a @onclick="()=>EditArticle(context)">编辑</a>
-                            </SpaceItem>
-                        }
-
-                        @if (functionList.Contains("article-delete"))
-                        {
-                            <SpaceItem>
-                                <Popconfirm Title="确认要删除吗？"
-                                            OnConfirm="_=>DeleteArticle(context.Id)"
-                                            OkText="Yes"
-                                            CancelText="No">
-                                    <a style="color:red">删除</a>
-                                </Popconfirm>
-
-                            </SpaceItem>
-                        }
-
-                    </Space>
-                </ActionColumn>
-            </ColumnDefinitions>
-
-            <PaginationTemplate>
-                <div style="margin:15px 0;float:right">
-                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
-                </div>
-            </PaginationTemplate>
-
-        </Table>
-
-    </Content>
-</Layout>
+</Table>
 
 
 @{
     RenderFragment editFooter = @<Template>
         <Button OnClick="SaveArticle" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
-        <Button OnClick="()=>isShowEditArticle=false" @key="@("back")">取消</Button>
+        <Button OnClick="() => isShowEditArticle = false" @key="@("back")">取消</Button>
     </Template>;
 }
 
 
-<Modal Title="文章信息" Style="width:1160px;" Visible="@isShowEditArticle" OnCancel="()=>isShowEditArticle=false" Footer="@editFooter">
+<Modal Title="文章信息" Style="width:1160px;" Visible="@isShowEditArticle" OnCancel="() => isShowEditArticle = false" Footer="@editFooter">
 
     <Form @ref="@_editArticleForm" Model="@editArticle" LabelColSpan="2" WrapperColSpan="22" Class="ueditorBody">
 
@@ -85,7 +78,7 @@
             <TabPane Key="1" Tab="基本信息">
 
                 <FormItem Label="所属栏目">
-                    <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
+                    <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node => node.DataItem.Children" DisabledExpression="node => node.DataItem.IsDisabled" TitleExpression="node => node.DataItem.Title" KeyExpression="node => node.DataItem.Key" IsLeafExpression="node => node.DataItem.Children == null"></TreeSelect>
                 </FormItem>
 
                 <FormItem Label="标题">
@@ -118,7 +111,7 @@
                         </label>
                     </Upload>
 
-                    <Upload FileList="fileList" ListType="UploadListType.PictureCard" OnPreview="(file)=> PreviewImg(file)" OnRemove=" (file)=> DeleteImg(file)" ShowButton=false style="margin-top:8px"></Upload>
+                    <Upload FileList="fileList" ListType="UploadListType.PictureCard" OnPreview="(file) => PreviewImg(file)" OnRemove=" (file)=> DeleteImg(file)" ShowButton=false style="margin-top:8px"></Upload>
 
                     <Image PreviewSrc="@previewImgUrl" Style="display: none;" @bind-PreviewVisible="isPreviewImg" />
 
@@ -250,12 +243,12 @@
                 string fileUrl = await JS.InvokeAsync<string>("CreateObjectUrl", newImageArray, "image/jpeg");
 
                 fileList.Add(new UploadFileItem()
-                    {
-                        Id = fileId,
-                        FileName = file.Name,
-                        Url = fileUrl,
-                        State = UploadState.Success
-                    });
+                {
+                    Id = fileId,
+                    FileName = file.Name,
+                    Url = fileUrl,
+                    State = UploadState.Success
+                });
             }
 
             StateHasChanged();
@@ -319,12 +312,12 @@
     private IEnumerable<TreeSelectDto>? CategoryTreeConvert(List<CategorySelectDto>? keyValueChildren)
     {
         return keyValueChildren?.Select(t => new TreeSelectDto
-            {
-                Key = t.Id.ToString()!,
-                Title = t.Name!.ToString()!,
-                Children = CategoryTreeConvert(t.ChildList),
-                IsDisabled = false
-            }).ToList();
+        {
+            Key = t.Id.ToString()!,
+            Title = t.Name!.ToString()!,
+            Children = CategoryTreeConvert(t.ChildList),
+            IsDisabled = false
+        }).ToList();
     }
 
     bool tableLoading = false;
@@ -403,12 +396,12 @@
             if (article.CoverImageList != null && article.CoverImageList.Any())
             {
                 fileList = article.CoverImageList?.Select(t => new UploadFileItem
-                    {
-                        Id = t.Id.ToString(),
-                        FileName = "coverImg.jpg",
-                        Url = t.Url,
-                        State = UploadState.Success
-                    }).ToList()!;
+                {
+                    Id = t.Id.ToString(),
+                    FileName = "coverImg.jpg",
+                    Url = t.Url,
+                    State = UploadState.Success
+                }).ToList()!;
             }
 
         }

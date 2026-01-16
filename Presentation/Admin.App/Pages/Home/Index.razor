@@ -2,21 +2,14 @@
 @using Application.Model.Site.Site
 @attribute [ReuseTabsPage(Title = "仪表盘", PinUrl = "/", Closable = false, Pin = true)]
 
-<Layout Style="padding-top:30px;">
-
-    <Content Class="site-layout-background">
-
-        <Card Title="服务器信息">
-            @foreach (var info in serverInfos)
-            {
-                <CardGrid Style="width:25%;text-align:left" Hoverable="true">
-                    @(info.Name + "：" + info.Value)
-                </CardGrid>
-            }
-        </Card>
-
-    </Content>
-</Layout>
+<Card Title="服务器信息">
+    @foreach (var info in serverInfos)
+    {
+        <CardGrid Style="width:25%;text-align:left" Hoverable="true">
+            @(info.Name + "：" + info.Value)
+        </CardGrid>
+    }
+</Card>
 
 @code {
 

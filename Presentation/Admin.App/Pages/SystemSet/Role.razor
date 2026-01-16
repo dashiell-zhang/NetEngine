@@ -3,72 +3,65 @@
 @using Application.Model.User.Role
 @attribute [ReuseTabsPageTitle("角色管理")]
 
-<Layout Style="padding-top:30px;">
+<div style="margin-bottom:10px">
 
-    <Content Class="site-layout-background">
+    @if (functionList.Contains("role-add"))
+    {
+        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditRole()">添加</Button>
+    }
 
-        <div style="margin-bottom:10px">
+</div>
+<Table TItem="RoleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
-            @if (functionList.Contains("role-add"))
-            {
-                <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditRole()">添加</Button>
-            }
+    <ColumnDefinitions>
+        <PropertyColumn Property="c => c.Code" Title="编码"></PropertyColumn>
+        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
+        <PropertyColumn Property="c => c.Remarks" Title="备注"></PropertyColumn>
+        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
+        <ActionColumn Title="操作">
+            <Space>
 
+                @if (functionList.Contains("role-edit"))
+                {
+                    <SpaceItem>
+                        <a @onclick="() => EditRole(context)">编辑</a>
+                    </SpaceItem>
+                }
+
+                @if (functionList.Contains("role-function"))
+                {
+                    <SpaceItem>
+                        <a @onclick="() => EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
+                    </SpaceItem>
+                }
+
+                @if (functionList.Contains("role-delete"))
+                {
+                    <SpaceItem>
+                        <Popconfirm Title="确认要删除吗？"
+                                    OnConfirm="_=>DeleteRole(context.Id)"
+                                    OkText="Yes"
+                                    CancelText="No">
+                            <a style="color:red">删除</a>
+                        </Popconfirm>
+
+                    </SpaceItem>
+                }
+
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
         </div>
-        <Table TItem="RoleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+    </PaginationTemplate>
 
-            <ColumnDefinitions>
-                <PropertyColumn Property="c=>c.Code" Title="编码"></PropertyColumn>
-                <PropertyColumn Property="c=>c.Name" Title="名称"></PropertyColumn>
-                <PropertyColumn Property="c=>c.Remarks" Title="备注"></PropertyColumn>
-                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-                <ActionColumn Title="操作">
-                    <Space>
-
-                        @if (functionList.Contains("role-edit"))
-                        {
-                            <SpaceItem>
-                                <a @onclick="()=>EditRole(context)">编辑</a>
-                            </SpaceItem>
-                        }
-
-                        @if (functionList.Contains("role-function"))
-                        {
-                            <SpaceItem>
-                                <a @onclick="()=>EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
-                            </SpaceItem>
-                        }
-
-                        @if (functionList.Contains("role-delete"))
-                        {
-                            <SpaceItem>
-                                <Popconfirm Title="确认要删除吗？"
-                                            OnConfirm="_=>DeleteRole(context.Id)"
-                                            OkText="Yes"
-                                            CancelText="No">
-                                    <a style="color:red">删除</a>
-                                </Popconfirm>
-
-                            </SpaceItem>
-                        }
-
-                    </Space>
-                </ActionColumn>
-            </ColumnDefinitions>
-
-            <PaginationTemplate>
-                <div style="margin:15px 0;float:right">
-                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
-                </div>
-            </PaginationTemplate>
-
-        </Table>
-
-    </Content>
-</Layout>
+</Table>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowEditRole" Title='("角色信息")' OnClose="()=>isShowEditRole=false">
+<Drawer Closable="true" Width="380" Visible="isShowEditRole" Title='("角色信息")' OnClose="() => isShowEditRole = false">
     <Template style="height:90%">
 
         <Form Model="@editRole" OnFinish="SaveRole">
@@ -92,7 +85,7 @@
                 <AntDesign.Col Span="24">
                     <div style="float:right">
                         <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditRole=false">取消</Button>
+                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditRole = false">取消</Button>
                     </div>
                 </AntDesign.Col>
             </Row>
@@ -101,18 +94,18 @@
 </Drawer>
 
 
-<Modal Title="权限范围" Style="width:1160px;" Visible="@isShowEditAuthority" OnCancel="()=>isShowEditAuthority=false" Footer="null" MaxBodyHeight="@("70vh")">
-    <Table DataSource="roleFunctionList" TreeChildren="item=>item.ChildList" DefaultExpandAllRows HidePagination>
+<Modal Title="权限范围" Style="width:1160px;" Visible="@isShowEditAuthority" OnCancel="() => isShowEditAuthority = false" Footer="null" MaxBodyHeight="@("70vh")">
+    <Table DataSource="roleFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck=>SetRoleFunction(context.Id,isCheck)">@context.Name</Checkbox>
+            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetRoleFunction(context.Id, isCheck)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck=>SetRoleFunction(item.Id,isCheck)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetRoleFunction(item.Id, isCheck)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>
@@ -259,11 +252,11 @@
     async Task SetRoleFunction(long functionId, bool isCheck)
     {
         SetRoleFunctionDto setRoleFunction = new()
-            {
-                RoleId = roleId,
-                FunctionId = functionId,
-                IsCheck = isCheck
-            };
+        {
+            RoleId = roleId,
+            FunctionId = functionId,
+            IsCheck = isCheck
+        };
 
         using var httpResponse = await Http.PostAsJsonAsync<SetRoleFunctionDto>("Role/SetRoleFunction", setRoleFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)

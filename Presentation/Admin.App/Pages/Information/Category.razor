@@ -2,67 +2,60 @@
 @using Application.Model.Site.Article
 @attribute [ReuseTabsPageTitle("栏目管理")]
 
-<Layout Style="padding-top:30px;">
+<div style="margin-bottom:10px">
 
-    <Content Class="site-layout-background">
+    @if (functionList.Contains("category-add"))
+    {
+        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditCategory()">添加</Button>
+    }
 
-        <div style="margin-bottom:10px">
+</div>
+<Table TItem="CategoryDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
-            @if (functionList.Contains("category-add"))
-            {
-                <Button Icon="plus" Type="@ButtonType.Primary" @onclick="()=>EditCategory()">添加</Button>
-            }
+    <ColumnDefinitions>
 
+        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
+        <PropertyColumn Property="c => c.Remarks" Title="备注"></PropertyColumn>
+        <PropertyColumn Property="c => c.ParentName" Title="父级栏目"></PropertyColumn>
+        <PropertyColumn Property="c => c.Sort" Title="排序"></PropertyColumn>
+        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
+        <ActionColumn Title="操作">
+            <Space>
+
+                @if (functionList.Contains("category-edit"))
+                {
+                    <SpaceItem>
+                        <a @onclick="() => EditCategory(context)">编辑</a>
+                    </SpaceItem>
+                }
+
+                @if (functionList.Contains("category-delete"))
+                {
+                    <SpaceItem>
+                        <Popconfirm Title="确认要删除吗？"
+                                    OnConfirm="_=>DeleteCategory(context.Id)"
+                                    OkText="Yes"
+                                    CancelText="No">
+                            <a style="color:red">删除</a>
+                        </Popconfirm>
+
+                    </SpaceItem>
+                }
+
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
         </div>
-        <Table TItem="CategoryDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+    </PaginationTemplate>
 
-            <ColumnDefinitions>
-
-                <PropertyColumn Property="c=>c.Name" Title="名称"></PropertyColumn>
-                <PropertyColumn Property="c=>c.Remarks" Title="备注"></PropertyColumn>
-                <PropertyColumn Property="c=>c.ParentName" Title="父级栏目"></PropertyColumn>
-                <PropertyColumn Property="c=>c.Sort" Title="排序"></PropertyColumn>
-                <PropertyColumn Property="c=>c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-                <ActionColumn Title="操作">
-                    <Space>
-
-                        @if (functionList.Contains("category-edit"))
-                        {
-                            <SpaceItem>
-                                <a @onclick="()=>EditCategory(context)">编辑</a>
-                            </SpaceItem>
-                        }
-
-                        @if (functionList.Contains("category-delete"))
-                        {
-                            <SpaceItem>
-                                <Popconfirm Title="确认要删除吗？"
-                                            OnConfirm="_=>DeleteCategory(context.Id)"
-                                            OkText="Yes"
-                                            CancelText="No">
-                                    <a style="color:red">删除</a>
-                                </Popconfirm>
-
-                            </SpaceItem>
-                        }
-
-                    </Space>
-                </ActionColumn>
-            </ColumnDefinitions>
-
-            <PaginationTemplate>
-                <div style="margin:15px 0;float:right">
-                    <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
-                </div>
-            </PaginationTemplate>
-
-        </Table>
-
-    </Content>
-</Layout>
+</Table>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowEditCategory" Title='("栏目信息")' OnClose="()=>isShowEditCategory=false">
+<Drawer Closable="true" Width="380" Visible="isShowEditCategory" Title='("栏目信息")' OnClose="() => isShowEditCategory = false">
     <Template style="height:90%">
 
         <Form Model="@editCategory" OnFinish="SaveCategory">
@@ -75,7 +68,7 @@
 
             <FormItem>
                 <Text>父级栏目</Text>
-                <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node=>node.DataItem.Children" DisabledExpression="node=>node.DataItem.IsDisabled" TitleExpression="node=>node.DataItem.Title" KeyExpression="node=>node.DataItem.Key" IsLeafExpression="node=>node.DataItem.Children==null"></TreeSelect>
+                <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node => node.DataItem.Children" DisabledExpression="node => node.DataItem.IsDisabled" TitleExpression="node => node.DataItem.Title" KeyExpression="node => node.DataItem.Key" IsLeafExpression="node => node.DataItem.Children == null"></TreeSelect>
             </FormItem>
 
 
@@ -95,7 +88,7 @@
                 <AntDesign.Col Span="24">
                     <div style="float:right">
                         <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                        <Button Type="@ButtonType.Default" @onclick="()=>isShowEditCategory=false">取消</Button>
+                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditCategory = false">取消</Button>
                     </div>
                 </AntDesign.Col>
             </Row>
@@ -149,12 +142,12 @@
     private IEnumerable<TreeSelectDto>? CategoryTreeConvert(List<CategorySelectDto>? keyValueChildren)
     {
         return keyValueChildren?.Select(t => new TreeSelectDto
-            {
-                Key = t.Id.ToString()!,
-                Title = t.Name!.ToString()!,
-                Children = CategoryTreeConvert(t.ChildList),
-                IsDisabled = (categoryId == t.Id && categoryId != 0)
-            }).ToList();
+        {
+            Key = t.Id.ToString()!,
+            Title = t.Name!.ToString()!,
+            Children = CategoryTreeConvert(t.ChildList),
+            IsDisabled = (categoryId == t.Id && categoryId != 0)
+        }).ToList();
     }
 
     bool saveLoading = false;

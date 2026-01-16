@@ -90,10 +90,10 @@ public class RoleController(RoleService roleService) : ControllerBase
 
 
     /// <summary>
-    /// 获取角色键值对
+    /// 获取角色选项列表
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public Task<List<KeyValueDto>> GetRoleKV() => roleService.GetRoleKVAsync();
+    public Task<List<RoleSelectDto>> GetRoleSelect() => roleService.GetRoleSelectAsync();
 
 }

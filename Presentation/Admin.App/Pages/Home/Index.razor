@@ -1,4 +1,5 @@
 @page "/"
+@using Application.Model.Site.Site
 @attribute [ReuseTabsPage(Title = "仪表盘", PinUrl = "/", Closable = false, Pin = true)]
 
 <Layout Style="padding-top:30px;">
@@ -9,7 +10,7 @@
             @foreach (var info in serverInfos)
             {
                 <CardGrid Style="width:25%;text-align:left" Hoverable="true">
-                    @(info.Key.ToString() + "：" + info.Value!.ToString())
+                    @(info.Name + "：" + info.Value)
                 </CardGrid>
             }
         </Card>
@@ -19,11 +20,11 @@
 
 @code {
 
-    List<KeyValueDto> serverInfos = new();
+    List<ServerInfoDto> serverInfos = new();
 
     async override protected void OnInitialized()
     {
-        var retData = await Http.GetFromJsonAsync<List<KeyValueDto>>("Site/GetServerInfo", JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<ServerInfoDto>>("Site/GetServerInfo", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {

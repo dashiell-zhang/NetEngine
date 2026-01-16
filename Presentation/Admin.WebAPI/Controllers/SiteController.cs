@@ -1,4 +1,3 @@
-using Application.Model.Shared;
 using Application.Model.Site.Site;
 using Application.Service.Site;
 using Microsoft.AspNetCore.Authorization;
@@ -42,49 +41,49 @@ public class SiteController(SiteService siteService) : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public List<KeyValueDto> GetServerInfo()
+    public List<ServerInfoDto> GetServerInfo()
     {
-        List<KeyValueDto> list =
+        List<ServerInfoDto> list =
         [
-            new KeyValueDto
+            new ServerInfoDto
             {
-                Key = "服务器名称",
+                Name = "服务器名称",
                 Value = Environment.MachineName
             },
 
-            new KeyValueDto
+            new ServerInfoDto
             {
-                Key = "服务器IP",
+                Name = "服务器IP",
                 Value = HttpContext.Connection.LocalIpAddress!.ToString()
             },
 
-            new KeyValueDto
+            new ServerInfoDto
             {
-                Key = "操作系统",
+                Name = "操作系统",
                 Value = Environment.OSVersion.ToString()
             },
 
-            new KeyValueDto
+            new ServerInfoDto
             {
-                Key = "外部端口",
+                Name = "外部端口",
                 Value = HttpContext.Connection.LocalPort.ToString()
             },
 
-            new KeyValueDto
+            new ServerInfoDto
             {
-                Key = "目录物理路径",
+                Name = "目录物理路径",
                 Value = Environment.CurrentDirectory
             },
 
-            new KeyValueDto
+            new ServerInfoDto
             {
-                Key = "服务器CPU",
+                Name = "服务器CPU",
                 Value = Environment.ProcessorCount.ToString() + "核"
             },
 
-            new KeyValueDto
+            new ServerInfoDto
             {
-                Key = "本网站占用内存",
+                Name = "本网站占用内存",
                 Value = ((double)GC.GetTotalMemory(false) / 1048576).ToString("N2") + "M"
             }
         ];

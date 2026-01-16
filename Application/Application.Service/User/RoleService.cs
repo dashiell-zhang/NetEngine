@@ -239,15 +239,15 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
 
 
     /// <summary>
-    /// 获取角色键值对
+    /// 获取角色选项列表
     /// </summary>
     /// <returns></returns>
-    public Task<List<KeyValueDto>> GetRoleKVAsync()
+    public Task<List<RoleSelectDto>> GetRoleSelectAsync()
     {
-        var list = db.Role.Select(t => new KeyValueDto
+        var list = db.Role.Select(t => new RoleSelectDto
         {
-            Key = t.Id,
-            Value = t.Name
+            Id = t.Id,
+            Name = t.Name
         }).ToListAsync();
 
         return list;

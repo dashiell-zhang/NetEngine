@@ -1,5 +1,6 @@
 @page "/systemset/user"
 @using Application.Model.User.User
+@using Application.Model.User.Role
 @attribute [ReuseTabsPageTitle("用户管理")]
 
 <Layout Style="padding-top:30px;">
@@ -90,7 +91,7 @@
                     <Row>
                         @foreach (var item in roleList)
                         {
-                            <AntDesign.Col Span="8"><Checkbox Label="@item.Key.ToString()">@item.Value</Checkbox></AntDesign.Col>
+                            <AntDesign.Col Span="8"><Checkbox Label="@item.Id.ToString()">@item.Name</Checkbox></AntDesign.Col>
                         }
                     </Row>
                 </CheckboxGroup>
@@ -155,9 +156,9 @@
         functionList = await userContextService.GetFunctionList();
 
         var getUserListTask = GetUserList();
-        var getRoleKVTask = GetRoleKV();
+        var getRoleSelectTask = GetRoleSelect();
 
-        await Task.WhenAll(getUserListTask, getRoleKVTask);
+        await Task.WhenAll(getUserListTask, getRoleSelectTask);
     }
 
 
@@ -169,13 +170,13 @@
 
     bool isShowEditAuthority = false;
 
-    List<KeyValueDto> roleList = new();
+    List<RoleSelectDto> roleList = new();
 
     List<UserFunctionDto> userFunctionList = new();
 
-    async Task GetRoleKV()
+    async Task GetRoleSelect()
     {
-        var retData = await Http.GetFromJsonAsync<List<KeyValueDto>>("Role/GetRoleKV", JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<RoleSelectDto>>("Role/GetRoleSelect", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {

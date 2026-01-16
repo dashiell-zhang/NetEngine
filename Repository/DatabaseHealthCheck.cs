@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
-namespace Repository.HealthCheck;
+namespace Repository;
 public class DatabaseHealthCheck(DatabaseContext db, ILogger<DatabaseHealthCheck> logger) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)

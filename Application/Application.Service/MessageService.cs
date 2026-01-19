@@ -15,7 +15,7 @@ using System.Net.Mime;
 namespace Application.Service
 {
     [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-    public class MessageService(IHostEnvironment hostEnvironment, ILogger<MessageService> logger, DatabaseContext db, IFileStorage fileStorage, ISMS sms) 
+    public class MessageService(IHostEnvironment hostEnvironment, ILogger<MessageService> logger, DatabaseContext db, ISMS? sms = null, IFileStorage? fileStorage = null)
     {
 
         private readonly string rootPath = hostEnvironment.ContentRootPath;
@@ -23,7 +23,12 @@ namespace Application.Service
 
         public async Task SendSMSAsync(SendSMSDto sendSMS)
         {
-            await sms.SendSMSAsync(sendSMS.SignName, sendSMS.Phone, sendSMS.TemplateCode, sendSMS.TemplateParams);
+            if (sms != null)
+            {
+
+                await sms.SendSMSAsync(sendSMS.SignName, sendSMS.Phone, sendSMS.TemplateCode, sendSMS.TemplateParams);
+
+            }
         }
 
 
@@ -36,6 +41,7 @@ namespace Application.Service
             var accountPassword = "";
 
             Dictionary<string, string> filePaths = [];
+            List<string> tempFiles = [];
 
             if (email.FileIdList != null)
             {
@@ -53,16 +59,25 @@ namespace Application.Service
                         Directory.CreateDirectory(directoryName);
                     }
 
-                    var downloadState = await fileStorage.FileDownloadAsync(file.Path, localPath);
+                    bool downloadState = true;
+
+                    if (fileStorage != null)
+                    {
+                        downloadState = await fileStorage.FileDownloadAsync(file.Path, localPath);
+
+                        if (!downloadState)
+                        {
+                            logger.LogError(fileId + "文件下载失败");
+                            throw new Exception(fileId + "文件下载失败");
+                        }
+
+                        // 记录需要删除的临时文件
+                        tempFiles.Add(localPath);
+                    }
 
                     if (downloadState)
                     {
                         filePaths.Add(localPath, file.Name);
-                    }
-                    else
-                    {
-                        logger.LogError(fileId + "文件下载失败");
-                        throw new Exception(fileId + "文件下载失败");
                     }
                 }
             }
@@ -97,9 +112,10 @@ namespace Application.Service
                 await smtpClient.SendMailAsync(message);
             }
 
-            foreach (var filePath in filePaths)
+            // 只删除从云存储下载的临时文件
+            foreach (var tempFile in tempFiles)
             {
-                IOHelper.DeleteFile(filePath.Key);
+                IOHelper.DeleteFile(tempFile);
             }
 
         }

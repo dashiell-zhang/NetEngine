@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>数据综合管理系统</title>
     <base href="/" />
+    <link rel="preload" id="webassembly" />
+    <script type="importmap"></script>
 
     <link href="Admin.App.styles.css" rel="stylesheet" />
 
@@ -203,7 +205,7 @@
         </div>
     </div>
 
-    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js" autostart="false"></script>
     <script type="module">
         import { BrotliDecode } from './js/brotli.decode.js';
 

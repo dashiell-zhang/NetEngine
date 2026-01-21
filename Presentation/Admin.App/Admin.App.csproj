@@ -4,9 +4,10 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
 		<!--<StaticWebAssetBasePath>admin</StaticWebAssetBasePath>-->
-		<PublishIISAssets>true</PublishIISAssets>
+		<!--<PublishIISAssets>true</PublishIISAssets>-->
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

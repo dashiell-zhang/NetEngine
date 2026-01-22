@@ -1,3 +1,4 @@
+#if !BROWSER
 using DistributedLock;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -69,3 +70,4 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
     }
 
 }
+#endif

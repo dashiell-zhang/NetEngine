@@ -11,6 +11,7 @@
   </Folder>
   <Folder Name="/Infrastructure/">
     <Project Path="Infrastructure/Common/Common.csproj" />
+    <Project Path="Infrastructure/DistributedLock.InMemory/DistributedLock.InMemory.csproj" />
     <Project Path="Infrastructure/DistributedLock.Redis/DistributedLock.Redis.csproj" />
     <Project Path="Infrastructure/DistributedLock/DistributedLock.csproj" />
     <Project Path="Infrastructure/FileStorage.AliCloud/FileStorage.AliCloud.csproj" />

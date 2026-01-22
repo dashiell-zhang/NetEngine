@@ -334,6 +334,14 @@ builder.Services.AddRedisLock(options =>
 });
 ```
 
+#### 4.3.1.1 注册内存锁（非分布式）
+
+在不需要跨进程/跨机器互斥的场景，可使用 `DistributedLock.InMemory`：
+
+```csharp
+builder.Services.AddInMemoryLock();
+```
+
 #### 4.3.2 核心接口
 
 ```csharp

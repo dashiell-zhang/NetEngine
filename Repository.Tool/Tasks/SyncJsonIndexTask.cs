@@ -18,7 +18,9 @@ public class SyncJsonIndexTask(IServiceProvider serviceProvider) : BackgroundSer
 
         var db = serviceProvider.GetRequiredService<DatabaseContext>();
 
-        var dbIndexDT = db.SelectFromSql("SELECT tablename,indexname,indexdef FROM pg_indexes where schemaname = 'public' AND indexname like 'jsonbIX%'");
+        var dbIndexDT = await db.SelectFromSqlAsync(
+            "SELECT tablename,indexname,indexdef FROM pg_indexes where schemaname = 'public' AND indexname like 'jsonbIX%'",
+            cancellationToken: stoppingToken);
 
         var dbIndexList = DataHelper.DataTableToList<DBIndex>(dbIndexDT);
 

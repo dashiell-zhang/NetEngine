@@ -80,7 +80,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
     {
         try
         {
-            var db = dbFactory.CreateDbContext();
+            await using var db = await dbFactory.CreateDbContextAsync();
 
             Repository.Database.QueueTask queueTask = new()
             {

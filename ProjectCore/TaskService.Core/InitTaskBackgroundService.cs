@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repository;
@@ -22,7 +23,9 @@ public class InitTaskBackgroundService(IServiceProvider serviceProvider) : Backg
         {
             var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-            var argScheduleTaskList = db.TaskSetting.Where(t => t.Category == "ScheduleTask" && t.Parameter != null).ToList();
+            var argScheduleTaskList = await db.TaskSetting
+                .Where(t => t.Category == "ScheduleTask" && t.Parameter != null)
+                .ToListAsync(stoppingToken);
 
             foreach (Type cls in taskClasses)
             {

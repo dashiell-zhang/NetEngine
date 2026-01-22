@@ -11,20 +11,20 @@ public static class DatabaseContextExtension
 {
 
     /// <summary>
-    /// 针对数据库执行自定义的sql查询，返回DataTable
+    /// 针对数据库执行自定义的sql查询，返回DataTable（异步）
     /// </summary>
     /// <param name="db"></param>
     /// <param name="sql">自定义查询Sql</param>
     /// <param name="parameters">sql参数</param>
+    /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static DataTable SelectFromSql(this DatabaseContext db, string sql, Dictionary<string, object>? parameters = default)
+    public static async Task<DataTable> SelectFromSqlAsync(this DatabaseContext db, string sql, Dictionary<string, object>? parameters = default, CancellationToken cancellationToken = default)
     {
-
         DbConnection connection = db.Database.GetDbConnection();
 
-        connection.Open();
+        await connection.OpenAsync(cancellationToken);
 
-        var command = connection.CreateCommand();
+        await using var command = connection.CreateCommand();
 
         command.CommandTimeout = 600;
 
@@ -42,37 +42,32 @@ public static class DatabaseContextExtension
             }
         }
 
-        var reader = command.ExecuteReader();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
         DataTable dataTable = new();
-
         dataTable.Load(reader);
 
-        reader.Close();
-        command.Dispose();
-        connection.Close();
+        await connection.CloseAsync();
 
         return dataTable;
     }
 
 
-
-
     /// <summary>
-    /// 针对数据库执行自定义的sql
+    /// 针对数据库执行自定义的sql（异步）
     /// </summary>
     /// <param name="db"></param>
     /// <param name="sql">自定义查询Sql</param>
     /// <param name="parameters">sql参数</param>
+    /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static void ExecuteSql(this DatabaseContext db, string sql, Dictionary<string, object>? parameters = default)
+    public static async Task ExecuteSqlAsync(this DatabaseContext db, string sql, Dictionary<string, object>? parameters = default, CancellationToken cancellationToken = default)
     {
-
         DbConnection connection = db.Database.GetDbConnection();
 
-        connection.Open();
+        await connection.OpenAsync(cancellationToken);
 
-        var command = connection.CreateCommand();
+        await using var command = connection.CreateCommand();
 
         command.CommandTimeout = 600;
 
@@ -90,29 +85,10 @@ public static class DatabaseContextExtension
             }
         }
 
-        command.ExecuteNonQuery();
+        await command.ExecuteNonQueryAsync(cancellationToken);
 
-        command.Dispose();
-        connection.Close();
+        await connection.CloseAsync();
     }
-
-
-
-    /// <summary>
-    /// 保存数据并记录更新日志
-    /// </summary>
-    /// <param name="db"></param>
-    /// <param name="actionUserId"></param>
-    /// <param name="ipAddress"></param>
-    /// <param name="deviceMark"></param>
-    /// <returns></returns>
-    public static int SaveChangesWithUpdateLog(this DatabaseContext db, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
-    {
-        CreateUpdateLog(db, actionUserId, ipAddress, deviceMark);
-
-        return db.SaveChanges();
-    }
-
 
 
     /// <summary>
@@ -267,8 +243,6 @@ public static class DatabaseContextExtension
     }
 
 
-
-
     /// <summary>
     /// 比较两个实体获取修改内容
     /// </summary>
@@ -362,6 +336,5 @@ public static class DatabaseContextExtension
 
         return retValue;
     }
-
 
 }

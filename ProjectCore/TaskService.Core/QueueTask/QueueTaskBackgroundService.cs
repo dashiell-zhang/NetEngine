@@ -89,7 +89,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
             var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
 
-            using var db = factory.CreateDbContext();
+            await using var db = await factory.CreateDbContextAsync();
 
             var idService = scope.ServiceProvider.GetRequiredService<IdService>();
 

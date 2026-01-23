@@ -18,6 +18,6 @@ public class LogController(LogManageService logManageService) : ControllerBase
     /// 获取日志列表
     /// </summary>
     [HttpGet]
-    public Task<PageListDto<LogDto>> GetLogList([FromQuery] PageRequestDto request) => logManageService.GetLogListAsync(request);
+    public Task<PageListDto<LogDto>> GetLogList([FromQuery] LogPageRequestDto request) => logManageService.GetLogListAsync(request);
 }
 

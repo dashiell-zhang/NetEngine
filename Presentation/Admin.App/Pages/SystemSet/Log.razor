@@ -2,6 +2,39 @@
 @using Application.Model.Basic.Log
 @attribute [ReuseTabsPageTitle("日志")]
 
+<Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearch">
+    <FormItem>
+        <Text>设备名称</Text>
+        <Input @bind-Value="@context.MachineName" Placeholder="请输入设备名称" Style="width: 200px" />
+    </FormItem>
+    <FormItem>
+        <Text>日志等级</Text>
+        <Select TItem="string" TItemValue="string" @bind-Value="@context.Level" Placeholder="请选择日志等级" Style="width: 150px" AllowClear>
+            <SelectOption Value="@("Debug")" Label="Debug"></SelectOption>
+            <SelectOption Value="@("Info")" Label="Info"></SelectOption>
+            <SelectOption Value="@("Warning")" Label="Warning"></SelectOption>
+            <SelectOption Value="@("Error")" Label="Error"></SelectOption>
+            <SelectOption Value="@("Fatal")" Label="Fatal"></SelectOption>
+        </Select>
+    </FormItem>
+    <FormItem>
+        <Text>开始时间</Text>
+        <DatePicker @bind-Value="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" />
+    </FormItem>
+    <FormItem>
+        <Text>结束时间</Text>
+        <DatePicker @bind-Value="@context.EndTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" />
+    </FormItem>
+    <FormItem>
+        <Space>
+            <Button Type="@ButtonType.Primary" HtmlType="submit" Icon="@("search-outlined")">搜索</Button>&nbsp;&nbsp;
+            <Button Icon="@("redo-outlined")" OnClick="HandleReset">重置</Button>
+        </Space>
+    </FormItem>
+</Form>
+
+<Divider Style="margin: 12px 0" />
+
 <Table TItem="LogDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
     <ColumnDefinitions>
@@ -24,7 +57,7 @@
 
     <PaginationTemplate>
         <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.PageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
         </div>
     </PaginationTemplate>
 
@@ -66,16 +99,16 @@
         GetLogList();
     }
 
+    LogPageRequestDto request = new() { PageSize = 10 };
+
     bool tableLoading = false;
-    int pageNum = 1;
-    int pageSize = 10;
     PageListDto<LogDto> pageList = new();
 
     async Task GetLogList()
     {
         tableLoading = true;
-
-        var retData = await Http.GetFromJsonAsync<PageListDto<LogDto>>("Log/GetLogList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var url = StringHelper.ModelToUriParam(request, "Log/GetLogList");
+        var retData = await Http.GetFromJsonAsync<PageListDto<LogDto>>(url, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -86,16 +119,28 @@
         StateHasChanged();
     }
 
+    async Task HandleSearch(EditContext editContext)
+    {
+        request.PageNum = 1;
+        await GetLogList();
+    }
+
+    void HandleReset()
+    {
+        request = new LogPageRequestDto { PageSize = request.PageSize };
+        GetLogList();
+    }
+
     void PageChange(PaginationEventArgs args)
     {
-        if (pageNum != args.Page)
+        if (request.PageNum != args.Page)
         {
-            pageNum = args.Page;
+            request.PageNum = args.Page;
         }
 
-        if (pageSize != args.PageSize)
+        if (request.PageSize != args.PageSize)
         {
-            pageSize = args.PageSize;
+            request.PageSize = args.PageSize;
         }
 
         GetLogList();
@@ -115,4 +160,3 @@
         StateHasChanged();
     }
 }
-

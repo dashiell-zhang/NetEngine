@@ -14,11 +14,32 @@ public class LogManageService(DatabaseContext db)
     /// <summary>
     /// 获取日志列表
     /// </summary>
-    public async Task<PageListDto<LogDto>> GetLogListAsync(PageRequestDto request)
+    public async Task<PageListDto<LogDto>> GetLogListAsync(LogPageRequestDto request)
     {
         PageListDto<LogDto> result = new();
 
         var query = db.Log.AsNoTracking().AsQueryable();
+
+        // 添加检索条件
+        if (!string.IsNullOrWhiteSpace(request.MachineName))
+        {
+            query = query.Where(t => t.MachineName.Contains(request.MachineName));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Level))
+        {
+            query = query.Where(t => t.Level == request.Level);
+        }
+
+        if (request.StartTime.HasValue)
+        {
+            query = query.Where(t => t.CreateTime >= request.StartTime.Value);
+        }
+
+        if (request.EndTime.HasValue)
+        {
+            query = query.Where(t => t.CreateTime <= request.EndTime.Value);
+        }
 
         result.Total = await query.CountAsync();
 

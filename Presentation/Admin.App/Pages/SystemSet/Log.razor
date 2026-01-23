@@ -1,0 +1,118 @@
+@page "/systemset/log"
+@using Application.Model.Basic.Log
+@attribute [ReuseTabsPageTitle("日志")]
+
+<Table TItem="LogDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+    <ColumnDefinitions>
+        <PropertyColumn Property="c => c.Project" Title="项目"></PropertyColumn>
+        <PropertyColumn Property="c => c.MachineName" Title="机器"></PropertyColumn>
+        <PropertyColumn Property="c => c.Level" Title="等级"></PropertyColumn>
+        <PropertyColumn Property="c => c.Category" Title="类别"></PropertyColumn>
+        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="时间"></PropertyColumn>
+        <ActionColumn Title="操作">
+            <Space>
+                @if (functionList.Contains("log-view"))
+                {
+                    <SpaceItem>
+                        <a @onclick="() => ViewLog(context)">查看</a>
+                    </SpaceItem>
+                }
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+        </div>
+    </PaginationTemplate>
+
+</Table>
+
+
+<Drawer Closable="true" Width="860" Visible="isShowDetail" Title='("日志详情")' OnClose="() => isShowDetail = false">
+    <Template style="height:90%">
+
+        <Descriptions Column="2" Bordered>
+            <DescriptionsItem Title="项目">@detail?.Project</DescriptionsItem>
+            <DescriptionsItem Title="机器">@detail?.MachineName</DescriptionsItem>
+            <DescriptionsItem Title="等级">@detail?.Level</DescriptionsItem>
+            <DescriptionsItem Title="类别">@detail?.Category</DescriptionsItem>
+            <DescriptionsItem Title="时间">@detail?.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</DescriptionsItem>
+            <DescriptionsItem Title="Id">@detail?.Id</DescriptionsItem>
+        </Descriptions>
+
+        <Divider />
+
+        <Text>内容</Text>
+        <TextArea @bind-Value="@detailContent" ReadOnly MinRows="10" MaxRows="24" style="width:100%" />
+
+    </Template>
+</Drawer>
+
+
+@code {
+
+    List<string> functionList = new();
+
+    override protected async Task OnInitializedAsync()
+    {
+        functionList = await userContextService.GetFunctionList();
+    }
+
+    override protected void OnParametersSet()
+    {
+        GetLogList();
+    }
+
+    bool tableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    PageListDto<LogDto> pageList = new();
+
+    async Task GetLogList()
+    {
+        tableLoading = true;
+
+        var retData = await Http.GetFromJsonAsync<PageListDto<LogDto>>("Log/GetLogList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetLogList();
+    }
+
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+    bool isShowDetail = false;
+    LogDto? detail;
+    string? detailContent;
+
+    void ViewLog(LogDto row)
+    {
+        detail = row;
+        detailContent = row.Content;
+        isShowDetail = true;
+        StateHasChanged();
+    }
+}
+

@@ -1,0 +1,156 @@
+@page "/taskcenter/queuetask"
+@using Application.Model.TaskCenter
+@attribute [ReuseTabsPageTitle("队列任务")]
+
+<Table TItem="QueueTaskDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+    <ColumnDefinitions>
+        <PropertyColumn Property="c => c.Name" Title="任务名称"></PropertyColumn>
+        <PropertyColumn Property="c => (DateTime?)(c.PlanTime == null ? null : c.PlanTime.Value.LocalDateTime)" Format="yyyy-MM-dd HH:mm" Title="计划时间"></PropertyColumn>
+        <PropertyColumn Property="c => c.Count" Title="执行次数"></PropertyColumn>
+        <PropertyColumn Property="c => (DateTime?)(c.LastTime == null ? null : c.LastTime.Value.LocalDateTime)" Format="yyyy-MM-dd HH:mm" Title="最后执行"></PropertyColumn>
+        <PropertyColumn Property="c => (DateTime?)(c.SuccessTime == null ? null : c.SuccessTime.Value.LocalDateTime)" Format="yyyy-MM-dd HH:mm" Title="成功时间"></PropertyColumn>
+        <PropertyColumn Property="c => c.CallbackName" Title="回调任务"></PropertyColumn>
+        <PropertyColumn Property="c => c.ParentTaskId" Title="父任务Id"></PropertyColumn>
+        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
+        <ActionColumn Title="操作">
+            <Space>
+                @if (functionList.Contains("queuetask"))
+                {
+                    <SpaceItem>
+                        <a @onclick="() => ViewQueueTask(context)">详情</a>
+                    </SpaceItem>
+                }
+
+                @if (context.SuccessTime == null && functionList.Contains("queuetask-retry"))
+                {
+                    <SpaceItem>
+                        <Popconfirm Title="确认要重试吗？将重置执行次数/时间并重新触发"
+                                    OnConfirm="_=>RetryQueueTask(context.Id)"
+                                    OkText="Yes"
+                                    CancelText="No">
+                            <a style="color:darkorange">重试</a>
+                        </Popconfirm>
+                    </SpaceItem>
+                }
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+        </div>
+    </PaginationTemplate>
+
+</Table>
+
+
+<Drawer Closable="true" Width="720" Visible="isShowDetail" Title='("队列任务详情")' OnClose="() => isShowDetail = false">
+    <Template style="height:90%">
+
+        <Descriptions Column="1" Bordered>
+            <DescriptionsItem Title="任务名称">@detail?.Name</DescriptionsItem>
+            <DescriptionsItem Title="计划时间">@FormatTime(detail?.PlanTime)</DescriptionsItem>
+            <DescriptionsItem Title="执行次数">@detail?.Count</DescriptionsItem>
+            <DescriptionsItem Title="首次执行">@FormatTime(detail?.FirstTime)</DescriptionsItem>
+            <DescriptionsItem Title="最后执行">@FormatTime(detail?.LastTime)</DescriptionsItem>
+            <DescriptionsItem Title="成功时间">@FormatTime(detail?.SuccessTime)</DescriptionsItem>
+            <DescriptionsItem Title="子任务成功">@FormatTime(detail?.ChildSuccessTime)</DescriptionsItem>
+            <DescriptionsItem Title="父任务Id">@detail?.ParentTaskId</DescriptionsItem>
+            <DescriptionsItem Title="回调任务">@detail?.CallbackName</DescriptionsItem>
+            <DescriptionsItem Title="创建时间">@FormatTime(detail?.CreateTime)</DescriptionsItem>
+        </Descriptions>
+
+        <Divider />
+
+        <Text>参数(JSON)</Text>
+        <TextArea @bind-Value="@detailParameter" ReadOnly MinRows="6" MaxRows="16" style="width:100%" />
+
+        <Divider />
+
+        <Text>回调参数(JSON)</Text>
+        <TextArea @bind-Value="@detailCallbackParameter" ReadOnly MinRows="6" MaxRows="16" style="width:100%" />
+
+    </Template>
+</Drawer>
+
+
+@code {
+
+    List<string> functionList = new();
+
+    override protected async Task OnInitializedAsync()
+    {
+        functionList = await userContextService.GetFunctionList();
+    }
+
+    override protected void OnParametersSet()
+    {
+        GetQueueTaskList();
+    }
+
+    bool tableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    PageListDto<QueueTaskDto> pageList = new();
+
+    async Task GetQueueTaskList()
+    {
+        tableLoading = true;
+
+        var retData = await Http.GetFromJsonAsync<PageListDto<QueueTaskDto>>("QueueTask/GetQueueTaskList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetQueueTaskList();
+    }
+
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+    bool isShowDetail = false;
+    QueueTaskDto? detail;
+    string? detailParameter;
+    string? detailCallbackParameter;
+
+    void ViewQueueTask(QueueTaskDto row)
+    {
+        detail = row;
+        detailParameter = row.Parameter;
+        detailCallbackParameter = row.CallbackParameter;
+        isShowDetail = true;
+        StateHasChanged();
+    }
+
+    async Task RetryQueueTask(long id)
+    {
+        using var httpResponse = await Http.PostAsync("QueueTask/RetryQueueTask?id=" + id, null);
+
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            Message.Success("已触发重试");
+            GetQueueTaskList();
+        }
+    }
+
+    static string? FormatTime(DateTimeOffset? time) => time?.LocalDateTime.ToString("yyyy-MM-dd HH:mm");
+}

@@ -27,6 +27,21 @@
                 </SubMenu>
             }
 
+            @if (functionList.Contains("taskcenter"))
+            {
+                <SubMenu TitleTemplate=subTaskCenter>
+                    @if (functionList.Contains("tasksetting"))
+                    {
+                        <MenuItem><a href="taskcenter/tasksetting">任务配置</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("queuetask"))
+                    {
+                        <MenuItem><a href="taskcenter/queuetask">队列任务</a></MenuItem>
+                    }
+                </SubMenu>
+            }
+
             @if (functionList.Contains("systemset"))
             {
                 <SubMenu TitleTemplate=subSystemSet>
@@ -48,6 +63,11 @@
                     @if (functionList.Contains("info"))
                     {
                         <MenuItem><a href="systemset/site">信息维护</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("log"))
+                    {
+                        <MenuItem><a href="systemset/log">日志</a></MenuItem>
                     }
                 </SubMenu>
             }
@@ -104,6 +124,13 @@
     @<span>
         <Icon Type="read" Theme="IconThemeType.Outline" />
         <span>资讯管理</span>
+    </span>
+    ;
+
+    RenderFragment subTaskCenter =
+    @<span>
+        <Icon Type="schedule" Theme="IconThemeType.Outline" />
+        <span>任务中心</span>
     </span>
     ;
 

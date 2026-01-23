@@ -1,4 +1,4 @@
-@page "/taskcenter/queuetask"
+@page "/operations/queuetask"
 @using Application.Model.TaskCenter
 @attribute [ReuseTabsPageTitle("队列任务")]
 
@@ -99,7 +99,7 @@
     {
         tableLoading = true;
 
-        var retData = await Http.GetFromJsonAsync<PageListDto<QueueTaskDto>>("QueueTask/GetQueueTaskList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<QueueTaskDto>>("Operations/GetQueueTaskList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -143,7 +143,7 @@
 
     async Task RetryQueueTask(long id)
     {
-        using var httpResponse = await Http.PostAsync("QueueTask/RetryQueueTask?id=" + id, null);
+        using var httpResponse = await Http.PostAsync("Operations/RetryQueueTask?id=" + id, null);
 
         if (httpResponse.IsSuccessStatusCode)
         {

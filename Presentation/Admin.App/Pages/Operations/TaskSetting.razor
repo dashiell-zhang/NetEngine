@@ -1,4 +1,4 @@
-@page "/taskcenter/tasksetting"
+@page "/operations/tasksetting"
 @using Application.Model.TaskCenter
 @attribute [ReuseTabsPageTitle("任务配置")]
 
@@ -15,12 +15,9 @@
         <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
         <ActionColumn Title="操作">
             <Space>
-                @if (functionList.Contains("tasksetting-edit"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => EditTaskSetting(context)">编辑</a>
-                    </SpaceItem>
-                }
+                <SpaceItem>
+                    <a @onclick="() => EditTaskSetting(context)">编辑</a>
+                </SpaceItem>
             </Space>
         </ActionColumn>
     </ColumnDefinitions>
@@ -117,7 +114,7 @@
     {
         tableLoading = true;
 
-        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("TaskSetting/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -181,7 +178,7 @@
     {
         saveLoading = true;
 
-        using var httpResponse = await Http.PostAsJsonAsync<EditTaskSettingDto>("TaskSetting/UpdateTaskSetting?taskSettingId=" + taskSettingId, editTaskSetting, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync<EditTaskSettingDto>("Operations/UpdateTaskSetting?taskSettingId=" + taskSettingId, editTaskSetting, JsonHelper.SerializeOpts);
 
         if (httpResponse.IsSuccessStatusCode)
         {

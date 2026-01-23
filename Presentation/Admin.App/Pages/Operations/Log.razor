@@ -1,14 +1,12 @@
-@page "/systemset/log"
+@page "/operations/log"
 @using Application.Model.Basic.Log
 @attribute [ReuseTabsPageTitle("日志")]
 
 <Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearch">
     <FormItem>
-        <Text>设备名称</Text>
         <Input @bind-Value="@context.MachineName" Placeholder="请输入设备名称" Style="width: 200px" />
     </FormItem>
     <FormItem>
-        <Text>日志等级</Text>
         <Select TItem="string" TItemValue="string" @bind-Value="@context.Level" Placeholder="请选择日志等级" Style="width: 150px" AllowClear>
             <SelectOption Value="@("Debug")" Label="Debug"></SelectOption>
             <SelectOption Value="@("Info")" Label="Info"></SelectOption>
@@ -18,16 +16,18 @@
         </Select>
     </FormItem>
     <FormItem>
-        <Text>开始时间</Text>
-        <DatePicker @bind-Value="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" />
+        <DatePicker @bind-Value="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择开始时间")" />
     </FormItem>
     <FormItem>
-        <Text>结束时间</Text>
-        <DatePicker @bind-Value="@context.EndTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" />
+        <DatePicker @bind-Value="@context.EndTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择结束时间")" />
     </FormItem>
     <FormItem>
         <Space>
-            <Button Type="@ButtonType.Primary" HtmlType="submit" Icon="@("search-outlined")">搜索</Button>&nbsp;&nbsp;
+            <Button Type="@ButtonType.Primary" HtmlType="submit" Icon="@("search-outlined")">搜索</Button>
+        </Space>
+    </FormItem>
+    <FormItem>
+        <Space>
             <Button Icon="@("redo-outlined")" OnClick="HandleReset">重置</Button>
         </Space>
     </FormItem>
@@ -45,12 +45,9 @@
         <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="时间"></PropertyColumn>
         <ActionColumn Title="操作">
             <Space>
-                @if (functionList.Contains("log-view"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => ViewLog(context)">查看</a>
-                    </SpaceItem>
-                }
+                <SpaceItem>
+                    <a @onclick="() => ViewLog(context)">查看</a>
+                </SpaceItem>
             </Space>
         </ActionColumn>
     </ColumnDefinitions>
@@ -107,7 +104,7 @@
     async Task GetLogList()
     {
         tableLoading = true;
-        var url = StringHelper.ModelToUriParam(request, "Log/GetLogList");
+        var url = StringHelper.ModelToUriParam(request, "Operations/GetLogList");
         var retData = await Http.GetFromJsonAsync<PageListDto<LogDto>>(url, JsonHelper.DeserializeOpts);
 
         if (retData != null)

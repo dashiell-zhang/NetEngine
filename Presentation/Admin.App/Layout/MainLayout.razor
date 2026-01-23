@@ -27,21 +27,6 @@
                 </SubMenu>
             }
 
-            @if (functionList.Contains("taskcenter"))
-            {
-                <SubMenu TitleTemplate=subTaskCenter>
-                    @if (functionList.Contains("tasksetting"))
-                    {
-                        <MenuItem><a href="taskcenter/tasksetting">任务配置</a></MenuItem>
-                    }
-
-                    @if (functionList.Contains("queuetask"))
-                    {
-                        <MenuItem><a href="taskcenter/queuetask">队列任务</a></MenuItem>
-                    }
-                </SubMenu>
-            }
-
             @if (functionList.Contains("systemset"))
             {
                 <SubMenu TitleTemplate=subSystemSet>
@@ -64,10 +49,25 @@
                     {
                         <MenuItem><a href="systemset/site">信息维护</a></MenuItem>
                     }
+                </SubMenu>
+            }
+
+            @if (functionList.Contains("operations"))
+            {
+                <SubMenu TitleTemplate=subOperations>
+                    @if (functionList.Contains("tasksetting"))
+                    {
+                        <MenuItem><a href="operations/tasksetting">任务配置</a></MenuItem>
+                    }
+
+                    @if (functionList.Contains("queuetask"))
+                    {
+                        <MenuItem><a href="operations/queuetask">队列任务</a></MenuItem>
+                    }
 
                     @if (functionList.Contains("log"))
                     {
-                        <MenuItem><a href="systemset/log">日志</a></MenuItem>
+                        <MenuItem><a href="operations/log">系统日志</a></MenuItem>
                     }
                 </SubMenu>
             }
@@ -120,17 +120,16 @@
         <span>系统设置</span>
     </span>;
 
+    RenderFragment subOperations =
+    @<span>
+        <Icon Type="tool" Theme="IconThemeType.Outline" />
+        <span>运维管理</span>
+    </span>;
+
     RenderFragment subArticle =
     @<span>
         <Icon Type="read" Theme="IconThemeType.Outline" />
         <span>资讯管理</span>
-    </span>
-    ;
-
-    RenderFragment subTaskCenter =
-    @<span>
-        <Icon Type="schedule" Theme="IconThemeType.Outline" />
-        <span>任务中心</span>
     </span>
     ;
 

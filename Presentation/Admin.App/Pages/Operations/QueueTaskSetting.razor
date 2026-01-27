@@ -1,14 +1,12 @@
-@page "/operations/tasksetting"
+@page "/operations/queuetasksetting"
 @using Application.Model.TaskCenter
-@attribute [ReuseTabsPageTitle("任务配置")]
+@attribute [ReuseTabsPageTitle("队列任务配置")]
 
 <Table TItem="TaskSettingDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
     <ColumnDefinitions>
         <PropertyColumn Property="c => c.Name" Title="任务名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.Category" Title="类型"></PropertyColumn>
         <PropertyColumn Property="c => c.IsEnable" Title="启用"></PropertyColumn>
-        <PropertyColumn Property="c => c.Cron" Title="Cron"></PropertyColumn>
         <PropertyColumn Property="c => c.Semaphore" Title="并发"></PropertyColumn>
         <PropertyColumn Property="c => c.Duration" Title="持续时间(分)"></PropertyColumn>
         <PropertyColumn Property="c => c.Remarks" Title="备注"></PropertyColumn>
@@ -48,32 +46,22 @@
 
             <FormItem>
                 <Text>是否启用</Text>
-                <Switch @bind-Value="@context.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
-            </FormItem>
-
-            <FormItem>
-                <Text>Cron</Text>
-                <Input Placeholder="ScheduleTask 的 Cron 表达式" @bind-Value="@context.Cron" />
+                <Switch @bind-Value="@editTaskSetting.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
             </FormItem>
 
             <FormItem>
                 <Text>并发</Text>
-                <Input Placeholder="QueueTask 并发值" Type="InputType.Number" @bind-Value="@context.Semaphore" />
+                <Input Placeholder="QueueTask 并发值" Type="InputType.Number" @bind-Value="@editTaskSetting.Semaphore" />
             </FormItem>
 
             <FormItem>
                 <Text>持续时间(分)</Text>
-                <Input Placeholder="预期持续时间(分)" Type="InputType.Number" @bind-Value="@context.Duration" />
-            </FormItem>
-
-            <FormItem>
-                <Text>参数(JSON)</Text>
-                <TextArea Placeholder="带参任务参数 JSON" @bind-Value="@context.Parameter" MinRows="4" MaxRows="10" style="width:100%" />
+                <Input Placeholder="预期持续时间(分)" Type="InputType.Number" @bind-Value="@editTaskSetting.Duration" />
             </FormItem>
 
             <FormItem>
                 <Text>备注</Text>
-                <Input Placeholder="请输入备注" @bind-Value="@context.Remarks" />
+                <Input Placeholder="请输入备注" @bind-Value="@editTaskSetting.Remarks" />
             </FormItem>
 
             <Row Gutter="24">
@@ -95,6 +83,8 @@
 
     List<string> functionList = new();
 
+    const string PageCategory = "QueueTask";
+
     override protected async Task OnInitializedAsync()
     {
         functionList = await userContextService.GetFunctionList();
@@ -110,11 +100,12 @@
     int pageSize = 10;
     PageListDto<TaskSettingDto> pageList = new();
 
+
     async Task GetTaskSettingList()
     {
         tableLoading = true;
 
-        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -191,3 +182,4 @@
         isShowEditTaskSetting = false;
     }
 }
+

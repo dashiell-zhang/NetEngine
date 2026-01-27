@@ -1,0 +1,183 @@
+@page "/operations/scheduletasksetting"
+@using Application.Model.TaskCenter
+@attribute [ReuseTabsPageTitle("定时任务配置")]
+
+<Table TItem="TaskSettingDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+    <ColumnDefinitions>
+        <PropertyColumn Property="c => c.Name" Title="任务名称"></PropertyColumn>
+        <PropertyColumn Property="c => c.IsEnable" Title="启用"></PropertyColumn>
+        <PropertyColumn Property="c => c.Cron" Title="Cron"></PropertyColumn>
+        <PropertyColumn Property="c => c.Remarks" Title="备注"></PropertyColumn>
+        <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
+        <ActionColumn Title="操作">
+            <Space>
+                <SpaceItem>
+                    <a @onclick="() => EditTaskSetting(context)">编辑</a>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+        </div>
+    </PaginationTemplate>
+
+</Table>
+
+
+<Drawer Closable="true" Width="520" Visible="isShowEditTaskSetting" Title='("任务配置")' OnClose="() => isShowEditTaskSetting = false">
+    <Template style="height:90%">
+
+        <Form Model="@editTaskSetting" OnFinish="SaveTaskSetting">
+
+            <FormItem>
+                <Text>任务名称</Text>
+                <Input Disabled @bind-Value="@taskName" />
+            </FormItem>
+
+            <FormItem>
+                <Text>任务类型</Text>
+                <Input Disabled @bind-Value="@taskCategory" />
+            </FormItem>
+
+            <FormItem>
+                <Text>是否启用</Text>
+                <Switch @bind-Value="@editTaskSetting.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
+            </FormItem>
+
+            <FormItem>
+                <Text>Cron</Text>
+                <Input Placeholder="ScheduleTask 的 Cron 表达式" @bind-Value="@editTaskSetting.Cron" />
+            </FormItem>
+
+            <FormItem>
+                <Text>参数(JSON)</Text>
+                <TextArea Placeholder="带参任务参数 JSON" @bind-Value="@editTaskSetting.Parameter" MinRows="4" MaxRows="10" style="width:100%" />
+            </FormItem>
+
+            <FormItem>
+                <Text>备注</Text>
+                <Input Placeholder="请输入备注" @bind-Value="@editTaskSetting.Remarks" />
+            </FormItem>
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <div style="float:right">
+                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditTaskSetting = false">取消</Button>
+                    </div>
+                </AntDesign.Col>
+            </Row>
+
+        </Form>
+
+    </Template>
+</Drawer>
+
+
+@code {
+
+    List<string> functionList = new();
+
+    const string PageCategory = "ScheduleTask";
+
+    override protected async Task OnInitializedAsync()
+    {
+        functionList = await userContextService.GetFunctionList();
+    }
+
+    override protected void OnParametersSet()
+    {
+        GetTaskSettingList();
+    }
+
+    bool tableLoading = false;
+    int pageNum = 1;
+    int pageSize = 10;
+    PageListDto<TaskSettingDto> pageList = new();
+
+
+    async Task GetTaskSettingList()
+    {
+        tableLoading = true;
+
+        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (pageNum != args.Page)
+        {
+            pageNum = args.Page;
+        }
+
+        if (pageSize != args.PageSize)
+        {
+            pageSize = args.PageSize;
+        }
+
+        GetTaskSettingList();
+    }
+
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+    bool isShowEditTaskSetting = false;
+    bool saveLoading = false;
+
+    long taskSettingId;
+    string? taskName;
+    string? taskCategory;
+    EditTaskSettingDto editTaskSetting = new();
+
+    async Task EditTaskSetting(TaskSettingDto taskSetting)
+    {
+        taskSettingId = taskSetting.Id;
+
+        taskName = taskSetting.Name;
+        taskCategory = taskSetting.Category;
+
+        editTaskSetting = new EditTaskSettingDto
+        {
+            IsEnable = taskSetting.IsEnable,
+            Cron = taskSetting.Cron,
+            Semaphore = taskSetting.Semaphore,
+            Duration = taskSetting.Duration,
+            Parameter = taskSetting.Parameter,
+            Remarks = taskSetting.Remarks
+        };
+
+        await Task.Delay(200);
+
+        isShowEditTaskSetting = true;
+
+        StateHasChanged();
+    }
+
+    async Task SaveTaskSetting()
+    {
+        saveLoading = true;
+
+        using var httpResponse = await Http.PostAsJsonAsync<EditTaskSettingDto>("Operations/UpdateTaskSetting?taskSettingId=" + taskSettingId, editTaskSetting, JsonHelper.SerializeOpts);
+
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            Message.Success("编辑成功");
+        }
+
+        saveLoading = false;
+
+        GetTaskSettingList();
+        isShowEditTaskSetting = false;
+    }
+}

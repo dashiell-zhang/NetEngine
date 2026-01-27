@@ -27,7 +27,7 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// 获取任务配置列表
     /// </summary>
     [HttpGet]
-    public Task<PageListDto<TaskSettingDto>> GetTaskSettingList([FromQuery] PageRequestDto request) => taskSettingService.GetTaskSettingListAsync(request);
+    public Task<PageListDto<TaskSettingDto>> GetTaskSettingList([FromQuery] PageRequestDto request, [FromQuery] string? category) => taskSettingService.GetTaskSettingListAsync(request, category);
 
 
     /// <summary>

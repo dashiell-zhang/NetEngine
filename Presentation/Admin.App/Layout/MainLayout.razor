@@ -57,7 +57,8 @@
                 <SubMenu TitleTemplate=subOperations>
                     @if (functionList.Contains("tasksetting"))
                     {
-                        <MenuItem><a href="operations/tasksetting">任务配置</a></MenuItem>
+                        <MenuItem><a href="operations/scheduletasksetting">定时任务配置</a></MenuItem>
+                        <MenuItem><a href="operations/queuetasksetting">队列任务配置</a></MenuItem>
                     }
 
                     @if (functionList.Contains("queuetask"))

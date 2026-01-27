@@ -17,11 +17,16 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext)
     /// <summary>
     /// 获取任务配置列表
     /// </summary>
-    public async Task<PageListDto<TaskSettingDto>> GetTaskSettingListAsync(PageRequestDto request)
+    public async Task<PageListDto<TaskSettingDto>> GetTaskSettingListAsync(PageRequestDto request, string? category)
     {
         PageListDto<TaskSettingDto> result = new();
 
         var query = db.TaskSetting.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(t => t.Category == category);
+        }
 
         result.Total = await query.CountAsync();
 
@@ -72,4 +77,3 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext)
         return true;
     }
 }
-

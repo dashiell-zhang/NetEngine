@@ -11,12 +11,10 @@ using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Site;
+
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, FileService fileService)
 {
-
-    private long UserId => userContext.UserId;
-
 
     /// <summary>
     /// 获取栏目列表
@@ -104,7 +102,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
         Category category = new()
         {
             Id = idService.GetId(),
-            CreateUserId = UserId,
+            CreateUserId = userContext.UserId,
             Name = createCategory.Name,
             ParentId = createCategory.ParentId,
             Remarks = createCategory.Remarks,
@@ -158,7 +156,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
         if (category != null)
         {
             category.IsDelete = true;
-            category.DeleteUserId = UserId;
+            category.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();
 
@@ -253,7 +251,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
         Article article = new()
         {
             Id = idService.GetId(),
-            CreateUserId = UserId,
+            CreateUserId = userContext.UserId,
             Title = createArticle.Title,
             Content = createArticle.Content,
             CategoryId = long.Parse(createArticle.CategoryId),
@@ -340,7 +338,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
         if (article != null)
         {
             article.IsDelete = true;
-            article.DeleteUserId = UserId;
+            article.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();
         }

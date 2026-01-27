@@ -13,8 +13,6 @@ namespace Application.Service.TaskCenter;
 public class TaskSettingService(DatabaseContext db, IUserContext userContext)
 {
 
-    private long UserId => userContext.UserId;
-
 
     /// <summary>
     /// 获取任务配置列表
@@ -67,7 +65,7 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext)
         taskSetting.Cron = updateTaskSetting.Cron;
         taskSetting.IsEnable = updateTaskSetting.IsEnable;
         taskSetting.Remarks = updateTaskSetting.Remarks;
-        taskSetting.UpdateUserId = UserId;
+        taskSetting.UpdateUserId = userContext.UserId;
 
         await db.SaveChangesAsync();
 

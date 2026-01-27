@@ -13,8 +13,6 @@ namespace Application.Service.Site;
 public class LinkService(DatabaseContext db, IdService idService, IUserContext userContext)
 {
 
-    private long UserId => userContext.UserId;
-
 
     /// <summary>
     /// 获取友情链接列表
@@ -77,7 +75,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
             Id = idService.GetId(),
             Name = createLink.Name,
             Url = createLink.Url,
-            CreateUserId = UserId,
+            CreateUserId = userContext.UserId,
             Sort = createLink.Sort
         };
 
@@ -127,7 +125,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
         if (link != null)
         {
             link.IsDelete = true;
-            link.DeleteUserId = UserId;
+            link.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();
 

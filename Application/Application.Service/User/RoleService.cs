@@ -16,9 +16,6 @@ namespace Application.Service.User;
 public class RoleService(DatabaseContext db, IdService idService, IUserContext userContext, IDistributedLock distLock)
 {
 
-    private long UserId => userContext.UserId;
-
-
     /// 获取角色列表
     /// </summary>
     /// <param name="request"></param>
@@ -218,7 +215,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
             if (functionAuthorize.Id == default)
             {
                 functionAuthorize.Id = idService.GetId();
-                functionAuthorize.CreateUserId = UserId;
+                functionAuthorize.CreateUserId = userContext.UserId;
 
                 db.FunctionAuthorize.Add(functionAuthorize);
             }
@@ -228,7 +225,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
             if (functionAuthorize.Id != default)
             {
                 functionAuthorize.IsDelete = true;
-                functionAuthorize.DeleteUserId = UserId;
+                functionAuthorize.DeleteUserId = userContext.UserId;
             }
         }
 

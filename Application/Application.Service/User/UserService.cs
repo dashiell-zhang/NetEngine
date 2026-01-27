@@ -19,8 +19,6 @@ namespace Application.Service.User;
 public class UserService(DatabaseContext db, IDistributedCache distributedCache, IUserContext userContext, IDistributedLock distLock, IdService idService)
 {
 
-    private long UserId => userContext.UserId;
-
 
     /// <summary>
     /// 通过 UserId 获取用户信息 
@@ -29,7 +27,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <returns></returns>
     public Task<UserDto?> GetUserAsync(long? userId)
     {
-        userId ??= UserId;
+        userId ??= userContext.UserId;
 
         var user = db.User.Where(t => t.Id == userId).Select(t => new UserDto
         {
@@ -59,11 +57,11 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
 
         if (string.IsNullOrEmpty(code) == false && code == request.SmsCode)
         {
-            var user = await db.User.Where(t => t.Id == UserId).FirstOrDefaultAsync();
+            var user = await db.User.Where(t => t.Id == userContext.UserId).FirstOrDefaultAsync();
 
             if (user != null)
             {
-                var checkPhone = await db.User.Where(t => t.Id != UserId && t.Phone == request.NewPhone).CountAsync();
+                var checkPhone = await db.User.Where(t => t.Id != userContext.UserId && t.Phone == request.NewPhone).CountAsync();
 
                 if (checkPhone == 0)
                 {
@@ -149,7 +147,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                         Phone = createUser.Phone
                     };
                     user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.Password, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                    user.CreateUserId = UserId;
+                    user.CreateUserId = userContext.UserId;
 
                     user.Email = createUser.Email;
                     db.User.Add(user);
@@ -160,7 +158,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                         {
                             Id = idService.GetId(),
                             UserId = user.Id,
-                            CreateUserId = UserId,
+                            CreateUserId = userContext.UserId,
                             RoleId = item
                         };
 
@@ -201,7 +199,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
 
                     if (user != null)
                     {
-                        user.UpdateUserId = UserId;
+                        user.UpdateUserId = userContext.UserId;
 
                         user.Name = updateUser.Name;
                         user.UserName = updateUser.UserName;
@@ -224,7 +222,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                             else
                             {
                                 item.IsDelete = true;
-                                item.DeleteUserId = UserId;
+                                item.DeleteUserId = userContext.UserId;
                             }
                         }
 
@@ -234,7 +232,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                             {
                                 Id = idService.GetId(),
                                 UserId = userId,
-                                CreateUserId = UserId,
+                                CreateUserId = userContext.UserId,
                                 RoleId = item
                             };
 
@@ -269,7 +267,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
         if (user != null)
         {
             user.IsDelete = true;
-            user.DeleteUserId = UserId;
+            user.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();
         }
@@ -327,7 +325,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
             if (functionAuthorize.Id == default)
             {
                 functionAuthorize.Id = idService.GetId();
-                functionAuthorize.CreateUserId = UserId;
+                functionAuthorize.CreateUserId = userContext.UserId;
 
                 functionAuthorize.FunctionId = setUserFunction.FunctionId;
                 functionAuthorize.UserId = setUserFunction.UserId;
@@ -348,7 +346,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                     foreach (var userFunction in userFunctionList)
                     {
                         userFunction.IsDelete = true;
-                        userFunction.DeleteUserId = UserId;
+                        userFunction.DeleteUserId = userContext.UserId;
                     }
 
                     await db.SaveChangesAsync();
@@ -401,7 +399,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                 userRole = new UserRole
                 {
                     Id = idService.GetId(),
-                    CreateUserId = UserId,
+                    CreateUserId = userContext.UserId,
                     UserId = setUserRole.UserId,
                     RoleId = setUserRole.RoleId
                 };
@@ -416,7 +414,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
             if (userRole != null)
             {
                 userRole.IsDelete = true;
-                userRole.DeleteUserId = UserId;
+                userRole.DeleteUserId = userContext.UserId;
 
                 await db.SaveChangesAsync();
             }

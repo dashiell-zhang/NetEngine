@@ -211,14 +211,6 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
         foreach (var item in list)
         {
-            var isValidUpdate = item.Properties.Where(t => t.IsModified && t.Metadata.Name != "UpdateTime" && t.Metadata.Name != "UpdateUserId").Any();
-
-            if (!isValidUpdate)
-            {
-                item.State = EntityState.Unchanged;
-                continue;
-            }
-
             var updateTime = item.Properties.Where(t => t.Metadata.Name == "UpdateTime").FirstOrDefault();
 
             if (updateTime != null && updateTime.IsModified == false)

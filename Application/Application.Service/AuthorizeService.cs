@@ -26,8 +26,6 @@ namespace Application.Service;
 public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, QueueTaskService queueTaskService)
 {
 
-    private long UserId => userContext.UserId;
-
 
     private readonly HttpClient httpClient = httpClientFactory.CreateClient();
 
@@ -202,9 +200,9 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     public async Task<Dictionary<string, string>> GetFunctionListAsync(string? sign)
     {
 
-        var roleIds = await db.UserRole.AsNoTracking().Where(t => t.UserId == UserId).Select(t => t.RoleId).ToListAsync();
+        var roleIds = await db.UserRole.AsNoTracking().Where(t => t.UserId == userContext.UserId).Select(t => t.RoleId).ToListAsync();
 
-        var query = db.FunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == UserId);
+        var query = db.FunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == userContext.UserId);
 
         if (sign != null)
         {
@@ -328,7 +326,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     public async Task<bool> UpdatePasswordByOldPasswordAsync(UpdatePasswordByOldPasswordDto updatePassword)
     {
 
-        var user = await db.User.Where(t => t.Id == UserId).FirstOrDefaultAsync();
+        var user = await db.User.Where(t => t.Id == userContext.UserId).FirstOrDefaultAsync();
 
         if (user != null)
         {
@@ -360,7 +358,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     public async Task<bool> UpdatePasswordBySMSAsync(UpdatePasswordBySMSDto updatePassword)
     {
 
-        string phone = await db.User.Where(t => t.Id == UserId).Select(t => t.Phone).FirstAsync();
+        string phone = await db.User.Where(t => t.Id == userContext.UserId).Select(t => t.Phone).FirstAsync();
 
         string key = "VerifyPhone_" + phone;
 
@@ -369,14 +367,14 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
         if (string.IsNullOrEmpty(code) == false && code == updatePassword.SmsCode)
         {
-            var user = await db.User.Where(t => t.Id == UserId).FirstOrDefaultAsync();
+            var user = await db.User.Where(t => t.Id == userContext.UserId).FirstOrDefaultAsync();
 
             if (user != null)
             {
                 user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.NewPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                user.UpdateUserId = UserId;
+                user.UpdateUserId = userContext.UserId;
 
-                var tokenList = await db.UserToken.Where(t => t.UserId == UserId).ToListAsync();
+                var tokenList = await db.UserToken.Where(t => t.UserId == userContext.UserId).ToListAsync();
 
                 db.UserToken.RemoveRange(tokenList);
 

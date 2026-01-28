@@ -107,7 +107,7 @@
     async Task GetLinkList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<LinkDto>>("Link/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<LinkDto>>("Site/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -168,7 +168,7 @@
         saveLoading = true;
         if (linkId == default)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<EditLinkDto>("Link/CreateLink", editLink, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditLinkDto>("Site/CreateLink", editLink, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("添加成功");
@@ -176,7 +176,7 @@
         }
         else
         {
-            using var httpResponse = await Http.PostAsJsonAsync<EditLinkDto>("Link/UpdateLink?linkId=" + linkId, editLink, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync<EditLinkDto>("Site/UpdateLink?linkId=" + linkId, editLink, JsonHelper.SerializeOpts);
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("编辑成功");
@@ -191,7 +191,7 @@
 
     async Task DeleteLink(long linkId)
     {
-        using var httpResponse = await Http.DeleteAsync("Link/DeleteLink?id=" + linkId);
+        using var httpResponse = await Http.DeleteAsync("Site/DeleteLink?id=" + linkId);
         if (httpResponse.IsSuccessStatusCode)
         {
             GetLinkList();

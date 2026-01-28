@@ -1,3 +1,5 @@
+using Application.Model.Shared;
+using Application.Model.Site.Link;
 using Application.Model.Site.Site;
 using Application.Service.Site;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +15,7 @@ namespace Admin.WebAPI.Controllers;
 [Authorize]
 [Route("[controller]/[action]")]
 [ApiController]
-public class SiteController(SiteService siteService) : ControllerBase
+public class SiteController(SiteService siteService, LinkService linkService) : ControllerBase
 {
 
 
@@ -33,6 +35,43 @@ public class SiteController(SiteService siteService) : ControllerBase
     /// <returns></returns>
     [HttpPost]
     public Task<bool> EditSite(SiteDto editSite) => siteService.EditSiteAsync(editSite);
+
+
+
+    /// <summary>
+    /// 获取友情链接列表
+    /// </summary>
+    [HttpGet]
+    public Task<PageListDto<LinkDto>> GetLinkList([FromQuery] PageRequestDto request) => linkService.GetLinkListAsync(request);
+
+
+    /// <summary>
+    /// 获取友情链接
+    /// </summary>
+    /// <param name="linkId">链接ID</param>
+    [HttpGet]
+    public Task<LinkDto?> GetLink(long linkId) => linkService.GetLinkAsync(linkId);
+
+
+    /// <summary>
+    /// 创建友情链接
+    /// </summary>
+    [HttpPost]
+    public Task<long> CreateLink(EditLinkDto createLink) => linkService.CreateLinkAsync(createLink);
+
+
+    /// <summary>
+    /// 更新友情链接
+    /// </summary>
+    [HttpPost]
+    public Task<bool> UpdateLink(long linkId, EditLinkDto updateLink) => linkService.UpdateLinkAsync(linkId, updateLink);
+
+
+    /// <summary>
+    /// 删除友情链接
+    /// </summary>
+    [HttpDelete]
+    public Task<bool> DeleteLink(long id) => linkService.DeleteLinkAsync(id);
 
 
 

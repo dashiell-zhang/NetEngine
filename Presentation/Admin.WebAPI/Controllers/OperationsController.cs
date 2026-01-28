@@ -41,7 +41,7 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// 获取队列任务列表
     /// </summary>
     [HttpGet]
-    public Task<PageListDto<QueueTaskDto>> GetQueueTaskList([FromQuery] PageRequestDto request) => queueTaskManageService.GetQueueTaskListAsync(request);
+    public Task<PageListDto<QueueTaskDto>> GetQueueTaskList([FromQuery] QueueTaskPageRequestDto request) => queueTaskManageService.GetQueueTaskListAsync(request);
 
 
     /// <summary>

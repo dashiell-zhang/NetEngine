@@ -15,11 +15,34 @@ public class QueueTaskManageService(DatabaseContext db)
     /// <summary>
     /// 获取队列任务列表
     /// </summary>
-    public async Task<PageListDto<QueueTaskDto>> GetQueueTaskListAsync(PageRequestDto request)
+    public async Task<PageListDto<QueueTaskDto>> GetQueueTaskListAsync(QueueTaskPageRequestDto request)
     {
         PageListDto<QueueTaskDto> result = new();
 
         var query = db.QueueTask.AsNoTracking().AsQueryable();
+
+        // 添加检索条件
+        if (request.IsSuccess != null)
+        {
+            query = request.IsSuccess.Value
+                ? query.Where(t => t.SuccessTime != null)
+                : query.Where(t => t.SuccessTime == null);
+        }
+
+        if (request.StartCreateTime.HasValue)
+        {
+            query = query.Where(t => t.CreateTime >= request.StartCreateTime.Value);
+        }
+
+        if (request.EndCreateTime.HasValue)
+        {
+            query = query.Where(t => t.CreateTime <= request.EndCreateTime.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ParameterKeyword))
+        {
+            query = query.Where(t => t.Parameter != null && t.Parameter.Contains(request.ParameterKeyword));
+        }
 
         result.Total = await query.CountAsync();
 

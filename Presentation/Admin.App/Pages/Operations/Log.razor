@@ -7,12 +7,20 @@
         <Input @bind-Value="@context.MachineName" Placeholder="请输入设备名称" Style="width: 200px" />
     </FormItem>
     <FormItem>
+        <Input @bind-Value="@context.Project" Placeholder="请输入项目名称" Style="width: 200px" />
+    </FormItem>
+    <FormItem>
+        <Input @bind-Value="@context.Content" Placeholder="请输入内容关键字" Style="width: 240px" />
+    </FormItem>
+    <FormItem>
         <Select TItem="string" TItemValue="string" @bind-Value="@context.Level" Placeholder="请选择日志等级" Style="width: 150px" AllowClear>
+            <SelectOption Value="@("Trace")" Label="Trace"></SelectOption>
             <SelectOption Value="@("Debug")" Label="Debug"></SelectOption>
-            <SelectOption Value="@("Info")" Label="Info"></SelectOption>
+            <SelectOption Value="@("Information")" Label="Information"></SelectOption>
             <SelectOption Value="@("Warning")" Label="Warning"></SelectOption>
             <SelectOption Value="@("Error")" Label="Error"></SelectOption>
-            <SelectOption Value="@("Fatal")" Label="Fatal"></SelectOption>
+            <SelectOption Value="@("Critical")" Label="Critical"></SelectOption>
+            <SelectOption Value="@("None")" Label="None"></SelectOption>
         </Select>
     </FormItem>
     <FormItem>
@@ -23,12 +31,12 @@
     </FormItem>
     <FormItem>
         <Space>
-            <Button Type="@ButtonType.Primary" HtmlType="submit" Icon="@("search-outlined")">搜索</Button>
+            <Button Type="@ButtonType.Primary" HtmlType="submit">搜索</Button>
         </Space>
     </FormItem>
     <FormItem>
         <Space>
-            <Button Icon="@("redo-outlined")" OnClick="HandleReset">重置</Button>
+            <Button OnClick="HandleReset">重置</Button>
         </Space>
     </FormItem>
 </Form>

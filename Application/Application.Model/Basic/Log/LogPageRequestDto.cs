@@ -8,9 +8,19 @@ namespace Application.Model.Basic.Log;
 public class LogPageRequestDto : PageRequestDto
 {
     /// <summary>
+    /// 项目名称
+    /// </summary>
+    public string? Project { get; set; }
+
+    /// <summary>
     /// 机器名称
     /// </summary>
     public string? MachineName { get; set; }
+
+    /// <summary>
+    /// 日志内容（模糊检索）
+    /// </summary>
+    public string? Content { get; set; }
 
     /// <summary>
     /// 日志等级

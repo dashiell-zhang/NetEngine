@@ -21,9 +21,20 @@ public class LogManageService(DatabaseContext db)
         var query = db.Log.AsNoTracking().AsQueryable();
 
         // 添加检索条件
+        if (!string.IsNullOrWhiteSpace(request.Project))
+        {
+            query = query.Where(t => t.Project.Contains(request.Project));
+        }
+
         if (!string.IsNullOrWhiteSpace(request.MachineName))
         {
             query = query.Where(t => t.MachineName.Contains(request.MachineName));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Content))
+        {
+            var keyword = request.Content.Trim();
+            query = query.Where(t => t.Content != null && t.Content.Contains(keyword));
         }
 
         if (!string.IsNullOrWhiteSpace(request.Level))
@@ -60,4 +71,3 @@ public class LogManageService(DatabaseContext db)
         return result;
     }
 }
-

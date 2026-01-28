@@ -25,7 +25,12 @@ public class JsonHelper
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
         SerializeOpts.Converters.Add(new DateTimeConverter());
+#if !BROWSER
+        var timeZone = DateTimeOffset.Now.Offset;
+        SerializeOpts.Converters.Add(new DateTimeOffsetConverter(timeZone));
+#else
         SerializeOpts.Converters.Add(new DateTimeOffsetConverter());
+#endif
         SerializeOpts.Converters.Add(new LongConverter());
 
 
@@ -35,7 +40,11 @@ public class JsonHelper
             PropertyNameCaseInsensitive = true
         };
         DeserializeOpts.Converters.Add(new DateTimeConverter());
+#if !BROWSER
+        DeserializeOpts.Converters.Add(new DateTimeOffsetConverter(timeZone));
+#else
         DeserializeOpts.Converters.Add(new DateTimeOffsetConverter());
+#endif
         DeserializeOpts.Converters.Add(new LongConverter());
 
 

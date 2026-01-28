@@ -31,6 +31,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Application\Application.Model\Application.Model.csproj" />
+	  <ProjectReference Include="..\..\Infrastructure\Common\Common.csproj" />
 	</ItemGroup>
 
 	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">

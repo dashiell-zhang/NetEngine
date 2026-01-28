@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug' and '$(EmitCompilerGeneratedFiles)'=='true'">
+    <!--
+      EmitCompilerGeneratedFiles passes /generatedfilesout to the compiler.
+      This must be a valid directory path (no trailing separator).
+      Define it here (targets) so TargetFramework/IntermediateOutputPath are already known.
+    -->
+    <CompilerGeneratedFilesOutputPath>$(IntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+</Project>

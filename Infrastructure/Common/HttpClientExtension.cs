@@ -9,6 +9,7 @@ public static class HttpClientExtension
 {
 
 
+#if !BROWSER
     /// <summary>
     /// 下载远程文件保存到本地（异步）
     /// </summary>
@@ -39,6 +40,7 @@ public static class HttpClientExtension
             return null;
         }
     }
+#endif
 
 
 

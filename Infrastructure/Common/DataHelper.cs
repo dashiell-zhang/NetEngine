@@ -1,12 +1,16 @@
-using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
 using System.ComponentModel;
 using System.Data;
 using System.Reflection;
 
+#if !BROWSER
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
+#endif
+
 namespace Common;
-public class DataHelper
+
+public partial class DataHelper
 {
 
     /// <summary>
@@ -349,13 +353,13 @@ public class DataHelper
 
     }
 
-
-    /// <summary>  
-    /// 将excel导入到datatable  
-    /// </summary>  
-    /// <param name="filePath">excel路径</param>  
-    /// <param name="isHaveColumnName">是否包含列名</param>  
-    /// <returns>返回datatable</returns>  
+#if !BROWSER
+    /// <summary>
+    /// 将excel导入到datatable
+    /// </summary>
+    /// <param name="filePath">excel路径</param>
+    /// <param name="isHaveColumnName">是否包含列名</param>
+    /// <returns>返回datatable</returns>
     public static DataTable? ExcelToDataTable(string filePath, bool isHaveColumnName)
     {
         DataTable? dataTable = null;
@@ -366,14 +370,12 @@ public class DataHelper
         {
             using (var fs = File.OpenRead(filePath))
             {
-
                 ISheet? sheet = null;
 
                 if (filePath.IndexOf(".xlsx") > 0)
                 {
                     workbook = new XSSFWorkbook(fs);
                 }
-
                 else if (filePath.IndexOf(".xls") > 0)
                 {
                     workbook = new HSSFWorkbook(fs);
@@ -387,23 +389,23 @@ public class DataHelper
                 {
                     int startRow = 0;
 
-                    sheet = workbook.GetSheetAt(0);//读取第一个sheet，当然也可以循环读取每个sheet  
+                    sheet = workbook.GetSheetAt(0);//读取第一个sheet，当然也可以循环读取每个sheet
                     dataTable = new();
                     if (sheet != null)
                     {
-                        int rowCount = sheet.LastRowNum;//总行数  
+                        int rowCount = sheet.LastRowNum;//总行数
                         if (rowCount > 0)
                         {
-                            IRow firstRow = sheet.GetRow(0);//第一行  
-                            int cellCount = GetEffectiveColumnCount(firstRow);//列数  
+                            IRow firstRow = sheet.GetRow(0);//第一行
+                            int cellCount = GetEffectiveColumnCount(firstRow);//列数
 
                             DataColumn column;
                             ICell cell;
 
-                            //构建datatable的列  
+                            //构建datatable的列
                             if (isHaveColumnName)
                             {
-                                startRow = 1;//如果第一行是列名，则从第二行开始读取  
+                                startRow = 1;//如果第一行是列名，则从第二行开始读取
                                 for (int i = firstRow.FirstCellNum; i < cellCount; ++i)
                                 {
                                     cell = firstRow.GetCell(i);
@@ -426,7 +428,7 @@ public class DataHelper
                                 }
                             }
 
-                            //填充行  
+                            //填充行
                             for (int i = startRow; i <= rowCount; ++i)
                             {
                                 IRow row = sheet.GetRow(i);
@@ -445,7 +447,7 @@ public class DataHelper
                                     }
                                     else
                                     {
-                                        //CellType(Unknown = -1,Numeric = 0,String = 1,Formula = 2,Blank = 3,Boolean = 4,Error = 5,)  
+                                        //CellType(Unknown = -1,Numeric = 0,String = 1,Formula = 2,Blank = 3,Boolean = 4,Error = 5,)
                                         switch (cell.CellType)
                                         {
                                             case CellType.Boolean:
@@ -492,7 +494,6 @@ public class DataHelper
             workbook?.Dispose();
         }
 
-
         static int GetEffectiveColumnCount(IRow row)
         {
             int lastCell = row.LastCellNum;
@@ -513,9 +514,6 @@ public class DataHelper
     /// <summary>
     /// 将 List 数据转换为 Excel 文件流
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="list"></param>
-    /// <returns></returns>
     public static byte[] ListToExcel<T>(List<T> list) where T : notnull, new()
     {
         //创建Excel文件的对象
@@ -562,9 +560,6 @@ public class DataHelper
     /// <summary>
     /// 将 List 数据转换为 Excel 文件流(使用DisplayName)
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="list"></param>
-    /// <returns></returns>
     public static byte[] ListToExcelDispalyName<T>(List<T> list) where T : notnull, new()
     {
         //创建Excel文件的对象
@@ -611,9 +606,6 @@ public class DataHelper
     /// <summary>
     /// 将 List 数据转换为指定模板 Excel 文件流
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="list"></param>
-    /// <returns></returns>
     public static byte[] ListToExcel<T>(List<T> list, ExcelTemplate excelTemplate) where T : notnull, new()
     {
         using XSSFWorkbook book = new();
@@ -637,7 +629,6 @@ public class DataHelper
             int cellIndex = 0;
             foreach (var column in excelTemplate.ColumnList)
             {
-
                 if (column.Field.Contains('.'))
                 {
                     string[] fieldList = column.Field.Split('.');
@@ -773,4 +764,5 @@ public class DataHelper
             dataRow.CreateCell(cellIndex).SetCellValue("");
         }
     }
+#endif
 }

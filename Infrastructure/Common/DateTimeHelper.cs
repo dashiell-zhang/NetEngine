@@ -91,13 +91,13 @@ public class DateTimeHelper
 
 
 
+#if !BROWSER
     /// <summary>
     /// 获取NTP网络远程时间
     /// </summary>
     /// <returns></returns>
     public static DateTimeOffset GetNetworkTime()
     {
-
         string ntpServer = "ntp.tencent.com";
 
         var ntpData = new byte[48];
@@ -132,6 +132,7 @@ public class DateTimeHelper
 
         return networkDateTime;
     }
+#endif
 
 
 

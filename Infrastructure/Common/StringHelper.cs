@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Numerics;
@@ -423,6 +424,18 @@ public partial class StringHelper
             {
                 // 获取枚举的整数值
                 stringValue = Convert.ToInt32(value).ToString();
+            }
+            else if (value is DateTimeOffset dateTimeOffset)
+            {
+                stringValue = dateTimeOffset.ToString("o", CultureInfo.InvariantCulture);
+            }
+            else if (value is DateTime dateTime)
+            {
+                stringValue = dateTime.ToString("o", CultureInfo.InvariantCulture);
+            }
+            else if (value is IFormattable formattable)
+            {
+                stringValue = formattable.ToString(null, CultureInfo.InvariantCulture);
             }
             else
             {

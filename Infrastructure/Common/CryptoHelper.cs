@@ -6,6 +6,7 @@ public class CryptoHelper
 {
 
 
+#if !BROWSER
     /// <summary>
     /// 使用 Aes 加密
     /// </summary>
@@ -39,9 +40,11 @@ public class CryptoHelper
                 }
         }
     }
+#endif
 
 
 
+#if !BROWSER
     /// <summary>
     /// 使用 Aes 解密
     /// </summary>
@@ -79,9 +82,11 @@ public class CryptoHelper
         byte[] results = cryptoTransform.TransformFinalBlock(inputBuffers, 0, inputBuffers.Length);
         return Encoding.UTF8.GetString(results);
     }
+#endif
 
 
 
+#if !BROWSER
     /// <summary>
     /// 使用 AesGcm 解密
     /// </summary>
@@ -124,9 +129,11 @@ public class CryptoHelper
         cipher.Decrypt(nonceBytes, cipherBytes, tag, decryptedData, associatedBytes);
         return Encoding.UTF8.GetString(decryptedData);
     }
+#endif
 
 
 
+#if !BROWSER
     /// <summary>
     /// 使用 AesGcm 加密
     /// </summary>
@@ -169,6 +176,7 @@ public class CryptoHelper
                 }
         }
     }
+#endif
 
 
 
@@ -196,6 +204,7 @@ public class CryptoHelper
 
 
 
+#if !BROWSER
     /// <summary>
     /// MD5 摘要计算
     /// </summary>
@@ -205,6 +214,7 @@ public class CryptoHelper
     {
         return Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(text)));
     }
+#endif
 
 
 
@@ -316,6 +326,7 @@ public class CryptoHelper
 
 
 
+#if !BROWSER
     /// <summary>
     /// HMACMD5 摘要计算
     /// </summary>
@@ -341,6 +352,7 @@ public class CryptoHelper
                 }
         }
     }
+#endif
 
 
 
@@ -457,6 +469,7 @@ public class CryptoHelper
 
 
 
+#if !BROWSER
     /// <summary>
     /// RSA 签名计算
     /// </summary>
@@ -528,9 +541,11 @@ public class CryptoHelper
                 }
         }
     }
+#endif
 
 
 
+#if !BROWSER
     /// <summary>
     /// RSA 签名验证
     /// </summary>
@@ -587,12 +602,12 @@ public class CryptoHelper
         {
             throw new Exception("RSA 初始化失败");
         }
-
-
     }
+#endif
 
 
 
+#if !BROWSER
     /// <summary>
     /// RSA 加密
     /// </summary>
@@ -643,9 +658,11 @@ public class CryptoHelper
             throw new Exception("RSA 初始化失败");
         }
     }
+#endif
 
 
 
+#if !BROWSER
     /// <summary>
     /// RSA 解密
     /// </summary>
@@ -718,6 +735,8 @@ public class CryptoHelper
         }
 
         return Encoding.UTF8.GetString(rsa.Decrypt(contentData, encryptionPadding));
+
     }
+#endif
 
 }

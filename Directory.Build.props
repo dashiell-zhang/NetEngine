@@ -8,7 +8,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>obj/Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj"
@@ -28,9 +27,5 @@
                         ('$(NetEngineIsInfrastructureProject)' != 'True')
                       " />
   </ItemGroup>
-  <!-- Clean CompilerGeneratedFilesOutputPath (obj/Generated) for Debug to avoid stale files mixing -->
-  <Target Name="CleanGeneratedForDebug" BeforeTargets="BeforeBuild" Condition="'$(Configuration)'=='Debug'">
-    <Message Text="Cleaning generated files under $(MSBuildProjectDirectory)\obj\Generated for Debug" Importance="low" />
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\obj\Generated" />
-  </Target>
+  <!-- CompilerGeneratedFilesOutputPath is set in Directory.Build.targets (needs TargetFramework/IntermediateOutputPath). -->
 </Project>

@@ -1,3 +1,4 @@
+#if !BROWSER
 using System.IO.Compression;
 
 namespace Common;
@@ -196,3 +197,4 @@ public class IOHelper
     }
 
 }
+#endif

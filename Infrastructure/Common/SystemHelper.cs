@@ -1,3 +1,4 @@
+#if !BROWSER
 using System.Diagnostics;
 
 namespace Common;
@@ -159,3 +160,4 @@ public class SystemHelper
     }
 
 }
+#endif

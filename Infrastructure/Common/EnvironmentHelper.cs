@@ -1,3 +1,4 @@
+#if !BROWSER
 using Microsoft.Extensions.Configuration.CommandLine;
 
 namespace Common;
@@ -25,3 +26,4 @@ public class EnvironmentHelper
         }
     }
 }
+#endif

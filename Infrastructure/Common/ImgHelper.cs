@@ -25,6 +25,7 @@ public class ImgHelper
     }
 
 
+#if !BROWSER
     /// <summary>
     /// 从图片截取部分区域
     /// </summary>
@@ -48,6 +49,7 @@ public class ImgHelper
         using SKData p = img.Encode(SKEncodedImageFormat.Png, 100);
         return p.ToArray();
     }
+#endif
 
 
     /// <summary>
@@ -129,4 +131,3 @@ public class ImgHelper
     }
 
 }
-

@@ -2,6 +2,14 @@
 @using Application.Model.TaskCenter
 @attribute [ReuseTabsPageTitle("定时任务配置")]
 
+<Space Style="margin-bottom:12px">
+    <Button Type="@ButtonType.Primary" OnClick="ShowCreateScheduleTask">新增带参任务</Button>
+</Space>
+
+<Space Style="margin-bottom:12px">
+    <Button OnClick="GetTaskSettingList">刷新</Button>
+</Space>
+
 <Table TItem="TaskSettingDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
     <ColumnDefinitions>
@@ -78,6 +86,56 @@
 </Drawer>
 
 
+<Drawer Closable="true" Width="560" Visible="isShowCreateScheduleTask" Title='("新增带参定时任务")' OnClose="() => isShowCreateScheduleTask = false">
+    <Template style="height:90%">
+
+        <Form Model="@createScheduleTask" OnFinish="CreateScheduleTask">
+
+            <FormItem>
+                <Text>任务名称</Text>
+                <Select TItem="string" TItemValue="string" @bind-Value="@createScheduleTask.Name" Placeholder="请选择任务名称" Style="width:100%" AllowClear ShowSearch>
+                    @foreach (var name in scheduleTaskNameList)
+                    {
+                        <SelectOption Value="@name" Label="@name"></SelectOption>
+                    }
+                </Select>
+            </FormItem>
+
+            <FormItem>
+                <Text>是否启用</Text>
+                <Switch @bind-Value="@createScheduleTask.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
+            </FormItem>
+
+            <FormItem>
+                <Text>Cron</Text>
+                <Input Placeholder="Cron 表达式（可选；为空则使用特性默认值）" @bind-Value="@createScheduleTask.Cron" />
+            </FormItem>
+
+            <FormItem>
+                <Text>参数(JSON)</Text>
+                <TextArea Placeholder="必填：带参任务参数 JSON" @bind-Value="@createScheduleTask.Parameter" MinRows="6" MaxRows="12" style="width:100%" />
+            </FormItem>
+
+            <FormItem>
+                <Text>备注</Text>
+                <Input Placeholder="请输入备注" @bind-Value="@createScheduleTask.Remarks" />
+            </FormItem>
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="24">
+                    <div style="float:right">
+                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@createLoading">新增</Button>
+                        <Button Type="@ButtonType.Default" @onclick="() => isShowCreateScheduleTask = false">取消</Button>
+                    </div>
+                </AntDesign.Col>
+            </Row>
+
+        </Form>
+
+    </Template>
+</Drawer>
+
+
 @code {
 
     List<string> functionList = new();
@@ -135,10 +193,16 @@
     bool isShowEditTaskSetting = false;
     bool saveLoading = false;
 
+    bool isShowCreateScheduleTask = false;
+    bool createLoading = false;
+
     long taskSettingId;
     string? taskName;
     string? taskCategory;
     EditTaskSettingDto editTaskSetting = new();
+
+    List<string> scheduleTaskNameList = [];
+    CreateScheduleTaskDto createScheduleTask = new() { IsEnable = true };
 
     async Task EditTaskSetting(TaskSettingDto taskSetting)
     {
@@ -179,5 +243,49 @@
 
         GetTaskSettingList();
         isShowEditTaskSetting = false;
+    }
+
+    async Task ShowCreateScheduleTask()
+    {
+        createScheduleTask = new CreateScheduleTaskDto { IsEnable = true };
+
+        var retData = await Http.GetFromJsonAsync<List<string>>("Operations/GetScheduleTaskNameList", JsonHelper.DeserializeOpts);
+
+        scheduleTaskNameList = retData ?? [];
+
+        await Task.Delay(100);
+
+        isShowCreateScheduleTask = true;
+
+        StateHasChanged();
+    }
+
+    async Task CreateScheduleTask()
+    {
+        if (string.IsNullOrWhiteSpace(createScheduleTask.Name))
+        {
+            Message.Error("请选择任务名称");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(createScheduleTask.Parameter))
+        {
+            Message.Error("任务参数(JSON) 不可以空");
+            return;
+        }
+
+        createLoading = true;
+
+        using var httpResponse = await Http.PostAsJsonAsync("Operations/CreateScheduleTask", createScheduleTask, JsonHelper.SerializeOpts);
+
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            Message.Success("新增成功");
+        }
+
+        createLoading = false;
+
+        GetTaskSettingList();
+        isShowCreateScheduleTask = false;
     }
 }

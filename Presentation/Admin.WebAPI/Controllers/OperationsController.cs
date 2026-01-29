@@ -38,6 +38,20 @@ public class OperationsController(LogManageService logManageService, TaskSetting
 
 
     /// <summary>
+    /// 获取定时任务名称列表（去重）
+    /// </summary>
+    [HttpGet]
+    public Task<List<string>> GetScheduleTaskNameList() => taskSettingService.GetTaskSettingNameListAsync("ScheduleTask");
+
+
+    /// <summary>
+    /// 新增带参定时任务（动态添加支持参数的 ScheduleTask）
+    /// </summary>
+    [HttpPost]
+    public Task<long> CreateScheduleTask(CreateScheduleTaskDto createTaskSetting) => taskSettingService.CreateScheduleTaskAsync(createTaskSetting);
+
+
+    /// <summary>
     /// 获取队列任务列表
     /// </summary>
     [HttpGet]

@@ -185,7 +185,25 @@ public static class WebApplicationBuilderExtension
             options.SwaggerDoc("v1", null);
 
             var modelPrefix = Assembly.GetEntryAssembly()?.GetName().Name + ".Models.";
-            options.SchemaGeneratorOptions = new() { SchemaIdSelector = type => type.ToString()[(type.ToString().IndexOf("Models.") + 7)..].Replace(modelPrefix, "").Replace("`1", "").Replace("+", ".") };
+            options.SchemaGeneratorOptions = new()
+            {
+                SchemaIdSelector = type =>
+                {
+                    var typeName = type.ToString();
+
+                    const string modelsToken = "Models.";
+                    var modelsIndex = typeName.IndexOf(modelsToken, StringComparison.Ordinal);
+                    if (modelsIndex >= 0)
+                    {
+                        typeName = typeName[(modelsIndex + modelsToken.Length)..];
+                    }
+
+                    return typeName
+                        .Replace(modelPrefix, "")
+                        .Replace("`1", "")
+                        .Replace("+", ".");
+                }
+            };
 
             options.MapType<long>(() => new OpenApiSchema { Type = JsonSchemaType.String, Format = "long" });
 

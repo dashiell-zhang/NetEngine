@@ -8,6 +8,7 @@ using TaskService.Core.ScheduleTask;
 namespace TaskService.Core;
 public class InitTaskBackgroundService(IServiceProvider serviceProvider) : BackgroundService
 {
+    private const string ArgsDefaultParameter = "__args_default__";
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -24,7 +25,7 @@ public class InitTaskBackgroundService(IServiceProvider serviceProvider) : Backg
             var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
             var argScheduleTaskList = await db.TaskSetting
-                .Where(t => t.Category == "ScheduleTask" && t.Parameter != null)
+                .Where(t => t.Category == "ScheduleTask" && t.Parameter != null && t.Parameter != ArgsDefaultParameter)
                 .ToListAsync(stoppingToken);
 
             foreach (Type cls in taskClasses)

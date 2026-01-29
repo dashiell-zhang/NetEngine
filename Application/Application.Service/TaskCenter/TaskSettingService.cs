@@ -15,6 +15,7 @@ namespace Application.Service.TaskCenter;
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class TaskSettingService(DatabaseContext db, IUserContext userContext, IdService idService)
 {
+    private const string ArgsDefaultParameter = "__args_default__";
 
 
     /// <summary>
@@ -82,17 +83,12 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
 
 
     /// <summary>
-    /// 获取任务名称列表（去重）
+    /// 获取支持参数的定时任务名称列表（去重）
     /// </summary>
-    public Task<List<string>> GetTaskSettingNameListAsync(string category)
+    public Task<List<string>> GetArgsScheduleTaskNameListAsync()
     {
-        if (string.IsNullOrWhiteSpace(category))
-        {
-            throw new CustomException("category 不可以空");
-        }
-
         return db.TaskSetting.AsNoTracking()
-            .Where(t => t.Category == category)
+            .Where(t => t.Category == "ScheduleTask" && t.Parameter == ArgsDefaultParameter)
             .Select(t => t.Name)
             .Distinct()
             .OrderBy(t => t)

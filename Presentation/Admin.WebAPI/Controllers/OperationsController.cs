@@ -41,7 +41,7 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// 获取定时任务名称列表（去重）
     /// </summary>
     [HttpGet]
-    public Task<List<string>> GetScheduleTaskNameList() => taskSettingService.GetTaskSettingNameListAsync("ScheduleTask");
+    public Task<List<string>> GetArgsScheduleTaskNameList() => taskSettingService.GetArgsScheduleTaskNameListAsync();
 
 
     /// <summary>

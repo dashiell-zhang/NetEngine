@@ -249,7 +249,7 @@
     {
         createScheduleTask = new CreateScheduleTaskDto { IsEnable = true };
 
-        var retData = await Http.GetFromJsonAsync<List<string>>("Operations/GetScheduleTaskNameList", JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<string>>("Operations/GetArgsScheduleTaskNameList", JsonHelper.DeserializeOpts);
 
         scheduleTaskNameList = retData ?? [];
 

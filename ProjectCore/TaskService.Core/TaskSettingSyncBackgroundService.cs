@@ -9,8 +9,10 @@ using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
 
 namespace TaskService.Core;
+
 public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IdService idService) : BackgroundService
 {
+    private const string ArgsDefaultParameter = "__args_default__";
     private readonly ILogger logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -138,7 +140,9 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
         //添加带参任务默认值到任务配置表中
         foreach (var item in ScheduleTaskBuilder.argsScheduleMethodList)
         {
-            var isHave = await db.TaskSetting.Where(t => t.Category == "ScheduleTask" && t.Name == item.Key && t.Parameter == null).AnyAsync();
+            var isHave = await db.TaskSetting
+                .Where(t => t.Category == "ScheduleTask" && t.Name == item.Key && t.Parameter == ArgsDefaultParameter)
+                .AnyAsync();
 
             if (!isHave)
             {
@@ -147,13 +151,16 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
                     Id = idService.GetId(),
                     Category = "ScheduleTask",
                     Name = item.Key,
-                    Cron = item.Value.Cron
+                    Cron = item.Value.Cron,
+                    Parameter = ArgsDefaultParameter
                 });
             }
         }
 
 
-        var enableArgsTaskList = scheduleTaskSettings.Where(t => t.Parameter != null && t.IsEnable == true).ToList();
+        var enableArgsTaskList = scheduleTaskSettings
+            .Where(t => t.Parameter != null && t.Parameter != ArgsDefaultParameter && t.IsEnable == true)
+            .ToList();
 
         foreach (var item in enableArgsTaskList)
         {

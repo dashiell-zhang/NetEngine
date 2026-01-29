@@ -23,7 +23,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpGet]
-    public Task<PageListDto<UserDto>> GetUserList([FromQuery] PageRequestDto request) => userService.GetUserListAsync(request);
+    public Task<PageListDto<UserDto>> GetUserList([FromQuery] UserPageRequestDto request) => userService.GetUserListAsync(request);
 
 
     /// <summary>

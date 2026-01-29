@@ -3,14 +3,35 @@
 @using Application.Model.User.Role
 @attribute [ReuseTabsPageTitle("用户管理")]
 
-<div style="margin-bottom:10px">
+<div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+        @if (functionList.Contains("user-add"))
+        {
+            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditUser()">添加</Button>
+        }
+    </div>
 
-    @if (functionList.Contains("user-add"))
-    {
-        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditUser()">添加</Button>
-    }
-
+    <div style="margin-left:auto">
+        <Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearch">
+            <FormItem>
+                <Input @bind-Value="@context.Keyword" Placeholder="名称/用户名/电话/邮箱 模糊检索" Style="width: 260px" AllowClear />
+            </FormItem>
+            <FormItem>
+                <Space>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit">搜索</Button>
+                </Space>
+            </FormItem>
+            <FormItem>
+                <Space>
+                    <Button OnClick="HandleReset">重置</Button>
+                </Space>
+            </FormItem>
+        </Form>
+    </div>
 </div>
+
+<Divider Style="margin: 12px 0" />
+
 <Table TItem="UserDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
     <ColumnDefinitions>
@@ -56,7 +77,7 @@
 
     <PaginationTemplate>
         <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.PageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
         </div>
     </PaginationTemplate>
 
@@ -157,8 +178,7 @@
 
     bool saveLoading = false;
     bool tableLoading = false;
-    int pageNum = 1;
-    int pageSize = 10;
+    UserPageRequestDto request = new() { PageSize = 10 };
     PageListDto<UserDto> pageList = new();
 
     bool isShowEditAuthority = false;
@@ -180,7 +200,9 @@
     async Task GetUserList()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<UserDto>>("User/GetUserList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+
+        var url = StringHelper.ModelToUriParam(request, "User/GetUserList");
+        var retData = await Http.GetFromJsonAsync<PageListDto<UserDto>>(url, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -193,19 +215,32 @@
 
     void PageChange(PaginationEventArgs args)
     {
-        if (pageNum != args.Page)
+        if (request.PageNum != args.Page)
         {
-            pageNum = args.Page;
+            request.PageNum = args.Page;
         }
 
-        if (pageSize != args.PageSize)
+        if (request.PageSize != args.PageSize)
         {
-            pageSize = args.PageSize;
+            request.PageSize = args.PageSize;
         }
 
         GetUserList();
     }
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    async Task HandleSearch(EditContext editContext)
+    {
+        request.PageNum = 1;
+        await GetUserList();
+    }
+
+    void HandleReset()
+    {
+        request = new UserPageRequestDto { PageSize = request.PageSize };
+        GetUserList();
+    }
 
 
     bool isShowEditUser = false;

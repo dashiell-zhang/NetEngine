@@ -93,11 +93,21 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<PageListDto<UserDto>> GetUserListAsync(PageRequestDto request)
+    public async Task<PageListDto<UserDto>> GetUserListAsync(UserPageRequestDto request)
     {
         PageListDto<UserDto> result = new();
 
         var query = db.User.AsSplitQuery();
+
+        var keyword = request.Keyword?.Trim();
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(t =>
+                t.Name.Contains(keyword) ||
+                t.UserName.Contains(keyword) ||
+                t.Phone.Contains(keyword) ||
+                t.Email!.Contains(keyword));
+        }
 
         result.Total = await query.CountAsync();
 

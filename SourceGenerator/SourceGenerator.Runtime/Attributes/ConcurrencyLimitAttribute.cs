@@ -1,4 +1,3 @@
-#if !BROWSER
 using SourceGenerator.Runtime.Options;
 using SourceGenerator.Runtime.Pipeline.Behaviors;
 
@@ -35,4 +34,3 @@ public class ConcurrencyLimitAttribute : ProxyBehaviorAttribute<ConcurrencyLimit
     public int Semaphore { get; set; } = 1;
 
 }
-#endif

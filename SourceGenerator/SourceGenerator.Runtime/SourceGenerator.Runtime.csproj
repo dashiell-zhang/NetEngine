@@ -1,15 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>net10.0;net10.0-browser</TargetFrameworks>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>SourceGenerator.Runtime</AssemblyName>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <ProjectReference Include="..\\..\\Infrastructure\\DistributedLock\\DistributedLock.csproj" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net10.0;net10.0-browser</TargetFrameworks>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>SourceGenerator.Runtime</AssemblyName>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
+	</ItemGroup>
+
 </Project>

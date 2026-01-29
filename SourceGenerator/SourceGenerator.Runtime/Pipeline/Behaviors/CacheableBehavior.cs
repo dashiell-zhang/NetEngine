@@ -56,7 +56,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         
         try
         {
-            var key = "CacheData_" + Md5Hex(ComposeSeed(ctx));
+            var key = "CacheData_" + Sha256Hex(ComposeSeed(ctx));
             var json = await cacheSvc.GetStringAsync(key);
             if (json is null) return (false, default!);
             if (log) logger?.LogInformation($"Cache hit {method}");
@@ -82,7 +82,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         
         try
         {
-            var key = "CacheData_" + Md5Hex(ComposeSeed(ctx));
+            var key = "CacheData_" + Sha256Hex(ComposeSeed(ctx));
             var json = JsonSerializer.Serialize(value, JsonUtil.JsonOpts);
             await cacheSvc.SetStringAsync(key, json, new DistributedCacheEntryOptions
             {
@@ -98,13 +98,12 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
 
     /// <summary>
-    /// 计算字符串的 MD5 哈希并返回十六进制表示
+    /// 计算字符串的 SHA-256 哈希并返回十六进制表示
     /// </summary>
-    private static string Md5Hex(string s)
+    private static string Sha256Hex(string s)
     {
-        using var md5 = MD5.Create();
         var bytes = Encoding.UTF8.GetBytes(s);
-        var hash = md5.ComputeHash(bytes);
+        var hash = SHA256.HashData(bytes);
         var sb = new StringBuilder(hash.Length * 2);
         foreach (var b in hash) sb.Append(b.ToString("x2"));
         return sb.ToString();

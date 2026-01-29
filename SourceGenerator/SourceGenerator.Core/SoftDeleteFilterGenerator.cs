@@ -116,7 +116,7 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
             var ns = entity.ContainingNamespace?.ToDisplayString();
             if (!string.IsNullOrWhiteSpace(ns))
             {
-                namespaces.Add(ns);
+                namespaces.Add(ns!);
             }
         }
 

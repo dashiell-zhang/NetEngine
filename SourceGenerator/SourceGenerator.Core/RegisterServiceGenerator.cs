@@ -94,7 +94,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 // 收集单个命名空间，避免空字符串污染
                 if (!string.IsNullOrWhiteSpace(nsValue))
                 {
-                    nsSet.Add(nsValue);
+                    nsSet.Add(nsValue!);
                 }
             }
 
@@ -150,13 +150,14 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             {
                 if (string.IsNullOrWhiteSpace(name))
                     return;
-                if (nameCounts.TryGetValue(name, out var count))
+                var key = name!;
+                if (nameCounts.TryGetValue(key, out var count))
                 {
-                    nameCounts[name] = count + 1;
+                    nameCounts[key] = count + 1;
                 }
                 else
                 {
-                    nameCounts[name] = 1;
+                    nameCounts[key] = 1;
                 }
             }
 

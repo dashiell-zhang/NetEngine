@@ -162,7 +162,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await Authentication();
+        await AuthenticationAsync();
     }
 
     UserDto user = new();
@@ -170,7 +170,7 @@
     List<string> functionList = new();
 
 
-    private async Task Authentication()
+    private async Task AuthenticationAsync()
     {
         var authorization = LocalStorage.GetItemAsString("Authorization");
 

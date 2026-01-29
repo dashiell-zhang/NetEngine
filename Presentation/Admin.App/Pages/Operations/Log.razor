@@ -2,7 +2,7 @@
 @using Application.Model.Basic.Log
 @attribute [ReuseTabsPageTitle("日志")]
 
-<Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearch">
+<Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
     <FormItem>
         <Input @bind-Value="@context.MachineName" Placeholder="请输入设备名称" Style="width: 200px" />
     </FormItem>
@@ -101,7 +101,7 @@
 
     override protected void OnParametersSet()
     {
-        GetLogList();
+        GetLogListAsync();
     }
 
     LogPageRequestDto request = new() { PageSize = 10 };
@@ -109,10 +109,10 @@
     bool tableLoading = false;
     PageListDto<LogDto> pageList = new();
 
-    async Task GetLogList()
+    async Task GetLogListAsync()
     {
         tableLoading = true;
-        var url = StringHelper.ModelToUriParam(request, "Operations/GetLogList");
+        var url = StringHelper.ModelToUriParam(request, "Operations/GetLogListAsync");
         var retData = await Http.GetFromJsonAsync<PageListDto<LogDto>>(url, JsonHelper.DeserializeOpts);
 
         if (retData != null)
@@ -124,16 +124,16 @@
         StateHasChanged();
     }
 
-    async Task HandleSearch(EditContext editContext)
+    async Task HandleSearchAsync(EditContext editContext)
     {
         request.PageNum = 1;
-        await GetLogList();
+        await GetLogListAsync();
     }
 
     void HandleReset()
     {
         request = new LogPageRequestDto { PageSize = request.PageSize };
-        GetLogList();
+        GetLogListAsync();
     }
 
     void PageChange(PaginationEventArgs args)
@@ -148,7 +148,7 @@
             request.PageSize = args.PageSize;
         }
 
-        GetLogList();
+        GetLogListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";

@@ -52,7 +52,7 @@
 
     <Row Gutter="24">
         <AntDesign.Col Span="24">
-            <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading" OnClick="SaveSite">保存</Button>
+            <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading" OnClick="SaveSiteAsync">保存</Button>
         </AntDesign.Col>
     </Row>
 
@@ -77,7 +77,7 @@
         StateHasChanged();
     }
 
-    async Task SaveSite()
+    async Task SaveSiteAsync()
     {
         saveLoading = true;
 

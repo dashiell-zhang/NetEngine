@@ -14,7 +14,7 @@
         <ActionColumn Title="操作">
             <Space>
                 <SpaceItem>
-                    <a @onclick="() => EditTaskSetting(context)">编辑</a>
+                    <a @onclick="() => EditTaskSettingAsync(context)">编辑</a>
                 </SpaceItem>
             </Space>
         </ActionColumn>
@@ -32,7 +32,7 @@
 <Drawer Closable="true" Width="520" Visible="isShowEditTaskSetting" Title='("任务配置")' OnClose="() => isShowEditTaskSetting = false">
     <Template style="height:90%">
 
-        <Form Model="@editTaskSetting" OnFinish="SaveTaskSetting">
+        <Form Model="@editTaskSetting" OnFinish="SaveTaskSettingAsync">
 
             <FormItem>
                 <Text>任务名称</Text>
@@ -92,7 +92,7 @@
 
     override protected void OnParametersSet()
     {
-        GetTaskSettingList();
+        GetTaskSettingListAsync();
     }
 
     bool tableLoading = false;
@@ -101,11 +101,11 @@
     PageListDto<TaskSettingDto> pageList = new();
 
 
-    async Task GetTaskSettingList()
+    async Task GetTaskSettingListAsync()
     {
         tableLoading = true;
 
-        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -128,7 +128,7 @@
             pageSize = args.PageSize;
         }
 
-        GetTaskSettingList();
+        GetTaskSettingListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -141,7 +141,7 @@
     string? taskCategory;
     EditTaskSettingDto editTaskSetting = new();
 
-    async Task EditTaskSetting(TaskSettingDto taskSetting)
+    async Task EditTaskSettingAsync(TaskSettingDto taskSetting)
     {
         taskSettingId = taskSetting.Id;
 
@@ -165,7 +165,7 @@
         StateHasChanged();
     }
 
-    async Task SaveTaskSetting()
+    async Task SaveTaskSettingAsync()
     {
         saveLoading = true;
 
@@ -178,7 +178,7 @@
 
         saveLoading = false;
 
-        GetTaskSettingList();
+        GetTaskSettingListAsync();
         isShowEditTaskSetting = false;
     }
 }

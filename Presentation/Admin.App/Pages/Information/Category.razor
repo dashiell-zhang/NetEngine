@@ -6,7 +6,7 @@
 
     @if (functionList.Contains("category-add"))
     {
-        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditCategory()">添加</Button>
+        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditCategoryAsync()">添加</Button>
     }
 
 </div>
@@ -25,7 +25,7 @@
                 @if (functionList.Contains("category-edit"))
                 {
                     <SpaceItem>
-                        <a @onclick="() => EditCategory(context)">编辑</a>
+                        <a @onclick="() => EditCategoryAsync(context)">编辑</a>
                     </SpaceItem>
                 }
 
@@ -33,7 +33,7 @@
                 {
                     <SpaceItem>
                         <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteCategory(context.Id)"
+                                    OnConfirm="_=>DeleteCategoryAsync(context.Id)"
                                     OkText="Yes"
                                     CancelText="No">
                             <a style="color:red">删除</a>
@@ -58,7 +58,7 @@
 <Drawer Closable="true" Width="380" Visible="isShowEditCategory" Title='("栏目信息")' OnClose="() => isShowEditCategory = false">
     <Template style="height:90%">
 
-        <Form Model="@editCategory" OnFinish="SaveCategory">
+        <Form Model="@editCategory" OnFinish="SaveCategoryAsync">
 
             <FormItem>
                 <Text>名称</Text>
@@ -109,17 +109,17 @@
     {
         functionList = await userContextService.GetFunctionList();
 
-        await GetCategorySelectList();
+        await GetCategorySelectListAsync();
     }
 
     override protected void OnParametersSet()
     {
-        GetCategoryList();
-        GetCategorySelectList();
+        GetCategoryListAsync();
+        GetCategorySelectListAsync();
     }
 
 
-    async Task GetCategorySelectList()
+    async Task GetCategorySelectListAsync()
     {
         List<CategorySelectDto> parentKVList = new();
 
@@ -128,7 +128,7 @@
 
 
 
-        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectList", JsonHelper.DeserializeOpts);
+        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectListAsync", JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -158,10 +158,10 @@
     int pageSize = 10;
     PageListDto<CategoryDto> pageList = new();
 
-    async Task GetCategoryList()
+    async Task GetCategoryListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<CategoryDto>>("Article/GetCategoryList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<CategoryDto>>("Article/GetCategoryListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -184,7 +184,7 @@
             pageSize = args.PageSize;
         }
 
-        GetCategoryList();
+        GetCategoryListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -195,12 +195,12 @@
     long categoryId;
 
 
-    async Task EditCategory(CategoryDto? category = null)
+    async Task EditCategoryAsync(CategoryDto? category = null)
     {
         editCategory = new();
         categoryId = default;
 
-        GetCategorySelectList();
+        GetCategorySelectListAsync();
 
         if (category != null)
         {
@@ -232,7 +232,7 @@
         StateHasChanged();
     }
 
-    async Task SaveCategory()
+    async Task SaveCategoryAsync()
     {
         saveLoading = true;
 
@@ -265,17 +265,17 @@
 
         saveLoading = false;
 
-        GetCategoryList();
+        GetCategoryListAsync();
         isShowEditCategory = false;
     }
 
 
-    async Task DeleteCategory(long categoryId)
+    async Task DeleteCategoryAsync(long categoryId)
     {
-        using var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId);
+        using var httpResponse = await Http.DeleteAsync("Article/DeleteCategoryAsync?id=" + categoryId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetCategoryList();
+            GetCategoryListAsync();
             Message.Success("删除成功");
         }
     }

@@ -31,7 +31,7 @@
                 {
                     <SpaceItem>
                         <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteLink(context.Id)"
+                                    OnConfirm="_=>DeleteLinkAsync(context.Id)"
                                     OkText="Yes"
                                     CancelText="No">
                             <a style="color:red">删除</a>
@@ -56,7 +56,7 @@
 <Drawer Closable="true" Width="380" Visible="isShowEditLink" Title='("友情链接信息")' OnClose="() => isShowEditLink = false">
     <Template style="height:90%">
 
-        <Form Model="@editLink" OnFinish="SaveLink">
+        <Form Model="@editLink" OnFinish="SaveLinkAsync">
 
             <FormItem>
                 <Text>名称</Text>
@@ -94,7 +94,7 @@
     {
         functionList = await userContextService.GetFunctionList();
 
-        await GetLinkList();
+        await GetLinkListAsync();
     }
 
     bool saveLoading = false;
@@ -104,10 +104,10 @@
 
     PageListDto<LinkDto> pageList = new();
 
-    async Task GetLinkList()
+    async Task GetLinkListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<LinkDto>>("Site/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<LinkDto>>("Site/GetLinkListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -130,7 +130,7 @@
             pageSize = args.PageSize;
         }
 
-        GetLinkList();
+        GetLinkListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -163,7 +163,7 @@
         StateHasChanged();
     }
 
-    async Task SaveLink()
+    async Task SaveLinkAsync()
     {
         saveLoading = true;
         if (linkId == default)
@@ -184,17 +184,17 @@
         }
         saveLoading = false;
 
-        GetLinkList();
+        GetLinkListAsync();
         isShowEditLink = false;
     }
 
 
-    async Task DeleteLink(long linkId)
+    async Task DeleteLinkAsync(long linkId)
     {
-        using var httpResponse = await Http.DeleteAsync("Site/DeleteLink?id=" + linkId);
+        using var httpResponse = await Http.DeleteAsync("Site/DeleteLinkAsync?id=" + linkId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetLinkList();
+            GetLinkListAsync();
             Message.Success("删除成功");
         }
     }

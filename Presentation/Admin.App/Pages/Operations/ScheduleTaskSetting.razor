@@ -3,11 +3,11 @@
 @attribute [ReuseTabsPageTitle("定时任务配置")]
 
 <Space Style="margin-bottom:12px">
-    <Button Type="@ButtonType.Primary" OnClick="ShowCreateScheduleTask">新增带参任务</Button>
+    <Button Type="@ButtonType.Primary" OnClick="ShowCreateScheduleTaskAsync">新增带参任务</Button>
 </Space>
 
 <Space Style="margin-bottom:12px">
-    <Button OnClick="GetTaskSettingList">刷新</Button>
+    <Button OnClick="GetTaskSettingListAsync">刷新</Button>
 </Space>
 
 <Table TItem="TaskSettingDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
@@ -21,7 +21,7 @@
         <ActionColumn Title="操作">
             <Space>
                 <SpaceItem>
-                    <a @onclick="() => EditTaskSetting(context)">编辑</a>
+                    <a @onclick="() => EditTaskSettingAsync(context)">编辑</a>
                 </SpaceItem>
             </Space>
         </ActionColumn>
@@ -39,7 +39,7 @@
 <Drawer Closable="true" Width="520" Visible="isShowEditTaskSetting" Title='("任务配置")' OnClose="() => isShowEditTaskSetting = false">
     <Template style="height:90%">
 
-        <Form Model="@editTaskSetting" OnFinish="SaveTaskSetting">
+        <Form Model="@editTaskSetting" OnFinish="SaveTaskSettingAsync">
 
             <FormItem>
                 <Text>任务名称</Text>
@@ -89,7 +89,7 @@
 <Drawer Closable="true" Width="560" Visible="isShowCreateScheduleTask" Title='("新增带参定时任务")' OnClose="() => isShowCreateScheduleTask = false">
     <Template style="height:90%">
 
-        <Form Model="@createScheduleTask" OnFinish="CreateScheduleTask">
+        <Form Model="@createScheduleTask" OnFinish="CreateScheduleTaskAsync">
 
             <FormItem>
                 <Text>任务名称</Text>
@@ -149,7 +149,7 @@
 
     override protected void OnParametersSet()
     {
-        GetTaskSettingList();
+        GetTaskSettingListAsync();
     }
 
     bool tableLoading = false;
@@ -158,11 +158,11 @@
     PageListDto<TaskSettingDto> pageList = new();
 
 
-    async Task GetTaskSettingList()
+    async Task GetTaskSettingListAsync()
     {
         tableLoading = true;
 
-        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -185,7 +185,7 @@
             pageSize = args.PageSize;
         }
 
-        GetTaskSettingList();
+        GetTaskSettingListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -204,7 +204,7 @@
     List<string> scheduleTaskNameList = [];
     CreateScheduleTaskDto createScheduleTask = new() { IsEnable = true };
 
-    async Task EditTaskSetting(TaskSettingDto taskSetting)
+    async Task EditTaskSettingAsync(TaskSettingDto taskSetting)
     {
         taskSettingId = taskSetting.Id;
 
@@ -228,7 +228,7 @@
         StateHasChanged();
     }
 
-    async Task SaveTaskSetting()
+    async Task SaveTaskSettingAsync()
     {
         saveLoading = true;
 
@@ -241,11 +241,11 @@
 
         saveLoading = false;
 
-        GetTaskSettingList();
+        GetTaskSettingListAsync();
         isShowEditTaskSetting = false;
     }
 
-    async Task ShowCreateScheduleTask()
+    async Task ShowCreateScheduleTaskAsync()
     {
         createScheduleTask = new CreateScheduleTaskDto { IsEnable = true };
 
@@ -260,7 +260,7 @@
         StateHasChanged();
     }
 
-    async Task CreateScheduleTask()
+    async Task CreateScheduleTaskAsync()
     {
         if (string.IsNullOrWhiteSpace(createScheduleTask.Name))
         {
@@ -276,7 +276,7 @@
 
         createLoading = true;
 
-        using var httpResponse = await Http.PostAsJsonAsync("Operations/CreateScheduleTask", createScheduleTask, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync("Operations/CreateScheduleTaskAsync", createScheduleTask, JsonHelper.SerializeOpts);
 
         if (httpResponse.IsSuccessStatusCode)
         {
@@ -285,7 +285,7 @@
 
         createLoading = false;
 
-        GetTaskSettingList();
+        GetTaskSettingListAsync();
         isShowCreateScheduleTask = false;
     }
 }

@@ -20,7 +20,7 @@
         <div style="min-width: 400px;display: inline-block;background-color: white;border-radius: 10px;position: absolute;right:18%;top:30%; padding: 35px;">
             <h1>管理系统</h1>
 
-            <Form Model="@loginData" OnFinish="LoginAction">
+            <Form Model="@loginData" OnFinish="LoginActionAsync">
 
                 <FormItem>
                     <Input @bind-Value="@context.UserName" Style="padding: 10px;" Placeholder="用户名" />
@@ -69,7 +69,7 @@
 
     private GetTokenDto loginData = new();
 
-    private async Task LoginAction()
+    private async Task LoginActionAsync()
     {
         submitLoading = true;
 

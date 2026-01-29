@@ -2,7 +2,7 @@
 @using Application.Model.TaskCenter
 @attribute [ReuseTabsPageTitle("队列任务")]
 
-<Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearch">
+<Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
     <FormItem>
         <Input @bind-Value="@context.ParameterKeyword" Placeholder="参数模糊检索" Style="width: 220px" AllowClear />
     </FormItem>
@@ -55,7 +55,7 @@
 
                 <SpaceItem>
                     <Popconfirm Title="确认要重试吗？将重置执行次数/时间并重新触发"
-                                OnConfirm="_=>RetryQueueTask(context.Id)"
+                                OnConfirm="_=>RetryQueueTaskAsync(context.Id)"
                                 OkText="Yes"
                                 CancelText="No">
                         <a style="color:darkorange">重试</a>
@@ -115,7 +115,7 @@
 
     override protected void OnParametersSet()
     {
-        GetQueueTaskList();
+        GetQueueTaskListAsync();
     }
 
     QueueTaskPageRequestDto request = new() { PageSize = 10 };
@@ -123,11 +123,11 @@
     bool tableLoading = false;
     PageListDto<QueueTaskDto> pageList = new();
 
-    async Task GetQueueTaskList()
+    async Task GetQueueTaskListAsync()
     {
         tableLoading = true;
 
-        var url = StringHelper.ModelToUriParam(request, "Operations/GetQueueTaskList");
+        var url = StringHelper.ModelToUriParam(request, "Operations/GetQueueTaskListAsync");
         var retData = await Http.GetFromJsonAsync<PageListDto<QueueTaskDto>>(url, JsonHelper.DeserializeOpts);
 
         if (retData != null)
@@ -139,16 +139,16 @@
         StateHasChanged();
     }
 
-    async Task HandleSearch(EditContext editContext)
+    async Task HandleSearchAsync(EditContext editContext)
     {
         request.PageNum = 1;
-        await GetQueueTaskList();
+        await GetQueueTaskListAsync();
     }
 
     void HandleReset()
     {
         request = new QueueTaskPageRequestDto { PageSize = request.PageSize };
-        GetQueueTaskList();
+        GetQueueTaskListAsync();
     }
 
     void PageChange(PaginationEventArgs args)
@@ -163,7 +163,7 @@
             request.PageSize = args.PageSize;
         }
 
-        GetQueueTaskList();
+        GetQueueTaskListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -182,14 +182,14 @@
         StateHasChanged();
     }
 
-    async Task RetryQueueTask(long id)
+    async Task RetryQueueTaskAsync(long id)
     {
-        using var httpResponse = await Http.PostAsync("Operations/RetryQueueTask?id=" + id, null);
+        using var httpResponse = await Http.PostAsync("Operations/RetryQueueTaskAsync?id=" + id, null);
 
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("已触发重试");
-            GetQueueTaskList();
+            GetQueueTaskListAsync();
         }
     }
 

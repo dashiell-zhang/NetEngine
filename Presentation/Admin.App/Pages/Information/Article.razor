@@ -10,7 +10,7 @@
 
     @if (functionList.Contains("article-add"))
     {
-        <Button Icon="plus" Type="@ButtonType.Primary" OnClick="() => EditArticle()">添加</Button>
+        <Button Icon="plus" Type="@ButtonType.Primary" OnClick="() => EditArticleAsync()">添加</Button>
     }
 
 </div>
@@ -31,7 +31,7 @@
                 {
 
                     <SpaceItem>
-                        <a @onclick="() => EditArticle(context)">编辑</a>
+                        <a @onclick="() => EditArticleAsync(context)">编辑</a>
                     </SpaceItem>
                 }
 
@@ -39,7 +39,7 @@
                 {
                     <SpaceItem>
                         <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteArticle(context.Id)"
+                                    OnConfirm="_=>DeleteArticleAsync(context.Id)"
                                     OkText="Yes"
                                     CancelText="No">
                             <a style="color:red">删除</a>
@@ -63,7 +63,7 @@
 
 @{
     RenderFragment editFooter = @<Template>
-        <Button OnClick="SaveArticle" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
+        <Button OnClick="SaveArticleAsync" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
         <Button OnClick="() => isShowEditArticle = false" @key="@("back")">取消</Button>
     </Template>;
 }
@@ -103,7 +103,7 @@
 
                 <FormItem Label="封面图">
 
-                    <InputFile id="fileInput" OnChange="@UploadImgage" hidden multiple accept=".png,.jpg" />
+                    <InputFile id="fileInput" OnChange="@UploadImgageAsync" hidden multiple accept=".png,.jpg" />
                     <Upload Name="files">
                         <label class="ant-btn" for="fileInput">
                             <Icon Type="upload" />
@@ -111,7 +111,7 @@
                         </label>
                     </Upload>
 
-                    <Upload FileList="fileList" ListType="UploadListType.PictureCard" OnPreview="(file) => PreviewImg(file)" OnRemove=" (file)=> DeleteImg(file)" ShowButton=false style="margin-top:8px"></Upload>
+                    <Upload FileList="fileList" ListType="UploadListType.PictureCard" OnPreview="(file) => PreviewImg(file)" OnRemove=" (file)=> DeleteImgAsync(file)" ShowButton=false style="margin-top:8px"></Upload>
 
                     <Image PreviewSrc="@previewImgUrl" Style="display: none;" @bind-PreviewVisible="isPreviewImg" />
 
@@ -137,7 +137,7 @@
 
 @code {
 
-    async Task UploadImgage(InputFileChangeEventArgs e)
+    async Task UploadImgageAsync(InputFileChangeEventArgs e)
     {
         foreach (var file in e.GetMultipleFiles())
         {
@@ -279,7 +279,7 @@
     {
         functionList = await userContextService.GetFunctionList();
 
-        await GetCategorySelectList();
+        await GetCategorySelectListAsync();
 
         var authorization = LocalStorage.GetItemAsString("Authorization");
 
@@ -288,17 +288,17 @@
 
     override protected void OnParametersSet()
     {
-        GetArticleList();
-        GetCategorySelectList();
+        GetArticleListAsync();
+        GetCategorySelectListAsync();
     }
 
 
 
-    async Task GetCategorySelectList()
+    async Task GetCategorySelectListAsync()
     {
         List<CategorySelectDto> parentKVList = new();
 
-        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectList?channelId=" + channelId, JsonHelper.DeserializeOpts);
+        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectListAsync?channelId=" + channelId, JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -325,10 +325,10 @@
     int pageSize = 10;
     PageListDto<ArticleDto> pageList = new();
 
-    async Task GetArticleList()
+    async Task GetArticleListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<ArticleDto>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<ArticleDto>>("Article/GetArticleListAsync?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -351,7 +351,7 @@
             pageSize = args.PageSize;
         }
 
-        GetArticleList();
+        GetArticleListAsync();
     }
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
@@ -361,7 +361,7 @@
     long articleId;
 
 
-    async Task EditArticle(ArticleDto? article = null)
+    async Task EditArticleAsync(ArticleDto? article = null)
     {
 
         editArticle = new();
@@ -413,7 +413,7 @@
             editArticle.CategoryId = "";
         }
 
-        GetCategorySelectList();
+        GetCategorySelectListAsync();
 
         isShowEditArticle = true;
 
@@ -426,7 +426,7 @@
     }
 
 
-    async Task SaveArticle()
+    async Task SaveArticleAsync()
     {
         editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
 
@@ -455,19 +455,19 @@
 
             saveLoading = false;
 
-            GetArticleList();
+            GetArticleListAsync();
 
             isShowEditArticle = false;
         }
     }
 
 
-    async Task DeleteArticle(long articleId)
+    async Task DeleteArticleAsync(long articleId)
     {
-        using var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId);
+        using var httpResponse = await Http.DeleteAsync("Article/DeleteArticleAsync?id=" + articleId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetArticleList();
+            GetArticleListAsync();
             Message.Success("删除成功");
         }
     }
@@ -479,7 +479,7 @@
         previewImgUrl = file.Url;
     }
 
-    async Task<bool> DeleteImg(UploadFileItem file)
+    async Task<bool> DeleteImgAsync(UploadFileItem file)
     {
         using var httpResponse = await Http.DeleteAsync("File/DeleteFile?id=" + file.Id);
 

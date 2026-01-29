@@ -31,7 +31,7 @@
                 @if (functionList.Contains("role-function"))
                 {
                     <SpaceItem>
-                        <a @onclick="() => EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
+                        <a @onclick="() => EditAuthorityAsync(context.Id)" style="color:darkorchid">权限范围</a>
                     </SpaceItem>
                 }
 
@@ -39,7 +39,7 @@
                 {
                     <SpaceItem>
                         <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteRole(context.Id)"
+                                    OnConfirm="_=>DeleteRoleAsync(context.Id)"
                                     OkText="Yes"
                                     CancelText="No">
                             <a style="color:red">删除</a>
@@ -64,7 +64,7 @@
 <Drawer Closable="true" Width="380" Visible="isShowEditRole" Title='("角色信息")' OnClose="() => isShowEditRole = false">
     <Template style="height:90%">
 
-        <Form Model="@editRole" OnFinish="SaveRole">
+        <Form Model="@editRole" OnFinish="SaveRoleAsync">
 
             <FormItem>
                 <Text>编码</Text>
@@ -98,14 +98,14 @@
     <Table DataSource="roleFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetRoleFunction(context.Id, isCheck)">@context.Name</Checkbox>
+            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(context.Id, isCheck)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetRoleFunction(item.Id, isCheck)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(item.Id, isCheck)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>
@@ -123,7 +123,7 @@
     {
         functionList = await userContextService.GetFunctionList();
 
-        await GetRoleList();
+        await GetRoleListAsync();
     }
 
     bool saveLoading = false;
@@ -139,10 +139,10 @@
 
     List<RoleFunctionDto> roleFunctionList = new();
 
-    async Task GetRoleList()
+    async Task GetRoleListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<RoleDto>>("Role/GetRoleList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<RoleDto>>("Role/GetRoleListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -165,7 +165,7 @@
             pageSize = args.PageSize;
         }
 
-        GetRoleList();
+        GetRoleListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -195,7 +195,7 @@
         StateHasChanged();
     }
 
-    async Task SaveRole()
+    async Task SaveRoleAsync()
     {
         saveLoading = true;
         if (roleId == default)
@@ -216,23 +216,23 @@
         }
         saveLoading = false;
 
-        GetRoleList();
+        GetRoleListAsync();
         isShowEditRole = false;
     }
 
 
-    async Task DeleteRole(long roleId)
+    async Task DeleteRoleAsync(long roleId)
     {
-        using var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId);
+        using var httpResponse = await Http.DeleteAsync("Role/DeleteRoleAsync?id=" + roleId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetRoleList();
+            GetRoleListAsync();
             Message.Success("删除成功");
         }
     }
 
 
-    async Task EditAuthority(long roleId)
+    async Task EditAuthorityAsync(long roleId)
     {
         this.roleId = roleId;
 
@@ -249,7 +249,7 @@
     }
 
 
-    async Task SetRoleFunction(long functionId, bool isCheck)
+    async Task SetRoleFunctionAsync(long functionId, bool isCheck)
     {
         SetRoleFunctionDto setRoleFunction = new()
         {
@@ -258,7 +258,7 @@
             IsCheck = isCheck
         };
 
-        using var httpResponse = await Http.PostAsJsonAsync<SetRoleFunctionDto>("Role/SetRoleFunction", setRoleFunction, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync<SetRoleFunctionDto>("Role/SetRoleFunctionAsync", setRoleFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("设置成功");

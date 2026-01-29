@@ -12,7 +12,7 @@
     </div>
 
     <div style="margin-left:auto">
-        <Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearch">
+        <Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
             <FormItem>
                 <Input @bind-Value="@context.Keyword" Placeholder="名称/用户名/电话/邮箱 模糊检索" Style="width: 260px" AllowClear />
             </FormItem>
@@ -54,7 +54,7 @@
                 @if (functionList.Contains("user-function"))
                 {
                     <SpaceItem>
-                        <a @onclick="() => EditAuthority(context.Id)" style="color:darkorchid">权限范围</a>
+                        <a @onclick="() => EditAuthorityAsync(context.Id)" style="color:darkorchid">权限范围</a>
                     </SpaceItem>
                 }
 
@@ -62,7 +62,7 @@
                 {
                     <SpaceItem>
                         <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteUser(context.Id)"
+                                    OnConfirm="_=>DeleteUserAsync(context.Id)"
                                     OkText="Yes"
                                     CancelText="No">
                             <a style="color:red">删除</a>
@@ -87,7 +87,7 @@
 <Drawer Closable="true" Width="380" Visible="isShowEditUser" Title='("用户信息")' OnClose="() => isShowEditUser = false">
     <Template style="height:90%">
 
-        <Form Model="@editUser" OnFinish="SaveUser">
+        <Form Model="@editUser" OnFinish="SaveUserAsync">
 
             <FormItem>
                 <Text>名称</Text>
@@ -142,14 +142,14 @@
     <Table DataSource="userFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetUserFunction(isCheck, context)">@context.Name</Checkbox>
+            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetUserFunctionAsync(isCheck, context)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetUserFunction(isCheck, item)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetUserFunctionAsync(isCheck, item)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>
@@ -169,8 +169,8 @@
     {
         functionList = await userContextService.GetFunctionList();
 
-        var getUserListTask = GetUserList();
-        var getRoleSelectTask = GetRoleSelect();
+        var getUserListTask = GetUserListAsync();
+        var getRoleSelectTask = GetRoleSelectAsync();
 
         await Task.WhenAll(getUserListTask, getRoleSelectTask);
     }
@@ -187,9 +187,9 @@
 
     List<UserFunctionDto> userFunctionList = new();
 
-    async Task GetRoleSelect()
+    async Task GetRoleSelectAsync()
     {
-        var retData = await Http.GetFromJsonAsync<List<RoleSelectDto>>("Role/GetRoleSelect", JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<RoleSelectDto>>("Role/GetRoleSelectAsync", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -197,11 +197,11 @@
         }
     }
 
-    async Task GetUserList()
+    async Task GetUserListAsync()
     {
         tableLoading = true;
 
-        var url = StringHelper.ModelToUriParam(request, "User/GetUserList");
+        var url = StringHelper.ModelToUriParam(request, "User/GetUserListAsync");
         var retData = await Http.GetFromJsonAsync<PageListDto<UserDto>>(url, JsonHelper.DeserializeOpts);
 
         if (retData != null)
@@ -225,21 +225,21 @@
             request.PageSize = args.PageSize;
         }
 
-        GetUserList();
+        GetUserListAsync();
     }
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
 
-    async Task HandleSearch(EditContext editContext)
+    async Task HandleSearchAsync(EditContext editContext)
     {
         request.PageNum = 1;
-        await GetUserList();
+        await GetUserListAsync();
     }
 
     void HandleReset()
     {
         request = new UserPageRequestDto { PageSize = request.PageSize };
-        GetUserList();
+        GetUserListAsync();
     }
 
 
@@ -247,7 +247,7 @@
     EditUserDto editUser = new();
     long userId;
 
-    async Task SaveUser()
+    async Task SaveUserAsync()
     {
         saveLoading = true;
 
@@ -273,7 +273,7 @@
 
         if (!isShowEditUser)
         {
-            GetUserList();
+            GetUserListAsync();
         }
 
         saveLoading = false;
@@ -306,18 +306,18 @@
 
 
 
-    async Task DeleteUser(long userId)
+    async Task DeleteUserAsync(long userId)
     {
-        using var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId);
+        using var httpResponse = await Http.DeleteAsync("User/DeleteUserAsync?id=" + userId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetUserList();
+            GetUserListAsync();
             Message.Success("删除成功");
         }
     }
 
 
-    async Task EditAuthority(long roleId)
+    async Task EditAuthorityAsync(long roleId)
     {
         this.userId = roleId;
 
@@ -334,7 +334,7 @@
     }
 
 
-    async Task SetUserFunction(bool isCheck, UserFunctionDto userFunction)
+    async Task SetUserFunctionAsync(bool isCheck, UserFunctionDto userFunction)
     {
         SetUserFunctionDto setUserFunction = new()
         {
@@ -343,7 +343,7 @@
             IsCheck = isCheck
         };
 
-        using var httpResponse = await Http.PostAsJsonAsync<SetUserFunctionDto>("User/SetUserFunction", setUserFunction, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync<SetUserFunctionDto>("User/SetUserFunctionAsync", setUserFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("设置成功");

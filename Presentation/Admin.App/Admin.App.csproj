@@ -25,6 +25,7 @@
 		<PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.2" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.2" />
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
 		<PackageReference Include="SkiaSharp.Views.Blazor" Version="3.119.1" />
 	</ItemGroup>
@@ -32,6 +33,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Application\Application.Model\Application.Model.csproj" />
 	  <ProjectReference Include="..\..\Infrastructure\Common\Common.csproj" />
+	  <ProjectReference Include="..\..\Infrastructure\DistributedLock.InMemory\DistributedLock.InMemory.csproj" />
 	</ItemGroup>
 
 	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">

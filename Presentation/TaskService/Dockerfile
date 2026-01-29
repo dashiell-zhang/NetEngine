@@ -22,7 +22,7 @@ ENV TZ=Asia/Shanghai
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
-WORKDIR "/src/BackgroundService/TaskService"
+WORKDIR "/src/Presentation/TaskService"
 RUN dotnet restore "TaskService.csproj"
 RUN dotnet build "TaskService.csproj" -c Release -o /app/build
 

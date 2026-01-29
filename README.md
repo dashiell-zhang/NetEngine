@@ -6,6 +6,17 @@
 
 ---
 
+## 0. 快速导航
+
+- [1. 功能特性总览](#1-功能特性总览)
+- [2. 解决方案结构](#2-解决方案结构)
+- [3. 快速开始](#3-快速开始)
+- [4. 核心运行时能力](#4-核心运行时能力)
+- [5. 数据库与 EF Core](#5-数据库与-ef-core)
+- [6. 其他说明](#6-其他说明)
+
+---
+
 ## 1. 功能特性总览
 
 - 认证与安全
@@ -78,8 +89,94 @@
 
 ### 2.6 SourceGenerator（源码生成）
 
-- `SourceGenerator.Core`：源代码生成器（批量注册服务、后台任务等）
-- `SourceGenerator.Runtime`：与生成代码配套的运行时组件
+- `SourceGenerator.Core`：源代码生成器（减少反射、批量生成样板代码）
+- `SourceGenerator.Runtime`：与生成代码配套的运行时组件（特性、行为管道等）
+
+核心能力（按生成器划分）：
+
+- `RegisterServiceGenerator`
+  - 基于 `[RegisterService]` 自动生成 DI 注册扩展方法（输出命名空间：`NetEngine.Generated`）
+  - 在可作为启动入口的项目中，额外生成聚合方法 `BatchRegisterServices()`，自动汇总并调用“当前项目 + 所有引用项目”的 `RegisterServices_{AssemblyName}()`
+- `BackgroundServiceGenerator`
+  - 扫描 `public` 且继承 `BackgroundService` 的类型，生成 `AddHostedService<T>()` 注册扩展方法（输出命名空间：`NetEngine.Generated`）
+  - 在启动入口项目中，额外生成 `BatchRegisterBackgroundServices()` 聚合注册方法
+- `AutoProxyGenerator`
+  - 基于 `[AutoProxy]` 为目标类型生成派生代理类 `*_Proxy`，在运行时执行“行为管道”以实现日志、缓存、并发限制等横切能力
+  - 常见用法：配合 `RegisterServiceGenerator` 自动把 DI 注册指向生成的 `*_Proxy` 实现（对外仍以接口注入）
+- `SoftDeleteFilterGenerator`
+  - 为继承 `Repository.Bases.CD` 且出现在 `DbSet<T>` 中的实体，自动生成全局软删除过滤器 `modelBuilder.ApplySoftDeleteFilters()`（输出命名空间：`Repository.Database.Generated`）
+- `JsonColumnGenerator`
+  - 基于 `[JsonColumn]` 为 JSON 列生成 EF Core 映射 `modelBuilder.ApplyJsonColumns()`（输出命名空间：`Repository.Database.Generated`），替代运行时反射扫描
+
+使用示例（简化版）：
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using SourceGenerator.Runtime.Attributes;
+
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
+[AutoProxy]
+public class UserService : IUserService
+{
+    [Logging]
+    [Cacheable(TtlSeconds = 60)]
+    public virtual Task<UserDto> GetAsync(long id) => ...
+}
+
+// 启动项目 Program.cs
+builder.Services.BatchRegisterServices();
+builder.Services.BatchRegisterBackgroundServices();
+```
+
+注意事项：
+
+- 代理拦截更适合“接口注入 + 调用接口方法”的使用方式；对于类方法，通常需要 `virtual`（或可被 override 的方式）才能在派生代理中被拦截。
+- `[AutoProxy]` 目标类需要存在 `public` 构造函数（生成器会据此选择可生成的目标）。
+
+#### SourceGenerator.Runtime：内置 Behaviors（行为管道）
+
+`AutoProxyGenerator` 生成的 `*_Proxy` 会在运行时按方法上声明的特性顺序组装行为管道（`SourceGenerator.Runtime.Pipeline`），目前已内置 3 个常用行为：
+
+1) `LoggingBehavior`（`[Logging]`）
+
+- 作用：记录方法执行开始/结束/异常日志，并输出耗时、TraceId、调用链、入参（可配置）等信息。
+- 依赖：`ILogger`（通常由宿主项目的 DI/日志框架提供）。
+
+2) `CacheableBehavior`（`[Cacheable]`）
+
+- 作用：对“有返回值的方法”提供基于 `IDistributedCache` 的结果缓存；缓存 Key 默认由 `方法名 + 入参` 计算并做 SHA-256。
+- 依赖：宿主项目需要注册 `IDistributedCache`（本项目示例为 Redis：`AddStackExchangeRedisCache`）。
+- 常用参数：`TtlSeconds`（缓存秒数）。
+
+3) `ConcurrencyLimitBehavior`（`[ConcurrencyLimit]`）
+
+- 作用：对方法调用做并发限制（信号量语义），底层使用 `IDistributedLock` 实现跨进程/跨机器互斥与限流；可选择“阻断”或“排队等待”。
+- 依赖：宿主项目需要注册 `IDistributedLock`（本项目示例为 Redis：`AddRedisLock`）。
+- 常用参数：`Semaphore`（并发数）、`IsUseParameter`（入参是否参与 Key）、`IsBlock`（未获取到锁是否直接阻断）、`ExpirySeconds`（锁超时）。
+
+示例用法（简化版）：
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using SourceGenerator.Runtime.Attributes;
+
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
+[AutoProxy]
+public class OrderService : IOrderService
+{
+    // 记录调用日志（开始/结束/异常）
+    [Logging]
+    public virtual Task<OrderDto> GetAsync(long id) => ...
+
+    // 缓存返回结果 60 秒（Key 默认包含入参）
+    [Cacheable(TtlSeconds = 60)]
+    public virtual Task<OrderDto> GetCacheAsync(long id) => ...
+
+    // 并发限制：同样入参最多 5 个并发；拿不到锁就直接提示“请勿频繁操作”
+    [ConcurrencyLimit(IsUseParameter = true, IsBlock = true, ExpirySeconds = 3, Semaphore = 5)]
+    public virtual Task SubmitAsync(SubmitOrderDto dto) => ...
+}
+```
 
 ### 2.7 InitData（初始化数据）
 
@@ -119,6 +216,8 @@ dotnet build NetEngine.slnx
 
 管理后台后端配置：`Presentation/Admin.WebAPI/appsettings.json`，结构与 Client.WebAPI 基本一致。
 
+> 安全提示：仓库内 `appsettings*.json` 中的密钥/连接串/密码多为示例值，建议仅用于本地开发；生产环境请使用环境变量、配置中心或 Secret 管理，并确保不要把真实密钥提交到仓库。
+
 ### 3.4 启动项目（开发环境）
 
 ```bash
@@ -137,6 +236,24 @@ dotnet run --project Presentation/TaskService/TaskService.csproj
 
 - Admin.App 默认使用 `https://localhost:9833/` 作为 API 地址，可在 `Admin.App/Program.cs` 中调整。
 - Debug 模式下，TaskService 启动后会在控制台列出所有队列任务 / 定时任务，可通过输入序号启用。
+
+### 3.5 默认访问地址（开发环境）
+
+- `Client.WebAPI`：`https://localhost:9801/swagger/`（仅 Development 启用），健康检查：`https://localhost:9801/healthz`
+- `Admin.WebAPI`：`https://localhost:9833/swagger/`（仅 Development 启用），健康检查：`https://localhost:9833/healthz`
+- `Admin.App`：`https://localhost:16701/`
+
+> 说明：Swagger 仅在 Development 环境启用（见 `ProjectCore/WebAPI.Core/Extensions/WebApplicationExtension.UseCommonMiddleware`）。如需在生产开启，请自行调整中间件配置并做好鉴权与访问控制。
+
+### 3.6 Docker（可选）
+
+仓库在以下目录提供了 Dockerfile，主要用于 Visual Studio 的容器调试/发布流程：
+
+- `Presentation/Client.WebAPI/Dockerfile`
+- `Presentation/Admin.WebAPI/Dockerfile`
+- `Presentation/TaskService/Dockerfile`
+
+如需用于生产部署，建议根据你的镜像源、证书（HTTPS）、连接串、时区等需求进一步裁剪与加固。
 
 ---
 

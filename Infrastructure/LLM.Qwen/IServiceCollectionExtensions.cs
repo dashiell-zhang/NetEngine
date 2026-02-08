@@ -11,6 +11,8 @@ public static class ServiceCollectionExtensions
     {
         services.Configure(action);
 
+        services.AddLlmClientFactory();
+
         services.AddHttpClient<QwenLlmClient>((serviceProvider, httpClient) =>
         {
             var settings = serviceProvider.GetRequiredService<IOptions<QwenSetting>>().Value;
@@ -29,7 +31,7 @@ public static class ServiceCollectionExtensions
             UseCookies = false
         });
 
+        services.AddKeyedTransient<ILlmClient, QwenLlmClient>("Qwen");
         services.AddTransient<ILlmClient>(serviceProvider => serviceProvider.GetRequiredService<QwenLlmClient>());
     }
 }
-

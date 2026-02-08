@@ -61,6 +61,8 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
     public DbSet<UserToken> UserToken { get; set; }
 
+    public DbSet<LlmApp> LlmApp { get; set; }
+
     #endregion
 
 

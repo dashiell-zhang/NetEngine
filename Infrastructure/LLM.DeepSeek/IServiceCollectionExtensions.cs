@@ -11,6 +11,8 @@ public static class ServiceCollectionExtensions
     {
         services.Configure(action);
 
+        services.AddLlmClientFactory();
+
         services.AddHttpClient<DeepSeekLlmClient>((serviceProvider, httpClient) =>
         {
             var settings = serviceProvider.GetRequiredService<IOptions<DeepSeekSetting>>().Value;
@@ -29,7 +31,7 @@ public static class ServiceCollectionExtensions
             UseCookies = false
         });
 
+        services.AddKeyedTransient<ILlmClient, DeepSeekLlmClient>("DeepSeek");
         services.AddTransient<ILlmClient>(serviceProvider => serviceProvider.GetRequiredService<DeepSeekLlmClient>());
     }
 }
-

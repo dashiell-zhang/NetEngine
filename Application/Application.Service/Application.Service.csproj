@@ -26,6 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\Infrastructure\LLM\LLM.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\FileStorage\FileStorage.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\SMS\SMS.csproj" />
 		<ProjectReference Include="..\..\Repository\Repository.csproj" />

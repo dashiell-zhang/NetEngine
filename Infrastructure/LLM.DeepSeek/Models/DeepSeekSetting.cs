@@ -1,6 +1,8 @@
+using LLM.Compatible;
+
 namespace LLM.DeepSeek.Models;
 
-public sealed class DeepSeekSetting
+public sealed class DeepSeekSetting : IOpenAiCompatibleSetting
 {
     public string BaseUrl { get; set; } = "https://api.deepseek.com";
 
@@ -10,4 +12,3 @@ public sealed class DeepSeekSetting
 
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(100);
 }
-

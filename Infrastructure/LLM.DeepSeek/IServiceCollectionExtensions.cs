@@ -31,7 +31,7 @@ public static class ServiceCollectionExtensions
             UseCookies = false
         });
 
-        services.AddKeyedTransient<ILlmClient, DeepSeekLlmClient>("DeepSeek");
-        services.AddTransient<ILlmClient>(serviceProvider => serviceProvider.GetRequiredService<DeepSeekLlmClient>());
+        services.AddKeyedTransient<ILlmClient>("DeepSeek", (serviceProvider, _) =>
+            serviceProvider.GetRequiredService<DeepSeekLlmClient>());
     }
 }

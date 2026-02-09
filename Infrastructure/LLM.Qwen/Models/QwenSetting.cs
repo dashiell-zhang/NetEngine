@@ -1,13 +1,11 @@
+using LLM.Compatible;
+
 namespace LLM.Qwen.Models;
 
-public sealed class QwenSetting
+public sealed class QwenSetting : IOpenAiCompatibleSetting
 {
-    /// <summary>
-    /// DashScope OpenAI-compatible base url，例如：
-    /// - https://dashscope.aliyuncs.com/compatible-mode/v1
-    /// - https://dashscope-us.aliyuncs.com/compatible-mode/v1
-    /// </summary>
-    public string BaseUrl { get; set; } = "https://dashscope-us.aliyuncs.com/compatible-mode/v1";
+
+    public string BaseUrl { get; set; } = "https://dashscope.aliyuncs.com/compatible-mode/v1";
 
     public string ApiKey { get; set; } = string.Empty;
 
@@ -15,4 +13,3 @@ public sealed class QwenSetting
 
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(100);
 }
-

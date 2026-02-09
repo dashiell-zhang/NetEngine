@@ -31,7 +31,7 @@ public static class ServiceCollectionExtensions
             UseCookies = false
         });
 
-        services.AddKeyedTransient<ILlmClient, QwenLlmClient>("Qwen");
-        services.AddTransient<ILlmClient>(serviceProvider => serviceProvider.GetRequiredService<QwenLlmClient>());
+        services.AddKeyedTransient<ILlmClient>("Qwen", (serviceProvider, _) =>
+            serviceProvider.GetRequiredService<QwenLlmClient>());
     }
 }

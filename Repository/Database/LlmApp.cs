@@ -4,7 +4,7 @@ using Repository.Database.Bases;
 namespace Repository.Database;
 
 /// <summary>
-/// LLM 应用配置表（用于按 Code 管理提示词与模型/供应商参数）
+/// LLM 应用配置表
 /// </summary>
 [Index(nameof(Code), IsUnique = true)]
 [Index(nameof(Provider))]
@@ -13,7 +13,7 @@ public class LlmApp : CUD_User
 {
 
     /// <summary>
-    /// 应用标记（业务侧通过该 Code 调用 LLM）
+    /// 应用标记
     /// </summary>
     public string Code { get; set; }
 
@@ -31,7 +31,7 @@ public class LlmApp : CUD_User
 
 
     /// <summary>
-    /// 模型名称（如 deepseek-chat、qwen-plus 等）
+    /// 模型名称
     /// </summary>
     public string Model { get; set; }
 

@@ -2,6 +2,7 @@ using AntDesign;
 using Blazored.LocalStorage;
 using Common;
 using Microsoft.AspNetCore.Components;
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
@@ -72,7 +73,8 @@ public class HttpInterceptor : DelegatingHandler
 
             if ((int)response.StatusCode == 401)
             {
-                NavigationManager.NavigateTo("login");
+                LocalStorage.RemoveItem("Authorization");
+                NavigationManager.NavigateTo("login", true);
             }
 
             if ((int)response.StatusCode == 400)
@@ -101,7 +103,7 @@ public class HttpInterceptor : DelegatingHandler
         else
         {
             NavigationManager.NavigateTo("login", true);
-            return new HttpResponseMessage();
+            return new HttpResponseMessage(HttpStatusCode.Unauthorized) { RequestMessage = request };
         }
     }
 }

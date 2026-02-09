@@ -15,16 +15,30 @@
 
     List<ServerInfoDto> serverInfos = new();
 
-    async override protected void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var retData = await Http.GetFromJsonAsync<List<ServerInfoDto>>("Site/GetServerInfo", JsonHelper.DeserializeOpts);
-
-        if (retData != null)
+        try
         {
-            serverInfos = retData;
-        }
+            using var response = await Http.GetAsync("Site/GetServerInfo");
+            if (!response.IsSuccessStatusCode)
+            {
+                return;
+            }
 
-        StateHasChanged();
+            var retData = await response.Content.ReadFromJsonAsync<List<ServerInfoDto>>(JsonHelper.DeserializeOpts);
+            if (retData != null)
+            {
+                serverInfos = retData;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // ignore
+        }
+        catch (HttpRequestException)
+        {
+            // interceptor handles 401/400; don't crash WASM runtime
+        }
     }
 
 }

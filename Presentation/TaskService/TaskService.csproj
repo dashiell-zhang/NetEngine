@@ -35,6 +35,7 @@
 		<ProjectReference Include="..\..\Infrastructure\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
+		<ProjectReference Include="..\..\Infrastructure\LLM\LLM.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\Logger.DataBase\Logger.DataBase.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\Logger.LocalFile\Logger.LocalFile.csproj" />
 		<ProjectReference Include="..\..\ProjectCore\TaskService.Core\TaskService.Core.csproj" />

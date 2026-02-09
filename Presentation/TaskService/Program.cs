@@ -2,6 +2,7 @@ using Common;
 using DistributedLock.Redis;
 using FileStorage.AliCloud;
 using IdentifierGenerator;
+using LLM.Compatible;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -69,6 +70,22 @@ class Program
                     services.AddScoped(t);
                 });
 
+                #region 注册 LLM 推理服务
+
+                services.AddOpenAiCompatibleProvider("DeepSeek", option =>
+                {
+                    option.BaseUrl = "https://api.deepseek.com";
+                    option.ApiKey = "";
+                });
+
+
+                services.AddOpenAiCompatibleProvider("Qwen", option =>
+                {
+                    option.BaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+                    option.ApiKey = "";
+                });
+
+                #endregion
 
                 #region 注册短信服务
 

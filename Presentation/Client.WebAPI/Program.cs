@@ -2,6 +2,7 @@ using Client.WebAPI.Libraries.HttpHandler;
 using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
+using LLM.Compatible;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -14,6 +15,7 @@ using System.Security.Cryptography.X509Certificates;
 using WebAPI.Core.Extensions;
 
 namespace Client.WebAPI;
+
 public class Program
 {
     public static void Main(string[] args)
@@ -54,6 +56,24 @@ public class Program
 
         builder.Services.BatchRegisterServices();
         builder.Services.BatchRegisterBackgroundServices();
+
+
+        #region 注册 LLM 推理服务
+
+        builder.Services.AddOpenAiCompatibleProvider("DeepSeek", option =>
+        {
+            option.BaseUrl = "https://api.deepseek.com";
+            option.ApiKey = "";
+        });
+
+
+        builder.Services.AddOpenAiCompatibleProvider("Qwen", option =>
+        {
+            option.BaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+            option.ApiKey = "";
+        });
+
+        #endregion
 
 
         //注册Id生成器

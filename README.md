@@ -510,6 +510,85 @@ using (await distLock.LockAsync("UploadFile", TimeSpan.FromMinutes(5), semaphore
 
 ---
 
+### 4.4 LLM（大模型调用）
+
+项目内置了一个“OpenAI Compatible”风格的 LLM 调用抽象（见 `Infrastructure/LLM`），并提供了基于数据库的应用配置表 `LlmApp`（见 `Repository/Database/LlmApp.cs`），用于按 `Code` 选择不同的供应商/模型/提示词模板。
+
+#### 4.4.1 注册 LLM Provider（后端）
+
+以 `Admin.WebAPI` 为例，在 `Presentation/Admin.WebAPI/Program.cs` 中通过 `AddOpenAiCompatibleProvider(providerKey, ...)` 注册供应商：
+
+```csharp
+builder.Services.AddOpenAiCompatibleProvider("DeepSeek", option =>
+{
+    option.BaseUrl = "https://api.deepseek.com";
+    option.ApiKey = "sk-...";
+});
+```
+
+- `providerKey`（例：`DeepSeek` / `Qwen`）就是 `LlmApp.Provider` 需要填写的值。
+- 你可以按同样方式注册更多供应商（只要其接口兼容 OpenAI Chat Completions）。
+
+#### 4.4.2 提示词模板占位符（{{key}} / {{*key}}）
+
+`LlmApp.SystemPromptTemplate` / `LlmApp.PromptTemplate` 支持占位符：
+
+- `{{key}}`：可选参数，未提供时保留原样（不会阻止调用）。
+- `{{*key}}`：必传参数，未提供（空或空白）会直接抛出异常，不发起 LLM 调用。
+
+示例：
+
+```text
+SystemPromptTemplate: 你是一个助手，请使用 {{lang}} 回复。
+PromptTemplate: 请计算 {{*a}} + {{*b}} 的结果，并说明思路。
+```
+
+#### 4.4.3 代码调用（非流式 / 流式）
+
+通过 `Application.Service.LLM.LlmInvokeService` 按 `Code` 调用：
+
+```csharp
+// 非流式：拿首条文本
+var args = new Dictionary<string, string>
+{
+    ["a"] = "5",
+    ["b"] = "9",
+    ["lang"] = "中文"
+};
+
+var content = await llmInvokeService.ChatContentAsync("sumqw", args, cancellationToken);
+```
+
+流式调用（SSE chunk / delta）：
+
+```csharp
+await foreach (var chunk in llmInvokeService.ChatStreamAsync("sumqw", args, cancellationToken))
+{
+    var delta = chunk.Choices.FirstOrDefault()?.Delta?.Content;
+    if (!string.IsNullOrEmpty(delta))
+    {
+        Console.Write(delta);
+    }
+}
+```
+
+> 必传参数校验：`LlmInvokeService` 会扫描模板中的 `{{*key}}` 并校验 `args[key]` 是否有值；缺失会抛出 `CustomException("必传参数未填写: ...")`。
+
+#### 4.4.4 管理后台配置与在线测试
+
+在 `Admin.App` 的“运维管理 / LLM应用”页面（`/operations/llmapp`）可对 `LlmApp` 进行增删改查，并在编辑抽屉内进行“调用测试”：
+
+- 自动识别模板中的 `{{key}}` / `{{*key}}` 占位符并生成输入框
+- 对 `{{*key}}` 做必填校验
+- 点击“调用测试”后显示模型返回内容
+
+#### 4.4.5 Client.WebAPI 示例接口
+
+`Presentation/Client.WebAPI/Controllers/DemoController.cs` 提供了示例：
+
+- `TestLLM`：非流式调用示例
+- `TestLLMStream`：流式调用示例（返回 `IAsyncEnumerable<string>`）
+
 ## 5. 数据库与 EF Core
 
 ### 5.1 默认：PostgreSQL

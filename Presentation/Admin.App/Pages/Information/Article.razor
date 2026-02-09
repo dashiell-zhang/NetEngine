@@ -298,7 +298,7 @@
     {
         List<CategorySelectDto> parentKVList = new();
 
-        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectListAsync?channelId=" + channelId, JsonHelper.DeserializeOpts);
+        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectList?channelId=" + channelId, JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -328,7 +328,7 @@
     async Task GetArticleListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<ArticleDto>>("Article/GetArticleListAsync?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<ArticleDto>>("Article/GetArticleList?channelId=" + channelId + "&pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -464,7 +464,7 @@
 
     async Task DeleteArticleAsync(long articleId)
     {
-        using var httpResponse = await Http.DeleteAsync("Article/DeleteArticleAsync?id=" + articleId);
+        using var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId);
         if (httpResponse.IsSuccessStatusCode)
         {
             GetArticleListAsync();

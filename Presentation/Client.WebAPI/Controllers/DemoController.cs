@@ -1,4 +1,5 @@
 using Application.Model.Site.Article;
+using Application.Service.LLM;
 using Client.WebAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,22 @@ namespace Client.WebAPI.Controllers;
 [Route("api/[controller]/[action]")]
 public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : ControllerBase
 {
+
+
+    [HttpGet]
+    public async Task<bool> Test([FromServices] LlmInvokeService llmInvokeService)
+    {
+        //string code = "sum";
+
+        string code = "sumqw";
+        Dictionary<string, string> args = new();
+        args["a"] = "5";
+        args["b"] = "9";
+
+        var s = await llmInvokeService.ChatContentAsync(code, args);
+
+        return true;
+    }
 
 
     [HttpGet]

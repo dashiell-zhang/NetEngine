@@ -1,0 +1,293 @@
+@page "/operations/llmapp"
+@using Application.Model.LLM.LlmApp
+@attribute [ReuseTabsPageTitle("LLM应用")]
+
+<div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditLlmApp()">添加</Button>
+    </div>
+
+    <div style="margin-left:auto">
+        <Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
+            <FormItem>
+                <Input @bind-Value="@context.Keyword" Placeholder="Code/名称/供应商/模型/备注 模糊检索" Style="width: 320px" AllowClear />
+            </FormItem>
+            <FormItem>
+                <Select TItem="bool?" TItemValue="bool?" @bind-Value="@context.IsEnable" Placeholder="是否启用" Style="width: 140px" AllowClear>
+                    <SelectOption Value="@((bool?)true)" Label="启用"></SelectOption>
+                    <SelectOption Value="@((bool?)false)" Label="停用"></SelectOption>
+                </Select>
+            </FormItem>
+            <FormItem>
+                <Space>
+                    <Button Type="@ButtonType.Primary" HtmlType="submit">搜索</Button>
+                </Space>
+            </FormItem>
+            <FormItem>
+                <Space>
+                    <Button OnClick="HandleReset">重置</Button>
+                </Space>
+            </FormItem>
+        </Form>
+    </div>
+</div>
+
+<Divider Style="margin: 12px 0" />
+
+<Table TItem="LlmAppDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+    <ColumnDefinitions>
+        <PropertyColumn Property="c => c.Code" Title="Code"></PropertyColumn>
+        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
+        <PropertyColumn Property="c => c.Provider" Title="供应商"></PropertyColumn>
+        <PropertyColumn Property="c => c.Model" Title="模型"></PropertyColumn>
+        <PropertyColumn Property="c => c.IsEnable" Title="启用"></PropertyColumn>
+        <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
+        <ActionColumn Title="操作">
+            <Space>
+
+                <SpaceItem>
+                    <a @onclick="() => EditLlmApp(context)">编辑</a>
+                </SpaceItem>
+
+                <SpaceItem>
+                    <Popconfirm Title="确认要删除吗？"
+                                OnConfirm="_=>DeleteLlmAppAsync(context.Id)"
+                                OkText="Yes"
+                                CancelText="No">
+                        <a style="color:red">删除</a>
+                    </Popconfirm>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+        <PaginationTemplate>
+            <div style="margin:15px 0;float:right">
+                <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.PageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            </div>
+        </PaginationTemplate>
+
+    </Table>
+
+
+    <Drawer Closable="true" Width="760" Visible="isShowEdit" Title='(editId == null ? "新增 LLM 应用" : "编辑 LLM 应用")' OnClose="() => isShowEdit = false">
+        <Template style="height:90%">
+
+            <Form Model="@editLlmApp" OnFinish="SaveLlmAppAsync">
+
+                <Row Gutter="24">
+                    <AntDesign.Col Span="12">
+                        <FormItem>
+                            <Text>Code</Text>
+                            <Input Placeholder="如: deepseek-chat-default" @bind-Value="@context.Code" />
+                        </FormItem>
+                    </AntDesign.Col>
+                    <AntDesign.Col Span="12">
+                        <FormItem>
+                            <Text>名称</Text>
+                            <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+                        </FormItem>
+                    </AntDesign.Col>
+                </Row>
+
+                <Row Gutter="24">
+                    <AntDesign.Col Span="12">
+                        <FormItem>
+                            <Text>供应商</Text>
+                            <Input Placeholder="如: DeepSeek / Qwen" @bind-Value="@context.Provider" />
+                        </FormItem>
+                    </AntDesign.Col>
+                    <AntDesign.Col Span="12">
+                        <FormItem>
+                            <Text>模型</Text>
+                            <Input Placeholder="如: deepseek-chat" @bind-Value="@context.Model" />
+                        </FormItem>
+                    </AntDesign.Col>
+                </Row>
+
+                <Row Gutter="24">
+                    <AntDesign.Col Span="12">
+                        <FormItem>
+                            <Text>MaxTokens</Text>
+                            <Input Placeholder="可选" Type="InputType.Number" @bind-Value="@context.MaxTokens" />
+                        </FormItem>
+                    </AntDesign.Col>
+                    <AntDesign.Col Span="12">
+                        <FormItem>
+                            <Text>Temperature</Text>
+                            <Input Placeholder="可选，如 0.7" Type="InputType.Number" @bind-Value="@context.Temperature" />
+                        </FormItem>
+                    </AntDesign.Col>
+                </Row>
+
+                <FormItem>
+                    <Text>是否启用</Text>
+                    <Switch @bind-Value="@editLlmApp.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
+                </FormItem>
+
+                <FormItem>
+                    <Text>SystemPromptTemplate</Text>
+                    <TextArea @bind-Value="@context.SystemPromptTemplate" MinRows="3" MaxRows="10" style="width:100%" />
+                </FormItem>
+
+                <FormItem>
+                    <Text>PromptTemplate</Text>
+                    <TextArea @bind-Value="@context.PromptTemplate" MinRows="4" MaxRows="14" style="width:100%" />
+                </FormItem>
+
+                <FormItem>
+                    <Text>备注</Text>
+                    <TextArea @bind-Value="@context.Remark" MinRows="2" MaxRows="6" style="width:100%" />
+                </FormItem>
+
+                <Row Gutter="24">
+                    <AntDesign.Col Span="24">
+                        <div style="float:right">
+                            <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                            <Button Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
+                        </div>
+                    </AntDesign.Col>
+                </Row>
+
+            </Form>
+
+        </Template>
+    </Drawer>
+
+
+@code {
+
+    List<string> functionList = new();
+
+    override protected async Task OnInitializedAsync()
+    {
+        functionList = await userContextService.GetFunctionList();
+    }
+
+    override protected void OnParametersSet()
+    {
+        GetLlmAppListAsync();
+    }
+
+    LlmAppPageRequestDto request = new() { PageSize = 10 };
+
+    bool tableLoading = false;
+    PageListDto<LlmAppDto> pageList = new();
+
+    async Task GetLlmAppListAsync()
+    {
+        tableLoading = true;
+
+        var url = StringHelper.ModelToUriParam(request, "Operations/GetLlmAppList");
+        var retData = await Http.GetFromJsonAsync<PageListDto<LlmAppDto>>(url, JsonHelper.DeserializeOpts);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    async Task HandleSearchAsync(EditContext editContext)
+    {
+        request.PageNum = 1;
+        await GetLlmAppListAsync();
+    }
+
+    void HandleReset()
+    {
+        request = new LlmAppPageRequestDto { PageSize = request.PageSize };
+        GetLlmAppListAsync();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (request.PageNum != args.Page)
+        {
+            request.PageNum = args.Page;
+        }
+
+        if (request.PageSize != args.PageSize)
+        {
+            request.PageSize = args.PageSize;
+        }
+
+        GetLlmAppListAsync();
+    }
+
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+    bool isShowEdit = false;
+    bool saveLoading = false;
+    long? editId;
+    EditLlmAppDto editLlmApp = new();
+
+    async Task EditLlmApp(LlmAppDto? row = null)
+    {
+        if (row == null)
+        {
+            editId = null;
+            editLlmApp = new EditLlmAppDto { IsEnable = true };
+        }
+        else
+        {
+            editId = row.Id;
+            editLlmApp = new EditLlmAppDto
+            {
+                Code = row.Code,
+                Name = row.Name,
+                Provider = row.Provider,
+                Model = row.Model,
+                SystemPromptTemplate = row.SystemPromptTemplate,
+                PromptTemplate = row.PromptTemplate,
+                MaxTokens = row.MaxTokens,
+                Temperature = row.Temperature,
+                IsEnable = row.IsEnable,
+                Remark = row.Remark
+            };
+        }
+
+        await Task.Delay(150);
+        isShowEdit = true;
+        StateHasChanged();
+    }
+
+    async Task SaveLlmAppAsync()
+    {
+        saveLoading = true;
+
+        HttpResponseMessage httpResponse;
+        if (editId == null)
+        {
+            httpResponse = await Http.PostAsJsonAsync("Operations/CreateLlmApp", editLlmApp, JsonHelper.SerializeOpts);
+        }
+        else
+        {
+            httpResponse = await Http.PostAsJsonAsync("Operations/UpdateLlmApp?id=" + editId.Value, editLlmApp, JsonHelper.SerializeOpts);
+        }
+
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            Message.Success("保存成功");
+            isShowEdit = false;
+            GetLlmAppListAsync();
+        }
+
+        saveLoading = false;
+    }
+
+    async Task DeleteLlmAppAsync(long id)
+    {
+        using var httpResponse = await Http.DeleteAsync("Operations/DeleteLlmAppid=" + id);
+
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            Message.Success("删除成功");
+            GetLlmAppListAsync();
+        }
+    }
+}
+

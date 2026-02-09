@@ -127,7 +127,7 @@
     {
         tableLoading = true;
 
-        var url = StringHelper.ModelToUriParam(request, "Operations/GetQueueTaskListAsync");
+        var url = StringHelper.ModelToUriParam(request, "Operations/GetQueueTaskList");
         var retData = await Http.GetFromJsonAsync<PageListDto<QueueTaskDto>>(url, JsonHelper.DeserializeOpts);
 
         if (retData != null)
@@ -184,7 +184,7 @@
 
     async Task RetryQueueTaskAsync(long id)
     {
-        using var httpResponse = await Http.PostAsync("Operations/RetryQueueTaskAsync?id=" + id, null);
+        using var httpResponse = await Http.PostAsync("Operations/RetryQueueTask?id=" + id, null);
 
         if (httpResponse.IsSuccessStatusCode)
         {

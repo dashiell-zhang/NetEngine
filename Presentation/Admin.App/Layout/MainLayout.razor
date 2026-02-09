@@ -66,6 +66,11 @@
                         <MenuItem><a href="operations/queuetask">队列任务</a></MenuItem>
                     }
 
+                    @if (functionList.Contains("llmapp"))
+                    {
+                        <MenuItem><a href="operations/llmapp">LLM应用</a></MenuItem>
+                    }
+
                     @if (functionList.Contains("log"))
                     {
                         <MenuItem><a href="operations/log">系统日志</a></MenuItem>

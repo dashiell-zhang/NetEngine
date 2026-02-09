@@ -142,7 +142,7 @@
     async Task GetRoleListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<RoleDto>>("Role/GetRoleListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<RoleDto>>("Role/GetRoleList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -223,7 +223,7 @@
 
     async Task DeleteRoleAsync(long roleId)
     {
-        using var httpResponse = await Http.DeleteAsync("Role/DeleteRoleAsync?id=" + roleId);
+        using var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId);
         if (httpResponse.IsSuccessStatusCode)
         {
             GetRoleListAsync();
@@ -258,7 +258,7 @@
             IsCheck = isCheck
         };
 
-        using var httpResponse = await Http.PostAsJsonAsync<SetRoleFunctionDto>("Role/SetRoleFunctionAsync", setRoleFunction, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync<SetRoleFunctionDto>("Role/SetRoleFunction", setRoleFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("设置成功");

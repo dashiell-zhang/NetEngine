@@ -189,7 +189,7 @@
 
     async Task GetRoleSelectAsync()
     {
-        var retData = await Http.GetFromJsonAsync<List<RoleSelectDto>>("Role/GetRoleSelectAsync", JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<List<RoleSelectDto>>("Role/GetRoleSelect", JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -201,7 +201,7 @@
     {
         tableLoading = true;
 
-        var url = StringHelper.ModelToUriParam(request, "User/GetUserListAsync");
+        var url = StringHelper.ModelToUriParam(request, "User/GetUserList");
         var retData = await Http.GetFromJsonAsync<PageListDto<UserDto>>(url, JsonHelper.DeserializeOpts);
 
         if (retData != null)
@@ -308,7 +308,7 @@
 
     async Task DeleteUserAsync(long userId)
     {
-        using var httpResponse = await Http.DeleteAsync("User/DeleteUserAsync?id=" + userId);
+        using var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId);
         if (httpResponse.IsSuccessStatusCode)
         {
             GetUserListAsync();
@@ -343,7 +343,7 @@
             IsCheck = isCheck
         };
 
-        using var httpResponse = await Http.PostAsJsonAsync<SetUserFunctionDto>("User/SetUserFunctionAsync", setUserFunction, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync<SetUserFunctionDto>("User/SetUserFunction", setUserFunction, JsonHelper.SerializeOpts);
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("设置成功");

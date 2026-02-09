@@ -107,7 +107,7 @@
     async Task GetLinkListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<LinkDto>>("Site/GetLinkListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<LinkDto>>("Site/GetLinkList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -191,7 +191,7 @@
 
     async Task DeleteLinkAsync(long linkId)
     {
-        using var httpResponse = await Http.DeleteAsync("Site/DeleteLinkAsync?id=" + linkId);
+        using var httpResponse = await Http.DeleteAsync("Site/DeleteLink?id=" + linkId);
         if (httpResponse.IsSuccessStatusCode)
         {
             GetLinkListAsync();

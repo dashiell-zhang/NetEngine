@@ -162,7 +162,7 @@
     {
         tableLoading = true;
 
-        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -276,7 +276,7 @@
 
         createLoading = true;
 
-        using var httpResponse = await Http.PostAsJsonAsync("Operations/CreateScheduleTaskAsync", createScheduleTask, JsonHelper.SerializeOpts);
+        using var httpResponse = await Http.PostAsJsonAsync("Operations/CreateScheduleTask", createScheduleTask, JsonHelper.SerializeOpts);
 
         if (httpResponse.IsSuccessStatusCode)
         {

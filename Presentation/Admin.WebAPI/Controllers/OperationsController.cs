@@ -1,7 +1,9 @@
 using Application.Model.Basic.Log;
+using Application.Model.LLM.LlmApp;
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
 using Application.Service.Basic;
+using Application.Service.LLM;
 using Application.Service.TaskCenter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +15,7 @@ namespace Admin.WebAPI.Controllers;
 [Route("[controller]/[action]")]
 [Authorize]
 [ApiController]
-public class OperationsController(LogManageService logManageService, TaskSettingService taskSettingService, QueueTaskManageService queueTaskManageService) : ControllerBase
+public class OperationsController(LogManageService logManageService, TaskSettingService taskSettingService, QueueTaskManageService queueTaskManageService, LlmAppService llmAppService) : ControllerBase
 {
 
     /// <summary>
@@ -63,5 +65,33 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// </summary>
     [HttpPost]
     public Task<bool> RetryQueueTask(long id) => queueTaskManageService.RetryQueueTaskAsync(id);
+
+
+    /// <summary>
+    /// 获取 LLM 应用配置列表
+    /// </summary>
+    [HttpGet]
+    public Task<PageListDto<LlmAppDto>> GetLlmAppList([FromQuery] LlmAppPageRequestDto request) => llmAppService.GetLlmAppListAsync(request);
+
+
+    /// <summary>
+    /// 创建 LLM 应用配置
+    /// </summary>
+    [HttpPost]
+    public Task<long> CreateLlmApp(EditLlmAppDto createLlmApp) => llmAppService.CreateLlmAppAsync(createLlmApp);
+
+
+    /// <summary>
+    /// 更新 LLM 应用配置
+    /// </summary>
+    [HttpPost]
+    public Task<bool> UpdateLlmApp(long id, EditLlmAppDto updateLlmApp) => llmAppService.UpdateLlmAppAsync(id, updateLlmApp);
+
+
+    /// <summary>
+    /// 删除 LLM 应用配置
+    /// </summary>
+    [HttpDelete]
+    public Task<bool> DeleteLlmApp(long id) => llmAppService.DeleteLlmAppAsync(id);
 
 }

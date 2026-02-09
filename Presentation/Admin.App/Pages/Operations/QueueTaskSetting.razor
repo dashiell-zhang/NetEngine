@@ -105,7 +105,7 @@
     {
         tableLoading = true;
 
-        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {

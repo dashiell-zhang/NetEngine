@@ -128,7 +128,7 @@
 
 
 
-        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectListAsync", JsonHelper.DeserializeOpts);
+        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectList", JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -161,7 +161,7 @@
     async Task GetCategoryListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<CategoryDto>>("Article/GetCategoryListAsync?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<CategoryDto>>("Article/GetCategoryList?pageNum=" + pageNum + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -272,7 +272,7 @@
 
     async Task DeleteCategoryAsync(long categoryId)
     {
-        using var httpResponse = await Http.DeleteAsync("Article/DeleteCategoryAsync?id=" + categoryId);
+        using var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId);
         if (httpResponse.IsSuccessStatusCode)
         {
             GetCategoryListAsync();

@@ -94,4 +94,11 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     [HttpDelete]
     public Task<bool> DeleteLlmApp(long id) => llmAppService.DeleteLlmAppAsync(id);
 
+
+    /// <summary>
+    /// LLM 调用测试
+    /// </summary>
+    [HttpPost]
+    public Task<TestLlmAppResultDto> TestLlmApp(TestLlmAppRequestDto request) => llmAppService.TestLlmAppAsync(request);
+
 }

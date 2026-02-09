@@ -1,5 +1,6 @@
 @page "/operations/llmapp"
 @using Application.Model.LLM.LlmApp
+@using System.Net.Http.Json
 @attribute [ReuseTabsPageTitle("LLM应用")]
 
 <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
@@ -46,6 +47,7 @@
         <ActionColumn Title="操作">
             <Space>
 
+
                 <SpaceItem>
                     <a @onclick="() => EditLlmApp(context)">编辑</a>
                 </SpaceItem>
@@ -62,98 +64,149 @@
         </ActionColumn>
     </ColumnDefinitions>
 
-        <PaginationTemplate>
-            <div style="margin:15px 0;float:right">
-                <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.PageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.PageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+        </div>
+    </PaginationTemplate>
+
+</Table>
+
+
+<Drawer Closable="true" Width="760" Visible="isShowEdit" Title='(editId == null ? "新增 LLM 应用" : "编辑 LLM 应用")' OnClose="() => isShowEdit = false">
+    <Template style="height:90%">
+
+        <Form Model="@editLlmApp" OnFinish="SaveLlmAppAsync">
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="12">
+                    <FormItem>
+                        <Text>Code</Text>
+                        <Input Placeholder="如: deepseek-chat-default" @bind-Value="@context.Code" />
+                    </FormItem>
+                </AntDesign.Col>
+                <AntDesign.Col Span="12">
+                    <FormItem>
+                        <Text>名称</Text>
+                        <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+                    </FormItem>
+                </AntDesign.Col>
+            </Row>
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="12">
+                    <FormItem>
+                        <Text>供应商</Text>
+                        <Input Placeholder="如: DeepSeek / Qwen" @bind-Value="@context.Provider" />
+                    </FormItem>
+                </AntDesign.Col>
+                <AntDesign.Col Span="12">
+                    <FormItem>
+                        <Text>模型</Text>
+                        <Input Placeholder="如: deepseek-chat" @bind-Value="@context.Model" />
+                    </FormItem>
+                </AntDesign.Col>
+            </Row>
+
+            <Row Gutter="24">
+                <AntDesign.Col Span="12">
+                    <FormItem>
+                        <Text>MaxTokens</Text>
+                        <Input Placeholder="可选" Type="InputType.Number" @bind-Value="@context.MaxTokens" />
+                    </FormItem>
+                </AntDesign.Col>
+                <AntDesign.Col Span="12">
+                    <FormItem>
+                        <Text>Temperature</Text>
+                        <Input Placeholder="可选，如 0.7" Type="InputType.Number" @bind-Value="@context.Temperature" />
+                    </FormItem>
+                </AntDesign.Col>
+            </Row>
+
+            <FormItem>
+                <Text>是否启用</Text>
+                <Switch @bind-Value="@editLlmApp.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
+            </FormItem>
+
+            <FormItem>
+                <Text>SystemPromptTemplate</Text>
+                <TextArea @bind-Value="@context.SystemPromptTemplate" MinRows="3" MaxRows="10" style="width:100%" />
+            </FormItem>
+
+            <FormItem>
+                <Text>PromptTemplate</Text>
+                <TextArea @bind-Value="@context.PromptTemplate" MinRows="4" MaxRows="14" style="width:100%" />
+            </FormItem>
+
+            <FormItem>
+                <Text>备注</Text>
+                <TextArea @bind-Value="@context.Remark" MinRows="2" MaxRows="6" style="width:100%" />
+            </FormItem>
+
+            <Divider />
+
+            <Text>调用测试</Text>
+
+            @if (PlaceholderKeys.Count != 0)
+            {
+                <div style="margin-top:10px">
+                    <span style="color:rgba(0,0,0,.45)">检测到占位符：@string.Join("、", PlaceholderKeys)</span>
+                </div>
+
+                <Row Gutter="24" style="margin-top:10px">
+                    @foreach (var key in PlaceholderKeys)
+                    {
+                        var paramItem = GetOrCreateTestParamItem(key);
+                        <AntDesign.Col Span="12" style="margin-bottom:10px">
+                            <FormItem>
+                                <Text>@key</Text>
+                                <Input @bind-Value="@paramItem.Value" Placeholder="@($"请输入 {key}")" />
+                            </FormItem>
+                        </AntDesign.Col>
+                    }
+                </Row>
+            }
+            else
+            {
+                <div style="margin-top:10px">
+                    <span style="color:rgba(0,0,0,.45)">未检测到 {{key}} 占位符</span>
+                </div>
+            }
+
+            <Row Gutter="24" style="margin-top:6px">
+                <AntDesign.Col Span="24">
+                    <Space>
+                        <Button Type="@ButtonType.Primary" Loading="@testLoading" @onclick="TestCallAsync">调用测试</Button>
+                        @if (!string.IsNullOrWhiteSpace(testResult?.Model))
+                        {
+                            <span style="color:rgba(0,0,0,.45)">Model: @testResult!.Model</span>
+                        }
+                        @if (testResult?.Usage?.TotalTokens != null)
+                        {
+                            <span style="color:rgba(0,0,0,.45)">Tokens: @testResult.Usage.TotalTokens</span>
+                        }
+                    </Space>
+                </AntDesign.Col>
+            </Row>
+
+            <div style="margin-top:10px">
+                <Text>返回结果</Text>
+                <TextArea Value="@testResult?.Content" ReadOnly MinRows="4" MaxRows="14" style="width:100%" />
             </div>
-        </PaginationTemplate>
-
-    </Table>
-
-
-    <Drawer Closable="true" Width="760" Visible="isShowEdit" Title='(editId == null ? "新增 LLM 应用" : "编辑 LLM 应用")' OnClose="() => isShowEdit = false">
-        <Template style="height:90%">
-
-            <Form Model="@editLlmApp" OnFinish="SaveLlmAppAsync">
-
-                <Row Gutter="24">
-                    <AntDesign.Col Span="12">
-                        <FormItem>
-                            <Text>Code</Text>
-                            <Input Placeholder="如: deepseek-chat-default" @bind-Value="@context.Code" />
-                        </FormItem>
-                    </AntDesign.Col>
-                    <AntDesign.Col Span="12">
-                        <FormItem>
-                            <Text>名称</Text>
-                            <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
-                        </FormItem>
-                    </AntDesign.Col>
-                </Row>
-
-                <Row Gutter="24">
-                    <AntDesign.Col Span="12">
-                        <FormItem>
-                            <Text>供应商</Text>
-                            <Input Placeholder="如: DeepSeek / Qwen" @bind-Value="@context.Provider" />
-                        </FormItem>
-                    </AntDesign.Col>
-                    <AntDesign.Col Span="12">
-                        <FormItem>
-                            <Text>模型</Text>
-                            <Input Placeholder="如: deepseek-chat" @bind-Value="@context.Model" />
-                        </FormItem>
-                    </AntDesign.Col>
-                </Row>
-
-                <Row Gutter="24">
-                    <AntDesign.Col Span="12">
-                        <FormItem>
-                            <Text>MaxTokens</Text>
-                            <Input Placeholder="可选" Type="InputType.Number" @bind-Value="@context.MaxTokens" />
-                        </FormItem>
-                    </AntDesign.Col>
-                    <AntDesign.Col Span="12">
-                        <FormItem>
-                            <Text>Temperature</Text>
-                            <Input Placeholder="可选，如 0.7" Type="InputType.Number" @bind-Value="@context.Temperature" />
-                        </FormItem>
-                    </AntDesign.Col>
-                </Row>
-
-                <FormItem>
-                    <Text>是否启用</Text>
-                    <Switch @bind-Value="@editLlmApp.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
-                </FormItem>
-
-                <FormItem>
-                    <Text>SystemPromptTemplate</Text>
-                    <TextArea @bind-Value="@context.SystemPromptTemplate" MinRows="3" MaxRows="10" style="width:100%" />
-                </FormItem>
-
-                <FormItem>
-                    <Text>PromptTemplate</Text>
-                    <TextArea @bind-Value="@context.PromptTemplate" MinRows="4" MaxRows="14" style="width:100%" />
-                </FormItem>
-
-                <FormItem>
-                    <Text>备注</Text>
-                    <TextArea @bind-Value="@context.Remark" MinRows="2" MaxRows="6" style="width:100%" />
-                </FormItem>
 
                 <Row Gutter="24">
                     <AntDesign.Col Span="24">
-                        <div style="float:right">
+                        <div style="float:right;margin-top:12px">
                             <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
                             <Button Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
                         </div>
                     </AntDesign.Col>
                 </Row>
 
-            </Form>
+        </Form>
 
-        </Template>
-    </Drawer>
+    </Template>
+</Drawer>
 
 
 @code {
@@ -222,8 +275,54 @@
 
     bool isShowEdit = false;
     bool saveLoading = false;
+    bool testLoading = false;
     long? editId;
     EditLlmAppDto editLlmApp = new();
+    TestLlmAppResultDto? testResult;
+    List<TestParamItem> testParamItems = [];
+
+    static readonly System.Text.RegularExpressions.Regex PlaceholderRegex = new(@"\{\{\s*(?<key>[^{}\s]+)\s*\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    List<string> PlaceholderKeys
+    {
+        get
+        {
+            HashSet<string> keys = new(StringComparer.OrdinalIgnoreCase);
+
+            void Collect(string? template)
+            {
+                if (string.IsNullOrWhiteSpace(template))
+                {
+                    return;
+                }
+
+                foreach (System.Text.RegularExpressions.Match m in PlaceholderRegex.Matches(template))
+                {
+                    var key = m.Groups["key"].Value;
+                    if (!string.IsNullOrWhiteSpace(key))
+                    {
+                        keys.Add(key.Trim());
+                    }
+                }
+            }
+
+            Collect(editLlmApp.SystemPromptTemplate);
+            Collect(editLlmApp.PromptTemplate);
+
+            return keys.OrderBy(t => t).ToList();
+        }
+    }
+
+    TestParamItem GetOrCreateTestParamItem(string key)
+    {
+        var item = testParamItems.FirstOrDefault(t => t.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+        if (item == null)
+        {
+            item = new TestParamItem { Key = key, Value = string.Empty };
+            testParamItems.Add(item);
+        }
+        return item;
+    }
 
     async Task EditLlmApp(LlmAppDto? row = null)
     {
@@ -249,6 +348,9 @@
                 Remark = row.Remark
             };
         }
+
+        testResult = null;
+        testParamItems = [];
 
         await Task.Delay(150);
         isShowEdit = true;
@@ -279,9 +381,46 @@
         saveLoading = false;
     }
 
+    async Task TestCallAsync()
+    {
+        testLoading = true;
+        testResult = null;
+
+        var req = new TestLlmAppRequestDto
+        {
+            Provider = editLlmApp.Provider ?? string.Empty,
+            Model = editLlmApp.Model ?? string.Empty,
+            SystemPromptTemplate = editLlmApp.SystemPromptTemplate,
+            PromptTemplate = editLlmApp.PromptTemplate ?? string.Empty,
+            MaxTokens = editLlmApp.MaxTokens,
+            Temperature = editLlmApp.Temperature,
+            Parameters = PlaceholderKeys.ToDictionary(k => k, k => GetOrCreateTestParamItem(k).Value, StringComparer.OrdinalIgnoreCase)
+        };
+
+        using var httpResponse = await Http.PostAsJsonAsync("Operations/TestLlmApp", req, JsonHelper.SerializeOpts);
+
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            testResult = await httpResponse.Content.ReadFromJsonAsync<TestLlmAppResultDto>(JsonHelper.DeserializeOpts);
+        }
+        else
+        {
+            Message.Error("调用失败");
+        }
+
+        testLoading = false;
+        StateHasChanged();
+    }
+
+    class TestParamItem
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+
     async Task DeleteLlmAppAsync(long id)
     {
-        using var httpResponse = await Http.DeleteAsync("Operations/DeleteLlmAppid=" + id);
+        using var httpResponse = await Http.DeleteAsync("Operations/DeleteLlmApp?id=" + id);
 
         if (httpResponse.IsSuccessStatusCode)
         {
@@ -290,4 +429,3 @@
         }
     }
 }
-

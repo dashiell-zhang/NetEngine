@@ -3,17 +3,20 @@ using Application.Model.LLM.LlmApp;
 using Application.Model.Shared;
 using Common;
 using IdentifierGenerator;
+using LLM;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
+using System.Text.RegularExpressions;
 
 namespace Application.Service.LLM;
 
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LlmAppService(DatabaseContext db, IdService idService, IUserContext userContext)
+public partial class LlmAppService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory)
 {
+    private static readonly Regex PlaceholderRegex = KeyRegex();
 
     /// <summary>
     /// 获取 LLM 应用配置列表
@@ -176,4 +179,88 @@ public class LlmAppService(DatabaseContext db, IdService idService, IUserContext
         return true;
     }
 
+
+    /// <summary>
+    /// 调用测试（不依赖数据库保存）
+    /// </summary>
+    public async Task<TestLlmAppResultDto> TestLlmAppAsync(TestLlmAppRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var client = llmClientFactory.GetClient(request.Provider);
+
+        var parameters = request.Parameters == null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(request.Parameters, StringComparer.OrdinalIgnoreCase);
+
+        var systemPrompt = RenderTemplate(request.SystemPromptTemplate, parameters);
+        var prompt = RenderTemplate(request.PromptTemplate, parameters) ?? string.Empty;
+
+        List<ChatMessage> messages = [];
+
+        if (!string.IsNullOrWhiteSpace(systemPrompt))
+        {
+            messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
+        }
+
+        messages.Add(new ChatMessage(ChatRole.User, prompt));
+
+        var resp = await client.ChatAsync(
+            new ChatRequest(
+                request.Model,
+                messages,
+                request.Temperature,
+                request.MaxTokens,
+                userContext.UserId == default ? null : userContext.UserId.ToString()),
+            cancellationToken);
+
+        var content = resp.Choices.FirstOrDefault()?.Message.Content;
+
+        return new TestLlmAppResultDto
+        {
+            Model = resp.Model,
+            ResponseId = resp.Id,
+            Content = content,
+            Usage = resp.Usage == null
+                ? null
+                : new TestLlmAppUsageDto
+                {
+                    PromptTokens = resp.Usage.PromptTokens,
+                    CompletionTokens = resp.Usage.CompletionTokens,
+                    TotalTokens = resp.Usage.TotalTokens
+                }
+        };
+    }
+
+
+    private static string? RenderTemplate(string? template, IReadOnlyDictionary<string, string> parameters)
+    {
+        if (template == null)
+        {
+            return null;
+        }
+
+        if (template.Length == 0)
+        {
+            return template;
+        }
+
+        return PlaceholderRegex.Replace(template, m =>
+        {
+            var key = m.Groups["key"].Value;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return m.Value;
+            }
+
+            if (parameters.TryGetValue(key, out var value))
+            {
+                return value ?? string.Empty;
+            }
+
+            return m.Value;
+        });
+    }
+
+
+    [GeneratedRegex(@"\{\{\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]
+    private static partial Regex KeyRegex();
 }

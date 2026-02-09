@@ -11,8 +11,6 @@
   </Folder>
   <Folder Name="/Infrastructure/">
     <Project Path="Infrastructure/LLM/LLM.csproj" />
-    <Project Path="Infrastructure/LLM.DeepSeek/LLM.DeepSeek.csproj" />
-    <Project Path="Infrastructure/LLM.Qwen/LLM.Qwen.csproj" />
     <Project Path="Infrastructure/Common/Common.csproj" />
     <Project Path="Infrastructure/DistributedLock.InMemory/DistributedLock.InMemory.csproj" />
     <Project Path="Infrastructure/DistributedLock.Redis/DistributedLock.Redis.csproj" />

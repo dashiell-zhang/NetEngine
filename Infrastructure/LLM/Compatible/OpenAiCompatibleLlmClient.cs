@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace LLM.Compatible;
@@ -39,22 +40,12 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
             throw new InvalidOperationException("LLM model is required (request.Model).");
         }
 
-        var model = request.Model;
-        var payload = new ChatCompletionRequestDto
-        {
-            Model = model,
-            Messages = request.Messages.Select(m => new ChatMessageDto
-            {
-                Role = RoleToString(m.Role),
-                Content = m.Content
-            }).ToList(),
-            Temperature = request.Temperature,
-            MaxTokens = request.MaxTokens,
-            User = request.User,
-            Stream = false
-        };
+        var payload = BuildPayload(request, stream: false);
 
-        using var response = await httpClient.PostAsJsonAsync("chat/completions", payload, JsonOptions, cancellationToken);
+        using var response = await httpClient.PostAsync(
+            "chat/completions",
+            new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json"),
+            cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var dto = await response.Content.ReadFromJsonAsync<ChatCompletionResponseDto>(JsonOptions, cancellationToken);
@@ -78,19 +69,7 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
         }
 
         var model = request.Model;
-        var payload = new ChatCompletionRequestDto
-        {
-            Model = model,
-            Messages = request.Messages.Select(m => new ChatMessageDto
-            {
-                Role = RoleToString(m.Role),
-                Content = m.Content
-            }).ToList(),
-            Temperature = request.Temperature,
-            MaxTokens = request.MaxTokens,
-            User = request.User,
-            Stream = true
-        };
+        var payload = BuildPayload(request, stream: true);
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
         {
@@ -149,6 +128,60 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
 
             yield return Map(dto, model);
         }
+    }
+
+    private static JsonObject BuildPayload(ChatRequest request, bool stream)
+    {
+        var payload = new JsonObject
+        {
+            ["model"] = request.Model,
+            ["messages"] = new JsonArray(
+                request.Messages.Select(m =>
+                {
+                    var msg = new JsonObject
+                    {
+                        ["role"] = RoleToString(m.Role),
+                        ["content"] = m.Content
+                    };
+                    return msg;
+                }).ToArray()),
+            ["stream"] = stream
+        };
+
+        if (request.Temperature != null)
+        {
+            payload["temperature"] = request.Temperature.Value;
+        }
+
+        if (request.MaxTokens != null)
+        {
+            payload["max_tokens"] = request.MaxTokens.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.User))
+        {
+            payload["user"] = request.User;
+        }
+
+        if (request.ExtraBody != null && request.ExtraBody.Count != 0)
+        {
+            foreach (var kv in request.ExtraBody)
+            {
+                if (string.IsNullOrWhiteSpace(kv.Key))
+                {
+                    continue;
+                }
+
+                if (payload.ContainsKey(kv.Key))
+                {
+                    throw new InvalidOperationException($"ExtraBody conflicts with base payload field: {kv.Key}");
+                }
+
+                payload[kv.Key] = kv.Value;
+            }
+        }
+
+        return payload;
     }
 
     private static ChatResponse Map(ChatCompletionResponseDto dto)
@@ -217,27 +250,6 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
         }
 
         return RoleFromString(role);
-    }
-
-    private sealed class ChatCompletionRequestDto
-    {
-        [JsonPropertyName("model")]
-        public string Model { get; set; } = string.Empty;
-
-        [JsonPropertyName("messages")]
-        public List<ChatMessageDto> Messages { get; set; } = [];
-
-        [JsonPropertyName("temperature")]
-        public float? Temperature { get; set; }
-
-        [JsonPropertyName("max_tokens")]
-        public int? MaxTokens { get; set; }
-
-        [JsonPropertyName("user")]
-        public string? User { get; set; }
-
-        [JsonPropertyName("stream")]
-        public bool Stream { get; set; }
     }
 
     private sealed class ChatMessageDto

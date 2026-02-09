@@ -1,5 +1,7 @@
 namespace LLM;
 
+using System.Text.Json.Nodes;
+
 /// <summary>
 /// 对话请求（Chat Completion）
 /// </summary>
@@ -8,10 +10,12 @@ namespace LLM;
 /// <param name="Temperature">随机性/发散度（通常 0~2；不同供应商可能范围不同）</param>
 /// <param name="MaxTokens">最大生成 token 数（不同供应商含义/字段名可能不同）</param>
 /// <param name="User">可选：终端用户标识（用于审计/限流等）</param>
+/// <param name="ExtraBody">可选：额外请求参数（直接透传到 OpenAI-compatible body 根字段）</param>
 public sealed record ChatRequest(
     string Model,
     IReadOnlyList<ChatMessage> Messages,
     float? Temperature = null,
     int? MaxTokens = null,
-    string? User = null
+    string? User = null,
+    Dictionary<string, JsonNode>? ExtraBody = null
 );

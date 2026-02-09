@@ -59,6 +59,11 @@ public class LlmApp : CUD_User
     /// </summary>
     public float? Temperature { get; set; }
 
+    /// <summary>
+    /// 额外请求参数（JSON对象字符串，直接透传到 OpenAI-compatible body 根字段）
+    /// </summary>
+    public string? ExtraBodyJson { get; set; }
+
 
     /// <summary>
     /// 是否启用
@@ -71,4 +76,3 @@ public class LlmApp : CUD_User
     /// </summary>
     public string? Remark { get; set; }
 }
-

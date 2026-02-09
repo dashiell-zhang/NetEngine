@@ -124,6 +124,15 @@
             </Row>
 
             <FormItem>
+                <Text>ExtraBodyJson</Text>
+                <TextArea @bind-Value="@context.ExtraBodyJson"
+                          Placeholder='JSON对象，直接透传到请求body根字段，如 {"enable_thinking":true}'
+                          MinRows="2"
+                          MaxRows="8"
+                          style="width:100%" />
+            </FormItem>
+
+            <FormItem>
                 <Text>是否启用</Text>
                 <Switch @bind-Value="@editLlmApp.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
             </FormItem>
@@ -365,6 +374,7 @@
                 PromptTemplate = row.PromptTemplate,
                 MaxTokens = row.MaxTokens,
                 Temperature = row.Temperature,
+                ExtraBodyJson = row.ExtraBodyJson,
                 IsEnable = row.IsEnable,
                 Remark = row.Remark
             };
@@ -420,6 +430,18 @@
             return;
         }
 
+        Dictionary<string, System.Text.Json.Nodes.JsonNode>? extraBody;
+        try
+        {
+            extraBody = ParseExtraBody(editLlmApp.ExtraBodyJson);
+        }
+        catch (Exception ex)
+        {
+            Message.Error(ex.Message);
+            testLoading = false;
+            return;
+        }
+
         var req = new TestLlmAppRequestDto
         {
             Provider = editLlmApp.Provider ?? string.Empty,
@@ -428,6 +450,7 @@
             PromptTemplate = editLlmApp.PromptTemplate ?? string.Empty,
             MaxTokens = editLlmApp.MaxTokens,
             Temperature = editLlmApp.Temperature,
+            ExtraBody = extraBody,
             Parameters = PlaceholderInfos.ToDictionary(k => k.Key, k => GetOrCreateTestParamItem(k.Key).Value, StringComparer.OrdinalIgnoreCase)
         };
 
@@ -455,6 +478,38 @@
     {
         public string Key { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
+    }
+
+    static Dictionary<string, System.Text.Json.Nodes.JsonNode>? ParseExtraBody(string? extraBodyJson)
+    {
+        if (string.IsNullOrWhiteSpace(extraBodyJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            var node = System.Text.Json.Nodes.JsonNode.Parse(extraBodyJson);
+            if (node is not System.Text.Json.Nodes.JsonObject obj)
+            {
+                throw new Exception("not object");
+            }
+
+            Dictionary<string, System.Text.Json.Nodes.JsonNode> dict = new(StringComparer.Ordinal);
+            foreach (var kv in obj)
+            {
+                if (!string.IsNullOrWhiteSpace(kv.Key) && kv.Value != null)
+                {
+                    dict[kv.Key] = kv.Value;
+                }
+            }
+
+            return dict.Count == 0 ? null : dict;
+        }
+        catch
+        {
+            throw new Exception("ExtraBodyJson 不是合法的 JSON 对象");
+        }
     }
 
     async Task DeleteLlmAppAsync(long id)

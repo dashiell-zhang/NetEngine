@@ -1,5 +1,7 @@
 namespace Application.Model.LLM.LlmApp;
 
+using System.Text.Json.Nodes;
+
 /// <summary>
 /// LLM 调用测试请求
 /// </summary>
@@ -41,10 +43,14 @@ public class TestLlmAppRequestDto
     /// </summary>
     public float? Temperature { get; set; }
 
+    /// <summary>
+    /// 额外请求参数（直接透传到 OpenAI-compatible body 根字段）
+    /// </summary>
+    public Dictionary<string, JsonNode>? ExtraBody { get; set; }
+
 
     /// <summary>
     /// 占位符参数（Key -> Value）
     /// </summary>
     public Dictionary<string, string>? Parameters { get; set; }
 }
-

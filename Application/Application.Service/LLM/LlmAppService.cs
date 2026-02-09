@@ -10,6 +10,7 @@ using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 using System.Text.RegularExpressions;
+using System.Text.Json.Nodes;
 
 namespace Application.Service.LLM;
 
@@ -66,6 +67,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
                     PromptTemplate = t.PromptTemplate,
                     MaxTokens = t.MaxTokens,
                     Temperature = t.Temperature,
+                    ExtraBodyJson = t.ExtraBodyJson,
                     IsEnable = t.IsEnable,
                     Remark = t.Remark,
                     CreateTime = t.CreateTime,
@@ -91,6 +93,8 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
         var model = createLlmApp.Model.Trim();
         var promptTemplate = createLlmApp.PromptTemplate.Trim();
 
+        ValidateExtraBodyJson(createLlmApp.ExtraBodyJson);
+
         var isHave = await db.LlmApp.AsNoTracking().Where(t => t.Code == code).AnyAsync();
         if (isHave)
         {
@@ -108,6 +112,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
             PromptTemplate = promptTemplate,
             MaxTokens = createLlmApp.MaxTokens,
             Temperature = createLlmApp.Temperature,
+            ExtraBodyJson = createLlmApp.ExtraBodyJson,
             IsEnable = createLlmApp.IsEnable,
             Remark = createLlmApp.Remark,
             CreateUserId = userContext.UserId
@@ -138,6 +143,8 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
         var model = updateLlmApp.Model.Trim();
         var promptTemplate = updateLlmApp.PromptTemplate.Trim();
 
+        ValidateExtraBodyJson(updateLlmApp.ExtraBodyJson);
+
         var isHave = await db.LlmApp.AsNoTracking().Where(t => t.Id != id && t.Code == code).AnyAsync();
         if (isHave)
         {
@@ -152,6 +159,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
         llmApp.PromptTemplate = promptTemplate;
         llmApp.MaxTokens = updateLlmApp.MaxTokens;
         llmApp.Temperature = updateLlmApp.Temperature;
+        llmApp.ExtraBodyJson = updateLlmApp.ExtraBodyJson;
         llmApp.IsEnable = updateLlmApp.IsEnable;
         llmApp.Remark = updateLlmApp.Remark;
         llmApp.UpdateUserId = userContext.UserId;
@@ -226,7 +234,8 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
                 messages,
                 request.Temperature,
                 request.MaxTokens,
-                userContext.UserId == default ? null : userContext.UserId.ToString()),
+                userContext.UserId == default ? null : userContext.UserId.ToString(),
+                request.ExtraBody),
             cancellationToken);
 
         var content = resp.Choices.FirstOrDefault()?.Message.Content;
@@ -302,4 +311,27 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
     [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex KeyRegex();
+
+    private static void ValidateExtraBodyJson(string? extraBodyJson)
+    {
+        if (string.IsNullOrWhiteSpace(extraBodyJson))
+        {
+            return;
+        }
+
+        JsonNode? node;
+        try
+        {
+            node = JsonNode.Parse(extraBodyJson);
+        }
+        catch
+        {
+            throw new CustomException("ExtraBodyJson 不是合法的 JSON");
+        }
+
+        if (node is not JsonObject)
+        {
+            throw new CustomException("ExtraBodyJson 必须是 JSON 对象（例如 {\"enable_thinking\":true}）");
+        }
+    }
 }

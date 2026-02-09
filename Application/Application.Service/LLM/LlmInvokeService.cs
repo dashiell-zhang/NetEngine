@@ -6,6 +6,7 @@ using Repository;
 using SourceGenerator.Runtime.Attributes;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Text.Json.Nodes;
 
 namespace Application.Service.LLM;
 
@@ -57,11 +58,14 @@ public partial class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmC
 
         messages.Add(new ChatMessage(ChatRole.User, userPrompt));
 
+        var extraBody = ParseExtraBodyJson(app.ExtraBodyJson, code);
+
         var request = new ChatRequest(
             app.Model,
             messages,
             app.Temperature,
-            app.MaxTokens
+            app.MaxTokens,
+            ExtraBody: extraBody
         );
 
         var client = llmClientFactory.GetClient(app.Provider);
@@ -121,11 +125,14 @@ public partial class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmC
 
         messages.Add(new ChatMessage(ChatRole.User, userPrompt));
 
+        var extraBody = ParseExtraBodyJson(app.ExtraBodyJson, code);
+
         var request = new ChatRequest(
             app.Model,
             messages,
             app.Temperature,
-            app.MaxTokens
+            app.MaxTokens,
+            ExtraBody: extraBody
         );
 
         var client = llmClientFactory.GetClient(app.Provider);
@@ -135,6 +142,44 @@ public partial class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmC
         }
     }
 
+    private static Dictionary<string, JsonNode>? ParseExtraBodyJson(string? extraBodyJson, string code)
+    {
+        if (string.IsNullOrWhiteSpace(extraBodyJson))
+        {
+            return null;
+        }
+
+        JsonNode? node;
+        try
+        {
+            node = JsonNode.Parse(extraBodyJson);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"LLM app ExtraBodyJson is invalid JSON: {code}", ex);
+        }
+
+        if (node is not JsonObject obj)
+        {
+            throw new InvalidOperationException($"LLM app ExtraBodyJson must be a JSON object: {code}");
+        }
+
+        Dictionary<string, JsonNode> dict = new(StringComparer.Ordinal);
+        foreach (var kv in obj)
+        {
+            if (string.IsNullOrWhiteSpace(kv.Key))
+            {
+                continue;
+            }
+
+            if (kv.Value != null)
+            {
+                dict[kv.Key] = kv.Value;
+            }
+        }
+
+        return dict.Count == 0 ? null : dict;
+    }
 
     private static void ValidateRequiredParameters(string? systemPromptTemplate, string? promptTemplate, Dictionary<string, string> parameters)
     {

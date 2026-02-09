@@ -2,6 +2,7 @@ using Application.Model.Site.Article;
 using Application.Service.LLM;
 using Client.WebAPI.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace Client.WebAPI.Controllers;
 
@@ -12,19 +13,48 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
 
 
     [HttpGet]
-    public async Task<bool> Test([FromServices] LlmInvokeService llmInvokeService)
+    public async Task<string> TestLLM([FromServices] LlmInvokeService llmInvokeService)
     {
-        //string code = "sum";
-
         string code = "sumqw";
+
         Dictionary<string, string> args = new();
+
         args["a"] = "5";
         args["b"] = "9";
+        args["c"] = "13";
 
-        var s = await llmInvokeService.ChatContentAsync(code, args);
+        var result = await llmInvokeService.ChatContentAsync(code, args);
 
-        return true;
+        return result ?? "";
     }
+
+
+    [HttpGet]
+    public async Task<string> TestLLMStream([FromServices] LlmInvokeService llmInvokeService, CancellationToken cancellationToken = default)
+    {
+        string code = "sumqw";
+
+        Dictionary<string, string> args = new();
+
+        args["a"] = "5";
+        args["b"] = "9";
+        args["c"] = "13";
+
+        var sb = new StringBuilder(4096);   // 避免频繁扩容
+
+        await foreach (var chunk in llmInvokeService.ChatStreamAsync(code, args, cancellationToken).WithCancellation(cancellationToken))
+        {
+            var content = chunk.Choices.FirstOrDefault()?.Delta?.Content;
+
+            if (!string.IsNullOrEmpty(content))
+            {
+                sb.Append(content);
+            }
+        }
+
+        return sb.ToString();
+    }
+
 
 
     [HttpGet]

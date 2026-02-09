@@ -147,31 +147,37 @@
 
             <Text>调用测试</Text>
 
-            @if (PlaceholderKeys.Count != 0)
-            {
-                <div style="margin-top:10px">
-                    <span style="color:rgba(0,0,0,.45)">检测到占位符：@string.Join("、", PlaceholderKeys)</span>
-                </div>
+                @if (PlaceholderInfos.Count != 0)
+                {
+                    <div style="margin-top:10px">
+                        <span style="color:rgba(0,0,0,.45)">检测到占位符：@string.Join("、", PlaceholderInfos.Select(t => t.Display))</span>
+                    </div>
 
-                <Row Gutter="24" style="margin-top:10px">
-                    @foreach (var key in PlaceholderKeys)
-                    {
-                        var paramItem = GetOrCreateTestParamItem(key);
-                        <AntDesign.Col Span="12" style="margin-bottom:10px">
-                            <FormItem>
-                                <Text>@key</Text>
-                                <Input @bind-Value="@paramItem.Value" Placeholder="@($"请输入 {key}")" />
-                            </FormItem>
-                        </AntDesign.Col>
-                    }
-                </Row>
-            }
-            else
-            {
-                <div style="margin-top:10px">
-                    <span style="color:rgba(0,0,0,.45)">未检测到 {{key}} 占位符</span>
-                </div>
-            }
+                    <Row Gutter="24" style="margin-top:10px">
+                        @foreach (var p in PlaceholderInfos)
+                        {
+                            var paramItem = GetOrCreateTestParamItem(p.Key);
+                            <AntDesign.Col Span="12" style="margin-bottom:10px">
+                                <FormItem>
+                                    <Text>
+                                        @p.Key
+                                        @if (p.IsRequired)
+                                        {
+                                            <span style="color:red;margin-left:6px">*</span>
+                                        }
+                                    </Text>
+                                    <Input @bind-Value="@paramItem.Value" Placeholder="@($"请输入 {p.Key}")" />
+                                </FormItem>
+                            </AntDesign.Col>
+                        }
+                    </Row>
+                }
+                else
+                {
+                    <div style="margin-top:10px">
+                        <span style="color:rgba(0,0,0,.45)">未检测到 {{key}} / {{*key}} 占位符</span>
+                    </div>
+                }
 
             <Row Gutter="24" style="margin-top:6px">
                 <AntDesign.Col Span="24">
@@ -281,13 +287,14 @@
     TestLlmAppResultDto? testResult;
     List<TestParamItem> testParamItems = [];
 
-    static readonly System.Text.RegularExpressions.Regex PlaceholderRegex = new(@"\{\{\s*(?<key>[^{}\s]+)\s*\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+    static readonly System.Text.RegularExpressions.Regex PlaceholderRegex = new(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    List<string> PlaceholderKeys
+    List<PlaceholderInfo> PlaceholderInfos
     {
         get
         {
-            HashSet<string> keys = new(StringComparer.OrdinalIgnoreCase);
+            List<PlaceholderInfo> list = [];
+            Dictionary<string, int> indexByKey = new(StringComparer.OrdinalIgnoreCase);
 
             void Collect(string? template)
             {
@@ -298,10 +305,24 @@
 
                 foreach (System.Text.RegularExpressions.Match m in PlaceholderRegex.Matches(template))
                 {
-                    var key = m.Groups["key"].Value;
+                    var key = m.Groups["key"].Value?.Trim();
+                    var isRequired = m.Groups["required"].Success;
+
                     if (!string.IsNullOrWhiteSpace(key))
                     {
-                        keys.Add(key.Trim());
+                        if (indexByKey.TryGetValue(key, out var index))
+                        {
+                            var existing = list[index];
+                            if (!existing.IsRequired && isRequired)
+                            {
+                                list[index] = new PlaceholderInfo(existing.Key, true);
+                            }
+                        }
+                        else
+                        {
+                            indexByKey[key] = list.Count;
+                            list.Add(new PlaceholderInfo(key, isRequired));
+                        }
                     }
                 }
             }
@@ -309,7 +330,7 @@
             Collect(editLlmApp.SystemPromptTemplate);
             Collect(editLlmApp.PromptTemplate);
 
-            return keys.OrderBy(t => t).ToList();
+            return list;
         }
     }
 
@@ -386,6 +407,19 @@
         testLoading = true;
         testResult = null;
 
+        var missing = PlaceholderInfos
+            .Where(t => t.IsRequired)
+            .Select(t => t.Key)
+            .Where(k => string.IsNullOrWhiteSpace(GetOrCreateTestParamItem(k).Value))
+            .ToList();
+
+        if (missing.Count != 0)
+        {
+            Message.Error("必传参数未填写: " + string.Join("、", missing));
+            testLoading = false;
+            return;
+        }
+
         var req = new TestLlmAppRequestDto
         {
             Provider = editLlmApp.Provider ?? string.Empty,
@@ -394,7 +428,7 @@
             PromptTemplate = editLlmApp.PromptTemplate ?? string.Empty,
             MaxTokens = editLlmApp.MaxTokens,
             Temperature = editLlmApp.Temperature,
-            Parameters = PlaceholderKeys.ToDictionary(k => k, k => GetOrCreateTestParamItem(k).Value, StringComparer.OrdinalIgnoreCase)
+            Parameters = PlaceholderInfos.ToDictionary(k => k.Key, k => GetOrCreateTestParamItem(k.Key).Value, StringComparer.OrdinalIgnoreCase)
         };
 
         using var httpResponse = await Http.PostAsJsonAsync("Operations/TestLlmApp", req, JsonHelper.SerializeOpts);
@@ -410,6 +444,11 @@
 
         testLoading = false;
         StateHasChanged();
+    }
+
+    record PlaceholderInfo(string Key, bool IsRequired)
+    {
+        public string Display => IsRequired ? Key + "*" : Key;
     }
 
     class TestParamItem

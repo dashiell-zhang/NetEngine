@@ -191,6 +191,23 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
             ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, string>(request.Parameters, StringComparer.OrdinalIgnoreCase);
 
+        var requiredKeys = ExtractRequiredKeys(request.SystemPromptTemplate)
+            .Concat(ExtractRequiredKeys(request.PromptTemplate))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (requiredKeys.Count != 0)
+        {
+            var missing = requiredKeys
+                .Where(k => !parameters.TryGetValue(k, out var v) || string.IsNullOrWhiteSpace(v))
+                .ToList();
+
+            if (missing.Count != 0)
+            {
+                throw new CustomException("必传参数未填写: " + string.Join("、", missing));
+            }
+        }
+
         var systemPrompt = RenderTemplate(request.SystemPromptTemplate, parameters);
         var prompt = RenderTemplate(request.PromptTemplate, parameters) ?? string.Empty;
 
@@ -260,7 +277,29 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
         });
     }
 
+    private static IEnumerable<string> ExtractRequiredKeys(string? template)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            yield break;
+        }
 
-    [GeneratedRegex(@"\{\{\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]
+        foreach (Match m in PlaceholderRegex.Matches(template))
+        {
+            if (!m.Groups["required"].Success)
+            {
+                continue;
+            }
+
+            var key = m.Groups["key"].Value?.Trim();
+            if (!string.IsNullOrWhiteSpace(key))
+            {
+                yield return key;
+            }
+        }
+    }
+
+
+    [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex KeyRegex();
 }

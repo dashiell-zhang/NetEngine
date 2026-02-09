@@ -1,15 +1,18 @@
+using Common;
 using LLM;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using SourceGenerator.Runtime.Attributes;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Application.Service.LLM;
 
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmClientFactory)
+public partial class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmClientFactory)
 {
+    private static readonly Regex PlaceholderRegex = KeyRegex();
 
     /// <summary>
     /// 按 LLM 应用 Code 调用对话接口，返回完整响应
@@ -40,6 +43,8 @@ public class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmClientFac
         {
             throw new InvalidOperationException($"LLM app prompt template is required: {code}");
         }
+
+        ValidateRequiredParameters(app.SystemPromptTemplate, app.PromptTemplate, parameters);
 
         var systemPrompt = RenderTemplate(app.SystemPromptTemplate, parameters);
         var userPrompt = RenderTemplate(app.PromptTemplate, parameters);
@@ -103,6 +108,8 @@ public class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmClientFac
             throw new InvalidOperationException($"LLM app prompt template is required: {code}");
         }
 
+        ValidateRequiredParameters(app.SystemPromptTemplate, app.PromptTemplate, parameters);
+
         var systemPrompt = RenderTemplate(app.SystemPromptTemplate, parameters);
         var userPrompt = RenderTemplate(app.PromptTemplate, parameters);
 
@@ -129,6 +136,50 @@ public class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmClientFac
     }
 
 
+    private static void ValidateRequiredParameters(string? systemPromptTemplate, string? promptTemplate, Dictionary<string, string> parameters)
+    {
+        var requiredKeys = ExtractRequiredKeys(systemPromptTemplate)
+            .Concat(ExtractRequiredKeys(promptTemplate))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (requiredKeys.Count == 0)
+        {
+            return;
+        }
+
+        var missing = requiredKeys
+            .Where(k => !parameters.TryGetValue(k, out var v) || string.IsNullOrWhiteSpace(v))
+            .ToList();
+
+        if (missing.Count != 0)
+        {
+            throw new CustomException("必传参数未填写: " + string.Join("、", missing));
+        }
+    }
+
+    private static IEnumerable<string> ExtractRequiredKeys(string? template)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            yield break;
+        }
+
+        foreach (Match m in PlaceholderRegex.Matches(template))
+        {
+            if (!m.Groups["required"].Success)
+            {
+                continue;
+            }
+
+            var key = m.Groups["key"].Value?.Trim();
+            if (!string.IsNullOrWhiteSpace(key))
+            {
+                yield return key;
+            }
+        }
+    }
+
     private static string RenderTemplate(string? template, Dictionary<string, string> parameters)
     {
         if (string.IsNullOrWhiteSpace(template))
@@ -136,18 +187,18 @@ public class LlmInvokeService(DatabaseContext db, ILlmClientFactory llmClientFac
             return string.Empty;
         }
 
-        var result = template;
-        foreach (var kv in parameters)
+        return PlaceholderRegex.Replace(template, m =>
         {
-            var key = kv.Key?.Trim();
+            var key = m.Groups["key"].Value;
             if (string.IsNullOrWhiteSpace(key))
             {
-                continue;
+                return m.Value;
             }
 
-            result = result.Replace("{{" + key + "}}", kv.Value ?? string.Empty, StringComparison.Ordinal);
-        }
-
-        return result;
+            return parameters.TryGetValue(key, out var value) ? (value ?? string.Empty) : m.Value;
+        });
     }
+
+    [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]
+    private static partial Regex KeyRegex();
 }

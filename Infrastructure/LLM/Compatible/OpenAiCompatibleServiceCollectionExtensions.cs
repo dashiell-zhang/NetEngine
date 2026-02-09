@@ -25,7 +25,7 @@ public static class OpenAiCompatibleServiceCollectionExtensions
                 .Get(providerKey);
 
             httpClient.BaseAddress = new Uri(settings.BaseUrl.TrimEnd('/') + "/");
-            httpClient.Timeout = settings.Timeout;
+            httpClient.Timeout = TimeSpan.FromSeconds(60);
 
             if (!string.IsNullOrWhiteSpace(settings.ApiKey))
             {
@@ -54,4 +54,3 @@ public static class OpenAiCompatibleServiceCollectionExtensions
         return services;
     }
 }
-

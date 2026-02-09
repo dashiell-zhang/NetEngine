@@ -72,18 +72,21 @@ class Program
 
                 #region 注册 LLM 推理服务
 
-                services.AddOpenAiCompatibleProvider("DeepSeek", option =>
+                var llmProvidersSection = hostContext.Configuration.GetSection("LLM:Providers");
+                if (llmProvidersSection.Exists())
                 {
-                    option.BaseUrl = "https://api.deepseek.com";
-                    option.ApiKey = "";
-                });
+                    foreach (var providerSection in llmProvidersSection.GetChildren())
+                    {
+                        var providerKey = providerSection.Key;
+                        var setting = providerSection.Get<OpenAiCompatibleProviderSetting>() ?? new OpenAiCompatibleProviderSetting();
 
-
-                services.AddOpenAiCompatibleProvider("Qwen", option =>
-                {
-                    option.BaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
-                    option.ApiKey = "";
-                });
+                        services.AddOpenAiCompatibleProvider(providerKey, option =>
+                        {
+                            option.BaseUrl = setting.BaseUrl;
+                            option.ApiKey = setting.ApiKey;
+                        });
+                    }
+                }
 
                 #endregion
 

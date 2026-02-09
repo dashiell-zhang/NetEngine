@@ -34,7 +34,12 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
     {
         ValidateSettings(settings);
 
-        var model = ResolveModel(request, settings.DefaultModel);
+        if (string.IsNullOrWhiteSpace(request.Model))
+        {
+            throw new InvalidOperationException("LLM model is required (request.Model).");
+        }
+
+        var model = request.Model;
         var payload = new ChatCompletionRequestDto
         {
             Model = model,
@@ -67,7 +72,12 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
     {
         ValidateSettings(settings);
 
-        var model = ResolveModel(request, settings.DefaultModel);
+        if (string.IsNullOrWhiteSpace(request.Model))
+        {
+            throw new InvalidOperationException("LLM model is required (request.Model).");
+        }
+
+        var model = request.Model;
         var payload = new ChatCompletionRequestDto
         {
             Model = model,
@@ -139,21 +149,6 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
 
             yield return Map(dto, model);
         }
-    }
-
-    private string ResolveModel(ChatRequest request, string? defaultModel)
-    {
-        if (!string.IsNullOrWhiteSpace(request.Model))
-        {
-            return request.Model;
-        }
-
-        if (!string.IsNullOrWhiteSpace(defaultModel))
-        {
-            return defaultModel;
-        }
-
-        throw new InvalidOperationException($"LLM model is required (request.Model or {ProviderName} setting DefaultModel).");
     }
 
     private static ChatResponse Map(ChatCompletionResponseDto dto)

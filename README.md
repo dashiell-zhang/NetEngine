@@ -1,4 +1,4 @@
-﻿﻿# NetEngine 项目框架
+﻿# NetEngine 项目框架
 
 基于最新 .NET 平台（.NET 10）搭建的通用项目框架，包含 Web API、Blazor 管理后台、定时任务服务、分布式锁、文件存储、短信、支付等常用基础能力，帮助你在启动新项目时快速进入业务开发阶段。
 
@@ -516,18 +516,21 @@ using (await distLock.LockAsync("UploadFile", TimeSpan.FromMinutes(5), semaphore
 
 #### 4.4.1 注册 LLM Provider（后端）
 
-以 `Admin.WebAPI` 为例，在 `Presentation/Admin.WebAPI/Program.cs` 中通过 `AddOpenAiCompatibleProvider(providerKey, ...)` 注册供应商：
+在 `Admin.WebAPI` / `Client.WebAPI` / `TaskService` 中，LLM Provider 统一从配置 `LLM:Providers` 读取并注册（见各自的 `Program.cs`）。配置结构示例：
 
-```csharp
-builder.Services.AddOpenAiCompatibleProvider("DeepSeek", option =>
+```json
 {
-    option.BaseUrl = "https://api.deepseek.com";
-    option.ApiKey = "sk-...";
-});
+  "LLM": {
+    "Providers": {
+      "DeepSeek": { "BaseUrl": "https://api.deepseek.com", "ApiKey": "" },
+      "Qwen": { "BaseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1", "ApiKey": "" }
+    }
+  }
+}
 ```
 
-- `providerKey`（例：`DeepSeek` / `Qwen`）就是 `LlmApp.Provider` 需要填写的值。
-- 你可以按同样方式注册更多供应商（只要其接口兼容 OpenAI Chat Completions）。
+- `Providers` 下的每个 Key（例：`DeepSeek` / `Qwen`）就是 `providerKey`，同时也是 `LlmApp.Provider` 需要填写的值。
+- 可以按相同结构添加更多供应商（只要其接口兼容 OpenAI Chat Completions）。
 
 #### 4.4.2 提示词模板占位符（{{key}} / {{*key}}）
 

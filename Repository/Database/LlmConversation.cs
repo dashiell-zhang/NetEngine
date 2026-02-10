@@ -1,27 +1,12 @@
-using Microsoft.EntityFrameworkCore;
 using Repository.Database.Bases;
 
 namespace Repository.Database;
 
 /// <summary>
-/// LLM 会话消息表
+/// LLM 会话记录表
 /// </summary>
-[Index(nameof(TrackKey))]
-[Index(nameof(ConversationKey))]
 public class LlmConversation : CD_User
 {
-
-    /// <summary>
-    /// 追踪标识
-    /// </summary>
-    public long TrackKey { get; set; }
-
-
-    /// <summary>
-    /// 会话Key（同一会话的所有消息使用同一个值；可为空）
-    /// </summary>
-    public long? ConversationKey { get; set; }
-
 
     /// <summary>
     /// LLM 应用ID
@@ -31,13 +16,20 @@ public class LlmConversation : CD_User
 
 
     /// <summary>
-    /// 消息角色（system/user/assistant/tool）
+    /// 系统提示词
     /// </summary>
-    public string Role { get; set; }
+    public string SystemContent { get; set; }
 
 
     /// <summary>
-    /// 消息内容（文本）
+    /// 用户消息
     /// </summary>
-    public string Content { get; set; }
+    public string UserContent { get; set; }
+
+
+    /// <summary>
+    /// 助手消息
+    /// </summary>
+    public string AssistantContent { get; set; }
+
 }

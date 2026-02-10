@@ -18,20 +18,17 @@ namespace Application.Service.LLM;
 public partial class LlmInvokeService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory)
 {
     private static readonly Regex PlaceholderRegex = KeyRegex();
-    private readonly long trackKey = idService.GetId();
 
     /// <summary>
     /// 按 LLM 应用 Code 调用对话接口，返回完整响应
     /// </summary>
     /// <param name="code">LLM 应用标记</param>
     /// <param name="parameters">模板参数（用于替换 {{Key}} 占位符）</param>
-    /// <param name="conversationKey">可选：会话Key（用于拼接历史对话）</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public async Task<ChatResponse> ChatAsync(
         string code,
         Dictionary<string, string> parameters,
-        long? conversationKey = null,
         CancellationToken cancellationToken = default)
     {
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable).FirstOrDefaultAsync(cancellationToken);
@@ -66,16 +63,6 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
             messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
         }
 
-        var effectiveConversationKey = await GetEffectiveConversationKeyAsync(conversationKey, app.Id, cancellationToken);
-        if (effectiveConversationKey != null)
-        {
-            var history = await LoadConversationHistoryAsync(effectiveConversationKey.Value, app.Id, cancellationToken);
-            if (history.Count != 0)
-            {
-                messages.AddRange(history);
-            }
-        }
-
         messages.Add(new ChatMessage(ChatRole.User, userPrompt));
 
         var extraBody = ParseExtraBodyJson(app.ExtraBodyJson, code);
@@ -92,7 +79,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         var response = await client.ChatAsync(request, cancellationToken);
 
         var assistantContent = response.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
-        await SaveConversationAsync(app.Id, effectiveConversationKey, userPrompt, assistantContent, cancellationToken);
+        await SaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantContent, cancellationToken);
 
         return response;
     }
@@ -104,10 +91,9 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     public async Task<string?> ChatContentAsync(
         string code,
         Dictionary<string, string> parameters,
-        long? conversationKey = null,
         CancellationToken cancellationToken = default)
     {
-        var response = await ChatAsync(code, parameters, conversationKey, cancellationToken);
+        var response = await ChatAsync(code, parameters, cancellationToken);
         return response.Choices.FirstOrDefault()?.Message.Content;
     }
 
@@ -118,7 +104,6 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(
         string code,
         Dictionary<string, string> parameters,
-        long? conversationKey = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable).FirstOrDefaultAsync(cancellationToken);
@@ -153,16 +138,6 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
             messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
         }
 
-        var effectiveConversationKey = await GetEffectiveConversationKeyAsync(conversationKey, app.Id, cancellationToken);
-        if (effectiveConversationKey != null)
-        {
-            var history = await LoadConversationHistoryAsync(effectiveConversationKey.Value, app.Id, cancellationToken);
-            if (history.Count != 0)
-            {
-                messages.AddRange(history);
-            }
-        }
-
         messages.Add(new ChatMessage(ChatRole.User, userPrompt));
 
         var extraBody = ParseExtraBodyJson(app.ExtraBodyJson, code);
@@ -188,7 +163,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
             yield return chunk;
         }
 
-        await SaveConversationAsync(app.Id, effectiveConversationKey, userPrompt, assistantBuilder.ToString(), cancellationToken);
+        await SaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantBuilder.ToString(), cancellationToken);
     }
 
     private static Dictionary<string, JsonNode>? ParseExtraBodyJson(string? extraBodyJson, string code)
@@ -293,94 +268,21 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         });
     }
 
-    private async Task<long?> GetEffectiveConversationKeyAsync(long? conversationKey, long llmAppId, CancellationToken cancellationToken)
+    private async Task SaveConversationAsync(long llmAppId, string systemPrompt, string userPrompt, string assistantContent, CancellationToken cancellationToken)
     {
-        if (conversationKey == null)
-        {
-            return null;
-        }
-
-        var otherAppId = await db.LlmConversation.AsNoTracking()
-            .Where(t => t.ConversationKey == conversationKey.Value)
-            .OrderBy(t => t.Id)
-            .Select(t => t.LlmAppId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (otherAppId != default && otherAppId != llmAppId)
-        {
-            return null;
-        }
-
-        return conversationKey.Value;
-    }
-
-    private async Task<List<ChatMessage>> LoadConversationHistoryAsync(long conversationKey, long llmAppId, CancellationToken cancellationToken)
-    {
-        var list = await db.LlmConversation.AsNoTracking()
-            .Where(t => t.ConversationKey == conversationKey && t.LlmAppId == llmAppId)
-            .OrderBy(t => t.Id)
-            .Select(t => new { t.Role, t.Content })
-            .ToListAsync(cancellationToken);
-
-        if (list.Count == 0)
-        {
-            return [];
-        }
-
-        List<ChatMessage> messages = new(list.Count);
-        foreach (var item in list)
-        {
-            var role = ParseRole(item.Role);
-            messages.Add(new ChatMessage(role, item.Content ?? string.Empty));
-        }
-
-        return messages;
-    }
-
-    private async Task SaveConversationAsync(long llmAppId, long? conversationKey, string userPrompt, string assistantContent, CancellationToken cancellationToken)
-    {
-        long? createUserId = userContext.IsAuthenticated && userContext.UserId != default ? userContext.UserId : null;
+        long? createUserId = userContext.IsAuthenticated ? userContext.UserId : null;
 
         db.LlmConversation.Add(new LlmConversation
         {
             Id = idService.GetId(),
-            TrackKey = trackKey,
-            ConversationKey = conversationKey,
             LlmAppId = llmAppId,
-            Role = "user",
-            Content = userPrompt ?? string.Empty,
-            CreateUserId = createUserId
-        });
-
-        db.LlmConversation.Add(new LlmConversation
-        {
-            Id = idService.GetId(),
-            TrackKey = trackKey,
-            ConversationKey = conversationKey,
-            LlmAppId = llmAppId,
-            Role = "assistant",
-            Content = assistantContent ?? string.Empty,
+            SystemContent = systemPrompt ?? string.Empty,
+            UserContent = userPrompt ?? string.Empty,
+            AssistantContent = assistantContent ?? string.Empty,
             CreateUserId = createUserId
         });
 
         await db.SaveChangesAsync(cancellationToken);
-    }
-
-    private static ChatRole ParseRole(string? role)
-    {
-        if (string.IsNullOrWhiteSpace(role))
-        {
-            return ChatRole.User;
-        }
-
-        return role.Trim().ToLowerInvariant() switch
-        {
-            "system" => ChatRole.System,
-            "user" => ChatRole.User,
-            "assistant" => ChatRole.Assistant,
-            "tool" => ChatRole.Tool,
-            _ => ChatRole.User
-        };
     }
 
     [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]

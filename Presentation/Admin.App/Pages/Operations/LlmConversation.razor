@@ -1,0 +1,162 @@
+@page "/operations/llmconversation"
+@using Application.Model.LLM.LlmConversation
+@using Common;
+@attribute [ReuseTabsPageTitle("LLM会话日志")]
+
+<Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
+    <FormItem>
+        <Input @bind-Value="@context.Keyword" Placeholder="应用Code/名称/System/User/Assistant 关键字" Style="width: 320px" AllowClear />
+    </FormItem>
+    <FormItem>
+        <DatePicker @bind-Value="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择开始时间")" />
+    </FormItem>
+    <FormItem>
+        <DatePicker @bind-Value="@context.EndTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择结束时间")" />
+    </FormItem>
+    <FormItem>
+        <Space>
+            <Button Type="@ButtonType.Primary" HtmlType="submit">搜索</Button>
+        </Space>
+    </FormItem>
+    <FormItem>
+        <Space>
+            <Button OnClick="HandleReset">重置</Button>
+        </Space>
+    </FormItem>
+</Form>
+
+<Divider Style="margin: 12px 0" />
+
+<Table TItem="LlmConversationDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+    <ColumnDefinitions>
+        <PropertyColumn Property="c => AppText(c)" Title="应用"></PropertyColumn>
+        <PropertyColumn Property="c => StringHelper.SubstringText(c.SystemContent, 60)" Title="System"></PropertyColumn>
+        <PropertyColumn Property="c => StringHelper.SubstringText(c.UserContent, 60)" Title="User"></PropertyColumn>
+        <PropertyColumn Property="c => StringHelper.SubstringText(c.AssistantContent, 60)" Title="Assistant"></PropertyColumn>
+        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="时间"></PropertyColumn>
+        <ActionColumn Title="操作">
+            <Space>
+                <SpaceItem>
+                    <a @onclick="() => ViewDetail(context)">查看</a>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <PaginationTemplate>
+        <div style="margin:15px 0;float:right">
+            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.PageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+        </div>
+    </PaginationTemplate>
+
+</Table>
+
+
+<Drawer Closable="true" Width="980" Visible="isShowDetail" Title='("LLM会话详情")' OnClose="() => isShowDetail = false">
+    <Template style="height:90%">
+
+        <Descriptions Column="2" Bordered>
+            <DescriptionsItem Title="应用Code">@detail?.LlmAppCode</DescriptionsItem>
+            <DescriptionsItem Title="应用名称">@detail?.LlmAppName</DescriptionsItem>
+            <DescriptionsItem Title="应用ID">@detail?.LlmAppId</DescriptionsItem>
+            <DescriptionsItem Title="创建人">@detail?.CreateUserName</DescriptionsItem>
+            <DescriptionsItem Title="创建人ID">@detail?.CreateUserId</DescriptionsItem>
+            <DescriptionsItem Title="时间">@detail?.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</DescriptionsItem>
+            <DescriptionsItem Title="Id">@detail?.Id</DescriptionsItem>
+        </Descriptions>
+
+        <Divider />
+
+        <Text>System</Text>
+        <TextArea @bind-Value="@detailSystem" ReadOnly MinRows="4" MaxRows="12" style="width:100%" />
+
+        <Divider />
+
+        <Text>User</Text>
+        <TextArea @bind-Value="@detailUser" ReadOnly MinRows="6" MaxRows="18" style="width:100%" />
+
+        <Divider />
+
+        <Text>Assistant</Text>
+        <TextArea @bind-Value="@detailAssistant" ReadOnly MinRows="10" MaxRows="24" style="width:100%" />
+
+    </Template>
+</Drawer>
+
+
+@code {
+
+    override protected void OnParametersSet()
+    {
+        GetListAsync();
+    }
+
+    LlmConversationPageRequestDto request = new() { PageSize = 10 };
+
+    bool tableLoading = false;
+    PageListDto<LlmConversationDto> pageList = new();
+
+    async Task GetListAsync()
+    {
+        tableLoading = true;
+        var url = StringHelper.ModelToUriParam(request, "Operations/GetLlmConversationList");
+        var retData = await Http.GetFromJsonAsync<PageListDto<LlmConversationDto>>(url, JsonHelper.DeserializeOpts);
+
+        if (retData != null)
+        {
+            pageList = retData;
+        }
+
+        tableLoading = false;
+        StateHasChanged();
+    }
+
+    async Task HandleSearchAsync(EditContext editContext)
+    {
+        request.PageNum = 1;
+        await GetListAsync();
+    }
+
+    void HandleReset()
+    {
+        request = new LlmConversationPageRequestDto { PageSize = request.PageSize };
+        GetListAsync();
+    }
+
+    void PageChange(PaginationEventArgs args)
+    {
+        if (request.PageNum != args.Page)
+        {
+            request.PageNum = args.Page;
+        }
+
+        if (request.PageSize != args.PageSize)
+        {
+            request.PageSize = args.PageSize;
+        }
+
+        GetListAsync();
+    }
+
+    Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+    bool isShowDetail = false;
+    LlmConversationDto? detail;
+    string? detailSystem;
+    string? detailUser;
+    string? detailAssistant;
+
+
+    static string AppText(LlmConversationDto row) => $"{row.LlmAppCode}（{row.LlmAppName}）";
+
+    void ViewDetail(LlmConversationDto row)
+    {
+        detail = row;
+        detailSystem = row.SystemContent;
+        detailUser = row.UserContent;
+        detailAssistant = row.AssistantContent;
+        isShowDetail = true;
+        StateHasChanged();
+    }
+}

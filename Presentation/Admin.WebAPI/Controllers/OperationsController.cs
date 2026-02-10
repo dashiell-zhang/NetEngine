@@ -1,4 +1,5 @@
 using Application.Model.Basic.Log;
+using Application.Model.LLM.LlmConversation;
 using Application.Model.LLM.LlmApp;
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
@@ -15,7 +16,7 @@ namespace Admin.WebAPI.Controllers;
 [Route("[controller]/[action]")]
 [Authorize]
 [ApiController]
-public class OperationsController(LogManageService logManageService, TaskSettingService taskSettingService, QueueTaskManageService queueTaskManageService, LlmAppService llmAppService) : ControllerBase
+public class OperationsController(LogManageService logManageService, TaskSettingService taskSettingService, QueueTaskManageService queueTaskManageService, LlmAppService llmAppService, LlmConversationManageService llmConversationManageService) : ControllerBase
 {
 
     /// <summary>
@@ -72,6 +73,13 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// </summary>
     [HttpGet]
     public Task<PageListDto<LlmAppDto>> GetLlmAppList([FromQuery] LlmAppPageRequestDto request) => llmAppService.GetLlmAppListAsync(request);
+
+
+    /// <summary>
+    /// 获取 LLM 调用日志列表
+    /// </summary>
+    [HttpGet]
+    public Task<PageListDto<LlmConversationDto>> GetLlmConversationList([FromQuery] LlmConversationPageRequestDto request) => llmConversationManageService.GetLlmConversationListAsync(request);
 
 
     /// <summary>

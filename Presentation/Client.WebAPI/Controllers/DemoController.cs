@@ -25,8 +25,11 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
         args["c"] = "13";
 
 
+        
         var s = idService.GetId();
-        var result = await llmInvokeService.ChatContentAsync(code, args,s);
+        
+
+        var result = await llmInvokeService.ChatContentAsync(code, args);
 
         return result ?? "";
     }
@@ -45,7 +48,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
 
         var sb = new StringBuilder(4096);   // 避免频繁扩容
 
-        await foreach (var chunk in llmInvokeService.ChatStreamAsync(code, args, null, cancellationToken).WithCancellation(cancellationToken))
+        await foreach (var chunk in llmInvokeService.ChatStreamAsync(code, args, cancellationToken).WithCancellation(cancellationToken))
         {
             var content = chunk.Choices.FirstOrDefault()?.Delta?.Content;
 

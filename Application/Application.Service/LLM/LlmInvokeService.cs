@@ -18,19 +18,20 @@ namespace Application.Service.LLM;
 public partial class LlmInvokeService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory)
 {
     private static readonly Regex PlaceholderRegex = KeyRegex();
+    private readonly long trackKey = idService.GetId();
 
     /// <summary>
     /// 按 LLM 应用 Code 调用对话接口，返回完整响应
     /// </summary>
     /// <param name="code">LLM 应用标记</param>
     /// <param name="parameters">模板参数（用于替换 {{Key}} 占位符）</param>
-    /// <param name="conversationId">可选：会话ID（用于拼接历史对话）</param>
+    /// <param name="conversationKey">可选：会话Key（用于拼接历史对话）</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public async Task<ChatResponse> ChatAsync(
         string code,
         Dictionary<string, string> parameters,
-        long? conversationId = null,
+        long? conversationKey = null,
         CancellationToken cancellationToken = default)
     {
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable).FirstOrDefaultAsync(cancellationToken);
@@ -65,10 +66,10 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
             messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
         }
 
-        if (conversationId != null)
+        var effectiveConversationKey = await GetEffectiveConversationKeyAsync(conversationKey, app.Id, cancellationToken);
+        if (effectiveConversationKey != null)
         {
-            await ValidateConversationAppAsync(conversationId.Value, app.Id, cancellationToken);
-            var history = await LoadConversationHistoryAsync(conversationId.Value, app.Id, cancellationToken);
+            var history = await LoadConversationHistoryAsync(effectiveConversationKey.Value, app.Id, cancellationToken);
             if (history.Count != 0)
             {
                 messages.AddRange(history);
@@ -90,11 +91,8 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         var client = llmClientFactory.GetClient(app.Provider);
         var response = await client.ChatAsync(request, cancellationToken);
 
-        if (conversationId != null)
-        {
-            var assistantContent = response.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
-            await SaveConversationAsync(app.Id, conversationId.Value, userPrompt, assistantContent, cancellationToken);
-        }
+        var assistantContent = response.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
+        await SaveConversationAsync(app.Id, effectiveConversationKey, userPrompt, assistantContent, cancellationToken);
 
         return response;
     }
@@ -106,10 +104,10 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     public async Task<string?> ChatContentAsync(
         string code,
         Dictionary<string, string> parameters,
-        long? conversationId = null,
+        long? conversationKey = null,
         CancellationToken cancellationToken = default)
     {
-        var response = await ChatAsync(code, parameters, conversationId, cancellationToken);
+        var response = await ChatAsync(code, parameters, conversationKey, cancellationToken);
         return response.Choices.FirstOrDefault()?.Message.Content;
     }
 
@@ -120,7 +118,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(
         string code,
         Dictionary<string, string> parameters,
-        long? conversationId = null,
+        long? conversationKey = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable).FirstOrDefaultAsync(cancellationToken);
@@ -155,10 +153,10 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
             messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
         }
 
-        if (conversationId != null)
+        var effectiveConversationKey = await GetEffectiveConversationKeyAsync(conversationKey, app.Id, cancellationToken);
+        if (effectiveConversationKey != null)
         {
-            await ValidateConversationAppAsync(conversationId.Value, app.Id, cancellationToken);
-            var history = await LoadConversationHistoryAsync(conversationId.Value, app.Id, cancellationToken);
+            var history = await LoadConversationHistoryAsync(effectiveConversationKey.Value, app.Id, cancellationToken);
             if (history.Count != 0)
             {
                 messages.AddRange(history);
@@ -178,26 +176,19 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         );
 
         var client = llmClientFactory.GetClient(app.Provider);
-        StringBuilder? assistantBuilder = conversationId == null ? null : new StringBuilder(2048);
+        var assistantBuilder = new StringBuilder(2048);
         await foreach (var chunk in client.ChatStreamAsync(request, cancellationToken).WithCancellation(cancellationToken))
         {
-            if (assistantBuilder != null)
+            var delta = chunk.Choices.FirstOrDefault()?.Delta?.Content;
+            if (!string.IsNullOrEmpty(delta))
             {
-                var delta = chunk.Choices.FirstOrDefault()?.Delta?.Content;
-                if (!string.IsNullOrEmpty(delta))
-                {
-                    assistantBuilder.Append(delta);
-                }
+                assistantBuilder.Append(delta);
             }
 
             yield return chunk;
         }
 
-        if (conversationId != null)
-        {
-            var assistantContent = assistantBuilder?.ToString() ?? string.Empty;
-            await SaveConversationAsync(app.Id, conversationId.Value, userPrompt, assistantContent, cancellationToken);
-        }
+        await SaveConversationAsync(app.Id, effectiveConversationKey, userPrompt, assistantBuilder.ToString(), cancellationToken);
     }
 
     private static Dictionary<string, JsonNode>? ParseExtraBodyJson(string? extraBodyJson, string code)
@@ -302,24 +293,31 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         });
     }
 
-    private async Task ValidateConversationAppAsync(long conversationId, long llmAppId, CancellationToken cancellationToken)
+    private async Task<long?> GetEffectiveConversationKeyAsync(long? conversationKey, long llmAppId, CancellationToken cancellationToken)
     {
+        if (conversationKey == null)
+        {
+            return null;
+        }
+
         var otherAppId = await db.LlmConversation.AsNoTracking()
-            .Where(t => t.ConversationId == conversationId)
+            .Where(t => t.ConversationKey == conversationKey.Value)
             .OrderBy(t => t.Id)
             .Select(t => t.LlmAppId)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (otherAppId != default && otherAppId != llmAppId)
         {
-            throw new CustomException("ConversationId 与当前 LLM 应用不匹配");
+            return null;
         }
+
+        return conversationKey.Value;
     }
 
-    private async Task<List<ChatMessage>> LoadConversationHistoryAsync(long conversationId, long llmAppId, CancellationToken cancellationToken)
+    private async Task<List<ChatMessage>> LoadConversationHistoryAsync(long conversationKey, long llmAppId, CancellationToken cancellationToken)
     {
         var list = await db.LlmConversation.AsNoTracking()
-            .Where(t => t.ConversationId == conversationId && t.LlmAppId == llmAppId)
+            .Where(t => t.ConversationKey == conversationKey && t.LlmAppId == llmAppId)
             .OrderBy(t => t.Id)
             .Select(t => new { t.Role, t.Content })
             .ToListAsync(cancellationToken);
@@ -339,14 +337,15 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         return messages;
     }
 
-    private async Task SaveConversationAsync(long llmAppId, long conversationId, string userPrompt, string assistantContent, CancellationToken cancellationToken)
+    private async Task SaveConversationAsync(long llmAppId, long? conversationKey, string userPrompt, string assistantContent, CancellationToken cancellationToken)
     {
         long? createUserId = userContext.IsAuthenticated && userContext.UserId != default ? userContext.UserId : null;
 
         db.LlmConversation.Add(new LlmConversation
         {
             Id = idService.GetId(),
-            ConversationId = conversationId,
+            TrackKey = trackKey,
+            ConversationKey = conversationKey,
             LlmAppId = llmAppId,
             Role = "user",
             Content = userPrompt ?? string.Empty,
@@ -356,7 +355,8 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         db.LlmConversation.Add(new LlmConversation
         {
             Id = idService.GetId(),
-            ConversationId = conversationId,
+            TrackKey = trackKey,
+            ConversationKey = conversationKey,
             LlmAppId = llmAppId,
             Role = "assistant",
             Content = assistantContent ?? string.Empty,

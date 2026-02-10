@@ -4,18 +4,23 @@ using Repository.Database.Bases;
 namespace Repository.Database;
 
 /// <summary>
-/// LLM 会话消息表（同一 ConversationId 下为一段对话历史）
+/// LLM 会话消息表
 /// </summary>
-[Index(nameof(ConversationId))]
-[Index(nameof(LlmAppId))]
-[Index(nameof(ConversationId), nameof(LlmAppId))]
+[Index(nameof(TrackKey))]
+[Index(nameof(ConversationKey))]
 public class LlmConversation : CD_User
 {
 
     /// <summary>
-    /// 会话ID（同一会话的所有消息使用同一个值）
+    /// 追踪标识
     /// </summary>
-    public long ConversationId { get; set; }
+    public long TrackKey { get; set; }
+
+
+    /// <summary>
+    /// 会话Key（同一会话的所有消息使用同一个值；可为空）
+    /// </summary>
+    public long? ConversationKey { get; set; }
 
 
     /// <summary>
@@ -36,4 +41,3 @@ public class LlmConversation : CD_User
     /// </summary>
     public string Content { get; set; }
 }
-

@@ -26,6 +26,9 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
     public DbSet<FunctionRoute> FunctionRoute { get; set; }
 
     public DbSet<Link> Link { get; set; }
+    public DbSet<LlmApp> LlmApp { get; set; }
+
+    public DbSet<LlmConversation> LlmConversation { get; set; }
 
     public DbSet<Log> Log { get; set; }
 
@@ -60,8 +63,6 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
     public DbSet<UserRole> UserRole { get; set; }
 
     public DbSet<UserToken> UserToken { get; set; }
-
-    public DbSet<LlmApp> LlmApp { get; set; }
 
     #endregion
 

@@ -1,6 +1,7 @@
 using Application.Model.Site.Article;
 using Application.Service.LLM;
 using Client.WebAPI.Services;
+using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 
@@ -13,7 +14,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
 
 
     [HttpGet]
-    public async Task<string> TestLLM([FromServices] LlmInvokeService llmInvokeService)
+    public async Task<string> TestLLM([FromServices] LlmInvokeService llmInvokeService, [FromServices]IdService idService)
     {
         string code = "sumqw";
 
@@ -23,7 +24,9 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
         args["b"] = "9";
         args["c"] = "13";
 
-        var result = await llmInvokeService.ChatContentAsync(code, args);
+
+        var s = idService.GetId();
+        var result = await llmInvokeService.ChatContentAsync(code, args,s);
 
         return result ?? "";
     }
@@ -42,7 +45,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
 
         var sb = new StringBuilder(4096);   // 避免频繁扩容
 
-        await foreach (var chunk in llmInvokeService.ChatStreamAsync(code, args, cancellationToken).WithCancellation(cancellationToken))
+        await foreach (var chunk in llmInvokeService.ChatStreamAsync(code, args, null, cancellationToken).WithCancellation(cancellationToken))
         {
             var content = chunk.Choices.FirstOrDefault()?.Delta?.Content;
 

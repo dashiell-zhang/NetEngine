@@ -177,7 +177,8 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
                     throw new InvalidOperationException($"ExtraBody conflicts with base payload field: {kv.Key}");
                 }
 
-                payload[kv.Key] = kv.Value;
+                // JsonNode 不能同时属于多个父节点：这里必须 Clone，否则会抛 "The node already has a parent."
+                payload[kv.Key] = kv.Value?.DeepClone();
             }
         }
 

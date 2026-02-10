@@ -123,6 +123,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("using Microsoft.Extensions.Logging;");
             sb.AppendLine("using System;");
             sb.AppendLine("using System.Collections.Generic;");
+            sb.AppendLine("using System.Net.Http;");
+            sb.AppendLine("using System.Threading;");
             sb.AppendLine("using System.Threading.Tasks;");
             sb.AppendLine("using SourceGenerator.Runtime;");
             sb.AppendLine("using SourceGenerator.Runtime.Pipeline;");
@@ -1423,7 +1425,27 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             // 常用 BCL 命名空间前缀去除，便于输出简洁类型名
             typeName = typeName.Replace("System.Collections.Generic.", string.Empty)
                                .Replace("System.Threading.Tasks.", string.Empty)
-                               .Replace("System.", string.Empty);
+                               ;
+            // 对于形如 System.Int32 / System.String / System.Guid 这种明显只有一段的 System.* 类型名，
+            // 可以安全移除 System. 前缀（避免误伤 System.Threading.* / System.Net.* 等多段命名空间）
+            if (typeName.StartsWith("System.", StringComparison.Ordinal))
+            {
+                var afterSystem = typeName.Substring("System.".Length);
+                var segmentEnd = afterSystem.IndexOfAny(['<', '[', '?', ',', ' ', ')', ':']);
+                if (segmentEnd < 0) segmentEnd = afterSystem.Length;
+                var firstSegment = afterSystem.Substring(0, segmentEnd);
+
+                if (firstSegment.IndexOf('.') < 0)
+                {
+                    typeName = afterSystem;
+                }
+            }
+            // 常用类型简化（确保生成代码不出现 Net.* / Threading.* 这种根命名空间）
+            typeName = typeName.Replace("System.Net.Http.HttpClient", "HttpClient")
+                               .Replace("System.Net.Http.HttpRequestMessage", "HttpRequestMessage")
+                               .Replace("System.Net.Http.HttpResponseMessage", "HttpResponseMessage")
+                               .Replace("System.Threading.CancellationToken", "CancellationToken")
+                               .Replace("System.Threading.CancellationTokenSource", "CancellationTokenSource");
             // 常用 Runtime 命名空间前缀去除
             typeName = typeName.Replace("SourceGenerator.Runtime.Pipeline.Behaviors.", string.Empty)
                                .Replace("SourceGenerator.Runtime.Pipeline.", string.Empty)
@@ -1932,9 +1954,5 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
     }
 
 }
-
-
-
-
 
 

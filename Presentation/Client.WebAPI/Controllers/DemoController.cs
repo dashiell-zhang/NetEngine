@@ -2,6 +2,7 @@ using Application.Model.Site.Article;
 using Application.Service.LLM;
 using Client.WebAPI.Services;
 using IdentifierGenerator;
+using LLM;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 
@@ -14,7 +15,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
 
 
     [HttpGet]
-    public async Task<string> TestLLM([FromServices] LlmInvokeService llmInvokeService, [FromServices]IdService idService)
+    public async Task<string> TestLLM([FromServices] LlmInvokeService llmInvokeService, [FromServices] IdService idService)
     {
         string code = "sumqw";
 
@@ -25,9 +26,9 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
         args["c"] = "13";
 
 
-        
+
         var s = idService.GetId();
-        
+
 
         var result = await llmInvokeService.ChatContentAsync(code, args);
 
@@ -59,6 +60,50 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
         }
 
         return sb.ToString();
+    }
+
+
+    public sealed record TestLlmToolAgentRequest(
+        string Provider,
+        string Model,
+        string Prompt,
+        string? ToolChoice = null,
+        string? ToolName = null,
+        int MaxSteps = 8
+    );
+
+
+
+    [HttpGet]
+    public async Task<ActionResult<object>> TestLLMToolAgentQuick([FromServices] LlmToolAgent agent, [FromServices] ILlmToolProvider toolProvider, CancellationToken cancellationToken = default)
+    {
+
+        var tools = toolProvider.GetTools();
+
+        var messages = new List<ChatMessage>
+        {
+            new(ChatRole.System, "你是一个会使用工具的助手。规则：需要小写时只能调用 to_lower；需要大写时只能调用 to_upper；涉及计算优先调用 sum。你必须先调用工具，再回答用户。"),
+            new(ChatRole.User, "请计算 5 + 9，再把文本 \"AbC\" 转成小写，并把两个结果用一句中文说明。")
+        };
+
+        var result = await agent.RunAsync(
+            "Qwen",
+            "qwen3-max",
+            messages,
+            tools,
+            ToolChoice.Required,
+            maxSteps: 6,
+            cancellationToken: cancellationToken);
+
+        var finalContent = result.LastResponse.Choices.FirstOrDefault()?.Message.Content;
+
+        return Ok(new
+        {
+            result.IsCompleted,
+            result.Steps,
+            FinalContent = finalContent,
+            Messages = result.Messages
+        });
     }
 
 

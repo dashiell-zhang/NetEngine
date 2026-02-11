@@ -51,6 +51,7 @@ public class Program
 
         builder.Services.BatchRegisterServices();
         builder.Services.BatchRegisterBackgroundServices();
+        builder.Services.AddGeneratedLlmTools();
 
         #region 注册 LLM 推理服务
 

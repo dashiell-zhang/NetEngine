@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -14,8 +13,7 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     protected abstract string ProviderName { get; }
@@ -143,37 +141,8 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
                     var msg = new JsonObject
                     {
                         ["role"] = RoleToString(m.Role),
-                        ["content"] = m.Role == ChatRole.Tool ? (m.Content ?? string.Empty) : m.Content
+                        ["content"] = m.Content
                     };
-
-                    if (!string.IsNullOrWhiteSpace(m.Name))
-                    {
-                        msg["name"] = m.Name;
-                    }
-
-                    if (m.Role == ChatRole.Tool && !string.IsNullOrWhiteSpace(m.ToolCallId))
-                    {
-                        msg["tool_call_id"] = m.ToolCallId;
-                    }
-
-                    if (m.ToolCalls != null && m.ToolCalls.Count != 0)
-                    {
-                        msg["tool_calls"] = new JsonArray(
-                            m.ToolCalls.Select(c =>
-                            {
-                                var call = new JsonObject
-                                {
-                                    ["id"] = c.Id,
-                                    ["type"] = "function",
-                                    ["function"] = new JsonObject
-                                    {
-                                        ["name"] = c.Name,
-                                        ["arguments"] = c.ArgumentsJson
-                                    }
-                                };
-                                return call;
-                            }).ToArray());
-                    }
                     return msg;
                 }).ToArray()),
             ["stream"] = stream
@@ -192,57 +161,6 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
         if (!string.IsNullOrWhiteSpace(request.User))
         {
             payload["user"] = request.User;
-        }
-
-        if (request.Tools != null && request.Tools.Count != 0)
-        {
-            payload["tools"] = new JsonArray(
-                request.Tools.Select(t =>
-                {
-                    if (string.IsNullOrWhiteSpace(t.Name))
-                    {
-                        throw new InvalidOperationException("Tool name is required.");
-                    }
-
-                    var fn = new JsonObject
-                    {
-                        ["name"] = t.Name
-                    };
-
-                    if (!string.IsNullOrWhiteSpace(t.Description))
-                    {
-                        fn["description"] = t.Description;
-                    }
-
-                    fn["parameters"] = t.ParametersSchema.DeepClone();
-
-                    return new JsonObject
-                    {
-                        ["type"] = "function",
-                        ["function"] = fn
-                    };
-                }).ToArray());
-        }
-
-        if (request.ToolChoice != null)
-        {
-            if (request.ToolChoice.Type == ToolChoiceType.Specific && string.IsNullOrWhiteSpace(request.ToolChoice.Name))
-            {
-                throw new InvalidOperationException("ToolChoice.Specific requires a tool name.");
-            }
-
-            payload["tool_choice"] = request.ToolChoice.Type switch
-            {
-                ToolChoiceType.Auto => "auto",
-                ToolChoiceType.None => "none",
-                ToolChoiceType.Required => "required",
-                ToolChoiceType.Specific => new JsonObject
-                {
-                    ["type"] = "function",
-                    ["function"] = new JsonObject { ["name"] = request.ToolChoice.Name }
-                },
-                _ => "auto"
-            };
         }
 
         if (request.ExtraBody != null && request.ExtraBody.Count != 0)
@@ -271,10 +189,7 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
     {
         var choices = dto.Choices?.Select(c => new ChatChoice(
             c.Index,
-            new ChatMessage(
-                RoleFromString(c.Message?.Role),
-                c.Message?.Content,
-                MapToolCalls(c.Message, c.Index)),
+            new ChatMessage(RoleFromString(c.Message?.Role), c.Message?.Content ?? string.Empty),
             c.FinishReason
         )).ToList() ?? [];
 
@@ -288,38 +203,6 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
             usage,
             dto.Id
         );
-    }
-
-    private static IReadOnlyList<ToolCall>? MapToolCalls(ChatMessageDto? message, int choiceIndex)
-    {
-        if (message == null)
-        {
-            return null;
-        }
-
-        if (message.ToolCalls != null && message.ToolCalls.Count != 0)
-        {
-            var toolCalls = message.ToolCalls
-                .Select((c, i) =>
-                {
-                    var id = string.IsNullOrWhiteSpace(c.Id) ? $"call_{choiceIndex}_{i}" : c.Id;
-                    var name = c.Function?.Name ?? string.Empty;
-                    var args = c.Function?.Arguments ?? "{}";
-                    return new ToolCall(id, name, args);
-                })
-                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
-                .ToList();
-
-            return toolCalls.Count == 0 ? null : toolCalls;
-        }
-
-        if (message.FunctionCall != null && !string.IsNullOrWhiteSpace(message.FunctionCall.Name))
-        {
-            var args = message.FunctionCall.Arguments ?? "{}";
-            return [new ToolCall($"call_{choiceIndex}_0", message.FunctionCall.Name, args)];
-        }
-
-        return null;
     }
 
     private static ChatStreamChunk Map(ChatCompletionStreamResponseDto dto, string fallbackModel)
@@ -376,46 +259,7 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
         public string Role { get; set; } = string.Empty;
 
         [JsonPropertyName("content")]
-        public string? Content { get; set; }
-
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-
-        [JsonPropertyName("tool_calls")]
-        public List<ToolCallDto>? ToolCalls { get; set; }
-
-        [JsonPropertyName("function_call")]
-        public FunctionCallDto? FunctionCall { get; set; }
-    }
-
-    private sealed class ToolCallDto
-    {
-        [JsonPropertyName("id")]
-        public string? Id { get; set; }
-
-        [JsonPropertyName("type")]
-        public string? Type { get; set; }
-
-        [JsonPropertyName("function")]
-        public ToolFunctionDto? Function { get; set; }
-    }
-
-    private sealed class ToolFunctionDto
-    {
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-
-        [JsonPropertyName("arguments")]
-        public string? Arguments { get; set; }
-    }
-
-    private sealed class FunctionCallDto
-    {
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-
-        [JsonPropertyName("arguments")]
-        public string? Arguments { get; set; }
+        public string Content { get; set; } = string.Empty;
     }
 
     private sealed class ChatCompletionResponseDto

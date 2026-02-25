@@ -4,11 +4,19 @@ using System.Net.Http.Headers;
 
 namespace LLM.Compatible;
 
+/// <summary>
+/// OpenAI-Compatible Provider 的依赖注入扩展
+/// </summary>
 public static class OpenAiCompatibleServiceCollectionExtensions
 {
+
     /// <summary>
-    /// 注册一个 OpenAI-Compatible LLM Provider（通过 providerKey 进行 keyed 解析）
+    /// 注册一个 OpenAI-Compatible LLM Provider 通过 providerKey 进行 keyed 解析和路由
     /// </summary>
+    /// <param name="services">服务集合</param>
+    /// <param name="providerKey">Provider 的 keyed 标识</param>
+    /// <param name="configure">Provider 配置委托</param>
+    /// <returns>服务集合</returns>
     public static IServiceCollection AddOpenAiCompatibleProvider(
         this IServiceCollection services,
         string providerKey,
@@ -16,6 +24,7 @@ public static class OpenAiCompatibleServiceCollectionExtensions
     {
         services.AddLlmClientFactory();
 
+        // 以 providerKey 作为命名 Options 存储 Provider 配置
         services.AddOptions<OpenAiCompatibleProviderSetting>(providerKey).Configure(configure);
 
         services.AddHttpClient(providerKey, (serviceProvider, httpClient) =>
@@ -24,6 +33,7 @@ public static class OpenAiCompatibleServiceCollectionExtensions
                 .GetRequiredService<IOptionsMonitor<OpenAiCompatibleProviderSetting>>()
                 .Get(providerKey);
 
+            // 统一确保 BaseAddress 以 / 结尾 方便拼接相对路径
             httpClient.BaseAddress = new Uri(settings.BaseUrl.TrimEnd('/') + "/");
             httpClient.Timeout = TimeSpan.FromSeconds(60);
 
@@ -38,6 +48,7 @@ public static class OpenAiCompatibleServiceCollectionExtensions
             UseCookies = false
         });
 
+        // 将 ILlmClient 按 providerKey 注册为 keyed 服务
         services.AddKeyedTransient<ILlmClient>(providerKey, (serviceProvider, _) =>
         {
             var settings = serviceProvider
@@ -53,4 +64,5 @@ public static class OpenAiCompatibleServiceCollectionExtensions
 
         return services;
     }
+
 }

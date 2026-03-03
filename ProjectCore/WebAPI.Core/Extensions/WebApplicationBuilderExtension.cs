@@ -221,6 +221,8 @@ public static class WebApplicationBuilderExtension
             });
 
             options.OperationFilter<SecurityRequirementsOperationFilter>();
+            options.OperationFilter<EnumParameterDescriptionOperationFilter>();
+            options.SchemaFilter<EnumSchemaFilter>();
         });
         #endregion
 

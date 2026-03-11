@@ -9,6 +9,21 @@ namespace DistributedLock.InMemory;
 /// </summary>
 public sealed class InMemoryLock : IDistributedLock
 {
+    public Task<bool> RenewAsync(IDisposable lockHandle, TimeSpan expiry)
+    {
+        if (expiry == default)
+        {
+            expiry = TimeSpan.FromMinutes(1);
+        }
+
+        if (expiry <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(expiry), "expiry 必须大于 0");
+        }
+
+        return Task.FromResult(lockHandle is InMemoryLockHandle inMemoryLockHandle && inMemoryLockHandle.Renew(expiry));
+    }
+
 
     /// <summary>
     /// 以 key 为粒度的锁分组表

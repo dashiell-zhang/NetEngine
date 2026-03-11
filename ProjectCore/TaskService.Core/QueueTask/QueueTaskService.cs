@@ -3,6 +3,8 @@ using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
+using Repository.Database;
+using Repository.Database.Enums;
 using SourceGenerator.Runtime.Attributes;
 
 namespace TaskService.Core.QueueTask;
@@ -36,6 +38,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
             Repository.Database.QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
+                Status = QueueTaskStatus.Pending,
                 Name = name,
                 Parameter = parameter != null ? JsonHelper.ObjectToJson(parameter) : null,
                 PlanTime = planTime,
@@ -85,6 +88,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
             Repository.Database.QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
+                Status = QueueTaskStatus.Pending,
                 Name = name,
                 Parameter = parameter != null ? JsonHelper.ObjectToJson(parameter) : null,
                 PlanTime = planTime,

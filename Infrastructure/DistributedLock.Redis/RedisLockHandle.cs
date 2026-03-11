@@ -3,6 +3,7 @@ using StackExchange.Redis;
 namespace DistributedLock.Redis;
 public sealed class RedisLockHandle : IDisposable
 {
+    public string LockValue { get; set; } = "123456";
 
     public IDatabase Database { get; set; }
 
@@ -11,7 +12,7 @@ public sealed class RedisLockHandle : IDisposable
 
     public void Dispose()
     {
-        Database.LockReleaseAsync(LockKey, "123456");
+        Database.LockReleaseAsync(LockKey, LockValue);
     }
 
 }

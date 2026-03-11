@@ -21,6 +21,28 @@ public class RedisLock : IDistributedLock
         connectionMultiplexer = new(async () => await ConnectionMultiplexer.ConnectAsync(redisSetting.Configuration));
     }
 
+    public async Task<bool> RenewAsync(IDisposable lockHandle, TimeSpan expiry)
+    {
+        if (lockHandle is not RedisLockHandle redisLockHandle)
+        {
+            return false;
+        }
+
+        if (expiry == default)
+        {
+            expiry = TimeSpan.FromMinutes(1);
+        }
+
+        try
+        {
+            return await redisLockHandle.Database.LockExtendAsync(redisLockHandle.LockKey, redisLockHandle.LockValue, expiry);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
 
     public async Task<IDisposable> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
     {

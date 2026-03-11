@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using Repository.Database;
+using Repository.Database.Enums;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.TaskCenter;
@@ -47,6 +48,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
             QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
+                Status = QueueTaskStatus.Pending,
                 Name = name,
                 PlanTime = planTime,
                 CallbackName = callbackName,
@@ -107,6 +109,7 @@ public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseCont
             QueueTask queueTask = new()
             {
                 Id = idService.GetId(),
+                Status = QueueTaskStatus.Pending,
                 Name = name,
                 PlanTime = planTime,
                 CallbackName = callbackName,

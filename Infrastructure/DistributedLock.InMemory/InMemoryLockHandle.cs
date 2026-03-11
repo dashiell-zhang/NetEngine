@@ -27,7 +27,7 @@ namespace DistributedLock.InMemory
         /// <summary>
         /// 过期释放控制器
         /// </summary>
-        private readonly CancellationTokenSource expiryCts;
+        private CancellationTokenSource expiryCts;
 
         /// <summary>
         /// 是否已释放
@@ -87,6 +87,38 @@ namespace DistributedLock.InMemory
             {
                 InMemoryLock.TryRemoveGroup(key, group);
             }
+        }
+
+
+        /// <summary>
+        /// 续期锁
+        /// </summary>
+        /// <param name="expiry">新的失效时长</param>
+        /// <returns>续期是否成功</returns>
+        public bool Renew(TimeSpan expiry)
+        {
+            if (Volatile.Read(ref disposed) != 0)
+            {
+                return false;
+            }
+
+            var nextCts = new CancellationTokenSource();
+            var currentCts = Interlocked.Exchange(ref expiryCts, nextCts);
+
+            try
+            {
+                currentCts.Cancel();
+            }
+            catch
+            {
+            }
+            finally
+            {
+                currentCts.Dispose();
+            }
+
+            _ = ExpireAsync(expiry, nextCts.Token);
+            return true;
         }
 
 

@@ -4,6 +4,8 @@ using Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
+using Repository.Database;
+using Repository.Database.Enums;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.TaskCenter;
@@ -93,6 +95,9 @@ public class QueueTaskManageService(DatabaseContext db)
         task.LastTime = null;
         task.SuccessTime = null;
         task.ChildSuccessTime = null;
+        task.Status = QueueTaskStatus.Pending;
+        task.WorkerId = null;
+        task.LeaseExpireTime = null;
 
         await db.SaveChangesAsync();
 

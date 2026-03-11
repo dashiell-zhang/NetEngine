@@ -2,21 +2,39 @@ using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Repository;
+using Repository.Database;
+using Repository.Database.Enums;
 using System.Collections.Concurrent;
 using System.Reflection;
 using static TaskService.Core.QueueTask.QueueTaskBuilder;
 
 namespace TaskService.Core.QueueTask;
 
-public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock) : BackgroundService
+/// <summary>
+/// 队列任务后台执行服务
+/// </summary>
+public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogger<QueueTaskBackgroundService> logger, IDistributedLock distLock, IDbContextFactory<DatabaseContext> dbFactory) : BackgroundService
 {
+    /// <summary>
+    /// 队列任务最大重试次数
+    /// </summary>
+    private const int MaxRetryCount = 3;
+
     private readonly ILogger logger = logger;
+
+    /// <summary>
+    /// 当前实例正在执行的任务列表
+    /// </summary>
     private readonly ConcurrentDictionary<long, string> runingTaskList = new();
+
+    /// <summary>
+    /// 当前 TaskService 实例标识
+    /// </summary>
+    private readonly string workerId = CreateWorkerId();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -27,9 +45,6 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
         {
             return;
         }
-
-        using var scope = serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
         if (queueMethodList.Count != 0)
         {
@@ -42,21 +57,29 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
                         var runingTaskIdList = runingTaskList.Where(t => t.Value == item.Name).Select(t => t.Key).ToList();
 
-                        int skipSize = runingTaskIdList.Count;
-
                         int taskSize = item.Semaphore - runingTaskIdList.Count;
 
                         if (taskSize > 0)
                         {
-                            var nowTime = DateTime.UtcNow;
+                            var queueTaskIdList = await GetCandidateTaskIdsAsync(item, taskSize * 3, runingTaskIdList, stoppingToken);
 
-                            var queueTaskIdList = await db.QueueTask.Where(t => t.Name == item.Name && t.CreateTime < nowTime.AddSeconds(-1) && t.SuccessTime == null && (t.PlanTime == null || t.PlanTime <= nowTime) && runingTaskIdList.Contains(t.Id) == false && t.Count < 3 && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count))).OrderBy(t => t.Count).ThenBy(t => t.LastTime).ThenBy(t => t.CreateTime).Skip(skipSize).Take(taskSize).Select(t => t.Id).ToListAsync(stoppingToken);
+                            int startedTaskCount = 0;
 
                             foreach (var queueTaskId in queueTaskIdList)
                             {
-                                if (runingTaskList.TryAdd(queueTaskId, item.Name))
+                                bool isClaimed = await TryClaimTaskAsync(queueTaskId, item, stoppingToken);
+                                if (isClaimed && runingTaskList.TryAdd(queueTaskId, item.Name))
                                 {
-                                    RunAction(item, queueTaskId);
+                                    _ = RunActionAsync(item, queueTaskId);
+                                    startedTaskCount++;
+                                    if (startedTaskCount >= taskSize)
+                                    {
+                                        break;
+                                    }
+                                }
+                                else if (isClaimed)
+                                {
+                                    await ReleaseClaimAsync(queueTaskId);
                                 }
                             }
                         }
@@ -75,10 +98,115 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
     private readonly MethodInfo jsonCloneObject = typeof(JsonHelper).GetMethod("JsonCloneObject", BindingFlags.Static | BindingFlags.Public)!;
 
-
-
-    private async void RunAction(QueueTaskInfo queueTaskInfo, long queueTaskId)
+    /// <summary>
+    /// 创建当前实例的唯一标识
+    /// </summary>
+    private static string CreateWorkerId()
     {
+        string worker = $"{Environment.MachineName}-{Environment.ProcessId}-{Guid.NewGuid():N}";
+        return worker[..Math.Min(48, worker.Length)];
+    }
+
+    /// <summary>
+    /// 加载当前任务类型可供领取的候选任务
+    /// </summary>
+    private async Task<List<long>> GetCandidateTaskIdsAsync(QueueTaskInfo queueTaskInfo, int takeSize, List<long> runningTaskIdList, CancellationToken cancellationToken)
+    {
+        var nowTime = DateTimeOffset.UtcNow;
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+
+        return await db.QueueTask
+            .AsNoTracking()
+            .Where(t => t.Name == queueTaskInfo.Name
+                && t.CreateTime < nowTime.AddSeconds(-1)
+                && t.SuccessTime == null
+                && (t.PlanTime == null || t.PlanTime <= nowTime)
+                && runningTaskIdList.Contains(t.Id) == false
+                && t.Count < MaxRetryCount
+                && ((t.Status == QueueTaskStatus.Pending && (t.LastTime == null || t.LastTime < nowTime.AddMinutes(-5 * t.Count)))
+                    || (t.Status == QueueTaskStatus.Running && t.LeaseExpireTime != null && t.LeaseExpireTime < nowTime)))
+            .OrderBy(t => t.Count)
+            .ThenBy(t => t.LastTime)
+            .ThenBy(t => t.CreateTime)
+            .Take(takeSize)
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// 尝试将任务原子标记为当前实例已领取
+    /// </summary>
+    private async Task<bool> TryClaimTaskAsync(long queueTaskId, QueueTaskInfo queueTaskInfo, CancellationToken cancellationToken)
+    {
+        var nowTime = DateTimeOffset.UtcNow;
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+
+        var queueTask = await db.QueueTask.FirstOrDefaultAsync(t => t.Id == queueTaskId, cancellationToken);
+        if (queueTask == null || queueTask.Name != queueTaskInfo.Name || queueTask.SuccessTime != null || queueTask.Count >= MaxRetryCount)
+        {
+            return false;
+        }
+
+        bool canClaim = queueTask.Status == QueueTaskStatus.Pending
+            || (queueTask.Status == QueueTaskStatus.Running && queueTask.LeaseExpireTime != null && queueTask.LeaseExpireTime < nowTime);
+
+        if (!canClaim || (queueTask.PlanTime != null && queueTask.PlanTime > nowTime))
+        {
+            return false;
+        }
+
+        queueTask.Status = QueueTaskStatus.Running;
+        queueTask.WorkerId = workerId;
+        queueTask.LeaseExpireTime = nowTime.AddMinutes(queueTaskInfo.Duration);
+
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 释放当前实例已经领取但尚未执行的任务
+    /// </summary>
+    private async Task ReleaseClaimAsync(long queueTaskId)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+
+        var queueTask = await db.QueueTask.FirstOrDefaultAsync(t => t.Id == queueTaskId);
+        if (queueTask == null || queueTask.WorkerId != workerId || queueTask.Status != QueueTaskStatus.Running || queueTask.SuccessTime != null)
+        {
+            return;
+        }
+
+        queueTask.Status = queueTask.Count >= MaxRetryCount ? QueueTaskStatus.Failed : QueueTaskStatus.Pending;
+        queueTask.WorkerId = null;
+        queueTask.LeaseExpireTime = null;
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 执行已经领取成功的队列任务
+    /// </summary>
+    private async Task RunActionAsync(QueueTaskInfo queueTaskInfo, long queueTaskId)
+    {
+        CancellationTokenSource? renewLeaseTokenSource = null;
+        Task? renewLeaseTask = null;
+        object? returnObject = null;
+        bool isReturnVoid = false;
+
         try
         {
             using var scope = serviceProvider.CreateScope();
@@ -94,141 +222,77 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
             var idService = scope.ServiceProvider.GetRequiredService<IdService>();
 
             using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
-            if (lockActionState != null)
+            if (lockActionState == null)
             {
-                var queueTask = await db.QueueTask.FirstAsync(t => t.Id == queueTaskId);
+                await ReleaseClaimAsync(queueTaskId);
+                return;
+            }
 
-                if (queueTask.FirstTime == null)
+            var queueTask = await db.QueueTask.FirstOrDefaultAsync(t => t.Id == queueTaskId && t.WorkerId == workerId && t.Status == QueueTaskStatus.Running);
+            if (queueTask == null)
+            {
+                return;
+            }
+
+            if (queueTask.FirstTime == null)
+            {
+                queueTask.FirstTime = DateTimeOffset.UtcNow;
+            }
+
+            queueTask.LastTime = DateTimeOffset.UtcNow;
+
+            queueTask.Count++;
+
+            await db.SaveChangesAsync();
+
+            isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
+
+            var parameterType = queueTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
+
+            Type serviceType = queueTaskInfo.Method.DeclaringType!;
+
+            object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
+
+            renewLeaseTokenSource = new CancellationTokenSource();
+            renewLeaseTask = RenewLeaseAsync(queueTaskId, queueTaskInfo, lockActionState, renewLeaseTokenSource.Token);
+
+            if (parameterType != null)
+            {
+                if (queueTask.Parameter != null)
                 {
-                    queueTask.FirstTime = DateTime.UtcNow;
-                }
+                    var parameter = jsonCloneObject.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
 
-                queueTask.LastTime = DateTime.UtcNow;
-
-                queueTask.Count++;
-
-                await db.SaveChangesAsync();
-
-                var isReturnVoid = queueTaskInfo.Method.ReturnType.FullName == "System.Void";
-
-                var parameterType = queueTaskInfo.Method.GetParameters().FirstOrDefault()?.ParameterType;
-
-                object? returnObject = null;
-
-                Type serviceType = queueTaskInfo.Method.DeclaringType!;
-
-                object serviceInstance = scope.ServiceProvider.GetRequiredService(serviceType);
-
-                if (parameterType != null)
-                {
-                    if (queueTask.Parameter != null)
-                    {
-                        var parameter = jsonCloneObject.MakeGenericMethod(parameterType).Invoke(null, [queueTask.Parameter])!;
-
-                        returnObject = queueTaskInfo.Method.Invoke(serviceInstance, [parameter]);
-                    }
-                    else
-                    {
-                        logger.LogError(queueTaskInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
-                    }
+                    returnObject = queueTaskInfo.Method.Invoke(serviceInstance, [parameter]);
                 }
                 else
                 {
-                    returnObject = queueTaskInfo.Method.Invoke(serviceInstance, null);
+                    logger.LogError(queueTaskInfo.Method + "方法要求有参数，但队列任务记录缺少参数");
                 }
-
-
-                if (returnObject is Task task)
-                {
-                    await task;
-
-                    var resultProperty = task.GetType().GetProperty("Result");
-                    returnObject = resultProperty?.GetValue(task);
-
-                    if (returnObject?.GetType().FullName == "System.Threading.Tasks.VoidTaskResult")
-                    {
-                        returnObject = null;
-                    }
-                }
-
-
-                queueTask.SuccessTime = DateTime.UtcNow;
-
-                var isHaveChild = await db.QueueTask.Where(t => t.ParentTaskId == queueTaskId).AnyAsync();
-
-                if (!isHaveChild)
-                {
-                    queueTask.ChildSuccessTime = queueTask.SuccessTime;
-                }
-
-                if (queueTask.CallbackName != null)
-                {
-
-                    if (queueTask.CallbackParameter == null && isReturnVoid == false && returnObject != null)
-                    {
-                        queueTask.CallbackParameter = JsonHelper.ObjectToJson(returnObject);
-                    }
-
-                    if (queueTask.ChildSuccessTime != null)
-                    {
-                        Repository.Database.QueueTask callbackTask = new()
-                        {
-                            Id = idService.GetId(),
-                            Name = queueTask.CallbackName,
-                            Parameter = queueTask.CallbackParameter
-                        };
-
-                        db.QueueTask.Add(callbackTask);
-                    }
-                }
-
-                if (queueTask.ParentTaskId != null && queueTask.ChildSuccessTime != null)
-                {
-                    await UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
-                }
-
-                await db.SaveChangesAsync();
             }
-
-
-            async Task UpdateParentState(long parentTaskId, long currentTaskId)
+            else
             {
-                using (await distLock.LockAsync(parentTaskId.ToString()))
-                {
-                    //同级别是否全部执行完成
-                    var isSameLevelHaveWait = await db.QueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).AnyAsync();
-
-                    if (!isSameLevelHaveWait)
-                    {
-                        var parentTaskInfo = await db.QueueTask.Where(t => t.Id == parentTaskId).FirstAsync();
-
-                        parentTaskInfo.ChildSuccessTime = DateTimeOffset.UtcNow;
-
-                        if (parentTaskInfo.CallbackName != null)
-                        {
-                            Repository.Database.QueueTask callbackTask = new()
-                            {
-                                Id = idService.GetId(),
-                                Name = parentTaskInfo.CallbackName,
-                                Parameter = parentTaskInfo.CallbackParameter
-                            };
-
-                            db.QueueTask.Add(callbackTask);
-                        }
-
-                        if (parentTaskInfo.ParentTaskId != null)
-                        {
-                            await UpdateParentState(parentTaskInfo.ParentTaskId.Value, parentTaskInfo.Id);
-                        }
-                    }
-                }
-
-
+                returnObject = queueTaskInfo.Method.Invoke(serviceInstance, null);
             }
 
+            if (returnObject is Task task)
+            {
+                await task;
+
+                var resultProperty = task.GetType().GetProperty("Result");
+                returnObject = resultProperty?.GetValue(task);
+
+                if (returnObject?.GetType().FullName == "System.Threading.Tasks.VoidTaskResult")
+                {
+                    returnObject = null;
+                }
+            }
+
+            await CompleteTaskAsync(queueTaskId, isReturnVoid, returnObject, idService);
         }
         catch (Exception ex)
         {
+            await MarkTaskFailedAsync(queueTaskId);
+
             var errorLog = new
             {
                 ex?.Source,
@@ -243,7 +307,219 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
         }
         finally
         {
+            await StopLeaseRenewAsync(renewLeaseTokenSource, renewLeaseTask);
             runingTaskList.TryRemove(queueTaskId, out _);
+        }
+    }
+
+    /// <summary>
+    /// 以新的上下文完成任务收尾并写入回调任务
+    /// </summary>
+    private async Task CompleteTaskAsync(long queueTaskId, bool isReturnVoid, object? returnObject, IdService idService)
+    {
+        for (int retryCount = 0; retryCount < 3; retryCount++)
+        {
+            await using var db = await dbFactory.CreateDbContextAsync();
+
+            var queueTask = await db.QueueTask.FirstOrDefaultAsync(t => t.Id == queueTaskId && t.WorkerId == workerId && t.Status == QueueTaskStatus.Running);
+            if (queueTask == null)
+            {
+                return;
+            }
+
+            queueTask.Status = QueueTaskStatus.Succeeded;
+            queueTask.SuccessTime = DateTimeOffset.UtcNow;
+            queueTask.WorkerId = null;
+            queueTask.LeaseExpireTime = null;
+
+            var isHaveChild = await db.QueueTask.Where(t => t.ParentTaskId == queueTaskId).AnyAsync();
+
+            if (!isHaveChild)
+            {
+                queueTask.ChildSuccessTime = queueTask.SuccessTime;
+            }
+
+            if (queueTask.CallbackName != null)
+            {
+                if (queueTask.CallbackParameter == null && isReturnVoid == false && returnObject != null)
+                {
+                    queueTask.CallbackParameter = JsonHelper.ObjectToJson(returnObject);
+                }
+
+                if (queueTask.ChildSuccessTime != null)
+                {
+                    Repository.Database.QueueTask callbackTask = new()
+                    {
+                        Id = idService.GetId(),
+                        Status = QueueTaskStatus.Pending,
+                        Name = queueTask.CallbackName,
+                        Parameter = queueTask.CallbackParameter
+                    };
+
+                    db.QueueTask.Add(callbackTask);
+                }
+            }
+
+            if (queueTask.ParentTaskId != null && queueTask.ChildSuccessTime != null)
+            {
+                await UpdateParentState(queueTask.ParentTaskId.Value, queueTask.Id);
+            }
+
+            try
+            {
+                await db.SaveChangesAsync();
+                return;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+            }
+
+            async Task UpdateParentState(long parentTaskId, long currentTaskId)
+            {
+                using (await distLock.LockAsync(parentTaskId.ToString()))
+                {
+                    var isSameLevelHaveWait = await db.QueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).AnyAsync();
+
+                    if (!isSameLevelHaveWait)
+                    {
+                        var parentTaskInfo = await db.QueueTask.Where(t => t.Id == parentTaskId).FirstAsync();
+
+                        parentTaskInfo.ChildSuccessTime = DateTimeOffset.UtcNow;
+
+                        if (parentTaskInfo.CallbackName != null)
+                        {
+                            Repository.Database.QueueTask callbackTask = new()
+                            {
+                                Id = idService.GetId(),
+                                Status = QueueTaskStatus.Pending,
+                                Name = parentTaskInfo.CallbackName,
+                                Parameter = parentTaskInfo.CallbackParameter
+                            };
+
+                            db.QueueTask.Add(callbackTask);
+                        }
+
+                        if (parentTaskInfo.ParentTaskId != null)
+                        {
+                            await UpdateParentState(parentTaskInfo.ParentTaskId.Value, parentTaskInfo.Id);
+                        }
+                    }
+                }
+            }
+        }
+
+        throw new DbUpdateConcurrencyException("Complete queue task failed after retries");
+    }
+
+    /// <summary>
+    /// 在任务执行期间持续延长数据库租约和并发锁
+    /// </summary>
+    private async Task RenewLeaseAsync(long queueTaskId, QueueTaskInfo queueTaskInfo, IDisposable lockHandle, CancellationToken cancellationToken)
+    {
+        var leaseDuration = TimeSpan.FromMinutes(queueTaskInfo.Duration);
+        var renewInterval = GetLeaseRenewInterval(leaseDuration);
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(renewInterval, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            try
+            {
+                if (!await distLock.RenewAsync(lockHandle, leaseDuration))
+                {
+                    logger.LogWarning("Renew distributed lock failed for queue task {QueueTaskId}", queueTaskId);
+                    continue;
+                }
+
+                await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+
+                var queueTask = await db.QueueTask.FirstOrDefaultAsync(t => t.Id == queueTaskId, cancellationToken);
+                if (queueTask == null || queueTask.WorkerId != workerId || queueTask.Status != QueueTaskStatus.Running || queueTask.SuccessTime != null)
+                {
+                    return;
+                }
+
+                queueTask.LeaseExpireTime = DateTimeOffset.UtcNow.Add(leaseDuration);
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Renew lease failed for queue task {QueueTaskId}", queueTaskId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 计算续租间隔
+    /// </summary>
+    private static TimeSpan GetLeaseRenewInterval(TimeSpan leaseDuration)
+    {
+        double seconds = leaseDuration.TotalSeconds / 3;
+        seconds = Math.Clamp(seconds, 5, 30);
+        return TimeSpan.FromSeconds(seconds);
+    }
+
+    /// <summary>
+    /// 停止续租任务并等待结束
+    /// </summary>
+    private static async Task StopLeaseRenewAsync(CancellationTokenSource? renewLeaseTokenSource, Task? renewLeaseTask)
+    {
+        if (renewLeaseTokenSource == null || renewLeaseTask == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await renewLeaseTokenSource.CancelAsync();
+            await renewLeaseTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception)
+        {
+        }
+        finally
+        {
+            renewLeaseTokenSource.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 将执行异常的任务恢复为待重试或失败状态
+    /// </summary>
+    private async Task MarkTaskFailedAsync(long queueTaskId)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+
+        var queueTask = await db.QueueTask.FirstOrDefaultAsync(t => t.Id == queueTaskId);
+        if (queueTask == null || queueTask.SuccessTime != null || queueTask.WorkerId != workerId)
+        {
+            return;
+        }
+
+        queueTask.WorkerId = null;
+        queueTask.LeaseExpireTime = null;
+        queueTask.Status = queueTask.Count >= MaxRetryCount ? QueueTaskStatus.Failed : QueueTaskStatus.Pending;
+
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
         }
     }
 

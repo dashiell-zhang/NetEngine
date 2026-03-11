@@ -1,4 +1,5 @@
 using Repository.Bases;
+using Repository.Database.Enums;
 
 namespace Repository.Database;
 
@@ -7,6 +8,20 @@ namespace Repository.Database;
 /// </summary>
 public class QueueTask : CD
 {
+    /// <summary>
+    /// 执行状态
+    /// </summary>
+    public QueueTaskStatus Status { get; set; } = QueueTaskStatus.Pending;
+
+    /// <summary>
+    /// 当前领取任务的实例标识
+    /// </summary>
+    public string? WorkerId { get; set; }
+
+    /// <summary>
+    /// 任务租约到期时间
+    /// </summary>
+    public DateTimeOffset? LeaseExpireTime { get; set; }
 
     /// <summary>
     /// 任务名称

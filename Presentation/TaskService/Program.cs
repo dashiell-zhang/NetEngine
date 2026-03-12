@@ -2,7 +2,6 @@ using Common;
 using DistributedLock.Redis;
 using FileStorage.AliCloud;
 using IdentifierGenerator;
-using LLM.Compatible;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -66,25 +65,25 @@ class Program
                     services.AddScoped(t);
                 });
 
-                #region 注册 LLM 推理服务
+                //#region 注册 LLM 推理服务
 
-                var llmProvidersSection = hostContext.Configuration.GetSection("LLM:Providers");
-                if (llmProvidersSection.Exists())
-                {
-                    foreach (var providerSection in llmProvidersSection.GetChildren())
-                    {
-                        var providerKey = providerSection.Key;
-                        var setting = providerSection.Get<OpenAiCompatibleProviderSetting>() ?? new OpenAiCompatibleProviderSetting();
+                //var llmProvidersSection = hostContext.Configuration.GetSection("LLM:Providers");
+                //if (llmProvidersSection.Exists())
+                //{
+                //    foreach (var providerSection in llmProvidersSection.GetChildren())
+                //    {
+                //        var providerKey = providerSection.Key;
+                //        var setting = providerSection.Get<OpenAiCompatibleProviderSetting>() ?? new OpenAiCompatibleProviderSetting();
 
-                        services.AddOpenAiCompatibleProvider(providerKey, option =>
-                        {
-                            option.BaseUrl = setting.BaseUrl;
-                            option.ApiKey = setting.ApiKey;
-                        });
-                    }
-                }
+                //        services.AddOpenAiCompatibleProvider(providerKey, option =>
+                //        {
+                //            option.BaseUrl = setting.BaseUrl;
+                //            option.ApiKey = setting.ApiKey;
+                //        });
+                //    }
+                //}
 
-                #endregion
+                //#endregion
 
                 #region 注册短信服务
 

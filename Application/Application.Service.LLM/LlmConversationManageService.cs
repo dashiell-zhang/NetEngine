@@ -7,6 +7,9 @@ using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.LLM;
 
+/// <summary>
+/// LLM 对话记录管理服务
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class LlmConversationManageService(DatabaseContext db)
 {
@@ -16,6 +19,7 @@ public class LlmConversationManageService(DatabaseContext db)
     /// </summary>
     public async Task<PageListDto<LlmConversationDto>> GetLlmConversationListAsync(LlmConversationPageRequestDto request)
     {
+
         PageListDto<LlmConversationDto> result = new();
 
         var query = db.LlmConversation

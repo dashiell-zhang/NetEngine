@@ -9,21 +9,27 @@ using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
-using System.Text.RegularExpressions;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace Application.Service.LLM;
 
+/// <summary>
+/// LLM 应用配置服务
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public partial class LlmAppService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory)
 {
+
     private static readonly Regex PlaceholderRegex = KeyRegex();
+
 
     /// <summary>
     /// 获取 LLM 应用配置列表
     /// </summary>
     public async Task<PageListDto<LlmAppDto>> GetLlmAppListAsync(LlmAppPageRequestDto request)
     {
+
         PageListDto<LlmAppDto> result = new();
 
         var query = db.LlmApp.AsNoTracking().AsQueryable();
@@ -87,6 +93,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     /// </summary>
     public async Task<long> CreateLlmAppAsync(EditLlmAppDto createLlmApp)
     {
+
         var code = createLlmApp.Code.Trim();
         var name = createLlmApp.Name.Trim();
         var provider = createLlmApp.Provider.Trim();
@@ -130,6 +137,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     /// </summary>
     public async Task<bool> UpdateLlmAppAsync(long id, EditLlmAppDto updateLlmApp)
     {
+
         var llmApp = await db.LlmApp.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (llmApp == null)
@@ -175,6 +183,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     /// </summary>
     public async Task<bool> DeleteLlmAppAsync(long id)
     {
+
         var llmApp = await db.LlmApp.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (llmApp != null)
@@ -193,6 +202,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     /// </summary>
     public async Task<TestLlmAppResultDto> TestLlmAppAsync(TestLlmAppRequestDto request, CancellationToken cancellationToken = default)
     {
+
         var client = llmClientFactory.GetClient(request.Provider);
 
         var parameters = request.Parameters == null
@@ -257,8 +267,12 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     }
 
 
+    /// <summary>
+    /// 渲染提示词模板
+    /// </summary>
     private static string? RenderTemplate(string? template, IReadOnlyDictionary<string, string> parameters)
     {
+
         if (template == null)
         {
             return null;
@@ -286,8 +300,13 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
         });
     }
 
+
+    /// <summary>
+    /// 提取必填占位参数
+    /// </summary>
     private static IEnumerable<string> ExtractRequiredKeys(string? template)
     {
+
         if (string.IsNullOrWhiteSpace(template))
         {
             yield break;
@@ -312,8 +331,13 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex KeyRegex();
 
+
+    /// <summary>
+    /// 校验额外请求体 JSON
+    /// </summary>
     private static void ValidateExtraBodyJson(string? extraBodyJson)
     {
+
         if (string.IsNullOrWhiteSpace(extraBodyJson))
         {
             return;

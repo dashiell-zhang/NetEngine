@@ -1,36 +1,35 @@
+using Application.Interface;
 using Common;
 using IdentifierGenerator;
 using LLM;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Application.Interface;
 using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Text;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace Application.Service.LLM;
 
+/// <summary>
+/// LLM 调用服务
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public partial class LlmInvokeService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory)
 {
+
     private static readonly Regex PlaceholderRegex = KeyRegex();
+
 
     /// <summary>
     /// 按 LLM 应用 Code 调用对话接口，返回完整响应
     /// </summary>
-    /// <param name="code">LLM 应用标记</param>
-    /// <param name="parameters">模板参数（用于替换 {{Key}} 占位符）</param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public async Task<ChatResponse> ChatAsync(
-        string code,
-        Dictionary<string, string> parameters,
-        CancellationToken cancellationToken = default)
+    public async Task<ChatResponse> ChatAsync(string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
     {
+
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable).FirstOrDefaultAsync(cancellationToken);
         if (app == null)
         {
@@ -86,26 +85,22 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
 
 
     /// <summary>
-    /// 按 LLM 应用 Code 调用对话接口，返回首条文本内容（便于业务直接使用）
+    /// 按 LLM 应用 Code 调用对话接口，返回首条文本内容
     /// </summary>
-    public async Task<string?> ChatContentAsync(
-        string code,
-        Dictionary<string, string> parameters,
-        CancellationToken cancellationToken = default)
+    public async Task<string?> ChatContentAsync(string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
     {
+
         var response = await ChatAsync(code, parameters, cancellationToken);
         return response.Choices.FirstOrDefault()?.Message.Content;
     }
 
 
     /// <summary>
-    /// 按 LLM 应用 Code 调用流式对话接口（SSE），返回流式 chunk
+    /// 按 LLM 应用 Code 调用流式对话接口
     /// </summary>
-    public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(
-        string code,
-        Dictionary<string, string> parameters,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(string code, Dictionary<string, string> parameters, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable).FirstOrDefaultAsync(cancellationToken);
         if (app == null)
         {
@@ -166,8 +161,13 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         await SaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantBuilder.ToString(), cancellationToken);
     }
 
+
+    /// <summary>
+    /// 解析额外请求体 JSON
+    /// </summary>
     private static Dictionary<string, JsonNode>? ParseExtraBodyJson(string? extraBodyJson, string code)
     {
+
         if (string.IsNullOrWhiteSpace(extraBodyJson))
         {
             return null;
@@ -205,8 +205,13 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         return dict.Count == 0 ? null : dict;
     }
 
+
+    /// <summary>
+    /// 校验必填模板参数
+    /// </summary>
     private static void ValidateRequiredParameters(string? systemPromptTemplate, string? promptTemplate, Dictionary<string, string> parameters)
     {
+
         var requiredKeys = ExtractRequiredKeys(systemPromptTemplate)
             .Concat(ExtractRequiredKeys(promptTemplate))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -227,8 +232,13 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         }
     }
 
+
+    /// <summary>
+    /// 提取必填占位参数
+    /// </summary>
     private static IEnumerable<string> ExtractRequiredKeys(string? template)
     {
+
         if (string.IsNullOrWhiteSpace(template))
         {
             yield break;
@@ -249,8 +259,13 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         }
     }
 
+
+    /// <summary>
+    /// 渲染提示词模板
+    /// </summary>
     private static string RenderTemplate(string? template, Dictionary<string, string> parameters)
     {
+
         if (string.IsNullOrWhiteSpace(template))
         {
             return string.Empty;
@@ -268,8 +283,13 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         });
     }
 
+
+    /// <summary>
+    /// 保存对话记录
+    /// </summary>
     private async Task SaveConversationAsync(long llmAppId, string systemPrompt, string userPrompt, string assistantContent, CancellationToken cancellationToken)
     {
+
         long? createUserId = userContext.IsAuthenticated ? userContext.UserId : null;
 
         db.LlmConversation.Add(new LlmConversation
@@ -284,6 +304,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
 
         await db.SaveChangesAsync(cancellationToken);
     }
+
 
     [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex KeyRegex();

@@ -1,724 +1,228 @@
-﻿# NetEngine 项目框架
+# NetEngine
 
-基于最新 .NET 平台（.NET 10）搭建的通用项目框架，包含 Web API、Blazor 管理后台、定时任务服务、分布式锁、文件存储、短信、支付等常用基础能力，帮助你在启动新项目时快速进入业务开发阶段。
+基于 .NET 10 的分层解决方案，包含 Web API、Blazor WASM 管理端、任务调度、EF Core、源码生成器以及常用基础设施能力
 
-> 设计理念：保持接近微软官方示例的代码风格，尽量少封装、易裁剪、易读、易维护。
+设计目标：
 
----
+- 保持分层清晰，避免把业务逻辑堆进宿主层
+- 尽量复用已有模式，减少无意义包装
+- 维持接近 ASP.NET Core / EF Core 官方风格的写法
 
-## 0. 快速导航
+## 项目现状
 
-- [1. 功能特性总览](#1-功能特性总览)
-- [2. 解决方案结构](#2-解决方案结构)
-- [3. 快速开始](#3-快速开始)
-- [4. 核心运行时能力](#4-核心运行时能力)
-- [5. 数据库与 EF Core](#5-数据库与-ef-core)
-- [6. 其他说明](#6-其他说明)
+当前解决方案根文件为 `NetEngine.slnx`
 
----
+### Application
 
-## 1. 功能特性总览
+- `Application.Interface`
+  - 放跨层公共抽象
+  - 当前主要承载 `IUserContext` 这类被 `ProjectCore` 和应用服务共同依赖的接口
+- `Application.Model`
+  - 放 DTO、请求模型、返回模型、配置模型
+  - `Admin.App` 直接引用这一层以复用前后端契约
+- `Application.Service`
+  - 放通用应用服务实现
+  - 当前主要包含用户、站点、基础能力、授权、支付、消息、任务中心等服务
+- `Application.Service.LLM`
+  - 放 LLM 相关应用服务实现
+  - 已从 `Application.Service` 独立拆出，用于按宿主收敛注册范围
+  - 当前包含 `LlmAppService`、`LlmConversationManageService`、`LlmInvokeService`
 
-- 认证与安全
-  - 基于 JWT 的认证授权，支持 ECDSA 公私钥签名
-  - 内置请求签名校验（防篡改、防重放）、RSA 字段解密
-- 缓存与分布式能力
-  - Redis 分布式缓存 + HybridCache 本地缓存
-  - Redis 分布式锁（互斥锁 & 信号量）
-- 支付与登录能力
-  - 支付宝（PC / H5）支付
-  - 微信支付（PC / H5 / APP / 小程序）
-  - 微信小程序常用接口（手机号、OpenId 等）
-  - 用户名 / 手机号 + 短信验证码登录
-- 存储与短信
-  - 文件存储：阿里云 OSS、腾讯云 COS
-  - 短信：阿里云短信、腾讯云短信
-- 日志与基础设施
-  - 数据库日志、本地文件日志
-  - 雪花 ID 生成器（约 139 年可用期）
-  - 常用 Helper / 扩展方法（Http、配置、Excel、二维码等）
-- 前后端应用
-  - `Client.WebAPI`：对外 Web API
-  - `Admin.WebAPI` + `Admin.App`：基于 Blazor WASM 的管理后台（用户 / 角色 / 权限）
-  - `TaskService`：统一的队列任务 + 定时任务调度中心
+### Repository
 
----
+- `Repository`
+  - EF Core 实体、`DatabaseContext`、数据库映射、拦截器、持久化逻辑
+- `Repository.Tool`
+  - 迁移和数据库工具宿主
 
-## 2. 解决方案结构
+### Infrastructure
 
-根目录解决方案：`NetEngine.slnx`
+- `Common`
+  - 通用工具、扩展方法、Json 等基础能力
+- `DistributedLock` / `DistributedLock.Redis` / `DistributedLock.InMemory`
+  - 分布式锁抽象、Redis 实现、内存实现
+- `FileStorage` / `FileStorage.AliCloud` / `FileStorage.TencentCloud`
+  - 文件存储抽象与云厂商实现
+- `SMS` / `SMS.AliCloud` / `SMS.TencentCloud`
+  - 短信抽象与云厂商实现
+- `Logger.DataBase` / `Logger.LocalFile`
+  - 数据库日志与本地文件日志
+- `IdentifierGenerator`
+  - ID 生成能力
+- `LLM`
+  - LLM 客户端抽象、工厂与 OpenAI Compatible Provider 实现
 
-### 2.1 Application（应用层）
-
-- `Application.Interface`：应用服务接口、DTO 接口等
-- `Application.Model`：DTO / ViewModel 等模型定义
-- `Application.Service`：应用服务实现（编排业务逻辑）
-
-### 2.2 Infrastructure（基础设施层）
-
-- `Common`：通用 Helper、扩展方法、Json 工具、二维码生成等
-- `DistributedLock` / `DistributedLock.Redis`：分布式锁抽象 + Redis 实现
-- `FileStorage` / `FileStorage.AliCloud` / `FileStorage.TencentCloud`：文件存储抽象 + OSS/COS 实现
-- `Logger.DataBase` / `Logger.LocalFile`：数据库、文件日志
-- `IdentifierGenerator`：雪花 ID 等标识生成
-- `SMS` / `SMS.AliCloud` / `SMS.TencentCloud`：短信抽象 + 两家云厂商实现
-
-### 2.3 Repository（数据访问层）
-
-- `Repository`：基于 EF Core + PostgreSQL 的数据访问层（实体、DbContext、拦截器）
-- `Repository.Column` / `Repository.Enum`：字段常量、枚举等元数据
-- `Repository.Tool`：专用于迁移的控制台项目（托管 EF Core 工具）
-
-> 默认数据库为 PostgreSQL，可按需切换为 SQL Server / MySQL（见下文“数据库与 EF Core”）。
-
-### 2.4 ProjectCore（核心 WebAPI & 任务基础）
+### ProjectCore
 
 - `WebAPI.Core`
-  - Web API 公共基础：JWT、Swagger、跨域、模型验证、健康检查
-  - 通用过滤器：缓存、并发/频率限制、ETag、签名校验、RSA 解密、异常处理等
+  - Web API 宿主公共能力
+  - 包含认证、Swagger、过滤器、健康检查、用户上下文接入等
 - `TaskService.Core`
-  - 队列任务 / 定时任务 的通用基础逻辑
-  - Cron 解析、任务注册与同步、执行调度
+  - 任务宿主公共能力
+  - 包含队列任务、定时任务、初始化和同步逻辑
 
-### 2.5 Presentation（宿主项目）
+### Presentation
 
-- `Client.WebAPI`：对外业务 API
-- `Admin.WebAPI`：管理后台 API + 静态资源托管
-- `Admin.App`：Blazor WASM 管理前端（使用 AntDesign 组件）
-- `TaskService`：Worker Service 任务中心（支持 Windows 服务 / systemd）
+- `Client.WebAPI`
+  - 对外 API 宿主
+  - 当前引用 `Application.Service` 和 `Application.Service.LLM`
+- `Admin.WebAPI`
+  - 管理端 API 宿主
+  - 当前引用 `Application.Service` 和 `Application.Service.LLM`
+- `Admin.App`
+  - Blazor WebAssembly 管理前端
+  - 当前直接引用 `Application.Model`
+- `TaskService`
+  - Worker Service 任务宿主
+  - 当前只引用 `Application.Service`
+  - 不再引用 `Application.Service.LLM`
 
-### 2.6 SourceGenerator（源码生成）
+### SourceGenerator
 
-- `SourceGenerator.Core`：源代码生成器（减少反射、批量生成样板代码）
-- `SourceGenerator.Runtime`：与生成代码配套的运行时组件（特性、行为管道等）
+- `SourceGenerator.Core`
+  - 编译期源码生成器
+- `SourceGenerator.Runtime`
+  - 生成代码运行时支持
 
-核心能力（按生成器划分）：
+### InitData
 
-- `RegisterServiceGenerator`
-  - 基于 `[RegisterService]` 自动生成 DI 注册扩展方法（输出命名空间：`NetEngine.Generated`）
-  - 在可作为启动入口的项目中，额外生成聚合方法 `BatchRegisterServices()`，自动汇总并调用“当前项目 + 所有引用项目”的 `RegisterServices_{AssemblyName}()`
-- `BackgroundServiceGenerator`
-  - 扫描 `public` 且继承 `BackgroundService` 的类型，生成 `AddHostedService<T>()` 注册扩展方法（输出命名空间：`NetEngine.Generated`）
-  - 在启动入口项目中，额外生成 `BatchRegisterBackgroundServices()` 聚合注册方法
-- `AutoProxyGenerator`
-  - 基于 `[AutoProxy]` 为目标类型生成派生代理类 `*_Proxy`，在运行时执行“行为管道”以实现日志、缓存、并发限制等横切能力
-  - 常见用法：配合 `RegisterServiceGenerator` 自动把 DI 注册指向生成的 `*_Proxy` 实现（对外仍以接口注入）
-- `SoftDeleteFilterGenerator`
-  - 为继承 `Repository.Bases.CD` 且出现在 `DbSet<T>` 中的实体，自动生成全局软删除过滤器 `modelBuilder.ApplySoftDeleteFilters()`（输出命名空间：`Repository.Database.Generated`）
-- `JsonColumnGenerator`
-  - 基于 `[JsonColumn]` 为 JSON 列生成 EF Core 映射 `modelBuilder.ApplyJsonColumns()`（输出命名空间：`Repository.Database.Generated`），替代运行时反射扫描
+- 初始化数据文件
 
-使用示例（简化版）：
+## 当前依赖边界
 
-```csharp
-using Microsoft.Extensions.DependencyInjection;
-using SourceGenerator.Runtime.Attributes;
+当前结构更接近下面这套关系：
 
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-[AutoProxy]
-public class UserService : IUserService
-{
-    [Logging]
-    [Cacheable(TtlSeconds = 60)]
-    public virtual Task<UserDto> GetAsync(long id) => ...
-}
+- `Presentation` 调用 `Application`
+- `Application` 依赖 `Repository` 和 `Infrastructure`
+- `ProjectCore` 依赖 `Application.Interface` 与 `Repository`
+- `Admin.App` 只复用 `Application.Model`
 
-// 启动项目 Program.cs
-builder.Services.BatchRegisterServices();
-builder.Services.BatchRegisterBackgroundServices();
-```
+这套边界的重点是：
 
-注意事项：
+- `Application.Interface` 不是“所有服务都要有接口”的接口层
+- 它更适合承载跨宿主、跨公共层要依赖的抽象
+- 应用服务可以直接以具体类注入
+- 只有宿主特化明显、依赖特征强的应用域才值得继续拆项目
 
-- 代理拦截更适合“接口注入 + 调用接口方法”的使用方式；对于类方法，通常需要 `virtual`（或可被 override 的方式）才能在派生代理中被拦截。
-- `[AutoProxy]` 目标类需要存在 `public` 构造函数（生成器会据此选择可生成的目标）。
+## 服务注册方式
 
-#### SourceGenerator.Runtime：内置 Behaviors（行为管道）
+仓库通过源码生成器自动生成 DI 注册扩展
 
-`AutoProxyGenerator` 生成的 `*_Proxy` 会在运行时按方法上声明的特性顺序组装行为管道（`SourceGenerator.Runtime.Pipeline`），目前已内置 3 个常用行为：
+- `BatchRegisterServices()`
+  - 注册当前启动项目及其所引用程序集内标记了 `[RegisterService]` 的服务
+- `BatchRegisterBackgroundServices()`
+  - 注册当前启动项目及其所引用程序集内符合条件的后台服务
 
-1) `LoggingBehavior`（`[Logging]`）
+这意味着：
 
-- 作用：记录方法执行开始/结束/异常日志，并输出耗时、TraceId、调用链、入参（可配置）等信息。
-- 依赖：`ILogger`（通常由宿主项目的 DI/日志框架提供）。
+- 服务是否被宿主注册，取决于宿主是否引用了对应类库
+- 将宿主特化服务拆成独立项目，可以天然收敛注册范围
 
-2) `CacheableBehavior`（`[Cacheable]`）
+`Application.Service.LLM` 的拆分就是基于这个原则完成的
 
-- 作用：对“有返回值的方法”提供基于 `IDistributedCache` 的结果缓存；缓存 Key 默认由 `方法名 + 入参` 计算并做 SHA-256。
-- 依赖：宿主项目需要注册 `IDistributedCache`（本项目示例为 Redis：`AddStackExchangeRedisCache`）。
-- 常用参数：`TtlSeconds`（缓存秒数）。
+## 主要能力
 
-3) `ConcurrencyLimitBehavior`（`[ConcurrencyLimit]`）
+- JWT 认证与权限控制
+- 请求签名校验与 RSA 字段解密
+- PostgreSQL + EF Core
+- Redis 分布式缓存、HybridCache、本地缓存
+- Redis 分布式锁与内存锁
+- 文件存储抽象与阿里云 / 腾讯云实现
+- 短信抽象与阿里云 / 腾讯云实现
+- 数据库日志与本地文件日志
+- 队列任务与定时任务调度
+- OpenAI Compatible 风格的 LLM 调用能力
 
-- 作用：对方法调用做并发限制（信号量语义），底层使用 `IDistributedLock` 实现跨进程/跨机器互斥与限流；可选择“阻断”或“排队等待”。
-- 依赖：宿主项目需要注册 `IDistributedLock`（本项目示例为 Redis：`AddRedisLock`）。
-- 常用参数：`Semaphore`（并发数）、`IsUseParameter`（入参是否参与 Key）、`IsBlock`（未获取到锁是否直接阻断）、`ExpirySeconds`（锁超时）。
+## LLM 现状
 
-示例用法（简化版）：
+当前 LLM 相关能力分成两层：
 
-```csharp
-using Microsoft.Extensions.DependencyInjection;
-using SourceGenerator.Runtime.Attributes;
+- `Infrastructure/LLM`
+  - 提供 `ILlmClientFactory`、Provider 注册扩展、客户端实现
+- `Application/Application.Service.LLM`
+  - 提供基于业务语义的应用服务
+  - `LlmAppService` 负责 LLM 应用配置管理
+  - `LlmConversationManageService` 负责对话记录查询
+  - `LlmInvokeService` 负责按 `LlmApp.Code` 发起调用
 
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-[AutoProxy]
-public class OrderService : IOrderService
-{
-    // 记录调用日志（开始/结束/异常）
-    [Logging]
-    public virtual Task<OrderDto> GetAsync(long id) => ...
+当前宿主引用关系：
 
-    // 缓存返回结果 60 秒（Key 默认包含入参）
-    [Cacheable(TtlSeconds = 60)]
-    public virtual Task<OrderDto> GetCacheAsync(long id) => ...
+- `Admin.WebAPI`：引用 `Application.Service.LLM`
+- `Client.WebAPI`：引用 `Application.Service.LLM`
+- `TaskService`：不引用 `Application.Service.LLM`
 
-    // 并发限制：同样入参最多 5 个并发；拿不到锁就直接提示“请勿频繁操作”
-    [ConcurrencyLimit(IsUseParameter = true, IsBlock = true, ExpirySeconds = 3, Semaphore = 5)]
-    public virtual Task SubmitAsync(SubmitOrderDto dto) => ...
-}
-```
+这样可以避免“某个宿主根本不用 LLM 应用服务，却因为全量注册导致启动时报缺失依赖”
 
-### 2.7 InitData（初始化数据）
+## 快速开始
 
-- 预置初始化 Excel 数据（例如行政区划数据）
+### 环境要求
 
----
-
-## 3. 快速开始
-
-### 3.1 环境要求
-
-- .NET 10 SDK（或兼容预览版）
-- PostgreSQL 数据库
+- .NET 10 SDK
+- PostgreSQL
 - Redis
-- （可选）阿里云 OSS / 腾讯云 COS、阿里云 / 腾讯云短信
+- 可选的云厂商配置，如短信、文件存储、LLM Provider
 
-### 3.2 构建
+### 构建
 
-```bash
+```powershell
 dotnet restore
 dotnet build NetEngine.slnx
 ```
 
-> 在仓库根目录执行上述命令即可。
+### 常用启动命令
 
-### 3.3 基本配置
-
-以 `Presentation/Client.WebAPI/appsettings.json` 为例：
-
-- `ConnectionStrings:dbConnection`：PostgreSQL 连接字符串
-- `ConnectionStrings:redisConnection`：Redis 连接字符串
-- `JWT`：Issuer / Audience / PublicKey / PrivateKey / Expiry
-- `RSA`：用于敏感字段加解密的公私钥
-- `TencentCloudSMS` / `AliCloudSMS`：短信配置
-- `TencentCloudFileStorage` / `AliCloudFileStorage`：文件存储配置
-- `FileServerUrl`：文件访问 URL 前缀
-
-管理后台后端配置：`Presentation/Admin.WebAPI/appsettings.json`，结构与 Client.WebAPI 基本一致。
-
-> 安全提示：仓库内 `appsettings*.json` 中的密钥/连接串/密码多为示例值，建议仅用于本地开发；生产环境请使用环境变量、配置中心或 Secret 管理，并确保不要把真实密钥提交到仓库。
-
-### 3.4 启动项目（开发环境）
-
-```bash
-# 客户端 WebAPI
+```powershell
 dotnet run --project Presentation/Client.WebAPI/Client.WebAPI.csproj
-
-# 管理后台 WebAPI
 dotnet run --project Presentation/Admin.WebAPI/Admin.WebAPI.csproj
-
-# 管理后台前端（Blazor WASM）
 dotnet run --project Presentation/Admin.App/Admin.App.csproj
-
-# 定时任务 / 队列任务服务（可选）
 dotnet run --project Presentation/TaskService/TaskService.csproj
 ```
 
-- Admin.App 默认使用 `https://localhost:9833/` 作为 API 地址，可在 `Admin.App/Program.cs` 中调整。
-- Debug 模式下，TaskService 启动后会在控制台列出所有队列任务 / 定时任务，可通过输入序号启用。
+### 健康检查
 
-### 3.5 默认访问地址（开发环境）
+- `Client.WebAPI`：`/healthz`
+- `Admin.WebAPI`：`/healthz`
 
-- `Client.WebAPI`：`https://localhost:9801/swagger/`（仅 Development 启用），健康检查：`https://localhost:9801/healthz`
-- `Admin.WebAPI`：`https://localhost:9833/swagger/`（仅 Development 启用），健康检查：`https://localhost:9833/healthz`
-- `Admin.App`：`https://localhost:16701/`
+## 配置说明
 
-> 说明：Swagger 仅在 Development 环境启用（见 `ProjectCore/WebAPI.Core/Extensions/WebApplicationExtension.UseCommonMiddleware`）。如需在生产开启，请自行调整中间件配置并做好鉴权与访问控制。
+常见配置位于各宿主的 `appsettings.json` 与 `appsettings.Development.json`
 
-### 3.6 Docker（可选）
+重点配置项包括：
 
-仓库在以下目录提供了 Dockerfile，主要用于 Visual Studio 的容器调试/发布流程：
+- `ConnectionStrings:dbConnection`
+- `ConnectionStrings:redisConnection`
+- `JWT`
+- `RSA`
+- `LLM:Providers`
+- `AliCloudSMS` / `TencentCloudSMS`
+- `AliCloudFileStorage` / `TencentCloudFileStorage`
+- `FileServerUrl`
 
-- `Presentation/Client.WebAPI/Dockerfile`
-- `Presentation/Admin.WebAPI/Dockerfile`
-- `Presentation/TaskService/Dockerfile`
+安全提示：
 
-如需用于生产部署，建议根据你的镜像源、证书（HTTPS）、连接串、时区等需求进一步裁剪与加固。
+- 仓库内配置默认按本地开发或示例值理解
+- 不要把真实密钥、真实连接串、真实密码提交进仓库
 
----
+## TaskService 说明
 
-## 4. 核心运行时能力
+- 任务宿主位于 `Presentation/TaskService`
+- 公共任务能力位于 `ProjectCore/TaskService.Core`
+- Debug 模式下启动后会进入交互式启用流程
+- 队列任务和定时任务优先复用现有 Builder、Attribute 与注册方式
 
-### 4.1 任务调度与队列任务
+## Admin.App 说明
 
-所有任务都定义在继承 `TaskBase` 的类中（如 `Presentation/TaskService/Tasks`），`TaskService` 启动时会自动扫描并注册。
+- 项目位于 `Presentation/Admin.App`
+- 目标框架为 `net10.0-browser`
+- 当前直接复用 `Application.Model` 中的 DTO 与请求模型
 
-#### 4.1.1 定义任务类
+## 数据库说明
 
-```csharp
-public class DemoTask(ILogger<DemoTask> logger,
-                      DatabaseContext db,
-                      QueueTaskService queueTaskService) : TaskBase
-{
-    // 在这里定义定时任务 / 队列任务方法
-}
-```
+- 默认数据库为 PostgreSQL
+- EF Core 核心实现位于 `Repository`
+- 涉及结构调整时，应同步关注实体、`DatabaseContext`、映射与调用点
+- 如需迁移工具支持，优先看 `Repository.Tool`
 
-#### 4.1.2 周期性定时任务（ScheduleTask）
+## 许可协议
 
-使用 `[ScheduleTask]` 标记需要周期执行的方法：
-
-```csharp
-[ScheduleTask(Name = "ShowTime", Cron = "0/3 * * * * ?")]
-public async Task ShowTime()
-{
-    // 每 3 秒执行一次
-}
-```
-
-- `Name`：任务唯一名称，对应数据库表 `TTaskSetting.Name`
-- `Cron`：6 段 Cron 表达式（含秒），如：
-  - `0 0 * * * ?`：每小时整点
-  - `0 0 3 * * ?`：每天 3 点
-  - `0 */5 * * * ?`：每 5 分钟
-- 返回类型：`Task` / `Task<T>` / `void`，禁止 `async void`（会被框架拒绝）
-- 带参数任务：如果方法只有一个参数，则实际参数来自 `TTaskSetting.Parameter` 的 JSON，可为同一个任务方法配置多条不同参数 / Cron 的任务实例。
-
-#### 4.1.3 队列任务（QueueTask）
-
-使用 `[QueueTask]` 标记需要排队执行的方法：
-
-```csharp
-[QueueTask(Name = "SendSMS", Semaphore = 5, Duration = 5)]
-public async Task SendSMS(SendSMSDto dto)
-{
-    // 真正的队列任务逻辑
-}
-```
-
-- `Name`：队列任务名称，入队时的 `name` 必须与之保持一致
-- `Semaphore`：并发执行上限（同名任务最多同时执行多少个）
-- `Duration`：单次任务预期执行时长（分钟），框架会据此设置分布式锁超时
-
-队列记录参数存放在 `TQueueTask.Parameter` 中，以 JSON 格式序列化；如果方法有返回值且未显式设置 `CallbackParameter`，返回值将作为回调任务参数写入新的队列记录。
-
-#### 4.1.4 在业务中创建队列任务
-
-由 `QueueTaskService` 负责入队，常用两种方式：
-
-1. 在显式事务内创建（与业务数据一致提交）：
-
-```csharp
-using var tran = await db.Database.BeginTransactionAsync();
-
-// 业务写库...
-
-queueTaskService.Create(
-    name: "SendSMS",
-    parameter: new SendSMSDto { /* ... */ },
-    planTime: null,
-    callbackName: null,
-    callbackParameter: null,
-    isChild: false);
-
-await db.SaveChangesAsync();
-await tran.CommitAsync();
-```
-
-2. 单独创建队列（独立事务）：
-
-```csharp
-await queueTaskService.CreateSingleAsync(
-    name: "SendSMS",
-    parameter: new SendSMSDto { /* ... */ });
-```
-
-参数说明：
-
-- `name`：队列任务名称
-- `parameter`：任务参数对象（序列化为 JSON 存入队列表）
-- `planTime`：计划执行时间（UTC），为 `null` 表示就绪后可立即被调度
-- `callbackName` / `callbackParameter`：可选回调任务名称及参数
-- `isChild`：是否标记为当前任务的子任务，用于控制任务树和回调链
-
-Debug 模式下可以参考 `DemoTask.ShowName` 的示例：一个定时任务触发多个队列任务（`ShowName` -> `SendSMS` / `CallPhone` -> `ShowNameSuccess`）。
-
-#### 4.1.5 任务启用与配置
-
-- Debug：通过 TaskService 控制台交互选择要启用的任务
-- Release：任务配置存放在 `TTaskSetting` 表中（是否启用 / Cron / 并发数等），`TaskSettingSyncBackgroundService` 会定期同步数据库配置到内存。
-
----
-
-### 4.2 通用过滤器
-
-以下过滤器均在 `WebAPI.Core.Filters` 中，可通过特性直接应用于控制器或 Action。
-
-#### 4.2.1 缓存过滤器（CacheDataFilter）
-
-- 作用：基于 `IDistributedCache` + 分布式锁，对接口返回结果做数据级缓存。
-- 使用示例：
-
-```csharp
-[CacheDataFilter(TTL = 60, IsUseToken = true)]
-public Task<UserInfo> GetUserInfo() => userService.GetUserInfoAsync();
-```
-
-- 关键参数：
-  - `TTL`：缓存有效期（秒）
-  - `IsUseToken`：是否把 `Authorization` 头参与 CacheKey 生成（避免不同用户串数据）
-
-#### 4.2.2 并发 / 频率限制过滤器（QueueLimitFilter）
-
-- 作用：防止重复提交 / 暴力请求，通过分布式锁对请求排队或限流。
-- 使用示例：
-
-```csharp
-[QueueLimitFilter(IsBlock = true, IsUseParameter = true, IsUseToken = true, Expiry = 3)]
-public Task<IActionResult> SubmitOrder(SubmitOrderDto dto) => orderService.SubmitAsync(dto);
-```
-
-- 关键参数：
-  - `IsUseParameter`：是否把请求参数参与锁 Key
-  - `IsUseToken`：是否把 Token 参与锁 Key
-  - `IsBlock`：有未释放锁时是否直接返回“请勿频繁操作”
-  - `Expiry`：锁失效时间（秒），>0 时不会在 Action 结束时立即释放
-
-#### 4.2.3 签名验证过滤器（SignVerifyFilter）
-
-- 作用：在非 Debug 环境下，对请求做强签名校验，用于防篡改和防重放；主要用于 `Admin.WebAPI`。
-- 使用方式：
-  - 在控制器上统一开启：`[SignVerifyFilter]`
-  - 在单个 Action 上跳过：`[SignVerifyFilter(IsSkip = true)]`
-- 协议要点：
-  - 请求头必须包含：`Token`（签名）、`Time`（毫秒时间戳）
-  - `Time` 与服务器时间差不能超过 3 分钟
-  - 签名原文包含：JWT 签名部分 + `Time` + 请求路径 + QueryString + 请求体 + Form 字段 + 上传文件内容 SHA256
-  - 后端计算 SHA256 与 `Token` 对比，不通过或超时则返回 401
-
-#### 4.2.4 RSA 解密过滤器（RSADecryptFilter）
-
-- 作用：自动解密标记为 `[RSAEncrypted]` 的字符串属性，适合传输敏感字段（密码、手机号等）。
-- 配置：`appsettings.json` 中配置 `RSA.PrivateKey`。
-- 使用示例：
-
-```csharp
-public class LoginRequest
-{
-    [RSAEncrypted]
-    public string Password { get; set; }
-}
-
-[RSADecryptFilter]
-public Task<IActionResult> Login(LoginRequest request) => authService.LoginAsync(request);
-```
-
-#### 4.2.5 ETag 过滤器（ETagFilter）
-
-- 作用：为 GET 请求自动计算 ETag，支持浏览器 / 代理协商缓存。
-- 使用：在需要的接口上添加 `[ETagFilter]`，返回 200 且为 `ObjectResult` 时会自动生成 ETag；若客户端携带的 `If-None-Match` 与之匹配，则返回 304。
-
-#### 4.2.6 全局异常过滤器（ExceptionFilter）
-
-- 作用：统一处理 `CustomException`，返回 HTTP 400 + `{ errMsg }`。
-- 注册：已在 `WebApplicationBuilderExtension.AddCommonServices` 中全局添加，无需手动配置；业务只需抛出 `CustomException`。
-
----
-
-### 4.3 分布式锁
-
-项目通过 `DistributedLock` 抽象分布式锁，并在 `DistributedLock.Redis` 中使用 Redis 实现。
-
-#### 4.3.1 注册 Redis 分布式锁
-
-在各宿主项目 `Program.cs` 中已示例：
-
-```csharp
-builder.Services.AddRedisLock(options =>
-{
-    options.Configuration = builder.Configuration.GetConnectionString("redisConnection")!;
-    options.InstanceName = "lock";
-});
-```
-
-#### 4.3.1.1 注册内存锁（非分布式）
-
-在不需要跨进程/跨机器互斥的场景，可使用 `DistributedLock.InMemory`：
-
-```csharp
-builder.Services.AddInMemoryLock();
-```
-
-#### 4.3.2 核心接口
-
-```csharp
-public interface IDistributedLock
-{
-    Task<IDisposable>  LockAsync(string key, TimeSpan expiry = default, int semaphore = 1);
-    Task<IDisposable?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1);
-}
-```
-
-- `key`：锁名（建议带业务前缀，如 `Order:123`）
-- `expiry`：锁超时（默认 1 分钟）
-- `semaphore`：信号量，用于控制允许同时持有锁的“名额”
-
-#### 4.3.3 使用示例
-
-1. 严格互斥：
-
-```csharp
-using (await distLock.LockAsync($"Order:{userId}", TimeSpan.FromMinutes(1)))
-{
-    // 此处在 userId 维度下串行执行
-}
-```
-
-2. 尝试获取（不阻塞）：
-
-```csharp
-using var handle = await distLock.TryLockAsync("Job:DailyReport", TimeSpan.FromMinutes(10));
-if (handle == null)
-{
-    // 其它节点已在执行，当前节点直接跳过
-    return;
-}
-
-// 执行任务...
-```
-
-3. 有限并发（信号量）：
-
-```csharp
-using (await distLock.LockAsync("UploadFile", TimeSpan.FromMinutes(5), semaphore: 5))
-{
-    // 全局最多 5 个并发上传
-}
-```
-
-分布式锁已在内部多处使用，例如：`CacheDataFilter` 防止缓存穿透、`QueueLimitFilter` 防重复提交、队列任务执行时的并发控制等。
-
----
-
-### 4.4 LLM（大模型调用）
-
-项目内置了一个“OpenAI Compatible”风格的 LLM 调用抽象（见 `Infrastructure/LLM`），并提供了基于数据库的应用配置表 `LlmApp`（见 `Repository/Database/LlmApp.cs`），用于按 `Code` 选择不同的供应商/模型/提示词模板。
-
-#### 4.4.1 注册 LLM Provider（后端）
-
-在 `Admin.WebAPI` / `Client.WebAPI` / `TaskService` 中，LLM Provider 统一从配置 `LLM:Providers` 读取并注册（见各自的 `Program.cs`）。配置结构示例：
-
-```json
-{
-  "LLM": {
-    "Providers": {
-      "DeepSeek": { "BaseUrl": "https://api.deepseek.com", "ApiKey": "" },
-      "Qwen": { "BaseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1", "ApiKey": "" }
-    }
-  }
-}
-```
-
-- `Providers` 下的每个 Key（例：`DeepSeek` / `Qwen`）就是 `providerKey`，同时也是 `LlmApp.Provider` 需要填写的值。
-- 可以按相同结构添加更多供应商（只要其接口兼容 OpenAI Chat Completions）。
-
-#### 4.4.2 提示词模板占位符（{{key}} / {{*key}}）
-
-`LlmApp.SystemPromptTemplate` / `LlmApp.PromptTemplate` 支持占位符：
-
-- `{{key}}`：可选参数，未提供时保留原样（不会阻止调用）。
-- `{{*key}}`：必传参数，未提供（空或空白）会直接抛出异常，不发起 LLM 调用。
-
-示例：
-
-```text
-SystemPromptTemplate: 你是一个助手，请使用 {{lang}} 回复。
-PromptTemplate: 请计算 {{*a}} + {{*b}} 的结果，并说明思路。
-```
-
-#### 4.4.3 代码调用（非流式 / 流式）
-
-通过 `Application.Service.LLM.LlmInvokeService` 按 `Code` 调用：
-
-```csharp
-// 非流式：拿首条文本
-var args = new Dictionary<string, string>
-{
-    ["a"] = "5",
-    ["b"] = "9",
-    ["lang"] = "中文"
-};
-
-var content = await llmInvokeService.ChatContentAsync("sumqw", args, cancellationToken);
-```
-
-流式调用（SSE chunk / delta）：
-
-```csharp
-await foreach (var chunk in llmInvokeService.ChatStreamAsync("sumqw", args, cancellationToken))
-{
-    var delta = chunk.Choices.FirstOrDefault()?.Delta?.Content;
-    if (!string.IsNullOrEmpty(delta))
-    {
-        Console.Write(delta);
-    }
-}
-```
-
-> 必传参数校验：`LlmInvokeService` 会扫描模板中的 `{{*key}}` 并校验 `args[key]` 是否有值；缺失会抛出 `CustomException("必传参数未填写: ...")`。
-
-#### 4.4.4 管理后台配置与在线测试
-
-在 `Admin.App` 的“运维管理 / LLM应用”页面（`/operations/llmapp`）可对 `LlmApp` 进行增删改查，并在编辑抽屉内进行“调用测试”：
-
-- 自动识别模板中的 `{{key}}` / `{{*key}}` 占位符并生成输入框
-- 对 `{{*key}}` 做必填校验
-- 点击“调用测试”后显示模型返回内容
-
-#### 4.4.5 Client.WebAPI 示例接口
-
-`Presentation/Client.WebAPI/Controllers/DemoController.cs` 提供了示例：
-
-- `TestLLM`：非流式调用示例
-- `TestLLMStream`：流式调用示例（返回 `IAsyncEnumerable<string>`）
-
-## 5. 数据库与 EF Core
-
-### 5.1 默认：PostgreSQL
-
-仓库默认使用 PostgreSQL，对应 NuGet 包与配置如下：
-
-- 包：`Npgsql.EntityFrameworkCore.PostgreSQL`
-- 连接字符串示例：
-
-```text
-Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456;Maximum Pool Size=30
-```
-
-- EF Core 配置示例：
-
-```csharp
-optionsBuilder.UseNpgsql("ConnectionString", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-```
-
-`Repository.Tool` 提供了一个 Host 项目方便执行迁移，你可以：
-
-- 使用标准 `dotnet ef` 命令；或
-- 在 `Repository.Tool` 中编写迁移代码并运行该项目。
-
-### 5.2 可选数据库（SQL Server / MySQL）
-
-如果需要切换到其他数据库，可参考如下模板：
-
-- SQL Server
-  - 包：`Microsoft.EntityFrameworkCore.SqlServer`
-  - 连接字符串：
-    ```text
-    Data Source=127.0.0.1;Initial Catalog=webcore;User ID=sa;Password=123456;Max Pool Size=100;Encrypt=True;TrustServerCertificate=True
-    ```
-  - EF 配置：
-    ```csharp
-    optionsBuilder.UseSqlServer("ConnectionString", o => o.MigrationsHistoryTable("__efmigrationshistory"));
-    ```
-
-- MySQL（Pomelo）
-  - 包：`Pomelo.EntityFrameworkCore.MySql`
-  - 连接字符串：
-    ```text
-    server=127.0.0.1;database=webcore;user id=root;password=123456;maxpoolsize=100
-    ```
-  - EF 配置：
-    ```csharp
-    optionsBuilder.UseMySql(
-        "ConnectionString",
-        new MySqlServerVersion(new Version(8, 0, 29)),
-        o => o.MigrationsHistoryTable("__efmigrationshistory"));
-    ```
-
-### 5.3 延迟加载（可选）
-
-如需启用 EF Core 延迟加载：
-
-- 安装包：`Microsoft.EntityFrameworkCore.Proxies`
-- 在 DbContext 配置中添加：
-
-```csharp
-options.UseLazyLoadingProxies();
-```
-
----
-
-## 6. 其他说明
-
-### 6.1 JWT 公私钥生成
-
-本项目默认使用 ECDSA（P-256 曲线）生成 JWT 公私钥：
-
-```csharp
-var keyInfo = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-var privateKey = Convert.ToBase64String(keyInfo.ExportECPrivateKey());
-var publicKey = Convert.ToBase64String(keyInfo.ExportSubjectPublicKeyInfo());
-```
-
-生成的 Base64 字符串可直接配置到 `appsettings.json` 的 `JWT.PrivateKey` 和 `JWT.PublicKey`。
-
-### 6.2 行政区划数据
-
-- Excel 数据位于 `InitData` 目录，已完成基础清洗，可直接导入。
-- 数据来源：百度地图开放平台  
-  https://lbsyun.baidu.com/index.php?title=open/dev-res  
-- 当前数据截止时间：`2021-04`
-
-示例导入 SQL（可根据自身表结构调整）：
-
-```sql
-insert into RegionArea
-select cast(CODE_PROV as int) as Id,
-       NAME_PROV as Province,
-       '2021-04-01' as CreateTime,
-       '0' as IsDelete
-from ditu
-group by CODE_PROV, NAME_PROV;
-
-insert into RegionCity
-select cast(CODE_CITY as int) as Id,
-       NAME_CITY as City,
-       cast(CODE_PROV as int) as ProvinceId,
-       '2021-04-01' as CreateTime,
-       '0' as IsDelete
-from ditu
-group by CODE_CITY, NAME_CITY, CODE_PROV;
-
-insert into RegionProvince
-select cast(CODE_COUN as int) as Id,
-       NAME_COUN as Area,
-       cast(CODE_CITY as int) as CityId,
-       '2021-04-01' as CreateTime,
-       '0' as IsDelete
-from ditu
-group by CODE_COUN, NAME_COUN, CODE_CITY;
-
-insert into RegionTown
-select cast(CODE_TOWN as int) as Id,
-       NAME_TOWN as Town,
-       cast(CODE_COUN as int) as AreaId,
-       '2021-04-01' as CreateTime,
-       '0' as IsDelete
-from ditu
-group by CODE_TOWN, NAME_TOWN, CODE_COUN;
-```
-
-### 6.3 许可协议
-
-本项目基于 MIT License 开源，详情见根目录 `LICENSE` 文件。  
-你可以在商业或非商业项目中自由使用、修改和分发本项目，但需保留原始版权声明。
+本项目基于 MIT License 开源，详见根目录 `LICENSE`

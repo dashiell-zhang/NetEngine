@@ -8,6 +8,7 @@
     <Project Path="Application/Application.Interface/Application.Interface.csproj" />
     <Project Path="Application/Application.Model/Application.Model.csproj" />
     <Project Path="Application/Application.Service/Application.Service.csproj" />
+    <Project Path="Application/Application.Service.LLM/Application.Service.LLM.csproj" />
   </Folder>
   <Folder Name="/Infrastructure/">
     <Project Path="Infrastructure/LLM/LLM.csproj" />

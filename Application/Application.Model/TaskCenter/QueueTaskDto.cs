@@ -19,6 +19,12 @@ public class QueueTaskDto
 
 
     /// <summary>
+    /// 执行状态
+    /// </summary>
+    public int Status { get; set; }
+
+
+    /// <summary>
     /// 执行实例标识
     /// </summary>
     public string? WorkerId { get; set; }
@@ -58,6 +64,12 @@ public class QueueTaskDto
     /// 成功执行时间
     /// </summary>
     public DateTimeOffset? SuccessTime { get; set; }
+
+
+    /// <summary>
+    /// 任务租约到期时间
+    /// </summary>
+    public DateTimeOffset? LeaseExpireTime { get; set; }
 
 
     /// <summary>

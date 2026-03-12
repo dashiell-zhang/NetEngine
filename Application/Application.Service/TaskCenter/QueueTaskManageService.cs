@@ -54,6 +54,7 @@ public class QueueTaskManageService(DatabaseContext db)
             {
                 Id = t.Id,
                 Name = t.Name,
+                Status = (int)t.Status,
                 WorkerId = t.WorkerId,
                 Parameter = t.Parameter,
                 PlanTime = t.PlanTime,
@@ -61,6 +62,7 @@ public class QueueTaskManageService(DatabaseContext db)
                 FirstTime = t.FirstTime,
                 LastTime = t.LastTime,
                 SuccessTime = t.SuccessTime,
+                LeaseExpireTime = t.LeaseExpireTime,
                 CallbackName = t.CallbackName,
                 CallbackParameter = t.CallbackParameter,
                 ParentTaskId = t.ParentTaskId,

@@ -53,14 +53,17 @@
                     </SpaceItem>
                 }
 
-                <SpaceItem>
-                    <Popconfirm Title="确认要重试吗？将重置执行次数/时间并重新触发"
-                                OnConfirm="_=>RetryQueueTaskAsync(context.Id)"
-                                OkText="Yes"
-                                CancelText="No">
-                        <a style="color:darkorange">重试</a>
-                    </Popconfirm>
-                </SpaceItem>
+                @if (context.Count > 0)
+                {
+                    <SpaceItem>
+                        <Popconfirm Title="确认要重试吗？将重置执行次数/时间并重新触发"
+                                    OnConfirm="_=>RetryQueueTaskAsync(context.Id)"
+                                    OkText="Yes"
+                                    CancelText="No">
+                            <a style="color:darkorange">重试</a>
+                        </Popconfirm>
+                    </SpaceItem>
+                }
             </Space>
         </ActionColumn>
     </ColumnDefinitions>
@@ -78,12 +81,16 @@
     <Template style="height:90%">
 
         <Descriptions Column="1" Bordered>
+            <DescriptionsItem Title="任务Id">@detail?.Id</DescriptionsItem>
             <DescriptionsItem Title="任务名称">@detail?.Name</DescriptionsItem>
+            <DescriptionsItem Title="执行状态">@FormatStatus(detail?.Status)</DescriptionsItem>
+            <DescriptionsItem Title="执行实例">@detail?.WorkerId</DescriptionsItem>
             <DescriptionsItem Title="计划时间">@FormatTime(detail?.PlanTime)</DescriptionsItem>
             <DescriptionsItem Title="执行次数">@detail?.Count</DescriptionsItem>
             <DescriptionsItem Title="首次执行">@FormatTime(detail?.FirstTime)</DescriptionsItem>
             <DescriptionsItem Title="最后执行">@FormatTime(detail?.LastTime)</DescriptionsItem>
             <DescriptionsItem Title="成功时间">@FormatTime(detail?.SuccessTime)</DescriptionsItem>
+            <DescriptionsItem Title="租约到期">@FormatTime(detail?.LeaseExpireTime)</DescriptionsItem>
             <DescriptionsItem Title="子任务成功">@FormatTime(detail?.ChildSuccessTime)</DescriptionsItem>
             <DescriptionsItem Title="父任务Id">@detail?.ParentTaskId</DescriptionsItem>
             <DescriptionsItem Title="回调任务">@detail?.CallbackName</DescriptionsItem>
@@ -192,6 +199,15 @@
             GetQueueTaskListAsync();
         }
     }
+
+    static string? FormatStatus(int? status) => status switch
+    {
+        0 => "待领取",
+        1 => "执行中",
+        2 => "成功",
+        3 => "失败",
+        _ => status?.ToString()
+    };
 
     static string? FormatTime(DateTimeOffset? time) => time?.LocalDateTime.ToString("yyyy-MM-dd HH:mm");
 }

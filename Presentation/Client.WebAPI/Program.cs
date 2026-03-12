@@ -39,14 +39,10 @@ public class Program
         NpgsqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
         int maxPoolSize = connectionStringBuilder.MaxPoolSize;
 
-        builder.Services.AddSingleton<QueryCountInterceptor>();
-
         builder.Services.AddDbContextPool<DatabaseContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(dataSourceBuilder.Build());
             options.AddInterceptors(new PostgresPatchInterceptor());
-            options.AddInterceptors(serviceProvider.GetRequiredService<QueryCountInterceptor>());
-
         }, maxPoolSize);
 
         builder.Services.AddPooledDbContextFactory<DatabaseContext>(options => { }, maxPoolSize);

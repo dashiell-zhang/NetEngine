@@ -103,7 +103,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
     /// </summary>
     private static string CreateWorkerId()
     {
-        string worker = $"{Environment.MachineName}-{Environment.ProcessId}-{Guid.NewGuid():N}";
+        string worker = $"{Environment.MachineName}-{Environment.ProcessId}";
         return worker[..Math.Min(48, worker.Length)];
     }
 
@@ -186,7 +186,6 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
         }
 
         queueTask.Status = queueTask.Count >= MaxRetryCount ? QueueTaskStatus.Failed : QueueTaskStatus.Pending;
-        queueTask.WorkerId = null;
         queueTask.LeaseExpireTime = null;
         try
         {
@@ -329,7 +328,6 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
             queueTask.Status = QueueTaskStatus.Succeeded;
             queueTask.SuccessTime = DateTimeOffset.UtcNow;
-            queueTask.WorkerId = null;
             queueTask.LeaseExpireTime = null;
 
             var isHaveChild = await db.QueueTask.Where(t => t.ParentTaskId == queueTaskId).AnyAsync();
@@ -510,7 +508,6 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
             return;
         }
 
-        queueTask.WorkerId = null;
         queueTask.LeaseExpireTime = null;
         queueTask.Status = queueTask.Count >= MaxRetryCount ? QueueTaskStatus.Failed : QueueTaskStatus.Pending;
 

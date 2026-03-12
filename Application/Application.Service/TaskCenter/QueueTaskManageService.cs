@@ -54,6 +54,7 @@ public class QueueTaskManageService(DatabaseContext db)
             {
                 Id = t.Id,
                 Name = t.Name,
+                WorkerId = t.WorkerId,
                 Parameter = t.Parameter,
                 PlanTime = t.PlanTime,
                 Count = t.Count,

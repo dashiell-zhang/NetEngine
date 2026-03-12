@@ -34,14 +34,11 @@ public class Program
         NpgsqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
         int maxPoolSize = connectionStringBuilder.MaxPoolSize;
 
-        builder.Services.AddSingleton<QueryCountInterceptor>();
 
         builder.Services.AddDbContextPool<DatabaseContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(dataSourceBuilder.Build());
             options.AddInterceptors(new PostgresPatchInterceptor());
-            options.AddInterceptors(serviceProvider.GetRequiredService<QueryCountInterceptor>());
-
         }, maxPoolSize);
 
         builder.Services.AddPooledDbContextFactory<DatabaseContext>(options => { }, maxPoolSize);
@@ -163,19 +160,6 @@ public class Program
         app.UseCommonMiddleware();
 
         app.UseStaticFiles();
-
-
-        //注入 adminapp 项目
-        //app.MapWhen(ctx => ctx.Request.Path.Value.ToLower().Contains("/admin"), adminapp =>
-        //{
-        //    adminapp.UseStaticFiles("/admin");
-        //    adminapp.UseBlazorFrameworkFiles("/admin");
-
-        //    adminapp.UseEndpoints(endpoints =>
-        //    {
-        //        endpoints.MapFallbackToFile("/admin/{*path:nonfile}", "admin/index.html");
-        //    });
-        //});
 
         app.MapControllers();
 

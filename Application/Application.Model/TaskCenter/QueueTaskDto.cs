@@ -19,6 +19,12 @@ public class QueueTaskDto
 
 
     /// <summary>
+    /// 执行实例标识
+    /// </summary>
+    public string? WorkerId { get; set; }
+
+
+    /// <summary>
     /// 参数(JSON)
     /// </summary>
     public string? Parameter { get; set; }
@@ -83,4 +89,3 @@ public class QueueTaskDto
     /// </summary>
     public DateTimeOffset CreateTime { get; set; }
 }
-

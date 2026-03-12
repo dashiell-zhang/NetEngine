@@ -4,6 +4,11 @@ using System.Runtime.CompilerServices;
 namespace TaskService.Core.QueueTask;
 public class QueueTaskBuilder
 {
+    /// <summary>
+    /// 队列任务默认租约时长
+    /// </summary>
+    public const int DefaultDuration = 5;
+
     public static readonly Dictionary<string, QueueTaskInfo> queueMethodList = [];
 
 
@@ -33,21 +38,11 @@ public class QueueTaskBuilder
                 semaphore = int.Parse(semaphoreStr);
             }
 
-            int duration = 5;
-
-            var durationStr = method.CustomAttributes.Where(t => t.AttributeType == typeof(QueueTaskAttribute)).First().NamedArguments.Where(t => t.MemberName == "Duration" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault();
-
-            if (durationStr != null)
-            {
-                duration = int.Parse(durationStr);
-            }
-
             queueMethodList.Add(name, new()
             {
                 Name = name,
                 Semaphore = semaphore,
                 Method = method,
-                Duration = duration,
             });
         }
 

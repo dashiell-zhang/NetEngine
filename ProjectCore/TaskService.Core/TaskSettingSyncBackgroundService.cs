@@ -70,10 +70,6 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
                 {
                     item.Value.Semaphore = task.Semaphore.Value;
                 }
-                if (task.Duration != null && task.Duration != item.Value.Duration)
-                {
-                    item.Value.Duration = task.Duration.Value;
-                }
                 item.Value.IsEnable = task.IsEnable;
             }
             else
@@ -83,8 +79,7 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
                     Id = idService.GetId(),
                     Category = "QueueTask",
                     Name = item.Key,
-                    Semaphore = item.Value.Semaphore,
-                    Duration = item.Value.Duration
+                    Semaphore = item.Value.Semaphore
                 });
             }
         }

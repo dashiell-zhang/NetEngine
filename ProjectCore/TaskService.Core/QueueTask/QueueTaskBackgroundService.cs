@@ -24,6 +24,11 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
     /// </summary>
     private const int MaxRetryCount = 3;
 
+    /// <summary>
+    /// 队列任务默认租约时长
+    /// </summary>
+    private static readonly TimeSpan DefaultLeaseDuration = TimeSpan.FromMinutes(QueueTaskBuilder.DefaultDuration);
+
     private readonly ILogger logger = logger;
 
     /// <summary>
@@ -159,7 +164,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
         queueTask.Status = QueueTaskStatus.Running;
         queueTask.WorkerId = workerId;
-        queueTask.LeaseExpireTime = nowTime.AddMinutes(queueTaskInfo.Duration);
+        queueTask.LeaseExpireTime = nowTime.Add(DefaultLeaseDuration);
 
         try
         {
@@ -220,7 +225,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
             var idService = scope.ServiceProvider.GetRequiredService<IdService>();
 
-            using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, TimeSpan.FromMinutes(queueTaskInfo.Duration), queueTaskInfo.Semaphore);
+            using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, DefaultLeaseDuration, queueTaskInfo.Semaphore);
             if (lockActionState == null)
             {
                 await ReleaseClaimAsync(queueTaskId);
@@ -414,8 +419,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
     /// </summary>
     private async Task RenewLeaseAsync(long queueTaskId, QueueTaskInfo queueTaskInfo, IDisposable lockHandle, CancellationToken cancellationToken)
     {
-        var leaseDuration = TimeSpan.FromMinutes(queueTaskInfo.Duration);
-        var renewInterval = GetLeaseRenewInterval(leaseDuration);
+        var renewInterval = GetLeaseRenewInterval(DefaultLeaseDuration);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -430,7 +434,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
             try
             {
-                if (!await distLock.RenewAsync(lockHandle, leaseDuration))
+                if (!await distLock.RenewAsync(lockHandle, DefaultLeaseDuration))
                 {
                     logger.LogWarning("Renew distributed lock failed for queue task {QueueTaskId}", queueTaskId);
                     continue;
@@ -444,7 +448,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
                     return;
                 }
 
-                queueTask.LeaseExpireTime = DateTimeOffset.UtcNow.Add(leaseDuration);
+                queueTask.LeaseExpireTime = DateTimeOffset.UtcNow.Add(DefaultLeaseDuration);
                 await db.SaveChangesAsync(cancellationToken);
             }
             catch (DbUpdateConcurrencyException)

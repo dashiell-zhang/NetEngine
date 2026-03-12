@@ -45,7 +45,7 @@ public class DemoTask(ILogger<DemoTask> logger, DatabaseContext db, QueueTaskSer
 
 
 
-    [QueueTask(Name = "ShowName", Semaphore = 5, Duration = 5)]
+    [QueueTask(Name = "ShowName", Semaphore = 5)]
     public async Task<string> ShowName(string name)
     {
         Console.WriteLine(DateTime.Now + "姓名：" + name);
@@ -59,21 +59,21 @@ public class DemoTask(ILogger<DemoTask> logger, DatabaseContext db, QueueTaskSer
 
 
 
-    [QueueTask(Name = "SendSMS", Semaphore = 5, Duration = 5)]
+    [QueueTask(Name = "SendSMS", Semaphore = 5)]
     public void SendSMS(string name)
     {
         Console.WriteLine(DateTime.Now + "姓名：" + name + ",短信发送成功");
     }
 
 
-    [QueueTask(Name = "CallPhone", Semaphore = 5, Duration = 5)]
+    [QueueTask(Name = "CallPhone", Semaphore = 5)]
     public void CallPhone(string name)
     {
         Console.WriteLine(DateTime.Now + "姓名：" + name + ",打电话执行成功");
     }
 
 
-    [QueueTask(Name = "ShowNameSuccess", Semaphore = 5, Duration = 5)]
+    [QueueTask(Name = "ShowNameSuccess", Semaphore = 5)]
     public void ShowNameSuccess(string name)
     {
         Console.WriteLine(DateTime.Now + "姓名：" + name + ",的所有任务都执行完成了");

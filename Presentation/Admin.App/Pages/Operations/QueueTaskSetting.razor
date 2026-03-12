@@ -8,7 +8,6 @@
         <PropertyColumn Property="c => c.Name" Title="任务名称"></PropertyColumn>
         <PropertyColumn Property="c => c.IsEnable" Title="启用"></PropertyColumn>
         <PropertyColumn Property="c => c.Semaphore" Title="并发"></PropertyColumn>
-        <PropertyColumn Property="c => c.Duration" Title="持续时间(分)"></PropertyColumn>
         <PropertyColumn Property="c => c.Remarks" Title="备注"></PropertyColumn>
         <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
         <ActionColumn Title="操作">
@@ -52,11 +51,6 @@
             <FormItem>
                 <Text>并发</Text>
                 <Input Placeholder="QueueTask 并发值" Type="InputType.Number" @bind-Value="@editTaskSetting.Semaphore" />
-            </FormItem>
-
-            <FormItem>
-                <Text>持续时间(分)</Text>
-                <Input Placeholder="预期持续时间(分)" Type="InputType.Number" @bind-Value="@editTaskSetting.Duration" />
             </FormItem>
 
             <FormItem>
@@ -153,7 +147,6 @@
             IsEnable = taskSetting.IsEnable,
             Cron = taskSetting.Cron,
             Semaphore = taskSetting.Semaphore,
-            Duration = taskSetting.Duration,
             Parameter = taskSetting.Parameter,
             Remarks = taskSetting.Remarks
         };
@@ -182,4 +175,3 @@
         isShowEditTaskSetting = false;
     }
 }
-

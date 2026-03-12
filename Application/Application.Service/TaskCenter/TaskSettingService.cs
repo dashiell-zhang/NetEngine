@@ -43,7 +43,6 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
                 Category = t.Category,
                 Parameter = t.Parameter,
                 Semaphore = t.Semaphore,
-                Duration = t.Duration,
                 Cron = t.Cron,
                 IsEnable = t.IsEnable,
                 Remarks = t.Remarks,
@@ -70,7 +69,6 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
 
         taskSetting.Parameter = updateTaskSetting.Parameter;
         taskSetting.Semaphore = updateTaskSetting.Semaphore;
-        taskSetting.Duration = updateTaskSetting.Duration;
         taskSetting.Cron = updateTaskSetting.Cron;
         taskSetting.IsEnable = updateTaskSetting.IsEnable;
         taskSetting.Remarks = updateTaskSetting.Remarks;

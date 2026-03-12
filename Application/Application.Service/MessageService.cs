@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Repository;
-using SMS;
 using SourceGenerator.Runtime.Attributes;
 using System.Net;
 using System.Net.Mail;
@@ -14,25 +13,19 @@ using System.Net.Mime;
 
 namespace Application.Service
 {
+    /// <summary>
+    /// 消息服务
+    /// </summary>
     [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-    public class MessageService(IHostEnvironment hostEnvironment, ILogger<MessageService> logger, DatabaseContext db, ISMS? sms = null, IFileStorage? fileStorage = null)
+    public class MessageService(IHostEnvironment hostEnvironment, ILogger<MessageService> logger, DatabaseContext db, IFileStorage? fileStorage = null)
     {
 
         private readonly string rootPath = hostEnvironment.ContentRootPath;
 
 
-        public async Task SendSMSAsync(SendSMSDto sendSMS)
-        {
-            if (sms != null)
-            {
-
-                await sms.SendSMSAsync(sendSMS.SignName, sendSMS.Phone, sendSMS.TemplateCode, sendSMS.TemplateParams);
-
-            }
-        }
-
-
-
+        /// <summary>
+        /// 发送邮件
+        /// </summary>
         public async Task SendEmailAsync(SendEmailDto email)
         {
 

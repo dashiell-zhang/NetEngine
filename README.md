@@ -27,6 +27,10 @@
   - 放 LLM 相关应用服务实现
   - 已从 `Application.Service` 独立拆出，用于按宿主收敛注册范围
   - 当前包含 `LlmAppService`、`LlmConversationManageService`、`LlmInvokeService`
+- `Application.Service.SMS`
+  - 放短信发送相关应用服务实现
+  - 已从 `MessageService` 中独立拆出，用于避免通过可空依赖兜底
+  - 当前包含 `SmsService`
 
 ### Repository
 
@@ -74,7 +78,7 @@
   - 当前直接引用 `Application.Model`
 - `TaskService`
   - Worker Service 任务宿主
-  - 当前只引用 `Application.Service`
+  - 当前引用 `Application.Service` 和 `Application.Service.SMS`
   - 不再引用 `Application.Service.LLM`
 
 ### SourceGenerator
@@ -194,7 +198,6 @@ dotnet run --project Presentation/TaskService/TaskService.csproj
 - `JWT`
 - `RSA`
 - `LLM:Providers`
-- `AliCloudSMS` / `TencentCloudSMS`
 - `AliCloudFileStorage` / `TencentCloudFileStorage`
 - `FileServerUrl`
 

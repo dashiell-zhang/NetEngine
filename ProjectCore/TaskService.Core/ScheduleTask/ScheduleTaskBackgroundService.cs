@@ -15,6 +15,8 @@ public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILo
 
     private readonly ConcurrentDictionary<string, string?> runingTaskList = new();
 
+    private readonly ConcurrentDictionary<string, string?> skipIfRunningSet = new();
+
     private readonly ILogger logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -55,8 +57,15 @@ public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILo
 
                             if (runingTaskList.TryAdd(key, null))
                             {
-                                item.LastTime = nextTime;
-                                RunAction(item, key);
+                                if (item.SkipIfRunning && !skipIfRunningSet.TryAdd(item.Name, null))
+                                {
+                                    runingTaskList.TryRemove(key, out _);
+                                }
+                                else
+                                {
+                                    item.LastTime = nextTime;
+                                    RunAction(item, key);
+                                }
                             }
                         }
                         else if (lateBy > ScheduleGraceWindow)
@@ -130,6 +139,11 @@ public class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, ILo
         finally
         {
             runingTaskList.TryRemove(key, out _);
+
+            if (scheduleTaskInfo.SkipIfRunning)
+            {
+                skipIfRunningSet.TryRemove(scheduleTaskInfo.Name, out _);
+            }
         }
 
     }

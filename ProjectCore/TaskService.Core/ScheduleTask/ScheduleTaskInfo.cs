@@ -43,4 +43,10 @@ public class ScheduleTaskInfo
     /// </summary>
     public bool IsEnable { get; set; }
 
+
+    /// <summary>
+    /// 上次执行未完成时跳过本次触发
+    /// </summary>
+    public bool SkipIfRunning { get; set; }
+
 }

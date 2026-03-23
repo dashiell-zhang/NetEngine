@@ -29,6 +29,8 @@ public class ScheduleTaskBuilder
 
             string cron = method.CustomAttributes.Where(t => t.AttributeType == typeof(ScheduleTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "Cron" && t.TypedValue.Value != null).Select(t => t.TypedValue.Value!.ToString()).FirstOrDefault()!;
 
+            bool skipIfRunning = (bool?)method.CustomAttributes.Where(t => t.AttributeType == typeof(ScheduleTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "SkipIfRunning").Select(t => t.TypedValue.Value).FirstOrDefault() ?? false;
+
             var parameterType = method.GetParameters().FirstOrDefault()?.ParameterType;
 
             if (parameterType == null)
@@ -37,7 +39,8 @@ public class ScheduleTaskBuilder
                 {
                     Name = name,
                     Cron = cron,
-                    Method = method
+                    Method = method,
+                    SkipIfRunning = skipIfRunning
                 });
             }
             else
@@ -47,7 +50,8 @@ public class ScheduleTaskBuilder
                 {
                     Name = name,
                     Cron = cron,
-                    Method = method
+                    Method = method,
+                    SkipIfRunning = skipIfRunning
                 });
 
                 var argsTaskList = taskSettings.Where(t => t.Name == name).ToList();
@@ -61,7 +65,8 @@ public class ScheduleTaskBuilder
                         Name = taskName,
                         Cron = item.Cron ?? cron,
                         Method = method,
-                        Parameter = item.Parameter
+                        Parameter = item.Parameter,
+                        SkipIfRunning = skipIfRunning
                     });
                 }
 

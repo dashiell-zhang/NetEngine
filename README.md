@@ -213,6 +213,26 @@ dotnet run --project Presentation/TaskService/TaskService.csproj
 - Debug 模式下启动后会进入交互式启用流程
 - 队列任务和定时任务优先复用现有 Builder、Attribute 与注册方式
 
+### 定时任务（ScheduleTask）
+
+通过 `[ScheduleTask]` 标记方法，支持 Cron 表达式驱动的周期性触发
+
+```csharp
+[ScheduleTask(Name = "ShowTime", Cron = "0/1 * * * * ?")]
+public async Task ShowTime() { }
+```
+
+`SkipIfRunning` 参数控制防重入行为，设为 `true` 时若上次执行尚未完成则跳过本次触发
+
+```csharp
+[ScheduleTask(Name = "ShowTime", Cron = "0/1 * * * * ?", SkipIfRunning = true)]
+public async Task ShowTime() { }
+```
+
+### 队列任务（QueueTask）
+
+通过 `[QueueTask]` 标记方法，支持异步入队、回调、`Semaphore` 控制并发数
+
 ## Admin.App 说明
 
 - 项目位于 `Presentation/Admin.App`

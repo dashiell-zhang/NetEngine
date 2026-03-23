@@ -124,6 +124,103 @@
 
 `Application.Service.LLM` 的拆分就是基于这个原则完成的
 
+## AutoProxy 行为说明
+
+`[AutoProxy]` 标注在服务类上，由源码生成器在编译期生成派生代理类，拦截虚方法并在调用前后插入行为管道。
+
+前提条件：
+
+- 服务类上标注 `[AutoProxy]`
+- 需要被拦截的方法必须是 `virtual`
+- 通过 `BatchRegisterServices()` 注册后，DI 容器会自动注入代理类
+
+### [Logging]
+
+记录方法的调用前（executing）、调用后（executed）和异常（exception）三个阶段，输出结构化 JSON 日志
+
+日志字段包括：`event`、`method`、`traceId`、`args`、`caller`（业务调用链）、`durationMs`、`result`
+
+无参数，直接标注即可：
+
+```csharp
+[Logging]
+public virtual async Task<string> GetData(int id) { ... }
+```
+
+`[Logging]` 同时实现了同步行为接口，对含 `ref/out` 参数的方法同样生效
+
+### [Cacheable]
+
+对有返回值的方法开启分布式缓存，缓存键由方法名和入参的 JSON 序列化结果计算 SHA-256 得出
+
+依赖 `IDistributedCache`
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `TtlSeconds` | `int` | `60` | 缓存有效期（秒） |
+
+```csharp
+[Cacheable(TtlSeconds = 300)]
+public virtual async Task<UserDto> GetUser(long userId) { ... }
+```
+
+仅对有返回值的方法生效，`void` 和 `Task` 方法不会写入缓存
+
+### [ConcurrencyLimit]
+
+基于分布式锁限制方法的并发执行数量
+
+依赖 `IDistributedLock`
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `IsUseParameter` | `bool` | `false` | 是否将入参纳入锁 key 计算，区分不同参数的调用 |
+| `IsBlock` | `bool` | `false` | 未获取到锁时直接抛出异常（`true`）还是等待排队（`false`） |
+| `ExpirySeconds` | `int` | `0` | 锁的最大持有时长（秒），`0` 表示不限 |
+| `Semaphore` | `int` | `1` | 允许同时持有锁的并发数 |
+
+```csharp
+// 全局同一时刻只允许一个调用执行，未获取锁时直接拒绝
+[ConcurrencyLimit(IsBlock = true)]
+public virtual async Task SyncData() { ... }
+
+// 按入参区分锁，允许 3 个并发，等待排队
+[ConcurrencyLimit(IsUseParameter = true, Semaphore = 3)]
+public virtual async Task ProcessOrder(long orderId) { ... }
+```
+
+### [Retry]
+
+方法执行出现异常时自动重试，全部重试失败后将最后一次异常向上抛出
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `MaxRetries` | `int` | `3` | 最大重试次数 |
+| `DelaySeconds` | `int` | `0` | 每次重试前的等待时长（秒），`0` 表示不等待 |
+
+```csharp
+// 失败后立即重试，最多 3 次
+[Retry]
+public virtual async Task<string> FetchRemoteData() { ... }
+
+// 失败后等待 2 秒再重试，最多 5 次
+[Retry(MaxRetries = 5, DelaySeconds = 2)]
+public virtual async Task SendNotification() { ... }
+```
+
+### 多行为组合
+
+多个行为可以组合使用，按声明顺序依次执行：
+
+```csharp
+[Logging]
+[Retry(MaxRetries = 3, DelaySeconds = 1)]
+[Cacheable(TtlSeconds = 120)]
+public virtual async Task<List<ProductDto>> GetProducts() { ... }
+```
+
+执行顺序为 `Logging → Retry → Cacheable → 实际方法`，即日志包裹重试，重试包裹缓存读写
+
 ## 主要能力
 
 - JWT 认证与权限控制

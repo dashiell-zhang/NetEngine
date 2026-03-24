@@ -231,7 +231,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                             }
                             else
                             {
-                                item.IsDelete = true;
+                                item.DeleteTime = DateTimeOffset.UtcNow;
                                 item.DeleteUserId = userContext.UserId;
                             }
                         }
@@ -276,7 +276,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
 
         if (user != null)
         {
-            user.IsDelete = true;
+            user.DeleteTime = DateTimeOffset.UtcNow;
             user.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();
@@ -355,7 +355,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
 
                     foreach (var userFunction in userFunctionList)
                     {
-                        userFunction.IsDelete = true;
+                        userFunction.DeleteTime = DateTimeOffset.UtcNow;
                         userFunction.DeleteUserId = userContext.UserId;
                     }
 
@@ -423,7 +423,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
         {
             if (userRole != null)
             {
-                userRole.IsDelete = true;
+                userRole.DeleteTime = DateTimeOffset.UtcNow;
                 userRole.DeleteUserId = userContext.UserId;
 
                 await db.SaveChangesAsync();

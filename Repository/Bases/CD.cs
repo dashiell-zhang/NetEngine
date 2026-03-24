@@ -26,14 +26,7 @@ public class CD
 
 
     /// <summary>
-    /// 是否删除
-    /// </summary>
-    public bool IsDelete { get; set; }
-
-
-
-    /// <summary>
-    /// 删除时间
+    /// 删除时间，不为 null 时表示已软删除
     /// </summary>
     public DateTimeOffset? DeleteTime { get; set; }
 

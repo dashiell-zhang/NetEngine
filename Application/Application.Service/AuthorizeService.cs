@@ -286,7 +286,6 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                 user = new()
                 {
                     Id = idService.GetId(),
-                    IsDelete = false,
                     Name = userInfo.NickName,
                     UserName = Guid.NewGuid().ToString(),
                     Phone = ""

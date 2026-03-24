@@ -140,7 +140,7 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
 
             sb.Append("        modelBuilder.Entity<")
               .Append(entityDisplay)
-              .AppendLine(">().HasQueryFilter(e => e.IsDelete == false);");
+              .AppendLine(">().HasQueryFilter(e => e.DeleteTime == null);");
         }
 
         sb.AppendLine("    }")

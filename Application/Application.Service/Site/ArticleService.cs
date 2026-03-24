@@ -155,7 +155,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
 
         if (category != null)
         {
-            category.IsDelete = true;
+            category.DeleteTime = DateTimeOffset.UtcNow;
             category.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();
@@ -337,7 +337,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
 
         if (article != null)
         {
-            article.IsDelete = true;
+            article.DeleteTime = DateTimeOffset.UtcNow;
             article.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();

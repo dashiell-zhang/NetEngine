@@ -222,18 +222,6 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
             }
 
 
-            var isDelete = item.Properties.Where(t => t.Metadata.Name == "IsDelete").FirstOrDefault();
-
-            if (isDelete != null && isDelete.IsModified == true && Convert.ToBoolean(isDelete.CurrentValue) == true)
-            {
-                var deleteTime = item.Properties.Where(t => t.Metadata.Name == "DeleteTime").FirstOrDefault();
-
-                if (deleteTime != null && deleteTime.IsModified == false)
-                {
-                    deleteTime.CurrentValue = DateTimeOffset.UtcNow;
-                }
-            }
-
         }
     }
 

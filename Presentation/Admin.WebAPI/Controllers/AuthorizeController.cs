@@ -111,7 +111,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
 
         foreach (var item in delList)
         {
-            item.IsDelete = true;
+            item.DeleteTime = DateTimeOffset.UtcNow;
         }
 
         foreach (var item in actionList)

@@ -188,7 +188,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         if (llmApp != null)
         {
-            llmApp.IsDelete = true;
+            llmApp.DeleteTime = DateTimeOffset.UtcNow;
             llmApp.DeleteUserId = userContext.UserId;
             await db.SaveChangesAsync();
         }

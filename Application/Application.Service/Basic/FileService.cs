@@ -184,7 +184,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
 
         if (file != null)
         {
-            file.IsDelete = true;
+            file.DeleteTime = DateTimeOffset.UtcNow;
             file.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();

@@ -158,7 +158,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
 
         if (role != null)
         {
-            role.IsDelete = true;
+            role.DeleteTime = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync();
         }
 
@@ -224,7 +224,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
         {
             if (functionAuthorize.Id != default)
             {
-                functionAuthorize.IsDelete = true;
+                functionAuthorize.DeleteTime = DateTimeOffset.UtcNow;
                 functionAuthorize.DeleteUserId = userContext.UserId;
             }
         }

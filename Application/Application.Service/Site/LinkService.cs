@@ -124,7 +124,7 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
 
         if (link != null)
         {
-            link.IsDelete = true;
+            link.DeleteTime = DateTimeOffset.UtcNow;
             link.DeleteUserId = userContext.UserId;
 
             await db.SaveChangesAsync();

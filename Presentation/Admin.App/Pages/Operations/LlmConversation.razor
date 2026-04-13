@@ -87,9 +87,9 @@
 
 @code {
 
-    override protected void OnParametersSet()
+    override protected async Task OnParametersSetAsync()
     {
-        GetListAsync();
+        await GetListAsync();
     }
 
     LlmConversationPageRequestDto request = new() { PageSize = 10 };
@@ -118,13 +118,13 @@
         await GetListAsync();
     }
 
-    void HandleReset()
+    async Task HandleReset()
     {
         request = new LlmConversationPageRequestDto { PageSize = request.PageSize };
-        GetListAsync();
+        await GetListAsync();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (request.PageNum != args.Page)
         {
@@ -136,7 +136,7 @@
             request.PageSize = args.PageSize;
         }
 
-        GetListAsync();
+        await GetListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";

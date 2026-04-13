@@ -279,17 +279,17 @@
     {
         functionList = await userContextService.GetFunctionList();
 
-        await GetCategorySelectListAsync();
-
         var authorization = LocalStorage.GetItemAsString("Authorization");
 
         headers.Add("Authorization", "Bearer " + authorization);
     }
 
-    override protected void OnParametersSet()
+    override protected async Task OnParametersSetAsync()
     {
-        GetArticleListAsync();
-        GetCategorySelectListAsync();
+        var getArticleListTask = GetArticleListAsync();
+        var getCategorySelectListTask = GetCategorySelectListAsync();
+
+        await Task.WhenAll(getArticleListTask, getCategorySelectListTask);
     }
 
 
@@ -339,7 +339,7 @@
         StateHasChanged();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (pageNum != args.Page)
         {
@@ -351,7 +351,7 @@
             pageSize = args.PageSize;
         }
 
-        GetArticleListAsync();
+        await GetArticleListAsync();
     }
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
@@ -413,13 +413,13 @@
             editArticle.CategoryId = "";
         }
 
-        GetCategorySelectListAsync();
+        var getCategorySelectListTask = GetCategorySelectListAsync();
 
         isShowEditArticle = true;
 
         StateHasChanged();
 
-        await Task.Delay(200);
+        await Task.WhenAll(getCategorySelectListTask, Task.Delay(200));
 
         JS.InvokeVoidAsync("InitUeditor", "Content", 370);
 
@@ -455,7 +455,7 @@
 
             saveLoading = false;
 
-            GetArticleListAsync();
+            await GetArticleListAsync();
 
             isShowEditArticle = false;
         }
@@ -467,7 +467,7 @@
         using var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetArticleListAsync();
+            await GetArticleListAsync();
             Message.Success("删除成功");
         }
     }

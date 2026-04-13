@@ -120,9 +120,9 @@
         functionList = await userContextService.GetFunctionList();
     }
 
-    override protected void OnParametersSet()
+    override protected async Task OnParametersSetAsync()
     {
-        GetQueueTaskListAsync();
+        await GetQueueTaskListAsync();
     }
 
     QueueTaskPageRequestDto request = new() { PageSize = 10 };
@@ -152,13 +152,13 @@
         await GetQueueTaskListAsync();
     }
 
-    void HandleReset()
+    async Task HandleReset()
     {
         request = new QueueTaskPageRequestDto { PageSize = request.PageSize };
-        GetQueueTaskListAsync();
+        await GetQueueTaskListAsync();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (request.PageNum != args.Page)
         {
@@ -170,7 +170,7 @@
             request.PageSize = args.PageSize;
         }
 
-        GetQueueTaskListAsync();
+        await GetQueueTaskListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -196,7 +196,7 @@
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("已触发重试");
-            GetQueueTaskListAsync();
+            await GetQueueTaskListAsync();
         }
     }
 

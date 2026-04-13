@@ -213,7 +213,7 @@
         StateHasChanged();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (request.PageNum != args.Page)
         {
@@ -225,7 +225,7 @@
             request.PageSize = args.PageSize;
         }
 
-        GetUserListAsync();
+        await GetUserListAsync();
     }
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
@@ -236,10 +236,10 @@
         await GetUserListAsync();
     }
 
-    void HandleReset()
+    async Task HandleReset()
     {
         request = new UserPageRequestDto { PageSize = request.PageSize };
-        GetUserListAsync();
+        await GetUserListAsync();
     }
 
 
@@ -273,7 +273,7 @@
 
         if (!isShowEditUser)
         {
-            GetUserListAsync();
+            await GetUserListAsync();
         }
 
         saveLoading = false;
@@ -311,7 +311,7 @@
         using var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetUserListAsync();
+            await GetUserListAsync();
             Message.Success("删除成功");
         }
     }

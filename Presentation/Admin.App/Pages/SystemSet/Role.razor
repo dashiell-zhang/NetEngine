@@ -153,7 +153,7 @@
         StateHasChanged();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (pageNum != args.Page)
         {
@@ -165,7 +165,7 @@
             pageSize = args.PageSize;
         }
 
-        GetRoleListAsync();
+        await GetRoleListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -216,7 +216,7 @@
         }
         saveLoading = false;
 
-        GetRoleListAsync();
+        await GetRoleListAsync();
         isShowEditRole = false;
     }
 
@@ -226,7 +226,7 @@
         using var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetRoleListAsync();
+            await GetRoleListAsync();
             Message.Success("删除成功");
         }
     }

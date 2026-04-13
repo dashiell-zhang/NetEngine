@@ -108,14 +108,14 @@
     override protected async Task OnInitializedAsync()
     {
         functionList = await userContextService.GetFunctionList();
-
-        await GetCategorySelectListAsync();
     }
 
-    override protected void OnParametersSet()
+    override protected async Task OnParametersSetAsync()
     {
-        GetCategoryListAsync();
-        GetCategorySelectListAsync();
+        var getCategoryListTask = GetCategoryListAsync();
+        var getCategorySelectListTask = GetCategorySelectListAsync();
+
+        await Task.WhenAll(getCategoryListTask, getCategorySelectListTask);
     }
 
 
@@ -172,7 +172,7 @@
         StateHasChanged();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (pageNum != args.Page)
         {
@@ -184,7 +184,7 @@
             pageSize = args.PageSize;
         }
 
-        GetCategoryListAsync();
+        await GetCategoryListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -199,8 +199,6 @@
     {
         editCategory = new();
         categoryId = default;
-
-        GetCategorySelectListAsync();
 
         if (category != null)
         {
@@ -225,7 +223,9 @@
             editCategory.Sort = 99;
         }
 
-        await Task.Delay(200);
+        var getCategorySelectListTask = GetCategorySelectListAsync();
+
+        await Task.WhenAll(getCategorySelectListTask, Task.Delay(200));
 
         isShowEditCategory = true;
 
@@ -265,7 +265,7 @@
 
         saveLoading = false;
 
-        GetCategoryListAsync();
+        await GetCategoryListAsync();
         isShowEditCategory = false;
     }
 
@@ -275,7 +275,7 @@
         using var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetCategoryListAsync();
+            await GetCategoryListAsync();
             Message.Success("删除成功");
         }
     }

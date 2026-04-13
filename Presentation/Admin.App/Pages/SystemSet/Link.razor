@@ -118,7 +118,7 @@
         StateHasChanged();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (pageNum != args.Page)
         {
@@ -130,7 +130,7 @@
             pageSize = args.PageSize;
         }
 
-        GetLinkListAsync();
+        await GetLinkListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -184,7 +184,7 @@
         }
         saveLoading = false;
 
-        GetLinkListAsync();
+        await GetLinkListAsync();
         isShowEditLink = false;
     }
 
@@ -194,7 +194,7 @@
         using var httpResponse = await Http.DeleteAsync("Site/DeleteLink?id=" + linkId);
         if (httpResponse.IsSuccessStatusCode)
         {
-            GetLinkListAsync();
+            await GetLinkListAsync();
             Message.Success("删除成功");
         }
     }

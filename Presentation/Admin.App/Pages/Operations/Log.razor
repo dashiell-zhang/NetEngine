@@ -99,9 +99,9 @@
         functionList = await userContextService.GetFunctionList();
     }
 
-    override protected void OnParametersSet()
+    override protected async Task OnParametersSetAsync()
     {
-        GetLogListAsync();
+        await GetLogListAsync();
     }
 
     LogPageRequestDto request = new() { PageSize = 10 };
@@ -130,13 +130,13 @@
         await GetLogListAsync();
     }
 
-    void HandleReset()
+    async Task HandleReset()
     {
         request = new LogPageRequestDto { PageSize = request.PageSize };
-        GetLogListAsync();
+        await GetLogListAsync();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (request.PageNum != args.Page)
         {
@@ -148,7 +148,7 @@
             request.PageSize = args.PageSize;
         }
 
-        GetLogListAsync();
+        await GetLogListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";

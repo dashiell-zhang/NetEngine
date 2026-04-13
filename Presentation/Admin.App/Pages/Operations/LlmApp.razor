@@ -233,9 +233,9 @@
         functionList = await userContextService.GetFunctionList();
     }
 
-    override protected void OnParametersSet()
+    override protected async Task OnParametersSetAsync()
     {
-        GetLlmAppListAsync();
+        await GetLlmAppListAsync();
     }
 
     LlmAppPageRequestDto request = new() { PageSize = 10 };
@@ -265,13 +265,13 @@
         await GetLlmAppListAsync();
     }
 
-    void HandleReset()
+    async Task HandleReset()
     {
         request = new LlmAppPageRequestDto { PageSize = request.PageSize };
-        GetLlmAppListAsync();
+        await GetLlmAppListAsync();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (request.PageNum != args.Page)
         {
@@ -283,7 +283,7 @@
             request.PageSize = args.PageSize;
         }
 
-        GetLlmAppListAsync();
+        await GetLlmAppListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -406,7 +406,7 @@
         {
             Message.Success("保存成功");
             isShowEdit = false;
-            GetLlmAppListAsync();
+            await GetLlmAppListAsync();
         }
 
         saveLoading = false;
@@ -519,7 +519,7 @@
         if (httpResponse.IsSuccessStatusCode)
         {
             Message.Success("删除成功");
-            GetLlmAppListAsync();
+            await GetLlmAppListAsync();
         }
     }
 }

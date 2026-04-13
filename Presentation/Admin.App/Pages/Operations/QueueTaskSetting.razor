@@ -84,9 +84,9 @@
         functionList = await userContextService.GetFunctionList();
     }
 
-    override protected void OnParametersSet()
+    override protected async Task OnParametersSetAsync()
     {
-        GetTaskSettingListAsync();
+        await GetTaskSettingListAsync();
     }
 
     bool tableLoading = false;
@@ -110,7 +110,7 @@
         StateHasChanged();
     }
 
-    void PageChange(PaginationEventArgs args)
+    async Task PageChange(PaginationEventArgs args)
     {
         if (pageNum != args.Page)
         {
@@ -122,7 +122,7 @@
             pageSize = args.PageSize;
         }
 
-        GetTaskSettingListAsync();
+        await GetTaskSettingListAsync();
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
@@ -171,7 +171,7 @@
 
         saveLoading = false;
 
-        GetTaskSettingListAsync();
+        await GetTaskSettingListAsync();
         isShowEditTaskSetting = false;
     }
 }

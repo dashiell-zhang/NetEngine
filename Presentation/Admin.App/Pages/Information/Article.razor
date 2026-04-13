@@ -1,9 +1,6 @@
 @page "/information/article"
 @using Application.Model.Site.Article
-@using SkiaSharp;
-@using System.Security.Cryptography;
-@using System.Text;
-@using System.Net.Http.Headers;
+@inject ImageUploadService imageUploadService
 @attribute [ReuseTabsPageTitle("文章管理")]
 
 <div style="margin-bottom:10px">
@@ -141,114 +138,28 @@
     {
         foreach (var file in e.GetMultipleFiles())
         {
-            var requestUrl = "/File/UploadFile?business=Article&key=" + fileKey + "&sign=cover&isPublicRead=true";
-
-            string url = LocalStorage.GetItemAsString("appApiUrl") + "File/UploadFile?business=Article&key=" + fileKey + "&sign=cover&isPublicRead=true";
-            using HttpClientHandler handler = new();
-
-            using HttpClient client = new(handler);
-            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
-
-            string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
-
-
-            using MultipartFormDataContent formDataContent = new(boundary);
-
-            byte[] imageByteArray;
-
-            using (var memoryStream = new MemoryStream())
+            try
             {
-                await file.OpenReadStream(999999999999).CopyToAsync(memoryStream);
-                imageByteArray = memoryStream.ToArray();
-            }
-
-            using var original = SKBitmap.Decode(imageByteArray);
-
-            int maxSideLength = 1920;
-
-            int width = original.Width;
-            int height = original.Height;
-
-            if (original.Width > original.Height)
-            {
-                if (original.Width > maxSideLength)
+                var uploadResult = await imageUploadService.UploadImageAsync(file, new ImageUploadRequest
                 {
-                    var percent = maxSideLength / (float)original.Width;
-                    width = (int)(original.Width * percent);
-                    height = (int)(original.Height * percent);
-                }
-            }
-            else
-            {
-                if (original.Height > maxSideLength)
-                {
-                    var percent = maxSideLength / (float)original.Height;
-                    width = (int)(original.Width * percent);
-                    height = (int)(original.Height * percent);
-                }
-            }
-
-
-            using var resizeBitmap = original.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None));
-            using var image = SKImage.FromBitmap(resizeBitmap);
-            using var imageData = image.Encode(SKEncodedImageFormat.Jpeg, 100);
-
-            using var sha256 = SHA256.Create();
-            var fileSign = Convert.ToHexString(sha256.ComputeHash(imageData.AsStream()));
-
-            var timeStr = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-            var authorization = LocalStorage.GetItemAsString("Authorization");
-            var privateKey = authorization?.Split(".").ToList().LastOrDefault();
-
-            var dataStr = privateKey + timeStr + requestUrl + "file" + fileSign;
-
-            using var shaa256 = SHA256.Create();
-            string dataSign = Convert.ToHexString(shaa256.ComputeHash(Encoding.UTF8.GetBytes(dataStr)));
-
-            headers.Remove("Token");
-            headers.Remove("Time");
-            headers.Add("Token", dataSign);
-            headers.Add("Time", timeStr);
-
-            foreach (var header in headers)
-            {
-                client.DefaultRequestHeaders.Add(header.Key, header.Value);
-            }
-
-            var fileContent = new StreamContent(imageData.AsStream());
-
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-
-
-            string fileName = file.Name.Replace(file.Name.Split(".").LastOrDefault() ?? "", "jpg");
-
-            formDataContent.Add(fileContent, "file", fileName);
-
-            using var httpResponse = await client.PostAsync(url, formDataContent);
-
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                var content = await httpResponse.Content.ReadAsStringAsync();
-
-                string fileId = content.Replace("\"", "");
-
-                byte[] newImageArray;
-
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    imageData.SaveTo(ms);
-                    newImageArray = ms.ToArray();
-                }
-
-                string fileUrl = await JS.InvokeAsync<string>("CreateObjectUrl", newImageArray, "image/jpeg");
+                    Business = "Article",
+                    Key = fileKey,
+                    Sign = "cover",
+                    IsPublicRead = true
+                });
+                string fileUrl = await JS.InvokeAsync<string>("CreateObjectUrl", uploadResult.FileBytes, uploadResult.ContentType);
 
                 fileList.Add(new UploadFileItem()
                 {
-                    Id = fileId,
-                    FileName = file.Name,
+                    Id = uploadResult.FileId,
+                    FileName = uploadResult.FileName,
                     Url = fileUrl,
                     State = UploadState.Success
                 });
+            }
+            catch (Exception ex)
+            {
+                Message.Error(file.Name + " 上传失败 " + ex.Message);
             }
 
             StateHasChanged();
@@ -258,8 +169,6 @@
 
 
     private Form<EditArticleDto>? _editArticleForm;
-
-    Dictionary<string, string> headers = new();
 
     bool isPreviewImg = false;
     string? previewImgUrl;
@@ -278,10 +187,6 @@
     override protected async Task OnInitializedAsync()
     {
         functionList = await userContextService.GetFunctionList();
-
-        var authorization = LocalStorage.GetItemAsString("Authorization");
-
-        headers.Add("Authorization", "Bearer " + authorization);
     }
 
     override protected async Task OnParametersSetAsync()

@@ -32,6 +32,11 @@ public class Program
             BaseAddress = new Uri(appApiUrl)
         });
 
+        builder.Services.AddHttpClient("upload", client =>
+        {
+            client.BaseAddress = new Uri(appApiUrl);
+        });
+
         builder.Services.AddBlazoredLocalStorage();
 
         builder.Services.AddAntDesign();

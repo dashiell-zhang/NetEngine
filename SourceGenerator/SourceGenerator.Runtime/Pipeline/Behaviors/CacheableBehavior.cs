@@ -1,3 +1,4 @@
+using DistributedLock;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
@@ -13,28 +14,62 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 {
 
     /// <summary>
+    /// 缓存回源保护锁的默认失效时长 秒
+    /// </summary>
+    private const int CacheLockExpirySeconds = 60;
+
+    /// <summary>
     /// 尝试从缓存中读取结果 未命中时调用下游并将结果写入缓存
     /// </summary>
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
         var cache = ctx.GetFeature<Options.CacheableOptions>();
 
-        if (cache is not null && ctx.HasReturnValue)
+        if (cache is null || !ctx.HasReturnValue)
         {
-            var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
-            var get = await TryGetAsync<T>(ctx, cache, ctx.Logger, ctx.Log, methodForLog);
+            return await next();
+        }
+
+        var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
+        var cacheKey = ComposeCacheKey(ctx);
+
+        var get = await TryGetAsync<T>(ctx, cacheKey, ctx.Logger, ctx.Log, methodForLog);
+        if (get.hit) return get.value;
+
+        var lockSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedLock)) as IDistributedLock;
+        if (lockSvc is null)
+        {
+            var resultWithoutLock = await next();
+            await SetAsync(ctx, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog, resultWithoutLock);
+            return resultWithoutLock;
+        }
+
+        IDisposable? lockHandle = null;
+        try
+        {
+            var lockKey = ComposeLockKey(cacheKey);
+            lockHandle = await lockSvc.LockAsync(lockKey, TimeSpan.FromSeconds(CacheLockExpirySeconds));
+            if (ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock acquired {methodForLog}");
+
+            get = await TryGetAsync<T>(ctx, cacheKey, ctx.Logger, ctx.Log, methodForLog);
             if (get.hit) return get.value;
+
+            var result = await next();
+            await SetAsync(ctx, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog, result);
+            return result;
         }
-
-        var result = await next();
-
-        if (cache is not null && ctx.HasReturnValue)
+        finally
         {
-            var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
-            await SetAsync(ctx, cache, ctx.Logger, ctx.Log, methodForLog, result);
+            try
+            {
+                lockHandle?.Dispose();
+                if (lockHandle is not null && ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock released {methodForLog}");
+            }
+            catch (Exception ex)
+            {
+                if (ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock release error {methodForLog}: {ex.Message}");
+            }
         }
-        
-        return result;
     }
 
 
@@ -46,9 +81,23 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
 
     /// <summary>
+    /// 生成当前调用对应的缓存键
+    /// </summary>
+    private static string ComposeCacheKey(InvocationContext ctx)
+        => "CacheData_" + Sha256Hex(ComposeSeed(ctx));
+
+
+    /// <summary>
+    /// 生成当前缓存键对应的防击穿锁键
+    /// </summary>
+    private static string ComposeLockKey(string cacheKey)
+        => "CacheDataLock_" + cacheKey;
+
+
+    /// <summary>
     /// 尝试从分布式缓存中读取结果 返回是否命中及对应值
     /// </summary>
-    private static async Task<(bool hit, T value)> TryGetAsync<T>(InvocationContext ctx, Options.CacheableOptions cache, ILogger? logger, bool log, string method)
+    private static async Task<(bool hit, T value)> TryGetAsync<T>(InvocationContext ctx, string cacheKey, ILogger? logger, bool log, string method)
     {
         var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         
@@ -56,8 +105,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         
         try
         {
-            var key = "CacheData_" + Sha256Hex(ComposeSeed(ctx));
-            var json = await cacheSvc.GetStringAsync(key);
+            var json = await cacheSvc.GetStringAsync(cacheKey);
             if (json is null) return (false, default!);
             if (log) logger?.LogInformation($"Cache hit {method}");
             return (true, JsonSerializer.Deserialize<T>(json, JsonUtil.JsonOpts)!);
@@ -74,7 +122,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     /// <summary>
     /// 将方法返回结果写入分布式缓存
     /// </summary>
-    private static async Task SetAsync<T>(InvocationContext ctx, Options.CacheableOptions cache, ILogger? logger, bool log, string method, T value)
+    private static async Task SetAsync<T>(InvocationContext ctx, string cacheKey, Options.CacheableOptions cache, ILogger? logger, bool log, string method, T value)
     {
         var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         
@@ -82,9 +130,8 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         
         try
         {
-            var key = "CacheData_" + Sha256Hex(ComposeSeed(ctx));
             var json = JsonSerializer.Serialize(value, JsonUtil.JsonOpts);
-            await cacheSvc.SetStringAsync(key, json, new DistributedCacheEntryOptions
+            await cacheSvc.SetStringAsync(cacheKey, json, new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache.TtlSeconds)
             });

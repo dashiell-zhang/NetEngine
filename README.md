@@ -79,7 +79,7 @@
 - `TaskService`
   - Worker Service 任务宿主
   - 当前引用 `Application.Service` 和 `Application.Service.SMS`
-  - 不再引用 `Application.Service.LLM`
+  - 不引用 `Application.Service.LLM`
 
 ### SourceGenerator
 
@@ -283,6 +283,7 @@ dotnet run --project Presentation/TaskService/TaskService.csproj
 
 - `Client.WebAPI`：`/healthz`
 - `Admin.WebAPI`：`/healthz`
+- `TaskService`：Worker Service 宿主，无 HTTP 健康检查路由
 
 ## 配置说明
 

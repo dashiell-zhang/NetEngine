@@ -62,7 +62,7 @@
 
     <PaginationTemplate>
         <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.PageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
         </div>
     </PaginationTemplate>
 
@@ -126,7 +126,7 @@
 
     async Task HandleSearchAsync(EditContext editContext)
     {
-        request.PageNum = 1;
+        request.Page = 1;
         await GetLogListAsync();
     }
 
@@ -138,9 +138,9 @@
 
     async Task PageChange(PaginationEventArgs args)
     {
-        if (request.PageNum != args.Page)
+        if (request.Page != args.Page)
         {
-            request.PageNum = args.Page;
+            request.Page = args.Page;
         }
 
         if (request.PageSize != args.PageSize)

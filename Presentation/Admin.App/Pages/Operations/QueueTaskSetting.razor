@@ -21,7 +21,7 @@
 
     <PaginationTemplate>
         <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="pageNum" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
         </div>
     </PaginationTemplate>
 
@@ -90,7 +90,7 @@
     }
 
     bool tableLoading = false;
-    int pageNum = 1;
+    int page = 1;
     int pageSize = 10;
     PageListDto<TaskSettingDto> pageList = new();
 
@@ -99,7 +99,7 @@
     {
         tableLoading = true;
 
-        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?pageNum=" + pageNum + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?page=" + page + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {
@@ -112,9 +112,9 @@
 
     async Task PageChange(PaginationEventArgs args)
     {
-        if (pageNum != args.Page)
+        if (page != args.Page)
         {
-            pageNum = args.Page;
+            page = args.Page;
         }
 
         if (pageSize != args.PageSize)

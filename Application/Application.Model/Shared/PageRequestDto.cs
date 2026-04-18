@@ -12,7 +12,7 @@ public class PageRequestDto
     /// <summary>
     /// 页码
     /// </summary>
-    public int PageNum { get; set; } = 1;
+    public int Page { get; set; } = 1;
 
 
 
@@ -28,6 +28,6 @@ public class PageRequestDto
     /// 获取跳过数量
     /// </summary>
     /// <returns></returns>
-    public int Skip() => (PageNum - 1) * PageSize;
+    public int Skip() => (Page - 1) * PageSize;
 
 }

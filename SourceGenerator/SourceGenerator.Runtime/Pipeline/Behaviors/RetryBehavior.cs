@@ -26,6 +26,10 @@ public sealed class RetryBehavior : IInvocationAsyncBehavior
             {
                 return await next();
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex) when (attempt < maxRetries)
             {
                 attempt++;

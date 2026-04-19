@@ -293,11 +293,49 @@ dotnet run --project Presentation/TaskService/TaskService.csproj
 
 - `ConnectionStrings:dbConnection`
 - `ConnectionStrings:redisConnection`
+- `Cors:AllowedOriginList`
 - `JWT`
 - `RSA`
 - `LLM:Providers`
 - `AliCloudFileStorage` / `TencentCloudFileStorage`
 - `FileServerUrl`
+
+### CORS 配置
+
+`Client.WebAPI` 与 `Admin.WebAPI` 共用 `ProjectCore/WebAPI.Core` 中的跨域校验逻辑，白名单从各自宿主的 `appsettings.json` 与 `appsettings.Development.json` 读取
+
+示例配置：
+
+```json
+{
+  "Cors": {
+    "AllowedOriginList": [
+      "*.xxx.com",
+      "localhost",
+      "localhost:6000",
+      "https://admin.xxx.com",
+      "https://localhost:5173",
+      "*"
+    ]
+  }
+}
+```
+
+支持的写法：
+
+- `*` 表示全部放通
+- `*.xxx.com` 表示按子域名匹配，不限制协议和端口
+- `xxx.com` 表示按主机匹配，不限制协议和端口
+- `localhost` 表示按主机匹配，不限制端口
+- `localhost:6000` 表示同时校验主机和端口
+- `https://xxx.com` 表示同时校验协议和主机
+- `https://localhost:6000` 表示同时校验协议、主机和端口
+
+环境建议：
+
+- `appsettings.json` 放正式环境白名单
+- `appsettings.Development.json` 放本地开发白名单
+- 开发环境会覆盖同名配置节，因此可以单独为本地调试增加 `localhost` 或指定端口
 
 安全提示：
 

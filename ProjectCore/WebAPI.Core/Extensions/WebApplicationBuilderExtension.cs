@@ -61,10 +61,14 @@ public static class WebApplicationBuilderExtension
         });
     }
 
-
-
+    /// <summary>
+    /// 注册 WebAPI 公共服务
+    /// </summary>
+    /// <param name="builder"></param>
     public static void AddCommonServices(this WebApplicationBuilder builder)
     {
+
+        var allowedCorsHostList = builder.Configuration.GetSection("Cors:AllowedOriginList").Get<List<string>>() ?? ["*.xxx.com"];
 
         #region 基础 Server 配置
 
@@ -117,7 +121,7 @@ public static class WebApplicationBuilderExtension
         {
             options.AddPolicy("cors", policy =>
             {
-                policy.SetIsOriginAllowed(origin => true)
+                policy.SetIsOriginAllowed(origin => IsAllowedCorsOrigin(origin, allowedCorsHostList))
                    .AllowAnyHeader()
                    .AllowAnyMethod()
                    .AllowCredentials()
@@ -263,6 +267,94 @@ public static class WebApplicationBuilderExtension
         builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
         #endregion
 
+    }
+
+
+    /// <summary>
+    /// 判断是否允许当前跨域来源
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="allowedCorsHostList"></param>
+    /// <returns></returns>
+    private static bool IsAllowedCorsOrigin(string? origin, List<string> allowedCorsHostList)
+    {
+        if (string.IsNullOrWhiteSpace(origin) || Uri.TryCreate(origin, UriKind.Absolute, out var originUri) == false)
+        {
+            return false;
+        }
+
+        var host = originUri.Host;
+        foreach (var allowedHost in allowedCorsHostList)
+        {
+            if (string.Equals(allowedHost, "*", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (IsCorsHostMatch(originUri.Scheme, host, originUri.Port, allowedHost))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /// <summary>
+    /// 判断是否匹配允许的跨域主机配置
+    /// </summary>
+    /// <param name="originScheme"></param>
+    /// <param name="originHost"></param>
+    /// <param name="originPort"></param>
+    /// <param name="allowedHost"></param>
+    /// <returns></returns>
+    private static bool IsCorsHostMatch(string originScheme, string originHost, int originPort, string allowedHost)
+    {
+        if (string.IsNullOrWhiteSpace(allowedHost))
+        {
+            return false;
+        }
+
+        string allowedHostPattern = allowedHost.Trim();
+        string? allowedScheme = null;
+        int? allowedPort = null;
+
+        if (allowedHostPattern.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            allowedScheme = Uri.UriSchemeHttps;
+            allowedHostPattern = allowedHostPattern["https://".Length..];
+        }
+        else if (allowedHostPattern.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        {
+            allowedScheme = Uri.UriSchemeHttp;
+            allowedHostPattern = allowedHostPattern["http://".Length..];
+        }
+
+        if (allowedScheme != null && string.Equals(originScheme, allowedScheme, StringComparison.OrdinalIgnoreCase) == false)
+        {
+            return false;
+        }
+
+        var portSeparatorIndex = allowedHostPattern.LastIndexOf(':');
+        if (portSeparatorIndex > 0 && int.TryParse(allowedHostPattern[(portSeparatorIndex + 1)..], out var parsedPort))
+        {
+            allowedHostPattern = allowedHostPattern[..portSeparatorIndex];
+            allowedPort = parsedPort;
+        }
+
+        if (allowedPort.HasValue && allowedPort.Value != originPort)
+        {
+            return false;
+        }
+
+        if (allowedHostPattern.StartsWith("*.", StringComparison.Ordinal))
+        {
+            var domainSuffix = allowedHostPattern[1..];
+            return originHost.EndsWith(domainSuffix, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return string.Equals(originHost, allowedHostPattern, StringComparison.OrdinalIgnoreCase);
     }
 
 

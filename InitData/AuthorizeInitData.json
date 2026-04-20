@@ -1,0 +1,972 @@
+{
+  "AdminUser": {
+    "Name": "管理员",
+    "UserName": "admin",
+    "Phone": "10086",
+    "Email": null,
+    "Password": "123456"
+  },
+  "AdminRole": {
+    "Code": "admin",
+    "Name": "管理员",
+    "Remarks": null
+  },
+  "Functions": [
+    {
+      "Name": "系统设置",
+      "Sign": "systemset",
+      "Remarks": null,
+      "ParentSign": null,
+      "Type": 1
+    },
+    {
+      "Name": "用户管理",
+      "Sign": "user",
+      "Remarks": null,
+      "ParentSign": "systemset",
+      "Type": 1
+    },
+    {
+      "Name": "用户管理-添加",
+      "Sign": "user-add",
+      "Remarks": null,
+      "ParentSign": "user",
+      "Type": 2
+    },
+    {
+      "Name": "用户管理-删除",
+      "Sign": "user-delete",
+      "Remarks": null,
+      "ParentSign": "user",
+      "Type": 2
+    },
+    {
+      "Name": "用户管理-编辑",
+      "Sign": "user-edit",
+      "Remarks": null,
+      "ParentSign": "user",
+      "Type": 2
+    },
+    {
+      "Name": "角色管理",
+      "Sign": "role",
+      "Remarks": null,
+      "ParentSign": "systemset",
+      "Type": 1
+    },
+    {
+      "Name": "角色管理-添加",
+      "Sign": "role-add",
+      "Remarks": null,
+      "ParentSign": "role",
+      "Type": 2
+    },
+    {
+      "Name": "角色管理-编辑",
+      "Sign": "role-edit",
+      "Remarks": null,
+      "ParentSign": "role",
+      "Type": 2
+    },
+    {
+      "Name": "角色管理-删除",
+      "Sign": "role-delete",
+      "Remarks": null,
+      "ParentSign": "role",
+      "Type": 2
+    },
+    {
+      "Name": "友链管理",
+      "Sign": "link",
+      "Remarks": null,
+      "ParentSign": "systemset",
+      "Type": 1
+    },
+    {
+      "Name": "友链管理-添加",
+      "Sign": "link-add",
+      "Remarks": null,
+      "ParentSign": "link",
+      "Type": 2
+    },
+    {
+      "Name": "友链管理-编辑",
+      "Sign": "link-edit",
+      "Remarks": null,
+      "ParentSign": "link",
+      "Type": 2
+    },
+    {
+      "Name": "友链管理-删除",
+      "Sign": "link-delete",
+      "Remarks": null,
+      "ParentSign": "link",
+      "Type": 2
+    },
+    {
+      "Name": "信息维护",
+      "Sign": "info",
+      "Remarks": null,
+      "ParentSign": "systemset",
+      "Type": 1
+    },
+    {
+      "Name": "资讯管理",
+      "Sign": "information",
+      "Remarks": null,
+      "ParentSign": null,
+      "Type": 1
+    },
+    {
+      "Name": "文章管理",
+      "Sign": "article",
+      "Remarks": null,
+      "ParentSign": "information",
+      "Type": 1
+    },
+    {
+      "Name": "文章管理-添加",
+      "Sign": "article-add",
+      "Remarks": null,
+      "ParentSign": "article",
+      "Type": 2
+    },
+    {
+      "Name": "文章管理-删除",
+      "Sign": "article-delete",
+      "Remarks": null,
+      "ParentSign": "article",
+      "Type": 2
+    },
+    {
+      "Name": "文章管理-编辑",
+      "Sign": "article-edit",
+      "Remarks": null,
+      "ParentSign": "article",
+      "Type": 2
+    },
+    {
+      "Name": "栏目管理",
+      "Sign": "category",
+      "Remarks": null,
+      "ParentSign": "information",
+      "Type": 1
+    },
+    {
+      "Name": "栏目管理-添加",
+      "Sign": "category-add",
+      "Remarks": null,
+      "ParentSign": "category",
+      "Type": 2
+    },
+    {
+      "Name": "栏目管理-删除",
+      "Sign": "category-delete",
+      "Remarks": null,
+      "ParentSign": "category",
+      "Type": 2
+    },
+    {
+      "Name": "栏目管理-编辑",
+      "Sign": "category-edit",
+      "Remarks": null,
+      "ParentSign": "category",
+      "Type": 2
+    },
+    {
+      "Name": "用户管理-权限范围",
+      "Sign": "user-function",
+      "Remarks": null,
+      "ParentSign": "user",
+      "Type": 2
+    },
+    {
+      "Name": "角色管理-权限范围",
+      "Sign": "role-function",
+      "Remarks": null,
+      "ParentSign": "role",
+      "Type": 2
+    },
+    {
+      "Name": "运维管理",
+      "Sign": "operations",
+      "Remarks": null,
+      "ParentSign": null,
+      "Type": 1
+    },
+    {
+      "Name": "任务配置",
+      "Sign": "tasksetting",
+      "Remarks": null,
+      "ParentSign": "operations",
+      "Type": 2
+    },
+    {
+      "Name": "队列任务",
+      "Sign": "queuetask",
+      "Remarks": null,
+      "ParentSign": "operations",
+      "Type": 2
+    },
+    {
+      "Name": "日志",
+      "Sign": "log",
+      "Remarks": null,
+      "ParentSign": "operations",
+      "Type": 2
+    },
+    {
+      "Name": "LLM应用",
+      "Sign": "llmapp",
+      "Remarks": null,
+      "ParentSign": "operations",
+      "Type": 2
+    }
+  ],
+  "FunctionRoutes": [
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/GetCategoryList",
+      "Remarks": "获取栏目列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/GetCategorySelectList",
+      "Remarks": "获取栏目树形列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/GetCategory",
+      "Remarks": "通过栏目Id 获取栏目信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/CreateCategory",
+      "Remarks": "创建栏目",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/UpdateCategory",
+      "Remarks": "更新栏目信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/DeleteCategory",
+      "Remarks": "删除栏目",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/GetArticleList",
+      "Remarks": "获取文章列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/GetArticle",
+      "Remarks": "通过文章ID 获取文章信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/CreateArticle",
+      "Remarks": "创建文章",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/UpdateArticle",
+      "Remarks": "更新文章信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Article/DeleteArticle",
+      "Remarks": "删除文章",
+      "FunctionSign": "article-delete"
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Authorize/GetFunctionList",
+      "Remarks": "获取授权功能列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "File/UploadFile",
+      "Remarks": "单文件上传接口",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "File/GetFileUrl",
+      "Remarks": "通过文件ID获取文件静态访问路径",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "File/DeleteFile",
+      "Remarks": "通过文件ID删除文件方法",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Link/GetLinkList",
+      "Remarks": "获取友情链接列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Link/GetLink",
+      "Remarks": "获取友情链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Link/CreateLink",
+      "Remarks": "创建友情链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Link/UpdateLink",
+      "Remarks": "更新友情链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Link/DeleteLink",
+      "Remarks": "删除友情链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Role/GetRoleList",
+      "Remarks": "获取角色列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Role/GetRole",
+      "Remarks": "通过ID获取角色信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Role/CreateRole",
+      "Remarks": "创建角色",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Role/UpdateRole",
+      "Remarks": "编辑角色",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Role/DeleteRole",
+      "Remarks": "删除角色",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Role/GetRoleFunction",
+      "Remarks": "获取某个角色的功能权限",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Role/SetRoleFunction",
+      "Remarks": "设置角色的功能",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Role/GetRoleKV",
+      "Remarks": "获取角色键值对",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Site/GetSite",
+      "Remarks": "获取站点信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Site/EditSite",
+      "Remarks": "编辑站点信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Site/GetServerInfo",
+      "Remarks": "获取服务器信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Ueditor/ProcessRequest",
+      "Remarks": null,
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/GetUserList",
+      "Remarks": "获取用户列表",
+      "FunctionSign": "user"
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/GetUser",
+      "Remarks": "通过 UserId 获取用户信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/CreateUser",
+      "Remarks": "创建用户",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/UpdateUser",
+      "Remarks": "更新用户信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/DeleteUser",
+      "Remarks": "删除用户",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/GetUserFunction",
+      "Remarks": "获取某个用户的功能权限",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/SetUserFunction",
+      "Remarks": "设置用户的功能",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/GetUserRoleList",
+      "Remarks": "获取用户角色列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "User/SetUserRole",
+      "Remarks": "设置用户角色",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Authorize/GetFunctionList",
+      "Remarks": "获取当前用户可访问的功能列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/GetUserList",
+      "Remarks": "获取用户列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/GetUser",
+      "Remarks": "获取单个用户信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/CreateUser",
+      "Remarks": "创建用户",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/UpdateUser",
+      "Remarks": "更新用户信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/DeleteUser",
+      "Remarks": "删除用户",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/GetUserRoleList",
+      "Remarks": "获取用户角色分配列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/SetUserRole",
+      "Remarks": "设置用户角色分配",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/GetUserFunction",
+      "Remarks": "获取用户功能分配树",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/User/SetUserFunction",
+      "Remarks": "设置用户功能分配",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Role/GetRoleList",
+      "Remarks": "获取角色列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Role/GetRole",
+      "Remarks": "获取单个角色信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Role/CreateRole",
+      "Remarks": "创建角色",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Role/UpdateRole",
+      "Remarks": "更新角色",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Role/DeleteRole",
+      "Remarks": "删除角色",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Role/GetRoleFunction",
+      "Remarks": "获取角色功能树",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Role/SetRoleFunction",
+      "Remarks": "设置角色功能勾选状态",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Role/GetRoleSelect",
+      "Remarks": "获取角色下拉列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/GetCategoryList",
+      "Remarks": "获取栏目列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/GetCategorySelectList",
+      "Remarks": "获取栏目树形选择列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/GetCategory",
+      "Remarks": "获取单个栏目详情",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/CreateCategory",
+      "Remarks": "创建栏目",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/UpdateCategory",
+      "Remarks": "更新栏目",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/DeleteCategory",
+      "Remarks": "删除栏目",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/GetArticleList",
+      "Remarks": "获取文章列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/GetArticle",
+      "Remarks": "获取单篇文章详情",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/CreateArticle",
+      "Remarks": "创建文章",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/UpdateArticle",
+      "Remarks": "更新文章",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Article/DeleteArticle",
+      "Remarks": "删除文章",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/File/UploadFile",
+      "Remarks": "上传文件",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/File/GetFileUrl",
+      "Remarks": "获取文件访问地址",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/File/GetFile",
+      "Remarks": "读取受保护文件",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/File/GetImage",
+      "Remarks": "按尺寸读取图片",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/File/DeleteFile",
+      "Remarks": "删除文件",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Site/GetServerInfo",
+      "Remarks": "获取服务器信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Site/GetSite",
+      "Remarks": "获取站点信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Authorize/GetFunctionList",
+      "Remarks": "获取当前用户可访问的功能列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Authorize/UpdatePasswordBySMS",
+      "Remarks": "通过短信验证码修改密码",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Authorize/UpdatePasswordByOldPassword",
+      "Remarks": "通过旧密码修改密码",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Authorize/UpdateRoute",
+      "Remarks": "同步当前宿主权限路由",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/User/GetUser",
+      "Remarks": "获取用户信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/User/EditUserPhoneBySMS",
+      "Remarks": "通过短信验证码修改当前用户手机号",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/User/GetUserProfile",
+      "Remarks": "获取当前用户资料",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/User/UpdateUserProfile",
+      "Remarks": "更新当前用户资料",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/File/UploadFile",
+      "Remarks": "上传文件",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/File/RemoteUploadFile",
+      "Remarks": "远程上传文件",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/File/GetFileList",
+      "Remarks": "获取文件列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/File/GetFileUrl",
+      "Remarks": "获取文件访问地址",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/File/GetFile",
+      "Remarks": "读取受保护文件",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/File/GetImage",
+      "Remarks": "按尺寸读取图片",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/File/DeleteFile",
+      "Remarks": "删除文件",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateAliPayPC",
+      "Remarks": "创建支付宝 PC 支付地址",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateAliPayMiniApp",
+      "Remarks": "创建支付宝小程序支付交易号",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateAliPayH5",
+      "Remarks": "创建支付宝 H5 支付地址",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateWxPayJsapi",
+      "Remarks": "创建微信支付 JSAPI 预支付参数",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateWeiXinPayJSAPI",
+      "Remarks": "创建微信支付 JSAPI 预支付参数 兼容路由",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateWxPayApp",
+      "Remarks": "创建微信支付 App 预支付参数",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateWeiXinPayApp",
+      "Remarks": "创建微信支付 App 预支付参数 兼容路由",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateWxPayH5",
+      "Remarks": "创建微信支付 H5 支付链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateWeiXinPayH5",
+      "Remarks": "创建微信支付 H5 支付链接 兼容路由",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateWxPayPc",
+      "Remarks": "创建微信支付 PC 扫码支付链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "client_webapi",
+      "Route": "/Pay/CreateWeiXinPayPC",
+      "Remarks": "创建微信支付 PC 扫码支付链接 兼容路由",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Authorize/UpdateRoute",
+      "Remarks": "更新路由信息表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/GetTaskSettingList",
+      "Remarks": "获取任务配置列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/UpdateTaskSetting",
+      "Remarks": "更新任务配置",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/GetArgsScheduleTaskNameList",
+      "Remarks": "获取支持参数的定时任务名称列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/CreateScheduleTask",
+      "Remarks": "创建带参定时任务",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/GetQueueTaskList",
+      "Remarks": "获取队列任务列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/RetryQueueTask",
+      "Remarks": "重试队列任务",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/GetLogList",
+      "Remarks": "获取日志列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Site/GetLinkList",
+      "Remarks": "获取友情链接列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Site/GetLink",
+      "Remarks": "获取单个友情链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Site/CreateLink",
+      "Remarks": "创建友情链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Site/UpdateLink",
+      "Remarks": "更新友情链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Site/DeleteLink",
+      "Remarks": "删除友情链接",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Site/EditSite",
+      "Remarks": "编辑站点信息",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/GetLlmAppList",
+      "Remarks": "获取 LLM 应用配置列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/CreateLlmApp",
+      "Remarks": "创建 LLM 应用配置",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/UpdateLlmApp",
+      "Remarks": "更新 LLM 应用配置",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/DeleteLlmApp",
+      "Remarks": "删除 LLM 应用配置",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/TestLlmApp",
+      "Remarks": "测试 LLM 应用配置",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Operations/GetLlmConversationList",
+      "Remarks": "获取 LLM 对话记录列表",
+      "FunctionSign": null
+    },
+    {
+      "Module": "admin_webapi",
+      "Route": "/Ueditor/ProcessRequest",
+      "Remarks": "处理 UEditor 请求",
+      "FunctionSign": null
+    }
+  ]
+}

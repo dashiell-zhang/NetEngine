@@ -43,6 +43,12 @@
 		<Folder Include="wwwroot\" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="..\..\InitData\AuthorizeInitData.json" Link="InitData\AuthorizeInitData.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
 	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">
 		<Message Text="CleanObjRelease" Importance="high" />
 		<RemoveDir Directories="$(BaseIntermediateOutputPath)\Release\" />

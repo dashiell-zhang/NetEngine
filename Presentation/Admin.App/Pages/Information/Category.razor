@@ -15,7 +15,7 @@
     <ColumnDefinitions>
 
         <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.Remarks" Title="备注"></PropertyColumn>
+        <PropertyColumn Property="c => c.Remark" Title="备注"></PropertyColumn>
         <PropertyColumn Property="c => c.ParentName" Title="父级栏目"></PropertyColumn>
         <PropertyColumn Property="c => c.Sort" Title="排序"></PropertyColumn>
         <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
@@ -74,7 +74,7 @@
 
             <FormItem>
                 <Text>备注</Text>
-                <Input Placeholder=" 请输入备注" @bind-Value="@context.Remarks" />
+                <Input Placeholder=" 请输入备注" @bind-Value="@context.Remark" />
             </FormItem>
 
 
@@ -204,7 +204,7 @@
         {
             categoryId = category.Id;
             editCategory.Name = category.Name;
-            editCategory.Remarks = category.Remarks;
+            editCategory.Remark = category.Remark;
             editCategory.Sort = category.Sort;
 
             if (category.ParentId == null)

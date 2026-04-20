@@ -35,7 +35,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
                 Id = t.Id,
                 Code = t.Code,
                 Name = t.Name,
-                Remarks = t.Remarks,
+                Remark = t.Remark,
                 CreateTime = t.CreateTime
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
         }
@@ -56,7 +56,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
             Id = t.Id,
             Code = t.Code,
             Name = t.Name,
-            Remarks = t.Remarks,
+            Remark = t.Remark,
             CreateTime = t.CreateTime
         }).FirstOrDefaultAsync();
 
@@ -84,7 +84,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
                         Id = idService.GetId(),
                         Code = role.Code,
                         Name = role.Name,
-                        Remarks = role.Remarks
+                        Remark = role.Remark
                     };
 
                     db.Role.Add(dbRole);
@@ -122,7 +122,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
                     {
                         dbRole.Code = role.Code;
                         dbRole.Name = role.Name;
-                        dbRole.Remarks = role.Remarks;
+                        dbRole.Remark = role.Remark;
 
                         await db.SaveChangesAsync();
 

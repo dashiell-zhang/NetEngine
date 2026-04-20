@@ -16,7 +16,7 @@
     <ColumnDefinitions>
         <PropertyColumn Property="c => c.Code" Title="编码"></PropertyColumn>
         <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.Remarks" Title="备注"></PropertyColumn>
+        <PropertyColumn Property="c => c.Remark" Title="备注"></PropertyColumn>
         <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
         <ActionColumn Title="操作">
             <Space>
@@ -78,7 +78,7 @@
 
             <FormItem>
                 <Text>备注</Text>
-                <Input Placeholder="请输入备注" @bind-Value="@context.Remarks" />
+                <Input Placeholder="请输入备注" @bind-Value="@context.Remark" />
             </FormItem>
 
             <Row Gutter="24">
@@ -186,7 +186,7 @@
             roleId = role.Id;
             editRole.Code = role.Code;
             editRole.Name = role.Name;
-            editRole.Remarks = role.Remarks;
+            editRole.Remark = role.Remark;
         }
 
 

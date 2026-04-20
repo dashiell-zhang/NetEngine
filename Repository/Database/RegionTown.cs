@@ -3,14 +3,16 @@ using Repository.Bases;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database;
+
+/// <summary>
+/// 街道信息表
+/// </summary>
 [Index(nameof(Town))]
 public class RegionTown : CD
 {
 
-
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public new int Id { get; set; }
-
 
 
     /// <summary>
@@ -19,12 +21,10 @@ public class RegionTown : CD
     public string Town { get; set; }
 
 
-
     /// <summary>
     /// 所属区域ID
     /// </summary>
     public int AreaId { get; set; }
     public virtual RegionArea Area { get; set; }
-
 
 }

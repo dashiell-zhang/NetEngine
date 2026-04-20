@@ -385,7 +385,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
         {
             Id = t.Id,
             Name = t.Name,
-            Remarks = t.Remarks,
+            Remark = t.Remark,
             IsCheck = db.UserRole.Where(r => r.RoleId == t.Id && r.UserId == userId).FirstOrDefault() != null
         }).ToListAsync();
 

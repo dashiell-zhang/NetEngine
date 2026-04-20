@@ -16,7 +16,7 @@
         <PropertyColumn Property="c => c.Name" Title="任务名称"></PropertyColumn>
         <PropertyColumn Property="c => c.IsEnable" Title="启用"></PropertyColumn>
         <PropertyColumn Property="c => c.Cron" Title="Cron"></PropertyColumn>
-        <PropertyColumn Property="c => c.Remarks" Title="备注"></PropertyColumn>
+        <PropertyColumn Property="c => c.Remark" Title="备注"></PropertyColumn>
         <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
         <ActionColumn Title="操作">
             <Space>
@@ -68,7 +68,7 @@
 
             <FormItem>
                 <Text>备注</Text>
-                <Input Placeholder="请输入备注" @bind-Value="@editTaskSetting.Remarks" />
+                <Input Placeholder="请输入备注" @bind-Value="@editTaskSetting.Remark" />
             </FormItem>
 
             <Row Gutter="24">
@@ -118,7 +118,7 @@
 
             <FormItem>
                 <Text>备注</Text>
-                <Input Placeholder="请输入备注" @bind-Value="@createScheduleTask.Remarks" />
+                <Input Placeholder="请输入备注" @bind-Value="@createScheduleTask.Remark" />
             </FormItem>
 
             <Row Gutter="24">
@@ -217,7 +217,7 @@
             Cron = taskSetting.Cron,
             Semaphore = taskSetting.Semaphore,
             Parameter = taskSetting.Parameter,
-            Remarks = taskSetting.Remarks
+            Remark = taskSetting.Remark
         };
 
         await Task.Delay(200);

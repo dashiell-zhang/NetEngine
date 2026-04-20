@@ -123,11 +123,11 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
         {
             var info = functionRoutes.Where(t => t.Route == item.Route).FirstOrDefault();
 
-            string? remarks = remarksDict.Where(a => a.Key == item.Name).Select(a => a.Value).FirstOrDefault();
+            string? remark = remarksDict.Where(a => a.Key == item.Name).Select(a => a.Value).FirstOrDefault();
 
             if (info != null)
             {
-                info.Remarks = remarks;
+                info.Remark = remark;
             }
             else
             {
@@ -136,7 +136,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
                     Id = idService.GetId(),
                     Module = projectName,
                     Route = item.Route!,
-                    Remarks = remarks
+                    Remark = remark
                 };
 
                 db.FunctionRoute.Add(functionRoute);
@@ -258,7 +258,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
 
         role.Code = adminRole.Code;
         role.Name = adminRole.Name;
-        role.Remarks = adminRole.Remarks;
+        role.Remark = adminRole.Remark;
         role.DeleteTime = null;
 
         await db.SaveChangesAsync();
@@ -292,7 +292,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
 
             function.Name = item.Name;
             function.Sign = item.Sign;
-            function.Remarks = item.Remarks;
+            function.Remark = item.Remark;
             function.Type = (FunctionType)item.Type;
             function.DeleteTime = null;
         }
@@ -342,7 +342,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
             functionRoute.FunctionId = item.FunctionSign == null ? null : functionDict[item.FunctionSign].Id;
             functionRoute.Module = item.Module;
             functionRoute.Route = item.Route;
-            functionRoute.Remarks = item.Remarks;
+            functionRoute.Remark = item.Remark;
             functionRoute.DeleteTime = null;
         }
 
@@ -463,7 +463,7 @@ public class AdminRoleSeedItem
 
     public string Name { get; set; } = string.Empty;
 
-    public string? Remarks { get; set; }
+    public string? Remark { get; set; }
 }
 
 
@@ -473,7 +473,7 @@ public class FunctionSeedItem
 
     public string Sign { get; set; } = string.Empty;
 
-    public string? Remarks { get; set; }
+    public string? Remark { get; set; }
 
     public string? ParentSign { get; set; }
 
@@ -487,7 +487,7 @@ public class FunctionRouteSeedItem
 
     public string Route { get; set; } = string.Empty;
 
-    public string? Remarks { get; set; }
+    public string? Remark { get; set; }
 
     public string? FunctionSign { get; set; }
 }

@@ -23,7 +23,7 @@ public class RoleDto
     /// <summary>
     /// 备注信息
     /// </summary>
-    public string? Remarks { get; set; }
+    public string? Remark { get; set; }
 
 
     /// <summary>

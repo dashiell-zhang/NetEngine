@@ -45,7 +45,7 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
                 Semaphore = t.Semaphore,
                 Cron = t.Cron,
                 IsEnable = t.IsEnable,
-                Remarks = t.Remarks,
+                Remark = t.Remark,
                 CreateTime = t.CreateTime,
                 UpdateTime = t.UpdateTime
             }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
@@ -71,7 +71,7 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
         taskSetting.Semaphore = updateTaskSetting.Semaphore;
         taskSetting.Cron = updateTaskSetting.Cron;
         taskSetting.IsEnable = updateTaskSetting.IsEnable;
-        taskSetting.Remarks = updateTaskSetting.Remarks;
+        taskSetting.Remark = updateTaskSetting.Remark;
         taskSetting.UpdateUserId = userContext.UserId;
 
         await db.SaveChangesAsync();
@@ -125,7 +125,7 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
             Parameter = createTaskSetting.Parameter,
             Cron = createTaskSetting.Cron,
             IsEnable = createTaskSetting.IsEnable,
-            Remarks = createTaskSetting.Remarks,
+            Remark = createTaskSetting.Remark,
             CreateUserId = userContext.UserId
         };
 

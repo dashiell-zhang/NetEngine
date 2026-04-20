@@ -36,7 +36,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
             {
                 Id = t.Id,
                 Name = t.Name,
-                Remarks = t.Remarks,
+                Remark = t.Remark,
                 Sort = t.Sort,
                 ParentId = t.ParentId,
                 ParentName = t.Parent!.Name,
@@ -81,7 +81,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
         {
             Id = t.Id,
             Name = t.Name,
-            Remarks = t.Remarks,
+            Remark = t.Remark,
             Sort = t.Sort,
             ParentId = t.ParentId,
             ParentName = t.Parent!.Name,
@@ -105,7 +105,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
             CreateUserId = userContext.UserId,
             Name = createCategory.Name,
             ParentId = createCategory.ParentId,
-            Remarks = createCategory.Remarks,
+            Remark = createCategory.Remark,
             Sort = createCategory.Sort
         };
 
@@ -131,7 +131,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
         {
             category.Name = updateCategory.Name;
             category.ParentId = updateCategory.ParentId;
-            category.Remarks = updateCategory.Remarks;
+            category.Remark = updateCategory.Remark;
             category.Sort = updateCategory.Sort;
 
             await db.SaveChangesAsync();

@@ -33,5 +33,5 @@ public class Link : CD_User
     /// <summary>
     /// 备注
     /// </summary>
-    public string? Remarks { get; set; }
+    public string? Remark { get; set; }
 }

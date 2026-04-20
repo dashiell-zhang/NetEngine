@@ -27,7 +27,7 @@ public class EditCategoryDto
     /// <summary>
     /// 备注
     /// </summary>
-    public string? Remarks { get; set; }
+    public string? Remark { get; set; }
 
 
 

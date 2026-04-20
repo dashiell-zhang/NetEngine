@@ -191,11 +191,11 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
         {
             var info = functionRoutes.Where(t => t.Route == item.Route).FirstOrDefault();
 
-            string? remarks = remarksDict.Where(a => a.Key == item.Name).Select(a => a.Value).FirstOrDefault();
+            string? remark = remarksDict.Where(a => a.Key == item.Name).Select(a => a.Value).FirstOrDefault();
 
             if (info != null)
             {
-                info.Remarks = remarks;
+                info.Remark = remark;
             }
             else
             {
@@ -204,7 +204,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
                     Id = idService.GetId(),
                     Module = projectName,
                     Route = item.Route!,
-                    Remarks = remarks
+                    Remark = remark
                 };
 
                 db.FunctionRoute.Add(functionRoute);

@@ -392,15 +392,9 @@
     {
         saveLoading = true;
 
-        HttpResponseMessage httpResponse;
-        if (editId == null)
-        {
-            httpResponse = await Http.PostAsJsonAsync("Operations/CreateLlmApp", editLlmApp, JsonHelper.SerializeOpts);
-        }
-        else
-        {
-            httpResponse = await Http.PostAsJsonAsync("Operations/UpdateLlmApp?id=" + editId.Value, editLlmApp, JsonHelper.SerializeOpts);
-        }
+        using HttpResponseMessage httpResponse = editId == null
+            ? await Http.PostAsJsonAsync("Operations/CreateLlmApp", editLlmApp, JsonHelper.SerializeOpts)
+            : await Http.PostAsJsonAsync("Operations/UpdateLlmApp?id=" + editId.Value, editLlmApp, JsonHelper.SerializeOpts);
 
         if (httpResponse.IsSuccessStatusCode)
         {

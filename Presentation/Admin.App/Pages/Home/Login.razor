@@ -55,7 +55,13 @@
         {
             JsonWebToken jsonWebToken = new(authorization);
 
-            var expTimeL = Convert.ToInt64(jsonWebToken.GetClaim("exp").Value);
+            var expClaim = jsonWebToken.GetClaim("exp");
+            if (expClaim == null)
+            {
+                return;
+            }
+
+            var expTimeL = Convert.ToInt64(expClaim.Value);
 
             var expTime = DateTimeOffset.FromUnixTimeSeconds(expTimeL);
 

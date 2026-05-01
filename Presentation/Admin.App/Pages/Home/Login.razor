@@ -85,19 +85,30 @@
     private async Task LoginActionAsync()
     {
         submitLoading = true;
-
-        using var httpResponse = await Http.PostAsJsonAsync<GetTokenDto>("Authorize/GetToken", loginData, JsonHelper.SerializeOpts);
-
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            var token = await httpResponse.Content.ReadAsStringAsync();
-            LocalStorage.SetItemAsString("Authorization", token);
-            NavigationManager.NavigateTo("", true);
+            using var httpResponse = await Http.PostAsJsonAsync<GetTokenDto>("Authorize/GetToken", loginData, JsonHelper.SerializeOpts);
+
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                var token = await httpResponse.Content.ReadAsStringAsync();
+                LocalStorage.SetItemAsString("Authorization", token);
+                NavigationManager.NavigateTo("", true);
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("登录失败");
+            }
         }
-
-        submitLoading = false;
-
-        StateHasChanged();
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
+        }
+        finally
+        {
+            submitLoading = false;
+            StateHasChanged();
+        }
     }
 
 }

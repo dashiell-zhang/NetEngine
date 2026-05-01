@@ -196,6 +196,18 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
 
         if (category != null)
         {
+            var isHaveChild = await db.Category.Where(t => t.ParentId == id).AnyAsync();
+            if (isHaveChild)
+            {
+                throw new CustomException("当前栏目下存在子栏目，无法删除");
+            }
+
+            var isHaveArticle = await db.Article.Where(t => t.CategoryId == id).AnyAsync();
+            if (isHaveArticle)
+            {
+                throw new CustomException("当前栏目下存在文章，无法删除");
+            }
+
             category.DeleteTime = DateTimeOffset.UtcNow;
             category.DeleteUserId = userContext.UserId;
 

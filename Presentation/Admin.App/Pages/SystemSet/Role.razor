@@ -98,14 +98,14 @@
     <Table DataSource="roleFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
 
         <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(context.Id, isCheck)">@context.Name</Checkbox>
+                <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(isCheck, context)">@context.Name</Checkbox>
         </Column>
 
         <Column Title="功能操作" TData="string">
             <Row>
                 @foreach (var item in context.FunctionList)
                 {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(item.Id, isCheck)">@item.Name</Checkbox>
+                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(isCheck, item)">@item.Name</Checkbox>
                 }
             </Row>
         </Column>
@@ -280,12 +280,12 @@
     }
 
 
-    async Task SetRoleFunctionAsync(long functionId, bool isCheck)
+    async Task SetRoleFunctionAsync(bool isCheck, RoleFunctionDto roleFunction)
     {
         SetRoleFunctionDto setRoleFunction = new()
         {
             RoleId = roleId,
-            FunctionId = functionId,
+            FunctionId = roleFunction.Id,
             IsCheck = isCheck
         };
 
@@ -298,13 +298,17 @@
             }
             else if ((int)httpResponse.StatusCode != 400)
             {
+                roleFunction.IsCheck = !isCheck;
                 Message.Error("设置失败");
             }
         }
         catch (HttpRequestException)
         {
+            roleFunction.IsCheck = !isCheck;
             Message.Error("请求失败，请稍后重试");
         }
+
+        StateHasChanged();
     }
 
 

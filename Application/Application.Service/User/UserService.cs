@@ -351,13 +351,8 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
             {
                 if (functionAuthorize.RoleId == null)
                 {
-                    var userFunctionList = await db.FunctionAuthorize.Where(t => t.UserId == setUserFunction.UserId).ToListAsync();
-
-                    foreach (var userFunction in userFunctionList)
-                    {
-                        userFunction.DeleteTime = DateTimeOffset.UtcNow;
-                        userFunction.DeleteUserId = userContext.UserId;
-                    }
+                    functionAuthorize.DeleteTime = DateTimeOffset.UtcNow;
+                    functionAuthorize.DeleteUserId = userContext.UserId;
 
                     await db.SaveChangesAsync();
 

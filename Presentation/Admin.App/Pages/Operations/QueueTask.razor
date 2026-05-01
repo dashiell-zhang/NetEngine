@@ -53,7 +53,7 @@
                     </SpaceItem>
                 }
 
-                @if (context.Count > 0)
+                @if (context.SuccessTime == null && context.Count > 0)
                 {
                     <SpaceItem>
                         <Popconfirm Title="确认要重试吗？将重置执行次数/时间并重新触发"

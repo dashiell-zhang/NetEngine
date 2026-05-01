@@ -390,6 +390,36 @@
 
     async Task SaveLlmAppAsync()
     {
+        if (string.IsNullOrWhiteSpace(editLlmApp.Code))
+        {
+            Message.Error("Code 不可以空");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(editLlmApp.Name))
+        {
+            Message.Error("名称不可以空");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(editLlmApp.Provider))
+        {
+            Message.Error("供应商不可以空");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(editLlmApp.Model))
+        {
+            Message.Error("模型不可以空");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(editLlmApp.PromptTemplate))
+        {
+            Message.Error("PromptTemplate 不可以空");
+            return;
+        }
+
         saveLoading = true;
 
         using HttpResponseMessage httpResponse = editId == null

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Application.Model.LLM.LlmApp;
 
 /// <summary>
@@ -9,25 +11,29 @@ public class EditLlmAppDto
     /// <summary>
     /// 应用标记
     /// </summary>
-    public string Code { get; set; }
+    [Required(ErrorMessage = "Code 不可以空")]
+    public string Code { get; set; } = string.Empty;
 
 
     /// <summary>
     /// 应用名称
     /// </summary>
-    public string Name { get; set; }
+    [Required(ErrorMessage = "名称不可以空")]
+    public string Name { get; set; } = string.Empty;
 
 
     /// <summary>
     /// 绑定的 LLM 供应商标识（如 DeepSeek、Qwen）
     /// </summary>
-    public string Provider { get; set; }
+    [Required(ErrorMessage = "供应商不可以空")]
+    public string Provider { get; set; } = string.Empty;
 
 
     /// <summary>
     /// 模型名称
     /// </summary>
-    public string Model { get; set; }
+    [Required(ErrorMessage = "模型不可以空")]
+    public string Model { get; set; } = string.Empty;
 
 
     /// <summary>
@@ -39,7 +45,8 @@ public class EditLlmAppDto
     /// <summary>
     /// User 提示词模板（可包含 {{Key}} 占位符）
     /// </summary>
-    public string PromptTemplate { get; set; }
+    [Required(ErrorMessage = "PromptTemplate 不可以空")]
+    public string PromptTemplate { get; set; } = string.Empty;
 
 
     /// <summary>

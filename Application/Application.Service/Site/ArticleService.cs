@@ -51,11 +51,11 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <summary>
     /// 获取栏目选择列表
     /// </summary>
-    /// <param name="id">类型Id</param>
+    /// <param name="channelId">频道栏目ID</param>
     /// <returns></returns>
-    public async Task<List<CategorySelectDto>> GetCategorySelectListAsync(long? id = null)
+    public async Task<List<CategorySelectDto>> GetCategorySelectListAsync(long? channelId = null)
     {
-        var list = await db.Category.Where(t => t.ParentId == id).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new CategorySelectDto
+        var list = await db.Category.Where(t => t.ParentId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new CategorySelectDto
         {
             Id = t.Id,
             Name = t.Name
@@ -174,11 +174,16 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<PageListDto<ArticleDto>> GetArticleListAsync(PageRequestDto request)
+    public async Task<PageListDto<ArticleDto>> GetArticleListAsync(ArticlePageRequestDto request)
     {
         PageListDto<ArticleDto> result = new();
 
         var query = db.Article.AsQueryable();
+
+        if (request.ChannelId != null)
+        {
+            query = query.Where(t => t.CategoryId == request.ChannelId.Value);
+        }
 
         result.Total = await query.CountAsync();
 

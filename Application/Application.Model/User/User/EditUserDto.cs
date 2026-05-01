@@ -45,6 +45,7 @@ public class EditUserDto
     /// <summary>
     /// 角色ID集合
     /// </summary>
-    public string[] RoleIds { get; set; }
+    [MinLength(1, ErrorMessage = "至少选择一个角色")]
+    public string[] RoleIds { get; set; } = [];
 
 }

@@ -249,6 +249,12 @@
 
     async Task SaveUserAsync()
     {
+        if (editUser.RoleIds.Length == 0)
+        {
+            Message.Error("至少选择一个角色");
+            return;
+        }
+
         saveLoading = true;
 
         if (userId == default)

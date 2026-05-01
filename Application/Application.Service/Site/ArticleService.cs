@@ -51,11 +51,22 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <summary>
     /// 获取栏目选择列表
     /// </summary>
-    /// <param name="channelId">频道栏目ID</param>
     /// <returns></returns>
-    public async Task<List<CategorySelectDto>> GetCategorySelectListAsync(long? channelId = null)
+    public Task<List<CategorySelectDto>> GetCategorySelectListAsync()
     {
-        var list = await db.Category.Where(t => t.ParentId == channelId).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new CategorySelectDto
+        return GetCategorySelectListAsync(null);
+    }
+
+
+    /// <summary>
+    /// 获取指定父级下的栏目选择列表
+    /// </summary>
+    /// <param name="parentId">父级栏目ID</param>
+    /// <returns></returns>
+    private async Task<List<CategorySelectDto>> GetCategorySelectListAsync(long? parentId)
+    {
+
+        var list = await db.Category.Where(t => t.ParentId == parentId).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new CategorySelectDto
         {
             Id = t.Id,
             Name = t.Name
@@ -67,6 +78,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
         }
 
         return list;
+
     }
 
 
@@ -134,12 +146,41 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
             category.Remark = updateCategory.Remark;
             category.Sort = updateCategory.Sort;
 
+            if (updateCategory.ParentId == categoryId || await IsDescendantCategoryAsync(updateCategory.ParentId, categoryId))
+            {
+                throw new CustomException("父级栏目不能选择自身或子栏目");
+            }
+
             await db.SaveChangesAsync();
 
             return true;
         }
 
         throw new CustomException("无效的 categoryId");
+
+    }
+
+
+    /// <summary>
+    /// 判断目标父级是否为当前栏目的子孙栏目
+    /// </summary>
+    /// <param name="targetParentId">目标父级栏目ID</param>
+    /// <param name="categoryId">当前栏目ID</param>
+    /// <returns></returns>
+    private async Task<bool> IsDescendantCategoryAsync(long? targetParentId, long categoryId)
+    {
+
+        while (targetParentId != null)
+        {
+            if (targetParentId.Value == categoryId)
+            {
+                return true;
+            }
+
+            targetParentId = await db.Category.Where(t => t.Id == targetParentId.Value).Select(t => t.ParentId).FirstOrDefaultAsync();
+        }
+
+        return false;
 
     }
 
@@ -174,16 +215,11 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<PageListDto<ArticleDto>> GetArticleListAsync(ArticlePageRequestDto request)
+    public async Task<PageListDto<ArticleDto>> GetArticleListAsync(PageRequestDto request)
     {
         PageListDto<ArticleDto> result = new();
 
         var query = db.Article.AsQueryable();
-
-        if (request.ChannelId != null)
-        {
-            query = query.Where(t => t.CategoryId == request.ChannelId.Value);
-        }
 
         result.Total = await query.CountAsync();
 

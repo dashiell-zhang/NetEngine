@@ -176,9 +176,6 @@
     bool saveLoading = false;
     List<UploadFileItem> fileList = new();
 
-    [Parameter]
-    public string? channelId { get; set; }
-
     List<TreeSelectDto>? selectCategoryList;
 
 
@@ -203,7 +200,7 @@
     {
         List<CategorySelectDto> parentKVList = new();
 
-        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectList?channelId=" + channelId, JsonHelper.DeserializeOpts);
+        var kvList = await Http.GetFromJsonAsync<List<CategorySelectDto>>("Article/GetCategorySelectList", JsonHelper.DeserializeOpts);
 
         if (kvList != null)
         {
@@ -233,7 +230,7 @@
     async Task GetArticleListAsync()
     {
         tableLoading = true;
-        var retData = await Http.GetFromJsonAsync<PageListDto<ArticleDto>>("Article/GetArticleList?channelId=" + channelId + "&page=" + page + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
+        var retData = await Http.GetFromJsonAsync<PageListDto<ArticleDto>>("Article/GetArticleList?page=" + page + "&pageSize=" + pageSize, JsonHelper.DeserializeOpts);
 
         if (retData != null)
         {

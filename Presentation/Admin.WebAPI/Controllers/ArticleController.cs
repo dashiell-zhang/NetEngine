@@ -27,10 +27,9 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <summary>
     /// 获取栏目树形列表
     /// </summary>
-    /// <param name="channelId">频道栏目ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<List<CategorySelectDto>> GetCategorySelectList(long? channelId = null) => articleService.GetCategorySelectListAsync(channelId);
+    public Task<List<CategorySelectDto>> GetCategorySelectList() => articleService.GetCategorySelectListAsync();
 
 
 
@@ -81,7 +80,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpGet]
-    public Task<PageListDto<ArticleDto>> GetArticleList([FromQuery] ArticlePageRequestDto request) => articleService.GetArticleListAsync(request);
+    public Task<PageListDto<ArticleDto>> GetArticleList([FromQuery] PageRequestDto request) => articleService.GetArticleListAsync(request);
 
 
 

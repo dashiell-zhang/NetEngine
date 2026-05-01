@@ -53,21 +53,28 @@
 
         if (!string.IsNullOrEmpty(authorization))
         {
-            JsonWebToken jsonWebToken = new(authorization);
-
-            var expClaim = jsonWebToken.GetClaim("exp");
-            if (expClaim == null)
+            try
             {
-                return;
+                JsonWebToken jsonWebToken = new(authorization);
+
+                var expClaim = jsonWebToken.GetClaim("exp");
+                if (expClaim == null)
+                {
+                    return;
+                }
+
+                var expTimeL = Convert.ToInt64(expClaim.Value);
+
+                var expTime = DateTimeOffset.FromUnixTimeSeconds(expTimeL);
+
+                if (expTime > DateTimeOffset.UtcNow)
+                {
+                    NavigationManager.NavigateTo("", true);
+                }
             }
-
-            var expTimeL = Convert.ToInt64(expClaim.Value);
-
-            var expTime = DateTimeOffset.FromUnixTimeSeconds(expTimeL);
-
-            if (expTime > DateTimeOffset.UtcNow)
+            catch
             {
-                NavigationManager.NavigateTo("", true);
+                LocalStorage.RemoveItem("Authorization");
             }
         }
     }

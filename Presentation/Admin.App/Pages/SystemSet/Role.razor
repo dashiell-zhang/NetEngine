@@ -198,36 +198,67 @@
     async Task SaveRoleAsync()
     {
         saveLoading = true;
-        if (roleId == default)
+        try
         {
-            using var httpResponse = await Http.PostAsJsonAsync<EditRoleDto>("Role/CreateRole", editRole, JsonHelper.SerializeOpts);
-            if (httpResponse.IsSuccessStatusCode)
+            if (roleId == default)
             {
-                Message.Success("添加成功");
+                using var httpResponse = await Http.PostAsJsonAsync<EditRoleDto>("Role/CreateRole", editRole, JsonHelper.SerializeOpts);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    Message.Success("添加成功");
+                    isShowEditRole = false;
+                    await GetRoleListAsync();
+                }
+                else if ((int)httpResponse.StatusCode != 400)
+                {
+                    Message.Error("添加失败");
+                }
+            }
+            else
+            {
+                using var httpResponse = await Http.PostAsJsonAsync<EditRoleDto>("Role/UpdateRole?roleId=" + roleId, editRole, JsonHelper.SerializeOpts);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    Message.Success("编辑成功");
+                    isShowEditRole = false;
+                    await GetRoleListAsync();
+                }
+                else if ((int)httpResponse.StatusCode != 400)
+                {
+                    Message.Error("编辑失败");
+                }
             }
         }
-        else
+        catch (HttpRequestException)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<EditRoleDto>("Role/UpdateRole?roleId=" + roleId, editRole, JsonHelper.SerializeOpts);
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                Message.Success("编辑成功");
-            }
+            Message.Error("请求失败，请稍后重试");
         }
-        saveLoading = false;
-
-        await GetRoleListAsync();
-        isShowEditRole = false;
+        finally
+        {
+            saveLoading = false;
+            StateHasChanged();
+        }
     }
 
 
     async Task DeleteRoleAsync(long roleId)
     {
-        using var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId);
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            await GetRoleListAsync();
-            Message.Success("删除成功");
+            using var httpResponse = await Http.DeleteAsync("Role/DeleteRole?id=" + roleId);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                await GetRoleListAsync();
+                Message.Success("删除成功");
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("删除失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
         }
     }
 
@@ -258,10 +289,21 @@
             IsCheck = isCheck
         };
 
-        using var httpResponse = await Http.PostAsJsonAsync<SetRoleFunctionDto>("Role/SetRoleFunction", setRoleFunction, JsonHelper.SerializeOpts);
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            Message.Success("设置成功");
+            using var httpResponse = await Http.PostAsJsonAsync<SetRoleFunctionDto>("Role/SetRoleFunction", setRoleFunction, JsonHelper.SerializeOpts);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                Message.Success("设置成功");
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("设置失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
         }
     }
 

@@ -93,16 +93,27 @@
     async Task SaveSiteAsync()
     {
         saveLoading = true;
-
-        using var httpResponse = await Http.PostAsJsonAsync<SiteDto>("Site/EditSite", editSite, JsonHelper.SerializeOpts);
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            Message.Success("保存成功");
+            using var httpResponse = await Http.PostAsJsonAsync<SiteDto>("Site/EditSite", editSite, JsonHelper.SerializeOpts);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                Message.Success("保存成功");
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("保存失败");
+            }
         }
-
-        saveLoading = false;
-
-        StateHasChanged();
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
+        }
+        finally
+        {
+            saveLoading = false;
+            StateHasChanged();
+        }
     }
 
 }

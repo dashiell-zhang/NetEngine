@@ -421,19 +421,32 @@
         }
 
         saveLoading = true;
-
-        using HttpResponseMessage httpResponse = editId == null
-            ? await Http.PostAsJsonAsync("Operations/CreateLlmApp", editLlmApp, JsonHelper.SerializeOpts)
-            : await Http.PostAsJsonAsync("Operations/UpdateLlmApp?id=" + editId.Value, editLlmApp, JsonHelper.SerializeOpts);
-
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            Message.Success("保存成功");
-            isShowEdit = false;
-            await GetLlmAppListAsync();
-        }
+            using HttpResponseMessage httpResponse = editId == null
+                ? await Http.PostAsJsonAsync("Operations/CreateLlmApp", editLlmApp, JsonHelper.SerializeOpts)
+                : await Http.PostAsJsonAsync("Operations/UpdateLlmApp?id=" + editId.Value, editLlmApp, JsonHelper.SerializeOpts);
 
-        saveLoading = false;
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                Message.Success("保存成功");
+                isShowEdit = false;
+                await GetLlmAppListAsync();
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("保存失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
+        }
+        finally
+        {
+            saveLoading = false;
+            StateHasChanged();
+        }
     }
 
     async Task TestCallAsync()
@@ -478,19 +491,28 @@
             Parameters = PlaceholderInfos.ToDictionary(k => k.Key, k => GetOrCreateTestParamItem(k.Key).Value, StringComparer.OrdinalIgnoreCase)
         };
 
-        using var httpResponse = await Http.PostAsJsonAsync("Operations/TestLlmApp", req, JsonHelper.SerializeOpts);
-
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            testResult = await httpResponse.Content.ReadFromJsonAsync<TestLlmAppResultDto>(JsonHelper.DeserializeOpts);
-        }
-        else
-        {
-            Message.Error("调用失败");
-        }
+            using var httpResponse = await Http.PostAsJsonAsync("Operations/TestLlmApp", req, JsonHelper.SerializeOpts);
 
-        testLoading = false;
-        StateHasChanged();
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                testResult = await httpResponse.Content.ReadFromJsonAsync<TestLlmAppResultDto>(JsonHelper.DeserializeOpts);
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("调用失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
+        }
+        finally
+        {
+            testLoading = false;
+            StateHasChanged();
+        }
     }
 
     record PlaceholderInfo(string Key, bool IsRequired)
@@ -538,12 +560,23 @@
 
     async Task DeleteLlmAppAsync(long id)
     {
-        using var httpResponse = await Http.DeleteAsync("Operations/DeleteLlmApp?id=" + id);
-
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            Message.Success("删除成功");
-            await GetLlmAppListAsync();
+            using var httpResponse = await Http.DeleteAsync("Operations/DeleteLlmApp?id=" + id);
+
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                Message.Success("删除成功");
+                await GetLlmAppListAsync();
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("删除失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
         }
     }
 }

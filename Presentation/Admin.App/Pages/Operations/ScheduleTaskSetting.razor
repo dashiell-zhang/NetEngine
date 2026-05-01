@@ -230,18 +230,30 @@
     async Task SaveTaskSettingAsync()
     {
         saveLoading = true;
-
-        using var httpResponse = await Http.PostAsJsonAsync<EditTaskSettingDto>("Operations/UpdateTaskSetting?taskSettingId=" + taskSettingId, editTaskSetting, JsonHelper.SerializeOpts);
-
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            Message.Success("编辑成功");
+            using var httpResponse = await Http.PostAsJsonAsync<EditTaskSettingDto>("Operations/UpdateTaskSetting?taskSettingId=" + taskSettingId, editTaskSetting, JsonHelper.SerializeOpts);
+
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                Message.Success("编辑成功");
+                isShowEditTaskSetting = false;
+                await GetTaskSettingListAsync();
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("编辑失败");
+            }
         }
-
-        saveLoading = false;
-
-        await GetTaskSettingListAsync();
-        isShowEditTaskSetting = false;
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
+        }
+        finally
+        {
+            saveLoading = false;
+            StateHasChanged();
+        }
     }
 
     async Task ShowCreateScheduleTaskAsync()
@@ -274,17 +286,29 @@
         }
 
         createLoading = true;
-
-        using var httpResponse = await Http.PostAsJsonAsync("Operations/CreateScheduleTask", createScheduleTask, JsonHelper.SerializeOpts);
-
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            Message.Success("新增成功");
+            using var httpResponse = await Http.PostAsJsonAsync("Operations/CreateScheduleTask", createScheduleTask, JsonHelper.SerializeOpts);
+
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                Message.Success("新增成功");
+                isShowCreateScheduleTask = false;
+                await GetTaskSettingListAsync();
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("新增失败");
+            }
         }
-
-        createLoading = false;
-
-        await GetTaskSettingListAsync();
-        isShowCreateScheduleTask = false;
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
+        }
+        finally
+        {
+            createLoading = false;
+            StateHasChanged();
+        }
     }
 }

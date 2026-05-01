@@ -191,12 +191,23 @@
 
     async Task RetryQueueTaskAsync(long id)
     {
-        using var httpResponse = await Http.PostAsync("Operations/RetryQueueTask?id=" + id, null);
-
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            Message.Success("已触发重试");
-            await GetQueueTaskListAsync();
+            using var httpResponse = await Http.PostAsync("Operations/RetryQueueTask?id=" + id, null);
+
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                Message.Success("已触发重试");
+                await GetQueueTaskListAsync();
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("重试失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
         }
     }
 

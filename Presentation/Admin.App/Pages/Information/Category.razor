@@ -236,48 +236,77 @@
     async Task SaveCategoryAsync()
     {
         saveLoading = true;
-
-        if (parentId == "0")
+        try
         {
-            editCategory.ParentId = null;
-        }
-        else
-        {
-            editCategory.ParentId = long.Parse(parentId);
-        }
-
-        if (categoryId == default)
-        {
-            using var httpResponse = await Http.PostAsJsonAsync<EditCategoryDto>("Article/CreateCategory", editCategory, JsonHelper.SerializeOpts);
-            if (httpResponse.IsSuccessStatusCode)
+            if (parentId == "0")
             {
-                Message.Success("添加成功");
+                editCategory.ParentId = null;
+            }
+            else
+            {
+                editCategory.ParentId = long.Parse(parentId);
+            }
+
+            if (categoryId == default)
+            {
+                using var httpResponse = await Http.PostAsJsonAsync<EditCategoryDto>("Article/CreateCategory", editCategory, JsonHelper.SerializeOpts);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    Message.Success("添加成功");
+                    isShowEditCategory = false;
+                    await GetCategoryListAsync();
+                }
+                else if ((int)httpResponse.StatusCode != 400)
+                {
+                    Message.Error("添加失败");
+                }
+            }
+            else
+            {
+                using var httpResponse = await Http.PostAsJsonAsync<EditCategoryDto>("Article/UpdateCategory?categoryId=" + categoryId, editCategory, JsonHelper.SerializeOpts);
+
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    Message.Success("编辑成功");
+                    isShowEditCategory = false;
+                    await GetCategoryListAsync();
+                }
+                else if ((int)httpResponse.StatusCode != 400)
+                {
+                    Message.Error("编辑失败");
+                }
             }
         }
-        else
+        catch (HttpRequestException)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<EditCategoryDto>("Article/UpdateCategory?categoryId=" + categoryId, editCategory, JsonHelper.SerializeOpts);
-
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                Message.Success("编辑成功");
-            }
+            Message.Error("请求失败，请稍后重试");
         }
-
-        saveLoading = false;
-
-        await GetCategoryListAsync();
-        isShowEditCategory = false;
+        finally
+        {
+            saveLoading = false;
+            StateHasChanged();
+        }
     }
 
 
     async Task DeleteCategoryAsync(long categoryId)
     {
-        using var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId);
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            await GetCategoryListAsync();
-            Message.Success("删除成功");
+            using var httpResponse = await Http.DeleteAsync("Article/DeleteCategory?id=" + categoryId);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                await GetCategoryListAsync();
+                Message.Success("删除成功");
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("删除失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
         }
     }
 

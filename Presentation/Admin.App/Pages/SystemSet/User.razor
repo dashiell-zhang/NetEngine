@@ -256,34 +256,50 @@
         }
 
         saveLoading = true;
-
-        if (userId == default)
+        try
         {
-            using var httpResponse = await Http.PostAsJsonAsync<EditUserDto>("User/CreateUser", editUser, JsonHelper.SerializeOpts);
-            if (httpResponse.IsSuccessStatusCode)
+            if (userId == default)
             {
-                Message.Success("添加成功");
-                isShowEditUser = false;
+                using var httpResponse = await Http.PostAsJsonAsync<EditUserDto>("User/CreateUser", editUser, JsonHelper.SerializeOpts);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    Message.Success("添加成功");
+                    isShowEditUser = false;
+                }
+                else if ((int)httpResponse.StatusCode != 400)
+                {
+                    Message.Error("添加失败");
+                }
+            }
+            else
+            {
+                using var httpResponse = await Http.PostAsJsonAsync<EditUserDto>("User/UpdateUser?userId=" + userId, editUser, JsonHelper.SerializeOpts);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    Message.Success("编辑成功");
+
+                    isShowEditUser = false;
+                }
+                else if ((int)httpResponse.StatusCode != 400)
+                {
+                    Message.Error("编辑失败");
+                }
+            }
+
+            if (!isShowEditUser)
+            {
+                await GetUserListAsync();
             }
         }
-        else
+        catch (HttpRequestException)
         {
-            using var httpResponse = await Http.PostAsJsonAsync<EditUserDto>("User/UpdateUser?userId=" + userId, editUser, JsonHelper.SerializeOpts);
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                Message.Success("编辑成功");
-
-                isShowEditUser = false;
-            }
+            Message.Error("请求失败，请稍后重试");
         }
-
-        if (!isShowEditUser)
+        finally
         {
-            await GetUserListAsync();
+            saveLoading = false;
+            StateHasChanged();
         }
-
-        saveLoading = false;
-        StateHasChanged();
     }
 
 
@@ -315,11 +331,22 @@
 
     async Task DeleteUserAsync(long userId)
     {
-        using var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId);
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            await GetUserListAsync();
-            Message.Success("删除成功");
+            using var httpResponse = await Http.DeleteAsync("User/DeleteUser?id=" + userId);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                await GetUserListAsync();
+                Message.Success("删除成功");
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("删除失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
         }
     }
 
@@ -350,14 +377,26 @@
             IsCheck = isCheck
         };
 
-        using var httpResponse = await Http.PostAsJsonAsync<SetUserFunctionDto>("User/SetUserFunction", setUserFunction, JsonHelper.SerializeOpts);
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            Message.Success("设置成功");
+            using var httpResponse = await Http.PostAsJsonAsync<SetUserFunctionDto>("User/SetUserFunction", setUserFunction, JsonHelper.SerializeOpts);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                Message.Success("设置成功");
+            }
+            else
+            {
+                userFunction.IsCheck = !isCheck;
+                if ((int)httpResponse.StatusCode != 400)
+                {
+                    Message.Error("设置失败");
+                }
+            }
         }
-        else
+        catch (HttpRequestException)
         {
             userFunction.IsCheck = !isCheck;
+            Message.Error("请求失败，请稍后重试");
         }
 
         StateHasChanged();

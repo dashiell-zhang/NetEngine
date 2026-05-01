@@ -336,41 +336,69 @@
         {
 
             saveLoading = true;
-
-            if (articleId == default)
+            try
             {
-                using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/CreateArticle?fileKey=" + fileKey, editArticle, JsonHelper.SerializeOpts);
-
-                if (httpResponse.IsSuccessStatusCode)
+                if (articleId == default)
                 {
-                    Message.Success("添加成功");
+                    using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/CreateArticle?fileKey=" + fileKey, editArticle, JsonHelper.SerializeOpts);
+
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        Message.Success("添加成功");
+                        isShowEditArticle = false;
+                        await GetArticleListAsync();
+                    }
+                    else if ((int)httpResponse.StatusCode != 400)
+                    {
+                        Message.Error("添加失败");
+                    }
+                }
+                else
+                {
+                    using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.SerializeOpts);
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        Message.Success("编辑成功");
+                        isShowEditArticle = false;
+                        await GetArticleListAsync();
+                    }
+                    else if ((int)httpResponse.StatusCode != 400)
+                    {
+                        Message.Error("编辑失败");
+                    }
                 }
             }
-            else
+            catch (HttpRequestException)
             {
-                using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.SerializeOpts);
-                if (httpResponse.IsSuccessStatusCode)
-                {
-                    Message.Success("编辑成功");
-                }
+                Message.Error("请求失败，请稍后重试");
             }
-
-            saveLoading = false;
-
-            await GetArticleListAsync();
-
-            isShowEditArticle = false;
+            finally
+            {
+                saveLoading = false;
+                StateHasChanged();
+            }
         }
     }
 
 
     async Task DeleteArticleAsync(long articleId)
     {
-        using var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId);
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            await GetArticleListAsync();
-            Message.Success("删除成功");
+            using var httpResponse = await Http.DeleteAsync("Article/DeleteArticle?id=" + articleId);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                await GetArticleListAsync();
+                Message.Success("删除成功");
+            }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("删除失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
         }
     }
 
@@ -383,18 +411,29 @@
 
     async Task<bool> DeleteImgAsync(UploadFileItem file)
     {
-        using var httpResponse = await Http.DeleteAsync("File/DeleteFile?id=" + file.Id);
-
-        if (httpResponse.IsSuccessStatusCode)
+        try
         {
-            var retValue = await httpResponse.Content.ReadAsStringAsync();
+            using var httpResponse = await Http.DeleteAsync("File/DeleteFile?id=" + file.Id);
 
-            if (Convert.ToBoolean(retValue))
+            if (httpResponse.IsSuccessStatusCode)
             {
-                fileList.Remove(file);
+                var retValue = await httpResponse.Content.ReadAsStringAsync();
 
-                return true;
+                if (Convert.ToBoolean(retValue))
+                {
+                    fileList.Remove(file);
+
+                    return true;
+                }
             }
+            else if ((int)httpResponse.StatusCode != 400)
+            {
+                Message.Error("删除图片失败");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("请求失败，请稍后重试");
         }
 
         return false;

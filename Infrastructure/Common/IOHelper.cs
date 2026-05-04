@@ -147,11 +147,16 @@ public class IOHelper
             Directory.CreateDirectory(tempPath);
         }
 
-        fileInfo.CopyTo(Path.Combine(tempPath, fileInfo.Name));
+        try
+        {
+            fileInfo.CopyTo(Path.Combine(tempPath, fileInfo.Name));
 
-        CompressDirectoryZip(tempPath, zipPath);
-
-        DeleteDirectory(tempPath);
+            CompressDirectoryZip(tempPath, zipPath);
+        }
+        finally
+        {
+            DeleteDirectory(tempPath);
+        }
     }
 
 
@@ -175,6 +180,11 @@ public class IOHelper
             directoryInfo.Create();
         }
 
+        if (File.Exists(zipPath))
+        {
+            File.Delete(zipPath);
+        }
+
         ZipFile.CreateFromDirectory(folderPath, zipPath, CompressionLevel.Optimal, false);
     }
 
@@ -193,7 +203,7 @@ public class IOHelper
             directoryInfo.Create();
         }
 
-        ZipFile.ExtractToDirectory(zipPath, folderPath);
+        ZipFile.ExtractToDirectory(zipPath, folderPath, true);
     }
 
 }

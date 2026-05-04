@@ -435,7 +435,7 @@ public partial class DataHelper
                                 if (row == null || row.Cells.Count == 0) continue;
 
                                 //跳过空行(所有列都为空的 视为空行)
-                                if (!row.Cells.Where(it => it.CellType == CellType.String).Any(it => !string.IsNullOrWhiteSpace(it.StringCellValue))) continue;
+                                if (!row.Cells.Any(it => IsCellHasValue(it))) continue;
 
                                 DataRow dataRow = dataTable.NewRow();
                                 for (int j = row.FirstCellNum; j < cellCount; ++j)
@@ -500,13 +500,25 @@ public partial class DataHelper
             while (lastCell > 0)
             {
                 var cell = row.GetCell(lastCell - 1);
-                if (cell != null && !string.IsNullOrWhiteSpace(cell.StringCellValue))
+                if (cell != null && IsCellHasValue(cell))
                 {
                     break;
                 }
                 lastCell--;
             }
             return lastCell;
+        }
+
+        //判断单元格是否包含有效值
+        static bool IsCellHasValue(ICell cell)
+        {
+            return cell.CellType switch
+            {
+                CellType.Blank => false,
+                CellType.String => !string.IsNullOrWhiteSpace(cell.StringCellValue),
+                CellType.Formula => !string.IsNullOrWhiteSpace(cell.ToString()),
+                _ => true
+            };
         }
     }
 

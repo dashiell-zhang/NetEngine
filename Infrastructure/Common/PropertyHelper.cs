@@ -88,35 +88,54 @@ public class PropertyHelper
         {
             var pi = fields[i];
 
-            string? oldValue = pi.GetValue(original)?.ToString();
-            string? newValue = pi.GetValue(after)?.ToString();
+            object? oldObject = pi.GetValue(original);
+            object? newObject = pi.GetValue(after);
+            Type propertyType = Nullable.GetUnderlyingType(pi.PropertyType) ?? pi.PropertyType;
 
-            string typename = pi.PropertyType.FullName!;
-
-            if ((typename != "System.Decimal" && oldValue != newValue) || (typename == "System.Decimal" && decimal.Parse(oldValue!) != decimal.Parse(newValue!)))
+            if (!IsValueEquals(oldObject, newObject, propertyType))
             {
 
                 retValue += pi.Name + ":";
 
-                if (typename == "System.Boolean")
+                if (propertyType == typeof(bool))
                 {
-                    retValue += (bool.Parse(oldValue!) ? "是" : "否") + " -> ";
-                    retValue += (bool.Parse(newValue!) ? "是" : "否") + "； \n";
+                    retValue += FormatBool(oldObject) + " -> ";
+                    retValue += FormatBool(newObject) + "； \n";
                 }
-                else if (typename == "System.DateTime")
+                else if (propertyType == typeof(DateTime))
                 {
-                    retValue += (oldValue != null ? DateTime.Parse(oldValue).ToString("yyyy-MM-dd") : "") + " ->";
-                    retValue += (newValue != null ? DateTime.Parse(newValue).ToString("yyyy-MM-dd") : "") + "； \n";
+                    retValue += (oldObject is DateTime oldDateTime ? oldDateTime.ToString("yyyy-MM-dd") : "") + " ->";
+                    retValue += (newObject is DateTime newDateTime ? newDateTime.ToString("yyyy-MM-dd") : "") + "； \n";
                 }
                 else
                 {
-                    retValue += (oldValue ?? "") + " -> ";
-                    retValue += (newValue ?? "") + "； \n";
+                    retValue += (oldObject?.ToString() ?? "") + " -> ";
+                    retValue += (newObject?.ToString() ?? "") + "； \n";
                 }
             }
         }
 
         return retValue;
+
+        static bool IsValueEquals(object? oldObject, object? newObject, Type propertyType)
+        {
+            if (oldObject == null || newObject == null)
+            {
+                return oldObject == null && newObject == null;
+            }
+
+            if (propertyType == typeof(decimal))
+            {
+                return Convert.ToDecimal(oldObject) == Convert.ToDecimal(newObject);
+            }
+
+            return oldObject.Equals(newObject);
+        }
+
+        static string FormatBool(object? value)
+        {
+            return value is bool boolValue ? (boolValue ? "是" : "否") : "";
+        }
     }
 
 
@@ -153,7 +172,7 @@ public class PropertyHelper
             {
                 var rightEnumerator = rightList.GetEnumerator();
 
-                var elementType = rightList.GetType().GetGenericArguments()[0];
+                var elementType = GetListElementType(rightList.GetType());
 
                 while (rightEnumerator.MoveNext())
                 {
@@ -185,7 +204,40 @@ public class PropertyHelper
         {
             if (original == null) return null;
 
-            if (type.IsValueType || type == typeof(string))
+            if (type.IsValueType || type == typeof(string) || type == typeof(object))
+            {
+                return original;
+            }
+            else if (type.IsArray)
+            {
+                var sourceArray = (Array)original;
+                var elementType = type.GetElementType() ?? typeof(object);
+                var clonedArray = Array.CreateInstance(elementType, sourceArray.Length);
+
+                for (int i = 0; i < sourceArray.Length; i++)
+                {
+                    clonedArray.SetValue(Clone(sourceArray.GetValue(i), elementType), i);
+                }
+
+                return clonedArray;
+            }
+            else if (typeof(IList).IsAssignableFrom(type))
+            {
+                if (type.IsInterface || type.IsAbstract || type.GetConstructor(Type.EmptyTypes) == null || Activator.CreateInstance(type) is not IList clonedList || original is not IList sourceList)
+                {
+                    return original;
+                }
+
+                var elementType = GetListElementType(type);
+
+                foreach (var item in sourceList)
+                {
+                    clonedList.Add(Clone(item, elementType));
+                }
+
+                return clonedList;
+            }
+            else if (type.IsInterface || type.IsAbstract || type.GetConstructor(Type.EmptyTypes) == null)
             {
                 return original;
             }
@@ -287,8 +339,8 @@ public class PropertyHelper
                 if (left is IList leftList && right is IList rightList)
                 {
 
-                    var lType = leftList.GetType().GetGenericArguments()[0];
-                    var rType = rightList.GetType().GetGenericArguments()[0];
+                    var lType = GetListElementType(leftList.GetType());
+                    var rType = GetListElementType(rightList.GetType());
 
                     var rightEnumerator = rightList.GetEnumerator();
 
@@ -375,12 +427,52 @@ public class PropertyHelper
 
         static object? Clone(object original, Type lType, Type rType)
         {
-            if (lType.IsValueType || lType == typeof(string) || rType.IsValueType || rType == typeof(string))
+            if (lType.IsValueType || lType == typeof(string) || lType == typeof(object) || rType.IsValueType || rType == typeof(string) || rType == typeof(object))
             {
                 if (lType == rType)
                 {
                     return original;
                 }
+
+                return lType.IsAssignableFrom(rType) ? original : null;
+            }
+
+            if (lType.IsArray && rType.IsArray && original is Array sourceArray)
+            {
+                var lElementType = lType.GetElementType() ?? typeof(object);
+                var rElementType = rType.GetElementType() ?? typeof(object);
+                var clonedArray = Array.CreateInstance(lElementType, sourceArray.Length);
+
+                for (int i = 0; i < sourceArray.Length; i++)
+                {
+                    var item = sourceArray.GetValue(i);
+                    clonedArray.SetValue(item == null ? null : Clone(item, lElementType, rElementType), i);
+                }
+
+                return clonedArray;
+            }
+
+            if (typeof(IList).IsAssignableFrom(lType) && typeof(IList).IsAssignableFrom(rType))
+            {
+                if (lType.IsInterface || lType.IsAbstract || lType.GetConstructor(Type.EmptyTypes) == null || Activator.CreateInstance(lType) is not IList clonedList || original is not IList sourceList)
+                {
+                    return lType.IsAssignableFrom(rType) ? original : null;
+                }
+
+                var lElementType = GetListElementType(lType);
+                var rElementType = GetListElementType(rType);
+
+                foreach (var item in sourceList)
+                {
+                    clonedList.Add(item == null ? null : Clone(item, lElementType, rElementType));
+                }
+
+                return clonedList;
+            }
+
+            if (lType.IsInterface || lType.IsAbstract || lType.GetConstructor(Type.EmptyTypes) == null)
+            {
+                return lType.IsAssignableFrom(rType) ? original : null;
             }
 
             if (lType == rType)
@@ -399,6 +491,33 @@ public class PropertyHelper
                 return clonedObject;
             }
         }
+    }
+
+
+
+    /// <summary>
+    /// 获取集合元素类型
+    /// </summary>
+    /// <param name="type">集合类型</param>
+    /// <returns></returns>
+    private static Type GetListElementType(Type type)
+    {
+        if (type.IsArray)
+        {
+            return type.GetElementType() ?? typeof(object);
+        }
+
+        if (type.IsGenericType)
+        {
+            var genericArguments = type.GetGenericArguments();
+
+            if (genericArguments.Length > 0)
+            {
+                return genericArguments[0];
+            }
+        }
+
+        return typeof(object);
     }
 
 

@@ -17,8 +17,6 @@ public static class HttpClientExtension
     {
         try
         {
-            fileName ??= System.Web.HttpUtility.UrlDecode(Path.GetFileName(url));
-
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
@@ -26,6 +24,8 @@ public static class HttpClientExtension
 
             using var httpResponse = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             httpResponse.EnsureSuccessStatusCode();
+
+            fileName = GetDownloadFileName(url, httpResponse, fileName);
 
             string filePath = Path.Combine(folderPath, fileName);
 
@@ -39,6 +39,31 @@ public static class HttpClientExtension
         {
             return null;
         }
+    }
+
+
+    /// <summary>
+    /// 获取下载文件名
+    /// </summary>
+    private static string GetDownloadFileName(string url, HttpResponseMessage httpResponse, string? fileName)
+    {
+        fileName = string.IsNullOrWhiteSpace(fileName) ? httpResponse.Content.Headers.ContentDisposition?.FileNameStar : fileName;
+        fileName = string.IsNullOrWhiteSpace(fileName) ? httpResponse.Content.Headers.ContentDisposition?.FileName : fileName;
+
+        if (string.IsNullOrWhiteSpace(fileName) && Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            fileName = System.Web.HttpUtility.UrlDecode(Path.GetFileName(uri.LocalPath));
+        }
+
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            fileName = Guid.NewGuid().ToString("N");
+        }
+
+        fileName = fileName.Trim('"');
+        fileName = Path.GetFileName(fileName);
+
+        return string.IsNullOrWhiteSpace(fileName) ? Guid.NewGuid().ToString("N") : fileName;
     }
 #endif
 

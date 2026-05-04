@@ -181,6 +181,13 @@ public static class HybridCacheExtension
             // 添加方法名
             sb.Append(methodCall.Method.Name);
 
+            if (methodCall.Method.IsGenericMethod)
+            {
+                sb.Append('<');
+                sb.Append(string.Join(',', methodCall.Method.GetGenericArguments().Select(t => t.FullName)));
+                sb.Append('>');
+            }
+
             // 添加参数
             if (methodCall.Arguments.Count > 0)
             {
@@ -225,7 +232,7 @@ public static class HybridCacheExtension
         // 成员访问表达式
         else if (argument is MemberExpression member)
         {
-            var container = GetArgumentValueObject(member.Expression!);
+            var container = member.Expression == null ? null : GetArgumentValueObject(member.Expression);
             if (member.Member is FieldInfo field)
             {
                 value = field.GetValue(container);
@@ -268,7 +275,7 @@ public static class HybridCacheExtension
 
         if (expression is MemberExpression member)
         {
-            var container = GetArgumentValueObject(member.Expression!);
+            var container = member.Expression == null ? null : GetArgumentValueObject(member.Expression);
             if (member.Member is FieldInfo field)
             {
                 return field.GetValue(container);

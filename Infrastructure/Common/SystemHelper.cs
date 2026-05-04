@@ -55,7 +55,9 @@ public class SystemHelper
         string output = "";
 
         //创建一个ProcessStartInfo对象 使用系统shell 指定命令和参数 设置标准输出
-        ProcessStartInfo psi = new("/bin/bash", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
+        ProcessStartInfo psi = new("/bin/bash") { RedirectStandardOutput = true };
+        psi.ArgumentList.Add("-c");
+        psi.ArgumentList.Add(shell);
 
         using (var proc = Process.Start(psi))
         {
@@ -86,7 +88,11 @@ public class SystemHelper
         string output = "";
 
         //创建一个ProcessStartInfo对象 使用系统shell 指定命令和参数 设置标准输出
-        ProcessStartInfo psi = new("powershell", "-c \"" + shell + "\"") { RedirectStandardOutput = true };
+        ProcessStartInfo psi = new("powershell") { RedirectStandardOutput = true };
+        psi.ArgumentList.Add("-NoProfile");
+        psi.ArgumentList.Add("-NonInteractive");
+        psi.ArgumentList.Add("-Command");
+        psi.ArgumentList.Add(shell);
 
         using (var proc = Process.Start(psi))
         {
@@ -116,7 +122,7 @@ public class SystemHelper
     /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
     public static bool WordToPDF(string wordPath, string pdfPath)
     {
-        string shell = "$File='" + wordPath + "'\n$OutFile = '" + pdfPath + "'\n$Word = New-Object -ComObject Word.Application\n$Doc =$Word.Documents.Open($File)\n$Doc.ExportAsFixedFormat($OutFile, 17)\n$Doc.Close()\n";
+        string shell = "$File='" + EscapePowerShellSingleQuotedString(wordPath) + "'\n$OutFile = '" + EscapePowerShellSingleQuotedString(pdfPath) + "'\n$Word = New-Object -ComObject Word.Application\n$Doc = $null\ntry {\n$Doc = $Word.Documents.Open($File)\n$Doc.ExportAsFixedFormat($OutFile, 17)\n}\nfinally {\nif ($Doc -ne $null) { $Doc.Close($false) | Out-Null; [System.Runtime.InteropServices.Marshal]::ReleaseComObject($Doc) | Out-Null }\n$Word.Quit() | Out-Null\n[System.Runtime.InteropServices.Marshal]::ReleaseComObject($Word) | Out-Null\n}\n";
 
         WindowsShell(shell);
 
@@ -134,7 +140,7 @@ public class SystemHelper
     /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
     public static bool ExcelToPDF(string excelPath, string pdfPath)
     {
-        string shell = "$File = '" + excelPath + "'\n$OutFile = '" + pdfPath + "'\n$Excel = New-Object -ComObject Excel.Application\n$Workbook =$Excel.Workbooks.Open($File)\n$Workbook.ExportAsFixedFormat(0,$OutFile)\n$Workbook.Close()\n";
+        string shell = "$File = '" + EscapePowerShellSingleQuotedString(excelPath) + "'\n$OutFile = '" + EscapePowerShellSingleQuotedString(pdfPath) + "'\n$Excel = New-Object -ComObject Excel.Application\n$Workbook = $null\ntry {\n$Workbook = $Excel.Workbooks.Open($File)\n$Workbook.ExportAsFixedFormat(0,$OutFile)\n}\nfinally {\nif ($Workbook -ne $null) { $Workbook.Close($false) | Out-Null; [System.Runtime.InteropServices.Marshal]::ReleaseComObject($Workbook) | Out-Null }\n$Excel.Quit() | Out-Null\n[System.Runtime.InteropServices.Marshal]::ReleaseComObject($Excel) | Out-Null\n}\n";
 
         WindowsShell(shell);
 
@@ -152,11 +158,20 @@ public class SystemHelper
     /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
     public static bool PPTToPDF(string pptPath, string pdfPath)
     {
-        string shell = "$File = '" + pptPath + "'\n$OutFile = '" + pdfPath + "'\n$PowerPoint = New-Object -ComObject PowerPoint.Application\n$Presentation =$PowerPoint.Presentations.Open($File,$True,$False,$False)\n$Presentation.SaveAs($OutFile, 32)\n$Presentation.Close()\n";
+        string shell = "$File = '" + EscapePowerShellSingleQuotedString(pptPath) + "'\n$OutFile = '" + EscapePowerShellSingleQuotedString(pdfPath) + "'\n$PowerPoint = New-Object -ComObject PowerPoint.Application\n$Presentation = $null\ntry {\n$Presentation = $PowerPoint.Presentations.Open($File,$True,$False,$False)\n$Presentation.SaveAs($OutFile, 32)\n}\nfinally {\nif ($Presentation -ne $null) { $Presentation.Close() | Out-Null; [System.Runtime.InteropServices.Marshal]::ReleaseComObject($Presentation) | Out-Null }\n$PowerPoint.Quit() | Out-Null\n[System.Runtime.InteropServices.Marshal]::ReleaseComObject($PowerPoint) | Out-Null\n}\n";
 
         WindowsShell(shell);
 
         return File.Exists(pdfPath);
+    }
+
+
+    /// <summary>
+    /// 转义 PowerShell 单引号字符串内容
+    /// </summary>
+    private static string EscapePowerShellSingleQuotedString(string value)
+    {
+        return value.Replace("'", "''");
     }
 
 }

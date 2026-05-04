@@ -257,30 +257,14 @@ public partial class StringHelper
         {
             int group = text.Length / 3;
 
-            string stars = text.Substring(group, group);
+            string pstars = new('*', group);
 
-            string pstars = "";
-
-            for (int i = 0; i < group; i++)
-            {
-                pstars += "*";
-            }
-
-            text = text.Replace(stars, pstars);
+            text = text.Remove(group, group).Insert(group, pstars);
         }
         else
         {
 
-            string stars = text.Substring(1, 1);
-
-            string pstars = "";
-
-            for (int i = 0; i < 1; i++)
-            {
-                pstars += "*";
-            }
-
-            text = text.Replace(stars, pstars);
+            text = text.Remove(1, 1).Insert(1, "*");
         }
 
         return text;
@@ -408,17 +392,7 @@ public partial class StringHelper
     public static string ModelToUriParam(object obj, string url = "")
     {
         PropertyInfo[] properties = obj.GetType().GetProperties();
-        StringBuilder sb = new();
-        sb.Append(url);
-
-        if (!url.Contains('?'))
-        {
-            sb.Append('?');
-        }
-        else if (!url.EndsWith('&') && !url.EndsWith('?'))
-        {
-            sb.Append('&');
-        }
+        List<string> queryParts = [];
 
         foreach (var p in properties)
         {
@@ -452,17 +426,27 @@ public partial class StringHelper
                 stringValue = value.ToString()!;
             }
 
-            sb.Append(HttpUtility.UrlEncode(p.Name));
-            sb.Append('=');
-            sb.Append(HttpUtility.UrlEncode(stringValue));
+            queryParts.Add($"{HttpUtility.UrlEncode(p.Name)}={HttpUtility.UrlEncode(stringValue)}");
+        }
+
+        if (queryParts.Count == 0)
+        {
+            return url;
+        }
+
+        StringBuilder sb = new();
+        sb.Append(url);
+
+        if (!url.Contains('?'))
+        {
+            sb.Append('?');
+        }
+        else if (!url.EndsWith('&') && !url.EndsWith('?'))
+        {
             sb.Append('&');
         }
 
-        // 移除最后一个 '&' 字符
-        if (sb[^1] == '&')
-        {
-            sb.Remove(sb.Length - 1, 1);
-        }
+        sb.Append(string.Join('&', queryParts));
 
         return sb.ToString();
     }

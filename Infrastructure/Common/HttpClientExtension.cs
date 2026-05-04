@@ -211,6 +211,8 @@ public static class HttpClientExtension
         MultipartFormDataContent content = new(boundary);
         foreach (var item in formItems)
         {
+            ValidatePostFormDataItem(item);
+
             if (item.IsFile)
             {
                 //上传文件
@@ -228,6 +230,28 @@ public static class HttpClientExtension
         request.SetHeadersAndOptions(headers, options);
 
         return httpClient.SendAsync(request);
+    }
+
+
+    /// <summary>
+    /// 验证 FormData 表单项
+    /// </summary>
+    private static void ValidatePostFormDataItem(PostFormDataItem item)
+    {
+        if (item == null)
+        {
+            throw new ArgumentException("表单项不能为空", nameof(item));
+        }
+
+        if (string.IsNullOrWhiteSpace(item.Key))
+        {
+            throw new ArgumentException("表单项 Key 不能为空", nameof(item));
+        }
+
+        if (!item.IsFile && item.Value == null)
+        {
+            throw new ArgumentException("文本表单项 Value 不能为空", nameof(item));
+        }
     }
 
 

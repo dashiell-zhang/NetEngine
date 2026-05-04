@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Data;
+using System.Globalization;
 using System.Reflection;
 
 #if !BROWSER
@@ -41,98 +42,7 @@ public partial class DataHelper
 
                     if (pi != null && pi.CanWrite && (drValue != null && !Convert.IsDBNull(drValue)))
                     {
-                        string piFullName = pi.PropertyType.FullName!;
-
-                        if (piFullName.Contains("System.DateTime"))
-                        {
-                            if (piFullName.StartsWith("System.Nullable`1[[System.DateTime"))
-                            {
-                                pi.SetValue(model, Convert.ToDateTime(drValue), null);
-                            }
-                            else
-                            {
-                                pi.SetValue(model, Convert.ToDateTime(drValue), null);
-                            }
-                        }
-                        else if (piFullName.Contains("System.Boolean"))
-                        {
-                            pi.SetValue(model, Convert.ToBoolean(drValue), null);
-                        }
-                        else if (piFullName.Contains("System.Decimal"))
-                        {
-                            if (piFullName.StartsWith("System.Nullable`1[[System.Decimal") && string.IsNullOrWhiteSpace($"{drValue}"))
-                            {
-                                pi.SetValue(model, null, null);
-                            }
-                            else
-                            {
-                                pi.SetValue(model, Convert.ToDecimal(drValue), null);
-                            }
-                        }
-                        else if (piFullName.Contains("System.Int32"))
-                        {
-                            if (piFullName.StartsWith("System.Nullable`1[[System.Int32") && string.IsNullOrWhiteSpace($"{drValue}"))
-                            {
-                                pi.SetValue(model, null, null);
-                            }
-                            else
-                            {
-                                pi.SetValue(model, Convert.ToInt32(drValue), null);
-                            }
-                        }
-                        else if (pi.PropertyType!.IsEnum || Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
-                        {
-                            bool isNullable = false;
-
-                            string drValueStr = drValue.ToString()!.Trim();
-
-                            Type enumType = pi.PropertyType;
-
-                            if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
-                            {
-                                enumType = Nullable.GetUnderlyingType(pi.PropertyType)!;
-                                isNullable = true;
-                            }
-
-                            if (string.IsNullOrWhiteSpace(drValueStr) && isNullable)
-                            {
-                                pi.SetValue(model, null, null);
-                            }
-                            else if (int.TryParse(drValueStr, out int drValueInt))
-                            {
-                                var enumValue = Enum.ToObject(enumType, drValueInt);
-                                pi.SetValue(model, enumValue, null);
-                            }
-                            else if (Enum.TryParse(enumType, drValueStr, out object? enumValueTemp))
-                            {
-                                pi.SetValue(model, enumValueTemp, null);
-                            }
-                            else
-                            {
-                                var enumValue = GetEnumValueFromDescription(enumType, drValueStr);
-
-                                if (enumValue != null)
-                                {
-                                    pi.SetValue(model, enumValue, null);
-                                }
-                                else
-                                {
-                                    throw new Exception($"无法转换枚举：{drValueStr} => {enumType.FullName}");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (string.IsNullOrWhiteSpace($"{drValue}"))
-                            {
-                                pi.SetValue(model, null, null);
-                            }
-                            else
-                            {
-                                pi.SetValue(model, $"{drValue}".Trim(), null);
-                            }
-                        }
-
+                        SetPropertyValue(model, pi, drValue);
                     }
                 }
 
@@ -177,99 +87,7 @@ public partial class DataHelper
 
                     if (pi != null && pi.CanWrite && (drValue != null && !Convert.IsDBNull(drValue)))
                     {
-                        string piFullName = pi.PropertyType.FullName!;
-
-                        if (piFullName.Contains("System.DateTime"))
-                        {
-                            if (piFullName.StartsWith("System.Nullable`1[[System.DateTime"))
-                            {
-                                pi.SetValue(model, Convert.ToDateTime(drValue), null);
-                            }
-                            else
-                            {
-                                pi.SetValue(model, Convert.ToDateTime(drValue), null);
-                            }
-                        }
-                        else if (piFullName.Contains("System.Boolean"))
-                        {
-                            pi.SetValue(model, Convert.ToBoolean(drValue), null);
-                        }
-                        else if (piFullName.Contains("System.Decimal"))
-                        {
-                            if (piFullName.StartsWith("System.Nullable`1[[System.Decimal") && string.IsNullOrWhiteSpace($"{drValue}"))
-                            {
-                                pi.SetValue(model, null, null);
-                            }
-                            else
-                            {
-                                pi.SetValue(model, Convert.ToDecimal(drValue), null);
-                            }
-                        }
-                        else if (piFullName.Contains("System.Int32"))
-                        {
-                            if (piFullName.StartsWith("System.Nullable`1[[System.Int32") && string.IsNullOrWhiteSpace($"{drValue}"))
-                            {
-                                pi.SetValue(model, null, null);
-                            }
-                            else
-                            {
-                                pi.SetValue(model, Convert.ToInt32(drValue), null);
-                            }
-                        }
-                        else if (pi.PropertyType!.IsEnum || Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
-                        {
-                            bool isNullable = false;
-
-                            string drValueStr = drValue.ToString()!.Trim();
-
-                            Type enumType = pi.PropertyType;
-
-                            if (Nullable.GetUnderlyingType(pi.PropertyType)?.IsEnum == true)
-                            {
-                                enumType = Nullable.GetUnderlyingType(pi.PropertyType)!;
-                                isNullable = true;
-                            }
-
-                            if (string.IsNullOrWhiteSpace(drValueStr) && isNullable)
-                            {
-                                pi.SetValue(model, null, null);
-                            }
-                            else if (int.TryParse(drValueStr, out int drValueInt))
-                            {
-                                var enumValue = Enum.ToObject(enumType, drValueInt);
-                                pi.SetValue(model, enumValue, null);
-                            }
-                            else if (Enum.TryParse(enumType, drValueStr, out object? enumValueTemp))
-                            {
-                                pi.SetValue(model, enumValueTemp, null);
-                            }
-                            else
-                            {
-                                var enumValue = GetEnumValueFromDescription(enumType, drValueStr);
-
-                                if (enumValue != null)
-                                {
-                                    pi.SetValue(model, enumValue, null);
-                                }
-                                else
-                                {
-                                    throw new Exception($"无法转换枚举：{drValueStr} => {enumType.FullName}");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (string.IsNullOrWhiteSpace($"{drValue}"))
-                            {
-                                pi.SetValue(model, null, null);
-                            }
-                            else
-                            {
-                                pi.SetValue(model, $"{drValue}".Trim(), null);
-                            }
-
-                        }
-
+                        SetPropertyValue(model, pi, drValue);
                     }
                 }
 
@@ -296,6 +114,83 @@ public partial class DataHelper
         }
 
         return null;
+    }
+
+
+    /// <summary>
+    /// 设置 DataRow 值到实体属性
+    /// </summary>
+    private static void SetPropertyValue<T>(T model, PropertyInfo pi, object drValue) where T : class
+    {
+        Type propertyType = pi.PropertyType;
+        Type targetType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+        bool isNullable = Nullable.GetUnderlyingType(propertyType) != null || !propertyType.IsValueType;
+        string drValueStr = $"{drValue}".Trim();
+
+        if (string.IsNullOrWhiteSpace(drValueStr))
+        {
+            if (isNullable)
+            {
+                pi.SetValue(model, null, null);
+            }
+
+            return;
+        }
+
+        object? value;
+
+        if (targetType == typeof(string))
+        {
+            value = drValueStr;
+        }
+        else if (targetType.IsEnum)
+        {
+            value = GetEnumValue(targetType, drValueStr);
+        }
+        else if (targetType == typeof(Guid))
+        {
+            value = Guid.Parse(drValueStr);
+        }
+        else if (targetType == typeof(DateOnly))
+        {
+            value = drValue is DateTime dateTime ? DateOnly.FromDateTime(dateTime) : DateOnly.Parse(drValueStr, CultureInfo.CurrentCulture);
+        }
+        else if (targetType == typeof(TimeOnly))
+        {
+            value = drValue is DateTime dateTime ? TimeOnly.FromDateTime(dateTime) : TimeOnly.Parse(drValueStr, CultureInfo.CurrentCulture);
+        }
+        else if (targetType == typeof(DateTimeOffset))
+        {
+            value = drValue is DateTime dateTime ? new DateTimeOffset(dateTime) : DateTimeOffset.Parse(drValueStr, CultureInfo.CurrentCulture);
+        }
+        else
+        {
+            value = Convert.ChangeType(drValue, targetType, CultureInfo.CurrentCulture);
+        }
+
+        pi.SetValue(model, value, null);
+
+        static object GetEnumValue(Type enumType, string value)
+        {
+            if (int.TryParse(value, out int drValueInt))
+            {
+                return Enum.ToObject(enumType, drValueInt);
+            }
+
+            if (Enum.TryParse(enumType, value, out object? enumValueTemp))
+            {
+                return enumValueTemp!;
+            }
+
+            var enumValue = GetEnumValueFromDescription(enumType, value);
+
+            if (enumValue != null)
+            {
+                return enumValue;
+            }
+
+            throw new Exception($"无法转换枚举：{value} => {enumType.FullName}");
+        }
     }
 
 
@@ -438,12 +333,13 @@ public partial class DataHelper
                                 if (!row.Cells.Any(it => IsCellHasValue(it))) continue;
 
                                 DataRow dataRow = dataTable.NewRow();
+                                int dataColumnIndex = 0;
                                 for (int j = row.FirstCellNum; j < cellCount; ++j)
                                 {
                                     cell = row.GetCell(j);
                                     if (cell == null)
                                     {
-                                        dataRow[j] = "";
+                                        dataRow[dataColumnIndex] = "";
                                     }
                                     else
                                     {
@@ -452,30 +348,33 @@ public partial class DataHelper
                                         {
                                             case CellType.Boolean:
                                                 {
-                                                    dataRow[j] = cell.BooleanCellValue;
+                                                    dataRow[dataColumnIndex] = cell.BooleanCellValue;
                                                     break;
                                                 }
 
                                             case CellType.Blank:
-                                                dataRow[j] = "";
+                                                dataRow[dataColumnIndex] = "";
                                                 break;
                                             case CellType.Numeric:
                                                 //NPOI中数字和日期都是NUMERIC类型的，这里对其进行判断是否是日期类型
                                                 if (DateUtil.IsCellDateFormatted(cell))//日期类型
                                                 {
-                                                    dataRow[j] = cell.DateCellValue;
+                                                    dataRow[dataColumnIndex] = cell.DateCellValue;
                                                 }
                                                 else//其他数字类型
                                                 {
-                                                    dataRow[j] = cell.NumericCellValue;
+                                                    dataRow[dataColumnIndex] = cell.NumericCellValue;
                                                 }
                                                 break;
-                                            case CellType.Formula://公式类型也像string一样直接取内容
+                                            case CellType.Formula:
+                                                dataRow[dataColumnIndex] = GetFormulaCellValue(cell);
+                                                break;
                                             case CellType.String:
-                                                dataRow[j] = cell.StringCellValue;
+                                                dataRow[dataColumnIndex] = cell.StringCellValue;
                                                 break;
                                         }
                                     }
+                                    dataColumnIndex++;
                                 }
                                 dataTable.Rows.Add(dataRow);
                             }
@@ -520,6 +419,23 @@ public partial class DataHelper
                 _ => true
             };
         }
+
+
+        /// <summary>
+        /// 获取公式单元格缓存结果
+        /// </summary>
+        static object GetFormulaCellValue(ICell cell)
+        {
+            return cell.CachedFormulaResultType switch
+            {
+                CellType.Boolean => cell.BooleanCellValue,
+                CellType.Numeric => DateUtil.IsCellDateFormatted(cell) ? cell.DateCellValue.HasValue ? cell.DateCellValue.Value : "" : cell.NumericCellValue,
+                CellType.String => cell.StringCellValue,
+                CellType.Blank => "",
+                CellType.Error => "",
+                _ => cell.ToString() ?? ""
+            };
+        }
     }
 
 
@@ -548,10 +464,10 @@ public partial class DataHelper
         }
 
         //将数据逐步写入sheet1各个行
+        int rowIndex = 1;
         foreach (var item in list)
         {
-            int i = list.IndexOf(item);
-            IRow rowtemp = sheet1.CreateRow(i + 1);
+            IRow rowtemp = sheet1.CreateRow(rowIndex);
 
             dict = PropertyHelper.GetProperties(item);
             int d = 0;
@@ -560,6 +476,7 @@ public partial class DataHelper
                 ToExcelSetValue(rowtemp, d, it.Value);
                 d++;
             }
+            rowIndex++;
         }
 
         using MemoryStream ms = new();
@@ -594,10 +511,10 @@ public partial class DataHelper
         }
 
         //将数据逐步写入sheet1各个行
+        int rowIndex = 1;
         foreach (var item in list)
         {
-            int i = list.IndexOf(item);
-            IRow rowtemp = sheet1.CreateRow(i + 1);
+            IRow rowtemp = sheet1.CreateRow(rowIndex);
 
             dict = PropertyHelper.GetProperties(item);
             int d = 0;
@@ -606,6 +523,7 @@ public partial class DataHelper
                 ToExcelSetValue(rowtemp, d, it.Value);
                 d++;
             }
+            rowIndex++;
         }
 
         using MemoryStream ms = new();

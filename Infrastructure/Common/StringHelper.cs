@@ -243,6 +243,16 @@ public partial class StringHelper
     /// <returns></returns>
     public static string PartiallyHidden(string text)
     {
+        if (string.IsNullOrEmpty(text))
+        {
+            return text;
+        }
+
+        if (text.Length == 1)
+        {
+            return "*";
+        }
+
         if (text.Length >= 3)
         {
             int group = text.Length / 3;
@@ -606,6 +616,12 @@ public partial class StringHelper
             return false;
         }
 
+        if (cidrBits < 0 || cidrBits > 128)
+        {
+            //无效的CIDR掩码长度
+            return false;
+        }
+
         // 解析网络地址  
         if (!IPAddress.TryParse(cidrParts[0], out IPAddress? networkAddress))
         {
@@ -625,8 +641,8 @@ public partial class StringHelper
         var networkBytes = networkAddress.GetAddressBytes();
 
 
-        var ipBigInteger = new BigInteger(ipBytes.Reverse().ToArray());
-        var networkBigInteger = new BigInteger(networkBytes.Reverse().ToArray());
+        var ipBigInteger = new BigInteger(ipBytes, isUnsigned: true, isBigEndian: true);
+        var networkBigInteger = new BigInteger(networkBytes, isUnsigned: true, isBigEndian: true);
 
         var maskedNetwork = networkBigInteger >> (128 - cidrBits);
 

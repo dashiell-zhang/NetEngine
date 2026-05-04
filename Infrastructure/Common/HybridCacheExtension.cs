@@ -137,6 +137,12 @@ public static class HybridCacheExtension
     {
         StringBuilder sb = new();
 
+        if (!string.IsNullOrWhiteSpace(keyPrefix))
+        {
+            sb.Append(keyPrefix);
+            sb.Append(':');
+        }
+
         // 解析表达式
         if (expression is LambdaExpression lambda)
         {

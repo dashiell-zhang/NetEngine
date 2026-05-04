@@ -157,9 +157,15 @@ public class DateTimeHelper
     /// <returns></returns>
     public static int GetAge(DateOnly date)
     {
-        var dateTime = date.ToDateTime(new TimeOnly());
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var age = today.Year - date.Year;
 
-        return Convert.ToInt32(Math.Ceiling((DateTime.Today.Subtract(dateTime).Days + 1) / 365.0));
+        if (today < date.AddYears(age))
+        {
+            age--;
+        }
+
+        return Math.Max(age, 0);
     }
 
 

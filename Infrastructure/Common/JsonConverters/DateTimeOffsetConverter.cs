@@ -50,7 +50,7 @@ public class DateTimeOffsetConverter : JsonConverter<DateTimeOffset>
 
     public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
     {
-        var formatted = timeZone.HasValue ? value.ToUniversalTime().ToString(formatString) : value.ToString(formatString);
+        var formatted = timeZone.HasValue ? value.ToOffset(timeZone.Value).ToString(formatString) : value.ToString(formatString);
         writer.WriteStringValue(formatted);
     }
 }

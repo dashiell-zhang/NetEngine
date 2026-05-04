@@ -568,7 +568,7 @@ public class CryptoHelper
 
         using var rsa = RSA.Create();
 
-        rsa.ImportRSAPublicKey(Convert.FromBase64String(publicKey), out _);
+        ImportPublicKey(rsa, publicKey);
 
         var data = Encoding.UTF8.GetBytes(content);
 
@@ -628,7 +628,7 @@ public class CryptoHelper
 
         using var rsa = RSA.Create();
 
-        rsa.ImportRSAPublicKey(Convert.FromBase64String(publicKey), out _);
+        ImportPublicKey(rsa, publicKey);
 
         if (rsa != null)
         {
@@ -736,6 +736,36 @@ public class CryptoHelper
 
         return Encoding.UTF8.GetString(rsa.Decrypt(contentData, encryptionPadding));
 
+    }
+#endif
+
+
+
+#if !BROWSER
+    /// <summary>
+    /// 导入RSA公钥
+    /// </summary>
+    /// <param name="rsa">RSA对象</param>
+    /// <param name="publicKey">公钥</param>
+    private static void ImportPublicKey(RSA rsa, string publicKey)
+    {
+        byte[] keyData = Convert.FromBase64String(publicKey);
+
+        try
+        {
+            rsa.ImportRSAPublicKey(keyData, out _);
+        }
+        catch
+        {
+            try
+            {
+                rsa.ImportSubjectPublicKeyInfo(keyData, out _);
+            }
+            catch
+            {
+                throw new Exception("公钥导入初始化RSA失败");
+            }
+        }
     }
 #endif
 

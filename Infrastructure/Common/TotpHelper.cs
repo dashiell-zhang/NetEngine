@@ -31,9 +31,9 @@ public class TotpHelper
     public static string BuildOtpAuthUrl(string issuer, string accountName, string base32Secret, int digits = DefaultDigits, int period = DefaultPeriod, Algo algo = Algo.Sha1)
     {
 
-        if (digits is < 6 or > 10)
+        if (digits is < 6 or > 9)
         {
-            throw new ArgumentOutOfRangeException(nameof(digits), "验证码位数必须介于 6 到 10 位之间。");
+            throw new ArgumentOutOfRangeException(nameof(digits), "验证码位数必须介于 6 到 9 位之间。");
         }
 
         if (period <= 0)
@@ -92,9 +92,9 @@ public class TotpHelper
     /// </summary>
     private static string ComputeHotp(byte[] key, long counter, int digits, Algo algo)
     {
-        if (digits is < 6 or > 10)
+        if (digits is < 6 or > 9)
         {
-            throw new ArgumentOutOfRangeException(nameof(digits), "验证码位数（digits）必须在 6 到 10 位之间。");
+            throw new ArgumentOutOfRangeException(nameof(digits), "验证码位数（digits）必须在 6 到 9 位之间。");
         }
 
 

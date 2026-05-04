@@ -335,11 +335,11 @@ public partial class DataHelper
                 string name = pi.Name;
                 if (createColumn)
                 {
-                    column = new(name, pi.PropertyType);
+                    column = new(name, Nullable.GetUnderlyingType(pi.PropertyType) ?? pi.PropertyType);
                     dt.Columns.Add(column);
                 }
 
-                row[name] = pi.GetValue(t, null);
+                row[name] = pi.GetValue(t, null) ?? DBNull.Value;
             }
 
             if (createColumn)

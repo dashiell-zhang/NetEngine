@@ -85,20 +85,24 @@ public static class HttpClientExtension
             VersionPolicy = httpClient.DefaultVersionPolicy
         };
 
-        request.SetHeadersAndOptions(headers, options);
+        string mediaType;
 
-        string mediaType = "";
-
-        if (type == "json")
+        if (string.Equals(type, "json", StringComparison.OrdinalIgnoreCase))
         {
             mediaType = "application/json";
         }
-        else if (type == "xml")
+        else if (string.Equals(type, "xml", StringComparison.OrdinalIgnoreCase))
         {
             mediaType = "text/xml";
         }
+        else
+        {
+            throw new ArgumentException("type 无效，只能是 json 或 xml", nameof(type));
+        }
 
         request.Content = new StringContent(data, Encoding.UTF8, mediaType);
+
+        request.SetHeadersAndOptions(headers, options);
 
         return httpClient.SendAsync(request, cancellationToken);
     }
@@ -147,12 +151,12 @@ public static class HttpClientExtension
             VersionPolicy = httpClient.DefaultVersionPolicy
         };
 
-        request.SetHeadersAndOptions(headers, options);
-
         FormUrlEncodedContent content = new(formItems);
         content.Headers.ContentType!.CharSet = "utf-8";
 
         request.Content = content;
+
+        request.SetHeadersAndOptions(headers, options);
 
         return httpClient.SendAsync(request);
     }
@@ -177,8 +181,6 @@ public static class HttpClientExtension
             VersionPolicy = httpClient.DefaultVersionPolicy
         };
 
-        request.SetHeadersAndOptions(headers, options);
-
         string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
 
         MultipartFormDataContent content = new(boundary);
@@ -197,6 +199,8 @@ public static class HttpClientExtension
         }
 
         request.Content = content;
+
+        request.SetHeadersAndOptions(headers, options);
 
         return httpClient.SendAsync(request);
     }
@@ -267,7 +271,11 @@ public static class HttpClientExtension
         {
             foreach (var header in headers)
             {
-                request.Headers.Add(header.Key, header.Value);
+                if (!request.Headers.TryAddWithoutValidation(header.Key, header.Value))
+                {
+                    request.Content?.Headers.Remove(header.Key);
+                    request.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
             }
         }
 

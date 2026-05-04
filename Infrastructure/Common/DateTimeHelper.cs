@@ -70,7 +70,7 @@ public class DateTimeHelper
         return GetQuarterly(date) switch
         {
             1 => DateOnly.Parse(date.Year + "-01-01"),
-            2 => DateOnly.Parse(date.Year + "-03-01"),
+            2 => DateOnly.Parse(date.Year + "-04-01"),
             3 => DateOnly.Parse(date.Year + "-07-01"),
             4 => DateOnly.Parse(date.Year + "-10-01"),
             _ => throw new Exception(),
@@ -104,9 +104,14 @@ public class DateTimeHelper
 
         ntpData[0] = 0x1B;
 
-        var addresses = Dns.GetHostEntry(ntpServer).AddressList;
+        var address = Dns.GetHostEntry(ntpServer).AddressList.FirstOrDefault(t => t.AddressFamily == AddressFamily.InterNetwork);
 
-        IPEndPoint ipEndPoint = new(addresses[0], 123);
+        if (address == null)
+        {
+            throw new Exception("未获取到可用的NTP IPv4地址");
+        }
+
+        IPEndPoint ipEndPoint = new(address, 123);
         Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
         socket.Connect(ipEndPoint);

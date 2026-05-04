@@ -47,7 +47,7 @@ public partial class DataHelper
                         {
                             if (piFullName.StartsWith("System.Nullable`1[[System.DateTime"))
                             {
-                                pi.SetValue(model, null, null);
+                                pi.SetValue(model, Convert.ToDateTime(drValue), null);
                             }
                             else
                             {
@@ -183,7 +183,7 @@ public partial class DataHelper
                         {
                             if (piFullName.StartsWith("System.Nullable`1[[System.DateTime"))
                             {
-                                pi.SetValue(model, null, null);
+                                pi.SetValue(model, Convert.ToDateTime(drValue), null);
                             }
                             else
                             {

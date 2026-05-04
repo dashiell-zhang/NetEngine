@@ -116,7 +116,7 @@ public class SystemHelper
     /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
     public static bool WordToPDF(string wordPath, string pdfPath)
     {
-        string shell = "$File='" + wordPath + "'\n$OutFile = '" + pdfPath + "'\n$Word = New-Object –ComObject Word.Application\n$Doc =$Word.Documents.Open($File)\n$Doc.ExportAsFixedFormat($OutFile, 17)\n$Doc.Close()\n";
+        string shell = "$File='" + wordPath + "'\n$OutFile = '" + pdfPath + "'\n$Word = New-Object -ComObject Word.Application\n$Doc =$Word.Documents.Open($File)\n$Doc.ExportAsFixedFormat($OutFile, 17)\n$Doc.Close()\n";
 
         WindowsShell(shell);
 
@@ -134,7 +134,7 @@ public class SystemHelper
     /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
     public static bool ExcelToPDF(string excelPath, string pdfPath)
     {
-        string shell = "$File = '" + excelPath + "'\n$OutFile = '" + pdfPath + "'\n$Excel = New-Object –ComObject Excel.Application\n$Workbook =$Excel.Workbooks.Open($File)\n$Workbook.ExportAsFixedFormat(0,$OutFile)\n$Workbook.Close()\n";
+        string shell = "$File = '" + excelPath + "'\n$OutFile = '" + pdfPath + "'\n$Excel = New-Object -ComObject Excel.Application\n$Workbook =$Excel.Workbooks.Open($File)\n$Workbook.ExportAsFixedFormat(0,$OutFile)\n$Workbook.Close()\n";
 
         WindowsShell(shell);
 
@@ -152,7 +152,7 @@ public class SystemHelper
     /// <remarks>文件地址需要用 \\ 切分，不可用 / </remarks>
     public static bool PPTToPDF(string pptPath, string pdfPath)
     {
-        string shell = "$File = '" + pptPath + "'\n$OutFile = '" + pdfPath + "'\n$PowerPoint = New-Object –ComObject PowerPoint.Application\n$Presentation =$PowerPoint.Presentations.Open($File,$True,$False,$False)\n$Presentation.SaveAs($OutFile, 32)\n$Presentation.Close()\n";
+        string shell = "$File = '" + pptPath + "'\n$OutFile = '" + pdfPath + "'\n$PowerPoint = New-Object -ComObject PowerPoint.Application\n$Presentation =$PowerPoint.Presentations.Open($File,$True,$False,$False)\n$Presentation.SaveAs($OutFile, 32)\n$Presentation.Close()\n";
 
         WindowsShell(shell);
 

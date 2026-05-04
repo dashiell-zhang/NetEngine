@@ -37,7 +37,18 @@ public class ImgHelper
     /// <returns></returns>
     public static byte[] Screenshot(string fromImagePath, int offsetX, int offsetY, int width, int height)
     {
+        if (!File.Exists(fromImagePath))
+        {
+            throw new FileNotFoundException("图片文件不存在", fromImagePath);
+        }
+
         using var original = SKBitmap.Decode(fromImagePath);
+
+        if (original == null)
+        {
+            throw new ArgumentException("图片文件无法解码", nameof(fromImagePath));
+        }
+
         using SKBitmap bitmap = new(width, height);
         using SKCanvas canvas = new(bitmap);
         SKRect sourceRect = new(offsetX, offsetY, offsetX + width, offsetY + height);

@@ -22,7 +22,15 @@ public class TotpHelper
     /// <summary>
     /// 生成随机 Base32 编码的密钥（每个用户唯一保存）
     /// </summary>
-    public static string GenerateBase32Secret(int secretBytes = DefaultSecretBytes) => Base32Encode(RandomNumberGenerator.GetBytes(secretBytes));
+    public static string GenerateBase32Secret(int secretBytes = DefaultSecretBytes)
+    {
+        if (secretBytes <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(secretBytes), "密钥长度必须大于 0。");
+        }
+
+        return Base32Encode(RandomNumberGenerator.GetBytes(secretBytes));
+    }
 
 
     /// <summary>
@@ -54,6 +62,8 @@ public class TotpHelper
     /// </summary>
     public static string GenerateCode(string base32Secret, DateTimeOffset? now = null, int digits = DefaultDigits, int period = DefaultPeriod, Algo algo = Algo.Sha1)
     {
+        ValidateTotpOptions(digits, period);
+
         var key = Base32Decode(base32Secret);
         long counter = (now ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds() / period;
         return ComputeHotp(key, counter, digits, algo);
@@ -65,6 +75,13 @@ public class TotpHelper
     /// </summary>
     public static bool VerifyCode(string base32Secret, string code, int allowedDrift = 1, int digits = DefaultDigits, int period = DefaultPeriod, Algo algo = Algo.Sha1)
     {
+        ValidateTotpOptions(digits, period);
+
+        if (allowedDrift < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(allowedDrift), "允许偏移步数必须大于或等于 0。");
+        }
+
         if (code.Length != digits || code.Any(c => c < '0' || c > '9'))
         {
             return false;
@@ -92,10 +109,7 @@ public class TotpHelper
     /// </summary>
     private static string ComputeHotp(byte[] key, long counter, int digits, Algo algo)
     {
-        if (digits is < 6 or > 9)
-        {
-            throw new ArgumentOutOfRangeException(nameof(digits), "验证码位数（digits）必须在 6 到 9 位之间。");
-        }
+        ValidateTotpOptions(digits, DefaultPeriod);
 
 
         // 8 字节大端序计数器（栈上）
@@ -140,6 +154,23 @@ public class TotpHelper
         int mod = Pow10(digits);
         int otp = bin % mod;
         return otp.ToString().PadLeft(digits, '0');
+    }
+
+
+    /// <summary>
+    /// 验证TOTP参数
+    /// </summary>
+    private static void ValidateTotpOptions(int digits, int period)
+    {
+        if (digits is < 6 or > 9)
+        {
+            throw new ArgumentOutOfRangeException(nameof(digits), "验证码位数（digits）必须在 6 到 9 位之间。");
+        }
+
+        if (period <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(period), "时间步长（period）必须大于 0 秒。");
+        }
     }
 
 

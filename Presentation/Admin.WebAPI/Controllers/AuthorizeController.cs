@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Repository;
 using Repository.Database;
 using Repository.Database.Enums;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Xml;
@@ -145,6 +146,30 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
 
         await db.SaveChangesAsync();
 
+    }
+
+
+    /// <summary>
+    /// 生成 ECDSA 公私钥
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet]
+    public object GenerateEcdsaKeyPair()
+    {
+        var env = HttpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+
+        if (!env.IsDevelopment())
+        {
+            throw new InvalidOperationException("GenerateEcdsaKeyPair 仅允许在 Development 环境执行");
+        }
+
+        using var keyInfo = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+        return new
+        {
+            PrivateKey = Convert.ToBase64String(keyInfo.ExportECPrivateKey()),
+            PublicKey = Convert.ToBase64String(keyInfo.ExportSubjectPublicKeyInfo())
+        };
     }
 
 

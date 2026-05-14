@@ -69,8 +69,6 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         var request = new ChatRequest(
             app.Model,
             messages,
-            app.Temperature,
-            app.MaxTokens,
             ExtraBody: extraBody
         );
 
@@ -140,8 +138,6 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         var request = new ChatRequest(
             app.Model,
             messages,
-            app.Temperature,
-            app.MaxTokens,
             ExtraBody: extraBody
         );
 

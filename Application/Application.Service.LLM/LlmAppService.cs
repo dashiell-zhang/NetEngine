@@ -71,8 +71,6 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
                     Model = t.Model,
                     SystemPromptTemplate = t.SystemPromptTemplate,
                     PromptTemplate = t.PromptTemplate,
-                    MaxTokens = t.MaxTokens,
-                    Temperature = t.Temperature,
                     ExtraBodyJson = t.ExtraBodyJson,
                     IsEnable = t.IsEnable,
                     Remark = t.Remark,
@@ -117,8 +115,6 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
             Model = model,
             SystemPromptTemplate = createLlmApp.SystemPromptTemplate,
             PromptTemplate = promptTemplate,
-            MaxTokens = createLlmApp.MaxTokens,
-            Temperature = createLlmApp.Temperature,
             ExtraBodyJson = createLlmApp.ExtraBodyJson,
             IsEnable = createLlmApp.IsEnable,
             Remark = createLlmApp.Remark,
@@ -165,8 +161,6 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
         llmApp.Model = model;
         llmApp.SystemPromptTemplate = updateLlmApp.SystemPromptTemplate;
         llmApp.PromptTemplate = promptTemplate;
-        llmApp.MaxTokens = updateLlmApp.MaxTokens;
-        llmApp.Temperature = updateLlmApp.Temperature;
         llmApp.ExtraBodyJson = updateLlmApp.ExtraBodyJson;
         llmApp.IsEnable = updateLlmApp.IsEnable;
         llmApp.Remark = updateLlmApp.Remark;
@@ -242,8 +236,6 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
             new ChatRequest(
                 request.Model,
                 messages,
-                request.Temperature,
-                request.MaxTokens,
                 userContext.UserId == default ? null : userContext.UserId.ToString(),
                 request.ExtraBody),
             cancellationToken);

@@ -108,21 +108,6 @@
                 </AntDesign.Col>
             </Row>
 
-            <Row Gutter="24">
-                <AntDesign.Col Span="12">
-                    <FormItem>
-                        <Text>MaxTokens</Text>
-                        <Input Placeholder="可选" Type="InputType.Number" @bind-Value="@context.MaxTokens" />
-                    </FormItem>
-                </AntDesign.Col>
-                <AntDesign.Col Span="12">
-                    <FormItem>
-                        <Text>Temperature</Text>
-                        <Input Placeholder="可选，如 0.7" Type="InputType.Number" @bind-Value="@context.Temperature" />
-                    </FormItem>
-                </AntDesign.Col>
-            </Row>
-
             <FormItem>
                 <Text>ExtraBodyJson</Text>
                 <TextArea @bind-Value="@context.ExtraBodyJson"
@@ -372,8 +357,6 @@
                 Model = row.Model,
                 SystemPromptTemplate = row.SystemPromptTemplate,
                 PromptTemplate = row.PromptTemplate,
-                MaxTokens = row.MaxTokens,
-                Temperature = row.Temperature,
                 ExtraBodyJson = row.ExtraBodyJson,
                 IsEnable = row.IsEnable,
                 Remark = row.Remark
@@ -485,8 +468,6 @@
             Model = editLlmApp.Model ?? string.Empty,
             SystemPromptTemplate = editLlmApp.SystemPromptTemplate,
             PromptTemplate = editLlmApp.PromptTemplate ?? string.Empty,
-            MaxTokens = editLlmApp.MaxTokens,
-            Temperature = editLlmApp.Temperature,
             ExtraBody = extraBody,
             Parameters = PlaceholderInfos.ToDictionary(k => k.Key, k => GetOrCreateTestParamItem(k.Key).Value, StringComparer.OrdinalIgnoreCase)
         };

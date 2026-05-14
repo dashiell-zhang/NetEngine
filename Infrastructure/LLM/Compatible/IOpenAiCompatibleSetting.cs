@@ -7,9 +7,9 @@ public interface IOpenAiCompatibleSetting
 {
 
     /// <summary>
-    /// OpenAI 兼容接口的服务地址基址 通常包含 v1 路径
+    /// OpenAI 兼容接口的完整端点地址 例如 https://host/v1/chat/completions
     /// </summary>
-    string BaseUrl { get; set; }
+    string Endpoint { get; set; }
 
 
     /// <summary>

@@ -33,17 +33,6 @@ public class TestLlmAppRequestDto
 
 
     /// <summary>
-    /// 最大生成 token 数
-    /// </summary>
-    public int? MaxTokens { get; set; }
-
-
-    /// <summary>
-    /// 随机性/发散度
-    /// </summary>
-    public float? Temperature { get; set; }
-
-    /// <summary>
     /// 额外请求参数（直接透传到 OpenAI-compatible body 根字段）
     /// </summary>
     public Dictionary<string, JsonNode>? ExtraBody { get; set; }

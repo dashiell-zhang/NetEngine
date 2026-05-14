@@ -32,9 +32,9 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
     /// </summary>
     protected virtual void ValidateSettings(TSetting settings)
     {
-        if (string.IsNullOrWhiteSpace(settings.BaseUrl))
+        if (string.IsNullOrWhiteSpace(settings.Endpoint))
         {
-            throw new InvalidOperationException($"{ProviderName} BaseUrl is required.");
+            throw new InvalidOperationException($"{ProviderName} Endpoint is required.");
         }
 
         if (string.IsNullOrWhiteSpace(settings.ApiKey))
@@ -59,7 +59,7 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
         var payload = BuildPayload(request, stream: false);
 
         using var response = await httpClient.PostAsync(
-            "chat/completions",
+            settings.Endpoint,
             new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json"),
             cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -91,7 +91,7 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
         var model = request.Model;
         var payload = BuildPayload(request, stream: true);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, settings.Endpoint)
         {
             Content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json")
         };
@@ -174,16 +174,6 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
                 }).ToArray()),
             ["stream"] = stream
         };
-
-        if (request.Temperature != null)
-        {
-            payload["temperature"] = request.Temperature.Value;
-        }
-
-        if (request.MaxTokens != null)
-        {
-            payload["max_tokens"] = request.MaxTokens.Value;
-        }
 
         if (!string.IsNullOrWhiteSpace(request.User))
         {

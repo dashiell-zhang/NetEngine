@@ -66,7 +66,7 @@ public class Program
 
                 builder.Services.AddOpenAiCompatibleProvider(providerKey, option =>
                 {
-                    option.BaseUrl = setting.BaseUrl;
+                    option.Endpoint = setting.Endpoint;
                     option.ApiKey = setting.ApiKey;
                 });
             }

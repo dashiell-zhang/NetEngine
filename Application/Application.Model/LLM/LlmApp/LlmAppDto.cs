@@ -49,17 +49,6 @@ public class LlmAppDto
 
 
     /// <summary>
-    /// 最大生成 token 数（不同供应商字段名/含义可能略有不同）
-    /// </summary>
-    public int? MaxTokens { get; set; }
-
-
-    /// <summary>
-    /// 随机性/发散度（通常 0~2；不同供应商可能范围不同）
-    /// </summary>
-    public float? Temperature { get; set; }
-
-    /// <summary>
     /// 额外请求参数（JSON对象字符串，直接透传到 OpenAI-compatible body 根字段）
     /// </summary>
     public string? ExtraBodyJson { get; set; }

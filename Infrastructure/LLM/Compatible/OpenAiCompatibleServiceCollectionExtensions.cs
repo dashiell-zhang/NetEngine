@@ -33,8 +33,6 @@ public static class OpenAiCompatibleServiceCollectionExtensions
                 .GetRequiredService<IOptionsMonitor<OpenAiCompatibleProviderSetting>>()
                 .Get(providerKey);
 
-            // 统一确保 BaseAddress 以 / 结尾 方便拼接相对路径
-            httpClient.BaseAddress = new Uri(settings.BaseUrl.TrimEnd('/') + "/");
             httpClient.Timeout = TimeSpan.FromSeconds(60);
 
             if (!string.IsNullOrWhiteSpace(settings.ApiKey))

@@ -30,10 +30,9 @@ public class EditLlmModelDto
 
 
     /// <summary>
-    /// 接口密钥
+    /// 接口密钥（为空则不修改）
     /// </summary>
-    [Required(ErrorMessage = "接口密钥不可以空")]
-    public string ApiKey { get; set; } = string.Empty;
+    public string? ApiKey { get; set; }
 
 
     /// <summary>

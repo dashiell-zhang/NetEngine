@@ -93,7 +93,7 @@
 
             <FormItem>
                 <Text>接口密钥</Text>
-                <InputPassword Placeholder="请输入接口密钥" @bind-Value="@context.ApiKey" />
+                <InputPassword Placeholder="@(editId == null ? "请输入接口密钥" : "留空则不修改")" @bind-Value="@context.ApiKey" />
             </FormItem>
 
             <FormItem>
@@ -213,7 +213,6 @@
                 Name = row.Name,
                 ModelId = row.ModelId,
                 Endpoint = row.Endpoint,
-                ApiKey = row.ApiKey,
                 ProtocolType = row.ProtocolType,
                 IsEnable = row.IsEnable,
                 Remark = row.Remark
@@ -243,7 +242,7 @@
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(editLlmModel.ApiKey))
+        if (editId == null && string.IsNullOrWhiteSpace(editLlmModel.ApiKey))
         {
             Message.Error("接口密钥不可以空");
             return;

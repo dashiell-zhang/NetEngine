@@ -54,7 +54,6 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
                     Name = t.Name,
                     ModelId = t.ModelId,
                     Endpoint = t.Endpoint,
-                    ApiKey = t.ApiKey,
                     ProtocolType = t.ProtocolType,
                     IsEnable = t.IsEnable,
                     Remark = t.Remark,
@@ -79,6 +78,12 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
         var name = createLlmModel.Name.Trim();
         var modelId = createLlmModel.ModelId.Trim();
         var endpoint = createLlmModel.Endpoint.Trim();
+
+        if (string.IsNullOrWhiteSpace(createLlmModel.ApiKey))
+        {
+            throw new CustomException("接口密钥不可以空");
+        }
+
         var apiKey = createLlmModel.ApiKey.Trim();
 
         var isHave = await db.LlmModel.Where(t => t.Name == name && t.DeleteTime == null).AnyAsync();
@@ -123,7 +128,6 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
         var name = updateLlmModel.Name.Trim();
         var modelId = updateLlmModel.ModelId.Trim();
         var endpoint = updateLlmModel.Endpoint.Trim();
-        var apiKey = updateLlmModel.ApiKey.Trim();
 
         var isHave = await db.LlmModel.Where(t => t.Id != id && t.Name == name && t.DeleteTime == null).AnyAsync();
         if (isHave)
@@ -134,7 +138,11 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
         llmModel.Name = name;
         llmModel.ModelId = modelId;
         llmModel.Endpoint = endpoint;
-        llmModel.ApiKey = apiKey;
+
+        if (!string.IsNullOrWhiteSpace(updateLlmModel.ApiKey))
+        {
+            llmModel.ApiKey = updateLlmModel.ApiKey.Trim();
+        }
         llmModel.ProtocolType = updateLlmModel.ProtocolType;
         llmModel.IsEnable = updateLlmModel.IsEnable;
         llmModel.Remark = updateLlmModel.Remark;

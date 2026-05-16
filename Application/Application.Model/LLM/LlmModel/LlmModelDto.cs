@@ -31,12 +31,6 @@ public class LlmModelDto
 
 
     /// <summary>
-    /// 接口密钥
-    /// </summary>
-    public string ApiKey { get; set; }
-
-
-    /// <summary>
     /// 协议类型（0=Chat, 1=Responses）
     /// </summary>
     public int ProtocolType { get; set; }

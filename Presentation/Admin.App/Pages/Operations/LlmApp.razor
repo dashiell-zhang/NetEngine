@@ -173,21 +173,23 @@
                     </div>
                 }
 
-            <Row Gutter="24" style="margin-top:6px">
-                <AntDesign.Col Span="24">
-                    <Space>
-                        <Button Type="@ButtonType.Primary" Loading="@testLoading" @onclick="TestCallAsync">调用测试</Button>
+            <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between">
+                <Button Type="@ButtonType.Primary" Loading="@testLoading" @onclick="TestCallAsync">调用测试</Button>
+
+                @if (!string.IsNullOrWhiteSpace(testResult?.Model) || testResult?.Usage?.TotalTokens != null)
+                {
+                    <div style="color:rgba(0,0,0,.45);font-size:13px">
                         @if (!string.IsNullOrWhiteSpace(testResult?.Model))
                         {
-                            <span style="color:rgba(0,0,0,.45)">Model: @testResult!.Model</span>
+                            <span>Model: @testResult!.Model</span>
                         }
                         @if (testResult?.Usage?.TotalTokens != null)
                         {
-                            <span style="color:rgba(0,0,0,.45)">Tokens: @testResult.Usage.TotalTokens</span>
+                            <span style="margin-left:24px">Tokens: @testResult.Usage.TotalTokens</span>
                         }
-                    </Space>
-                </AntDesign.Col>
-            </Row>
+                    </div>
+                }
+            </div>
 
             <div style="margin-top:10px">
                 <Text>返回结果</Text>

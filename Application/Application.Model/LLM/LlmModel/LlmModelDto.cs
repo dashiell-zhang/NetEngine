@@ -1,9 +1,9 @@
-namespace Application.Model.LLM.LlmApp;
+namespace Application.Model.LLM.LlmModel;
 
 /// <summary>
-/// LLM 应用配置
+/// LLM 模型配置
 /// </summary>
-public class LlmAppDto
+public class LlmModelDto
 {
 
     /// <summary>
@@ -13,45 +13,33 @@ public class LlmAppDto
 
 
     /// <summary>
-    /// 应用标记
-    /// </summary>
-    public string Code { get; set; }
-
-
-    /// <summary>
-    /// 应用名称
+    /// 模型显示名称
     /// </summary>
     public string Name { get; set; }
 
 
     /// <summary>
-    /// 关联的 LLM 模型 ID
+    /// 模型标识
     /// </summary>
-    public long LlmModelId { get; set; }
+    public string ModelId { get; set; }
 
 
     /// <summary>
-    /// 关联的 LLM 模型名称
+    /// API 端点地址
     /// </summary>
-    public string LlmModelName { get; set; }
+    public string Endpoint { get; set; }
 
 
     /// <summary>
-    /// System 提示词模板（可包含 {{Key}} 占位符）
+    /// 接口密钥
     /// </summary>
-    public string? SystemPromptTemplate { get; set; }
+    public string ApiKey { get; set; }
 
 
     /// <summary>
-    /// User 提示词模板（可包含 {{Key}} 占位符）
+    /// 协议类型（0=Chat, 1=Responses）
     /// </summary>
-    public string PromptTemplate { get; set; }
-
-
-    /// <summary>
-    /// 额外请求参数（JSON对象字符串，直接透传到 OpenAI-compatible body 根字段）
-    /// </summary>
-    public string? ExtraBodyJson { get; set; }
+    public int ProtocolType { get; set; }
 
 
     /// <summary>

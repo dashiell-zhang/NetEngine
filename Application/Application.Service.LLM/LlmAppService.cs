@@ -18,7 +18,7 @@ namespace Application.Service.LLM;
 /// LLM 应用配置服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmAppService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory)
+public partial class LlmAppService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver)
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();
@@ -32,7 +32,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         PageListDto<LlmAppDto> result = new();
 
-        var query = db.LlmApp.AsNoTracking().AsQueryable();
+        var query = db.LlmApp.Where(t => t.DeleteTime == null).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.Keyword))
         {
@@ -40,15 +40,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
             query = query.Where(t =>
                 t.Code.Contains(keyword) ||
                 t.Name.Contains(keyword) ||
-                t.Provider.Contains(keyword) ||
-                t.Model.Contains(keyword) ||
                 (t.Remark != null && t.Remark.Contains(keyword)));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Provider))
-        {
-            var provider = request.Provider.Trim();
-            query = query.Where(t => t.Provider == provider);
         }
 
         if (request.IsEnable != null)
@@ -67,8 +59,8 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
                     Id = t.Id,
                     Code = t.Code,
                     Name = t.Name,
-                    Provider = t.Provider,
-                    Model = t.Model,
+                    LlmModelId = t.LlmModelId,
+                    LlmModelName = t.LlmModel != null ? t.LlmModel.Name : string.Empty,
                     SystemPromptTemplate = t.SystemPromptTemplate,
                     PromptTemplate = t.PromptTemplate,
                     ExtraBodyJson = t.ExtraBodyJson,
@@ -94,16 +86,20 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         var code = createLlmApp.Code.Trim();
         var name = createLlmApp.Name.Trim();
-        var provider = createLlmApp.Provider.Trim();
-        var model = createLlmApp.Model.Trim();
         var promptTemplate = createLlmApp.PromptTemplate.Trim();
 
         ValidateExtraBodyJson(createLlmApp.ExtraBodyJson);
 
-        var isHave = await db.LlmApp.AsNoTracking().Where(t => t.Code == code).AnyAsync();
+        var isHave = await db.LlmApp.Where(t => t.Code == code && t.DeleteTime == null).AnyAsync();
         if (isHave)
         {
             throw new CustomException("Code 已存在");
+        }
+
+        var modelExists = await db.LlmModel.Where(t => t.Id == createLlmApp.LlmModelId && t.DeleteTime == null).AnyAsync();
+        if (!modelExists)
+        {
+            throw new CustomException("无效的 LlmModelId");
         }
 
         LlmApp llmApp = new()
@@ -111,8 +107,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
             Id = idService.GetId(),
             Code = code,
             Name = name,
-            Provider = provider,
-            Model = model,
+            LlmModelId = createLlmApp.LlmModelId,
             SystemPromptTemplate = createLlmApp.SystemPromptTemplate,
             PromptTemplate = promptTemplate,
             ExtraBodyJson = createLlmApp.ExtraBodyJson,
@@ -134,7 +129,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     public async Task<bool> UpdateLlmAppAsync(long id, EditLlmAppDto updateLlmApp)
     {
 
-        var llmApp = await db.LlmApp.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var llmApp = await db.LlmApp.Where(t => t.Id == id && t.DeleteTime == null).FirstOrDefaultAsync();
 
         if (llmApp == null)
         {
@@ -143,22 +138,25 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         var code = updateLlmApp.Code.Trim();
         var name = updateLlmApp.Name.Trim();
-        var provider = updateLlmApp.Provider.Trim();
-        var model = updateLlmApp.Model.Trim();
         var promptTemplate = updateLlmApp.PromptTemplate.Trim();
 
         ValidateExtraBodyJson(updateLlmApp.ExtraBodyJson);
 
-        var isHave = await db.LlmApp.AsNoTracking().Where(t => t.Id != id && t.Code == code).AnyAsync();
+        var isHave = await db.LlmApp.Where(t => t.Id != id && t.Code == code && t.DeleteTime == null).AnyAsync();
         if (isHave)
         {
             throw new CustomException("Code 已存在");
         }
 
+        var modelExists = await db.LlmModel.Where(t => t.Id == updateLlmApp.LlmModelId && t.DeleteTime == null).AnyAsync();
+        if (!modelExists)
+        {
+            throw new CustomException("无效的 LlmModelId");
+        }
+
         llmApp.Code = code;
         llmApp.Name = name;
-        llmApp.Provider = provider;
-        llmApp.Model = model;
+        llmApp.LlmModelId = updateLlmApp.LlmModelId;
         llmApp.SystemPromptTemplate = updateLlmApp.SystemPromptTemplate;
         llmApp.PromptTemplate = promptTemplate;
         llmApp.ExtraBodyJson = updateLlmApp.ExtraBodyJson;
@@ -178,7 +176,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     public async Task<bool> DeleteLlmAppAsync(long id)
     {
 
-        var llmApp = await db.LlmApp.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var llmApp = await db.LlmApp.Where(t => t.Id == id && t.DeleteTime == null).FirstOrDefaultAsync();
 
         if (llmApp != null)
         {
@@ -197,7 +195,10 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     public async Task<TestLlmAppResultDto> TestLlmAppAsync(TestLlmAppRequestDto request, CancellationToken cancellationToken = default)
     {
 
-        var client = llmClientFactory.GetClient(request.Provider);
+        var config = await configResolver.GetConfigAsync(request.LlmModelId)
+            ?? throw new CustomException("无效的 LlmModelId 或模型已禁用");
+
+        var client = await llmClientFactory.GetClientAsync(request.LlmModelId, configResolver);
 
         var parameters = request.Parameters == null
             ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -234,7 +235,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         var resp = await client.ChatAsync(
             new ChatRequest(
-                request.Model,
+                config.ModelId,
                 messages,
                 userContext.UserId == default ? null : userContext.UserId.ToString(),
                 request.ExtraBody),

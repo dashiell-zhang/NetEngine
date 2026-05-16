@@ -23,17 +23,10 @@ public class EditLlmAppDto
 
 
     /// <summary>
-    /// 绑定的 LLM 供应商标识（如 DeepSeek、Qwen）
-    /// </summary>
-    [Required(ErrorMessage = "供应商不可以空")]
-    public string Provider { get; set; } = string.Empty;
-
-
-    /// <summary>
-    /// 模型名称
+    /// 关联的 LLM 模型 ID
     /// </summary>
     [Required(ErrorMessage = "模型不可以空")]
-    public string Model { get; set; } = string.Empty;
+    public long LlmModelId { get; set; }
 
 
     /// <summary>
@@ -65,4 +58,5 @@ public class EditLlmAppDto
     /// 备注
     /// </summary>
     public string? Remark { get; set; }
+
 }

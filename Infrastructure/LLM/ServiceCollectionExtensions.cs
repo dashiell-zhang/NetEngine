@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
     /// <returns>服务集合</returns>
     public static IServiceCollection AddLlmClientFactory(this IServiceCollection services)
     {
-        services.TryAddSingleton<ILlmClientFactory, LlmClientFactory>();
+        services.TryAddSingleton<ILlmClientFactory, DynamicLlmClientFactory>();
         return services;
     }
 

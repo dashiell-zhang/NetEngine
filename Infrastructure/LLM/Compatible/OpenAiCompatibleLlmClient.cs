@@ -11,7 +11,7 @@ namespace LLM.Compatible;
 /// OpenAI-Compatible 协议的通用 LLM 客户端基类
 /// </summary>
 public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient, TSetting settings) : ILlmClient
-    where TSetting : class, IOpenAiCompatibleSetting
+    where TSetting : IOpenAiCompatibleSetting
 {
 
     private static readonly JsonSerializerOptions JsonOptions = new()

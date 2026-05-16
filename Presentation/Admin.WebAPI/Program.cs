@@ -1,7 +1,7 @@
 using Common;
 using DistributedLock.Redis;
 using IdentifierGenerator;
-using LLM.Compatible;
+using LLM;
 using Logger.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -49,25 +49,7 @@ public class Program
         builder.Services.BatchRegisterServices();
         builder.Services.BatchRegisterBackgroundServices();
 
-        #region 注册 LLM 推理服务
-
-        var llmProvidersSection = builder.Configuration.GetSection("LLM:Providers");
-        if (llmProvidersSection.Exists())
-        {
-            foreach (var providerSection in llmProvidersSection.GetChildren())
-            {
-                var providerKey = providerSection.Key;
-                var setting = providerSection.Get<OpenAiCompatibleProviderSetting>() ?? new OpenAiCompatibleProviderSetting();
-
-                builder.Services.AddOpenAiCompatibleProvider(providerKey, option =>
-                {
-                    option.Endpoint = setting.Endpoint;
-                    option.ApiKey = setting.ApiKey;
-                });
-            }
-        }
-
-        #endregion
+        builder.Services.AddLlmClientFactory();
 
         //注册Id生成器
         builder.Services.AddIdentifierGenerator();

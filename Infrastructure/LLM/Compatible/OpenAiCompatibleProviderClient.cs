@@ -3,8 +3,8 @@ namespace LLM.Compatible;
 /// <summary>
 /// 基于 OpenAI-Compatible 协议的通用 Provider 客户端
 /// </summary>
-public sealed class OpenAiCompatibleProviderClient(HttpClient httpClient, OpenAiCompatibleProviderSetting settings, string providerName)
-    : OpenAiCompatibleLlmClient<OpenAiCompatibleProviderSetting>(httpClient, settings)
+public sealed class OpenAiCompatibleProviderClient(HttpClient httpClient, IOpenAiCompatibleSetting settings, string providerName)
+    : OpenAiCompatibleLlmClient<IOpenAiCompatibleSetting>(httpClient, settings)
 {
 
     /// <summary>

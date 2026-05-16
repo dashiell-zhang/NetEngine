@@ -65,26 +65,6 @@ class Program
                     services.AddScoped(t);
                 });
 
-                //#region 注册 LLM 推理服务
-
-                //var llmProvidersSection = hostContext.Configuration.GetSection("LLM:Providers");
-                //if (llmProvidersSection.Exists())
-                //{
-                //    foreach (var providerSection in llmProvidersSection.GetChildren())
-                //    {
-                //        var providerKey = providerSection.Key;
-                //        var setting = providerSection.Get<OpenAiCompatibleProviderSetting>() ?? new OpenAiCompatibleProviderSetting();
-
-                //        services.AddOpenAiCompatibleProvider(providerKey, option =>
-                //        {
-                //            option.Endpoint = setting.Endpoint;
-                //            option.ApiKey = setting.ApiKey;
-                //        });
-                //    }
-                //}
-
-                //#endregion
-
                 #region 注册短信服务
 
                 //services.AddTencentCloudSMS(options =>

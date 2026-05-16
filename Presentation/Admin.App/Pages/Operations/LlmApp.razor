@@ -1,5 +1,6 @@
 @page "/operations/llmapp"
 @using Application.Model.LLM.LlmApp
+@using Application.Model.LLM.LlmModel
 @using System.Net.Http.Json
 @attribute [ReuseTabsPageTitle("LLM应用")]
 
@@ -11,7 +12,7 @@
     <div style="margin-left:auto">
         <Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
             <FormItem>
-                <Input @bind-Value="@context.Keyword" Placeholder="Code/名称/供应商/模型/备注 模糊检索" Style="width: 320px" AllowClear />
+                <Input @bind-Value="@context.Keyword" Placeholder="Code/名称/备注 模糊检索" Style="width: 320px" AllowClear />
             </FormItem>
             <FormItem>
                 <Select TItem="bool?" TItemValue="bool?" @bind-Value="@context.IsEnable" Placeholder="是否启用" Style="width: 140px" AllowClear>
@@ -40,8 +41,7 @@
     <ColumnDefinitions>
         <PropertyColumn Property="c => c.Code" Title="Code"></PropertyColumn>
         <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.Provider" Title="供应商"></PropertyColumn>
-        <PropertyColumn Property="c => c.Model" Title="模型"></PropertyColumn>
+        <PropertyColumn Property="c => c.LlmModelName" Title="模型"></PropertyColumn>
         <PropertyColumn Property="c => c.IsEnable" Title="启用"></PropertyColumn>
         <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
         <ActionColumn Title="操作">
@@ -94,16 +94,16 @@
             </Row>
 
             <Row Gutter="24">
-                <AntDesign.Col Span="12">
-                    <FormItem>
-                        <Text>供应商</Text>
-                        <Input Placeholder="如: DeepSeek / Qwen" @bind-Value="@context.Provider" />
-                    </FormItem>
-                </AntDesign.Col>
-                <AntDesign.Col Span="12">
+                <AntDesign.Col Span="24">
                     <FormItem>
                         <Text>模型</Text>
-                        <Input Placeholder="如: deepseek-chat" @bind-Value="@context.Model" />
+                        <Select TItem="LlmModelSelectDto" TItemValue="long"
+                                DataSource="@modelSelectList"
+                                @bind-Value="@context.LlmModelId"
+                                ValueName="@nameof(LlmModelSelectDto.Id)"
+                                LabelName="@nameof(LlmModelSelectDto.Name)"
+                                Placeholder="请选择模型"
+                                Style="width: 100%" />
                     </FormItem>
                 </AntDesign.Col>
             </Row>
@@ -228,6 +228,8 @@
     bool tableLoading = false;
     PageListDto<LlmAppDto> pageList = new();
 
+    List<LlmModelSelectDto> modelSelectList = [];
+
     async Task GetLlmAppListAsync()
     {
         tableLoading = true;
@@ -242,6 +244,15 @@
 
         tableLoading = false;
         StateHasChanged();
+    }
+
+    async Task GetModelSelectListAsync()
+    {
+        var retData = await Http.GetFromJsonAsync<List<LlmModelSelectDto>>("LlmModel/GetLlmModelSelect", JsonHelper.DeserializeOpts);
+        if (retData != null)
+        {
+            modelSelectList = retData;
+        }
     }
 
     async Task HandleSearchAsync(EditContext editContext)
@@ -353,8 +364,7 @@
             {
                 Code = row.Code,
                 Name = row.Name,
-                Provider = row.Provider,
-                Model = row.Model,
+                LlmModelId = row.LlmModelId,
                 SystemPromptTemplate = row.SystemPromptTemplate,
                 PromptTemplate = row.PromptTemplate,
                 ExtraBodyJson = row.ExtraBodyJson,
@@ -366,6 +376,7 @@
         testResult = null;
         testParamItems = [];
 
+        await GetModelSelectListAsync();
         await Task.Delay(150);
         isShowEdit = true;
         StateHasChanged();
@@ -385,15 +396,9 @@
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(editLlmApp.Provider))
+        if (editLlmApp.LlmModelId == 0)
         {
-            Message.Error("供应商不可以空");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(editLlmApp.Model))
-        {
-            Message.Error("模型不可以空");
+            Message.Error("请选择模型");
             return;
         }
 
@@ -434,6 +439,12 @@
 
     async Task TestCallAsync()
     {
+        if (editLlmApp.LlmModelId == 0)
+        {
+            Message.Error("请先选择模型");
+            return;
+        }
+
         testLoading = true;
         testResult = null;
 
@@ -464,8 +475,7 @@
 
         var req = new TestLlmAppRequestDto
         {
-            Provider = editLlmApp.Provider ?? string.Empty,
-            Model = editLlmApp.Model ?? string.Empty,
+            LlmModelId = editLlmApp.LlmModelId,
             SystemPromptTemplate = editLlmApp.SystemPromptTemplate,
             PromptTemplate = editLlmApp.PromptTemplate ?? string.Empty,
             ExtraBody = extraBody,

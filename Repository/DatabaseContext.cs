@@ -30,6 +30,8 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
 
     public DbSet<LlmConversation> LlmConversation { get; set; }
 
+    public DbSet<LlmModel> LlmModel { get; set; }
+
     public DbSet<Log> Log { get; set; }
 
     public DbSet<Order> Order { get; set; }

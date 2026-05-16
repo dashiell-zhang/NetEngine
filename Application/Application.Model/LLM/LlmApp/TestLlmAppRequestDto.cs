@@ -1,6 +1,6 @@
-namespace Application.Model.LLM.LlmApp;
-
 using System.Text.Json.Nodes;
+
+namespace Application.Model.LLM.LlmApp;
 
 /// <summary>
 /// LLM 调用测试请求
@@ -9,15 +9,9 @@ public class TestLlmAppRequestDto
 {
 
     /// <summary>
-    /// 供应商标识（与服务端注册的 ProviderKey 一致）
+    /// 关联的 LLM 模型 ID
     /// </summary>
-    public string Provider { get; set; }
-
-
-    /// <summary>
-    /// 模型名称
-    /// </summary>
-    public string Model { get; set; }
+    public long LlmModelId { get; set; }
 
 
     /// <summary>
@@ -42,4 +36,5 @@ public class TestLlmAppRequestDto
     /// 占位符参数（Key -> Value）
     /// </summary>
     public Dictionary<string, string>? Parameters { get; set; }
+
 }

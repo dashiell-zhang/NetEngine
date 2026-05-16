@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Repository.Database.Bases;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Database;
 
 /// <summary>
 /// LLM 应用配置表
 /// </summary>
-[Index(nameof(Code), IsUnique = true)]
-[Index(nameof(Provider))]
+[Index(nameof(Code))]
 [Index(nameof(IsEnable))]
 public class LlmApp : CUD_User
 {
@@ -25,15 +25,16 @@ public class LlmApp : CUD_User
 
 
     /// <summary>
-    /// 绑定的 LLM 供应商标识（如 DeepSeek、Qwen）
+    /// 关联的 LLM 模型 ID
     /// </summary>
-    public string Provider { get; set; }
+    [ForeignKey(nameof(LlmModel))]
+    public long LlmModelId { get; set; }
 
 
     /// <summary>
-    /// 模型名称
+    /// 关联的 LLM 模型
     /// </summary>
-    public string Model { get; set; }
+    public LlmModel LlmModel { get; set; }
 
 
     /// <summary>

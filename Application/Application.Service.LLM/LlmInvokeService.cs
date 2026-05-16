@@ -18,7 +18,7 @@ namespace Application.Service.LLM;
 /// LLM 调用服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmInvokeService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory)
+public partial class LlmInvokeService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver)
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();
@@ -30,20 +30,10 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     public async Task<ChatResponse> ChatAsync(string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
     {
 
-        var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable).FirstOrDefaultAsync(cancellationToken);
+        var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable && t.DeleteTime == null).FirstOrDefaultAsync(cancellationToken);
         if (app == null)
         {
             throw new InvalidOperationException($"LLM app not found or disabled: {code}");
-        }
-
-        if (string.IsNullOrWhiteSpace(app.Provider))
-        {
-            throw new InvalidOperationException($"LLM app provider is required: {code}");
-        }
-
-        if (string.IsNullOrWhiteSpace(app.Model))
-        {
-            throw new InvalidOperationException($"LLM app model is required: {code}");
         }
 
         if (string.IsNullOrWhiteSpace(app.PromptTemplate))
@@ -66,13 +56,16 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
 
         var extraBody = ParseExtraBodyJson(app.ExtraBodyJson, code);
 
+        var config = await configResolver.GetConfigAsync(app.LlmModelId, cancellationToken)
+            ?? throw new InvalidOperationException($"LLM model config not found or disabled for app: {code}");
+
         var request = new ChatRequest(
-            app.Model,
+            config.ModelId,
             messages,
             ExtraBody: extraBody
         );
 
-        var client = llmClientFactory.GetClient(app.Provider);
+        var client = await llmClientFactory.GetClientAsync(app.LlmModelId, configResolver);
         var response = await client.ChatAsync(request, cancellationToken);
 
         var assistantContent = response.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
@@ -99,20 +92,10 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(string code, Dictionary<string, string> parameters, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
-        var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable).FirstOrDefaultAsync(cancellationToken);
+        var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable && t.DeleteTime == null).FirstOrDefaultAsync(cancellationToken);
         if (app == null)
         {
             throw new InvalidOperationException($"LLM app not found or disabled: {code}");
-        }
-
-        if (string.IsNullOrWhiteSpace(app.Provider))
-        {
-            throw new InvalidOperationException($"LLM app provider is required: {code}");
-        }
-
-        if (string.IsNullOrWhiteSpace(app.Model))
-        {
-            throw new InvalidOperationException($"LLM app model is required: {code}");
         }
 
         if (string.IsNullOrWhiteSpace(app.PromptTemplate))
@@ -135,13 +118,16 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
 
         var extraBody = ParseExtraBodyJson(app.ExtraBodyJson, code);
 
+        var config = await configResolver.GetConfigAsync(app.LlmModelId, cancellationToken)
+            ?? throw new InvalidOperationException($"LLM model config not found or disabled for app: {code}");
+
         var request = new ChatRequest(
-            app.Model,
+            config.ModelId,
             messages,
             ExtraBody: extraBody
         );
 
-        var client = llmClientFactory.GetClient(app.Provider);
+        var client = await llmClientFactory.GetClientAsync(app.LlmModelId, configResolver);
         var assistantBuilder = new StringBuilder(2048);
         await foreach (var chunk in client.ChatStreamAsync(request, cancellationToken).WithCancellation(cancellationToken))
         {

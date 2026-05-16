@@ -1,15 +1,15 @@
 using Application.Model.Shared;
 
-namespace Application.Model.LLM.LlmApp;
+namespace Application.Model.LLM.LlmModel;
 
 /// <summary>
-/// LLM 应用配置分页请求
+/// LLM 模型配置分页请求
 /// </summary>
-public class LlmAppPageRequestDto : PageRequestDto
+public class LlmModelPageRequestDto : PageRequestDto
 {
 
     /// <summary>
-    /// Code/Name/Remark 模糊检索
+    /// 名称/模型标识/备注 模糊检索
     /// </summary>
     public string? Keyword { get; set; }
 

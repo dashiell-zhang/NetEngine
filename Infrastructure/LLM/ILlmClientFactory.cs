@@ -14,11 +14,4 @@ public interface ILlmClientFactory
     /// <returns>对应的 LLM 客户端</returns>
     Task<ILlmClient> GetClientAsync(long modelId, ILlmModelConfigResolver configResolver);
 
-
-    /// <summary>
-    /// 清除指定模型的客户端缓存（模型配置更新或删除时调用）
-    /// </summary>
-    /// <param name="modelId">模型 ID</param>
-    void InvalidateCache(long modelId);
-
 }

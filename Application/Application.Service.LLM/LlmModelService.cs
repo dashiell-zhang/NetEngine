@@ -3,7 +3,6 @@ using Application.Model.LLM.LlmModel;
 using Application.Model.Shared;
 using Common;
 using IdentifierGenerator;
-using LLM;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
@@ -16,7 +15,7 @@ namespace Application.Service.LLM;
 /// LLM 模型配置服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LlmModelService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory)
+public class LlmModelService(DatabaseContext db, IdService idService, IUserContext userContext)
 {
 
     /// <summary>
@@ -143,9 +142,6 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
 
         await db.SaveChangesAsync();
 
-        // 清除该模型的客户端缓存
-        llmClientFactory.InvalidateCache(id);
-
         return true;
     }
 
@@ -163,9 +159,6 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
             llmModel.DeleteTime = DateTimeOffset.UtcNow;
             llmModel.DeleteUserId = userContext.UserId;
             await db.SaveChangesAsync();
-
-            // 清除该模型的客户端缓存
-            llmClientFactory.InvalidateCache(id);
         }
 
         return true;

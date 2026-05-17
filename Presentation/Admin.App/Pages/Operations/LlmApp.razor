@@ -4,211 +4,995 @@
 @using System.Net.Http.Json
 @attribute [ReuseTabsPageTitle("LLM应用")]
 
-<div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-    <div>
-        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditLlmApp()">添加</Button>
+<div class="llm-app-page">
+    <div class="llm-app-page__hero">
+        <div>
+            <div class="llm-app-page__eyebrow">Operations</div>
+            <h2 class="llm-app-page__title">LLM 应用编排台</h2>
+            <div class="llm-app-page__subtitle">集中维护应用入口、提示词模板和调试参数，让模型配置、应用配置与联调过程保持在同一视图内完成</div>
+
+            <div class="llm-app-page__hero-tools">
+                <Button Class="llm-app-page__hero-button" Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditLlmApp()">新增应用</Button>
+            </div>
+        </div>
+
+        <div class="llm-app-page__stats">
+            <div class="llm-app-page__stat-card">
+                <span class="llm-app-page__stat-label">应用总量</span>
+                <strong class="llm-app-page__stat-value">@pageList.Total</strong>
+                <span class="llm-app-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条记录</span>
+            </div>
+
+            <div class="llm-app-page__stat-card">
+                <span class="llm-app-page__stat-label">启用筛选</span>
+                <strong class="llm-app-page__stat-value llm-app-page__stat-value--small">@(request.IsEnable == null ? "全部应用" : request.IsEnable.Value ? "仅启用" : "仅停用")</strong>
+                <span class="llm-app-page__stat-foot">快速聚焦可发布或已停用配置</span>
+            </div>
+
+            <div class="llm-app-page__stat-card">
+                <span class="llm-app-page__stat-label">检索状态</span>
+                <strong class="llm-app-page__stat-value llm-app-page__stat-value--small">@(string.IsNullOrWhiteSpace(request.Keyword) ? "全部应用" : "关键词检索")</strong>
+                <span class="llm-app-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
+            </div>
+        </div>
     </div>
 
-    <div style="margin-left:auto">
-        <Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
-            <FormItem>
-                <Input @bind-Value="@context.Keyword" Placeholder="Code/名称/备注 模糊检索" Style="width: 320px" AllowClear />
+    <Card Class="llm-app-page__card llm-app-page__card--compact" BodyStyle="padding: 16px 18px">
+        <Form Class="llm-app-page__filter-form llm-app-page__filter-form--inline" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
+            <FormItem Class="llm-app-page__filter-item llm-app-page__filter-item--keyword">
+                <Input @bind-Value="@context.Keyword" Placeholder="Code / 名称 / 备注 模糊检索" AllowClear />
             </FormItem>
-            <FormItem>
-                <Select TItem="bool?" TItemValue="bool?" @bind-Value="@context.IsEnable" Placeholder="是否启用" Style="width: 140px" AllowClear>
+
+            <FormItem Class="llm-app-page__filter-item llm-app-page__filter-item--status">
+                <Select TItem="bool?" TItemValue="bool?" @bind-Value="@context.IsEnable" Placeholder="请选择状态" AllowClear>
                     <SelectOption Value="@((bool?)true)" Label="启用"></SelectOption>
                     <SelectOption Value="@((bool?)false)" Label="停用"></SelectOption>
                 </Select>
             </FormItem>
-            <FormItem>
-                <Space>
-                    <Button Type="@ButtonType.Primary" HtmlType="submit">搜索</Button>
-                </Space>
-            </FormItem>
-            <FormItem>
-                <Space>
-                    <Button OnClick="HandleReset">重置</Button>
-                </Space>
+
+            <FormItem Class="llm-app-page__filter-item llm-app-page__filter-item--actions">
+                <div class="llm-app-page__filter-actions">
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索应用</Button>
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--default" OnClick="HandleReset">重置条件</Button>
+                </div>
             </FormItem>
         </Form>
-    </div>
+    </Card>
+
+    <Card Class="llm-app-page__card llm-app-page__card--compact" BodyStyle="padding: 14px">
+        <div class="llm-app-page__list-shell">
+            <div class="llm-app-page__table-wrap">
+                <Table TItem="LlmAppDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <ActionColumn Title="应用">
+                            <div class="llm-app-page__app-cell">
+                                <div class="llm-app-page__app-code">@context.Code</div>
+                                <div class="llm-app-page__app-name">@context.Name</div>
+                            </div>
+                        </ActionColumn>
+                        <PropertyColumn Property="c => c.LlmModelName" Title="模型"></PropertyColumn>
+                        <ActionColumn Title="状态">
+                            <Tag Class="llm-app-page__status-tag" Color="@EnableStatusColor(context.IsEnable)">@EnableStatusText(context.IsEnable)</Tag>
+                        </ActionColumn>
+                        <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
+                        <ActionColumn Title="操作">
+                            <Space>
+                                <SpaceItem>
+                                    <a class="llm-app-page__link" @onclick="() => EditLlmApp(context)">编辑</a>
+                                </SpaceItem>
+
+                                <SpaceItem>
+                                    <Popconfirm Title="确认要删除吗？"
+                                                OnConfirm="_=>DeleteLlmAppAsync(context.Id)"
+                                                OkText="Yes"
+                                                CancelText="No">
+                                        <a class="llm-app-page__link llm-app-page__link--danger">删除</a>
+                                    </Popconfirm>
+                                </SpaceItem>
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="llm-app-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
 </div>
 
-<Divider Style="margin: 12px 0" />
 
-<Table TItem="LlmAppDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+<Drawer Closable="true" Width="1480" Visible="isShowEdit" Title='(editId == null ? "新增 LLM 应用" : "编辑 LLM 应用")' OnClose="() => isShowEdit = false">
+    <Template style="height:100%">
+        <div class="llm-app-drawer">
+            <Form Class="llm-app-drawer__form" Model="@editLlmApp" Layout="@FormLayout.Vertical" OnFinish="SaveLlmAppAsync">
+                <div class="llm-app-drawer__content">
+                    <div class="llm-app-drawer__main">
+                        <div class="llm-app-drawer__section">
+                            <div class="llm-app-drawer__section-head">
+                                <div>
+                                    <div class="llm-app-drawer__section-title">基本配置</div>
+                                </div>
 
-    <ColumnDefinitions>
-        <PropertyColumn Property="c => c.Code" Title="Code"></PropertyColumn>
-        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.LlmModelName" Title="模型"></PropertyColumn>
-        <PropertyColumn Property="c => c.IsEnable" Title="启用"></PropertyColumn>
-        <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
-        <ActionColumn Title="操作">
-            <Space>
+                                <div class="llm-app-drawer__switch-box">
+                                    <span class="llm-app-drawer__switch-label">是否启用</span>
+                                    <Switch @bind-Value="@editLlmApp.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
+                                </div>
+                            </div>
 
+                            <Row Gutter="24">
+                                <AntDesign.Col Span="12">
+                                    <FormItem Class="llm-app-drawer__field-item">
+                                        <div class="llm-app-drawer__field-label">Code</div>
+                                        <Input Placeholder="如: deepseek-chat-default" @bind-Value="@context.Code" />
+                                    </FormItem>
+                                </AntDesign.Col>
 
-                <SpaceItem>
-                    <a @onclick="() => EditLlmApp(context)">编辑</a>
-                </SpaceItem>
+                                <AntDesign.Col Span="12">
+                                    <FormItem Class="llm-app-drawer__field-item">
+                                        <div class="llm-app-drawer__field-label">名称</div>
+                                        <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                            </Row>
 
-                <SpaceItem>
-                    <Popconfirm Title="确认要删除吗？"
-                                OnConfirm="_=>DeleteLlmAppAsync(context.Id)"
-                                OkText="Yes"
-                                CancelText="No">
-                        <a style="color:red">删除</a>
-                    </Popconfirm>
-                </SpaceItem>
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
+                            <Row Gutter="24">
+                                <AntDesign.Col Span="24">
+                                    <FormItem Class="llm-app-drawer__field-item">
+                                        <div class="llm-app-drawer__field-label">模型</div>
+                                        <Select TItem="LlmModelSelectDto" TItemValue="long"
+                                                DataSource="@modelSelectList"
+                                                @bind-Value="@context.LlmModelId"
+                                                ValueName="@nameof(LlmModelSelectDto.Id)"
+                                                LabelName="@nameof(LlmModelSelectDto.Name)"
+                                                Placeholder="请选择模型"
+                                                Style="width:100%" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                            </Row>
 
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
-        </div>
-    </PaginationTemplate>
+                            <FormItem Class="llm-app-drawer__textarea-item">
+                                <div class="llm-app-drawer__field-label">ExtraBodyJson</div>
+                                <TextArea @bind-Value="@context.ExtraBodyJson"
+                                          Placeholder='JSON对象，直接透传到请求body根字段，如 {"enable_thinking":true}'
+                                          MinRows="4"
+                                          MaxRows="10"
+                                          style="width:100%" />
+                            </FormItem>
 
-</Table>
+                            <FormItem Class="llm-app-drawer__textarea-item">
+                                <div class="llm-app-drawer__field-label">备注</div>
+                                <TextArea @bind-Value="@context.Remark" MinRows="2" MaxRows="6" style="width:100%" />
+                            </FormItem>
 
+                            <FormItem Class="llm-app-drawer__textarea-item">
+                                <div class="llm-app-drawer__field-label">SystemPromptTemplate</div>
+                                <TextArea @bind-Value="@context.SystemPromptTemplate" MinRows="6" MaxRows="16" style="width:100%" />
+                            </FormItem>
 
-<Drawer Closable="true" Width="760" Visible="isShowEdit" Title='(editId == null ? "新增 LLM 应用" : "编辑 LLM 应用")' OnClose="() => isShowEdit = false">
-    <Template style="height:90%">
-
-        <Form Model="@editLlmApp" OnFinish="SaveLlmAppAsync">
-
-            <Row Gutter="24">
-                <AntDesign.Col Span="12">
-                    <FormItem>
-                        <Text>Code</Text>
-                        <Input Placeholder="如: deepseek-chat-default" @bind-Value="@context.Code" />
-                    </FormItem>
-                </AntDesign.Col>
-                <AntDesign.Col Span="12">
-                    <FormItem>
-                        <Text>名称</Text>
-                        <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
-                    </FormItem>
-                </AntDesign.Col>
-            </Row>
-
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <FormItem>
-                        <Text>模型</Text>
-                        <Select TItem="LlmModelSelectDto" TItemValue="long"
-                                DataSource="@modelSelectList"
-                                @bind-Value="@context.LlmModelId"
-                                ValueName="@nameof(LlmModelSelectDto.Id)"
-                                LabelName="@nameof(LlmModelSelectDto.Name)"
-                                Placeholder="请选择模型"
-                                Style="width: 100%" />
-                    </FormItem>
-                </AntDesign.Col>
-            </Row>
-
-            <FormItem>
-                <Text>ExtraBodyJson</Text>
-                <TextArea @bind-Value="@context.ExtraBodyJson"
-                          Placeholder='JSON对象，直接透传到请求body根字段，如 {"enable_thinking":true}'
-                          MinRows="2"
-                          MaxRows="8"
-                          style="width:100%" />
-            </FormItem>
-
-            <FormItem>
-                <Text>是否启用</Text>
-                <Switch @bind-Value="@editLlmApp.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
-            </FormItem>
-
-            <FormItem>
-                <Text>SystemPromptTemplate</Text>
-                <TextArea @bind-Value="@context.SystemPromptTemplate" MinRows="3" MaxRows="10" style="width:100%" />
-            </FormItem>
-
-            <FormItem>
-                <Text>PromptTemplate</Text>
-                <TextArea @bind-Value="@context.PromptTemplate" MinRows="4" MaxRows="14" style="width:100%" />
-            </FormItem>
-
-            <FormItem>
-                <Text>备注</Text>
-                <TextArea @bind-Value="@context.Remark" MinRows="2" MaxRows="6" style="width:100%" />
-            </FormItem>
-
-            <Divider />
-
-            <Text>调用测试</Text>
-
-                @if (PlaceholderInfos.Count != 0)
-                {
-                    <div style="margin-top:10px">
-                        <span style="color:rgba(0,0,0,.45)">检测到占位符：@string.Join("、", PlaceholderInfos.Select(t => t.Display))</span>
-                    </div>
-
-                    <Row Gutter="24" style="margin-top:10px">
-                        @foreach (var p in PlaceholderInfos)
-                        {
-                            var paramItem = GetOrCreateTestParamItem(p.Key);
-                            <AntDesign.Col Span="12" style="margin-bottom:10px">
-                                <FormItem>
-                                    <Text>
-                                        @p.Key
-                                        @if (p.IsRequired)
-                                        {
-                                            <span style="color:red;margin-left:6px">*</span>
-                                        }
-                                    </Text>
-                                    <Input @bind-Value="@paramItem.Value" Placeholder="@($"请输入 {p.Key}")" />
-                                </FormItem>
-                            </AntDesign.Col>
-                        }
-                    </Row>
-                }
-                else
-                {
-                    <div style="margin-top:10px">
-                        <span style="color:rgba(0,0,0,.45)">未检测到 {{key}} / {{*key}} 占位符</span>
-                    </div>
-                }
-
-            <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between">
-                <Button Type="@ButtonType.Primary" Loading="@testLoading" @onclick="TestCallAsync">调用测试</Button>
-
-                @if (!string.IsNullOrWhiteSpace(testResult?.Model) || testResult?.Usage?.TotalTokens != null)
-                {
-                    <div style="color:rgba(0,0,0,.45);font-size:13px">
-                        @if (!string.IsNullOrWhiteSpace(testResult?.Model))
-                        {
-                            <span>Model: @testResult!.Model</span>
-                        }
-                        @if (testResult?.Usage?.TotalTokens != null)
-                        {
-                            <span style="margin-left:24px">Tokens: @testResult.Usage.TotalTokens</span>
-                        }
-                    </div>
-                }
-            </div>
-
-            <div style="margin-top:10px">
-                <Text>返回结果</Text>
-                <TextArea Value="@testResult?.Content" ReadOnly MinRows="4" MaxRows="14" style="width:100%" />
-            </div>
-
-                <Row Gutter="24">
-                    <AntDesign.Col Span="24">
-                        <div style="float:right;margin-top:12px">
-                            <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                            <Button Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
+                            <FormItem Class="llm-app-drawer__textarea-item">
+                                <div class="llm-app-drawer__field-label">PromptTemplate</div>
+                                <TextArea @bind-Value="@context.PromptTemplate" MinRows="6" MaxRows="16" style="width:100%" />
+                            </FormItem>
                         </div>
-                    </AntDesign.Col>
-                </Row>
+                    </div>
 
-        </Form>
+                    <div class="llm-app-drawer__side">
+                        <div class="llm-app-drawer__section llm-app-drawer__section--sandbox">
+                            <div class="llm-app-drawer__section-head">
+                                <div>
+                                    <div class="llm-app-drawer__section-title">调用测试</div>
+                                    <div class="llm-app-drawer__section-desc">识别模板中的占位符并现场填写测试参数，直接验证返回内容是否符合预期</div>
+                                </div>
+                            </div>
 
+                            @if (PlaceholderInfos.Count != 0)
+                            {
+                                <div class="llm-app-drawer__placeholder-summary">
+                                    检测到占位符：@string.Join("、", PlaceholderInfos.Select(t => t.Display))
+                                </div>
+
+                                <Row Gutter="24" class="llm-app-drawer__param-grid">
+                                    @foreach (var p in PlaceholderInfos)
+                                    {
+                                        var paramItem = GetOrCreateTestParamItem(p.Key);
+                                        <AntDesign.Col Span="12">
+                                            <div class="llm-app-drawer__param-card">
+                                                <FormItem>
+                                                    <div class="llm-app-drawer__field-label">
+                                                        @p.Key
+                                                        @if (p.IsRequired)
+                                                        {
+                                                            <span class="llm-app-drawer__required">*</span>
+                                                        }
+                                                    </div>
+                                                    <Input @bind-Value="@paramItem.Value" Placeholder="@($"请输入 {p.Key}")" />
+                                                </FormItem>
+                                            </div>
+                                        </AntDesign.Col>
+                                    }
+                                </Row>
+                            }
+                            else
+                            {
+                                <div class="llm-app-drawer__placeholder-summary llm-app-drawer__placeholder-summary--empty">
+                                    未检测到 {{key}} / {{*key}} 占位符
+                                </div>
+                            }
+
+                            <div class="llm-app-drawer__test-bar">
+                                <Button Class="llm-app-page__action-button llm-app-page__action-button--primary" Type="@ButtonType.Primary" Loading="@testLoading" @onclick="TestCallAsync">调用测试</Button>
+
+                                <div class="llm-app-drawer__test-meta">
+                                    @if (!string.IsNullOrWhiteSpace(testResult?.Model))
+                                    {
+                                        <span class="llm-app-drawer__meta-pill llm-app-drawer__meta-pill--soft">Model: @testResult!.Model</span>
+                                    }
+                                    @if (testResult?.Usage?.TotalTokens != null)
+                                    {
+                                        <span class="llm-app-drawer__meta-pill llm-app-drawer__meta-pill--soft">Tokens: @testResult.Usage.TotalTokens</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="llm-app-drawer__result-box">
+                                <div class="llm-app-drawer__result-toolbar">
+                                    <span class="llm-app-drawer__result-dot"></span>
+                                    <span class="llm-app-drawer__result-dot"></span>
+                                    <span class="llm-app-drawer__result-dot"></span>
+                                    <span class="llm-app-drawer__result-caption">返回结果</span>
+                                </div>
+
+                                <TextArea Value="@testResult?.Content" ReadOnly MinRows="6" MaxRows="18" style="width:100%" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="llm-app-drawer__footer">
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--default" Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
+                </div>
+            </Form>
+        </div>
     </Template>
 </Drawer>
+
+<style>
+    .llm-app-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+
+    .llm-app-page__hero {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.3fr) minmax(320px, 1fr);
+        gap: 12px;
+        padding: 16px 18px;
+        border-radius: 22px;
+        background:
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 36%),
+            radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 32%),
+            linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f4fffd 100%);
+        color: #10233f;
+        border: 1px solid #e9eef5;
+        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
+    }
+
+    .llm-app-page__eyebrow {
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .llm-app-page__title {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.15;
+        color: #10233f;
+    }
+
+    .llm-app-page__subtitle {
+        margin-top: 6px;
+        max-width: 660px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: #526075;
+    }
+
+    .llm-app-page__hero-tools {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .llm-app-page__hero-button {
+        height: 40px;
+        padding: 0 18px;
+        border-radius: 16px;
+        border-color: #93c5fd;
+        background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+        box-shadow: 0 10px 18px rgba(59, 130, 246, 0.20);
+    }
+
+    .llm-app-page__hero-button:hover,
+    .llm-app-page__hero-button:focus {
+        border-color: #60a5fa;
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    .llm-app-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        align-self: stretch;
+    }
+
+    .llm-app-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 4px;
+        min-height: 86px;
+        padding: 10px 12px;
+        border-radius: 18px;
+        border: 1px solid #e4edf7;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .llm-app-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
+    }
+
+    .llm-app-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 253, 245, 0.96) 100%);
+    }
+
+    .llm-app-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 243, 255, 0.96) 100%);
+    }
+
+    .llm-app-page__stat-label {
+        font-size: 11px;
+        color: #64748b;
+    }
+
+    .llm-app-page__stat-value {
+        font-size: 20px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .llm-app-page__stat-value--small {
+        font-size: 16px;
+    }
+
+    .llm-app-page__stat-foot {
+        font-size: 11px;
+        line-height: 1.5;
+        color: #64748b;
+    }
+
+    .llm-app-page__card {
+        border-radius: 18px;
+        border: 1px solid #edf2f7;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .llm-app-page__card--compact {
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .llm-app-page__field-label,
+    .llm-app-drawer__field-label {
+        margin-bottom: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .llm-app-page__filter-form--inline {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .llm-app-page__filter-actions,
+    .llm-app-drawer__footer,
+    .llm-app-drawer__summary-meta,
+    .llm-app-drawer__test-meta,
+    .llm-app-drawer__test-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .llm-app-page__filter-form .ant-form-item,
+    .llm-app-drawer__form .ant-form-item {
+        margin-bottom: 10px;
+    }
+
+    .llm-app-drawer__main .ant-form-item {
+        margin-bottom: 14px;
+    }
+
+    .llm-app-drawer__main .llm-app-drawer__field-item {
+        margin-bottom: 16px;
+    }
+
+    .llm-app-drawer__main .llm-app-drawer__field-item .llm-app-drawer__field-label {
+        margin-bottom: 6px;
+    }
+
+    .llm-app-drawer__main .llm-app-drawer__textarea-item {
+        margin-bottom: 18px;
+    }
+
+    .llm-app-drawer__main .llm-app-drawer__textarea-item .llm-app-drawer__field-label {
+        margin-bottom: 4px;
+    }
+
+    .llm-app-page__filter-form--inline .ant-form-item {
+        margin-right: 0;
+        margin-bottom: 0;
+    }
+
+    .llm-app-page__filter-item--keyword {
+        flex: 1 1 420px;
+        min-width: 320px;
+    }
+
+    .llm-app-page__filter-item--status {
+        flex: 0 0 220px;
+    }
+
+    .llm-app-page__filter-item--actions {
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+
+    .llm-app-page__filter-form .ant-input,
+    .llm-app-page__filter-form .ant-input-affix-wrapper,
+    .llm-app-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .llm-app-drawer__form .ant-input,
+    .llm-app-drawer__form .ant-input-affix-wrapper,
+    .llm-app-drawer__form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .llm-app-drawer__form .ant-input-textarea-show-count,
+    .llm-app-drawer__form .ant-input-textarea textarea {
+        border-radius: 16px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .llm-app-page__filter-form .ant-input {
+        padding: 0 14px;
+    }
+
+    .llm-app-page__filter-form .ant-input-affix-wrapper {
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .llm-app-page__filter-form .ant-input-affix-wrapper .ant-input {
+        height: auto;
+        padding: 0;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .llm-app-page__filter-form .ant-input,
+    .llm-app-page__filter-form .ant-input-affix-wrapper,
+    .llm-app-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .llm-app-drawer__form .ant-input,
+    .llm-app-drawer__form .ant-input-affix-wrapper,
+    .llm-app-drawer__form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        height: 44px;
+        width: 100%;
+    }
+
+    .llm-app-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .llm-app-drawer__form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .llm-app-page__filter-form .ant-input,
+    .llm-app-page__filter-form .ant-input-affix-wrapper .ant-input,
+    .llm-app-page__filter-form .ant-select-selection-item,
+    .llm-app-page__filter-form .ant-select-selection-placeholder {
+        color: #334155;
+        font-size: 13px;
+    }
+
+    .llm-app-page__filter-form .ant-select-selection-item,
+    .llm-app-page__filter-form .ant-select-selection-placeholder {
+        line-height: 42px;
+    }
+
+    .llm-app-drawer__form .ant-select-selection-item,
+    .llm-app-drawer__form .ant-select-selection-placeholder {
+        color: #334155;
+        font-size: 13px;
+        line-height: 42px;
+    }
+
+    .llm-app-page__filter-form .ant-input::placeholder,
+    .llm-app-page__filter-form .ant-input-affix-wrapper .ant-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .llm-app-drawer__form .ant-input-textarea textarea {
+        min-height: 120px;
+        padding: 14px 16px;
+        line-height: 1.75;
+    }
+
+    .llm-app-page__filter-form .ant-input,
+    .llm-app-page__filter-form .ant-input-affix-wrapper,
+    .llm-app-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .llm-app-drawer__form .ant-input,
+    .llm-app-drawer__form .ant-input-affix-wrapper,
+    .llm-app-drawer__form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .llm-app-page__filter-form .ant-input:hover,
+    .llm-app-page__filter-form .ant-input-affix-wrapper:hover,
+    .llm-app-page__filter-form .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+    .llm-app-drawer__form .ant-input:hover,
+    .llm-app-drawer__form .ant-input-affix-wrapper:hover,
+    .llm-app-drawer__form .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+    .llm-app-drawer__form .ant-input-textarea textarea:hover {
+        border-color: #bfdbfe;
+    }
+
+    .llm-app-page__filter-form .ant-input:focus,
+    .llm-app-page__filter-form .ant-input-focused,
+    .llm-app-page__filter-form .ant-input-affix-wrapper-focused,
+    .llm-app-page__filter-form .ant-select-focused .ant-select-selector,
+    .llm-app-drawer__form .ant-input:focus,
+    .llm-app-drawer__form .ant-input-focused,
+    .llm-app-drawer__form .ant-input-affix-wrapper-focused,
+    .llm-app-drawer__form .ant-select-focused .ant-select-selector,
+    .llm-app-drawer__form .ant-input-textarea textarea:focus {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
+    }
+
+    .llm-app-page__action-button {
+        height: 40px;
+        padding: 0 18px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: none;
+    }
+
+    .llm-app-page__action-button--primary {
+        border-color: #93c5fd;
+        background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+    }
+
+    .llm-app-page__action-button--primary:hover,
+    .llm-app-page__action-button--primary:focus {
+        border-color: #60a5fa;
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    .llm-app-page__action-button--default {
+        color: #334155;
+        border-color: #dbe7f5;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .llm-app-page__action-button--default:hover,
+    .llm-app-page__action-button--default:focus {
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+        background: linear-gradient(180deg, #fafdff 0%, #eff6ff 100%);
+    }
+
+    .llm-app-page__list-shell {
+        border: 1px solid #e8eef6;
+        border-radius: 18px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .llm-app-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .llm-app-page__table-wrap .ant-table-thead > tr > th {
+        padding: 14px 12px;
+        background: linear-gradient(180deg, #fbfdff 0%, #f3f8ff 100%);
+        color: #475569;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #dbe7f5;
+    }
+
+    .llm-app-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .llm-app-page__table-wrap .ant-table-tbody > tr > td {
+        padding: 15px 12px;
+        color: #1e293b;
+        font-size: 13px;
+        border-bottom: 1px solid #eef2f7;
+        transition: background-color 0.2s ease;
+    }
+
+    .llm-app-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fbff;
+    }
+
+    .llm-app-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .llm-app-page__app-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .llm-app-page__app-code {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        max-width: 100%;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 700;
+        font-family: Consolas, "Courier New", monospace;
+    }
+
+    .llm-app-page__app-name {
+        color: #334155;
+        font-weight: 600;
+    }
+
+    .llm-app-page__status-tag {
+        border: none;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-weight: 700;
+    }
+
+    .llm-app-page__link {
+        color: #1d4ed8;
+        font-weight: 600;
+    }
+
+    .llm-app-page__link--danger {
+        color: #dc2626;
+    }
+
+    .llm-app-page__pagination {
+        margin: 0;
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .llm-app-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .llm-app-page__pagination .ant-pagination-item,
+    .llm-app-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .llm-app-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .llm-app-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .llm-app-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .llm-app-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+
+    .llm-app-page__pagination .ant-pagination-item-active a {
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .llm-app-drawer {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: calc(100vh - 170px);
+    }
+
+    .llm-app-drawer__form,
+    .llm-app-drawer__main,
+    .llm-app-drawer__side {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .llm-app-drawer__content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 14px;
+        align-items: start;
+    }
+
+    .llm-app-drawer__section {
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid #e6eef8;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .llm-app-drawer__section--sandbox {
+        background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+        border-color: #dbeafe;
+    }
+
+    .llm-app-drawer__side .llm-app-drawer__section--sandbox {
+        min-height: 100%;
+    }
+
+    .llm-app-drawer__section-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .llm-app-drawer__param-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 78px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fdfefe 0%, #f8fbff 100%);
+        border: 1px solid #eaf1f8;
+    }
+
+    .llm-app-drawer__meta-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .llm-app-drawer__meta-pill--status {
+        border: none;
+        box-shadow: none;
+    }
+
+    .llm-app-drawer__meta-pill--soft {
+        color: #526075;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid #dbe7f5;
+    }
+
+    .llm-app-drawer__section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #10233f;
+    }
+
+    .llm-app-drawer__section-desc {
+        margin-top: 6px;
+        font-size: 13px;
+        line-height: 1.7;
+        color: #6b7280;
+    }
+
+    .llm-app-drawer__switch-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid #dbe7f5;
+        background: #fbfdff;
+    }
+
+    .llm-app-drawer__switch-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #526075;
+    }
+
+    .llm-app-drawer__placeholder-summary {
+        margin-top: 14px;
+        margin-bottom: 14px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #eff6ff;
+        border: 1px solid #bae6fd;
+        color: #1d4ed8;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .llm-app-drawer__placeholder-summary--empty {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #64748b;
+    }
+
+    .llm-app-drawer__param-grid {
+        margin-top: 0;
+    }
+
+    .llm-app-drawer__required {
+        margin-left: 6px;
+        color: #dc2626;
+    }
+
+    .llm-app-drawer__test-bar {
+        justify-content: space-between;
+        margin-top: 16px;
+        margin-bottom: 12px;
+    }
+
+    .llm-app-drawer__result-box {
+        display: flex;
+        flex-direction: column;
+        min-height: 260px;
+        padding: 16px;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+        border: 1px solid #dbeafe;
+    }
+
+    .llm-app-drawer__result-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dbeafe;
+    }
+
+    .llm-app-drawer__result-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #bfdbfe;
+    }
+
+    .llm-app-drawer__result-dot:nth-child(2) {
+        background: #93c5fd;
+    }
+
+    .llm-app-drawer__result-dot:nth-child(3) {
+        background: #60a5fa;
+    }
+
+    .llm-app-drawer__result-caption {
+        margin-left: 4px;
+        color: #526075;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .llm-app-drawer__result-box textarea {
+        flex: 1;
+        min-height: 0;
+        color: #1e293b;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        font-family: Consolas, "Courier New", monospace;
+        line-height: 1.75;
+        resize: none;
+    }
+
+    .llm-app-drawer__footer {
+        justify-content: flex-end;
+        padding-top: 6px;
+    }
+
+    @@media (max-width: 1280px) {
+        .llm-app-page__hero,
+        .llm-app-page__stats {
+            grid-template-columns: 1fr;
+        }
+
+        .llm-app-drawer__content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .llm-app-drawer__section-head,
+        .llm-app-drawer__summary,
+        .llm-app-drawer__test-bar {
+            grid-template-columns: 1fr;
+            display: grid;
+        }
+
+        .llm-app-drawer__section-head,
+        .llm-app-drawer__summary,
+        .llm-app-drawer__test-bar {
+            justify-content: stretch;
+        }
+
+        .llm-app-page__filter-form--inline {
+            align-items: stretch;
+        }
+
+        .llm-app-page__filter-item--keyword,
+        .llm-app-page__filter-item--status,
+        .llm-app-page__filter-item--actions {
+            flex: 1 1 100%;
+            min-width: 0;
+            margin-left: 0;
+        }
+
+        .llm-app-page__filter-item--actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .llm-app-page__hero,
+        .llm-app-drawer__section {
+            padding: 18px;
+        }
+
+        .llm-app-page__title {
+            font-size: 24px;
+        }
+    }
+</style>
 
 
 @code {
@@ -285,6 +1069,18 @@
     }
 
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    /// <summary>
+    /// 返回启用状态展示文案
+    /// </summary>
+    static string EnableStatusText(bool isEnable) => isEnable ? "启用中" : "已停用";
+
+
+    /// <summary>
+    /// 返回启用状态标签颜色
+    /// </summary>
+    static string EnableStatusColor(bool isEnable) => isEnable ? "#3b82f6" : "#94a3b8";
 
     bool isShowEdit = false;
     bool saveLoading = false;

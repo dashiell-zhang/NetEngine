@@ -16,7 +16,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
     [HttpGet]
     public async Task<string> TestLLM([FromServices] LlmInvokeService llmInvokeService, [FromServices]IdService idService)
     {
-        string code = "sumqw";
+        string code = "jiafa";
 
         Dictionary<string, string> args = new();
 

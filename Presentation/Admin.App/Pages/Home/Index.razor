@@ -2,19 +2,340 @@
 @using Application.Model.Site.Site
 @attribute [ReuseTabsPage(Title = "仪表盘", PinUrl = "/", Closable = false, Pin = true)]
 
-<Card Title="服务器信息">
-    @foreach (var info in serverInfos)
+<div class="dashboard-page">
+    <div class="dashboard-page__hero">
+        <div>
+            <div class="dashboard-page__eyebrow">Console Overview</div>
+            <h2 class="dashboard-page__title">服务器运行概览</h2>
+            <div class="dashboard-page__subtitle">将当前宿主的实例标识、部署环境和资源占用收拢到同一视图，方便在进入后台后快速确认服务状态</div>
+
+            @if (overviewInfos.Count > 0)
+            {
+                <div class="dashboard-page__tag-list">
+                    @foreach (var info in overviewInfos)
+                    {
+                        <Tag Class="dashboard-page__tag">@(info.Name + "：" + info.Value)</Tag>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="dashboard-page__hero-panel">
+            <div class="dashboard-page__hero-panel-label">当前实例</div>
+            <div class="dashboard-page__hero-panel-title">@GetInfoValue("服务器名称", "未识别实例")</div>
+            <div class="dashboard-page__hero-panel-foot">管理端宿主实例已连接，可在下方查看资源占用与部署环境</div>
+
+            <div class="dashboard-page__hero-status">
+                <span class="dashboard-page__status-dot"></span>
+                <span>@(serverInfos.Count > 0 ? "运行信息已同步" : "等待接口返回数据")</span>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
     {
-        <CardGrid Style="width:25%;text-align:left" Hoverable="true">
-            @(info.Name + "：" + info.Value)
-        </CardGrid>
+        <Card Class="dashboard-page__card" BodyStyle="padding: 32px 24px">
+            <div class="dashboard-page__empty">正在加载服务器信息</div>
+        </Card>
     }
-</Card>
+    else if (serverInfos.Count == 0)
+    {
+        <Card Class="dashboard-page__card" BodyStyle="padding: 32px 24px">
+            <div class="dashboard-page__empty">暂未获取到服务器信息</div>
+        </Card>
+    }
+    else
+    {
+        <div class="dashboard-page__content-grid">
+            <Card Class="dashboard-page__card" Title="核心指标" BodyStyle="padding: 20px">
+                <div class="dashboard-page__metric-grid">
+                    @foreach (var info in metricInfos)
+                    {
+                        <div class="dashboard-page__metric-card">
+                            <span class="dashboard-page__metric-label">@info.Name</span>
+                            <strong class="dashboard-page__metric-value">@info.Value</strong>
+                        </div>
+                    }
+                </div>
+            </Card>
+
+            <Card Class="dashboard-page__card" Title="部署信息" BodyStyle="padding: 20px">
+                <div class="dashboard-page__detail-list">
+                    @foreach (var info in deploymentInfos)
+                    {
+                        <div class="dashboard-page__detail-item">
+                            <span class="dashboard-page__detail-label">@info.Name</span>
+                            <span class="dashboard-page__detail-value">@info.Value</span>
+                        </div>
+                    }
+                </div>
+            </Card>
+        </div>
+    }
+</div>
+
+<style>
+    .dashboard-page {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding-bottom: 16px;
+    }
+
+    .dashboard-page__hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.95fr);
+        gap: 18px;
+        padding: 26px 28px;
+        border-radius: 24px;
+        border: 1px solid #d9e9f4;
+        background:
+            radial-gradient(circle at top right, rgba(24, 144, 255, 0.18), transparent 35%),
+            radial-gradient(circle at bottom left, rgba(19, 194, 194, 0.14), transparent 30%),
+            linear-gradient(135deg, #f8fcff 0%, #eef7fb 50%, #f5fbff 100%);
+        box-shadow: 0 16px 34px rgba(80, 118, 154, 0.12);
+    }
+
+    .dashboard-page__eyebrow {
+        margin-bottom: 10px;
+        color: #1677ff;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .dashboard-page__title {
+        margin: 0;
+        color: #102a43;
+        font-size: 30px;
+        line-height: 1.2;
+    }
+
+    .dashboard-page__subtitle {
+        max-width: 680px;
+        margin-top: 12px;
+        color: #52667a;
+        font-size: 14px;
+        line-height: 1.9;
+    }
+
+    .dashboard-page__tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .dashboard-page__tag {
+        margin-right: 0;
+        padding: 6px 14px;
+        color: #0f3b66;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(144, 202, 249, 0.78);
+        border-radius: 999px;
+    }
+
+    .dashboard-page__hero-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        padding: 22px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(226, 239, 247, 0.92);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+    }
+
+    .dashboard-page__hero-panel-label {
+        color: #5b7083;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .dashboard-page__hero-panel-title {
+        margin-top: 12px;
+        color: #102a43;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.2;
+        word-break: break-word;
+    }
+
+    .dashboard-page__hero-panel-foot {
+        margin-top: 8px;
+        color: #60758a;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .dashboard-page__hero-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        margin-top: 18px;
+        padding: 8px 12px;
+        color: #166534;
+        font-size: 13px;
+        font-weight: 600;
+        background: #edfdf3;
+        border: 1px solid #c7f0d4;
+        border-radius: 999px;
+    }
+
+    .dashboard-page__status-dot {
+        width: 8px;
+        height: 8px;
+        background: #16a34a;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
+    }
+
+    .dashboard-page__content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+        gap: 18px;
+    }
+
+    .dashboard-page__card {
+        border-radius: 20px;
+        border: 1px solid #edf2f7;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    }
+
+    .dashboard-page__metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .dashboard-page__metric-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 132px;
+        padding: 18px;
+        border-radius: 18px;
+        background:
+            radial-gradient(circle at top right, rgba(24, 144, 255, 0.12), transparent 30%),
+            linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
+        border: 1px solid #e7eef5;
+    }
+
+    .dashboard-page__metric-label {
+        color: #66788a;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .dashboard-page__metric-value {
+        margin-top: 18px;
+        color: #102a43;
+        font-size: 22px;
+        line-height: 1.5;
+        word-break: break-word;
+    }
+
+    .dashboard-page__detail-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dashboard-page__detail-item {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid #eef3f7;
+    }
+
+    .dashboard-page__detail-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .dashboard-page__detail-label {
+        color: #7b8794;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .dashboard-page__detail-value {
+        color: #102a43;
+        font-size: 14px;
+        line-height: 1.8;
+        word-break: break-word;
+    }
+
+    .dashboard-page__empty {
+        color: #7b8794;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    @@media (max-width: 1200px) {
+        .dashboard-page__hero,
+        .dashboard-page__content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dashboard-page__hero {
+            padding: 22px 18px;
+        }
+
+        .dashboard-page__title {
+            font-size: 24px;
+        }
+
+        .dashboard-page__metric-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-page__detail-item {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+    }
+</style>
 
 @code {
 
+    /// <summary>
+    /// 服务器信息列表
+    /// </summary>
     List<ServerInfoDto> serverInfos = new();
 
+
+    /// <summary>
+    /// 头部概览信息
+    /// </summary>
+    List<ServerInfoDto> overviewInfos = new();
+
+
+    /// <summary>
+    /// 核心指标信息
+    /// </summary>
+    List<ServerInfoDto> metricInfos = new();
+
+
+    /// <summary>
+    /// 部署信息
+    /// </summary>
+    List<ServerInfoDto> deploymentInfos = new();
+
+
+    /// <summary>
+    /// 页面加载状态
+    /// </summary>
+    bool isLoading = true;
+
+    /// <summary>
+    /// 初始化首页数据
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         try
@@ -29,6 +350,7 @@
             if (retData != null)
             {
                 serverInfos = retData;
+                RefreshLayoutData();
             }
         }
         catch (OperationCanceledException)
@@ -39,6 +361,61 @@
         {
             // interceptor handles 401/400; don't crash WASM runtime
         }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+
+    /// <summary>
+    /// 刷新页面信息分组
+    /// </summary>
+    void RefreshLayoutData()
+    {
+        overviewInfos = BuildInfoGroup("服务器IP", "外部端口");
+        metricInfos = BuildInfoGroup("服务器CPU", "本网站占用内存");
+        deploymentInfos = BuildInfoGroup("操作系统", "目录物理路径");
+    }
+
+
+    /// <summary>
+    /// 获取指定名称的信息值
+    /// </summary>
+    string GetInfoValue(string name, string fallback = "--")
+    {
+        foreach (var info in serverInfos)
+        {
+            if (info.Name == name && !string.IsNullOrWhiteSpace(info.Value))
+            {
+                return info.Value;
+            }
+        }
+
+        return fallback;
+    }
+
+
+    /// <summary>
+    /// 按名称顺序构建信息分组
+    /// </summary>
+    List<ServerInfoDto> BuildInfoGroup(params string[] names)
+    {
+        var result = new List<ServerInfoDto>();
+
+        foreach (var name in names)
+        {
+            foreach (var info in serverInfos)
+            {
+                if (info.Name == name)
+                {
+                    result.Add(info);
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
 }

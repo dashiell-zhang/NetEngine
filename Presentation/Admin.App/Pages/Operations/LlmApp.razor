@@ -663,8 +663,10 @@
 
     .llm-app-page__app-cell {
         display: flex;
-        flex-direction: column;
-        gap: 6px;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: nowrap;
+        min-width: 0;
     }
 
     .llm-app-page__app-code {
@@ -685,6 +687,7 @@
     .llm-app-page__app-name {
         color: #334155;
         font-weight: 600;
+        white-space: nowrap;
     }
 
     .llm-app-page__status-tag {

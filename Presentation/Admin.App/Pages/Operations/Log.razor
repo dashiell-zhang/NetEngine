@@ -2,92 +2,778 @@
 @using Application.Model.Basic.Log
 @attribute [ReuseTabsPageTitle("日志")]
 
-<Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
-    <FormItem>
-        <Input @bind-Value="@context.MachineName" Placeholder="请输入设备名称" Style="width: 200px" />
-    </FormItem>
-    <FormItem>
-        <Input @bind-Value="@context.Project" Placeholder="请输入项目名称" Style="width: 200px" />
-    </FormItem>
-    <FormItem>
-        <Input @bind-Value="@context.Content" Placeholder="请输入内容关键字" Style="width: 240px" />
-    </FormItem>
-    <FormItem>
-        <Select TItem="string" TItemValue="string" @bind-Value="@context.Level" Placeholder="请选择日志等级" Style="width: 150px" AllowClear>
-            <SelectOption Value="@("Trace")" Label="Trace"></SelectOption>
-            <SelectOption Value="@("Debug")" Label="Debug"></SelectOption>
-            <SelectOption Value="@("Information")" Label="Information"></SelectOption>
-            <SelectOption Value="@("Warning")" Label="Warning"></SelectOption>
-            <SelectOption Value="@("Error")" Label="Error"></SelectOption>
-            <SelectOption Value="@("Critical")" Label="Critical"></SelectOption>
-            <SelectOption Value="@("None")" Label="None"></SelectOption>
-        </Select>
-    </FormItem>
-    <FormItem>
-        <DatePicker @bind-Value="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择开始时间")" />
-    </FormItem>
-    <FormItem>
-        <DatePicker @bind-Value="@context.EndTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择结束时间")" />
-    </FormItem>
-    <FormItem>
-        <Space>
-            <Button Type="@ButtonType.Primary" HtmlType="submit">搜索</Button>
-        </Space>
-    </FormItem>
-    <FormItem>
-        <Space>
-            <Button OnClick="HandleReset">重置</Button>
-        </Space>
-    </FormItem>
-</Form>
-
-<Divider Style="margin: 12px 0" />
-
-<Table TItem="LogDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
-
-    <ColumnDefinitions>
-        <PropertyColumn Property="c => c.Project" Title="项目"></PropertyColumn>
-        <PropertyColumn Property="c => c.MachineName" Title="机器"></PropertyColumn>
-        <PropertyColumn Property="c => c.Level" Title="等级"></PropertyColumn>
-        <PropertyColumn Property="c => c.Category" Title="类别"></PropertyColumn>
-        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="时间"></PropertyColumn>
-        <ActionColumn Title="操作">
-            <Space>
-                <SpaceItem>
-                    <a @onclick="() => ViewLog(context)">查看</a>
-                </SpaceItem>
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
-
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+<div class="log-page">
+    <div class="log-page__hero">
+        <div>
+            <div class="log-page__eyebrow">Operations</div>
+            <h2 class="log-page__title">系统日志中心</h2>
+            <div class="log-page__subtitle">集中查看系统运行轨迹、快速筛选异常线索，并通过详情面板完成问题定位</div>
         </div>
-    </PaginationTemplate>
 
-</Table>
+        <div class="log-page__stats">
+            <div class="log-page__stat-card">
+                <span class="log-page__stat-label">日志总量</span>
+                <strong class="log-page__stat-value">@pageList.Total</strong>
+                <span class="log-page__stat-foot">当前已加载 @CurrentPageCount() 条</span>
+            </div>
+
+            <div class="log-page__stat-card">
+                <span class="log-page__stat-label">筛选等级</span>
+                <strong class="log-page__stat-value">@CurrentLevelText()</strong>
+                <span class="log-page__stat-foot">支持快速聚焦异常级别</span>
+            </div>
+
+            <div class="log-page__stat-card">
+                <span class="log-page__stat-label">时间范围</span>
+                <strong class="log-page__stat-value log-page__stat-value--small">@CurrentTimeRangeText()</strong>
+                <span class="log-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
+            </div>
+        </div>
+    </div>
+
+    <Card Class="log-page__card log-page__card--compact log-page__filter-card" BodyStyle="padding: 22px 22px 10px 22px">
+        <Form Class="log-page__filter-form" Model="@request" Layout="@FormLayout.Vertical" OnFinish="HandleSearchAsync">
+            <div class="log-page__filter-grid">
+                <FormItem>
+                    <div class="log-page__field-label">设备名称</div>
+                    <Input @bind-Value="@context.MachineName" Placeholder="请输入设备名称" AllowClear />
+                </FormItem>
+
+                <FormItem>
+                    <div class="log-page__field-label">项目名称</div>
+                    <Input @bind-Value="@context.Project" Placeholder="请输入项目名称" AllowClear />
+                </FormItem>
+
+                <FormItem>
+                    <div class="log-page__field-label">内容关键字</div>
+                    <Input @bind-Value="@context.Content" Placeholder="请输入内容关键字" AllowClear />
+                </FormItem>
+
+                <FormItem>
+                    <div class="log-page__field-label">日志等级</div>
+                    <Select TItem="string" TItemValue="string" @bind-Value="@context.Level" Placeholder="请选择日志等级" AllowClear>
+                        <SelectOption Value="@("Trace")" Label="Trace"></SelectOption>
+                        <SelectOption Value="@("Debug")" Label="Debug"></SelectOption>
+                        <SelectOption Value="@("Information")" Label="Information"></SelectOption>
+                        <SelectOption Value="@("Warning")" Label="Warning"></SelectOption>
+                        <SelectOption Value="@("Error")" Label="Error"></SelectOption>
+                        <SelectOption Value="@("Critical")" Label="Critical"></SelectOption>
+                        <SelectOption Value="@("None")" Label="None"></SelectOption>
+                    </Select>
+                </FormItem>
+
+                <FormItem>
+                    <div class="log-page__field-label">开始时间</div>
+                    <DatePicker @bind-Value="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择开始时间")" Style="width:100%" />
+                </FormItem>
+
+                <FormItem>
+                    <div class="log-page__field-label">结束时间</div>
+                    <DatePicker @bind-Value="@context.EndTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择结束时间")" Style="width:100%" />
+                </FormItem>
+            </div>
+
+            <div class="log-page__filter-footer">
+                <div class="log-page__section-tools log-page__section-tools--footer">
+                    <Button Class="log-page__action-button log-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索日志</Button>
+                    <Button Class="log-page__action-button log-page__action-button--default" OnClick="HandleReset">重置条件</Button>
+                </div>
+            </div>
+        </Form>
+    </Card>
+
+    <Card Class="log-page__card log-page__card--compact log-page__list-card" BodyStyle="padding: 14px">
+        <div class="log-page__list-shell">
+            <div class="log-page__table-wrap">
+                <Table TItem="LogDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <PropertyColumn Property="c => c.Project" Title="项目"></PropertyColumn>
+                        <PropertyColumn Property="c => c.MachineName" Title="机器"></PropertyColumn>
+                        <ActionColumn Title="等级">
+                            <Tag Color="@LogLevelColor(context.Level)">@LogLevelText(context.Level)</Tag>
+                        </ActionColumn>
+                        <PropertyColumn Property="c => c.Category" Title="类别"></PropertyColumn>
+                        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="时间"></PropertyColumn>
+                        <ActionColumn Title="操作">
+                            <Space>
+                                <SpaceItem>
+                                    <a class="log-page__detail-link" @onclick="() => ViewLog(context)">查看详情</a>
+                                </SpaceItem>
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="log-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
+</div>
 
 
-<Drawer Closable="true" Width="860" Visible="isShowDetail" Title='("日志详情")' OnClose="() => isShowDetail = false">
-    <Template style="height:90%">
+<Drawer Closable="true" Width="900" Visible="isShowDetail" Title='("日志详情")' OnClose="() => isShowDetail = false">
+    <Template style="height:100%">
+        <div class="log-drawer">
+            <div class="log-drawer__overview">
+                <div class="log-drawer__summary">
+                    <div class="log-drawer__summary-main">
+                        <div class="log-drawer__summary-eyebrow">LOG ENTRY</div>
+                        <div class="log-drawer__summary-title">@detail?.Project</div>
+                    </div>
 
-        <Descriptions Column="2" Bordered>
-            <DescriptionsItem Title="项目">@detail?.Project</DescriptionsItem>
-            <DescriptionsItem Title="机器">@detail?.MachineName</DescriptionsItem>
-            <DescriptionsItem Title="等级">@detail?.Level</DescriptionsItem>
-            <DescriptionsItem Title="类别">@detail?.Category</DescriptionsItem>
-            <DescriptionsItem Title="时间">@detail?.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</DescriptionsItem>
-            <DescriptionsItem Title="Id">@detail?.Id</DescriptionsItem>
-        </Descriptions>
+                    <div class="log-drawer__summary-meta">
+                        <Tag Class="log-drawer__meta-pill log-drawer__meta-pill--level" Color="@LogLevelColor(detail?.Level)">@LogLevelText(detail?.Level)</Tag>
+                        <span class="log-drawer__meta-pill log-drawer__meta-pill--time">@DetailTimeText()</span>
+                    </div>
+                </div>
 
-        <Divider />
+                <div class="log-drawer__meta-grid">
+                    <div class="log-drawer__meta-item">
+                        <span class="log-drawer__meta-label">机器</span>
+                        <span class="log-drawer__meta-value">@detail?.MachineName</span>
+                    </div>
 
-        <Text>内容</Text>
-        <TextArea @bind-Value="@detailContent" ReadOnly MinRows="10" MaxRows="24" style="width:100%" />
+                    <div class="log-drawer__meta-item">
+                        <span class="log-drawer__meta-label">类别</span>
+                        <span class="log-drawer__meta-value">@detail?.Category</span>
+                    </div>
 
+                    <div class="log-drawer__meta-item">
+                        <span class="log-drawer__meta-label">Id</span>
+                        <span class="log-drawer__meta-value log-drawer__meta-value--mono">@detail?.Id</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="log-drawer__content-box">
+                <div class="log-drawer__content-toolbar">
+                    <span class="log-drawer__content-dot"></span>
+                    <span class="log-drawer__content-dot"></span>
+                    <span class="log-drawer__content-dot"></span>
+                    <span class="log-drawer__content-caption">日志原文</span>
+                </div>
+
+                <TextArea @bind-Value="@detailContent" ReadOnly style="width:100%" />
+            </div>
+        </div>
     </Template>
 </Drawer>
+
+<style>
+    .log-page {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding-bottom: 12px;
+    }
+
+    .log-page__hero {
+        display: grid;
+        grid-template-columns: minmax(260px, 1.4fr) minmax(320px, 1fr);
+        gap: 18px;
+        padding: 22px 26px;
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 36%),
+            radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 32%),
+            linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f4fffd 100%);
+        color: #10233f;
+        border: 1px solid #d9ebff;
+        box-shadow: 0 14px 32px rgba(77, 125, 173, 0.10);
+    }
+
+    .log-page__eyebrow {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+        margin-bottom: 10px;
+    }
+
+    .log-page__title {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .log-page__subtitle {
+        margin-top: 10px;
+        max-width: 620px;
+        font-size: 13px;
+        line-height: 1.8;
+        color: #526075;
+    }
+
+    .log-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        align-self: stretch;
+    }
+
+    .log-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: space-between;
+        padding: 14px 16px;
+        min-height: 108px;
+        border: 1px solid #d9ebff;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.84);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    .log-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
+    }
+
+    .log-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 253, 245, 0.96) 100%);
+    }
+
+    .log-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 243, 255, 0.96) 100%);
+    }
+
+    .log-page__stat-label {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .log-page__stat-value {
+        font-size: 24px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .log-page__stat-value--small {
+        font-size: 18px;
+    }
+
+    .log-page__stat-foot {
+        font-size: 12px;
+        line-height: 1.6;
+        color: #64748b;
+    }
+
+    .log-page__card {
+        border-radius: 18px;
+        border: 1px solid #edf2f7;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .log-page__card--compact {
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .log-page__list-card .ant-card-body {
+        padding: 14px;
+    }
+
+    .log-page__list-shell {
+        border: 1px solid #e8eef6;
+        border-radius: 18px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .log-page__section-head,
+    .log-drawer__content-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .log-page__section-head--filter {
+        margin-bottom: 20px;
+    }
+
+    .log-page__section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #10233f;
+    }
+
+    .log-page__section-desc {
+        margin-top: 6px;
+        font-size: 13px;
+        line-height: 1.7;
+        color: #6b7280;
+    }
+
+    .log-page__filter-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px 16px;
+    }
+
+    .log-page__field-label {
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .log-page__section-tools {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .log-page__filter-footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 4px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .log-page__section-tools--footer {
+        gap: 12px;
+    }
+
+    .log-page__filter-form .ant-form-item {
+        margin-bottom: 12px;
+    }
+
+    .log-page__filter-form .ant-input,
+    .log-page__filter-form .ant-input-affix-wrapper,
+    .log-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .log-page__filter-form .ant-picker {
+        height: 44px;
+        border-radius: 16px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .log-page__filter-form .ant-input {
+        padding: 0 14px;
+    }
+
+    .log-page__filter-form .ant-input-affix-wrapper {
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .log-page__filter-form .ant-input-affix-wrapper .ant-input {
+        height: auto;
+        padding: 0;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .log-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .log-page__filter-form .ant-picker {
+        padding: 0 14px;
+    }
+
+    .log-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        display: flex;
+        align-items: center;
+    }
+
+    .log-page__filter-form .ant-input,
+    .log-page__filter-form .ant-input-affix-wrapper .ant-input,
+    .log-page__filter-form .ant-picker-input > input,
+    .log-page__filter-form .ant-select-selection-item,
+    .log-page__filter-form .ant-select-selection-placeholder {
+        color: #334155;
+        font-size: 13px;
+    }
+
+    .log-page__filter-form .ant-select-selection-item,
+    .log-page__filter-form .ant-select-selection-placeholder,
+    .log-page__filter-form .ant-picker-input > input {
+        line-height: 42px;
+    }
+
+    .log-page__filter-form .ant-input::placeholder,
+    .log-page__filter-form .ant-input-affix-wrapper .ant-input::placeholder,
+    .log-page__filter-form .ant-picker-input > input::placeholder {
+        color: #94a3b8;
+    }
+
+    .log-page__filter-form .ant-input:hover,
+    .log-page__filter-form .ant-input-affix-wrapper:hover,
+    .log-page__filter-form .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+    .log-page__filter-form .ant-picker:hover {
+        border-color: #bfdbfe;
+        background: #ffffff;
+    }
+
+    .log-page__filter-form .ant-input:focus,
+    .log-page__filter-form .ant-input-focused,
+    .log-page__filter-form .ant-input-affix-wrapper:focus,
+    .log-page__filter-form .ant-input-affix-wrapper-focused,
+    .log-page__filter-form .ant-select-focused .ant-select-selector,
+    .log-page__filter-form .ant-picker-focused {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
+        background: #ffffff;
+    }
+
+    .log-page__filter-form .ant-picker {
+        width: 100%;
+    }
+
+    .log-page__action-button {
+        height: 44px;
+        padding: 0 20px;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: 13px;
+        box-shadow: none;
+    }
+
+    .log-page__action-button--primary {
+        border-color: #93c5fd;
+        background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+    }
+
+    .log-page__action-button--primary:hover,
+    .log-page__action-button--primary:focus {
+        border-color: #60a5fa;
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    .log-page__action-button--default {
+        color: #334155;
+        border-color: #dbe7f5;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .log-page__action-button--default:hover,
+    .log-page__action-button--default:focus {
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+        background: linear-gradient(180deg, #fafdff 0%, #eff6ff 100%);
+    }
+
+    .log-page__chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: #eef6ff;
+        color: #2563eb;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        border: 1px solid #dbeafe;
+    }
+
+    .log-page__chip--muted {
+        background: #f8fafc;
+        color: #526075;
+        border-color: #e2e8f0;
+    }
+
+    .log-page__table-wrap {
+        padding: 0;
+        background: #ffffff;
+    }
+
+    .log-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .log-page__table-wrap .ant-table-container {
+        overflow: hidden;
+        border-radius: 0;
+    }
+
+    .log-page__table-wrap .ant-table-thead > tr > th {
+        padding: 14px 12px;
+        background: linear-gradient(180deg, #fbfdff 0%, #f3f8ff 100%);
+        color: #475569;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #dbe7f5;
+    }
+
+    .log-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .log-page__table-wrap .ant-table-tbody > tr > td {
+        padding: 14px 12px;
+        color: #1e293b;
+        font-size: 13px;
+        border-bottom: 1px solid #eef2f7;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .log-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fbff;
+    }
+
+    .log-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .log-page__detail-link {
+        color: #1d4ed8;
+        font-weight: 600;
+    }
+
+    .log-page__pagination {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .log-page__pagination .ant-pagination {
+        margin: 0;
+    }
+
+    .log-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .log-page__pagination .ant-pagination-item,
+    .log-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .log-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .log-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .log-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .log-page__pagination .ant-pagination-item {
+        min-width: 34px;
+        background: #fff;
+    }
+
+    .log-page__pagination .ant-pagination-item a {
+        color: #334155;
+    }
+
+    .log-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+
+    .log-page__pagination .ant-pagination-item-active a {
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .log-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .log-page__pagination .ant-pagination-next .ant-pagination-item-link {
+        background: #fff;
+        color: #475569;
+    }
+
+    .log-drawer__summary {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 0;
+        padding: 4px 2px 16px 2px;
+        border-bottom: 1px solid #eef4fb;
+    }
+
+    .log-drawer {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: calc(100vh - 170px);
+    }
+
+    .log-drawer__overview {
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid #e6eef8;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .log-drawer__summary-eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+        margin-bottom: 8px;
+    }
+
+    .log-drawer__summary-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #10233f;
+    }
+
+    .log-drawer__summary-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .log-drawer__meta-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .log-drawer__meta-pill--level {
+        border: none;
+        box-shadow: none;
+    }
+
+    .log-drawer__meta-pill--time {
+        color: #526075;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid #dbe7f5;
+    }
+
+    .log-drawer__highlight-label,
+    .log-drawer__meta-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .log-drawer__highlight-value {
+        color: #10233f;
+        font-size: 14px;
+        font-weight: 600;
+        word-break: break-all;
+    }
+
+    .log-drawer__meta-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .log-drawer__meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 78px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fdfefe 0%, #f8fbff 100%);
+        border: 1px solid #eaf1f8;
+    }
+
+    .log-drawer__meta-value {
+        color: #0f172a;
+        font-size: 14px;
+        line-height: 1.6;
+        word-break: break-all;
+    }
+
+    .log-drawer__meta-value--mono {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 13px;
+    }
+
+    .log-drawer__content-head {
+        margin: 0 0 14px 0;
+    }
+
+    .log-drawer__content-box {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: clamp(380px, 56vh, 760px);
+        padding: 16px;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+        border: 1px solid #dbeafe;
+    }
+
+    .log-drawer__content-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dbeafe;
+    }
+
+    .log-drawer__content-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #bfdbfe;
+    }
+
+    .log-drawer__content-dot:nth-child(2) {
+        background: #93c5fd;
+    }
+
+    .log-drawer__content-dot:nth-child(3) {
+        background: #60a5fa;
+    }
+
+    .log-drawer__content-caption {
+        margin-left: 4px;
+        color: #526075;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .log-drawer__content-box textarea {
+        flex: 1;
+        min-height: 0;
+        color: #1e293b;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        font-family: Consolas, "Courier New", monospace;
+        line-height: 1.7;
+        resize: none;
+    }
+
+    @@media (max-width: 1200px) {
+        .log-page__hero,
+        .log-page__stats,
+        .log-page__filter-grid,
+        .log-drawer__meta-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 
 @code {
@@ -156,6 +842,61 @@
     bool isShowDetail = false;
     LogDto? detail;
     string? detailContent;
+
+    /// <summary>
+    /// 返回当前页已加载的日志数量
+    /// </summary>
+    int CurrentPageCount() => pageList.List?.Count ?? 0;
+
+
+    /// <summary>
+    /// 返回当前等级筛选文案
+    /// </summary>
+    string CurrentLevelText() => string.IsNullOrWhiteSpace(request.Level) ? "全部等级" : request.Level;
+
+
+    /// <summary>
+    /// 返回当前时间范围文案
+    /// </summary>
+    string CurrentTimeRangeText()
+    {
+        if (request.StartTime == null && request.EndTime == null)
+        {
+            return "全部时间";
+        }
+
+        var startText = request.StartTime?.ToString("MM-dd HH:mm") ?? "未设开始";
+        var endText = request.EndTime?.ToString("MM-dd HH:mm") ?? "未设结束";
+        return $"{startText} - {endText}";
+    }
+
+
+    /// <summary>
+    /// 返回详情中的时间文案
+    /// </summary>
+    string DetailTimeText() => detail == null ? "-" : detail.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+
+    /// <summary>
+    /// 返回日志等级展示文案
+    /// </summary>
+    string LogLevelText(string? level) => string.IsNullOrWhiteSpace(level) ? "未知" : level;
+
+
+    /// <summary>
+    /// 返回日志等级标签颜色
+    /// </summary>
+    string LogLevelColor(string? level) => level switch
+    {
+        "Trace" => "#94a3b8",
+        "Debug" => "#38bdf8",
+        "Information" => "#3b82f6",
+        "Warning" => "#f59e0b",
+        "Error" => "#f97316",
+        "Critical" => "#dc2626",
+        "None" => "#64748b",
+        _ => "#9ca3af"
+    };
 
     void ViewLog(LogDto row)
     {

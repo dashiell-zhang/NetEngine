@@ -2,75 +2,588 @@
 @using Application.Model.TaskCenter
 @attribute [ReuseTabsPageTitle("队列任务配置")]
 
-<Table TItem="TaskSettingDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+<div class="queue-task-page">
+    <div class="queue-task-page__hero">
+        <div>
+            <div class="queue-task-page__eyebrow">Operations</div>
+            <h2 class="queue-task-page__title">队列任务配置台</h2>
+            <div class="queue-task-page__subtitle">集中维护 QueueTask 分类任务的启停状态、并发额度与备注说明，让队列消费能力调整和日常运维管理都在一个视图内完成</div>
 
-    <ColumnDefinitions>
-        <PropertyColumn Property="c => c.Name" Title="任务名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.IsEnable" Title="启用"></PropertyColumn>
-        <PropertyColumn Property="c => c.Semaphore" Title="并发"></PropertyColumn>
-        <PropertyColumn Property="c => c.Remark" Title="备注"></PropertyColumn>
-        <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
-        <ActionColumn Title="操作">
-            <Space>
-                <SpaceItem>
-                    <a @onclick="() => EditTaskSettingAsync(context)">编辑</a>
-                </SpaceItem>
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
-
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            <div class="queue-task-page__hero-tools">
+                <Button Class="queue-task-page__hero-button queue-task-page__hero-button--light" Icon="reload" OnClick="GetTaskSettingListAsync">刷新列表</Button>
+            </div>
         </div>
-    </PaginationTemplate>
 
-</Table>
+        <div class="queue-task-page__stats">
+            <div class="queue-task-page__stat-card">
+                <span class="queue-task-page__stat-label">任务总量</span>
+                <strong class="queue-task-page__stat-value">@pageList.Total</strong>
+                <span class="queue-task-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条配置</span>
+            </div>
+
+            <div class="queue-task-page__stat-card">
+                <span class="queue-task-page__stat-label">当前页启用</span>
+                <strong class="queue-task-page__stat-value">@(pageList.List?.Count(t => t.IsEnable) ?? 0)</strong>
+                <span class="queue-task-page__stat-foot">便于快速观察当前页投产中的任务数量</span>
+            </div>
+
+            <div class="queue-task-page__stat-card">
+                <span class="queue-task-page__stat-label">分页状态</span>
+                <strong class="queue-task-page__stat-value queue-task-page__stat-value--small">第 @(page) 页 / 每页 @pageSize 条</strong>
+                <span class="queue-task-page__stat-foot">当前分类固定为 QueueTask</span>
+            </div>
+        </div>
+    </div>
+
+    <Card Class="queue-task-page__card queue-task-page__card--compact" BodyStyle="padding: 14px 14px 10px">
+        <div class="queue-task-page__list-shell">
+            <div class="queue-task-page__table-wrap">
+                <Table TItem="TaskSettingDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <ActionColumn Title="任务">
+                            <div class="queue-task-page__name-cell">
+                                <div class="queue-task-page__name-title">@context.Name</div>
+                            </div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="状态">
+                            <Tag Class="queue-task-page__status-tag" Color="@(context.IsEnable ? "#16a34a" : "#94a3b8")">@(context.IsEnable ? "启用中" : "已停用")</Tag>
+                        </ActionColumn>
+
+                        <ActionColumn Title="并发">
+                            <div class="queue-task-page__semaphore-pill">@context.Semaphore</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="备注">
+                            <div class="queue-task-page__remark-cell">@(string.IsNullOrWhiteSpace(context.Remark) ? "暂无备注说明" : context.Remark)</div>
+                        </ActionColumn>
+
+                        <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
+
+                        <ActionColumn Title="操作">
+                            <Space>
+                                <SpaceItem>
+                                    <a class="queue-task-page__link" @onclick="() => EditTaskSettingAsync(context)">编辑</a>
+                                </SpaceItem>
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="queue-task-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
+</div>
 
 
-<Drawer Closable="true" Width="520" Visible="isShowEditTaskSetting" Title='("任务配置")' OnClose="() => isShowEditTaskSetting = false">
-    <Template style="height:90%">
+<Drawer Closable="true" Width="620" Visible="isShowEditTaskSetting" Title='("任务配置")' OnClose="() => isShowEditTaskSetting = false">
+    <Template style="height:100%">
+        <div class="queue-task-drawer">
+            <Form Class="queue-task-drawer__form" Model="@editTaskSetting" Layout="@FormLayout.Vertical" OnFinish="SaveTaskSettingAsync">
+                <div class="queue-task-drawer__section">
+                    <div class="queue-task-drawer__section-head">
+                        <div>
+                            <div class="queue-task-drawer__section-title">基础配置</div>
+                        </div>
 
-        <Form Model="@editTaskSetting" OnFinish="SaveTaskSettingAsync">
-
-            <FormItem>
-                <Text>任务名称</Text>
-                <Input Disabled @bind-Value="@taskName" />
-            </FormItem>
-
-            <FormItem>
-                <Text>任务类型</Text>
-                <Input Disabled @bind-Value="@taskCategory" />
-            </FormItem>
-
-            <FormItem>
-                <Text>是否启用</Text>
-                <Switch @bind-Value="@editTaskSetting.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
-            </FormItem>
-
-            <FormItem>
-                <Text>并发</Text>
-                <Input Placeholder="QueueTask 并发值" Type="InputType.Number" @bind-Value="@editTaskSetting.Semaphore" />
-            </FormItem>
-
-            <FormItem>
-                <Text>备注</Text>
-                <Input Placeholder="请输入备注" @bind-Value="@editTaskSetting.Remark" />
-            </FormItem>
-
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <div style="float:right">
-                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditTaskSetting = false">取消</Button>
+                        <div class="queue-task-drawer__switch-box">
+                            <span class="queue-task-drawer__switch-label">是否启用</span>
+                            <Switch @bind-Value="@editTaskSetting.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
+                        </div>
                     </div>
-                </AntDesign.Col>
-            </Row>
 
-        </Form>
+                    <div class="queue-task-drawer__meta-grid">
+                        <div class="queue-task-drawer__meta-item">
+                            <span class="queue-task-drawer__meta-label">任务名称</span>
+                            <span class="queue-task-drawer__meta-value">@(string.IsNullOrWhiteSpace(taskName) ? "-" : taskName)</span>
+                        </div>
 
+                        <div class="queue-task-drawer__meta-item">
+                            <span class="queue-task-drawer__meta-label">任务类型</span>
+                            <span class="queue-task-drawer__meta-value">@(string.IsNullOrWhiteSpace(taskCategory) ? "-" : taskCategory)</span>
+                        </div>
+                    </div>
+
+                    <FormItem Class="queue-task-drawer__field-item">
+                        <div class="queue-task-drawer__field-label">并发</div>
+                        <Input Placeholder="QueueTask 并发值" Type="InputType.Number" min="1" @bind-Value="@editTaskSetting.Semaphore" />
+                        <div class="queue-task-drawer__field-help">建议结合消费者实例数和单任务耗时设置并发额度，避免任务堆积或竞争过载</div>
+                    </FormItem>
+
+                    <FormItem Class="queue-task-drawer__field-item">
+                        <div class="queue-task-drawer__field-label">备注</div>
+                        <TextArea Placeholder="请输入备注" @bind-Value="@editTaskSetting.Remark" MinRows="4" MaxRows="8" style="width:100%" />
+                    </FormItem>
+                </div>
+
+                <div class="queue-task-drawer__footer">
+                    <Button Class="queue-task-page__action-button queue-task-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                    <Button Class="queue-task-page__action-button queue-task-page__action-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditTaskSetting = false">取消</Button>
+                </div>
+            </Form>
+        </div>
     </Template>
 </Drawer>
+
+<style>
+    .queue-task-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+
+    .queue-task-page__hero {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.35fr) minmax(320px, 1fr);
+        gap: 12px;
+        padding: 16px 18px;
+        border-radius: 22px;
+        background:
+            radial-gradient(circle at top right, rgba(14, 165, 233, 0.16), transparent 34%),
+            radial-gradient(circle at bottom left, rgba(34, 197, 94, 0.12), transparent 30%),
+            linear-gradient(135deg, #fbfdff 0%, #eef8ff 48%, #f3fcf7 100%);
+        color: #10233f;
+        border: 1px solid #e5edf6;
+        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
+    }
+
+    .queue-task-page__eyebrow {
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #0284c7;
+    }
+
+    .queue-task-page__title {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.15;
+        color: #10233f;
+    }
+
+    .queue-task-page__subtitle {
+        margin-top: 6px;
+        max-width: 680px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #526075;
+    }
+
+    .queue-task-page__hero-tools,
+    .queue-task-drawer__footer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .queue-task-page__hero-tools {
+        margin-top: 12px;
+    }
+
+    .queue-task-page__hero-button,
+    .queue-task-page__action-button {
+        height: 40px;
+        padding: 0 18px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: none;
+    }
+
+    .queue-task-page__hero-button--light,
+    .queue-task-page__action-button--default {
+        color: #334155;
+        border-color: #dbe7f5;
+        background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .queue-task-page__hero-button--light:hover,
+    .queue-task-page__hero-button--light:focus,
+    .queue-task-page__action-button--default:hover,
+    .queue-task-page__action-button--default:focus {
+        color: #0369a1;
+        border-color: #bae6fd;
+        background: linear-gradient(180deg, #fafdff 0%, #edf9ff 100%);
+    }
+
+    .queue-task-page__action-button--primary {
+        border-color: #7dd3fc;
+        background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 100%);
+    }
+
+    .queue-task-page__action-button--primary:hover,
+    .queue-task-page__action-button--primary:focus {
+        border-color: #38bdf8;
+        background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+    }
+
+    .queue-task-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        align-self: stretch;
+    }
+
+    .queue-task-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 4px;
+        min-height: 86px;
+        padding: 10px 12px;
+        border-radius: 18px;
+        border: 1px solid #e3edf7;
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.94);
+    }
+
+    .queue-task-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 249, 255, 0.98) 100%);
+    }
+
+    .queue-task-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 253, 245, 0.98) 100%);
+    }
+
+    .queue-task-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.98) 100%);
+    }
+
+    .queue-task-page__stat-label {
+        font-size: 11px;
+        color: #64748b;
+    }
+
+    .queue-task-page__stat-value {
+        font-size: 20px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .queue-task-page__stat-value--small {
+        font-size: 16px;
+    }
+
+    .queue-task-page__stat-foot {
+        font-size: 11px;
+        line-height: 1.6;
+        color: #64748b;
+    }
+
+    .queue-task-page__card {
+        border-radius: 18px;
+        border: 1px solid #edf2f7;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .queue-task-page__card--compact {
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .queue-task-page__list-shell {
+        border: 1px solid #e8eef6;
+        border-radius: 18px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .queue-task-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .queue-task-page__table-wrap .ant-table-thead > tr > th {
+        padding: 14px 12px;
+        background: linear-gradient(180deg, #fbfdff 0%, #f0f9ff 100%);
+        color: #475569;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #dbe7f5;
+    }
+
+    .queue-task-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .queue-task-page__table-wrap .ant-table-tbody > tr > td {
+        padding: 15px 12px;
+        color: #1e293b;
+        font-size: 13px;
+        border-bottom: 1px solid #eef2f7;
+        transition: background-color 0.2s ease;
+    }
+
+    .queue-task-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fcff;
+    }
+
+    .queue-task-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .queue-task-page__name-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .queue-task-page__name-title {
+        color: #0f172a;
+        font-weight: 700;
+    }
+
+    .queue-task-page__status-tag {
+        border: none;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-weight: 700;
+    }
+
+    .queue-task-page__semaphore-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .queue-task-page__remark-cell {
+        color: #475569;
+        line-height: 1.7;
+    }
+
+    .queue-task-page__link {
+        color: #0284c7;
+        font-weight: 600;
+    }
+
+    .queue-task-page__pagination {
+        margin: 0;
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+    }
+
+    .queue-task-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .queue-task-page__pagination .ant-pagination-item,
+    .queue-task-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .queue-task-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .queue-task-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .queue-task-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .queue-task-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #f0f9ff 0%, #dbeafe 100%);
+        border-color: #7dd3fc;
+    }
+
+    .queue-task-page__pagination .ant-pagination-item-active a {
+        color: #0369a1;
+        font-weight: 700;
+    }
+
+    .queue-task-drawer {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: calc(100vh - 170px);
+    }
+
+    .queue-task-drawer__form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .queue-task-drawer__section {
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid #e6eef8;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .queue-task-drawer__section-head,
+    .queue-task-drawer__footer,
+    .queue-task-drawer__switch-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .queue-task-drawer__section-head {
+        justify-content: space-between;
+        margin-bottom: 18px;
+    }
+
+    .queue-task-drawer__section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #10233f;
+    }
+
+    .queue-task-drawer__switch-box {
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: #f8fbff;
+        border: 1px solid #dbeafe;
+    }
+
+    .queue-task-drawer__switch-label,
+    .queue-task-drawer__meta-label,
+    .queue-task-drawer__field-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .queue-task-drawer__meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .queue-task-drawer__meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-height: 76px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #fdfefe 0%, #f8fbff 100%);
+        border: 1px solid #eaf1f8;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.96);
+    }
+
+    .queue-task-drawer__meta-item:nth-child(1) {
+        background: linear-gradient(180deg, #ffffff 0%, #f2f9ff 100%);
+        border-color: #dbeafe;
+    }
+
+    .queue-task-drawer__meta-item:nth-child(2) {
+        background: linear-gradient(180deg, #ffffff 0%, #f3fbf8 100%);
+        border-color: #d7f0e3;
+    }
+
+    .queue-task-drawer__meta-value {
+        color: #10233f;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.6;
+        word-break: break-all;
+    }
+
+    .queue-task-drawer__field-help {
+        margin-top: 8px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #64748b;
+    }
+
+    .queue-task-drawer__form .ant-form-item {
+        margin-bottom: 16px;
+    }
+
+    .queue-task-drawer__form .ant-input,
+    .queue-task-drawer__form .ant-input-affix-wrapper,
+    .queue-task-drawer__form .ant-input-textarea textarea {
+        border-radius: 16px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .queue-task-drawer__form .ant-input,
+    .queue-task-drawer__form .ant-input-affix-wrapper {
+        height: 44px;
+        width: 100%;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .queue-task-drawer__form .ant-input-textarea textarea {
+        min-height: 132px;
+        padding: 14px 16px;
+        line-height: 1.75;
+    }
+
+    .queue-task-drawer__form .ant-input:hover,
+    .queue-task-drawer__form .ant-input-affix-wrapper:hover,
+    .queue-task-drawer__form .ant-input-textarea textarea:hover {
+        border-color: #7dd3fc;
+    }
+
+    .queue-task-drawer__form .ant-input:focus,
+    .queue-task-drawer__form .ant-input-focused,
+    .queue-task-drawer__form .ant-input-affix-wrapper-focused,
+    .queue-task-drawer__form .ant-input-textarea textarea:focus {
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.10);
+    }
+
+    .queue-task-drawer__footer {
+        justify-content: flex-end;
+        padding-top: 6px;
+    }
+
+    @@media (max-width: 1280px) {
+        .queue-task-page__hero,
+        .queue-task-page__stats {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .queue-task-drawer__section-head,
+        .queue-task-drawer__meta-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .queue-task-page__hero,
+        .queue-task-drawer__section {
+            padding: 18px;
+        }
+
+        .queue-task-page__title {
+            font-size: 24px;
+        }
+    }
+</style>
 
 
 @code {

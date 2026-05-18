@@ -2,113 +2,892 @@
 @using Application.Model.TaskCenter
 @attribute [ReuseTabsPageTitle("队列任务")]
 
-<Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
-    <FormItem>
-        <Input @bind-Value="@context.ParameterKeyword" Placeholder="参数模糊检索" Style="width: 220px" AllowClear />
-    </FormItem>
-    <FormItem>
-        <Select TItem="bool?" TItemValue="bool?" @bind-Value="@context.IsSuccess" Placeholder="是否成功" Style="width: 140px" AllowClear>
-            <SelectOption Value="@((bool?)true)" Label="成功"></SelectOption>
-            <SelectOption Value="@((bool?)false)" Label="未成功"></SelectOption>
-        </Select>
-    </FormItem>
-    <FormItem>
-        <DatePicker @bind-Value="@context.StartCreateTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("创建开始")" />
-    </FormItem>
-    <FormItem>
-        <DatePicker @bind-Value="@context.EndCreateTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("创建结束")" />
-    </FormItem>
-    <FormItem>
-        <Space>
-            <Button Type="@ButtonType.Primary" HtmlType="submit">搜索</Button>
-        </Space>
-    </FormItem>
-    <FormItem>
-        <Space>
-            <Button OnClick="HandleReset">重置</Button>
-        </Space>
-    </FormItem>
-</Form>
-
-<Divider Style="margin: 12px 0" />
-
-<Table TItem="QueueTaskDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
-
-    <ColumnDefinitions>
-        <PropertyColumn Property="c => c.Name" Title="任务名称"></PropertyColumn>
-        <PropertyColumn Property="c => (DateTime?)(c.PlanTime == null ? null : c.PlanTime.Value.LocalDateTime)" Format="yyyy-MM-dd HH:mm" Title="计划时间"></PropertyColumn>
-        <PropertyColumn Property="c => c.Count" Title="执行次数"></PropertyColumn>
-        <PropertyColumn Property="c => (DateTime?)(c.LastTime == null ? null : c.LastTime.Value.LocalDateTime)" Format="yyyy-MM-dd HH:mm" Title="最后执行"></PropertyColumn>
-        <PropertyColumn Property='c => c.SuccessTime == null ? "未成功" : "成功"' Title="是否成功"></PropertyColumn>
-        <PropertyColumn Property="c => (DateTime?)(c.SuccessTime == null ? null : c.SuccessTime.Value.LocalDateTime)" Format="yyyy-MM-dd HH:mm" Title="成功时间"></PropertyColumn>
-        <PropertyColumn Property="c => c.CallbackName" Title="回调任务"></PropertyColumn>
-        <PropertyColumn Property="c => c.ParentTaskId" Title="父任务Id"></PropertyColumn>
-        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-        <ActionColumn Title="操作">
-            <Space>
-                @if (functionList.Contains("queuetask"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => ViewQueueTask(context)">详情</a>
-                    </SpaceItem>
-                }
-
-                @if (context.SuccessTime == null && context.Count > 0)
-                {
-                    <SpaceItem>
-                        <Popconfirm Title="确认要重试吗？将重置执行次数/时间并重新触发"
-                                    OnConfirm="_=>RetryQueueTaskAsync(context.Id)"
-                                    OkText="Yes"
-                                    CancelText="No">
-                            <a style="color:darkorange">重试</a>
-                        </Popconfirm>
-                    </SpaceItem>
-                }
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
-
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+<div class="queue-task-log-page">
+    <div class="queue-task-log-page__hero">
+        <div>
+            <div class="queue-task-log-page__eyebrow">Operations</div>
+            <h2 class="queue-task-log-page__title">队列任务中心</h2>
+            <div class="queue-task-log-page__subtitle">按参数关键字、执行结果和创建时间检索队列任务，集中查看调度状态、执行轨迹与回调上下文，便于定位失败任务并快速触发重试</div>
         </div>
-    </PaginationTemplate>
 
-</Table>
+        <div class="queue-task-log-page__stats">
+            <div class="queue-task-log-page__stat-card">
+                <span class="queue-task-log-page__stat-label">任务总量</span>
+                <strong class="queue-task-log-page__stat-value">@pageList.Total</strong>
+                <span class="queue-task-log-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条记录</span>
+            </div>
+
+            <div class="queue-task-log-page__stat-card">
+                <span class="queue-task-log-page__stat-label">结果筛选</span>
+                <strong class="queue-task-log-page__stat-value queue-task-log-page__stat-value--small">@SuccessFilterText()</strong>
+                <span class="queue-task-log-page__stat-foot">@(string.IsNullOrWhiteSpace(request.ParameterKeyword) ? "未设置参数关键字过滤" : "参数关键字过滤中")</span>
+            </div>
+
+            <div class="queue-task-log-page__stat-card">
+                <span class="queue-task-log-page__stat-label">时间窗口</span>
+                <strong class="queue-task-log-page__stat-value queue-task-log-page__stat-value--small">@DateRangeText()</strong>
+                <span class="queue-task-log-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
+            </div>
+        </div>
+    </div>
+
+    <Card Class="queue-task-log-page__card queue-task-log-page__card--compact" BodyStyle="padding: 16px 18px">
+        <Form Class="queue-task-log-page__filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
+            <FormItem Class="queue-task-log-page__filter-item queue-task-log-page__filter-item--keyword">
+                <Input @bind-Value="@context.ParameterKeyword" Placeholder="参数 JSON / 关键字 模糊检索" AllowClear />
+            </FormItem>
+
+            <FormItem Class="queue-task-log-page__filter-item queue-task-log-page__filter-item--status">
+                <Select TItem="bool?" TItemValue="bool?" @bind-Value="@context.IsSuccess" Placeholder="是否成功" AllowClear>
+                    <SelectOption Value="@((bool?)true)" Label="成功"></SelectOption>
+                    <SelectOption Value="@((bool?)false)" Label="未成功"></SelectOption>
+                </Select>
+            </FormItem>
+
+            <FormItem Class="queue-task-log-page__filter-item queue-task-log-page__filter-item--time">
+                <DatePicker @bind-Value="@context.StartCreateTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("创建开始")" Style="width:100%" />
+            </FormItem>
+
+            <FormItem Class="queue-task-log-page__filter-item queue-task-log-page__filter-item--time">
+                <DatePicker @bind-Value="@context.EndCreateTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("创建结束")" Style="width:100%" />
+            </FormItem>
+
+            <FormItem Class="queue-task-log-page__filter-item queue-task-log-page__filter-item--actions">
+                <div class="queue-task-log-page__filter-actions">
+                    <Button Class="queue-task-log-page__action-button queue-task-log-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索任务</Button>
+                    <Button Class="queue-task-log-page__action-button queue-task-log-page__action-button--default" OnClick="HandleReset">重置条件</Button>
+                </div>
+            </FormItem>
+        </Form>
+    </Card>
+
+    <Card Class="queue-task-log-page__card queue-task-log-page__card--compact" BodyStyle="padding: 14px 14px 10px">
+        <div class="queue-task-log-page__list-shell">
+            <div class="queue-task-log-page__table-wrap">
+                <Table TItem="QueueTaskDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <ActionColumn Title="任务">
+                            <div class="queue-task-log-page__task-cell">
+                                <div class="queue-task-log-page__task-name" title="@context.Name">@context.Name</div>
+                                <div class="queue-task-log-page__task-sub" title="@context.CallbackName">@(string.IsNullOrWhiteSpace(context.CallbackName) ? "无回调任务" : "回调: " + context.CallbackName)</div>
+                            </div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="状态">
+                            <Tag Class="queue-task-log-page__status-tag" Color="@StatusTagColor(context.Status)">@FormatStatus(context.Status)</Tag>
+                        </ActionColumn>
+
+                        <ActionColumn Title="结果">
+                            <Tag Class="queue-task-log-page__status-tag" Color="@SuccessTagColor(context.SuccessTime)">@SuccessText(context.SuccessTime)</Tag>
+                        </ActionColumn>
+
+                        <ActionColumn Title="计划时间">
+                            <div class="queue-task-log-page__time-cell">@FormatTime(context.PlanTime)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="最后执行">
+                            <div class="queue-task-log-page__time-cell">@FormatTime(context.LastTime)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="次数">
+                            <div class="queue-task-log-page__count-pill">@context.Count</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="父任务">
+                            <div class="queue-task-log-page__mono-text">@(context.ParentTaskId?.ToString() ?? "-")</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="创建时间">
+                            <div class="queue-task-log-page__time-cell">@FormatTime(context.CreateTime)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="操作">
+                            <Space>
+                                @if (functionList.Contains("queuetask"))
+                                {
+                                    <SpaceItem>
+                                        <a class="queue-task-log-page__link" @onclick="() => ViewQueueTask(context)">详情</a>
+                                    </SpaceItem>
+                                }
+
+                                @if (context.SuccessTime == null && context.Count > 0)
+                                {
+                                    <SpaceItem>
+                                        <Popconfirm Title="确认要重试吗？将重置执行次数/时间并重新触发"
+                                                    OnConfirm="_=>RetryQueueTaskAsync(context.Id)"
+                                                    OkText="Yes"
+                                                    CancelText="No">
+                                            <a class="queue-task-log-page__link queue-task-log-page__link--warn">重试</a>
+                                        </Popconfirm>
+                                    </SpaceItem>
+                                }
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="queue-task-log-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
+</div>
 
 
-<Drawer Closable="true" Width="720" Visible="isShowDetail" Title='("队列任务详情")' OnClose="() => isShowDetail = false">
-    <Template style="height:90%">
+<Drawer Closable="true" Width="1180" Visible="isShowDetail" Title='("队列任务详情")' OnClose="() => isShowDetail = false">
+    <Template style="height:100%">
+        <div class="queue-task-log-drawer">
+            <div class="queue-task-log-drawer__overview">
+                <div class="queue-task-log-drawer__summary">
+                    <div class="queue-task-log-drawer__summary-main">
+                        <div class="queue-task-log-drawer__summary-eyebrow">Queue Task</div>
+                        <div class="queue-task-log-drawer__summary-title">@(string.IsNullOrWhiteSpace(detail?.Name) ? "未命名任务" : detail!.Name)</div>
+                        <div class="queue-task-log-drawer__summary-subtitle">任务 ID：@(detail == null ? "-" : detail.Id.ToString()) / 回调任务：@(string.IsNullOrWhiteSpace(detail?.CallbackName) ? "-" : detail!.CallbackName)</div>
+                    </div>
 
-        <Descriptions Column="1" Bordered>
-            <DescriptionsItem Title="任务Id">@detail?.Id</DescriptionsItem>
-            <DescriptionsItem Title="任务名称">@detail?.Name</DescriptionsItem>
-            <DescriptionsItem Title="执行状态">@FormatStatus(detail?.Status)</DescriptionsItem>
-            <DescriptionsItem Title="执行实例">@detail?.WorkerId</DescriptionsItem>
-            <DescriptionsItem Title="计划时间">@FormatTime(detail?.PlanTime)</DescriptionsItem>
-            <DescriptionsItem Title="执行次数">@detail?.Count</DescriptionsItem>
-            <DescriptionsItem Title="首次执行">@FormatTime(detail?.FirstTime)</DescriptionsItem>
-            <DescriptionsItem Title="最后执行">@FormatTime(detail?.LastTime)</DescriptionsItem>
-            <DescriptionsItem Title="成功时间">@FormatTime(detail?.SuccessTime)</DescriptionsItem>
-            <DescriptionsItem Title="租约到期">@FormatTime(detail?.LeaseExpireTime)</DescriptionsItem>
-            <DescriptionsItem Title="子任务成功">@FormatTime(detail?.ChildSuccessTime)</DescriptionsItem>
-            <DescriptionsItem Title="父任务Id">@detail?.ParentTaskId</DescriptionsItem>
-            <DescriptionsItem Title="回调任务">@detail?.CallbackName</DescriptionsItem>
-            <DescriptionsItem Title="创建时间">@FormatTime(detail?.CreateTime)</DescriptionsItem>
-        </Descriptions>
+                    <div class="queue-task-log-drawer__summary-meta">
+                        <Tag Class="queue-task-log-drawer__summary-tag" Color="@StatusTagColor(detail?.Status)">@FormatStatus(detail?.Status)</Tag>
+                        <Tag Class="queue-task-log-drawer__summary-tag" Color="@SuccessTagColor(detail?.SuccessTime)">@SuccessText(detail?.SuccessTime)</Tag>
+                        <span class="queue-task-log-drawer__meta-pill">创建：@FormatTime(detail?.CreateTime)</span>
+                    </div>
+                </div>
 
-        <Divider />
+                <div class="queue-task-log-drawer__meta-grid">
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">执行实例</span>
+                        <span class="queue-task-log-drawer__meta-value queue-task-log-drawer__meta-value--mono">@(string.IsNullOrWhiteSpace(detail?.WorkerId) ? "-" : detail!.WorkerId)</span>
+                    </div>
 
-        <Text>参数(JSON)</Text>
-        <TextArea @bind-Value="@detailParameter" ReadOnly MinRows="6" MaxRows="16" style="width:100%" />
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">计划时间</span>
+                        <span class="queue-task-log-drawer__meta-value">@FormatTime(detail?.PlanTime)</span>
+                    </div>
 
-        <Divider />
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">执行次数</span>
+                        <span class="queue-task-log-drawer__meta-value">@(detail == null ? "-" : detail.Count.ToString())</span>
+                    </div>
 
-        <Text>回调参数(JSON)</Text>
-        <TextArea @bind-Value="@detailCallbackParameter" ReadOnly MinRows="6" MaxRows="16" style="width:100%" />
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">首次执行</span>
+                        <span class="queue-task-log-drawer__meta-value">@FormatTime(detail?.FirstTime)</span>
+                    </div>
 
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">最后执行</span>
+                        <span class="queue-task-log-drawer__meta-value">@FormatTime(detail?.LastTime)</span>
+                    </div>
+
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">成功时间</span>
+                        <span class="queue-task-log-drawer__meta-value">@FormatTime(detail?.SuccessTime)</span>
+                    </div>
+
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">租约到期</span>
+                        <span class="queue-task-log-drawer__meta-value">@FormatTime(detail?.LeaseExpireTime)</span>
+                    </div>
+
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">子任务成功</span>
+                        <span class="queue-task-log-drawer__meta-value">@FormatTime(detail?.ChildSuccessTime)</span>
+                    </div>
+
+                    <div class="queue-task-log-drawer__meta-item">
+                        <span class="queue-task-log-drawer__meta-label">父任务 ID</span>
+                        <span class="queue-task-log-drawer__meta-value queue-task-log-drawer__meta-value--mono">@(detail?.ParentTaskId?.ToString() ?? "-")</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="queue-task-log-drawer__content-grid">
+                <div class="queue-task-log-drawer__content-box">
+                    <div class="queue-task-log-drawer__content-toolbar">
+                        <span class="queue-task-log-drawer__content-dot"></span>
+                        <span class="queue-task-log-drawer__content-dot"></span>
+                        <span class="queue-task-log-drawer__content-dot"></span>
+                        <span class="queue-task-log-drawer__content-caption">参数 JSON</span>
+                    </div>
+
+                    <TextArea Value="@detailParameter" ReadOnly style="width:100%" />
+                </div>
+
+                <div class="queue-task-log-drawer__content-box">
+                    <div class="queue-task-log-drawer__content-toolbar">
+                        <span class="queue-task-log-drawer__content-dot"></span>
+                        <span class="queue-task-log-drawer__content-dot"></span>
+                        <span class="queue-task-log-drawer__content-dot"></span>
+                        <span class="queue-task-log-drawer__content-caption">回调参数 JSON</span>
+                    </div>
+
+                    <TextArea Value="@detailCallbackParameter" ReadOnly style="width:100%" />
+                </div>
+            </div>
+        </div>
     </Template>
 </Drawer>
+
+<style>
+    .queue-task-log-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+
+    .queue-task-log-page__hero {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.3fr) minmax(320px, 1fr);
+        gap: 12px;
+        padding: 16px 18px;
+        border-radius: 22px;
+        background:
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 36%),
+            radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.12), transparent 32%),
+            linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f3fdf8 100%);
+        color: #10233f;
+        border: 1px solid #e9eef5;
+        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
+    }
+
+    .queue-task-log-page__eyebrow {
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .queue-task-log-page__title {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.15;
+        color: #10233f;
+    }
+
+    .queue-task-log-page__subtitle {
+        margin-top: 6px;
+        max-width: 700px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #526075;
+    }
+
+    .queue-task-log-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        align-self: stretch;
+    }
+
+    .queue-task-log-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 4px;
+        min-height: 86px;
+        padding: 10px 12px;
+        border-radius: 18px;
+        border: 1px solid #e4edf7;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .queue-task-log-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
+    }
+
+    .queue-task-log-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 253, 245, 0.96) 100%);
+    }
+
+    .queue-task-log-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 243, 255, 0.96) 100%);
+    }
+
+    .queue-task-log-page__stat-label {
+        font-size: 11px;
+        color: #64748b;
+    }
+
+    .queue-task-log-page__stat-value {
+        font-size: 20px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .queue-task-log-page__stat-value--small {
+        font-size: 16px;
+    }
+
+    .queue-task-log-page__stat-foot {
+        font-size: 11px;
+        line-height: 1.5;
+        color: #64748b;
+    }
+
+    .queue-task-log-page__card {
+        border-radius: 18px;
+        border: 1px solid #edf2f7;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .queue-task-log-page__card--compact {
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .queue-task-log-page__filter-form,
+    .queue-task-log-page__filter-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .queue-task-log-page__filter-form .ant-form-item {
+        margin-right: 0;
+        margin-bottom: 0;
+    }
+
+    .queue-task-log-page__filter-item--keyword {
+        flex: 1 1 360px;
+        min-width: 320px;
+    }
+
+    .queue-task-log-page__filter-item--status {
+        flex: 0 0 180px;
+    }
+
+    .queue-task-log-page__filter-item--time {
+        flex: 0 0 220px;
+    }
+
+    .queue-task-log-page__filter-item--actions {
+        margin-left: auto;
+    }
+
+    .queue-task-log-page__filter-form .ant-input,
+    .queue-task-log-page__filter-form .ant-input-affix-wrapper,
+    .queue-task-log-page__filter-form .ant-picker,
+    .queue-task-log-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        height: 44px;
+        width: 100%;
+        border-radius: 16px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .queue-task-log-page__filter-form .ant-input,
+    .queue-task-log-page__filter-form .ant-input-affix-wrapper,
+    .queue-task-log-page__filter-form .ant-picker,
+    .queue-task-log-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .queue-task-log-page__filter-form .ant-input-affix-wrapper {
+        display: flex;
+        align-items: center;
+    }
+
+    .queue-task-log-page__filter-form .ant-input-affix-wrapper .ant-input {
+        height: auto;
+        padding: 0;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .queue-task-log-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        display: flex;
+        align-items: center;
+    }
+
+    .queue-task-log-page__filter-form .ant-input,
+    .queue-task-log-page__filter-form .ant-input-affix-wrapper .ant-input,
+    .queue-task-log-page__filter-form .ant-picker input,
+    .queue-task-log-page__filter-form .ant-select-selection-item,
+    .queue-task-log-page__filter-form .ant-select-selection-placeholder {
+        color: #334155;
+        font-size: 13px;
+    }
+
+    .queue-task-log-page__filter-form .ant-select-selection-item,
+    .queue-task-log-page__filter-form .ant-select-selection-placeholder {
+        line-height: 42px;
+    }
+
+    .queue-task-log-page__filter-form .ant-input::placeholder,
+    .queue-task-log-page__filter-form .ant-input-affix-wrapper .ant-input::placeholder,
+    .queue-task-log-page__filter-form .ant-picker input::placeholder {
+        color: #94a3b8;
+    }
+
+    .queue-task-log-page__filter-form .ant-input:hover,
+    .queue-task-log-page__filter-form .ant-input-affix-wrapper:hover,
+    .queue-task-log-page__filter-form .ant-picker:hover,
+    .queue-task-log-page__filter-form .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+        border-color: #bfdbfe;
+        background: #ffffff;
+    }
+
+    .queue-task-log-page__filter-form .ant-input:focus,
+    .queue-task-log-page__filter-form .ant-input-focused,
+    .queue-task-log-page__filter-form .ant-input-affix-wrapper-focused,
+    .queue-task-log-page__filter-form .ant-picker-focused,
+    .queue-task-log-page__filter-form .ant-select-focused .ant-select-selector {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
+        background: #ffffff;
+    }
+
+    .queue-task-log-page__action-button {
+        height: 40px;
+        padding: 0 18px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: none;
+    }
+
+    .queue-task-log-page__action-button--primary {
+        border-color: #93c5fd;
+        background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+    }
+
+    .queue-task-log-page__action-button--primary:hover,
+    .queue-task-log-page__action-button--primary:focus {
+        border-color: #60a5fa;
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    .queue-task-log-page__action-button--default {
+        color: #334155;
+        border-color: #dbe7f5;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .queue-task-log-page__action-button--default:hover,
+    .queue-task-log-page__action-button--default:focus {
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+        background: linear-gradient(180deg, #fafdff 0%, #eff6ff 100%);
+    }
+
+    .queue-task-log-page__list-shell {
+        border: 1px solid #e8eef6;
+        border-radius: 18px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .queue-task-log-page__table-wrap {
+        overflow: hidden;
+        border-radius: 16px;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th {
+        padding: 14px 12px;
+        background: linear-gradient(180deg, #fbfdff 0%, #f3f8ff 100%);
+        color: #475569;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #dbe7f5;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td {
+        padding: 14px 12px;
+        color: #1e293b;
+        font-size: 13px;
+        border-bottom: 1px solid #eef2f7;
+        transition: background-color 0.2s ease;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fbff;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(1),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(1) {
+        width: 220px;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(2),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(2),
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(3),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(3),
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(6),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(6) {
+        width: 100px;
+        white-space: nowrap;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(4),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(4),
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(5),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(5),
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(8),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(8) {
+        width: 150px;
+        white-space: nowrap;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(7),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(7) {
+        width: 140px;
+    }
+
+    .queue-task-log-page__table-wrap .ant-table-thead > tr > th:nth-child(9),
+    .queue-task-log-page__table-wrap .ant-table-tbody > tr > td:nth-child(9) {
+        width: 130px;
+    }
+
+    .queue-task-log-page__task-cell {
+        display: block;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .queue-task-log-page__task-name {
+        color: #334155;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .queue-task-log-page__task-sub {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .queue-task-log-page__status-tag {
+        border: none;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-weight: 700;
+    }
+
+    .queue-task-log-page__count-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #0f172a;
+        font-weight: 700;
+    }
+
+    .queue-task-log-page__mono-text,
+    .queue-task-log-drawer__meta-value--mono {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 13px;
+    }
+
+    .queue-task-log-page__time-cell,
+    .queue-task-log-page__mono-text {
+        color: #475569;
+        white-space: nowrap;
+    }
+
+    .queue-task-log-page__link {
+        color: #1d4ed8;
+        font-weight: 600;
+    }
+
+    .queue-task-log-page__link--warn {
+        color: #d97706;
+    }
+
+    .queue-task-log-page__pagination {
+        margin: 0;
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .queue-task-log-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .queue-task-log-page__pagination .ant-pagination-item,
+    .queue-task-log-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .queue-task-log-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .queue-task-log-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .queue-task-log-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .queue-task-log-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+
+    .queue-task-log-page__pagination .ant-pagination-item-active a {
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .queue-task-log-drawer {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: calc(100vh - 180px);
+    }
+
+    .queue-task-log-drawer__overview {
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid #e6eef8;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .queue-task-log-drawer__summary {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 4px 2px 16px 2px;
+        border-bottom: 1px solid #eef4fb;
+    }
+
+    .queue-task-log-drawer__summary-eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+        margin-bottom: 8px;
+    }
+
+    .queue-task-log-drawer__summary-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #10233f;
+    }
+
+    .queue-task-log-drawer__summary-subtitle {
+        margin-top: 6px;
+        color: #526075;
+        font-size: 13px;
+        line-height: 1.7;
+        word-break: break-all;
+    }
+
+    .queue-task-log-drawer__summary-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .queue-task-log-drawer__summary-tag {
+        border-radius: 999px;
+        border: none;
+        padding: 4px 12px;
+        font-weight: 700;
+    }
+
+    .queue-task-log-drawer__meta-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        color: #526075;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid #dbe7f5;
+    }
+
+    .queue-task-log-drawer__meta-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .queue-task-log-drawer__meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 78px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fdfefe 0%, #f8fbff 100%);
+        border: 1px solid #eaf1f8;
+    }
+
+    .queue-task-log-drawer__meta-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .queue-task-log-drawer__meta-value {
+        color: #0f172a;
+        font-size: 14px;
+        line-height: 1.6;
+        word-break: break-all;
+    }
+
+    .queue-task-log-drawer__content-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .queue-task-log-drawer__content-box {
+        display: flex;
+        flex-direction: column;
+        min-height: clamp(280px, 34vh, 460px);
+        padding: 16px;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+        border: 1px solid #dbeafe;
+    }
+
+    .queue-task-log-drawer__content-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dbeafe;
+    }
+
+    .queue-task-log-drawer__content-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #bfdbfe;
+    }
+
+    .queue-task-log-drawer__content-dot:nth-child(2) {
+        background: #93c5fd;
+    }
+
+    .queue-task-log-drawer__content-dot:nth-child(3) {
+        background: #60a5fa;
+    }
+
+    .queue-task-log-drawer__content-caption {
+        margin-left: 4px;
+        color: #526075;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .queue-task-log-drawer__content-box textarea {
+        flex: 1;
+        min-height: 0;
+        color: #1e293b;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        font-family: Consolas, "Courier New", monospace;
+        line-height: 1.75;
+        resize: none;
+    }
+
+    @@media (max-width: 1200px) {
+        .queue-task-log-page__hero,
+        .queue-task-log-drawer__content-grid,
+        .queue-task-log-drawer__meta-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .queue-task-log-page__stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .queue-task-log-page__stats {
+            grid-template-columns: 1fr;
+        }
+
+        .queue-task-log-page__filter-item--actions {
+            margin-left: 0;
+        }
+
+        .queue-task-log-page__filter-item--keyword,
+        .queue-task-log-page__filter-item--status,
+        .queue-task-log-page__filter-item--time {
+            width: 100%;
+            min-width: 100%;
+            flex-basis: 100%;
+        }
+
+        .queue-task-log-drawer__summary {
+            flex-direction: column;
+        }
+
+        .queue-task-log-drawer__summary-meta {
+            justify-content: flex-start;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .queue-task-log-page__hero,
+        .queue-task-log-drawer__overview,
+        .queue-task-log-drawer__content-box {
+            padding: 18px;
+        }
+
+        .queue-task-log-page__title {
+            font-size: 24px;
+        }
+    }
+</style>
 
 
 @code {
@@ -211,14 +990,75 @@
         }
     }
 
+
+    /// <summary>
+    /// 返回结果筛选的展示文案
+    /// </summary>
+    string SuccessFilterText() => request.IsSuccess switch
+    {
+        true => "仅成功任务",
+        false => "仅未成功",
+        _ => "全部结果"
+    };
+
+
+    /// <summary>
+    /// 返回时间筛选区间展示文案
+    /// </summary>
+    string DateRangeText()
+    {
+        if (request.StartCreateTime == null && request.EndCreateTime == null)
+        {
+            return "全部时间";
+        }
+
+        var startText = request.StartCreateTime?.ToString("MM-dd HH:mm") ?? "不限开始";
+        var endText = request.EndCreateTime?.ToString("MM-dd HH:mm") ?? "不限结束";
+        return startText + " ~ " + endText;
+    }
+
+
+    /// <summary>
+    /// 返回任务状态标签颜色
+    /// </summary>
+    static string StatusTagColor(int? status) => status switch
+    {
+        0 => "#94a3b8",
+        1 => "#2563eb",
+        2 => "#16a34a",
+        3 => "#dc2626",
+        _ => "#94a3b8"
+    };
+
+
+    /// <summary>
+    /// 返回成功结果标签颜色
+    /// </summary>
+    static string SuccessTagColor(DateTimeOffset? successTime) => successTime == null ? "#f59e0b" : "#16a34a";
+
+
+    /// <summary>
+    /// 返回成功结果展示文案
+    /// </summary>
+    static string SuccessText(DateTimeOffset? successTime) => successTime == null ? "未成功" : "成功";
+
+
+    /// <summary>
+    /// 返回任务状态展示文案
+    /// </summary>
     static string? FormatStatus(int? status) => status switch
     {
         0 => "待领取",
         1 => "执行中",
         2 => "成功",
         3 => "失败",
-        _ => status?.ToString()
+        null => "-",
+        _ => status.ToString()
     };
 
-    static string? FormatTime(DateTimeOffset? time) => time?.LocalDateTime.ToString("yyyy-MM-dd HH:mm");
+
+    /// <summary>
+    /// 返回时间展示文案
+    /// </summary>
+    static string FormatTime(DateTimeOffset? time) => time?.LocalDateTime.ToString("yyyy-MM-dd HH:mm") ?? "-";
 }

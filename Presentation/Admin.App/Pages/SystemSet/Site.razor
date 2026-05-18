@@ -2,68 +2,541 @@
 @using Application.Model.Site.Site
 @attribute [ReuseTabsPageTitle("信息维护")]
 
-<Form Model="@editSite" LabelColSpan="2" WrapperColSpan="22">
+<div class="site-setting-page">
+    <div class="site-setting-page__hero">
+        <div class="site-setting-page__hero-main">
+            <div class="site-setting-page__eyebrow">System Settings</div>
+            <h2 class="site-setting-page__title">站点信息维护</h2>
+            <div class="site-setting-page__subtitle">集中维护站点展示资料、联系信息与 SEO 内容，保证前台页脚、系统说明和搜索摘要使用同一套数据</div>
 
-    <Tabs Type="@TabType.Card">
+            <div class="site-setting-page__hero-tags">
+                <Tag Color="@("blue")">站点信息 @GetSiteFieldCount() / 7</Tag>
+                <Tag Color="@("green")">SEO @GetSeoFieldCount() / 3</Tag>
+                <Tag Color="@("gold")">底部代码 @GetFootCodeStatus()</Tag>
+            </div>
+        </div>
 
-        <TabPane Key="1" Tab="站点信息">
-            <FormItem Label="网站Url">
-                <Input Placeholder="请输入网站Url" @bind-Value="@context.WebUrl" style="width: 30em" />
-            </FormItem>
+        <div class="site-setting-page__stats">
+            <div class="site-setting-page__stat-card">
+                <span class="site-setting-page__stat-label">站点地址</span>
+                <strong class="site-setting-page__stat-value site-setting-page__stat-value--small">@GetWebUrlText()</strong>
+                <span class="site-setting-page__stat-foot">建议填写正式访问地址 便于统一展示</span>
+            </div>
 
-            <FormItem Label="管理者名称">
-                <Input Placeholder="管理者名称" @bind-Value="@context.ManagerName" style="width: 30em" />
-            </FormItem>
+            <div class="site-setting-page__stat-card">
+                <span class="site-setting-page__stat-label">站点信息完成度</span>
+                <strong class="site-setting-page__stat-value">@GetSiteFieldCount() / 7</strong>
+                <span class="site-setting-page__stat-foot">覆盖地址 联系方式 备案信息与底部代码</span>
+            </div>
 
-            <FormItem Label="管理者地址">
-                <Input Placeholder="请输入管理者地址" @bind-Value="@context.ManagerAddress" style="width: 30em" />
-            </FormItem>
+            <div class="site-setting-page__stat-card">
+                <span class="site-setting-page__stat-label">SEO 完成度</span>
+                <strong class="site-setting-page__stat-value">@GetSeoFieldCount() / 3</strong>
+                <span class="site-setting-page__stat-foot">标题 关键字 描述建议同步完善</span>
+            </div>
+        </div>
+    </div>
 
-            <FormItem Label="联系电话">
-                <Input Placeholder="请输入联系电话" @bind-Value="@context.ManagerPhone" style="width: 30em" />
-            </FormItem>
-            <FormItem Label="邮箱">
-                <Input Placeholder="请输入邮箱" @bind-Value="@context.ManagerEmail" style="width: 30em" />
-            </FormItem>
-            <FormItem Label="备案号">
-                <Input Placeholder="请输入备案号" @bind-Value="@context.RecordNumber" style="width: 30em" />
-            </FormItem>
+    <Card Class="site-setting-page__panel" BodyStyle="padding: 20px 20px 18px 20px">
+        <Tabs Class="site-setting-page__tabs" Type="@TabType.Line">
 
-            <FormItem Label="自定义代码">
-                <TextArea ShowCount Placeholder="请输入自定义代码，将放置在页面底部" @bind-Value="@context.FootCode" MinRows="4" MaxRows="10" style="width:50em;min-height:100px" />
-            </FormItem>
-        </TabPane>
+            <TabPane Key="1" Tab="站点信息">
+                <div class="site-setting-page__section-intro">
+                    <div>
+                        <div class="site-setting-page__section-title">站点基础资料</div>
+                        <div class="site-setting-page__section-text">优先维护站点地址、联系人和备案信息，保持多个页面的展示口径一致</div>
+                    </div>
+                    <div class="site-setting-page__section-meta">已填写 @GetSiteFieldCount() / 7</div>
+                </div>
 
-        <TabPane Key="2" Tab="SEO参数" ForceRender="true">
-            <FormItem Label="SEO标题">
-                <TextArea ShowCount Placeholder="请输入SEO标题" @bind-Value="@context.SeoTitle" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
-            </FormItem>
+                <div class="site-setting-page__section-card">
+                    <Form Class="site-setting-page__inner-form" Model="@editSite" Layout="@FormLayout.Vertical">
+                        <div class="site-setting-page__field-grid site-setting-page__field-grid--wide">
+                            <FormItem Label="网站 Url">
+                                <Input Placeholder="请输入网站 Url" @bind-Value="@editSite.WebUrl" AllowClear Style="width:100%" />
+                            </FormItem>
 
-            <FormItem Label="SEO关键字">
-                <TextArea ShowCount Placeholder="请输入SEO关键字" @bind-Value="@context.SeoKeyWords" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
-            </FormItem>
+                            <FormItem Label="备案号">
+                                <Input Placeholder="请输入备案号" @bind-Value="@editSite.RecordNumber" AllowClear Style="width:100%" />
+                            </FormItem>
 
-            <FormItem Label="SEO描述">
-                <TextArea ShowCount Placeholder="请输入SEO描述" @bind-Value="@context.SeoDescription" MinRows="4" MaxRows="6" style="width:50em;min-height:100px" />
-            </FormItem>
-        </TabPane>
+                            <FormItem Label="管理者名称">
+                                <Input Placeholder="请输入管理者名称" @bind-Value="@editSite.ManagerName" AllowClear Style="width:100%" />
+                            </FormItem>
 
-    </Tabs>
+                            <FormItem Label="联系电话">
+                                <Input Placeholder="请输入联系电话" @bind-Value="@editSite.ManagerPhone" AllowClear Style="width:100%" />
+                            </FormItem>
 
-    <Row Gutter="24">
-        <AntDesign.Col Span="24">
-            <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading" OnClick="SaveSiteAsync">保存</Button>
-        </AntDesign.Col>
-    </Row>
+                            <FormItem Label="管理者地址">
+                                <Input Placeholder="请输入管理者地址" @bind-Value="@editSite.ManagerAddress" AllowClear Style="width:100%" />
+                            </FormItem>
 
+                            <FormItem Label="邮箱">
+                                <Input Placeholder="请输入邮箱" @bind-Value="@editSite.ManagerEmail" AllowClear Style="width:100%" />
+                            </FormItem>
+                        </div>
+                    </Form>
+                </div>
 
-</Form>
+                <div class="site-setting-page__section-card site-setting-page__section-card--wide">
+                    <div class="site-setting-page__card-head">
+                        <div class="site-setting-page__card-title">自定义底部代码</div>
+                        <div class="site-setting-page__card-text">适合放置统计脚本、站点验证代码或页脚扩展内容，保存后会参与页面底部输出</div>
+                    </div>
+
+                    <Form Class="site-setting-page__inner-form" Model="@editSite" Layout="@FormLayout.Vertical">
+                        <FormItem Label="代码内容">
+                            <TextArea ShowCount Placeholder="请输入自定义代码，将放置在页面底部" @bind-Value="@editSite.FootCode" MinRows="6" MaxRows="12" Style="width:100%;min-height:180px" />
+                        </FormItem>
+                    </Form>
+                </div>
+            </TabPane>
+
+            <TabPane Key="2" Tab="SEO 参数" ForceRender="true">
+                <div class="site-setting-page__section-intro">
+                    <div>
+                        <div class="site-setting-page__section-title">搜索引擎展示内容</div>
+                        <div class="site-setting-page__section-text">SEO 字段会影响搜索摘要和分享预览，建议围绕品牌词和站点核心价值填写</div>
+                    </div>
+                    <div class="site-setting-page__section-meta">已填写 @GetSeoFieldCount() / 3</div>
+                </div>
+
+                <Row Gutter="24">
+                    <AntDesign.Col Span="12">
+                        <div class="site-setting-page__section-card">
+                            <div class="site-setting-page__card-head">
+                                <div class="site-setting-page__card-title">标题与关键字</div>
+                                <div class="site-setting-page__card-text">用于定义搜索结果的主标题和站点关键词，建议避免重复堆词</div>
+                            </div>
+
+                            <Form Class="site-setting-page__inner-form" Model="@editSite" Layout="@FormLayout.Vertical">
+                                <FormItem Label="SEO 标题">
+                                    <TextArea ShowCount Placeholder="请输入 SEO 标题" @bind-Value="@editSite.SeoTitle" MinRows="4" MaxRows="6" Style="width:100%;min-height:120px" />
+                                </FormItem>
+
+                                <FormItem Label="SEO 关键字">
+                                    <TextArea ShowCount Placeholder="请输入 SEO 关键字" @bind-Value="@editSite.SeoKeyWords" MinRows="4" MaxRows="6" Style="width:100%;min-height:120px" />
+                                </FormItem>
+                            </Form>
+                        </div>
+                    </AntDesign.Col>
+
+                    <AntDesign.Col Span="12">
+                        <div class="site-setting-page__section-card">
+                            <div class="site-setting-page__card-head">
+                                <div class="site-setting-page__card-title">描述与长度预览</div>
+                                <div class="site-setting-page__card-text">描述建议突出站点服务对象、核心能力和可信信息，让搜索结果更完整</div>
+                            </div>
+
+                            <Form Class="site-setting-page__inner-form" Model="@editSite" Layout="@FormLayout.Vertical">
+                                <FormItem Label="SEO 描述">
+                                    <TextArea ShowCount Placeholder="请输入 SEO 描述" @bind-Value="@editSite.SeoDescription" MinRows="8" MaxRows="10" Style="width:100%;min-height:220px" />
+                                </FormItem>
+                            </Form>
+
+                            <div class="site-setting-page__preview-list">
+                                <div class="site-setting-page__preview-item">
+                                    <span>标题长度</span>
+                                    <strong>@CountTextLength(editSite.SeoTitle) 字</strong>
+                                </div>
+                                <div class="site-setting-page__preview-item">
+                                    <span>关键字长度</span>
+                                    <strong>@CountTextLength(editSite.SeoKeyWords) 字</strong>
+                                </div>
+                                <div class="site-setting-page__preview-item">
+                                    <span>描述长度</span>
+                                    <strong>@CountTextLength(editSite.SeoDescription) 字</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </AntDesign.Col>
+                </Row>
+            </TabPane>
+
+        </Tabs>
+
+        <div class="site-setting-page__footer">
+            <div>
+                <div class="site-setting-page__footer-title">保存当前配置</div>
+                <div class="site-setting-page__footer-text">保存后将直接影响站点信息展示和 SEO 元信息输出，请确认内容已经校对</div>
+            </div>
+
+            <Button Class="site-setting-page__save-button" Type="@ButtonType.Primary" Loading="@saveLoading" OnClick="SaveSiteAsync">保存更改</Button>
+        </div>
+    </Card>
+</div>
+
+<style>
+    .site-setting-page {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding-bottom: 24px;
+    }
+
+    .site-setting-page__hero {
+        display: grid;
+        grid-template-columns: minmax(320px, 1.9fr) minmax(320px, 1.1fr);
+        gap: 16px;
+        padding: 20px 22px;
+        border-radius: 22px;
+        border: 1px solid #d9e6f2;
+        background:
+            linear-gradient(135deg, rgba(239, 246, 255, 0.96) 0%, rgba(248, 250, 252, 0.98) 56%, rgba(241, 245, 249, 0.98) 100%);
+        box-shadow: 0 12px 28px rgba(59, 83, 119, 0.08);
+    }
+
+    .site-setting-page__hero-main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .site-setting-page__eyebrow {
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .site-setting-page__title {
+        margin: 0;
+        font-size: 27px;
+        line-height: 1.15;
+        color: #10233f;
+    }
+
+    .site-setting-page__subtitle {
+        margin-top: 8px;
+        max-width: 620px;
+        font-size: 12px;
+        line-height: 1.8;
+        color: #526075;
+    }
+
+    .site-setting-page__hero-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .site-setting-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-content: start;
+    }
+
+    .site-setting-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 106px;
+        padding: 14px 15px;
+        border-radius: 18px;
+        border: 1px solid #e2ebf4;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+    .site-setting-page__stat-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #607089;
+    }
+
+    .site-setting-page__stat-value {
+        font-size: 21px;
+        line-height: 1.1;
+        color: #10233f;
+    }
+
+    .site-setting-page__stat-value--small {
+        font-size: 15px;
+        line-height: 1.6;
+        word-break: break-all;
+    }
+
+    .site-setting-page__stat-foot {
+        margin-top: auto;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #6b7b91;
+    }
+
+    .site-setting-page__panel {
+        border-radius: 22px;
+        border: 1px solid #e6edf5;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .site-setting-page__form {
+        background: transparent;
+    }
+
+    .site-setting-page__section-intro {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding: 2px 2px 0;
+    }
+
+    .site-setting-page__section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #10233f;
+    }
+
+    .site-setting-page__section-text {
+        margin-top: 6px;
+        max-width: 680px;
+        font-size: 12px;
+        line-height: 1.75;
+        color: #64748b;
+    }
+
+    .site-setting-page__section-meta {
+        flex-shrink: 0;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #edf6ff;
+        border: 1px solid #d8eaff;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .site-setting-page__section-card {
+        height: 100%;
+        margin-bottom: 16px;
+        padding: 20px 20px 16px;
+        border-radius: 18px;
+        border: 1px solid #e8eef5;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+    }
+
+    .site-setting-page__section-card--wide {
+        margin-top: 2px;
+    }
+
+    .site-setting-page__inner-form {
+        margin-top: 4px;
+    }
+
+    .site-setting-page__field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 16px;
+    }
+
+    .site-setting-page__field-grid--wide {
+        gap: 0 18px;
+    }
+
+    .site-setting-page__card-head {
+        margin-bottom: 16px;
+    }
+
+    .site-setting-page__card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .site-setting-page__card-text {
+        margin-top: 6px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #64748b;
+    }
+
+    .site-setting-page__tips-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 16px 18px;
+        border-radius: 16px;
+        border: 1px dashed #bcd3f6;
+        background: linear-gradient(135deg, #f5faff 0%, #fbfdff 100%);
+    }
+
+    .site-setting-page__tips-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1d4ed8;
+    }
+
+    .site-setting-page__tips-text {
+        font-size: 12px;
+        line-height: 1.8;
+        color: #53657e;
+    }
+
+    .site-setting-page__preview-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .site-setting-page__preview-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #f8fbff;
+        border: 1px solid #dbe7f3;
+    }
+
+    .site-setting-page__preview-item span {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .site-setting-page__preview-item strong {
+        font-size: 16px;
+        color: #10233f;
+    }
+
+    .site-setting-page__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 4px;
+        padding: 18px 2px 0;
+        border-top: 1px solid #edf2f7;
+    }
+
+    .site-setting-page__footer-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #10233f;
+    }
+
+    .site-setting-page__footer-text {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #64748b;
+    }
+
+    .site-setting-page__save-button {
+        min-width: 132px;
+        height: 42px;
+        padding: 0 22px;
+        border-radius: 14px;
+        border-color: #60a5fa;
+        background: linear-gradient(180deg, #38bdf8 0%, #2563eb 100%);
+        box-shadow: 0 12px 20px rgba(37, 99, 235, 0.22);
+    }
+
+    .site-setting-page__save-button:hover,
+    .site-setting-page__save-button:focus {
+        border-color: #38bdf8;
+        background: linear-gradient(180deg, #22c1f3 0%, #1d4ed8 100%);
+    }
+
+    .site-setting-page__tabs :is(.ant-tabs-nav) {
+        margin-bottom: 16px;
+    }
+
+    .site-setting-page__tabs :is(.ant-tabs-tab) {
+        padding: 8px 14px;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .site-setting-page :is(.ant-form-item) {
+        margin-bottom: 16px;
+    }
+
+    .site-setting-page :is(.ant-form-item-label > label) {
+        color: #334155;
+        font-weight: 600;
+        height: auto;
+    }
+
+    .site-setting-page :is(.ant-input),
+    .site-setting-page :is(.ant-input-affix-wrapper),
+    .site-setting-page :is(.ant-input-textarea),
+    .site-setting-page :is(.ant-input-number),
+    .site-setting-page :is(.ant-input-number-input) {
+        border-radius: 14px;
+    }
+
+    @@media (max-width: 1180px) {
+        .site-setting-page__hero,
+        .site-setting-page__stats,
+        .site-setting-page__preview-list {
+            grid-template-columns: 1fr;
+        }
+
+        .site-setting-page__field-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .site-setting-page__footer {
+            padding-top: 14px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .site-setting-page__hero {
+            padding: 16px;
+        }
+
+        .site-setting-page__title {
+            font-size: 24px;
+        }
+
+        .site-setting-page__form {
+            padding: 0;
+        }
+
+        .site-setting-page__section-intro,
+        .site-setting-page__footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .site-setting-page__section-card {
+            padding: 16px;
+        }
+
+        .site-setting-page__save-button {
+            width: 100%;
+        }
+    }
+</style>
 
 @code {
 
+    /// <summary>
+    /// 站点编辑模型
+    /// </summary>
     SiteDto editSite = new();
+
+
+    /// <summary>
+    /// 保存按钮加载状态
+    /// </summary>
     bool saveLoading = false;
 
+
+    /// <summary>
+    /// 初始化页面并加载站点信息
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         try
@@ -90,6 +563,10 @@
         }
     }
 
+
+    /// <summary>
+    /// 保存站点信息
+    /// </summary>
     async Task SaveSiteAsync()
     {
         saveLoading = true;
@@ -115,5 +592,47 @@
             StateHasChanged();
         }
     }
+
+
+    /// <summary>
+    /// 获取已填写字段数量
+    /// </summary>
+    int GetFilledFieldCount() => CountFilledFields(editSite.WebUrl, editSite.ManagerName, editSite.ManagerAddress, editSite.ManagerPhone, editSite.ManagerEmail, editSite.RecordNumber, editSite.SeoTitle, editSite.SeoKeyWords, editSite.SeoDescription, editSite.FootCode);
+
+
+    /// <summary>
+    /// 获取站点信息字段数量
+    /// </summary>
+    int GetSiteFieldCount() => CountFilledFields(editSite.WebUrl, editSite.ManagerName, editSite.ManagerAddress, editSite.ManagerPhone, editSite.ManagerEmail, editSite.RecordNumber, editSite.FootCode);
+
+
+    /// <summary>
+    /// 获取 SEO 字段数量
+    /// </summary>
+    int GetSeoFieldCount() => CountFilledFields(editSite.SeoTitle, editSite.SeoKeyWords, editSite.SeoDescription);
+
+
+    /// <summary>
+    /// 获取网站地址展示文本
+    /// </summary>
+    string GetWebUrlText() => string.IsNullOrWhiteSpace(editSite.WebUrl) ? "待填写网站地址" : editSite.WebUrl;
+
+
+    /// <summary>
+    /// 获取底部代码状态
+    /// </summary>
+    string GetFootCodeStatus() => string.IsNullOrWhiteSpace(editSite.FootCode) ? "未配置" : "已配置";
+
+
+    /// <summary>
+    /// 统计文本长度
+    /// </summary>
+    int CountTextLength(string? text) => string.IsNullOrWhiteSpace(text) ? 0 : text.Trim().Length;
+
+
+    /// <summary>
+    /// 统计非空字段数量
+    /// </summary>
+    int CountFilledFields(params string?[] values) => values.Count(value => !string.IsNullOrWhiteSpace(value));
 
 }

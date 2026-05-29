@@ -361,5 +361,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 /Infrastructure/WebAPIBasic/Properties
-/WebAPI/files
-/AdminAPI/wwwroot/uploads
+
+*.lscache

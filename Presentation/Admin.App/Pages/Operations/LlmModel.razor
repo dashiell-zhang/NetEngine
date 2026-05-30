@@ -4,7 +4,7 @@
 @attribute [ReuseTabsPageTitle("LLM模型管理")]
 
 <div class="llm-model-page">
-    <div class="llm-model-page__hero">
+    <div class="llm-model-page__hero admin-page-hero--with-actions">
         <div>
             <div class="llm-model-page__eyebrow">Operations</div>
             <h2 class="llm-model-page__title">LLM 模型管理台</h2>
@@ -59,7 +59,7 @@
     </Card>
 
     <Card Class="llm-model-page__card llm-model-page__card--compact" BodyStyle="padding: 14px 14px 10px">
-        <div class="llm-model-page__list-shell">
+        <div class="llm-model-page__list-shell admin-page-list-shell">
             <div class="llm-model-page__table-wrap">
                 <Table TItem="LlmModelDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -106,7 +106,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="llm-model-page__pagination">
+                        <div class="llm-model-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>
@@ -139,21 +139,21 @@
                             <Row Gutter="24">
                                 <AntDesign.Col Span="12">
                                     <FormItem Class="llm-model-drawer__field-item">
-                                        <div class="llm-model-drawer__field-label">名称</div>
+                                        <div class="llm-model-drawer__field-label admin-required-label">名称</div>
                                         <Input Placeholder="请输入模型名称" @bind-Value="@context.Name" />
                                     </FormItem>
                                 </AntDesign.Col>
 
                                 <AntDesign.Col Span="12">
                                     <FormItem Class="llm-model-drawer__field-item">
-                                        <div class="llm-model-drawer__field-label">模型标识</div>
+                                        <div class="llm-model-drawer__field-label admin-required-label">模型标识</div>
                                         <Input Placeholder="如: deepseek-v4-flash" @bind-Value="@context.ModelId" />
                                     </FormItem>
                                 </AntDesign.Col>
                             </Row>
 
                             <FormItem Class="llm-model-drawer__field-item">
-                                <div class="llm-model-drawer__field-label">端点地址</div>
+                                <div class="llm-model-drawer__field-label admin-required-label">端点地址</div>
                                 <Input Placeholder="如: https://api.deepseek.com/chat/completions" @bind-Value="@context.Endpoint" />
                             </FormItem>
 

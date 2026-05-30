@@ -5,7 +5,7 @@
 @attribute [ReuseTabsPageTitle("LLM会话日志")]
 
 <div class="llm-conversation-page">
-    <div class="llm-conversation-page__hero">
+    <div class="llm-conversation-page__hero admin-page-hero--without-actions">
         <div>
             <div class="llm-conversation-page__eyebrow">Operations</div>
             <h2 class="llm-conversation-page__title">LLM 会话日志</h2>
@@ -57,7 +57,7 @@
     </Card>
 
     <Card Class="llm-conversation-page__card llm-conversation-page__card--compact" BodyStyle="padding: 14px 14px 10px">
-        <div class="llm-conversation-page__list-shell">
+        <div class="llm-conversation-page__list-shell admin-page-list-shell">
             <div class="llm-conversation-page__table-wrap">
                 <Table TItem="LlmConversationDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -98,7 +98,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="llm-conversation-page__pagination">
+                        <div class="llm-conversation-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>

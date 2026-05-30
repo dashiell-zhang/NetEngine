@@ -3,7 +3,7 @@
 @attribute [ReuseTabsPageTitle("队列任务配置")]
 
 <div class="queue-task-page">
-    <div class="queue-task-page__hero">
+    <div class="queue-task-page__hero admin-page-hero--with-actions">
         <div>
             <div class="queue-task-page__eyebrow">Operations</div>
             <h2 class="queue-task-page__title">队列任务配置台</h2>
@@ -36,7 +36,7 @@
     </div>
 
     <Card Class="queue-task-page__card queue-task-page__card--compact" BodyStyle="padding: 14px 14px 10px">
-        <div class="queue-task-page__list-shell">
+        <div class="queue-task-page__list-shell admin-page-list-shell">
             <div class="queue-task-page__table-wrap">
                 <Table TItem="TaskSettingDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -71,7 +71,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="queue-task-page__pagination">
+                        <div class="queue-task-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>

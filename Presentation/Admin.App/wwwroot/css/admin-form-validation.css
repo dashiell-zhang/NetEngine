@@ -1,0 +1,164 @@
+.ant-form-item-explain {
+    display: none;
+}
+
+.ant-form-item-explain-connected {
+    min-height: 0;
+}
+
+.admin-required-label::before {
+    content: "*";
+    margin-right: 4px;
+    color: #ff4d4f;
+    font-family: SimSun, sans-serif;
+    line-height: 1;
+}
+
+.admin-page-hero--with-actions {
+    min-height: 172px;
+    padding: 16px 18px !important;
+}
+
+.admin-page-hero--without-actions {
+    min-height: 138px;
+    padding: 16px 18px !important;
+}
+
+.admin-page-hero--with-actions [class*="__stat-card"],
+.admin-page-hero--without-actions [class*="__stat-card"] {
+    gap: 6px !important;
+    min-height: 96px !important;
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+}
+
+.admin-page-list-shell {
+    border: 1px solid #e8eef6 !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+    background: #ffffff !important;
+    box-shadow: none !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] {
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-table {
+    background: transparent !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-thead > tr > th {
+    height: 56px !important;
+    padding: 0 12px !important;
+    background: #f6f9fd !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #dbe7f5 !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-thead > tr > th::before {
+    display: none !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-tbody > tr > td {
+    height: auto !important;
+    padding: 15px 12px !important;
+    color: #1e293b !important;
+    font-size: 13px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #eef2f7 !important;
+    transition: background-color 0.2s ease;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-tbody > tr:hover > td {
+    background: #f8fbff !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-tbody > tr:last-child > td {
+    border-bottom: none !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-placeholder > td {
+    height: auto !important;
+    padding: 0 !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-placeholder .ant-empty {
+    min-height: 160px !important;
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-empty {
+    margin: 8px 0 !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] .ant-empty-description {
+    color: #94a3b8 !important;
+}
+
+.admin-page-list-pagination {
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 56px;
+    padding: 0 16px !important;
+    border-top: 1px solid #eef4fb !important;
+    background: #ffffff !important;
+}
+
+.admin-page-list-pagination .ant-pagination {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.admin-page-list-pagination .ant-pagination-total-text {
+    color: #64748b !important;
+    font-size: 12px !important;
+}
+
+.admin-page-list-pagination .ant-pagination-item,
+.admin-page-list-pagination .ant-pagination-prev .ant-pagination-item-link,
+.admin-page-list-pagination .ant-pagination-next .ant-pagination-item-link,
+.admin-page-list-pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+.admin-page-list-pagination .ant-pagination-options-quick-jumper input {
+    border-radius: 10px !important;
+    border-color: #dbe7f5 !important;
+    box-shadow: none !important;
+}
+
+.admin-page-list-pagination .ant-pagination-item-active {
+    background: #e8f1ff !important;
+    border-color: #93c5fd !important;
+}
+
+.admin-page-list-pagination .ant-pagination-item-active a {
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+@media (max-width: 1280px) {
+    .admin-page-hero--with-actions,
+    .admin-page-hero--without-actions {
+        min-height: auto;
+        padding: 18px 18px !important;
+    }
+
+    .admin-page-hero--with-actions [class*="__stat-card"],
+    .admin-page-hero--without-actions [class*="__stat-card"] {
+        gap: 6px !important;
+        min-height: 96px !important;
+        padding: 12px 14px !important;
+        border-radius: 18px !important;
+    }
+}

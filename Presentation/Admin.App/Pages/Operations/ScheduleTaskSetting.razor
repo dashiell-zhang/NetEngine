@@ -3,7 +3,7 @@
 @attribute [ReuseTabsPageTitle("定时任务配置")]
 
 <div class="schedule-task-page">
-    <div class="schedule-task-page__hero">
+    <div class="schedule-task-page__hero admin-page-hero--with-actions">
         <div>
             <div class="schedule-task-page__eyebrow">Operations</div>
             <h2 class="schedule-task-page__title">定时任务配置台</h2>
@@ -37,7 +37,7 @@
     </div>
 
     <Card Class="schedule-task-page__card schedule-task-page__card--compact" BodyStyle="padding: 14px 14px 10px">
-        <div class="schedule-task-page__list-shell">
+        <div class="schedule-task-page__list-shell admin-page-list-shell">
             <div class="schedule-task-page__table-wrap">
                 <Table TItem="TaskSettingDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -72,7 +72,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="schedule-task-page__pagination">
+                        <div class="schedule-task-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>
@@ -136,7 +136,7 @@
                     <div class="schedule-task-drawer__create-head">
                         <div class="schedule-task-drawer__create-main">
                             <FormItem Class="schedule-task-drawer__field-item">
-                                <div class="schedule-task-drawer__field-label">任务名称</div>
+                                <div class="schedule-task-drawer__field-label admin-required-label">任务名称</div>
                                 <Select TItem="string" TItemValue="string" @bind-Value="@createScheduleTask.Name" Placeholder="请选择任务名称" Style="width:100%" AllowClear ShowSearch>
                                     @foreach (var name in scheduleTaskNameList)
                                     {
@@ -162,7 +162,7 @@
                     </FormItem>
 
                     <FormItem Class="schedule-task-drawer__field-item">
-                        <div class="schedule-task-drawer__field-label">参数 JSON</div>
+                        <div class="schedule-task-drawer__field-label admin-required-label">参数 JSON</div>
                         <TextArea Placeholder="必填：带参任务参数 JSON" @bind-Value="@createScheduleTask.Parameter" MinRows="8" MaxRows="14" style="width:100%" />
                         <div class="schedule-task-drawer__field-help">建议按对象结构组织字段，便于任务内部直接映射到请求模型</div>
                     </FormItem>

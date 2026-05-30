@@ -3,7 +3,7 @@
 @attribute [ReuseTabsPageTitle("栏目管理")]
 
 <div class="category-page">
-    <div class="category-page__hero">
+    <div class="category-page__hero admin-page-hero--with-actions">
         <div>
             <div class="category-page__eyebrow">Information Management</div>
             <h2 class="category-page__title">栏目管理工作台</h2>
@@ -39,16 +39,7 @@
     </div>
 
     <Card Class="category-page__card category-page__card--compact" BodyStyle="padding: 14px 14px 10px">
-        <div class="category-page__list-shell">
-            <div class="category-page__section-head">
-                <div>
-                    <div class="category-page__section-title">栏目列表</div>
-                    <div class="category-page__section-desc">查看栏目名称、层级归属和排序值，并在列表中直接完成编辑或删除</div>
-                </div>
-
-                <div class="category-page__section-meta">当前加载 @(pageList.List?.Count ?? 0) 条记录</div>
-            </div>
-
+        <div class="category-page__list-shell admin-page-list-shell">
             <div class="category-page__table-wrap">
                 <Table TItem="CategoryDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -97,7 +88,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="category-page__pagination">
+                        <div class="category-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>
@@ -119,7 +110,7 @@
                     <Row Gutter="24">
                         <AntDesign.Col Span="14">
                             <FormItem Class="category-drawer__field-item">
-                                <div class="category-drawer__field-label">名称</div>
+                                <div class="category-drawer__field-label admin-required-label">名称</div>
                                 <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
                             </FormItem>
                         </AntDesign.Col>
@@ -274,46 +265,9 @@
         flex-direction: column;
     }
 
-    .category-page__section-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        padding: 2px 2px 14px;
-    }
-
-    .category-page__section-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #163250;
-    }
-
-    .category-page__section-desc {
-        margin-top: 4px;
-        font-size: 12px;
-        line-height: 1.6;
-        color: #67768b;
-    }
-
-    .category-page__section-meta {
-        display: inline-flex;
-        align-items: center;
-        min-height: 34px;
-        padding: 0 12px;
-        border-radius: 999px;
-        background: #f7faff;
-        border: 1px solid #e0e8f2;
-        color: #51647c;
-        font-size: 12px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
     .category-page__table-wrap {
         overflow: hidden;
         border-radius: 16px;
-        border: 1px solid #edf2f7;
-        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
     }
 
     .category-page__table-wrap .ant-table {
@@ -646,10 +600,6 @@
             grid-template-columns: 1fr;
         }
 
-        .category-page__section-head {
-            flex-direction: column;
-            align-items: flex-start;
-        }
     }
 
     @@media (max-width: 768px) {

@@ -3,7 +3,7 @@
 @attribute [ReuseTabsPageTitle("角色管理")]
 
 <div class="system-role-page">
-    <div class="system-role-page__hero">
+    <div class="system-role-page__hero admin-page-hero--with-actions">
         <div>
             <div class="system-role-page__eyebrow">System Settings</div>
             <h2 class="system-role-page__title">角色管理工作台</h2>
@@ -39,16 +39,7 @@
     </div>
 
     <Card Class="system-role-page__card system-role-page__card--compact" BodyStyle="padding: 14px 14px 10px">
-        <div class="system-role-page__list-shell">
-            <div class="system-role-page__section-head">
-                <div>
-                    <div class="system-role-page__section-title">角色列表</div>
-                    <div class="system-role-page__section-desc">查看角色编码、名称和说明，并在列表中直接完成编辑、授权和删除</div>
-                </div>
-
-                <div class="system-role-page__section-meta">当前加载 @(pageList.List?.Count ?? 0) 条记录</div>
-            </div>
-
+        <div class="system-role-page__list-shell admin-page-list-shell">
             <div class="system-role-page__table-wrap">
                 <Table TItem="RoleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -100,7 +91,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="system-role-page__pagination">
+                        <div class="system-role-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>
@@ -122,14 +113,14 @@
                     <Row Gutter="24">
                         <AntDesign.Col Span="12">
                             <FormItem Class="system-role-drawer__field-item">
-                                <div class="system-role-drawer__field-label">编码</div>
+                                <div class="system-role-drawer__field-label admin-required-label">编码</div>
                                 <Input Placeholder="请输入编码" @bind-Value="@context.Code" />
                             </FormItem>
                         </AntDesign.Col>
 
                         <AntDesign.Col Span="12">
                             <FormItem Class="system-role-drawer__field-item">
-                                <div class="system-role-drawer__field-label">名称</div>
+                                <div class="system-role-drawer__field-label admin-required-label">名称</div>
                                 <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
                             </FormItem>
                         </AntDesign.Col>
@@ -237,7 +228,7 @@
 
     .system-role-page__subtitle {
         margin-top: 6px;
-        max-width: 620px;
+        max-width: 640px;
         font-size: 11px;
         line-height: 1.6;
         color: #526075;
@@ -253,6 +244,7 @@
         gap: 10px;
         align-self: stretch;
     }
+
 
     .system-role-page__stat-card {
         display: flex;
@@ -355,8 +347,6 @@
     .system-role-page__table-wrap {
         overflow: hidden;
         border-radius: 16px;
-        border: 1px solid #edf2f7;
-        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
     }
 
     .system-role-page__table-wrap .ant-table {
@@ -682,7 +672,6 @@
             grid-template-columns: 1fr;
         }
 
-        .system-role-page__section-head,
         .system-role-authority__overview {
             flex-direction: column;
             align-items: flex-start;

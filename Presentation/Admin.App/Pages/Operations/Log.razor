@@ -3,7 +3,7 @@
 @attribute [ReuseTabsPageTitle("日志")]
 
 <div class="log-page">
-    <div class="log-page__hero">
+    <div class="log-page__hero admin-page-hero--without-actions">
         <div>
             <div class="log-page__eyebrow">Operations</div>
             <h2 class="log-page__title">系统日志中心</h2>
@@ -83,7 +83,7 @@
     </Card>
 
     <Card Class="log-page__card log-page__card--compact log-page__list-card" BodyStyle="padding: 14px">
-        <div class="log-page__list-shell">
+        <div class="log-page__list-shell admin-page-list-shell">
             <div class="log-page__table-wrap">
                 <Table TItem="LogDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -105,7 +105,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="log-page__pagination">
+                        <div class="log-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>

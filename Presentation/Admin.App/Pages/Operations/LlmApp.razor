@@ -5,7 +5,7 @@
 @attribute [ReuseTabsPageTitle("LLM应用")]
 
 <div class="llm-app-page">
-    <div class="llm-app-page__hero">
+    <div class="llm-app-page__hero admin-page-hero--with-actions">
         <div>
             <div class="llm-app-page__eyebrow">Operations</div>
             <h2 class="llm-app-page__title">LLM 应用编排台</h2>
@@ -60,7 +60,7 @@
     </Card>
 
     <Card Class="llm-app-page__card llm-app-page__card--compact" BodyStyle="padding: 14px">
-        <div class="llm-app-page__list-shell">
+        <div class="llm-app-page__list-shell admin-page-list-shell">
             <div class="llm-app-page__table-wrap">
                 <Table TItem="LlmAppDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -95,7 +95,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="llm-app-page__pagination">
+                        <div class="llm-app-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>
@@ -128,14 +128,14 @@
                             <Row Gutter="24">
                                 <AntDesign.Col Span="12">
                                     <FormItem Class="llm-app-drawer__field-item">
-                                        <div class="llm-app-drawer__field-label">Code</div>
+                                        <div class="llm-app-drawer__field-label llm-app-drawer__field-label--required">Code</div>
                                         <Input Placeholder="如: deepseek-chat-default" @bind-Value="@context.Code" />
                                     </FormItem>
                                 </AntDesign.Col>
 
                                 <AntDesign.Col Span="12">
                                     <FormItem Class="llm-app-drawer__field-item">
-                                        <div class="llm-app-drawer__field-label">名称</div>
+                                        <div class="llm-app-drawer__field-label llm-app-drawer__field-label--required">名称</div>
                                         <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
                                     </FormItem>
                                 </AntDesign.Col>
@@ -144,7 +144,7 @@
                             <Row Gutter="24">
                                 <AntDesign.Col Span="24">
                                     <FormItem Class="llm-app-drawer__field-item">
-                                        <div class="llm-app-drawer__field-label">模型</div>
+                                        <div class="llm-app-drawer__field-label llm-app-drawer__field-label--required">模型</div>
                                         <Select TItem="LlmModelSelectDto" TItemValue="long"
                                                 DataSource="@modelSelectList"
                                                 @bind-Value="@context.LlmModelId"
@@ -176,7 +176,7 @@
                             </FormItem>
 
                             <FormItem Class="llm-app-drawer__textarea-item">
-                                <div class="llm-app-drawer__field-label">PromptTemplate</div>
+                                <div class="llm-app-drawer__field-label llm-app-drawer__field-label--required">PromptTemplate</div>
                                 <TextArea @bind-Value="@context.PromptTemplate" MinRows="6" MaxRows="16" style="width:100%" />
                             </FormItem>
                         </div>
@@ -206,12 +206,16 @@
                                                 <FormItem>
                                                     <div class="llm-app-drawer__field-label">
                                                         @p.Key
+                                                        @if (!string.IsNullOrWhiteSpace(p.Comment))
+                                                        {
+                                                            <span class="llm-app-drawer__field-comment">@p.Comment</span>
+                                                        }
                                                         @if (p.IsRequired)
                                                         {
                                                             <span class="llm-app-drawer__required">*</span>
                                                         }
                                                     </div>
-                                                    <Input @bind-Value="@paramItem.Value" Placeholder="@($"请输入 {p.Key}")" />
+                                                    <Input @bind-Value="@paramItem.Value" Placeholder="@(string.IsNullOrWhiteSpace(p.Comment) ? $"请输入 {p.Key}" : $"请输入 {p.Comment}")" />
                                                 </FormItem>
                                             </div>
                                         </AntDesign.Col>
@@ -221,7 +225,7 @@
                             else
                             {
                                 <div class="llm-app-drawer__placeholder-summary llm-app-drawer__placeholder-summary--empty">
-                                    未检测到 {{key}} / {{*key}} 占位符
+                                    未检测到 {{key}} / {{*key}} / {{*key|变量注释}} 占位符
                                 </div>
                             }
 
@@ -402,6 +406,21 @@
         font-size: 12px;
         font-weight: 600;
         color: #334155;
+    }
+
+    .llm-app-drawer__field-label--required::before {
+        content: "*";
+        margin-right: 4px;
+        color: #ff4d4f;
+        font-family: SimSun, sans-serif;
+        line-height: 1;
+    }
+
+    .llm-app-drawer__field-comment {
+        margin-left: 8px;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 500;
     }
 
     .llm-app-page__filter-form--inline {
@@ -1093,7 +1112,7 @@
     TestLlmAppResultDto? testResult;
     List<TestParamItem> testParamItems = [];
 
-    static readonly System.Text.RegularExpressions.Regex PlaceholderRegex = new(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+    static readonly System.Text.RegularExpressions.Regex PlaceholderRegex = new(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}|\s]+)\s*(?:\|\s*(?<comment>[^{}]*?))?\s*\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     List<PlaceholderInfo> PlaceholderInfos
     {
@@ -1113,21 +1132,24 @@
                 {
                     var key = m.Groups["key"].Value?.Trim();
                     var isRequired = m.Groups["required"].Success;
+                    var comment = m.Groups["comment"].Value?.Trim();
 
                     if (!string.IsNullOrWhiteSpace(key))
                     {
                         if (indexByKey.TryGetValue(key, out var index))
                         {
                             var existing = list[index];
-                            if (!existing.IsRequired && isRequired)
+                            var mergedComment = string.IsNullOrWhiteSpace(existing.Comment) ? comment : existing.Comment;
+
+                            if (existing.IsRequired != isRequired || !string.Equals(existing.Comment, mergedComment, StringComparison.Ordinal))
                             {
-                                list[index] = new PlaceholderInfo(existing.Key, true);
+                                list[index] = new PlaceholderInfo(existing.Key, existing.IsRequired || isRequired, mergedComment);
                             }
                         }
                         else
                         {
                             indexByKey[key] = list.Count;
-                            list.Add(new PlaceholderInfo(key, isRequired));
+                            list.Add(new PlaceholderInfo(key, isRequired, comment));
                         }
                     }
                 }
@@ -1251,8 +1273,8 @@
 
         var missing = PlaceholderInfos
             .Where(t => t.IsRequired)
-            .Select(t => t.Key)
-            .Where(k => string.IsNullOrWhiteSpace(GetOrCreateTestParamItem(k).Value))
+            .Where(t => string.IsNullOrWhiteSpace(GetOrCreateTestParamItem(t.Key).Value))
+            .Select(t => t.Display)
             .ToList();
 
         if (missing.Count != 0)
@@ -1307,9 +1329,16 @@
         }
     }
 
-    record PlaceholderInfo(string Key, bool IsRequired)
+    record PlaceholderInfo(string Key, bool IsRequired, string? Comment)
     {
-        public string Display => IsRequired ? Key + "*" : Key;
+        public string Display
+        {
+            get
+            {
+                var text = string.IsNullOrWhiteSpace(Comment) ? Key : $"{Key}（{Comment}）";
+                return IsRequired ? text + "*" : text;
+            }
+        }
     }
 
     class TestParamItem

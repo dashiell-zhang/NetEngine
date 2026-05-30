@@ -288,6 +288,6 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     }
 
 
-    [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}\s]+)\s*\}\}", RegexOptions.Compiled)]
+    [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}|\s]+)\s*(?:\|\s*(?<comment>[^{}]*?))?\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex KeyRegex();
 }

@@ -4,7 +4,7 @@
 @attribute [ReuseTabsPageTitle("用户管理")]
 
 <div class="system-user-page">
-    <div class="system-user-page__hero">
+    <div class="system-user-page__hero admin-page-hero--with-actions">
         <div>
             <div class="system-user-page__eyebrow">System Settings</div>
             <h2 class="system-user-page__title">用户管理工作台</h2>
@@ -55,7 +55,7 @@
     </Card>
 
     <Card Class="system-user-page__card system-user-page__card--compact" BodyStyle="padding: 14px 14px 10px">
-        <div class="system-user-page__list-shell">
+        <div class="system-user-page__list-shell admin-page-list-shell">
             <div class="system-user-page__table-wrap">
                 <Table TItem="UserDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
@@ -114,7 +114,7 @@
                     </ColumnDefinitions>
 
                     <PaginationTemplate>
-                        <div class="system-user-page__pagination">
+                        <div class="system-user-page__pagination admin-page-list-pagination">
                             <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
                         </div>
                     </PaginationTemplate>
@@ -136,14 +136,14 @@
                     <Row Gutter="24">
                         <AntDesign.Col Span="12">
                             <FormItem Class="system-user-drawer__field-item">
-                                <div class="system-user-drawer__field-label">名称</div>
+                                <div class="system-user-drawer__field-label admin-required-label">名称</div>
                                 <Input Placeholder="请输入名称" @bind-Value="@context.Name" AutoComplete="false" />
                             </FormItem>
                         </AntDesign.Col>
 
                         <AntDesign.Col Span="12">
                             <FormItem Class="system-user-drawer__field-item">
-                                <div class="system-user-drawer__field-label">用户名</div>
+                                <div class="system-user-drawer__field-label admin-required-label">用户名</div>
                                 <Input Placeholder="请输入用户名" @bind-Value="@context.UserName" />
                             </FormItem>
                         </AntDesign.Col>
@@ -152,7 +152,7 @@
                     <Row Gutter="24">
                         <AntDesign.Col Span="12">
                             <FormItem Class="system-user-drawer__field-item">
-                                <div class="system-user-drawer__field-label">手机</div>
+                                <div class="system-user-drawer__field-label admin-required-label">手机</div>
                                 <Input Placeholder="请输入手机号" Type="InputType.Tel" @bind-Value="@context.Phone" />
                             </FormItem>
                         </AntDesign.Col>
@@ -166,14 +166,14 @@
                     </Row>
 
                     <FormItem Class="system-user-drawer__field-item">
-                        <div class="system-user-drawer__field-label">密码</div>
+                        <div class="system-user-drawer__field-label admin-required-label">密码</div>
                         <InputPassword Placeholder="请输入密码" Type="InputType.Password" @bind-Value="@context.Password" ReadOnly="isReadOnly" OnFocus="() => isReadOnly = false" VisibilityToggle="false" />
                     </FormItem>
                 </div>
 
                 <div class="system-user-drawer__section">
                     <div class="system-user-drawer__section-head">
-                        <div class="system-user-drawer__section-title">角色分配</div>
+                        <div class="system-user-drawer__section-title admin-required-label">角色分配</div>
                         <div class="system-user-drawer__section-tip">至少选择一个角色</div>
                     </div>
 
@@ -481,8 +481,6 @@
     .system-user-page__table-wrap {
         overflow: hidden;
         border-radius: 16px;
-        border: 1px solid #edf2f7;
-        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
     }
 
     .system-user-page__table-wrap .ant-table {

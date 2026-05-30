@@ -2,88 +2,552 @@
 @using Application.Model.Site.Link
 @attribute [ReuseTabsPageTitle("友链管理")]
 
-<div style="margin-bottom:10px">
+<div class="system-link-page">
+    <div class="system-link-page__hero">
+        <div>
+            <div class="system-link-page__eyebrow">System Settings</div>
+            <h2 class="system-link-page__title">友链管理工作台</h2>
+            <div class="system-link-page__subtitle">统一维护友链名称、地址与展示顺序，让新增、编辑和上下线管理都在同一个页面中完成</div>
 
-    @if (functionList.Contains("link-add"))
-    {
-        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditLink()">添加</Button>
-    }
-
-</div>
-<Table TItem="LinkDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
-
-    <ColumnDefinitions>
-        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.Url" Title="Url"></PropertyColumn>
-        <PropertyColumn Property="c => c.Sort" Title="排序"></PropertyColumn>
-        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-        <ActionColumn Title="操作">
-            <Space>
-
-                @if (functionList.Contains("link-edit"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => EditLink(context)">编辑</a>
-                    </SpaceItem>
-                }
-
-                @if (functionList.Contains("link-delete"))
-                {
-                    <SpaceItem>
-                        <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteLinkAsync(context.Id)"
-                                    OkText="Yes"
-                                    CancelText="No">
-                            <a style="color:red">删除</a>
-                        </Popconfirm>
-
-                    </SpaceItem>
-                }
-
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
-
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            @if (functionList.Contains("link-add"))
+            {
+                <div class="system-link-page__hero-tools">
+                    <Button Class="system-link-page__action-button system-link-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLink()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增友链</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
+                </div>
+            }
         </div>
-    </PaginationTemplate>
 
-</Table>
+        <div class="system-link-page__stats">
+            <div class="system-link-page__stat-card">
+                <span class="system-link-page__stat-label">友链总量</span>
+                <strong class="system-link-page__stat-value">@pageList.Total</strong>
+                <span class="system-link-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条链接</span>
+            </div>
+
+            <div class="system-link-page__stat-card">
+                <span class="system-link-page__stat-label">操作能力</span>
+                <strong class="system-link-page__stat-value system-link-page__stat-value--small">@OperationCapabilityText()</strong>
+                <span class="system-link-page__stat-foot">支持新增、编辑和删除等维护动作</span>
+            </div>
+
+            <div class="system-link-page__stat-card">
+                <span class="system-link-page__stat-label">默认排序</span>
+                <strong class="system-link-page__stat-value system-link-page__stat-value--small">@DefaultSortText()</strong>
+                <span class="system-link-page__stat-foot">新增友链默认使用当前排序基线</span>
+            </div>
+        </div>
+    </div>
+
+    <Card Class="system-link-page__card system-link-page__card--compact" BodyStyle="padding: 14px 14px 10px">
+        <div class="system-link-page__list-shell">
+            <div class="system-link-page__section-head">
+                <div>
+                    <div class="system-link-page__section-title">友链列表</div>
+                    <div class="system-link-page__section-desc">查看链接名称、访问地址和排序值，并在列表中直接完成编辑或删除</div>
+                </div>
+
+                <div class="system-link-page__section-meta">当前加载 @(pageList.List?.Count ?? 0) 条记录</div>
+            </div>
+
+            <div class="system-link-page__table-wrap">
+                <Table TItem="LinkDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <ActionColumn Title="友链">
+                            <div class="system-link-page__link-cell" title="@(context.Name + " / " + context.Url)">
+                                <div class="system-link-page__link-name">@context.Name</div>
+                                <span class="system-link-page__link-divider">/</span>
+                                <a class="system-link-page__url-link" href="@context.Url" target="_blank" rel="noopener noreferrer">@context.Url</a>
+                            </div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="排序">
+                            <div class="system-link-page__sort-pill">@context.Sort</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="创建时间">
+                            <div class="system-link-page__time-cell">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="操作">
+                            <Space>
+                                @if (functionList.Contains("link-edit"))
+                                {
+                                    <SpaceItem>
+                                        <a class="system-link-page__link-action" @onclick="() => EditLink(context)">编辑</a>
+                                    </SpaceItem>
+                                }
+
+                                @if (functionList.Contains("link-delete"))
+                                {
+                                    <SpaceItem>
+                                        <Popconfirm Title="确认要删除吗？"
+                                                    OnConfirm="_ => DeleteLinkAsync(context.Id)"
+                                                    OkText="Yes"
+                                                    CancelText="No">
+                                            <a class="system-link-page__link-action system-link-page__link-action--danger">删除</a>
+                                        </Popconfirm>
+                                    </SpaceItem>
+                                }
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="system-link-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
+</div>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowEditLink" Title='("友情链接信息")' OnClose="() => isShowEditLink = false">
-    <Template style="height:90%">
+<Drawer Closable="true" Width="700" Visible="isShowEditLink" Title='(linkId == default ? "新增友链" : "编辑友链")' OnClose="() => isShowEditLink = false">
+    <Template style="height:100%">
+        <div class="system-link-drawer">
+            <Form Class="system-link-drawer__form" Model="@editLink" Layout="@FormLayout.Vertical" OnFinish="SaveLinkAsync">
+                <div class="system-link-drawer__section">
+                    <div class="system-link-drawer__section-title">基础资料</div>
 
-        <Form Model="@editLink" OnFinish="SaveLinkAsync">
+                    <Row Gutter="24">
+                        <AntDesign.Col Span="16">
+                            <FormItem Class="system-link-drawer__field-item">
+                                <div class="system-link-drawer__field-label">名称</div>
+                                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+                            </FormItem>
+                        </AntDesign.Col>
 
-            <FormItem>
-                <Text>名称</Text>
-                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
-            </FormItem>
+                        <AntDesign.Col Span="8">
+                            <FormItem Class="system-link-drawer__field-item">
+                                <div class="system-link-drawer__field-label">排序</div>
+                                <Input Placeholder="请输入排序值" Type="InputType.Number" @bind-Value="@context.Sort" />
+                            </FormItem>
+                        </AntDesign.Col>
+                    </Row>
 
-            <FormItem>
-                <Text>Url</Text>
-                <Input Placeholder="请输入Url" Type="InputType.Url" @bind-Value="@context.Url" />
-            </FormItem>
+                    <FormItem Class="system-link-drawer__field-item">
+                        <div class="system-link-drawer__field-label">Url</div>
+                        <Input Placeholder="请输入Url" Type="InputType.Url" @bind-Value="@context.Url" />
+                    </FormItem>
+                </div>
 
-            <FormItem>
-                <Text>排序</Text>
-                <Input Placeholder="请输入排序值" Type="InputType.Number" @bind-Value="@context.Sort" />
-            </FormItem>
-
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <div style="float:right">
-                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditLink = false">取消</Button>
-                    </div>
-                </AntDesign.Col>
-            </Row>
-        </Form>
+                <div class="system-link-drawer__footer">
+                    <Button Class="system-link-page__action-button system-link-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存友链</Button>
+                    <Button Class="system-link-page__action-button system-link-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditLink = false">取消</Button>
+                </div>
+            </Form>
+        </div>
     </Template>
 </Drawer>
+
+
+<style>
+    .system-link-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+
+    .system-link-page__hero {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.35fr) minmax(320px, 1fr);
+        gap: 10px;
+        padding: 14px 16px;
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 35%),
+            radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.14), transparent 30%),
+            linear-gradient(135deg, #f8fbff 0%, #eef8ff 48%, #f5fbff 100%);
+        color: #10233f;
+        border: 1px solid #dfebf8;
+        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
+    }
+
+    .system-link-page__eyebrow {
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .system-link-page__title {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .system-link-page__subtitle {
+        margin-top: 6px;
+        max-width: 620px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: #526075;
+    }
+
+    .system-link-page__hero-tools {
+        margin-top: 14px;
+    }
+
+    .system-link-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-self: stretch;
+    }
+
+    .system-link-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        justify-content: space-between;
+        min-height: 88px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid #dbe9f8;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    }
+
+    .system-link-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
+    }
+
+    .system-link-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 253, 245, 0.96) 100%);
+    }
+
+    .system-link-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 248, 255, 0.92) 100%);
+    }
+
+    .system-link-page__stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #5a6b82;
+    }
+
+    .system-link-page__stat-value {
+        font-size: 24px;
+        line-height: 1;
+        color: #10233f;
+    }
+
+    .system-link-page__stat-value--small {
+        font-size: 16px;
+        line-height: 1.25;
+    }
+
+    .system-link-page__stat-foot {
+        font-size: 11px;
+        color: #6c7a8f;
+    }
+
+    .system-link-page__card {
+        border: 1px solid #e6edf5;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 12px 28px rgba(59, 83, 119, 0.06);
+    }
+
+    .system-link-page__card--compact {
+        overflow: hidden;
+    }
+
+    .system-link-page__list-shell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .system-link-page__section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 2px 2px 14px;
+    }
+
+    .system-link-page__section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .system-link-page__section-desc {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #67768b;
+    }
+
+    .system-link-page__section-meta {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: #f7faff;
+        border: 1px solid #e0e8f2;
+        color: #51647c;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .system-link-page__table-wrap {
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid #edf2f7;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+    }
+
+    .system-link-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .system-link-page__table-wrap .ant-table-thead > tr > th {
+        padding: 14px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+        background: #f7faff;
+        border-bottom: 1px solid #e9eff6;
+    }
+
+    .system-link-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .system-link-page__table-wrap .ant-table-tbody > tr > td {
+        height: 51px;
+        padding: 8px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eef3f8;
+    }
+
+    .system-link-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fbff;
+    }
+
+    .system-link-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .system-link-page__link-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .system-link-page__link-name,
+    .system-link-page__time-cell {
+        font-size: 14px;
+        font-weight: 600;
+        color: #12263f;
+    }
+
+    .system-link-page__link-name {
+        flex: 0 0 auto;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .system-link-page__link-divider {
+        flex: 0 0 auto;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .system-link-page__url-link {
+        display: inline-block;
+        min-width: 0;
+        flex: 1 1 auto;
+        font-size: 12px;
+        color: #0f766e;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .system-link-page__url-link:hover {
+        color: #0c5f59;
+        text-decoration: underline;
+    }
+
+    .system-link-page__sort-pill {
+        display: inline-flex;
+        min-width: 44px;
+        justify-content: center;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eef6ff;
+        color: #1d4f91;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .system-link-page__link-action {
+        font-weight: 600;
+        color: #2563eb;
+    }
+
+    .system-link-page__link-action--danger {
+        color: #dc2626;
+    }
+
+    .system-link-page__pagination {
+        margin: 0;
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .system-link-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .system-link-page__pagination .ant-pagination-item,
+    .system-link-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .system-link-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .system-link-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .system-link-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .system-link-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+
+    .system-link-page__pagination .ant-pagination-item-active a {
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .system-link-page__action-button {
+        height: 38px;
+        padding: 0 16px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .system-link-page__action-button--primary {
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+    }
+
+    .system-link-page__action-button--default {
+        border-color: #d8e3ef;
+        background: #fff;
+        color: #24415f;
+    }
+
+    .system-link-drawer {
+        height: 100%;
+        padding: 0;
+    }
+
+    .system-link-drawer__form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+    }
+
+    .system-link-drawer__section {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid #e8eef5;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .system-link-drawer__section-title {
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .system-link-drawer__field-item {
+        margin-bottom: 12px;
+    }
+
+    .system-link-drawer__field-label {
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+    }
+
+    .system-link-drawer__field-item .ant-input,
+    .system-link-drawer__field-item .ant-input-affix-wrapper {
+        border-radius: 12px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+        min-height: 40px;
+    }
+
+    .system-link-drawer__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: auto;
+        padding: 4px 0 0;
+    }
+
+    @@media (max-width: 992px) {
+        .system-link-page__hero {
+            grid-template-columns: 1fr;
+        }
+
+        .system-link-page__stats {
+            grid-template-columns: 1fr;
+        }
+
+        .system-link-page__section-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .system-link-page__title {
+            font-size: 22px;
+        }
+
+        .system-link-drawer__section {
+            padding: 14px;
+        }
+
+        .system-link-drawer__footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .system-link-page__action-button {
+            width: 100%;
+        }
+    }
+</style>
 
 
 @code {
@@ -228,6 +692,41 @@
         {
             Message.Error("请求失败，请稍后重试");
         }
+    }
+
+
+    /// <summary>
+    /// 获取当前操作能力描述
+    /// </summary>
+    string OperationCapabilityText()
+    {
+        var count = 0;
+
+        if (functionList.Contains("link-add"))
+        {
+            count++;
+        }
+
+        if (functionList.Contains("link-edit"))
+        {
+            count++;
+        }
+
+        if (functionList.Contains("link-delete"))
+        {
+            count++;
+        }
+
+        return count == 0 ? "只读查看" : $"{count} 项能力";
+    }
+
+
+    /// <summary>
+    /// 获取默认排序描述
+    /// </summary>
+    string DefaultSortText()
+    {
+        return "99 起";
     }
 
 }

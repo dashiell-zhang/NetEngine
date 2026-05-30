@@ -1,123 +1,721 @@
 @page "/systemset/role"
-@using System.ComponentModel
 @using Application.Model.User.Role
 @attribute [ReuseTabsPageTitle("角色管理")]
 
-<div style="margin-bottom:10px">
+<div class="system-role-page">
+    <div class="system-role-page__hero">
+        <div>
+            <div class="system-role-page__eyebrow">System Settings</div>
+            <h2 class="system-role-page__title">角色管理工作台</h2>
+            <div class="system-role-page__subtitle">集中维护角色编码、角色说明与权限范围，让角色创建、维护和授权配置都在一个页面内完成</div>
 
-    @if (functionList.Contains("role-add"))
-    {
-        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditRole()">添加</Button>
-    }
-
-</div>
-<Table TItem="RoleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
-
-    <ColumnDefinitions>
-        <PropertyColumn Property="c => c.Code" Title="编码"></PropertyColumn>
-        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.Remark" Title="备注"></PropertyColumn>
-        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-        <ActionColumn Title="操作">
-            <Space>
-
-                @if (functionList.Contains("role-edit"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => EditRole(context)">编辑</a>
-                    </SpaceItem>
-                }
-
-                @if (functionList.Contains("role-function"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => EditAuthorityAsync(context.Id)" style="color:darkorchid">权限范围</a>
-                    </SpaceItem>
-                }
-
-                @if (functionList.Contains("role-delete"))
-                {
-                    <SpaceItem>
-                        <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteRoleAsync(context.Id)"
-                                    OkText="Yes"
-                                    CancelText="No">
-                            <a style="color:red">删除</a>
-                        </Popconfirm>
-
-                    </SpaceItem>
-                }
-
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
-
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            @if (functionList.Contains("role-add"))
+            {
+                <div class="system-role-page__hero-tools">
+                    <Button Class="system-role-page__action-button system-role-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditRole()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增角色</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
+                </div>
+            }
         </div>
-    </PaginationTemplate>
 
-</Table>
+        <div class="system-role-page__stats">
+            <div class="system-role-page__stat-card">
+                <span class="system-role-page__stat-label">角色总量</span>
+                <strong class="system-role-page__stat-value">@pageList.Total</strong>
+                <span class="system-role-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 个角色</span>
+            </div>
+
+            <div class="system-role-page__stat-card">
+                <span class="system-role-page__stat-label">操作能力</span>
+                <strong class="system-role-page__stat-value system-role-page__stat-value--small">@OperationCapabilityText()</strong>
+                <span class="system-role-page__stat-foot">支持编辑、删除和权限配置等操作</span>
+            </div>
+
+            <div class="system-role-page__stat-card">
+                <span class="system-role-page__stat-label">分页状态</span>
+                <strong class="system-role-page__stat-value system-role-page__stat-value--small">第 @(page) 页</strong>
+                <span class="system-role-page__stat-foot">每页 @(pageSize) 条</span>
+            </div>
+        </div>
+    </div>
+
+    <Card Class="system-role-page__card system-role-page__card--compact" BodyStyle="padding: 14px 14px 10px">
+        <div class="system-role-page__list-shell">
+            <div class="system-role-page__section-head">
+                <div>
+                    <div class="system-role-page__section-title">角色列表</div>
+                    <div class="system-role-page__section-desc">查看角色编码、名称和说明，并在列表中直接完成编辑、授权和删除</div>
+                </div>
+
+                <div class="system-role-page__section-meta">当前加载 @(pageList.List?.Count ?? 0) 条记录</div>
+            </div>
+
+            <div class="system-role-page__table-wrap">
+                <Table TItem="RoleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <ActionColumn Title="角色">
+                            <div class="system-role-page__role-cell">
+                                <div class="system-role-page__role-name" title="@context.Name">@context.Name</div>
+                                <div class="system-role-page__role-sub" title="@context.Code">@context.Code</div>
+                            </div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="说明">
+                            <div class="system-role-page__remark-cell" title="@(string.IsNullOrWhiteSpace(context.Remark) ? "暂无备注说明" : context.Remark)">@(string.IsNullOrWhiteSpace(context.Remark) ? "暂无备注说明" : context.Remark)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="创建时间">
+                            <div class="system-role-page__time-cell">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="操作">
+                            <Space>
+                                @if (functionList.Contains("role-edit"))
+                                {
+                                    <SpaceItem>
+                                        <a class="system-role-page__link" @onclick="() => EditRole(context)">编辑</a>
+                                    </SpaceItem>
+                                }
+
+                                @if (functionList.Contains("role-function"))
+                                {
+                                    <SpaceItem>
+                                        <a class="system-role-page__link system-role-page__link--accent" @onclick="() => EditAuthorityAsync(context)">权限范围</a>
+                                    </SpaceItem>
+                                }
+
+                                @if (functionList.Contains("role-delete"))
+                                {
+                                    <SpaceItem>
+                                        <Popconfirm Title="确认要删除吗？"
+                                                    OnConfirm="_ => DeleteRoleAsync(context.Id)"
+                                                    OkText="Yes"
+                                                    CancelText="No">
+                                            <a class="system-role-page__link system-role-page__link--danger">删除</a>
+                                        </Popconfirm>
+                                    </SpaceItem>
+                                }
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="system-role-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
+</div>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowEditRole" Title='("角色信息")' OnClose="() => isShowEditRole = false">
-    <Template style="height:90%">
+<Drawer Closable="true" Width="700" Visible="isShowEditRole" Title='(roleId == default ? "新增角色" : "编辑角色")' OnClose="() => isShowEditRole = false">
+    <Template style="height:100%">
+        <div class="system-role-drawer">
+            <Form Class="system-role-drawer__form" Model="@editRole" Layout="@FormLayout.Vertical" OnFinish="SaveRoleAsync">
+                <div class="system-role-drawer__section">
+                    <div class="system-role-drawer__section-title">基础资料</div>
 
-        <Form Model="@editRole" OnFinish="SaveRoleAsync">
+                    <Row Gutter="24">
+                        <AntDesign.Col Span="12">
+                            <FormItem Class="system-role-drawer__field-item">
+                                <div class="system-role-drawer__field-label">编码</div>
+                                <Input Placeholder="请输入编码" @bind-Value="@context.Code" />
+                            </FormItem>
+                        </AntDesign.Col>
 
-            <FormItem>
-                <Text>编码</Text>
-                <Input Placeholder="请输入编码" @bind-Value="@context.Code" />
-            </FormItem>
+                        <AntDesign.Col Span="12">
+                            <FormItem Class="system-role-drawer__field-item">
+                                <div class="system-role-drawer__field-label">名称</div>
+                                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+                            </FormItem>
+                        </AntDesign.Col>
+                    </Row>
 
-            <FormItem>
-                <Text>名称</Text>
-                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
-            </FormItem>
+                    <FormItem Class="system-role-drawer__field-item">
+                        <div class="system-role-drawer__field-label">备注</div>
+                        <TextArea Placeholder="请输入备注" @bind-Value="@context.Remark" MinRows="4" MaxRows="6" style="width:100%" />
+                    </FormItem>
+                </div>
 
-            <FormItem>
-                <Text>备注</Text>
-                <Input Placeholder="请输入备注" @bind-Value="@context.Remark" />
-            </FormItem>
-
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <div style="float:right">
-                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditRole = false">取消</Button>
-                    </div>
-                </AntDesign.Col>
-            </Row>
-        </Form>
+                <div class="system-role-drawer__footer">
+                    <Button Class="system-role-page__action-button system-role-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存角色</Button>
+                    <Button Class="system-role-page__action-button system-role-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditRole = false">取消</Button>
+                </div>
+            </Form>
+        </div>
     </Template>
 </Drawer>
 
 
 <Modal Title="权限范围" Style="width:1160px;" Visible="@isShowEditAuthority" OnCancel="() => isShowEditAuthority = false" Footer="null" MaxBodyHeight="@("70vh")">
-    <Table DataSource="roleFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
+    <div class="system-role-authority">
+        <div class="system-role-authority__overview">
+            <div>
+                <div class="system-role-authority__eyebrow">Authority Scope</div>
+                <div class="system-role-authority__title">@AuthorityRoleText()</div>
+                <div class="system-role-authority__subtitle">按菜单模块和功能操作逐项勾选，保存结果会立即同步到当前角色的权限范围</div>
+            </div>
 
-        <Column Title="菜单模块" TData="string">
-                <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(isCheck, context)">@context.Name</Checkbox>
-        </Column>
+            <div class="system-role-authority__meta-pill">已加载 @roleFunctionList.Count 个顶层模块</div>
+        </div>
 
-        <Column Title="功能操作" TData="string">
-            <Row>
-                @foreach (var item in context.FunctionList)
-                {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(isCheck, item)">@item.Name</Checkbox>
-                }
-            </Row>
-        </Column>
+        <div class="system-role-authority__table-wrap">
+            <Table TItem="RoleFunctionDto" DataSource="roleFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
 
-    </Table>
+                <Column Title="菜单模块" TData="string">
+                    <div class="system-role-authority__menu-cell">
+                        <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(isCheck, context)">@context.Name</Checkbox>
+                    </div>
+                </Column>
 
+                <Column Title="功能操作" TData="string">
+                    <div class="system-role-authority__action-grid">
+                        @if (context.FunctionList == null || context.FunctionList.Count == 0)
+                        {
+                            <span class="system-role-authority__empty">当前模块暂无独立功能项</span>
+                        }
+                        else
+                        {
+                            @foreach (var item in context.FunctionList)
+                            {
+                                <label class="system-role-authority__action-pill">
+                                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetRoleFunctionAsync(isCheck, item)">@item.Name</Checkbox>
+                                </label>
+                            }
+                        }
+                    </div>
+                </Column>
+
+            </Table>
+        </div>
+    </div>
 </Modal>
+
+
+<style>
+    .system-role-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+
+    .system-role-page__hero {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.35fr) minmax(320px, 1fr);
+        gap: 10px;
+        padding: 14px 16px;
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 35%),
+            radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.12), transparent 30%),
+            linear-gradient(135deg, #f8fbff 0%, #eef6ff 48%, #f4fbff 100%);
+        color: #10233f;
+        border: 1px solid #dfebf8;
+        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
+    }
+
+    .system-role-page__eyebrow {
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .system-role-page__title {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .system-role-page__subtitle {
+        margin-top: 6px;
+        max-width: 620px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: #526075;
+    }
+
+    .system-role-page__hero-tools {
+        margin-top: 14px;
+    }
+
+    .system-role-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-self: stretch;
+    }
+
+    .system-role-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        justify-content: space-between;
+        min-height: 88px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid #dbe9f8;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    }
+
+    .system-role-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
+    }
+
+    .system-role-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 253, 245, 0.96) 100%);
+    }
+
+    .system-role-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.90) 100%);
+    }
+
+    .system-role-page__stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #5a6b82;
+    }
+
+    .system-role-page__stat-value {
+        font-size: 24px;
+        line-height: 1;
+        color: #10233f;
+    }
+
+    .system-role-page__stat-value--small {
+        font-size: 16px;
+        line-height: 1.25;
+    }
+
+    .system-role-page__stat-foot {
+        font-size: 11px;
+        color: #6c7a8f;
+    }
+
+    .system-role-page__card {
+        border: 1px solid #e6edf5;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 12px 28px rgba(59, 83, 119, 0.06);
+    }
+
+    .system-role-page__card--compact {
+        overflow: hidden;
+    }
+
+    .system-role-page__list-shell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .system-role-page__section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 2px 2px 14px;
+    }
+
+    .system-role-page__section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .system-role-page__section-desc {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #67768b;
+    }
+
+    .system-role-page__section-meta {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: #f7faff;
+        border: 1px solid #e0e8f2;
+        color: #51647c;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .system-role-page__table-wrap {
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid #edf2f7;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+    }
+
+    .system-role-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .system-role-page__table-wrap .ant-table-thead > tr > th {
+        padding: 14px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+        background: #f7faff;
+        border-bottom: 1px solid #e9eff6;
+    }
+
+    .system-role-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .system-role-page__table-wrap .ant-table-tbody > tr > td {
+        height: 51px;
+        padding: 8px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eef3f8;
+    }
+
+    .system-role-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fbff;
+    }
+
+    .system-role-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .system-role-page__role-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .system-role-page__role-name,
+    .system-role-page__time-cell {
+        font-size: 14px;
+        font-weight: 600;
+        color: #12263f;
+        white-space: nowrap;
+    }
+
+    .system-role-page__role-sub {
+        font-size: 12px;
+        color: #708095;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .system-role-page__remark-cell {
+        max-width: 420px;
+        font-size: 13px;
+        line-height: 1.65;
+        color: #55667d;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .system-role-page__link {
+        font-weight: 600;
+        color: #2563eb;
+    }
+
+    .system-role-page__link--accent {
+        color: #0f766e;
+    }
+
+    .system-role-page__link--danger {
+        color: #dc2626;
+    }
+
+    .system-role-page__pagination {
+        margin: 0;
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .system-role-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .system-role-page__pagination .ant-pagination-item,
+    .system-role-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .system-role-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .system-role-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .system-role-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .system-role-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+
+    .system-role-page__pagination .ant-pagination-item-active a {
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .system-role-page__action-button {
+        height: 38px;
+        padding: 0 16px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .system-role-page__action-button--primary {
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+    }
+
+    .system-role-page__action-button--default {
+        border-color: #d8e3ef;
+        background: #fff;
+        color: #24415f;
+    }
+
+    .system-role-drawer {
+        height: 100%;
+        padding: 0;
+    }
+
+    .system-role-drawer__form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+    }
+
+    .system-role-drawer__section {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid #e8eef5;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .system-role-drawer__section-title {
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .system-role-drawer__field-item {
+        margin-bottom: 12px;
+    }
+
+    .system-role-drawer__field-label {
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+    }
+
+    .system-role-drawer__field-item .ant-input,
+    .system-role-drawer__field-item .ant-input-affix-wrapper,
+    .system-role-drawer__field-item .ant-input-textarea textarea {
+        border-radius: 12px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+    }
+
+    .system-role-drawer__field-item .ant-input,
+    .system-role-drawer__field-item .ant-input-affix-wrapper {
+        min-height: 40px;
+    }
+
+    .system-role-drawer__field-item .ant-input-textarea textarea {
+        padding: 12px 14px;
+        line-height: 1.7;
+    }
+
+    .system-role-drawer__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: auto;
+        padding: 4px 0 0;
+    }
+
+    .system-role-authority {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .system-role-authority__overview {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 20px;
+        border-radius: 18px;
+        border: 1px solid #e0eaf6;
+        background:
+            radial-gradient(circle at top right, rgba(16, 185, 129, 0.10), transparent 32%),
+            linear-gradient(135deg, #f7fffb 0%, #f5f9ff 100%);
+    }
+
+    .system-role-authority__eyebrow {
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .system-role-authority__title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #10233f;
+        line-height: 1.2;
+    }
+
+    .system-role-authority__subtitle {
+        margin-top: 6px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #5f6f85;
+    }
+
+    .system-role-authority__meta-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-self: flex-start;
+        min-height: 38px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid #d9e6f4;
+        color: #24415f;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .system-role-authority__table-wrap {
+        overflow: hidden;
+        border-radius: 18px;
+        border: 1px solid #e8eef5;
+        background: #fff;
+    }
+
+    .system-role-authority__table-wrap .ant-table-thead > tr > th {
+        padding: 16px 18px;
+        background: #f7faff;
+        color: #41556f;
+        font-weight: 700;
+        border-bottom: 1px solid #eaf0f7;
+    }
+
+    .system-role-authority__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .system-role-authority__table-wrap .ant-table-tbody > tr > td {
+        padding: 18px;
+        border-bottom: 1px solid #eef3f8;
+        vertical-align: top;
+    }
+
+    .system-role-authority__table-wrap .ant-table-tbody > tr > td:first-child {
+        vertical-align: middle;
+    }
+
+    .system-role-authority__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #fbfcff;
+    }
+
+    .system-role-authority__menu-cell {
+        display: flex;
+        align-items: center;
+        min-width: 220px;
+        font-weight: 600;
+        color: #183250;
+    }
+
+    .system-role-authority__action-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .system-role-authority__action-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        cursor: pointer;
+    }
+
+    .system-role-authority__empty {
+        color: #7a8799;
+        font-size: 12px;
+    }
+
+    @@media (max-width: 992px) {
+        .system-role-page__hero {
+            grid-template-columns: 1fr;
+        }
+
+        .system-role-page__stats {
+            grid-template-columns: 1fr;
+        }
+
+        .system-role-page__section-head,
+        .system-role-authority__overview {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .system-role-page__title {
+            font-size: 22px;
+        }
+
+        .system-role-drawer__section,
+        .system-role-authority__overview {
+            padding: 14px;
+        }
+
+        .system-role-drawer__footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .system-role-page__action-button {
+            width: 100%;
+        }
+    }
+</style>
 
 
 @code {
 
     List<string> functionList = new();
+
+    string authorityRoleName = string.Empty;
 
     override protected async Task OnInitializedAsync()
     {
@@ -126,9 +724,13 @@
         await GetRoleListAsync();
     }
 
+
     bool saveLoading = false;
+
     bool tableLoading = false;
+
     int page = 1;
+
     int pageSize = 10;
 
 
@@ -138,6 +740,7 @@
     PageListDto<RoleDto> pageList = new();
 
     List<RoleFunctionDto> roleFunctionList = new();
+
 
     async Task GetRoleListAsync()
     {
@@ -152,6 +755,7 @@
         tableLoading = false;
         StateHasChanged();
     }
+
 
     async Task PageChange(PaginationEventArgs args)
     {
@@ -168,13 +772,16 @@
         await GetRoleListAsync();
     }
 
+
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
 
     bool isShowEditRole = false;
 
     long roleId;
+
     EditRoleDto editRole = new();
+
 
     void EditRole(RoleDto? role = null)
     {
@@ -189,11 +796,11 @@
             editRole.Remark = role.Remark;
         }
 
-
         isShowEditRole = true;
 
         StateHasChanged();
     }
+
 
     async Task SaveRoleAsync()
     {
@@ -263,9 +870,10 @@
     }
 
 
-    async Task EditAuthorityAsync(long roleId)
+    async Task EditAuthorityAsync(RoleDto role)
     {
-        this.roleId = roleId;
+        roleId = role.Id;
+        authorityRoleName = role.Name;
 
         var retData = await Http.GetFromJsonAsync<List<RoleFunctionDto>>("Role/GetRoleFunction?roleId=" + roleId, JsonHelper.DeserializeOpts);
 
@@ -311,5 +919,44 @@
         StateHasChanged();
     }
 
+
+    /// <summary>
+    /// 获取当前操作能力描述
+    /// </summary>
+    string OperationCapabilityText()
+    {
+        var count = 0;
+
+        if (functionList.Contains("role-add"))
+        {
+            count++;
+        }
+
+        if (functionList.Contains("role-edit"))
+        {
+            count++;
+        }
+
+        if (functionList.Contains("role-function"))
+        {
+            count++;
+        }
+
+        if (functionList.Contains("role-delete"))
+        {
+            count++;
+        }
+
+        return count == 0 ? "只读查看" : $"{count} 项能力";
+    }
+
+
+    /// <summary>
+    /// 获取权限配置标题
+    /// </summary>
+    string AuthorityRoleText()
+    {
+        return string.IsNullOrWhiteSpace(authorityRoleName) ? "当前角色权限范围" : $"{authorityRoleName} 的权限范围";
+    }
 
 }

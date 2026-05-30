@@ -10,8 +10,8 @@
             <div class="schedule-task-page__subtitle">统一维护 ScheduleTask 分类任务的启停状态、Cron 表达式与参数 JSON，让日常运维配置、排查和更新都在一个视图内完成</div>
 
             <div class="schedule-task-page__hero-tools">
-                <Button Class="schedule-task-page__hero-button" Icon="plus" Type="@ButtonType.Primary" OnClick="ShowCreateScheduleTaskAsync">新增带参任务</Button>
-                <Button Class="schedule-task-page__hero-button schedule-task-page__hero-button--light" Icon="reload" OnClick="GetTaskSettingListAsync">刷新列表</Button>
+                <Button Class="schedule-task-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="ShowCreateScheduleTaskAsync"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增带参任务</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
+                <Button Class="schedule-task-page__hero-button schedule-task-page__hero-button--light admin-page-button admin-page-button--default" Icon="reload" @onclick="GetTaskSettingListAsync">刷新列表</Button>
             </div>
         </div>
 
@@ -119,8 +119,8 @@
                 </div>
 
                 <div class="schedule-task-drawer__footer">
-                    <Button Class="schedule-task-page__action-button schedule-task-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                    <Button Class="schedule-task-page__action-button schedule-task-page__action-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditTaskSetting = false">取消</Button>
+                    <Button Class="schedule-task-page__action-button schedule-task-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                    <Button Class="schedule-task-page__action-button schedule-task-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditTaskSetting = false">取消</Button>
                 </div>
             </Form>
         </div>
@@ -174,8 +174,8 @@
                 </div>
 
                 <div class="schedule-task-drawer__footer">
-                    <Button Class="schedule-task-page__action-button schedule-task-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@createLoading">新增</Button>
-                    <Button Class="schedule-task-page__action-button schedule-task-page__action-button--default" Type="@ButtonType.Default" @onclick="() => isShowCreateScheduleTask = false">取消</Button>
+                    <Button Class="schedule-task-page__action-button schedule-task-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@createLoading">新增</Button>
+                    <Button Class="schedule-task-page__action-button schedule-task-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowCreateScheduleTask = false">取消</Button>
                 </div>
             </Form>
         </div>
@@ -243,12 +243,28 @@
 
     .schedule-task-page__hero-button,
     .schedule-task-page__action-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
         height: 40px;
         padding: 0 18px;
         border-radius: 16px;
         font-size: 12px;
         font-weight: 600;
         box-shadow: none;
+    }
+
+    .schedule-task-page__hero-button-symbol {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        margin-right: 6px;
+        font-size: 18px;
+        line-height: 1;
+        font-weight: 500;
+        transform: translateY(-1px);
     }
 
     .schedule-task-page__hero-button {

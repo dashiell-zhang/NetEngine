@@ -29550,16 +29550,135 @@
 })();
 
 
-function InitUeditor(inputName, height) {
-    if (document.getElementById(inputName).nodeName == "TEXTAREA") {
-        var UEditor = new baidu.editor.ui.Editor({
+function InitUeditor(inputName, height, excludedToolbarItems) {
+    var target = document.getElementById(inputName);
+    if (target && target.nodeName == "TEXTAREA") {
+        var parentWidth = 0;
+        if (target.parentElement) {
+            parentWidth = Math.floor(target.parentElement.getBoundingClientRect().width);
+        }
+
+        var editorOptions = {
             autoFloatEnabled: true,
             pasteplain: false,
             autoHeightEnabled: false,
-            initialFrameHeight: height
-        });
+            initialFrameHeight: height,
+            initialFrameWidth: parentWidth > 0 ? parentWidth : '100%'
+        };
+
+        if (Array.isArray(excludedToolbarItems) && excludedToolbarItems.length > 0 && window.UEDITOR_CONFIG && Array.isArray(window.UEDITOR_CONFIG.toolbars)) {
+            editorOptions.toolbars = window.UEDITOR_CONFIG.toolbars.map(function (toolbar) {
+                return toolbar.filter(function (item) {
+                    return excludedToolbarItems.indexOf(item) === -1;
+                });
+            });
+        }
+
+        var UEditor = new baidu.editor.ui.Editor(editorOptions);
+
+        function syncEditorLayout() {
+            var editorElement = UEditor.ui && UEditor.ui.getDom ? UEditor.ui.getDom() : null;
+            var editorContainer = UEditor.container || editorElement;
+            var iframeHolder = UEditor.ui && UEditor.ui.getDom ? UEditor.ui.getDom('iframeholder') : null;
+            var toolbarBox = UEditor.ui && UEditor.ui.getDom ? UEditor.ui.getDom('toolbarbox') : null;
+            var bottomBar = UEditor.ui && UEditor.ui.getDom ? UEditor.ui.getDom('bottombar') : null;
+            var contentItem = (editorElement && editorElement.closest) ? editorElement.closest('.article-editor__content-item') : target.closest('.article-editor__content-item');
+            var contentHost = contentItem ? contentItem.querySelector('.ant-form-item-control-input-content') : target.parentElement;
+            var targetWrapper = target.parentElement;
+            var isModalMax = !!(editorElement && editorElement.closest && editorElement.closest('.ant-modal-max'));
+
+            if (!editorElement || !contentHost || (UEditor.ui && UEditor.ui.isFullScreen && UEditor.ui.isFullScreen())) {
+                return;
+            }
+
+            var hostRect = contentHost.getBoundingClientRect();
+            var hostWidth = Math.floor((contentItem || contentHost).getBoundingClientRect().width);
+
+            if (hostWidth > 0) {
+                UEditor.options.initialFrameWidth = hostWidth;
+                UEditor.options.minFrameWidth = hostWidth;
+                UEditor.ui._actualFrameWidth = hostWidth;
+                if (contentHost) {
+                    contentHost.style.width = '100%';
+                    contentHost.style.maxWidth = '100%';
+                }
+                if (targetWrapper) {
+                    targetWrapper.style.display = 'block';
+                    targetWrapper.style.width = '100%';
+                    targetWrapper.style.maxWidth = '100%';
+                }
+                if (editorContainer) {
+                    editorContainer.style.width = hostWidth + 'px';
+                    editorContainer.style.maxWidth = hostWidth + 'px';
+                }
+                editorElement.style.width = hostWidth + 'px';
+                editorElement.style.maxWidth = hostWidth + 'px';
+
+                if (iframeHolder) {
+                    iframeHolder.style.width = '100%';
+                    iframeHolder.style.maxWidth = '100%';
+                }
+            }
+
+            if (isModalMax && toolbarBox && bottomBar && contentItem) {
+                var panel = editorElement.closest ? editorElement.closest('.article-editor__panel') : null;
+                var panelRect = panel ? panel.getBoundingClientRect() : hostRect;
+                var contentItemRect = contentItem.getBoundingClientRect();
+                var availableHeight = Math.max(panelRect.bottom - contentItemRect.top - 16, 420);
+                var nextHeight = Math.max(availableHeight - toolbarBox.offsetHeight - bottomBar.offsetHeight - 4, 420);
+                UEditor.setHeight(nextHeight, true);
+            } else {
+                UEditor.setHeight(height, true);
+            }
+        }
 
         UEditor.render(inputName);
+
+        UEditor.addListener('fullscreenchanged', function (type, fullscreen) {
+            var editorElement = UEditor.ui && UEditor.ui.getDom ? UEditor.ui.getDom() : null;
+            if (editorElement) {
+                editorElement.classList.toggle('article-editor__ueditor-fullscreen', !!fullscreen);
+            }
+        });
+
+        UEditor.addListener('ready', function () {
+            syncEditorLayout();
+
+            if (target._ueditorResizeObserver) {
+                target._ueditorResizeObserver.disconnect();
+            }
+
+            if (window.ResizeObserver) {
+                var resizeObserver = new ResizeObserver(function () {
+                    window.requestAnimationFrame(syncEditorLayout);
+                });
+
+                if (target.parentElement) {
+                    resizeObserver.observe(target.parentElement);
+                }
+
+                var contentItem = target.closest('.article-editor__content-item');
+                if (contentItem) {
+                    resizeObserver.observe(contentItem);
+                }
+
+                var workspace = target.closest('.article-editor__workspace');
+                if (workspace) {
+                    resizeObserver.observe(workspace);
+                }
+
+                var modalBody = target.closest('.ant-modal-body');
+                if (modalBody) {
+                    resizeObserver.observe(modalBody);
+                }
+
+                target._ueditorResizeObserver = resizeObserver;
+            }
+        });
+
+        window.setTimeout(function () {
+            syncEditorLayout();
+        }, 0);
     }
 }
 

@@ -3,160 +3,869 @@
 @using Application.Model.User.Role
 @attribute [ReuseTabsPageTitle("用户管理")]
 
-<div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-    <div>
-        @if (functionList.Contains("user-add"))
-        {
-            <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditUser()">添加</Button>
-        }
+<div class="system-user-page">
+    <div class="system-user-page__hero">
+        <div>
+            <div class="system-user-page__eyebrow">System Settings</div>
+            <h2 class="system-user-page__title">用户管理工作台</h2>
+            <div class="system-user-page__subtitle">统一维护账号基础信息、角色归属与权限范围，让新增、检索和授权操作都收敛在同一个页面内完成</div>
+
+            @if (functionList.Contains("user-add"))
+            {
+                <div class="system-user-page__hero-tools">
+                    <Button Class="system-user-page__action-button system-user-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditUser()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增用户</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
+                </div>
+            }
+        </div>
+
+        <div class="system-user-page__stats">
+            <div class="system-user-page__stat-card">
+                <span class="system-user-page__stat-label">用户总量</span>
+                <strong class="system-user-page__stat-value">@pageList.Total</strong>
+                <span class="system-user-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 位用户</span>
+            </div>
+
+            <div class="system-user-page__stat-card">
+                <span class="system-user-page__stat-label">角色覆盖</span>
+                <strong class="system-user-page__stat-value system-user-page__stat-value--small">@RoleSummaryText()</strong>
+                <span class="system-user-page__stat-foot">已加载 @roleList.Count 个可分配角色</span>
+            </div>
+
+            <div class="system-user-page__stat-card">
+                <span class="system-user-page__stat-label">检索状态</span>
+                <strong class="system-user-page__stat-value system-user-page__stat-value--small">@KeywordStatusText()</strong>
+                <span class="system-user-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
+            </div>
+        </div>
     </div>
 
-    <div style="margin-left:auto">
-        <Form Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
-            <FormItem>
-                <Input @bind-Value="@context.Keyword" Placeholder="名称/用户名/电话/邮箱 模糊检索" Style="width: 260px" AllowClear />
+    <Card Class="system-user-page__card system-user-page__card--compact" BodyStyle="padding: 16px 18px">
+        <Form Class="system-user-page__filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
+            <FormItem Class="system-user-page__filter-item system-user-page__filter-item--keyword">
+                <Input @bind-Value="@context.Keyword" Placeholder="名称 / 用户名 / 电话 / 邮箱 模糊检索" AllowClear />
             </FormItem>
-            <FormItem>
-                <Space>
-                    <Button Type="@ButtonType.Primary" HtmlType="submit">搜索</Button>
-                </Space>
-            </FormItem>
-            <FormItem>
-                <Space>
-                    <Button OnClick="HandleReset">重置</Button>
-                </Space>
+
+            <FormItem Class="system-user-page__filter-item system-user-page__filter-item--actions">
+                <div class="system-user-page__filter-actions">
+                    <Button Class="system-user-page__action-button system-user-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索用户</Button>
+                    <Button Class="system-user-page__action-button system-user-page__action-button--default admin-page-button admin-page-button--default" OnClick="HandleReset">重置条件</Button>
+                </div>
             </FormItem>
         </Form>
-    </div>
+    </Card>
+
+    <Card Class="system-user-page__card system-user-page__card--compact" BodyStyle="padding: 14px 14px 10px">
+        <div class="system-user-page__list-shell">
+            <div class="system-user-page__table-wrap">
+                <Table TItem="UserDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <ActionColumn Title="用户">
+                            <div class="system-user-page__user-cell">
+                                <div class="system-user-page__user-name" title="@context.Name">@context.Name</div>
+                                <div class="system-user-page__user-sub" title="@context.UserName">@context.UserName</div>
+                            </div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="联系方式">
+                            <div class="system-user-page__contact-cell">
+                                <div class="system-user-page__contact-main" title="@context.Phone">@context.Phone</div>
+                                <div class="system-user-page__contact-sub" title="@(string.IsNullOrWhiteSpace(context.Email) ? "未填写邮箱" : context.Email)">@(string.IsNullOrWhiteSpace(context.Email) ? "未填写邮箱" : context.Email)</div>
+                            </div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="角色">
+                            <div class="system-user-page__role-pill">@(string.IsNullOrWhiteSpace(context.Roles) ? "未分配角色" : context.Roles)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="创建时间">
+                            <div class="system-user-page__time-cell">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="操作">
+                            <Space>
+                                @if (functionList.Contains("user-edit"))
+                                {
+                                    <SpaceItem>
+                                        <a class="system-user-page__link" @onclick="() => EditUser(context)">编辑</a>
+                                    </SpaceItem>
+                                }
+
+                                @if (functionList.Contains("user-function"))
+                                {
+                                    <SpaceItem>
+                                        <a class="system-user-page__link system-user-page__link--accent" @onclick="() => EditAuthorityAsync(context)">权限范围</a>
+                                    </SpaceItem>
+                                }
+
+                                @if (functionList.Contains("user-delete"))
+                                {
+                                    <SpaceItem>
+                                        <Popconfirm Title="确认要删除吗？"
+                                                    OnConfirm="_ => DeleteUserAsync(context.Id)"
+                                                    OkText="Yes"
+                                                    CancelText="No">
+                                            <a class="system-user-page__link system-user-page__link--danger">删除</a>
+                                        </Popconfirm>
+                                    </SpaceItem>
+                                }
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="system-user-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
 </div>
 
-<Divider Style="margin: 12px 0" />
 
-<Table TItem="UserDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+<Drawer Closable="true" Width="760" Visible="isShowEditUser" Title='(userId == default ? "新增用户" : "编辑用户")' OnClose="() => isShowEditUser = false">
+    <Template style="height:100%">
+        <div class="system-user-drawer">
+            <Form Class="system-user-drawer__form" Model="@editUser" Layout="@FormLayout.Vertical" OnFinish="SaveUserAsync">
+                <div class="system-user-drawer__section">
+                    <div class="system-user-drawer__section-title">基础资料</div>
 
-    <ColumnDefinitions>
-        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.UserName" Title="用户名"></PropertyColumn>
-        <PropertyColumn Property="c => c.Phone" Title="电话"></PropertyColumn>
-        <PropertyColumn Property="c => c.Email" Title="邮箱"></PropertyColumn>
-        <PropertyColumn Property="c => c.Roles" Title="角色"></PropertyColumn>
-        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-        <ActionColumn Title="操作">
-            <Space>
+                    <Row Gutter="24">
+                        <AntDesign.Col Span="12">
+                            <FormItem Class="system-user-drawer__field-item">
+                                <div class="system-user-drawer__field-label">名称</div>
+                                <Input Placeholder="请输入名称" @bind-Value="@context.Name" AutoComplete="false" />
+                            </FormItem>
+                        </AntDesign.Col>
 
-                @if (functionList.Contains("user-edit"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => EditUser(context)">编辑</a>
-                    </SpaceItem>
-                }
-
-                @if (functionList.Contains("user-function"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => EditAuthorityAsync(context.Id)" style="color:darkorchid">权限范围</a>
-                    </SpaceItem>
-                }
-
-                @if (functionList.Contains("user-delete"))
-                {
-                    <SpaceItem>
-                        <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteUserAsync(context.Id)"
-                                    OkText="Yes"
-                                    CancelText="No">
-                            <a style="color:red">删除</a>
-                        </Popconfirm>
-
-                    </SpaceItem>
-                }
-
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
-
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="@request.PageSize" Current="@request.Page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
-        </div>
-    </PaginationTemplate>
-
-</Table>
-
-
-<Drawer Closable="true" Width="380" Visible="isShowEditUser" Title='("用户信息")' OnClose="() => isShowEditUser = false">
-    <Template style="height:90%">
-
-        <Form Model="@editUser" OnFinish="SaveUserAsync">
-
-            <FormItem>
-                <Text>名称</Text>
-                <Input Placeholder="请输入名称" @bind-Value="@context.Name" AutoComplete=false />
-            </FormItem>
-
-            <FormItem>
-                <Text>用户名</Text>
-                <Input Placeholder="请输入用户名" @bind-Value="@context.UserName" />
-            </FormItem>
-
-            <FormItem>
-                <Text>角色</Text>
-                <CheckboxGroup Style="width:100%" @bind-Value="@context.RoleIds">
-                    <Row>
-                        @foreach (var item in roleList)
-                        {
-                            <AntDesign.Col Span="8"><Checkbox Label="@item.Id.ToString()">@item.Name</Checkbox></AntDesign.Col>
-                        }
+                        <AntDesign.Col Span="12">
+                            <FormItem Class="system-user-drawer__field-item">
+                                <div class="system-user-drawer__field-label">用户名</div>
+                                <Input Placeholder="请输入用户名" @bind-Value="@context.UserName" />
+                            </FormItem>
+                        </AntDesign.Col>
                     </Row>
-                </CheckboxGroup>
-            </FormItem>
 
-            <FormItem>
-                <Text>手机</Text>
-                <Input Placeholder="请输入手机号" Type="InputType.Tel" @bind-Value="@context.Phone" />
-            </FormItem>
+                    <Row Gutter="24">
+                        <AntDesign.Col Span="12">
+                            <FormItem Class="system-user-drawer__field-item">
+                                <div class="system-user-drawer__field-label">手机</div>
+                                <Input Placeholder="请输入手机号" Type="InputType.Tel" @bind-Value="@context.Phone" />
+                            </FormItem>
+                        </AntDesign.Col>
 
-            <FormItem>
-                <Text>邮箱</Text>
-                <Input Placeholder="请输入邮箱" Type="InputType.Email" @bind-Value="@context.Email" />
-            </FormItem>
+                        <AntDesign.Col Span="12">
+                            <FormItem Class="system-user-drawer__field-item">
+                                <div class="system-user-drawer__field-label">邮箱</div>
+                                <Input Placeholder="请输入邮箱" Type="InputType.Email" @bind-Value="@context.Email" />
+                            </FormItem>
+                        </AntDesign.Col>
+                    </Row>
 
-            <FormItem>
-                <Text>密码</Text>
-                <InputPassword Placeholder="请输入密码" Type="InputType.Password" @bind-Value="@context.Password" ReadOnly=isReadOnly OnFocus="() => isReadOnly = false" VisibilityToggle="false" />
-            </FormItem>
+                    <FormItem Class="system-user-drawer__field-item">
+                        <div class="system-user-drawer__field-label">密码</div>
+                        <InputPassword Placeholder="请输入密码" Type="InputType.Password" @bind-Value="@context.Password" ReadOnly="isReadOnly" OnFocus="() => isReadOnly = false" VisibilityToggle="false" />
+                    </FormItem>
+                </div>
 
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <div style="float:right">
-                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditUser = false">取消</Button>
+                <div class="system-user-drawer__section">
+                    <div class="system-user-drawer__section-head">
+                        <div class="system-user-drawer__section-title">角色分配</div>
+                        <div class="system-user-drawer__section-tip">至少选择一个角色</div>
                     </div>
-                </AntDesign.Col>
-            </Row>
-        </Form>
+
+                    <FormItem Class="system-user-drawer__field-item">
+                        <CheckboxGroup Class="system-user-drawer__role-group" Style="width:100%" @bind-Value="@context.RoleIds">
+                            <div class="system-user-drawer__role-grid">
+                                @foreach (var item in roleList)
+                                {
+                                    <label class="system-user-drawer__role-card">
+                                        <Checkbox Label="@item.Id.ToString()">@item.Name</Checkbox>
+                                    </label>
+                                }
+                            </div>
+                        </CheckboxGroup>
+                    </FormItem>
+                </div>
+
+                <div class="system-user-drawer__footer">
+                    <Button Class="system-user-page__action-button system-user-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存用户</Button>
+                    <Button Class="system-user-page__action-button system-user-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditUser = false">取消</Button>
+                </div>
+            </Form>
+        </div>
     </Template>
 </Drawer>
 
 <Modal Title="权限范围" Style="width:1160px;" Visible="@isShowEditAuthority" OnCancel="() => isShowEditAuthority = false" Footer="null" MaxBodyHeight="@("70vh")">
-    <Table DataSource="userFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
+    <div class="system-user-authority">
+        <div class="system-user-authority__overview">
+            <div>
+                <div class="system-user-authority__eyebrow">Authority Scope</div>
+                <div class="system-user-authority__title">@AuthorityUserText()</div>
+                <div class="system-user-authority__subtitle">按菜单模块和功能操作逐项勾选，保存结果会立即同步到当前用户的权限范围</div>
+            </div>
 
-        <Column Title="菜单模块" TData="string">
-            <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetUserFunctionAsync(isCheck, context)">@context.Name</Checkbox>
-        </Column>
+            <div class="system-user-authority__meta-pill">已加载 @userFunctionList.Count 个顶层模块</div>
+        </div>
 
-        <Column Title="功能操作" TData="string">
-            <Row>
-                @foreach (var item in context.FunctionList)
-                {
-                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetUserFunctionAsync(isCheck, item)">@item.Name</Checkbox>
-                }
-            </Row>
-        </Column>
+        <div class="system-user-authority__table-wrap">
+            <Table TItem="UserFunctionDto" DataSource="userFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
 
-    </Table>
+                <Column Title="菜单模块" TData="string">
+                    <div class="system-user-authority__menu-cell">
+                        <Checkbox Label="@context.Id.ToString()" @bind-Value="context.IsCheck" OnChange="isCheck => SetUserFunctionAsync(isCheck, context)">@context.Name</Checkbox>
+                    </div>
+                </Column>
 
+                <Column Title="功能操作" TData="string">
+                    <div class="system-user-authority__action-grid">
+                        @if (context.FunctionList.Count == 0)
+                        {
+                            <span class="system-user-authority__empty">当前模块暂无独立功能项</span>
+                        }
+                        else
+                        {
+                            @foreach (var item in context.FunctionList)
+                            {
+                                <label class="system-user-authority__action-pill">
+                                    <Checkbox Label="@item.Id.ToString()" @bind-Value="item.IsCheck" OnChange="isCheck => SetUserFunctionAsync(isCheck, item)">@item.Name</Checkbox>
+                                </label>
+                            }
+                        }
+                    </div>
+                </Column>
+
+            </Table>
+        </div>
+    </div>
 </Modal>
+
+<style>
+    .system-user-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+
+    .system-user-page__hero {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.35fr) minmax(320px, 1fr);
+        gap: 10px;
+        padding: 14px 16px;
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at top right, rgba(37, 99, 235, 0.20), transparent 35%),
+            radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.14), transparent 30%),
+            linear-gradient(135deg, #f8fbff 0%, #eef6ff 48%, #f6fbff 100%);
+        color: #10233f;
+        border: 1px solid #dfebf8;
+        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
+    }
+
+    .system-user-page__eyebrow {
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .system-user-page__title {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .system-user-page__subtitle {
+        margin-top: 6px;
+        max-width: 620px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: #526075;
+    }
+
+    .system-user-page__hero-tools {
+        margin-top: 14px;
+    }
+
+    .system-user-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-self: stretch;
+    }
+
+    .system-user-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        justify-content: space-between;
+        min-height: 88px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid #dbe9f8;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    }
+
+    .system-user-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
+    }
+
+    .system-user-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 249, 255, 0.96) 100%);
+    }
+
+    .system-user-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 250, 248, 0.96) 100%);
+    }
+
+    .system-user-page__stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #5a6b82;
+    }
+
+    .system-user-page__stat-value {
+        font-size: 24px;
+        line-height: 1;
+        color: #10233f;
+    }
+
+    .system-user-page__stat-value--small {
+        font-size: 16px;
+        line-height: 1.25;
+    }
+
+    .system-user-page__stat-foot {
+        font-size: 11px;
+        color: #6c7a8f;
+    }
+
+    .system-user-page__card {
+        border: 1px solid #e6edf5;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 12px 28px rgba(59, 83, 119, 0.06);
+    }
+
+    .system-user-page__card--compact {
+        overflow: hidden;
+    }
+
+    .system-user-page__filter-form {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .system-user-page__filter-form .ant-form-item {
+        margin-right: 0;
+        margin-bottom: 0;
+    }
+
+    .system-user-page__filter-item {
+        margin-bottom: 0;
+    }
+
+    .system-user-page__filter-item--keyword {
+        flex: 1 1 420px;
+        min-width: 320px;
+    }
+
+    .system-user-page__filter-form .ant-input,
+    .system-user-page__filter-form .ant-input-affix-wrapper,
+    .system-user-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        height: 42px;
+        width: 100%;
+        border-radius: 14px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .system-user-page__filter-form .ant-input,
+    .system-user-page__filter-form .ant-input-affix-wrapper,
+    .system-user-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .system-user-page__filter-form .ant-input {
+        line-height: 40px;
+    }
+
+    .system-user-page__filter-form .ant-input-affix-wrapper {
+        display: flex;
+        align-items: center;
+    }
+
+    .system-user-page__filter-form .ant-input-affix-wrapper .ant-input {
+        height: auto;
+        padding: 0;
+        line-height: 1.5715;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .system-user-page__filter-form .ant-input,
+    .system-user-page__filter-form .ant-input-affix-wrapper .ant-input,
+    .system-user-page__filter-form .ant-select-selection-item,
+    .system-user-page__filter-form .ant-select-selection-placeholder {
+        color: #334155;
+        font-size: 13px;
+    }
+
+    .system-user-page__filter-form .ant-input::placeholder,
+    .system-user-page__filter-form .ant-input-affix-wrapper .ant-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .system-user-page__filter-form .ant-input:hover,
+    .system-user-page__filter-form .ant-input-affix-wrapper:hover,
+    .system-user-page__filter-form .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+        border-color: #bfdbfe;
+    }
+
+    .system-user-page__filter-form .ant-input:focus,
+    .system-user-page__filter-form .ant-input-focused,
+    .system-user-page__filter-form .ant-input-affix-wrapper-focused,
+    .system-user-page__filter-form .ant-select-focused .ant-select-selector {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
+    }
+
+    .system-user-page__filter-item--actions {
+        margin-left: auto;
+    }
+
+    .system-user-page__filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .system-user-page__action-button {
+        height: 38px;
+        padding: 0 16px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .system-user-page__action-button--primary {
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+    }
+
+    .system-user-page__action-button--default {
+        border-color: #d8e3ef;
+        background: #fff;
+        color: #24415f;
+    }
+
+    .system-user-page__list-shell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .system-user-page__table-wrap {
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid #edf2f7;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+    }
+
+    .system-user-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .system-user-page__table-wrap .ant-table-thead > tr > th {
+        padding: 16px 18px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+        background: #f7faff;
+        border-bottom: 1px solid #e9eff6;
+    }
+
+    .system-user-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .system-user-page__table-wrap .ant-table-tbody > tr > td {
+        height: 51px;
+        padding: 8px 18px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eef3f8;
+    }
+
+    .system-user-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fbff;
+    }
+
+    .system-user-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .system-user-page__user-cell,
+    .system-user-page__contact-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .system-user-page__user-name,
+    .system-user-page__contact-main,
+    .system-user-page__time-cell {
+        font-size: 14px;
+        font-weight: 600;
+        color: #12263f;
+        white-space: nowrap;
+    }
+
+    .system-user-page__user-sub,
+    .system-user-page__contact-sub {
+        font-size: 12px;
+        color: #708095;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .system-user-page__role-pill {
+        display: inline-flex;
+        max-width: 100%;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef6ff;
+        color: #1d4f91;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    .system-user-page__link {
+        font-weight: 600;
+        color: #2563eb;
+    }
+
+    .system-user-page__link--accent {
+        color: #0f766e;
+    }
+
+    .system-user-page__link--danger {
+        color: #dc2626;
+    }
+
+    .system-user-page__pagination {
+        margin: 0;
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .system-user-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .system-user-page__pagination .ant-pagination-item,
+    .system-user-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .system-user-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .system-user-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .system-user-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .system-user-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+
+    .system-user-page__pagination .ant-pagination-item-active a {
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .system-user-drawer {
+        height: 100%;
+        padding: 0;
+    }
+
+    .system-user-drawer__form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+    }
+
+    .system-user-drawer__eyebrow,
+    .system-user-authority__eyebrow {
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .system-user-drawer__title,
+    .system-user-authority__title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #10233f;
+        line-height: 1.2;
+    }
+
+    .system-user-drawer__subtitle,
+    .system-user-authority__subtitle {
+        margin-top: 6px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #5f6f85;
+    }
+
+    .system-user-drawer__meta-pill,
+    .system-user-authority__meta-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-self: flex-start;
+        min-height: 38px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid #d9e6f4;
+        color: #24415f;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .system-user-drawer__section {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid #e8eef5;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .system-user-drawer__section + .system-user-drawer__section {
+        margin-top: -4px;
+    }
+
+    .system-user-drawer__section-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .system-user-drawer__section-title {
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .system-user-drawer__section-head .system-user-drawer__section-title {
+        margin-bottom: 0;
+    }
+
+    .system-user-drawer__section-tip {
+        font-size: 12px;
+        color: #6d7c91;
+    }
+
+    .system-user-drawer__field-item {
+        margin-bottom: 12px;
+    }
+
+    .system-user-drawer__field-label {
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+    }
+
+    .system-user-drawer__field-item .ant-input,
+    .system-user-drawer__field-item .ant-input-affix-wrapper {
+        border-radius: 12px;
+        min-height: 40px;
+    }
+
+    .system-user-drawer__role-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .system-user-drawer__role-card {
+        display: flex;
+        align-items: center;
+        min-height: 52px;
+        padding: 0 14px;
+        border-radius: 14px;
+        border: 1px solid #e3ebf4;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .system-user-drawer__role-card:hover {
+        border-color: #bed4f3;
+        box-shadow: 0 10px 20px rgba(59, 83, 119, 0.08);
+    }
+
+    .system-user-drawer__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: auto;
+        padding: 4px 0 0;
+    }
+
+    .system-user-authority {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .system-user-authority__overview {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 20px;
+        border-radius: 18px;
+        border: 1px solid #e0eaf6;
+        background:
+            radial-gradient(circle at top right, rgba(124, 58, 237, 0.12), transparent 32%),
+            linear-gradient(135deg, #fbf9ff 0%, #f5f9ff 100%);
+    }
+
+    .system-user-authority__table-wrap {
+        overflow: hidden;
+        border-radius: 18px;
+        border: 1px solid #e8eef5;
+        background: #fff;
+    }
+
+    .system-user-authority__table-wrap .ant-table-thead > tr > th {
+        padding: 16px 18px;
+        background: #f7faff;
+        color: #41556f;
+        font-weight: 700;
+        border-bottom: 1px solid #eaf0f7;
+    }
+
+    .system-user-authority__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .system-user-authority__table-wrap .ant-table-tbody > tr > td {
+        padding: 18px;
+        border-bottom: 1px solid #eef3f8;
+        vertical-align: top;
+    }
+
+    .system-user-authority__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #fbfcff;
+    }
+
+    .system-user-authority__table-wrap .ant-table-tbody > tr > td:first-child {
+        vertical-align: middle;
+    }
+
+    .system-user-authority__menu-cell {
+        display: flex;
+        align-items: center;
+        min-width: 220px;
+        font-weight: 600;
+        color: #183250;
+    }
+
+    .system-user-authority__action-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .system-user-authority__action-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        cursor: pointer;
+    }
+
+    .system-user-authority__empty {
+        color: #7a8799;
+        font-size: 12px;
+    }
+
+    @@media (max-width: 992px) {
+        .system-user-page__hero {
+            grid-template-columns: 1fr;
+        }
+
+        .system-user-page__stats {
+            grid-template-columns: 1fr;
+        }
+
+        .system-user-page__filter-item--actions {
+            margin-left: 0;
+        }
+
+        .system-user-authority__overview {
+        .system-user-authority__overview {
+            flex-direction: column;
+        }
+
+        .system-user-drawer__role-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .system-user-page__title {
+            font-size: 22px;
+        }
+
+        .system-user-page__filter-form,
+        .system-user-page__filter-actions,
+        .system-user-drawer__footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .system-user-page__action-button {
+            width: 100%;
+        }
+
+        .system-user-drawer__role-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 
 @code {
@@ -182,6 +891,8 @@
     PageListDto<UserDto> pageList = new();
 
     bool isShowEditAuthority = false;
+
+    string authorityUserName = string.Empty;
 
     List<RoleSelectDto> roleList = new();
 
@@ -351,9 +1062,10 @@
     }
 
 
-    async Task EditAuthorityAsync(long roleId)
+    async Task EditAuthorityAsync(UserDto user)
     {
-        this.userId = roleId;
+        userId = user.Id;
+        authorityUserName = string.IsNullOrWhiteSpace(user.Name) ? user.UserName : user.Name;
 
         var retData = await Http.GetFromJsonAsync<List<UserFunctionDto>>("User/GetUserFunction?userId=" + userId, JsonHelper.DeserializeOpts);
 
@@ -400,6 +1112,33 @@
         }
 
         StateHasChanged();
+    }
+
+
+    /// <summary>
+    /// 获取当前关键字筛选描述
+    /// </summary>
+    string KeywordStatusText()
+    {
+        return string.IsNullOrWhiteSpace(request.Keyword) ? "全部用户" : "关键词检索中";
+    }
+
+
+    /// <summary>
+    /// 获取角色覆盖摘要
+    /// </summary>
+    string RoleSummaryText()
+    {
+        return roleList.Count == 0 ? "角色加载中" : $"{roleList.Count} 个角色";
+    }
+
+
+    /// <summary>
+    /// 获取权限配置标题
+    /// </summary>
+    string AuthorityUserText()
+    {
+        return string.IsNullOrWhiteSpace(authorityUserName) ? "当前用户权限范围" : $"{authorityUserName} 的权限范围";
     }
 
 }

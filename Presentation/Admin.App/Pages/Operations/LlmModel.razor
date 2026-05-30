@@ -11,7 +11,7 @@
             <div class="llm-model-page__subtitle">统一维护模型名称、端点地址、协议类型与密钥配置，让模型切换、停启用和后续应用接入都在同一处完成</div>
 
             <div class="llm-model-page__hero-tools">
-                <Button Class="llm-model-page__hero-button" Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditLlmModel()">新增模型</Button>
+                <Button Class="llm-model-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLlmModel()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增模型</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
             </div>
         </div>
 
@@ -51,8 +51,8 @@
 
             <FormItem Class="llm-model-page__filter-item llm-model-page__filter-item--actions">
                 <div class="llm-model-page__filter-actions">
-                    <Button Class="llm-model-page__action-button llm-model-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索模型</Button>
-                    <Button Class="llm-model-page__action-button llm-model-page__action-button--default" OnClick="HandleReset">重置条件</Button>
+                    <Button Class="llm-model-page__action-button llm-model-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索模型</Button>
+                    <Button Class="llm-model-page__action-button llm-model-page__action-button--default admin-page-button admin-page-button--default" OnClick="HandleReset">重置条件</Button>
                 </div>
             </FormItem>
         </Form>
@@ -183,8 +183,8 @@
                 </div>
 
                 <div class="llm-model-drawer__footer">
-                    <Button Class="llm-model-page__action-button llm-model-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                    <Button Class="llm-model-page__action-button llm-model-page__action-button--default" Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
+                    <Button Class="llm-model-page__action-button llm-model-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                    <Button Class="llm-model-page__action-button llm-model-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
                 </div>
             </Form>
         </div>

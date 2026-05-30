@@ -12,7 +12,7 @@
             <div class="llm-app-page__subtitle">集中维护应用入口、提示词模板和调试参数，让模型配置、应用配置与联调过程保持在同一视图内完成</div>
 
             <div class="llm-app-page__hero-tools">
-                <Button Class="llm-app-page__hero-button" Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditLlmApp()">新增应用</Button>
+                <Button Class="llm-app-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLlmApp()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增应用</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
             </div>
         </div>
 
@@ -52,8 +52,8 @@
 
             <FormItem Class="llm-app-page__filter-item llm-app-page__filter-item--actions">
                 <div class="llm-app-page__filter-actions">
-                    <Button Class="llm-app-page__action-button llm-app-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索应用</Button>
-                    <Button Class="llm-app-page__action-button llm-app-page__action-button--default" OnClick="HandleReset">重置条件</Button>
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索应用</Button>
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--default admin-page-button admin-page-button--default" OnClick="HandleReset">重置条件</Button>
                 </div>
             </FormItem>
         </Form>
@@ -226,7 +226,7 @@
                             }
 
                             <div class="llm-app-drawer__test-bar">
-                                <Button Class="llm-app-page__action-button llm-app-page__action-button--primary" Type="@ButtonType.Primary" Loading="@testLoading" @onclick="TestCallAsync">调用测试</Button>
+                                <Button Class="llm-app-page__action-button llm-app-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" Loading="@testLoading" @onclick="TestCallAsync">调用测试</Button>
 
                                 <div class="llm-app-drawer__test-meta">
                                     @if (!string.IsNullOrWhiteSpace(testResult?.Model))
@@ -255,8 +255,8 @@
                 </div>
 
                 <div class="llm-app-drawer__footer">
-                    <Button Class="llm-app-page__action-button llm-app-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                    <Button Class="llm-app-page__action-button llm-app-page__action-button--default" Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
                 </div>
             </Form>
         </div>

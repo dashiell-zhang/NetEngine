@@ -2,99 +2,675 @@
 @using Application.Model.Site.Article
 @attribute [ReuseTabsPageTitle("栏目管理")]
 
-<div style="margin-bottom:10px">
+<div class="category-page">
+    <div class="category-page__hero">
+        <div>
+            <div class="category-page__eyebrow">Information Management</div>
+            <h2 class="category-page__title">栏目管理工作台</h2>
+            <div class="category-page__subtitle">统一维护栏目名称、父级结构和排序规则，让内容结构调整、栏目新增和维护都在一个视图内完成</div>
 
-    @if (functionList.Contains("category-add"))
-    {
-        <Button Icon="plus" Type="@ButtonType.Primary" @onclick="() => EditCategoryAsync()">添加</Button>
-    }
-
-</div>
-<Table TItem="CategoryDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
-
-    <ColumnDefinitions>
-
-        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
-        <PropertyColumn Property="c => c.Remark" Title="备注"></PropertyColumn>
-        <PropertyColumn Property="c => c.ParentName" Title="父级栏目"></PropertyColumn>
-        <PropertyColumn Property="c => c.Sort" Title="排序"></PropertyColumn>
-        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-        <ActionColumn Title="操作">
-            <Space>
-
-                @if (functionList.Contains("category-edit"))
-                {
-                    <SpaceItem>
-                        <a @onclick="() => EditCategoryAsync(context)">编辑</a>
-                    </SpaceItem>
-                }
-
-                @if (functionList.Contains("category-delete"))
-                {
-                    <SpaceItem>
-                        <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteCategoryAsync(context.Id)"
-                                    OkText="Yes"
-                                    CancelText="No">
-                            <a style="color:red">删除</a>
-                        </Popconfirm>
-
-                    </SpaceItem>
-                }
-
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
-
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            @if (functionList.Contains("category-add"))
+            {
+                <div class="category-page__hero-tools">
+                    <Button Class="category-page__action-button category-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditCategoryAsync()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增栏目</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
+                </div>
+            }
         </div>
-    </PaginationTemplate>
 
-</Table>
+        <div class="category-page__stats">
+            <div class="category-page__stat-card">
+                <span class="category-page__stat-label">栏目总量</span>
+                <strong class="category-page__stat-value">@pageList.Total</strong>
+                <span class="category-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 个栏目</span>
+            </div>
+
+            <div class="category-page__stat-card">
+                <span class="category-page__stat-label">当前页顶级</span>
+                <strong class="category-page__stat-value">@RootCategoryCount()</strong>
+                <span class="category-page__stat-foot">无父级栏目会作为顶层结构直接展示</span>
+            </div>
+
+            <div class="category-page__stat-card">
+                <span class="category-page__stat-label">默认排序</span>
+                <strong class="category-page__stat-value category-page__stat-value--small">@SortBaselineText()</strong>
+                <span class="category-page__stat-foot">新增栏目默认采用当前排序基线</span>
+            </div>
+        </div>
+    </div>
+
+    <Card Class="category-page__card category-page__card--compact" BodyStyle="padding: 14px 14px 10px">
+        <div class="category-page__list-shell">
+            <div class="category-page__section-head">
+                <div>
+                    <div class="category-page__section-title">栏目列表</div>
+                    <div class="category-page__section-desc">查看栏目名称、层级归属和排序值，并在列表中直接完成编辑或删除</div>
+                </div>
+
+                <div class="category-page__section-meta">当前加载 @(pageList.List?.Count ?? 0) 条记录</div>
+            </div>
+
+            <div class="category-page__table-wrap">
+                <Table TItem="CategoryDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <ActionColumn Title="栏目">
+                            <div class="category-page__name-cell">
+                                <div class="category-page__name-title" title="@context.Name">@context.Name</div>
+                                <div class="category-page__name-sub" title="@ParentCategoryText(context)">@ParentCategoryText(context)</div>
+                            </div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="备注">
+                            <div class="category-page__remark-cell" title="@RemarkText(context)">@RemarkText(context)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="排序">
+                            <div class="category-page__sort-pill">@context.Sort</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="创建时间">
+                            <div class="category-page__time-cell">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="操作">
+                            <Space>
+                                @if (functionList.Contains("category-edit"))
+                                {
+                                    <SpaceItem>
+                                        <a class="category-page__link-action" @onclick="() => EditCategoryAsync(context)">编辑</a>
+                                    </SpaceItem>
+                                }
+
+                                @if (functionList.Contains("category-delete"))
+                                {
+                                    <SpaceItem>
+                                        <Popconfirm Title="确认要删除吗？"
+                                                    OnConfirm="_ => DeleteCategoryAsync(context.Id)"
+                                                    OkText="Yes"
+                                                    CancelText="No">
+                                            <a class="category-page__link-action category-page__link-action--danger">删除</a>
+                                        </Popconfirm>
+                                    </SpaceItem>
+                                }
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="category-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
+</div>
 
 
-<Drawer Closable="true" Width="380" Visible="isShowEditCategory" Title='("栏目信息")' OnClose="() => isShowEditCategory = false">
-    <Template style="height:90%">
+<Drawer Closable="true" Width="700" Visible="isShowEditCategory" Title='(categoryId == default ? "新增栏目" : "编辑栏目")' OnClose="() => isShowEditCategory = false">
+    <Template style="height:100%">
+        <div class="category-drawer">
+            <Form Class="category-drawer__form" Model="@editCategory" Layout="@FormLayout.Vertical" OnFinish="SaveCategoryAsync">
+                <div class="category-drawer__section">
+                    <div class="category-drawer__section-title">基础资料</div>
 
-        <Form Model="@editCategory" OnFinish="SaveCategoryAsync">
+                    <Row Gutter="24">
+                        <AntDesign.Col Span="14">
+                            <FormItem Class="category-drawer__field-item">
+                                <div class="category-drawer__field-label">名称</div>
+                                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
+                            </FormItem>
+                        </AntDesign.Col>
 
-            <FormItem>
-                <Text>名称</Text>
-                <Input Placeholder="请输入名称" @bind-Value="@context.Name" />
-            </FormItem>
+                        <AntDesign.Col Span="10">
+                            <FormItem Class="category-drawer__field-item">
+                                <div class="category-drawer__field-label">排序</div>
+                                <Input Placeholder="请输入排序值" Type="InputType.Number" @bind-Value="@context.Sort" />
+                            </FormItem>
+                        </AntDesign.Col>
+                    </Row>
 
+                    <FormItem Class="category-drawer__field-item">
+                        <div class="category-drawer__field-label">父级栏目</div>
+                        <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node => node.DataItem.Children" DisabledExpression="node => node.DataItem.IsDisabled" TitleExpression="node => node.DataItem.Title" KeyExpression="node => node.DataItem.Key" IsLeafExpression="node => node.DataItem.Children == null"></TreeSelect>
+                    </FormItem>
 
-            <FormItem>
-                <Text>父级栏目</Text>
-                <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@parentId" Placeholder="请选择父级栏目" TreeDefaultExpandAll ChildrenExpression="node => node.DataItem.Children" DisabledExpression="node => node.DataItem.IsDisabled" TitleExpression="node => node.DataItem.Title" KeyExpression="node => node.DataItem.Key" IsLeafExpression="node => node.DataItem.Children == null"></TreeSelect>
-            </FormItem>
+                    <FormItem Class="category-drawer__field-item">
+                        <div class="category-drawer__field-label">备注</div>
+                        <Input Placeholder="请输入备注" @bind-Value="@context.Remark" />
+                    </FormItem>
+                </div>
 
-
-            <FormItem>
-                <Text>备注</Text>
-                <Input Placeholder=" 请输入备注" @bind-Value="@context.Remark" />
-            </FormItem>
-
-
-            <FormItem>
-                <Text>排序</Text>
-                <Input Placeholder="请输入排序值" Type="InputType.Number" @bind-Value="@context.Sort" />
-            </FormItem>
-
-
-            <Row Gutter="24">
-                <AntDesign.Col Span="24">
-                    <div style="float:right">
-                        <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                        <Button Type="@ButtonType.Default" @onclick="() => isShowEditCategory = false">取消</Button>
-                    </div>
-                </AntDesign.Col>
-            </Row>
-        </Form>
+                <div class="category-drawer__footer">
+                    <Button Class="category-page__action-button category-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存栏目</Button>
+                    <Button Class="category-page__action-button category-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditCategory = false">取消</Button>
+                </div>
+            </Form>
+        </div>
     </Template>
 </Drawer>
+
+
+<style>
+    .category-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+
+    .category-page__hero {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.35fr) minmax(320px, 1fr);
+        gap: 12px;
+        padding: 15px 16px;
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at top right, rgba(37, 99, 235, 0.16), transparent 35%),
+            radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 30%),
+            linear-gradient(135deg, #f8fbff 0%, #eef7ff 48%, #f5fffc 100%);
+        color: #10233f;
+        border: 1px solid #dfebf8;
+        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
+    }
+
+    .category-page__eyebrow {
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .category-page__title {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .category-page__subtitle {
+        margin-top: 6px;
+        max-width: 620px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: #526075;
+    }
+
+    .category-page__hero-tools {
+        margin-top: 14px;
+    }
+
+    .category-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-self: stretch;
+    }
+
+    .category-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        justify-content: space-between;
+        min-height: 88px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid #dbe9f8;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    }
+
+    .category-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
+    }
+
+    .category-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 253, 250, 0.96) 100%);
+    }
+
+    .category-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 248, 255, 0.92) 100%);
+    }
+
+    .category-page__stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #5a6b82;
+    }
+
+    .category-page__stat-value {
+        font-size: 24px;
+        line-height: 1;
+        color: #10233f;
+    }
+
+    .category-page__stat-value--small {
+        font-size: 16px;
+        line-height: 1.25;
+    }
+
+    .category-page__stat-foot {
+        font-size: 11px;
+        color: #6c7a8f;
+    }
+
+    .category-page__card {
+        border: 1px solid #e6edf5;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 12px 28px rgba(59, 83, 119, 0.06);
+    }
+
+    .category-page__card--compact {
+        overflow: hidden;
+    }
+
+    .category-page__list-shell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-page__section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 2px 2px 14px;
+    }
+
+    .category-page__section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .category-page__section-desc {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #67768b;
+    }
+
+    .category-page__section-meta {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: #f7faff;
+        border: 1px solid #e0e8f2;
+        color: #51647c;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .category-page__table-wrap {
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid #edf2f7;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+    }
+
+    .category-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .category-page__table-wrap .ant-table-thead > tr > th {
+        padding: 14px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+        background: #f7faff;
+        border-bottom: 1px solid #e9eff6;
+    }
+
+    .category-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .category-page__table-wrap .ant-table-tbody > tr > td {
+        height: 51px;
+        padding: 10px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eef3f8;
+    }
+
+    .category-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fbff;
+    }
+
+    .category-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .category-page__name-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        white-space: nowrap;
+    }
+
+    .category-page__name-title,
+    .category-page__time-cell {
+        font-size: 14px;
+        font-weight: 700;
+        color: #12263f;
+        white-space: nowrap;
+        flex: 0 0 auto;
+    }
+
+    .category-page__name-sub {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+        color: #708095;
+        flex: 0 1 auto;
+        max-width: 180px;
+        padding-left: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .category-page__name-sub::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #c3d2e5;
+        transform: translateY(-50%);
+    }
+
+    .category-page__remark-cell {
+        max-width: 320px;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #5d6b80;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .category-page__sort-pill {
+        display: inline-flex;
+        min-width: 44px;
+        justify-content: center;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eef6ff;
+        color: #1d4f91;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .category-page__link-action {
+        font-weight: 600;
+        color: #2563eb;
+    }
+
+    .category-page__link-action--danger {
+        color: #dc2626;
+    }
+
+    .category-page__pagination {
+        margin: 0;
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .category-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .category-page__pagination .ant-pagination-item,
+    .category-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .category-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .category-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .category-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .category-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+
+    .category-page__pagination .ant-pagination-item-active a {
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .category-drawer {
+        height: 100%;
+        padding: 0;
+    }
+
+    .category-drawer__form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+    }
+
+    .category-drawer__section {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid #e8eef5;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .category-drawer__section-title {
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .category-drawer__field-item {
+        margin-bottom: 12px;
+    }
+
+    .category-drawer__field-label {
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+    }
+
+    .category-drawer__field-item .ant-input,
+    .category-drawer__field-item .ant-input-affix-wrapper,
+    .category-drawer__field-item .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .category-drawer__field-item .ant-select-selection-search-input {
+        border-radius: 12px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+        min-height: 40px;
+    }
+
+    .category-drawer__field-item .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        display: flex;
+        align-items: center;
+    }
+
+    .category-drawer__field-item .ant-select-selection-item,
+    .category-drawer__field-item .ant-select-selection-placeholder {
+        line-height: 38px;
+    }
+
+    .ant-select-dropdown {
+        box-sizing: border-box;
+        padding: 8px 0;
+        border-radius: 16px;
+        border: 1px solid #dbe7f5;
+        background: #ffffff;
+        box-shadow: 0 18px 36px rgba(59, 83, 119, 0.12);
+        overflow: hidden;
+    }
+
+    .ant-select-dropdown .ant-tree {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 4px 8px;
+        background: transparent;
+    }
+
+    .ant-select-dropdown .ant-tree-list {
+        background: transparent;
+    }
+
+    .ant-select-dropdown .ant-tree-list-holder {
+        padding-right: 2px;
+    }
+
+    .ant-select-dropdown .ant-tree-list-holder-inner > .ant-tree-treenode:first-child {
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed #e4edf7;
+    }
+
+    .ant-select-dropdown .ant-tree-treenode {
+        align-items: center;
+        min-height: 34px;
+        padding: 1px 0;
+    }
+
+    .ant-select-dropdown .ant-tree-switcher {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 32px;
+        margin-right: 2px;
+        border-radius: 8px;
+        color: #7b8ba1;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .ant-select-dropdown .ant-tree-switcher:hover {
+        background: #f3f7fc;
+        color: #4b5f78;
+    }
+
+    .ant-select-dropdown .ant-tree-indent-unit {
+        width: 16px;
+    }
+
+    .ant-select-dropdown .ant-tree-node-content-wrapper {
+        display: flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 0 2px;
+        border-radius: 10px;
+        color: #1d3049;
+        background: transparent;
+        transition: color 0.2s ease;
+    }
+
+    .ant-select-dropdown .ant-tree-title {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 8px;
+        line-height: 1.4;
+        transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .ant-select-dropdown .ant-tree-node-content-wrapper:hover {
+        color: #1d4ed8;
+    }
+
+    .ant-select-dropdown .ant-tree-node-content-wrapper:hover .ant-tree-title {
+        background: #f3f8ff;
+    }
+
+    .ant-select-dropdown .ant-tree-node-content-wrapper.ant-tree-node-selected {
+        background: transparent;
+        color: #1d4ed8;
+        box-shadow: none;
+    }
+
+    .ant-select-dropdown .ant-tree-node-content-wrapper.ant-tree-node-selected,
+    .ant-select-dropdown .ant-tree-node-content-wrapper.ant-tree-node-selected:hover {
+        background: transparent !important;
+        color: #1d4ed8 !important;
+        box-shadow: none !important;
+    }
+
+    .ant-select-dropdown .ant-tree-node-content-wrapper.ant-tree-node-selected .ant-tree-title,
+    .ant-select-dropdown .ant-tree-node-content-wrapper.ant-tree-node-selected:hover .ant-tree-title,
+    .ant-select-dropdown .ant-tree-treenode-selected .ant-tree-title {
+        background: linear-gradient(180deg, #f2f8ff 0%, #e3f0ff 100%) !important;
+        color: #1d4ed8 !important;
+        border-radius: 8px !important;
+        padding: 0 10px !important;
+        box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.38) !important;
+    }
+
+    .ant-select-dropdown .ant-tree-checkbox + span {
+        line-height: 1.4;
+    }
+
+    .category-drawer__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: auto;
+        padding: 4px 0 0;
+    }
+
+    @@media (max-width: 992px) {
+        .category-page__hero {
+            grid-template-columns: 1fr;
+        }
+
+        .category-page__stats {
+            grid-template-columns: 1fr;
+        }
+
+        .category-page__section-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .category-page__title {
+            font-size: 22px;
+        }
+
+        .category-drawer__section {
+            padding: 14px;
+        }
+
+        .category-drawer__footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .category-page__action-button {
+            width: 100%;
+        }
+    }
+</style>
 
 
 @code {
@@ -308,6 +884,42 @@
         {
             Message.Error("请求失败，请稍后重试");
         }
+    }
+
+
+    /// <summary>
+    /// 获取当前页顶级栏目数量
+    /// </summary>
+    int RootCategoryCount()
+    {
+        return pageList.List?.Count(item => item.ParentId == null) ?? 0;
+    }
+
+
+    /// <summary>
+    /// 获取父级栏目显示文本
+    /// </summary>
+    string ParentCategoryText(CategoryDto category)
+    {
+        return string.IsNullOrWhiteSpace(category.ParentName) ? "无父级栏目" : category.ParentName;
+    }
+
+
+    /// <summary>
+    /// 获取备注显示文本
+    /// </summary>
+    string RemarkText(CategoryDto category)
+    {
+        return string.IsNullOrWhiteSpace(category.Remark) ? "暂无备注说明" : category.Remark;
+    }
+
+
+    /// <summary>
+    /// 获取默认排序描述
+    /// </summary>
+    string SortBaselineText()
+    {
+        return "99 起";
     }
 
 

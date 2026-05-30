@@ -3,133 +3,988 @@
 @inject ImageUploadService imageUploadService
 @attribute [ReuseTabsPageTitle("文章管理")]
 
-<div style="margin-bottom:10px">
+<div class="article-page">
+    <div class="article-page__hero">
+        <div>
+            <div class="article-page__eyebrow">Information Management</div>
+            <h2 class="article-page__title">文章管理工作台</h2>
+            <div class="article-page__subtitle">统一管理文章标题、栏目归属、推荐与显示状态，让内容发布、编辑和维护都在一个视图内快速完成</div>
 
-    @if (functionList.Contains("article-add"))
-    {
-        <Button Icon="plus" Type="@ButtonType.Primary" OnClick="() => EditArticleAsync()">添加</Button>
-    }
-
-</div>
-<Table TItem="ArticleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
-
-    <ColumnDefinitions>
-        <PropertyColumn Property="c => c.Title" Title="标题"></PropertyColumn>
-        <PropertyColumn Property="c => c.CategoryName" Title="类别"></PropertyColumn>
-        <PropertyColumn Property="c => c.IsRecommend" Title="是否推荐"></PropertyColumn>
-        <PropertyColumn Property="c => c.IsDisplay" Title="显示状态"></PropertyColumn>
-        <PropertyColumn Property="c => c.ClickCount" Title="点击量"></PropertyColumn>
-        <PropertyColumn Property="c => c.CreateTime.LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="创建时间"></PropertyColumn>
-
-        <ActionColumn Title="操作">
-            <Space>
-
-                @if (functionList.Contains("article-edit"))
-                {
-
-                    <SpaceItem>
-                        <a @onclick="() => EditArticleAsync(context)">编辑</a>
-                    </SpaceItem>
-                }
-
-                @if (functionList.Contains("article-delete"))
-                {
-                    <SpaceItem>
-                        <Popconfirm Title="确认要删除吗？"
-                                    OnConfirm="_=>DeleteArticleAsync(context.Id)"
-                                    OkText="Yes"
-                                    CancelText="No">
-                            <a style="color:red">删除</a>
-                        </Popconfirm>
-
-                    </SpaceItem>
-                }
-
-            </Space>
-        </ActionColumn>
-    </ColumnDefinitions>
-
-    <PaginationTemplate>
-        <div style="margin:15px 0;float:right">
-            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+            @if (functionList.Contains("article-add"))
+            {
+                <div class="article-page__hero-tools">
+                    <Button Class="article-page__action-button article-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" OnClick="() => EditArticleAsync()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">添加文章</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
+                </div>
+            }
         </div>
-    </PaginationTemplate>
 
-</Table>
+        <div class="article-page__stats">
+            <div class="article-page__stat-card">
+                <span class="article-page__stat-label">文章总量</span>
+                <strong class="article-page__stat-value">@pageList.Total</strong>
+                <span class="article-page__stat-foot">当前页加载 @(pageList.List?.Count ?? 0) 篇文章</span>
+            </div>
+
+            <div class="article-page__stat-card">
+                <span class="article-page__stat-label">当前页推荐</span>
+                <strong class="article-page__stat-value">@RecommendArticleCount()</strong>
+                <span class="article-page__stat-foot">推荐内容可在首页或重点区位优先展示</span>
+            </div>
+
+            <div class="article-page__stat-card">
+                <span class="article-page__stat-label">当前页显示中</span>
+                <strong class="article-page__stat-value article-page__stat-value--small">@DisplayArticleCount()</strong>
+                <span class="article-page__stat-foot">已显示文章会在前台内容列表中对外可见</span>
+            </div>
+        </div>
+    </div>
+
+    <Card Class="article-page__card article-page__card--compact" BodyStyle="padding: 14px 14px 10px">
+        <div class="article-page__list-shell">
+            <div class="article-page__section-head">
+                <div>
+                    <div class="article-page__section-title">文章列表</div>
+                    <div class="article-page__section-desc">查看文章标题、所属栏目、推荐与发布状态，并在列表中直接完成编辑或删除</div>
+                </div>
+
+                <div class="article-page__section-meta">当前加载 @(pageList.List?.Count ?? 0) 条记录</div>
+            </div>
+
+            <div class="article-page__table-wrap">
+                <Table TItem="ArticleDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
+
+                    <ColumnDefinitions>
+                        <ActionColumn Title="标题">
+                            <div class="article-page__title-cell">
+                                <div class="article-page__title-main" title="@context.Title">@context.Title</div>
+                            </div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="类别">
+                            <div class="article-page__category-pill" title="@CategoryText(context)">@CategoryText(context)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="推荐状态">
+                            <div class="article-page__state-badge @(context.IsRecommend ? "article-page__state-badge--blue" : "article-page__state-badge--plain")">@RecommendStatusText(context)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="显示状态">
+                            <div class="article-page__state-badge @(context.IsDisplay ? "article-page__state-badge--green" : "article-page__state-badge--warn")">@DisplayStatusText(context)</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="点击量">
+                            <div class="article-page__click-pill">@context.ClickCount</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="创建时间">
+                            <div class="article-page__time-cell">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
+                        </ActionColumn>
+
+                        <ActionColumn Title="操作">
+                            <Space>
+
+                                @if (functionList.Contains("article-edit"))
+                                {
+                                    <SpaceItem>
+                                        <a class="article-page__link-action" @onclick="() => EditArticleAsync(context)">编辑</a>
+                                    </SpaceItem>
+                                }
+
+                                @if (functionList.Contains("article-delete"))
+                                {
+                                    <SpaceItem>
+                                        <Popconfirm Title="确认要删除吗？"
+                                                    OnConfirm="_=>DeleteArticleAsync(context.Id)"
+                                                    OkText="Yes"
+                                                    CancelText="No">
+                                            <a class="article-page__link-action article-page__link-action--danger">删除</a>
+                                        </Popconfirm>
+
+                                    </SpaceItem>
+                                }
+
+                            </Space>
+                        </ActionColumn>
+                    </ColumnDefinitions>
+
+                    <PaginationTemplate>
+                        <div class="article-page__pagination">
+                            <Pagination Total="@pageList.Total" PageSize="pageSize" Current="page" ShowSizeChanger OnChange="PageChange" ShowQuickJumper ShowTotal="showTotal" />
+                        </div>
+                    </PaginationTemplate>
+
+                </Table>
+            </div>
+        </div>
+    </Card>
+</div>
 
 
 @{
     RenderFragment editFooter = @<Template>
-        <Button OnClick="SaveArticleAsync" Type="@ButtonType.Primary" Loading="@saveLoading">保存</Button>
-        <Button OnClick="() => isShowEditArticle = false" @key="@("back")">取消</Button>
+        <div class="article-editor__footer-actions">
+            <Button Class="article-page__action-button article-page__action-button--primary admin-page-button admin-page-button--primary" OnClick="SaveArticleAsync" Type="@ButtonType.Primary" Loading="@saveLoading">保存文章</Button>
+            <Button Class="article-page__action-button article-page__action-button--default admin-page-button admin-page-button--default" OnClick="() => isShowEditArticle = false" @key="@("back")">取消</Button>
+        </div>
     </Template>;
 }
 
 
-<Modal Title="文章信息" Style="width:1160px;" Visible="@isShowEditArticle" OnCancel="() => isShowEditArticle = false" Footer="@editFooter">
+<Modal Title='@(articleId == default ? "新增文章" : "编辑文章")' Width="1440" MaxBodyHeight="@("calc(100vh - 150px)")" Visible="@isShowEditArticle" Class="article-editor-modal" Centered="true" Maximizable="true" OnCancel="() => isShowEditArticle = false" Footer="@editFooter">
 
-    <Form @ref="@_editArticleForm" Model="@editArticle" LabelColSpan="2" WrapperColSpan="22" Class="ueditorBody">
+    <div class="article-editor">
+    <Form @ref="@_editArticleForm" Model="@editArticle" Layout="@FormLayout.Vertical" Class="ueditorBody article-editor__form">
+        <div class="article-editor__workspace">
+            <div class="article-editor__main-column">
+                <div class="article-editor__panel">
+                    <div class="article-editor__panel-title">基础资料</div>
 
-        <Tabs Type="@TabType.Card">
+                    <div class="article-editor__info-grid">
+                        <FormItem Label="所属栏目" Class="article-editor__field-item">
+                            <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width:100%;" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node => node.DataItem.Children" DisabledExpression="node => node.DataItem.IsDisabled" TitleExpression="node => node.DataItem.Title" KeyExpression="node => node.DataItem.Key" IsLeafExpression="node => node.DataItem.Children == null"></TreeSelect>
+                        </FormItem>
 
-            <TabPane Key="1" Tab="基本信息">
+                        <FormItem Label="标题" Class="article-editor__field-item article-editor__field-item--wide">
+                            <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width:100%;" />
+                        </FormItem>
+                    </div>
 
-                <FormItem Label="所属栏目">
-                    <TreeSelect TItem="TreeSelectDto" TItemValue="string" Style="width: 190px" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node => node.DataItem.Children" DisabledExpression="node => node.DataItem.IsDisabled" TitleExpression="node => node.DataItem.Title" KeyExpression="node => node.DataItem.Key" IsLeafExpression="node => node.DataItem.Children == null"></TreeSelect>
-                </FormItem>
+                    <FormItem Label="内容" Class="article-editor__field-item article-editor__content-item">
+                        <TextArea Id="Content" @bind-Value="@context.Content" />
+                    </FormItem>
+                </div>
+            </div>
 
-                <FormItem Label="标题">
-                    <Input Placeholder="请输入标题" @bind-Value="@context.Title" style="width: 30em" />
-                </FormItem>
+            <div class="article-editor__side-column">
+                <div class="article-editor__settings-card article-editor__panel">
+                    <div class="article-editor__panel-title">发布设置</div>
 
-                <FormItem Label="是否显示">
-                    <Switch @bind-Value="@context.IsDisplay" CheckedChildren="是" UnCheckedChildren="否" />
-                </FormItem>
+                    <div class="article-editor__toggle-stack">
+                        <div class="article-editor__toggle-card">
+                            <div class="article-editor__toggle-copy">
+                                <span class="article-editor__toggle-title">是否显示</span>
+                            </div>
+                            <Switch @bind-Value="@context.IsDisplay" CheckedChildren="是" UnCheckedChildren="否" />
+                        </div>
 
-                <FormItem Label="是否推荐">
-                    <Switch @bind-Value="@context.IsRecommend" CheckedChildren="是" UnCheckedChildren="否" />
-                </FormItem>
+                        <div class="article-editor__toggle-card">
+                            <div class="article-editor__toggle-copy">
+                                <span class="article-editor__toggle-title">是否推荐</span>
+                            </div>
+                            <Switch @bind-Value="@context.IsRecommend" CheckedChildren="是" UnCheckedChildren="否" />
+                        </div>
+                    </div>
 
-                <FormItem Label="排序">
-                    <Input Placeholder="请输入排序值" Type="InputType.Number" @bind-Value="@context.Sort" style="width: 190px" />
-                </FormItem>
+                    <div class="article-editor__mini-grid">
+                        <FormItem Label="排序" Class="article-editor__field-item">
+                            <Input Placeholder="请输入排序值" Type="InputType.Number" @bind-Value="@context.Sort" style="width:100%;" />
+                        </FormItem>
 
-                <FormItem Label="点击量">
-                    <Input Placeholder="请输入点击量" Type="InputType.Number" @bind-Value="@context.ClickCount" style="width: 190px" />
-                </FormItem>
+                        <FormItem Label="点击量" Class="article-editor__field-item">
+                            <Input Placeholder="请输入点击量" Type="InputType.Number" @bind-Value="@context.ClickCount" style="width:100%;" />
+                        </FormItem>
+                    </div>
+                </div>
 
-                <FormItem Label="封面图">
+                <div class="article-editor__panel article-editor__cover-panel">
+                    <div class="article-editor__panel-title">摘要与封面</div>
 
-                    <InputFile id="fileInput" OnChange="@UploadImgageAsync" hidden multiple accept=".png,.jpg" />
-                    <Upload Name="files">
-                        <label class="ant-btn" for="fileInput">
-                            <Icon Type="upload" />
-                            上传图片
-                        </label>
-                    </Upload>
+                    <FormItem Label="摘要" Class="article-editor__field-item article-editor__summary-item">
+                        <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Digest" MinRows="3" MaxRows="4" style="width:100%;min-height:78px" />
+                    </FormItem>
 
-                    <Upload FileList="fileList" ListType="UploadListType.PictureCard" OnPreview="(file) => PreviewImg(file)" OnRemove=" (file)=> DeleteImgAsync(file)" ShowButton=false style="margin-top:8px"></Upload>
+                    <FormItem Class="article-editor__field-item article-editor__upload-item">
+                        <InputFile id="fileInput" OnChange="@UploadImgageAsync" hidden multiple accept=".png,.jpg" />
+                        <Upload Name="files">
+                            <label class="ant-btn article-editor__upload-trigger" for="fileInput">
+                                <Icon Type="upload" />
+                                上传图片
+                            </label>
+                        </Upload>
 
-                    <Image PreviewSrc="@previewImgUrl" Style="display: none;" @bind-PreviewVisible="isPreviewImg" />
+                        <Upload FileList="fileList" ListType="UploadListType.PictureCard" OnPreview="(file) => PreviewImg(file)" OnRemove=" (file)=> DeleteImgAsync(file)" ShowButton=false style="margin-top:12px"></Upload>
 
-                </FormItem>
-
-            </TabPane>
-
-            <TabPane Key="2" Tab="详细内容" ForceRender="true">
-                <FormItem Label="摘要">
-                    <TextArea ShowCount MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Digest" MinRows="4" MaxRows="6" style="width:50em;min-height:80px" />
-                </FormItem>
-
-                <FormItem Label="内容">
-                    <TextArea Id="Content" @bind-Value="@context.Content" />
-                </FormItem>
-            </TabPane>
-
-        </Tabs>
+                        <Image PreviewSrc="@previewImgUrl" Style="display: none;" @bind-PreviewVisible="isPreviewImg" />
+                    </FormItem>
+                </div>
+            </div>
+        </div>
 
     </Form>
+</div>
 </Modal>
+
+
+<style>
+    .article-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+
+    .article-page__hero {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.35fr) minmax(320px, 1fr);
+        gap: 12px;
+        padding: 15px 16px;
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at top right, rgba(37, 99, 235, 0.16), transparent 35%),
+            radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 30%),
+            linear-gradient(135deg, #f8fbff 0%, #eef7ff 48%, #f5fffc 100%);
+        color: #10233f;
+        border: 1px solid #dfebf8;
+        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
+    }
+
+    .article-page__eyebrow {
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2563eb;
+    }
+
+    .article-page__title {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+        color: #10233f;
+    }
+
+    .article-page__subtitle {
+        margin-top: 6px;
+        max-width: 640px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: #526075;
+    }
+
+    .article-page__hero-tools {
+        margin-top: 14px;
+    }
+
+    .article-page__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-self: stretch;
+    }
+
+    .article-page__stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        justify-content: space-between;
+        min-height: 88px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid #dbe9f8;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    }
+
+    .article-page__stat-card:nth-child(1) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
+    }
+
+    .article-page__stat-card:nth-child(2) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 253, 250, 0.96) 100%);
+    }
+
+    .article-page__stat-card:nth-child(3) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 248, 255, 0.92) 100%);
+    }
+
+    .article-page__stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #5a6b82;
+    }
+
+    .article-page__stat-value {
+        font-size: 24px;
+        line-height: 1;
+        color: #10233f;
+    }
+
+    .article-page__stat-value--small {
+        font-size: 24px;
+    }
+
+    .article-page__stat-foot {
+        font-size: 11px;
+        color: #6c7a8f;
+    }
+
+    .article-page__card {
+        border: 1px solid #e6edf5;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 12px 28px rgba(59, 83, 119, 0.06);
+    }
+
+    .article-page__card--compact {
+        overflow: hidden;
+    }
+
+    .article-page__list-shell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .article-page__section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 2px 2px 14px;
+    }
+
+    .article-page__section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .article-page__section-desc {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #67768b;
+    }
+
+    .article-page__section-meta {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: #f7faff;
+        border: 1px solid #e0e8f2;
+        color: #51647c;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .article-page__table-wrap {
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid #edf2f7;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+    }
+
+    .article-page__table-wrap .ant-table {
+        background: transparent;
+    }
+
+    .article-page__table-wrap .ant-table-thead > tr > th {
+        padding: 14px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+        background: #f7faff;
+        border-bottom: 1px solid #e9eff6;
+    }
+
+    .article-page__table-wrap .ant-table-thead > tr > th::before {
+        display: none;
+    }
+
+    .article-page__table-wrap .ant-table-tbody > tr > td {
+        height: 51px;
+        padding: 10px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eef3f8;
+    }
+
+    .article-page__table-wrap .ant-table-tbody > tr:hover > td {
+        background: #f8fbff;
+    }
+
+    .article-page__table-wrap .ant-table-tbody > tr:last-child > td {
+        border-bottom: none;
+    }
+
+    .article-page__title-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+        max-width: 360px;
+    }
+
+    .article-page__title-main,
+    .article-page__time-cell {
+        font-size: 14px;
+        font-weight: 600;
+        color: #12263f;
+    }
+
+    .article-page__title-main {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .article-page__category-pill,
+    .article-page__click-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        white-space: nowrap;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .article-page__category-pill {
+        color: #1d4f91;
+        background: #eef6ff;
+    }
+
+    .article-page__click-pill {
+        min-width: 52px;
+        color: #1d4f91;
+        background: #eef6ff;
+    }
+
+    .article-page__state-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .article-page__state-badge--blue {
+        background: #eef6ff;
+        color: #1d4ed8;
+    }
+
+    .article-page__state-badge--green {
+        background: #ecfdf3;
+        color: #15803d;
+    }
+
+    .article-page__state-badge--warn {
+        background: #fff4e8;
+        color: #c2410c;
+    }
+
+    .article-page__state-badge--plain {
+        background: #f4f7fb;
+        color: #64748b;
+    }
+
+    .article-page__link-action {
+        font-weight: 600;
+        color: #2563eb;
+    }
+
+    .article-page__link-action--danger {
+        color: #dc2626;
+    }
+
+    .article-page__pagination {
+        margin: 0;
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 16px 16px 16px;
+        border-top: 1px solid #eef4fb;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .article-page__pagination .ant-pagination-total-text {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .article-page__pagination .ant-pagination-item,
+    .article-page__pagination .ant-pagination-prev .ant-pagination-item-link,
+    .article-page__pagination .ant-pagination-next .ant-pagination-item-link,
+    .article-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
+    .article-page__pagination .ant-pagination-options-quick-jumper input {
+        border-radius: 10px;
+        border-color: #dbe7f5;
+        box-shadow: none;
+    }
+
+    .article-page__pagination .ant-pagination-item-active {
+        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+
+    .article-page__pagination .ant-pagination-item-active a {
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .article-editor {
+        padding: 6px 0 0;
+    }
+
+    .article-editor-modal .ant-modal-body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    .article-editor__footer-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        min-height: 38px;
+    }
+
+    .article-editor__form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .article-editor__workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.9fr) minmax(280px, 0.68fr);
+        gap: 12px;
+        align-items: start;
+    }
+
+    .article-editor__main-column,
+    .article-editor__side-column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .article-editor__panel {
+        padding: 14px 14px 10px;
+        border-radius: 18px;
+        border: 1px solid #e8eef5;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .article-editor__panel--wide {
+        padding-bottom: 12px;
+    }
+
+    .article-editor__panel-title {
+        margin-bottom: 6px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .article-editor__panel-desc {
+        margin-bottom: 10px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #708095;
+    }
+
+    .article-editor__field-item {
+        margin-bottom: 12px;
+    }
+
+    .article-editor__field-item--wide {
+        grid-column: span 2;
+    }
+
+    .article-editor__info-grid,
+    .article-editor__mini-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 16px;
+    }
+
+    .article-editor__summary-item {
+        margin-bottom: 8px;
+    }
+
+    .article-editor__settings-card {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .article-editor__settings-desc {
+        margin-bottom: 10px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #708095;
+    }
+
+    .article-editor__toggle-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .article-editor__toggle-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid #e6edf6;
+        background: rgba(255, 255, 255, 0.78);
+    }
+
+    .article-editor__toggle-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .article-editor__toggle-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #163250;
+    }
+
+    .article-editor__toggle-note {
+        font-size: 12px;
+        line-height: 1.5;
+        color: #708095;
+    }
+
+    .article-editor .ant-input,
+    .article-editor .ant-input-affix-wrapper,
+    .article-editor .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .article-editor .ant-select-selection-search-input {
+        border-radius: 12px;
+        border-color: #dbe7f5;
+        background: #ffffff;
+        box-shadow: none;
+        min-height: 40px;
+    }
+
+    .article-editor .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+        display: flex;
+        align-items: center;
+    }
+
+    .article-editor .ant-select-selection-item,
+    .article-editor .ant-select-selection-placeholder {
+        line-height: 38px;
+    }
+
+    .article-editor .ant-form-item-label > label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #42556d;
+    }
+
+    .article-editor .ant-form-vertical .ant-form-item-label {
+        padding-bottom: 6px;
+    }
+
+    .article-editor .ant-form-item-explain,
+    .article-editor .ant-form-item-extra {
+        display: none;
+    }
+
+    .article-editor .ant-form-item-explain-connected {
+        min-height: 0;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) {
+        box-sizing: border-box;
+        padding: 8px 0;
+        border-radius: 16px;
+        border: 1px solid #dbe7f5;
+        background: #ffffff;
+        box-shadow: 0 18px 36px rgba(59, 83, 119, 0.12);
+        overflow: hidden;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 4px 8px;
+        background: transparent;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-list {
+        background: transparent;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-list-holder {
+        padding-right: 2px;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-list-holder-inner > .ant-tree-treenode:first-child {
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed #e4edf7;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-treenode {
+        align-items: center;
+        min-height: 34px;
+        padding: 1px 0;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-switcher {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 32px;
+        margin-right: 2px;
+        border-radius: 8px;
+        color: #7b8ba1;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-switcher:hover {
+        background: #f3f7fc;
+        color: #4b5f78;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-indent-unit {
+        width: 16px;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-node-content-wrapper {
+        display: flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 0 2px;
+        border-radius: 10px;
+        color: #1d3049;
+        background: transparent;
+        transition: color 0.2s ease;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-title {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 8px;
+        line-height: 1.4;
+        transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-node-content-wrapper:hover {
+        color: #1d4ed8;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-node-content-wrapper:hover .ant-tree-title {
+        background: #f3f8ff;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-node-content-wrapper.ant-tree-node-selected {
+        background: transparent;
+        color: #1d4ed8;
+        box-shadow: none;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-node-content-wrapper.ant-tree-node-selected,
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-node-content-wrapper.ant-tree-node-selected:hover {
+        background: transparent !important;
+        color: #1d4ed8 !important;
+        box-shadow: none !important;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-node-content-wrapper.ant-tree-node-selected .ant-tree-title,
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-node-content-wrapper.ant-tree-node-selected:hover .ant-tree-title,
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-treenode-selected .ant-tree-title {
+        background: linear-gradient(180deg, #f2f8ff 0%, #e3f0ff 100%) !important;
+        color: #1d4ed8 !important;
+        border-radius: 8px !important;
+        padding: 0 10px !important;
+        box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.38) !important;
+    }
+
+    .ant-select-dropdown:has(.ant-tree) .ant-tree-checkbox + span {
+        line-height: 1.4;
+    }
+
+    .article-editor__upload-item .ant-form-item-control-input-content {
+        width: 100%;
+    }
+
+    .article-editor__upload-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 38px;
+        padding: 0 14px;
+        border-radius: 12px;
+        border: 1px solid #d8e3ef;
+        background: #ffffff;
+        color: #24415f;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .article-editor__content-item .ant-form-item-control-input-content,
+    .article-editor__content-item .ant-input,
+    .article-editor__content-item textarea {
+        min-height: 320px;
+    }
+
+    .article-editor__content-item .edui-editor {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        overflow: hidden;
+        border: 1px solid #dbe7f5 !important;
+        border-radius: 12px !important;
+        background: #ffffff;
+    }
+
+    .article-editor__content-item .edui-editor.article-editor__ueditor-fullscreen {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        max-width: none !important;
+        height: 100vh !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+        z-index: 1600 !important;
+        border: 0 !important;
+    }
+
+    .article-editor__content-item .edui-editor.article-editor__ueditor-fullscreen .edui-editor-toolbarbox,
+    .article-editor__content-item .edui-editor.article-editor__ueditor-fullscreen .edui-editor-toolbarboxouter {
+        border-radius: 0 !important;
+    }
+
+    .article-editor__content-item .edui-editor-toolbarbox {
+        width: auto !important;
+        max-width: none !important;
+        overflow: hidden;
+        border-radius: 12px 12px 0 0;
+        box-shadow: none !important;
+    }
+
+    .article-editor__content-item .edui-editor-toolbarboxouter {
+        border-bottom: 1px solid #e3ebf5;
+        border-radius: 12px 12px 0 0;
+        box-shadow: none !important;
+        background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+    }
+
+    .article-editor__content-item .edui-editor-toolbarboxinner {
+        padding: 6px 8px;
+        overflow: visible;
+        white-space: normal;
+    }
+
+    .article-editor__content-item .edui-editor-iframeholder,
+    .article-editor__content-item .edui-editor-bottomContainer {
+        width: auto !important;
+        max-width: none !important;
+        box-sizing: border-box;
+    }
+
+    .article-editor-modal.ant-modal-max .ant-modal-body {
+        max-height: none !important;
+        overflow: hidden !important;
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor__form {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor__workspace {
+        flex: 1 1 auto;
+        min-height: 0;
+        align-items: stretch;
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor__main-column,
+    .article-editor-modal.ant-modal-max .article-editor__side-column {
+        min-height: 0;
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor__main-column > .article-editor__panel:first-child {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor__content-item,
+    .article-editor-modal.ant-modal-max .article-editor__content-item .ant-form-item-control,
+    .article-editor-modal.ant-modal-max .article-editor__content-item .ant-form-item-control-input,
+    .article-editor-modal.ant-modal-max .article-editor__content-item .ant-form-item-control-input-content {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor__content-item .edui-editor {
+        min-height: calc(100vh - 380px);
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor__content-item .edui-editor-toolbarboxinner {
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+    }
+
+    .article-editor-modal.ant-modal-max .article-editor__content-item .edui-editor-iframeholder {
+        height: calc(100vh - 450px) !important;
+        min-height: 420px !important;
+    }
+
+    @@media (max-width: 992px) {
+        .article-page__hero {
+            grid-template-columns: 1fr;
+        }
+
+        .article-page__stats {
+            grid-template-columns: 1fr;
+        }
+
+        .article-page__section-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .article-editor__workspace,
+        .article-editor__info-grid,
+        .article-editor__mini-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .article-editor__field-item--wide {
+            grid-column: auto;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .article-page__title {
+            font-size: 22px;
+        }
+
+        .article-page__action-button {
+            width: 100%;
+        }
+    }
+</style>
 
 
 @code {
@@ -256,6 +1111,50 @@
         await GetArticleListAsync();
     }
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
+
+
+    /// <summary>
+    /// 获取当前页推荐文章数量
+    /// </summary>
+    int RecommendArticleCount()
+    {
+        return pageList.List?.Count(item => item.IsRecommend) ?? 0;
+    }
+
+
+    /// <summary>
+    /// 获取当前页显示中的文章数量
+    /// </summary>
+    int DisplayArticleCount()
+    {
+        return pageList.List?.Count(item => item.IsDisplay) ?? 0;
+    }
+
+    /// <summary>
+    /// 获取栏目显示文本
+    /// </summary>
+    string CategoryText(ArticleDto article)
+    {
+        return string.IsNullOrWhiteSpace(article.CategoryName) ? "未分配栏目" : article.CategoryName;
+    }
+
+
+    /// <summary>
+    /// 获取推荐状态显示文本
+    /// </summary>
+    string RecommendStatusText(ArticleDto article)
+    {
+        return article.IsRecommend ? "已推荐" : "普通文章";
+    }
+
+
+    /// <summary>
+    /// 获取显示状态文本
+    /// </summary>
+    string DisplayStatusText(ArticleDto article)
+    {
+        return article.IsDisplay ? "显示中" : "已隐藏";
+    }
 
 
     bool isShowEditArticle = false;

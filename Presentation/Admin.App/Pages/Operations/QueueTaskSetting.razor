@@ -10,7 +10,7 @@
             <div class="queue-task-page__subtitle">集中维护 QueueTask 分类任务的启停状态、并发额度与备注说明，让队列消费能力调整和日常运维管理都在一个视图内完成</div>
 
             <div class="queue-task-page__hero-tools">
-                <Button Class="queue-task-page__hero-button queue-task-page__hero-button--light" Icon="reload" OnClick="GetTaskSettingListAsync">刷新列表</Button>
+                <Button Class="queue-task-page__hero-button queue-task-page__hero-button--light admin-page-button admin-page-button--default" Icon="reload" OnClick="GetTaskSettingListAsync">刷新列表</Button>
             </div>
         </div>
 
@@ -124,8 +124,8 @@
                 </div>
 
                 <div class="queue-task-drawer__footer">
-                    <Button Class="queue-task-page__action-button queue-task-page__action-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                    <Button Class="queue-task-page__action-button queue-task-page__action-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditTaskSetting = false">取消</Button>
+                    <Button Class="queue-task-page__action-button queue-task-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
+                    <Button Class="queue-task-page__action-button queue-task-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEditTaskSetting = false">取消</Button>
                 </div>
             </Form>
         </div>

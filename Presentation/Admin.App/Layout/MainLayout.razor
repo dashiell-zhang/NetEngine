@@ -1,6 +1,8 @@
 @inherits LayoutComponentBase
 @using Application.Model.User.User
+@using System.Reflection
 @using Microsoft.IdentityModel.JsonWebTokens;
+@inject AntDesign.ReuseTabsService ReuseTabsService
 
 <Layout Style="min-height: 100vh;">
 
@@ -177,9 +179,32 @@
     </Header>
 
     <Layout Class="site-layout" Style=@leftLayoutStyle>
-        <Content Style="margin:0 0px;margin-top:4px;">
+        <Content Class="main-layout-content" Style=@($"margin:0 0px;margin-top:4px;--main-tab-left:{(collapsed ? "92px" : "212px")};--main-tab-right:152px;")>
             <ReuseTabs Class="MainTab" TabPaneTemplate="@tabPaneTemplate">
             </ReuseTabs>
+
+            @if (reuseTabMoreVisible)
+            {
+                <button type="button" class="main-layout-tab-more-backdrop" @onclick="CloseReuseTabMoreMenu" aria-label="关闭更多标签菜单"></button>
+            }
+
+            <div class="main-layout-tab-more-shell">
+                <button type="button" class="@(reuseTabMoreVisible ? "main-layout-tab-more-trigger main-layout-tab-more-trigger--open" : "main-layout-tab-more-trigger")" @onclick="ToggleReuseTabMoreMenu" aria-label="更多标签" aria-expanded="@reuseTabMoreVisible">
+                    <Icon Type="ellipsis" Theme="IconThemeType.Outline" />
+                </button>
+
+                @if (reuseTabMoreVisible)
+                {
+                    <div class="main-layout-tab-more-popup">
+                        @foreach (var page in GetReuseTabMenuPages())
+                        {
+                            <button type="button" class="@GetReuseTabMenuItemClass(page)" @onclick="@(() => ActivateReuseTab(page))">
+                                @RenderReuseTabTitle(page)
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
         </Content>
     </Layout>
 
@@ -187,7 +212,10 @@
 
 <style>
     .main-layout-header {
+        border-bottom: 1px solid rgba(199, 216, 241, 0.56);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 255, 0.88));
         backdrop-filter: blur(14px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
     }
 
     .main-layout-header__actions {
@@ -477,11 +505,342 @@
         background: linear-gradient(90deg, rgba(69, 160, 255, 0.22), rgba(69, 160, 255, 0.07));
     }
 
-    .MainTab > :first-child {
-        width: 80%;
-        padding-left: 5px;
+    .main-layout-content {
+        --main-tab-nav-padding: 12px;
+        min-width: 0;
+        padding: 8px 16px 0 8px;
+    }
+
+    .main-layout-tab-more-shell {
+        display: none;
         position: fixed;
+        top: 0;
+        right: calc(var(--main-tab-right) + var(--main-tab-nav-padding) + 6px);
+        z-index: 3;
+        align-items: center;
+        height: 46px;
+    }
+
+    .main-layout-tab-more-shell::before {
+        position: absolute;
+        top: 13px;
+        bottom: 13px;
+        left: -8px;
+        width: 1px;
+        content: "";
+        background: linear-gradient(180deg, rgba(207, 220, 240, 0), rgba(207, 220, 240, 0.92), rgba(207, 220, 240, 0));
+    }
+
+    .main-layout-content:has(.MainTab > .ant-tabs-nav .ant-tabs-nav-operations:not(.ant-tabs-nav-operations-hidden)) .main-layout-tab-more-shell {
+        display: flex;
+    }
+
+    .main-layout-content:has(.MainTab > .ant-tabs-nav .ant-tabs-nav-operations:not(.ant-tabs-nav-operations-hidden)) .MainTab > .ant-tabs-nav .ant-tabs-nav-operations {
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .main-layout-tab-more-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid rgba(211, 223, 241, 0.92);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(245, 249, 255, 0.9));
+        background-color: rgba(248, 251, 255, 0.9);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+        color: rgba(51, 94, 154, 0.88);
+        cursor: pointer;
+        transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+
+    .main-layout-tab-more-trigger:hover,
+    .main-layout-tab-more-trigger--open {
+        border-color: rgba(163, 191, 231, 0.96);
+        background: linear-gradient(180deg, rgba(248, 252, 255, 0.98), rgba(235, 244, 255, 0.94));
+        background-color: rgba(240, 247, 255, 0.96);
+        color: #2a68c5;
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+        transform: translateY(-1px);
+    }
+
+    .main-layout-tab-more-trigger .anticon {
+        font-size: 15px;
+        font-weight: 700;
+        color: inherit;
+    }
+
+    .main-layout-tab-more-backdrop {
+        position: fixed;
+        inset: 0;
         z-index: 2;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        cursor: default;
+    }
+
+    .main-layout-tab-more-popup {
+        position: fixed;
+        top: 50px;
+        right: calc(var(--main-tab-right) + var(--main-tab-nav-padding) + 6px);
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        min-width: 188px;
+        padding: 8px;
+        border: 1px solid rgba(201, 217, 240, 0.96);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.97));
+        background-color: rgba(249, 252, 255, 0.98);
+        box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+    }
+
+    .main-layout-tab-more-menu__item {
+        display: block;
+        min-width: 172px;
+        margin: 1px 0;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: transparent;
+        color: #2c4564;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.35;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+
+    .main-layout-tab-more-menu__item:hover,
+    .main-layout-tab-more-menu__item--active {
+        background: linear-gradient(90deg, rgba(79, 146, 255, 0.14), rgba(79, 146, 255, 0.04));
+        color: #1e63c7;
+    }
+
+    .MainTab {
+        display: block;
+        min-width: 0;
+        padding-top: 50px;
+    }
+
+    .MainTab > .ant-tabs-nav {
+        left: var(--main-tab-left);
+        right: var(--main-tab-right);
+        width: auto;
+        display: flex;
+        align-items: stretch;
+        min-height: 46px;
+        padding: 0 12px;
+        position: fixed;
+        top: 0;
+        z-index: 2;
+        border-bottom: 0;
+        border-radius: 0;
+        background: transparent;
+        backdrop-filter: blur(18px);
+        box-shadow: none;
+    }
+
+    .MainTab > .ant-tabs-nav::after {
+        position: absolute;
+        top: 0;
+        right: 58px;
+        z-index: 0;
+        width: 56px;
+        height: 100%;
+        content: "";
+        pointer-events: none;
+        background: linear-gradient(90deg, rgba(246, 249, 255, 0), rgba(246, 249, 255, 0.96));
+    }
+
+    .MainTab > .ant-tabs-nav::before {
+        border-bottom: 0;
+    }
+
+    .MainTab > .ant-tabs-nav {
+        margin: 0;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-wrap {
+        display: flex;
+        align-items: stretch;
+        position: relative;
+        z-index: 1;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        scroll-behavior: smooth;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-wrap::-webkit-scrollbar {
+        display: none;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-list {
+        display: flex;
+        align-items: stretch;
+        min-width: max-content;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-operations {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        margin: 0 0 0 8px;
+        padding-left: 0;
+        background: transparent;
+        z-index: 1;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-operations::before {
+        position: absolute;
+        top: 13px;
+        bottom: 13px;
+        left: -6px;
+        width: 1px;
+        content: "";
+        background: linear-gradient(180deg, rgba(207, 220, 240, 0), rgba(207, 220, 240, 0.96), rgba(207, 220, 240, 0));
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-more {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        width: 38px;
+        min-width: 38px;
+        height: 46px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid rgba(176, 203, 239, 0.96) !important;
+        border-radius: 10px;
+        background: linear-gradient(180deg, rgba(244, 249, 255, 0.98), rgba(232, 241, 255, 0.9)) !important;
+        background-color: rgba(238, 246, 255, 0.96) !important;
+        box-shadow: 0 10px 18px rgba(37, 99, 235, 0.1) !important;
+        color: #316dca !important;
+        transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-more .anticon {
+        font-size: 16px;
+        font-weight: 700;
+        color: inherit !important;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-more[aria-expanded="true"] {
+        border-color: rgba(113, 166, 242, 0.98) !important;
+        background: linear-gradient(180deg, rgba(232, 242, 255, 1), rgba(216, 232, 255, 0.96)) !important;
+        background-color: rgba(223, 236, 255, 0.98) !important;
+        color: #1f63c7 !important;
+        box-shadow: 0 12px 22px rgba(37, 99, 235, 0.16) !important;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-nav-more:hover {
+        border-color: rgba(113, 166, 242, 0.98) !important;
+        background: linear-gradient(180deg, rgba(237, 245, 255, 1), rgba(223, 236, 255, 0.96)) !important;
+        background-color: rgba(228, 239, 255, 0.98) !important;
+        color: #1f63c7 !important;
+        box-shadow: 0 12px 22px rgba(37, 99, 235, 0.16) !important;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-tab {
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        height: 46px;
+        margin: 0 2px 0 0 !important;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 0;
+        color: rgba(31, 60, 90, 0.72);
+        transition: background-color 0.18s ease, color 0.18s ease;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-tab:hover {
+        background: rgba(59, 130, 246, 0.05);
+        color: #1d4f91;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-tab-active {
+        color: #1f6fff;
+        background: linear-gradient(180deg, rgba(79, 146, 255, 0.08), rgba(79, 146, 255, 0.02));
+        box-shadow: inset 0 -2px 0 #4f92ff;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-tab-btn {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .MainTab > .ant-tabs-nav .ant-tabs-tab-remove {
+        color: rgba(31, 60, 90, 0.4);
+    }
+
+    .ant-dropdown .ant-tabs-dropdown-menu {
+        min-width: 172px;
+        margin-top: 0;
+        padding: 8px;
+        max-height: none !important;
+        overflow: visible !important;
+        border: 1px solid rgba(201, 217, 240, 0.96) !important;
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.97)) !important;
+        background-color: rgba(249, 252, 255, 0.98) !important;
+        backdrop-filter: blur(18px);
+        box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12) !important;
+    }
+
+    .ant-dropdown .ant-tabs-dropdown-menu-item {
+        min-width: 156px;
+        margin: 1px 0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        color: #2c4564;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.35;
+        transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+
+    .ant-dropdown .ant-tabs-dropdown-menu-item:hover {
+        background: linear-gradient(90deg, rgba(79, 146, 255, 0.14), rgba(79, 146, 255, 0.04)) !important;
+        color: #1e63c7 !important;
+        transform: translateX(1px);
+    }
+
+    @@media (max-width: 900px) {
+        .main-layout-content {
+            --main-tab-nav-padding: 8px;
+            padding-right: 10px;
+        }
+
+        .MainTab {
+            padding-top: 48px;
+        }
+
+        .MainTab > .ant-tabs-nav {
+            right: 128px;
+            padding-inline: 8px;
+        }
+
+        .MainTab > .ant-tabs-nav::after {
+            right: 54px;
+            width: 44px;
+        }
+
+        .MainTab :is(.ant-tabs-tab) {
+            padding-inline: 12px;
+        }
     }
 </style>
 
@@ -508,7 +867,7 @@
     ;
 
     RenderFragment<AntDesign.ReuseTabsPageItem> tabPaneTemplate = context =>
-    @<div style="padding-top:30px;">
+    @<div style="padding-top:0;">
         <div Class="site-layout-background">
             @context.Body
         </div>
@@ -541,6 +900,18 @@
     UserDto user = new();
 
     List<string> functionList = new();
+
+    bool reuseTabMoreVisible;
+
+    HashSet<int> overflowTabIndexes = [];
+
+    static readonly BindingFlags reuseTabBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+    static readonly PropertyInfo? reuseTabTitleProperty = typeof(AntDesign.ReuseTabsPageItem).GetProperty("Title", reuseTabBindingFlags);
+
+    static readonly PropertyInfo? reuseTabUrlProperty = typeof(AntDesign.ReuseTabsPageItem).GetProperty("Url", reuseTabBindingFlags);
+
+    static readonly FieldInfo? reuseTabUrlField = typeof(AntDesign.ReuseTabsPageItem).GetField("<Url>k__BackingField", reuseTabBindingFlags);
 
 
     private async Task AuthenticationAsync()
@@ -589,6 +960,132 @@
                 StateHasChanged();
             }
         }
+    }
+
+
+    /// <summary>
+    /// 获取更多菜单中的复用标签页集合
+    /// </summary>
+    private IEnumerable<AntDesign.ReuseTabsPageItem> GetReuseTabMenuPages()
+    {
+        if (overflowTabIndexes.Count == 0)
+        {
+            return [];
+        }
+
+        return ReuseTabsService.Pages
+            .Where(page => !page.Ignore)
+            .Select((page, index) => new { page, index })
+            .Where(item => overflowTabIndexes.Contains(item.index))
+            .Select(item => item.page);
+    }
+
+
+    /// <summary>
+    /// 渲染更多菜单中的标签标题
+    /// </summary>
+    private RenderFragment RenderReuseTabTitle(AntDesign.ReuseTabsPageItem page)
+    {
+        var title = reuseTabTitleProperty?.GetValue(page);
+
+        return builder =>
+        {
+            switch (title)
+            {
+                case RenderFragment fragment:
+                    fragment(builder);
+                    break;
+                case string text when !string.IsNullOrWhiteSpace(text):
+                    builder.AddContent(0, text);
+                    break;
+                default:
+                    builder.AddContent(0, "未命名标签");
+                    break;
+            }
+        };
+    }
+
+
+    /// <summary>
+    /// 获取复用标签页在更多菜单中的样式类
+    /// </summary>
+    private string GetReuseTabMenuItemClass(AntDesign.ReuseTabsPageItem page)
+    {
+        return IsCurrentReuseTab(page)
+            ? "main-layout-tab-more-menu__item main-layout-tab-more-menu__item--active"
+            : "main-layout-tab-more-menu__item";
+    }
+
+
+    /// <summary>
+    /// 切换更多标签菜单的显示状态
+    /// </summary>
+    private async Task ToggleReuseTabMoreMenu()
+    {
+        if (reuseTabMoreVisible)
+        {
+            reuseTabMoreVisible = false;
+            return;
+        }
+
+        var indexes = await JS.InvokeAsync<int[]>("netEngineMainLayout.getOverflowTabIndexes");
+
+        overflowTabIndexes = indexes.ToHashSet();
+
+        reuseTabMoreVisible = overflowTabIndexes.Count > 0;
+    }
+
+
+    /// <summary>
+    /// 关闭更多标签菜单
+    /// </summary>
+    private void CloseReuseTabMoreMenu()
+    {
+        reuseTabMoreVisible = false;
+    }
+
+
+    /// <summary>
+    /// 激活更多菜单中的复用标签页
+    /// </summary>
+    private void ActivateReuseTab(AntDesign.ReuseTabsPageItem page)
+    {
+        var pageUrl = GetReuseTabPageUrl(page);
+
+        reuseTabMoreVisible = false;
+        overflowTabIndexes.Clear();
+
+        if (!string.IsNullOrWhiteSpace(pageUrl))
+        {
+            NavigationManager.NavigateTo(pageUrl);
+        }
+    }
+
+
+    /// <summary>
+    /// 判断复用标签页是否为当前页面
+    /// </summary>
+    private bool IsCurrentReuseTab(AntDesign.ReuseTabsPageItem page)
+    {
+        var pageUrl = GetReuseTabPageUrl(page);
+
+        if (string.IsNullOrWhiteSpace(pageUrl))
+        {
+            return false;
+        }
+
+        var currentUrl = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri).TrimStart('/');
+
+        return string.Equals(currentUrl, pageUrl, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    /// <summary>
+    /// 获取复用标签页的访问地址
+    /// </summary>
+    private string? GetReuseTabPageUrl(AntDesign.ReuseTabsPageItem page)
+    {
+        return reuseTabUrlProperty?.GetValue(page) as string ?? reuseTabUrlField?.GetValue(page) as string;
     }
 
 

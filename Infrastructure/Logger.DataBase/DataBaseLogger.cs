@@ -5,15 +5,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System.Diagnostics;
+using System.Text;
 
 namespace Logger.DataBase;
 
-public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IServiceProvider serviceProvider, DataBaseLogWriter logWriter) : ILogger
+/// <summary>
+/// 数据库日志记录器
+/// </summary>
+public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IServiceProvider serviceProvider, DataBaseLogWriter logWriter, IExternalScopeProvider? scopeProvider) : ILogger
 {
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
-        return default;
+        return scopeProvider?.Push(state);
     }
 
 
@@ -35,6 +39,13 @@ public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IS
 
                 if (logContent != null)
                 {
+                    var scopeText = CaptureScopes();
+
+                    if (!string.IsNullOrEmpty(scopeText))
+                    {
+                        logContent = scopeText + " " + logContent;
+                    }
+
                     if (categoryName.StartsWith("Microsoft.EntityFrameworkCore"))
                     {
                         var stackTrace = new StackTrace(true);
@@ -100,6 +111,44 @@ public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IS
             }
 
         }
+    }
+
+
+    /// <summary>
+    /// 收集当前所有 Scope 并序列化为 JSON
+    /// </summary>
+    private string? CaptureScopes()
+    {
+        if (scopeProvider is null)
+        {
+            return null;
+        }
+
+        StringBuilder builder = new();
+
+        scopeProvider.ForEachScope((scope, state) =>
+        {
+            if (scope is null)
+            {
+                return;
+            }
+
+            if (state.Length > 0)
+            {
+                state.Append(' ');
+            }
+
+            try
+            {
+                state.Append(JsonHelper.ObjectToJson(scope));
+            }
+            catch
+            {
+                state.Append(scope);
+            }
+        }, builder);
+
+        return builder.Length == 0 ? null : builder.ToString();
     }
 
 }

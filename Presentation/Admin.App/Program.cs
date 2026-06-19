@@ -1,5 +1,4 @@
 using Admin.App.Libraries;
-using Blazored.LocalStorage;
 using DistributedLock.InMemory;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -7,8 +6,16 @@ using NetEngine.Generated;
 using System.Globalization;
 
 namespace Admin.App;
+
+/// <summary>
+/// 管理端应用入口
+/// </summary>
 public class Program
 {
+
+    /// <summary>
+    /// 启动管理端应用
+    /// </summary>
     public static async Task Main(string[] args)
     {
 
@@ -37,7 +44,7 @@ public class Program
             client.BaseAddress = new Uri(appApiUrl);
         });
 
-        builder.Services.AddBlazoredLocalStorage();
+        builder.Services.AddScoped<IBrowserLocalStorageService, BrowserLocalStorageService>();
 
         builder.Services.AddAntDesign();
 
@@ -51,7 +58,7 @@ public class Program
 
         await using WebAssemblyHost host = builder.Build();
 
-        var localStorage = host.Services.GetRequiredService<ISyncLocalStorageService>();
+        var localStorage = host.Services.GetRequiredService<IBrowserLocalStorageService>();
         localStorage.SetItemAsString("appApiUrl", appApiUrl);
 
         await host.RunAsync();

@@ -1,5 +1,4 @@
 using AntDesign;
-using Blazored.LocalStorage;
 using Common;
 using Microsoft.AspNetCore.Components;
 using System.Net;
@@ -16,12 +15,15 @@ namespace Admin.App.Libraries;
 public class HttpInterceptor : DelegatingHandler
 {
 
-    private readonly ISyncLocalStorageService LocalStorage;
+    private readonly IBrowserLocalStorageService LocalStorage;
     private readonly NavigationManager NavigationManager;
     private readonly NotificationService Notice;
 
 
-    public HttpInterceptor(ISyncLocalStorageService _LocalStorage, NavigationManager _NavigationManager, NotificationService _Notice)
+    /// <summary>
+    /// 初始化 Http 请求拦截器
+    /// </summary>
+    public HttpInterceptor(IBrowserLocalStorageService _LocalStorage, NavigationManager _NavigationManager, NotificationService _Notice)
     {
         LocalStorage = _LocalStorage;
         NavigationManager = _NavigationManager;
@@ -30,6 +32,9 @@ public class HttpInterceptor : DelegatingHandler
     }
 
 
+    /// <summary>
+    /// 发送并处理带鉴权信息的请求
+    /// </summary>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var authorization = LocalStorage.GetItemAsString("Authorization");

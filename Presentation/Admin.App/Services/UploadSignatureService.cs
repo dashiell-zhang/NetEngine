@@ -1,4 +1,4 @@
-using Blazored.LocalStorage;
+using Admin.App.Libraries;
 using SourceGenerator.Runtime.Attributes;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,10 +9,20 @@ namespace Admin.App.Services;
 /// 负责生成上传请求的鉴权数据
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class UploadSignatureService(ISyncLocalStorageService localStorage)
+public class UploadSignatureService
 {
 
-    private readonly ISyncLocalStorageService _localStorage = localStorage;
+    private readonly IBrowserLocalStorageService _localStorage;
+
+
+    /// <summary>
+    /// 初始化上传签名服务
+    /// </summary>
+    public UploadSignatureService(IBrowserLocalStorageService localStorage)
+    {
+
+        _localStorage = localStorage;
+    }
 
 
     /// <summary>

@@ -157,18 +157,24 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
                 var paramList = string.Join(", ", ctor.Parameters.Select(p => FormatParameter(p, includeDefault: true, ns)));
                 var argList = string.Join(", ", ctor.Parameters.Select(p => p.Name));
+                var firstIsSp = ctor.Parameters.FirstOrDefault() is IParameterSymbol fp && IsType(fp.Type, "System.IServiceProvider");
+                var firstSpName = firstIsSp ? ctor.Parameters[0].Name : null;
                 
                 // 纯粹镜像基类构造函数
                 sb.Append("    public ").Append(proxyName).Append('(').Append(paramList).Append(')').AppendLine()
                   .AppendLine("        : base(" + argList + ")")
-                  .AppendLine("    {")
-                  .AppendLine("    }")
+                  .AppendLine("    {");
+
+                if (firstSpName is not null)
+                {
+                    sb.AppendLine("        __sp = " + firstSpName + ";");
+                }
+
+                sb.AppendLine("    }")
                   .AppendLine()
                   .AppendLine();
 
                 // 如果第一个参数不是 IServiceProvider 则生成以 IServiceProvider 作为首参的重载构造函数
-                var firstIsSp = ctor.Parameters.FirstOrDefault() is IParameterSymbol fp && IsType(fp.Type, "System.IServiceProvider");
-                
                 if (!firstIsSp)
                 {
                     var withSpParams = (ctor.Parameters.Length == 0)
@@ -1954,5 +1960,4 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
     }
 
 }
-
 

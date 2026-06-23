@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SourceGenerator.Core;
@@ -16,6 +17,15 @@ internal static class AutoProxyEligibility
     /// <returns>如果可以生成代理则返回 true</returns>
     public static bool CanGenerateProxy(INamedTypeSymbol type)
         => Validate(type).CanGenerate;
+
+
+    /// <summary>
+    /// 判断目标类型是否可以生成完整可编译的 AutoProxy 代理
+    /// </summary>
+    /// <param name="type">待检查的目标类型</param>
+    /// <returns>如果类型和方法都可以生成代理则返回 true</returns>
+    public static bool CanGenerateCompleteProxy(INamedTypeSymbol type)
+        => CanGenerateProxy(type) && !GetUnsupportedAsyncByRefMethods(type).Any();
 
 
     /// <summary>
@@ -59,6 +69,43 @@ internal static class AutoProxyEligibility
 
 
     /// <summary>
+    /// 获取返回 Task 或 ValueTask 且带 ref out in 参数的不可代理方法
+    /// </summary>
+    /// <param name="type">待检查的目标类型</param>
+    /// <returns>不可代理的方法列表</returns>
+    public static IEnumerable<IMethodSymbol> GetUnsupportedAsyncByRefMethods(INamedTypeSymbol type)
+    {
+
+        foreach (var method in type.GetMembers().OfType<IMethodSymbol>())
+        {
+            if (!ShouldGenerateDerivedOverride(method))
+                continue;
+
+            if (IsUnsupportedAsyncByRefMethod(method))
+                yield return method;
+        }
+
+        foreach (var iface in type.AllInterfaces)
+        {
+            foreach (var member in iface.GetMembers())
+            {
+                if (member is not IMethodSymbol method)
+                    continue;
+
+                if (!ShouldGenerateExplicitInterfaceMethod(type, method, out var impl))
+                    continue;
+
+                var diagnosticMethod = impl ?? method;
+
+                if (IsUnsupportedAsyncByRefMethod(diagnosticMethod))
+                    yield return diagnosticMethod;
+            }
+        }
+
+    }
+
+
+    /// <summary>
     /// 判断目标类型及其外层类型是否都是 public
     /// </summary>
     /// <param name="type">待检查的目标类型</param>
@@ -92,6 +139,122 @@ internal static class AutoProxyEligibility
         }
 
         return true;
+
+    }
+
+
+    /// <summary>
+    /// 判断方法是否需要生成派生类 override 实现
+    /// </summary>
+    /// <param name="method">待检查的方法</param>
+    /// <returns>如果需要生成派生类 override 实现则返回 true</returns>
+    private static bool ShouldGenerateDerivedOverride(IMethodSymbol method)
+    {
+
+        if (method.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise or MethodKind.StaticConstructor or MethodKind.Constructor)
+            return false;
+
+        if (!IsSupportedOverrideAccessibility(method.DeclaredAccessibility) || method.IsStatic)
+            return false;
+
+        if (method.IsSealed)
+            return false;
+
+        return method.IsVirtual || method.IsAbstract || method.IsOverride;
+
+    }
+
+
+    /// <summary>
+    /// 判断接口方法是否需要生成显式接口代理实现
+    /// </summary>
+    /// <param name="type">待检查的目标类型</param>
+    /// <param name="method">待检查的接口方法</param>
+    /// <param name="impl">接口方法在目标类型中的实现</param>
+    /// <returns>如果需要生成显式接口代理实现则返回 true</returns>
+    private static bool ShouldGenerateExplicitInterfaceMethod(INamedTypeSymbol type, IMethodSymbol method, out IMethodSymbol? impl)
+    {
+
+        impl = null;
+
+        if (method.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise)
+            return false;
+
+        impl = type.FindImplementationForInterfaceMember(method) as IMethodSymbol;
+
+        if (impl is not null && impl.ExplicitInterfaceImplementations.Length > 0)
+            return false;
+
+        if (impl is not null && (impl.IsVirtual || impl.IsAbstract || impl.IsOverride))
+            return false;
+
+        return true;
+
+    }
+
+
+    /// <summary>
+    /// 判断方法是否是当前不支持的异步 ref out in 签名
+    /// </summary>
+    /// <param name="method">待检查的方法</param>
+    /// <returns>如果方法签名不支持生成代理则返回 true</returns>
+    private static bool IsUnsupportedAsyncByRefMethod(IMethodSymbol method)
+        => IsTaskOrValueTaskReturn(method.ReturnType)
+           && method.Parameters.Any(p => p.RefKind != RefKind.None);
+
+
+    /// <summary>
+    /// 判断返回值是否为 Task 或 ValueTask
+    /// </summary>
+    /// <param name="returnType">待检查的返回值类型</param>
+    /// <returns>如果返回值是 Task 或 ValueTask 则返回 true</returns>
+    private static bool IsTaskOrValueTaskReturn(ITypeSymbol returnType)
+    {
+
+        if (returnType is not INamedTypeSymbol named)
+            return false;
+
+        var type = named.IsGenericType && named.ConstructedFrom is INamedTypeSymbol constructedFrom
+            ? constructedFrom
+            : named;
+
+        return IsType(type, "System.Threading.Tasks.Task")
+               || IsType(type, "System.Threading.Tasks.ValueTask");
+
+    }
+
+
+    /// <summary>
+    /// 判断指定可访问性是否支持生成派生类 override
+    /// </summary>
+    /// <param name="accessibility">待检查的访问性</param>
+    /// <returns>如果支持生成派生类 override 则返回 true</returns>
+    private static bool IsSupportedOverrideAccessibility(Accessibility accessibility)
+        => accessibility is Accessibility.Public
+            or Accessibility.Protected
+            or Accessibility.Internal
+            or Accessibility.ProtectedOrInternal
+            or Accessibility.ProtectedAndInternal;
+
+
+    /// <summary>
+    /// 判断类型是否匹配指定元数据名称
+    /// </summary>
+    /// <param name="type">待检查的类型</param>
+    /// <param name="metadataName">元数据名称</param>
+    /// <returns>如果类型匹配则返回 true</returns>
+    private static bool IsType(ITypeSymbol type, string metadataName)
+    {
+
+        var checkType = type is INamedTypeSymbol { IsGenericType: true, ConstructedFrom: INamedTypeSymbol constructedFrom }
+            ? constructedFrom
+            : type;
+        var actual = checkType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var expected = metadataName.StartsWith("global::", System.StringComparison.Ordinal)
+            ? metadataName
+            : "global::" + metadataName;
+
+        return string.Equals(actual, expected, System.StringComparison.Ordinal);
 
     }
 

@@ -54,6 +54,21 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     return;
                 }
 
+                var hasInvalidMethod = false;
+                foreach (var method in AutoProxyEligibility.GetUnsupportedAsyncByRefMethods(typeSymbol))
+                {
+                    hasInvalidMethod = true;
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        UnsupportedAsyncByRefMethodDescriptor,
+                        method.Locations.FirstOrDefault() ?? typeSymbol.Locations.FirstOrDefault(),
+                        method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                }
+
+                if (hasInvalidMethod)
+                {
+                    return;
+                }
+
                 if (classHandler.CanHandle(typeSymbol, attrData))
                 {
                     classHandler.Execute(new HandlerContext(spc, typeSymbol, attrData));
@@ -70,6 +85,18 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         id: "AutoProxy001",
         title: "AutoProxy 目标类型不支持生成代理",
         messageFormat: "类型 {0} 无法生成 AutoProxy 代理：{1}",
+        category: "AutoProxyGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当 AutoProxy 方法签名不支持生成代理时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor UnsupportedAsyncByRefMethodDescriptor = new(
+        id: "AutoProxy002",
+        title: "AutoProxy 方法签名不支持生成代理",
+        messageFormat: "方法 {0} 不能生成 AutoProxy 代理：Task 或 ValueTask 返回值的方法不支持 ref、out 或 in 参数",
         category: "AutoProxyGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -218,17 +245,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             // 为虚方法/抽象方法/已重写的可访问实例方法生成重写实现（支持 public/protected/internal）
             foreach (var method in cls.GetMembers().OfType<IMethodSymbol>())
             {
-                if (method.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise or MethodKind.StaticConstructor or MethodKind.Constructor)
-                    continue;
-                
-                if (!IsSupportedOverrideAccessibility(method.DeclaredAccessibility) || method.IsStatic)
-                    continue;
-
-                // sealed override 不能再被重写
-                if (method.IsSealed)
-                    continue;
-                
-                if (!(method.IsVirtual || method.IsAbstract || method.IsOverride))
+                if (!ShouldGenerateDerivedOverride(method))
                     continue;
                 
                 AppendDerivedOverride(sb, method, classFull, callTarget: "base", ns);
@@ -242,18 +259,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     switch (member)
                     {
                         case IMethodSymbol m:
-                            if (m.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise)
-                                continue;
-                            // 在当前类层次结构中查找此接口成员的实现
-                            var impl = cls.FindImplementationForInterfaceMember(m) as IMethodSymbol;
-                            // 如果在继承层次中实现是显式接口实现
-                            // 无法通过 base.Method(...) 转发 否则会产生编译错误
-                            // 因此跳过生成对应代码
-                            if (impl is not null && impl.ExplicitInterfaceImplementations.Length > 0)
-                                break;
-                            // 如果实现方法本身已可被重写 通过 override 路径在接口调用时也能被拦截
-                            // 此时再生成显式接口实现是冗余的 为避免重复列出接口选择跳过
-                            if (impl is not null && (impl.IsVirtual || impl.IsAbstract || impl.IsOverride))
+                            if (!ShouldGenerateExplicitInterfaceMethod(cls, m, out var impl))
                                 break;
                             AppendExplicitInterfaceMethod(sb, iface, m, impl, classFull, ns);
                             break;
@@ -733,6 +739,56 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 or Accessibility.Internal
                 or Accessibility.ProtectedOrInternal
                 or Accessibility.ProtectedAndInternal;
+
+
+        /// <summary>
+        /// 判断方法是否需要生成派生类 override 实现
+        /// </summary>
+        private static bool ShouldGenerateDerivedOverride(IMethodSymbol method)
+        {
+
+            if (method.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise or MethodKind.StaticConstructor or MethodKind.Constructor)
+                return false;
+
+            if (!IsSupportedOverrideAccessibility(method.DeclaredAccessibility) || method.IsStatic)
+                return false;
+
+            if (method.IsSealed)
+                return false;
+
+            return method.IsVirtual || method.IsAbstract || method.IsOverride;
+
+        }
+
+
+        /// <summary>
+        /// 判断接口方法是否需要生成显式接口代理实现
+        /// </summary>
+        private static bool ShouldGenerateExplicitInterfaceMethod(INamedTypeSymbol cls, IMethodSymbol method, out IMethodSymbol? impl)
+        {
+
+            impl = null;
+
+            if (method.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.EventRaise)
+                return false;
+
+            // 在当前类层次结构中查找此接口成员的实现
+            impl = cls.FindImplementationForInterfaceMember(method) as IMethodSymbol;
+
+            // 如果在继承层次中实现是显式接口实现
+            // 无法通过 base.Method(...) 转发 否则会产生编译错误
+            // 因此跳过生成对应代码
+            if (impl is not null && impl.ExplicitInterfaceImplementations.Length > 0)
+                return false;
+
+            // 如果实现方法本身已可被重写 通过 override 路径在接口调用时也能被拦截
+            // 此时再生成显式接口实现是冗余的 为避免重复列出接口选择跳过
+            if (impl is not null && (impl.IsVirtual || impl.IsAbstract || impl.IsOverride))
+                return false;
+
+            return true;
+
+        }
 
 
         private static string GetOverrideAccessibilityText(Accessibility accessibility) => accessibility switch

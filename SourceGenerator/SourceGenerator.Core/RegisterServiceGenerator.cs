@@ -177,7 +177,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 var keyExpr = GetKeyExpression(attrData);
 
                 var hasAutoProxy = HasAutoProxy(typeSymbol, autoProxyAttributeSymbol);
-                var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateProxy(typeSymbol);
+                var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateCompleteProxy(typeSymbol);
                 CollectNamespaces(usingNamespaces, typeSymbol);
 
                 // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型

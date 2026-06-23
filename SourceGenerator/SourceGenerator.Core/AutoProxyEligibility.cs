@@ -25,7 +25,9 @@ internal static class AutoProxyEligibility
     /// <param name="type">待检查的目标类型</param>
     /// <returns>如果类型和方法都可以生成代理则返回 true</returns>
     public static bool CanGenerateCompleteProxy(INamedTypeSymbol type)
-        => CanGenerateProxy(type) && !GetUnsupportedAsyncByRefMethods(type).Any();
+        => CanGenerateProxy(type)
+           && !GetUnsupportedAsyncByRefMethods(type).Any()
+           && !GetUnsupportedDefaultInterfaceMethods(type).Any();
 
 
     /// <summary>
@@ -99,6 +101,32 @@ internal static class AutoProxyEligibility
 
                 if (IsUnsupportedAsyncByRefMethod(diagnosticMethod))
                     yield return diagnosticMethod;
+            }
+        }
+
+    }
+
+
+    /// <summary>
+    /// 获取目标类型未显式实现且无法被代理安全转发的接口默认实现方法
+    /// </summary>
+    /// <param name="type">待检查的目标类型</param>
+    /// <returns>无法代理的接口默认实现方法列表</returns>
+    public static IEnumerable<IMethodSymbol> GetUnsupportedDefaultInterfaceMethods(INamedTypeSymbol type)
+    {
+
+        foreach (var iface in type.AllInterfaces)
+        {
+            foreach (var member in iface.GetMembers())
+            {
+                if (member is not IMethodSymbol method)
+                    continue;
+
+                if (!IsDefaultInterfaceMethod(method))
+                    continue;
+
+                if (!HasClassImplementation(type, method))
+                    yield return method;
             }
         }
 
@@ -201,6 +229,36 @@ internal static class AutoProxyEligibility
     private static bool IsUnsupportedAsyncByRefMethod(IMethodSymbol method)
         => IsTaskOrValueTaskReturn(method.ReturnType)
            && method.Parameters.Any(p => p.RefKind != RefKind.None);
+
+
+    /// <summary>
+    /// 判断方法是否是需要类显式接管的接口默认实现方法
+    /// </summary>
+    /// <param name="method">待检查的方法</param>
+    /// <returns>如果方法是接口默认实现方法则返回 true</returns>
+    private static bool IsDefaultInterfaceMethod(IMethodSymbol method)
+        => method.ContainingType.TypeKind == TypeKind.Interface
+           && method.MethodKind == MethodKind.Ordinary
+           && method.DeclaredAccessibility == Accessibility.Public
+           && !method.IsAbstract
+           && !method.IsStatic;
+
+
+    /// <summary>
+    /// 判断目标类型或其基类是否提供了接口方法的类实现
+    /// </summary>
+    /// <param name="type">待检查的目标类型</param>
+    /// <param name="method">待检查的接口方法</param>
+    /// <returns>如果接口方法由类层次结构实现则返回 true</returns>
+    private static bool HasClassImplementation(INamedTypeSymbol type, IMethodSymbol method)
+    {
+
+        var impl = type.FindImplementationForInterfaceMember(method) as IMethodSymbol;
+
+        return impl is not null
+               && impl.ContainingType.TypeKind == TypeKind.Class;
+
+    }
 
 
     /// <summary>

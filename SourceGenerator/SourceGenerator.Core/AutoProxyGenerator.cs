@@ -65,6 +65,16 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
                 }
 
+                foreach (var method in AutoProxyEligibility.GetUnsupportedDefaultInterfaceMethods(typeSymbol))
+                {
+                    hasInvalidMethod = true;
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        UnsupportedDefaultInterfaceMethodDescriptor,
+                        method.Locations.FirstOrDefault() ?? typeSymbol.Locations.FirstOrDefault(),
+                        typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                }
+
                 if (hasInvalidMethod)
                 {
                     return;
@@ -98,6 +108,18 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         id: "AutoProxy002",
         title: "AutoProxy 方法签名不支持生成代理",
         messageFormat: "方法 {0} 不能生成 AutoProxy 代理：Task 或 ValueTask 返回值的方法不支持 ref、out 或 in 参数",
+        category: "AutoProxyGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当 AutoProxy 目标类型继承了无法拦截的接口默认实现方法时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor UnsupportedDefaultInterfaceMethodDescriptor = new(
+        id: "AutoProxy003",
+        title: "AutoProxy 接口默认实现方法不支持代理",
+        messageFormat: "类型 {0} 不能生成 AutoProxy 代理：接口默认实现方法 {1} 无法被代理安全转发，请在目标类型中提供可代理的 public virtual 实现",
         category: "AutoProxyGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

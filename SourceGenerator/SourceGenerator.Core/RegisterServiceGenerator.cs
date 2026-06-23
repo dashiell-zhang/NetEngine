@@ -209,22 +209,28 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 AddNamespace(usingNamespaces, serviceInfo?.Namespace);
                 AddNamespace(usingNamespaces, implInfo.Namespace);
 
-                AddCount(implInfo.Minimal);
-                AddCount(serviceInfo?.Minimal);
+                AddCount(implInfo.ConflictKey);
+                AddCount(serviceInfo?.ConflictKey);
 
                 registrationInfos.Add(new RegistrationInfo(lifetime, keyExpr, implInfo, serviceInfo));
             }
 
             foreach (var info in registrationInfos)
             {
-                var implDisplay = nameCounts[info.Impl.Minimal] > 1 ? info.Impl.Full : info.Impl.Minimal;
+                var implDisplay = nameCounts[info.Impl.ConflictKey] > 1 ? info.Impl.Full : info.Impl.Minimal;
                 var serviceDisplay = info.Service is null
                     ? null
-                    : nameCounts[info.Service.Minimal] > 1
+                    : nameCounts[info.Service.ConflictKey] > 1
                         ? info.Service.Full
                         : info.Service.Minimal;
+                var implTypeof = nameCounts[info.Impl.ConflictKey] > 1 ? info.Impl.OpenGenericFullTypeof : info.Impl.OpenGenericMinimalTypeof;
+                var serviceTypeof = info.Service is null
+                    ? null
+                    : nameCounts[info.Service.ConflictKey] > 1
+                        ? info.Service.OpenGenericFullTypeof
+                        : info.Service.OpenGenericMinimalTypeof;
 
-                var call = BuildRegistrationCall(info.Lifetime, info.KeyExpr, serviceDisplay, implDisplay);
+                var call = BuildRegistrationCall(info.Lifetime, info.KeyExpr, serviceDisplay, implDisplay, serviceTypeof, implTypeof);
                 registrations.Append("        ").AppendLine(call);
             }
 
@@ -351,7 +357,14 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             ? typeSymbol.ContainingNamespace.ToDisplayString()
             : null;
 
-        return new DisplayInfo(minimal, full, ns);
+        var openGenericMinimalTypeof = ContainsTypeParameter(typeSymbol)
+            ? "typeof(" + BuildOpenGenericTypeName(typeSymbol, includeNamespace: false) + ")"
+            : null;
+        var openGenericFullTypeof = ContainsTypeParameter(typeSymbol)
+            ? "typeof(" + BuildOpenGenericTypeName(typeSymbol, includeNamespace: true) + ")"
+            : null;
+
+        return new DisplayInfo(minimal, full, ns, openGenericMinimalTypeof, openGenericFullTypeof);
     }
 
 
@@ -364,24 +377,155 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
         var minimal = $"{typeSymbol.Name}_Proxy";
         var full = $"{proxyNs}.{typeSymbol.Name}_Proxy";
-        return new DisplayInfo(minimal, full, proxyNs);
+        var genericArity = GetAllTypeParameterCount(typeSymbol);
+        var openGenericMinimalTypeof = genericArity > 0
+            ? "typeof(" + minimal + BuildOpenGenericAritySuffix(genericArity) + ")"
+            : null;
+        var openGenericFullTypeof = genericArity > 0
+            ? "typeof(" + full + BuildOpenGenericAritySuffix(genericArity) + ")"
+            : null;
+
+        return new DisplayInfo(minimal, full, proxyNs, openGenericMinimalTypeof, openGenericFullTypeof);
+    }
+
+
+    /// <summary>
+    /// 判断类型声明或类型参数中是否包含开放泛型参数
+    /// </summary>
+    /// <param name="symbol">待检查的类型符号</param>
+    /// <returns>如果包含开放泛型参数则返回 true</returns>
+    private static bool ContainsTypeParameter(ITypeSymbol symbol)
+    {
+        if (symbol.TypeKind == TypeKind.TypeParameter)
+            return true;
+
+        if (symbol is IArrayTypeSymbol arrayType)
+            return ContainsTypeParameter(arrayType.ElementType);
+
+        if (symbol is IPointerTypeSymbol pointerType)
+            return ContainsTypeParameter(pointerType.PointedAtType);
+
+        if (symbol is INamedTypeSymbol named)
+        {
+            foreach (var typeArg in named.TypeArguments)
+            {
+                if (ContainsTypeParameter(typeArg))
+                    return true;
+            }
+
+            return named.ContainingType is not null && ContainsTypeParameter(named.ContainingType);
+        }
+
+        return false;
+    }
+
+
+    /// <summary>
+    /// 构建开放泛型类型在 typeof 表达式中的类型名
+    /// </summary>
+    /// <param name="typeSymbol">待转换的命名类型符号</param>
+    /// <returns>可用于 typeof 的开放泛型类型名</returns>
+    private static string BuildOpenGenericTypeName(INamedTypeSymbol typeSymbol, bool includeNamespace)
+    {
+        var containingTypes = new Stack<INamedTypeSymbol>();
+        for (var t = typeSymbol; t is not null; t = t.ContainingType)
+        {
+            containingTypes.Push(t);
+        }
+
+        var sb = new StringBuilder();
+        if (includeNamespace && typeSymbol.ContainingNamespace is { IsGlobalNamespace: false } ns)
+        {
+            sb.Append(ns.ToDisplayString()).Append('.');
+        }
+
+        var first = true;
+        foreach (var t in containingTypes)
+        {
+            if (!first)
+            {
+                sb.Append('.');
+            }
+
+            sb.Append(t.Name).Append(BuildOpenGenericAritySuffix(t.Arity));
+            first = false;
+        }
+
+        return sb.ToString();
+    }
+
+
+    /// <summary>
+    /// 构建开放泛型类型参数占位符后缀
+    /// </summary>
+    /// <param name="arity">泛型参数数量</param>
+    /// <returns>开放泛型后缀 例如 &lt;&gt; 或 &lt;,&gt;</returns>
+    private static string BuildOpenGenericAritySuffix(int arity)
+    {
+        if (arity <= 0)
+            return string.Empty;
+
+        return "<" + new string(',', arity - 1) + ">";
+    }
+
+
+    /// <summary>
+    /// 获取类型及其外层类型链上的泛型参数总数
+    /// </summary>
+    /// <param name="typeSymbol">待统计的类型符号</param>
+    /// <returns>泛型参数总数</returns>
+    private static int GetAllTypeParameterCount(INamedTypeSymbol typeSymbol)
+    {
+        var count = 0;
+        for (var t = typeSymbol; t is not null; t = t.ContainingType)
+        {
+            count += t.TypeParameters.Length;
+        }
+
+        return count;
     }
 
 
     private sealed class DisplayInfo
     {
-        public DisplayInfo(string minimal, string full, string? ns)
+        public DisplayInfo(string minimal, string full, string? ns, string? openGenericMinimalTypeof, string? openGenericFullTypeof)
         {
             Minimal = minimal;
             Full = full;
             Namespace = ns;
+            OpenGenericMinimalTypeof = openGenericMinimalTypeof;
+            OpenGenericFullTypeof = openGenericFullTypeof;
         }
 
+        /// <summary>
+        /// 当前命名空间下可用的最短类型显示名
+        /// </summary>
         public string Minimal { get; }
 
+        /// <summary>
+        /// 包含命名空间的完整类型显示名
+        /// </summary>
         public string Full { get; }
 
+        /// <summary>
+        /// 类型所在命名空间
+        /// </summary>
         public string? Namespace { get; }
+
+        /// <summary>
+        /// 用于判断是否需要完整限定名的冲突键
+        /// </summary>
+        public string ConflictKey => OpenGenericMinimalTypeof ?? Minimal;
+
+        /// <summary>
+        /// 开放泛型注册使用的最短 typeof 表达式
+        /// </summary>
+        public string? OpenGenericMinimalTypeof { get; }
+
+        /// <summary>
+        /// 开放泛型注册使用的完整 typeof 表达式
+        /// </summary>
+        public string? OpenGenericFullTypeof { get; }
     }
 
 
@@ -413,13 +557,62 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
     /// <param name="ifaceDisplay">作为 TService 使用的类型显示名，可为空表示自注册</param>
     /// <param name="implDisplay">实现类型的显示名</param>
     /// <returns>完整的扩展方法调用代码字符串</returns>
-    private static string BuildRegistrationCall(string lifetime, string? keyExpr, string? ifaceDisplay, string implDisplay)
+    private static string BuildRegistrationCall(string lifetime, string? keyExpr, string? ifaceDisplay, string implDisplay, string? ifaceTypeof = null, string? implTypeof = null)
     {
         var hasInterface = !string.IsNullOrWhiteSpace(ifaceDisplay);
 
         var hasKey = !string.IsNullOrWhiteSpace(keyExpr);
 
+        var useTypeofRegistration = !string.IsNullOrWhiteSpace(ifaceTypeof) || !string.IsNullOrWhiteSpace(implTypeof);
+
         var sb = new StringBuilder("services.");
+
+        if (useTypeofRegistration)
+        {
+            var serviceType = hasInterface
+                ? ifaceTypeof ?? "typeof(" + ifaceDisplay + ")"
+                : implTypeof ?? "typeof(" + implDisplay + ")";
+            var implementationType = implTypeof ?? serviceType;
+
+            if (!hasKey)
+            {
+                sb.Append(lifetime switch
+                {
+                    "Singleton" => "AddSingleton",
+                    "Scoped" => "AddScoped",
+                    _ => "AddTransient"
+                });
+
+                if (hasInterface)
+                {
+                    sb.Append("(").Append(serviceType).Append(", ").Append(implementationType).Append(");");
+                }
+                else
+                {
+                    sb.Append("(").Append(serviceType).Append(");");
+                }
+            }
+            else
+            {
+                sb.Append(lifetime switch
+                {
+                    "Singleton" => "AddKeyedSingleton",
+                    "Scoped" => "AddKeyedScoped",
+                    _ => "AddKeyedTransient"
+                });
+
+                if (hasInterface)
+                {
+                    sb.Append("(").Append(serviceType).Append(", ").Append(keyExpr).Append(", ").Append(implementationType).Append(");");
+                }
+                else
+                {
+                    sb.Append("(").Append(serviceType).Append(", ").Append(keyExpr).Append(");");
+                }
+            }
+
+            return sb.ToString();
+        }
 
         if (!hasKey)
         {

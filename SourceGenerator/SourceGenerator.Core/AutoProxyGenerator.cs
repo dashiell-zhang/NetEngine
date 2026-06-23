@@ -461,10 +461,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     
-                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper([global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                    sb.AppendLine($"            var __e = {callExpr}.GetAsyncEnumerator();");
+                    sb.AppendLine($"            var __e = {callExpr}.GetAsyncEnumerator(__enumerationCancellationToken);");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
                     sb.AppendLine("                while (true)");
@@ -514,9 +514,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var tItem = FormatType(((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0], currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     
-                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s, [global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
-                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
+                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator(__enumerationCancellationToken);");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
                     sb.AppendLine("                while (true)");
@@ -577,9 +577,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tItem = FormatType(((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0], currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
-                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s, [global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
-                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
+                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator(__enumerationCancellationToken);");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
                     sb.AppendLine("                while (true)");
@@ -688,10 +688,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                       .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
-                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper([global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                    sb.AppendLine($"            var __e = {callExpr}.GetAsyncEnumerator();");
+                    sb.AppendLine($"            var __e = {callExpr}.GetAsyncEnumerator(__enumerationCancellationToken);");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
                     sb.AppendLine("                while (true)");
@@ -1008,10 +1008,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
                     var callExpr2 = "base." + methodName + typeParams + "(" + argList + ")";
-                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper([global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                    sb.AppendLine($"            var __e = {callExpr2}.GetAsyncEnumerator();");
+                    sb.AppendLine($"            var __e = {callExpr2}.GetAsyncEnumerator(__enumerationCancellationToken);");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
                     sb.AppendLine("                while (true)");
@@ -1055,9 +1055,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 else if (isTaskOfAsyncEnumerable)
                 {
                     var tItem = FormatType(((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0], currentNamespace);
-                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s, [global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
-                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
+                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator(__enumerationCancellationToken);");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
                     sb.AppendLine("                while (true)");
@@ -1112,9 +1112,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 else if (isValueTaskOfAsyncEnumerable)
                 {
                     var tItem = FormatType(((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0], currentNamespace);
-                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s, [global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
-                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
+                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator(__enumerationCancellationToken);");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
                     sb.AppendLine("                while (true)");
@@ -1212,12 +1212,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                       .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
-                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper([global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
-                    sb.AppendLine($"                await foreach (var __item in {callExpr3})");
+                    sb.AppendLine($"                await foreach (var __item in {callExpr3}.WithCancellation(__enumerationCancellationToken))");
                     sb.AppendLine("                {");
                     sb.AppendLine("                    try { __items.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __items.Add(Convert.ToString(__item)); }");
                     sb.AppendLine("                    yield return __item;");

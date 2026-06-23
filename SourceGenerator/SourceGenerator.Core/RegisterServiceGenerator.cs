@@ -177,10 +177,11 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 var keyExpr = GetKeyExpression(attrData);
 
                 var hasAutoProxy = HasAutoProxy(typeSymbol, autoProxyAttributeSymbol);
+                var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateProxy(typeSymbol);
                 CollectNamespaces(usingNamespaces, typeSymbol);
 
                 // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型
-                var implInfo = hasAutoProxy
+                var implInfo = canUseAutoProxy
                     ? GetProxyDisplay(typeSymbol)
                     : GetDisplay(typeSymbol);
 
@@ -201,7 +202,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 // 2. 如果没有接口但带 [AutoProxy]，则使用原始类类型，形成
                 //    AddScoped<Demo2Service, Demo2Service_Proxy>() 这样的注册；
                 // 3. 否则为 null，走 self 注册。
-                if (serviceInfo is null && hasAutoProxy)
+                if (serviceInfo is null && canUseAutoProxy)
                 {
                     serviceInfo = GetDisplay(typeSymbol);
                 }

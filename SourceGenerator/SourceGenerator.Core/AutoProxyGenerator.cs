@@ -41,6 +41,18 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             if (typeSymbol.TypeKind == TypeKind.Class)
             {
                 var classHandler = new ClassProxyHandler();
+                var validation = AutoProxyEligibility.Validate(typeSymbol);
+
+                if (!validation.CanGenerate)
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        InvalidAutoProxyTargetDescriptor,
+                        typeSymbol.Locations.FirstOrDefault(),
+                        typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        validation.Reason ?? "目标类型不满足代理生成条件"));
+
+                    return;
+                }
 
                 if (classHandler.CanHandle(typeSymbol, attrData))
                 {
@@ -49,6 +61,18 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
         });
     }
+
+
+    /// <summary>
+    /// 当 AutoProxy 目标类型不支持生成代理时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor InvalidAutoProxyTargetDescriptor = new(
+        id: "AutoProxy001",
+        title: "AutoProxy 目标类型不支持生成代理",
+        messageFormat: "类型 {0} 无法生成 AutoProxy 代理：{1}",
+        category: "AutoProxyGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 
 
     /// <summary>
@@ -85,8 +109,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// 判断当前处理器是否可以处理给定类型
         /// </summary>
         public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
-            => type.TypeKind == TypeKind.Class
-               && type.Constructors.Any(c => c.DeclaredAccessibility == Accessibility.Public);
+            => AutoProxyEligibility.CanGenerateProxy(type);
 
 
         /// <summary>
@@ -138,9 +161,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             // 代理类继承原始实现类型 只列出需要在代理中显式实现的接口
             var minimalInterfaces = GetInterfacesNeedingExplicitImplementations(cls);
             var ifaceList = minimalInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", minimalInterfaces.Select(i => TrimCurrentNamespace(i, ns)));
+            var proxyAccessibility = AutoProxyEligibility.GetProxyAccessibilityText(cls);
             
             // 使用完全限定的基类类型 避免全局命名空间或嵌套类型的解析问题
-            sb.Append("public sealed class ").Append(proxyName).Append(typeParamsDecl).Append(" : ").Append(classLocal).Append(ifaceList).AppendLine();
+            sb.Append(proxyAccessibility).Append(" sealed class ").Append(proxyName).Append(typeParamsDecl).Append(" : ").Append(classLocal).Append(ifaceList).AppendLine();
             
             if (!string.IsNullOrWhiteSpace(typeParamConstraints)) sb.Append(typeParamConstraints);
             

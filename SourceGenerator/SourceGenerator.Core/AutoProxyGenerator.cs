@@ -1863,7 +1863,20 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             if (c.Type is INamedTypeSymbol nts && nts.TypeKind == TypeKind.Enum)
             {
                 var named = nts.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                return named + "." + c.Value.ToString();
+                var field = nts.GetMembers()
+                    .OfType<IFieldSymbol>()
+                    .FirstOrDefault(f => f.HasConstantValue && Equals(f.ConstantValue, c.Value));
+
+                if (field is not null)
+                {
+                    return named + "." + field.Name;
+                }
+
+                var valueText = c.Value is IFormattable enumValue
+                    ? enumValue.ToString(null, System.Globalization.CultureInfo.InvariantCulture)
+                    : c.Value.ToString();
+
+                return "(" + named + ")" + valueText;
             }
             if (c.Value is IFormattable f) return f.ToString(null, System.Globalization.CultureInfo.InvariantCulture);
             return c.Value?.ToString();
@@ -1960,4 +1973,3 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
     }
 
 }
-

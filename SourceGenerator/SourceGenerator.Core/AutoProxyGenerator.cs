@@ -512,10 +512,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     tItem = TrimCurrentNamespace(tItem, currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     
-                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                    sb.AppendLine($"            var __s = await {callExpr};");
                     sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
@@ -535,7 +533,20 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                await __e.DisposeAsync();");
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
-                    sb.AppendLine($"        return Task.FromResult<IAsyncEnumerable<{tItem}>>(__streamWrapper());");
+                    sb.AppendLine($"        async Task<IAsyncEnumerable<{tItem}>> __taskWrapper(){{");
+                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            try");
+                    sb.AppendLine("            {");
+                    sb.AppendLine($"                var __s = await {callExpr};");
+                    sb.AppendLine("                return __streamWrapper(__s);");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("            catch (Exception __ex)");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("                throw;");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("        }");
+                    sb.AppendLine("        return __taskWrapper();");
                 }
                 else if (isGenericTask)
                 {
@@ -559,6 +570,48 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
+                }
+                else if (isValueTaskOfAsyncEnumerable)
+                {
+                    var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
+                        .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                    tItem = TrimCurrentNamespace(tItem, currentNamespace);
+                    var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s){{");
+                    sb.AppendLine("            var __items = new List<object?>(16);");
+                    sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
+                    sb.AppendLine("            try");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                while (true)");
+                    sb.AppendLine("                {");
+                    sb.AppendLine("                    bool __moved;");
+                    sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("                    if (!__moved) break;");
+                    sb.AppendLine("                    var __item = __e.Current;");
+                    sb.AppendLine("                    try { __items.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __items.Add(Convert.ToString(__item)); }");
+                    sb.AppendLine("                    yield return __item;");
+                    sb.AppendLine("                }");
+                    sb.AppendLine("                foreach (var __f in __filters) __f.OnAfter(__ctx, __items);");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("            finally");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                await __e.DisposeAsync();");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("        }");
+                    sb.AppendLine($"        async ValueTask<IAsyncEnumerable<{tItem}>> __valueTaskWrapper(){{");
+                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            try");
+                    sb.AppendLine("            {");
+                    sb.AppendLine($"                var __s = await {callExpr};");
+                    sb.AppendLine("                return __streamWrapper(__s);");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("            catch (Exception __ex)");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("                throw;");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("        }");
+                    sb.AppendLine("        return __valueTaskWrapper();");
                 }
                 else if (isValueTask)
                 {
@@ -1010,10 +1063,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
                     tItem = TrimCurrentNamespace(tItem, currentNamespace);
-                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                    sb.AppendLine($"            var __s = await {call};");
                     sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
@@ -1033,7 +1084,20 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                await __e.DisposeAsync();");
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
-                    sb.AppendLine($"        return Task.FromResult<IAsyncEnumerable<{tItem}>>(__streamWrapper());");
+                    sb.AppendLine($"        async Task<IAsyncEnumerable<{tItem}>> __taskWrapper(){{");
+                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            try");
+                    sb.AppendLine("            {");
+                    sb.AppendLine($"                var __s = await {call};");
+                    sb.AppendLine("                return __streamWrapper(__s);");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("            catch (Exception __ex)");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("                throw;");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("        }");
+                    sb.AppendLine("        return __taskWrapper();");
                 }
                 else if (isGenericTask)
                 {
@@ -1058,10 +1122,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var tItem = (((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0])
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
                     tItem = TrimCurrentNamespace(tItem, currentNamespace);
-                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(){{");
+                    sb.AppendLine($"        async IAsyncEnumerable<{tItem}> __streamWrapper(IAsyncEnumerable<{tItem}> __s){{");
                     sb.AppendLine("            var __items = new List<object?>(16);");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
-                    sb.AppendLine($"            var __s = await {call};");
                     sb.AppendLine("            var __e = __s.GetAsyncEnumerator();");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
@@ -1081,7 +1143,20 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     sb.AppendLine("                await __e.DisposeAsync();");
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
-                    sb.AppendLine($"        return new ValueTask<IAsyncEnumerable<{tItem}>>(__streamWrapper());");
+                    sb.AppendLine($"        async ValueTask<IAsyncEnumerable<{tItem}>> __valueTaskWrapper(){{");
+                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            try");
+                    sb.AppendLine("            {");
+                    sb.AppendLine($"                var __s = await {call};");
+                    sb.AppendLine("                return __streamWrapper(__s);");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("            catch (Exception __ex)");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("                throw;");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("        }");
+                    sb.AppendLine("        return __valueTaskWrapper();");
                 }
                 else if (isValueTask)
                 {

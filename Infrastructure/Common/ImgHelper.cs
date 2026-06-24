@@ -54,7 +54,7 @@ public class ImgHelper
         SKRect sourceRect = new(offsetX, offsetY, offsetX + width, offsetY + height);
         SKRect destRect = new(0, 0, width, height);
 
-        canvas.DrawBitmap(original, sourceRect, destRect);
+        canvas.DrawBitmap(original, sourceRect, destRect, new SKSamplingOptions(), null);
 
         using var img = SKImage.FromBitmap(bitmap);
         using SKData p = img.Encode(SKEncodedImageFormat.Png, 100);
@@ -126,7 +126,7 @@ public class ImgHelper
 
             // 计算当前字符宽度，调整下一个字符的位置
             float charWidth = font.MeasureText(currentChar, paint);
-            canvas.DrawText(currentChar, x, y, font, paint);
+            canvas.DrawText(currentChar, x, y, SKTextAlign.Left, font, paint);
             x += charWidth;  // 更新下一个字符的X坐标位置
         }
 

@@ -1,3 +1,4 @@
+using LLM.Anthropic;
 using LLM.Compatible;
 using LLM.Responses;
 
@@ -29,14 +30,36 @@ public sealed class DynamicLlmClientFactory(IHttpClientFactory httpClientFactory
 
         var httpClient = httpClientFactory.CreateClient();
         httpClient.Timeout = TimeSpan.FromSeconds(120);
-        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.ApiKey);
 
         return (LlmProtocolType)config.ProtocolType switch
         {
-            LlmProtocolType.Chat => new OpenAiCompatibleProviderClient(httpClient, config, config.ModelId),
-            LlmProtocolType.Responses => new OpenAiResponsesLlmClient(httpClient, config),
+            LlmProtocolType.Chat => CreateOpenAiCompatibleClient(httpClient, config),
+            LlmProtocolType.Responses => CreateOpenAiResponsesClient(httpClient, config),
+            LlmProtocolType.Anthropic => new AnthropicMessagesLlmClient(httpClient, config),
             _ => throw new InvalidOperationException($"Unsupported LLM protocol type: {config.ProtocolType}")
         };
+    }
+
+
+    /// <summary>
+    /// 创建 OpenAI-Compatible 客户端
+    /// </summary>
+    private static ILlmClient CreateOpenAiCompatibleClient(HttpClient httpClient, LlmModelConfig config)
+    {
+
+        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.ApiKey);
+        return new OpenAiCompatibleProviderClient(httpClient, config, config.ModelId);
+    }
+
+
+    /// <summary>
+    /// 创建 OpenAI Responses 客户端
+    /// </summary>
+    private static ILlmClient CreateOpenAiResponsesClient(HttpClient httpClient, LlmModelConfig config)
+    {
+
+        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.ApiKey);
+        return new OpenAiResponsesLlmClient(httpClient, config);
     }
 
 }

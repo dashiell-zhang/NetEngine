@@ -31,7 +31,7 @@ public class LlmModelDto
 
 
     /// <summary>
-    /// 协议类型（0=Chat, 1=Responses）
+    /// 协议类型（0=Chat, 1=Responses, 2=Anthropic）
     /// </summary>
     public int ProtocolType { get; set; }
 

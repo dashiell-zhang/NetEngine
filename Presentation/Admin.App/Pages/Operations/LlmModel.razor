@@ -154,7 +154,7 @@
 
                             <FormItem Class="llm-model-drawer__field-item">
                                 <div class="llm-model-drawer__field-label admin-required-label">端点地址</div>
-                                <Input Placeholder="如: https://api.deepseek.com/chat/completions 或 https://api.openai.com/v1/responses" @bind-Value="@context.Endpoint" />
+                                <Input Placeholder="如: https://api.deepseek.com/chat/completions、https://api.openai.com/v1/responses 或 https://api.anthropic.com/v1/messages" @bind-Value="@context.Endpoint" />
                             </FormItem>
 
                             <Row Gutter="24">
@@ -164,6 +164,7 @@
                                         <Select TItem="int" TItemValue="int" @bind-Value="@context.ProtocolType" Style="width: 100%">
                                             <SelectOption Value="0" Label="Chat"></SelectOption>
                                             <SelectOption Value="1" Label="Responses"></SelectOption>
+                                            <SelectOption Value="2" Label="Anthropic"></SelectOption>
                                         </Select>
                                     </FormItem>
                                 </AntDesign.Col>
@@ -855,6 +856,7 @@
     {
         0 => "Chat",
         1 => "Responses",
+        2 => "Anthropic",
         _ => "未知"
     };
 

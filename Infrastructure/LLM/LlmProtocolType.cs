@@ -15,6 +15,12 @@ public enum LlmProtocolType
     /// <summary>
     /// OpenAI Responses API 协议
     /// </summary>
-    Responses = 1
+    Responses = 1,
+
+
+    /// <summary>
+    /// Anthropic Messages API 协议
+    /// </summary>
+    Anthropic = 2
 
 }

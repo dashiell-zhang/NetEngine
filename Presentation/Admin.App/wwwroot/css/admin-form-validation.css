@@ -32,31 +32,51 @@
     border-radius: 18px !important;
 }
 
-.admin-page-list-shell {
-    border: 1px solid #e8eef6 !important;
-    border-radius: 18px !important;
-    overflow: hidden;
-    background: #ffffff !important;
+.ant-card:has(.admin-page-list-shell) {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     box-shadow: none !important;
 }
 
-.admin-page-list-shell [class*="__table-wrap"] {
+.ant-card:has(.admin-page-list-shell) > .ant-card-body {
+    padding: 0 !important;
+}
+
+.admin-page-list-shell {
+    border: 1px solid #e4edf7 !important;
+    border-radius: 20px !important;
     overflow: hidden;
-    border-radius: 16px;
+    background:
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 30%),
+        linear-gradient(135deg, #fffdf8 0%, #f6faff 50%, #ffffff 100%) !important;
+    box-shadow: 0 14px 30px rgba(56, 89, 136, 0.08) !important;
+}
+
+.admin-page-list-shell [class*="__table-wrap"] {
+    overflow-x: auto !important;
+    border-radius: 20px !important;
 }
 
 .admin-page-list-shell [class*="__table-wrap"] .ant-table {
     background: transparent !important;
 }
 
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-container,
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-content,
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-thead > tr > th:first-child,
+.admin-page-list-shell [class*="__table-wrap"] .ant-table-thead > tr > th:last-child {
+    border-radius: 0 !important;
+}
+
 .admin-page-list-shell [class*="__table-wrap"] .ant-table-thead > tr > th {
-    height: 56px !important;
-    padding: 0 12px !important;
-    background: #f6f9fd !important;
-    color: #475569 !important;
-    font-size: 13px !important;
+    height: auto !important;
+    padding: 16px 18px !important;
+    background: rgba(248, 251, 255, 0.88) !important;
+    color: #173253 !important;
+    font-size: 14px !important;
     font-weight: 700 !important;
-    letter-spacing: 0.04em !important;
+    letter-spacing: 0 !important;
     vertical-align: middle !important;
     border-bottom: 1px solid #dbe7f5 !important;
 }
@@ -67,16 +87,17 @@
 
 .admin-page-list-shell [class*="__table-wrap"] .ant-table-tbody > tr > td {
     height: auto !important;
-    padding: 15px 12px !important;
+    padding: 16px 18px !important;
     color: #1e293b !important;
     font-size: 13px !important;
+    background: rgba(255, 255, 255, 0.72) !important;
     vertical-align: middle !important;
-    border-bottom: 1px solid #eef2f7 !important;
+    border-bottom: 1px solid #e6eef8 !important;
     transition: background-color 0.2s ease;
 }
 
 .admin-page-list-shell [class*="__table-wrap"] .ant-table-tbody > tr:hover > td {
-    background: #f8fbff !important;
+    background: rgba(248, 251, 255, 0.96) !important;
 }
 
 .admin-page-list-shell [class*="__table-wrap"] .ant-table-tbody > tr:last-child > td {
@@ -105,6 +126,11 @@
     color: #94a3b8 !important;
 }
 
+.admin-page-list-shell a[class*="__link"],
+.admin-page-list-shell a[class*="__link-action"] {
+    font-weight: 500 !important;
+}
+
 .admin-page-list-pagination {
     margin: 0 !important;
     display: flex;
@@ -112,8 +138,8 @@
     justify-content: flex-end;
     min-height: 56px;
     padding: 0 16px !important;
-    border-top: 1px solid #eef4fb !important;
-    background: #ffffff !important;
+    border-top: 1px solid #e6eef8 !important;
+    background: rgba(255, 255, 255, 0.72) !important;
 }
 
 .admin-page-list-pagination .ant-pagination {
@@ -138,13 +164,58 @@
 }
 
 .admin-page-list-pagination .ant-pagination-item-active {
-    background: #e8f1ff !important;
+    background: #eaf3ff !important;
     border-color: #93c5fd !important;
 }
 
 .admin-page-list-pagination .ant-pagination-item-active a {
     color: #1d4ed8 !important;
     font-weight: 700 !important;
+}
+
+.admin-authority-table-shell {
+    overflow-x: auto;
+    border-radius: 20px;
+    border: 1px solid #e4edf7;
+    background:
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.06), transparent 30%),
+        linear-gradient(135deg, #fffdf8 0%, #f6faff 50%, #ffffff 100%);
+    box-shadow: 0 10px 24px rgba(56, 89, 136, 0.06);
+}
+
+.admin-authority-table-shell .ant-table {
+    background: transparent;
+}
+
+.admin-authority-table-shell .ant-table-container,
+.admin-authority-table-shell .ant-table-content,
+.admin-authority-table-shell .ant-table-thead > tr > th:first-child,
+.admin-authority-table-shell .ant-table-thead > tr > th:last-child {
+    border-radius: 0;
+}
+
+.admin-authority-table-shell .ant-table-thead > tr > th {
+    padding: 16px 18px;
+    background: rgba(248, 251, 255, 0.88);
+    color: #173253;
+    font-size: 14px;
+    font-weight: 700;
+    border-bottom: 1px solid #dbe7f5;
+}
+
+.admin-authority-table-shell .ant-table-thead > tr > th::before {
+    display: none;
+}
+
+.admin-authority-table-shell .ant-table-tbody > tr > td {
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    border-bottom: 1px solid #e6eef8;
+    vertical-align: top;
+}
+
+.admin-authority-table-shell .ant-table-tbody > tr:hover > td {
+    background: rgba(248, 251, 255, 0.96);
 }
 
 @media (max-width: 1280px) {

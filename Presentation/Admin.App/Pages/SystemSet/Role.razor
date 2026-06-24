@@ -154,7 +154,7 @@
             <div class="system-role-authority__meta-pill">已加载 @roleFunctionList.Count 个顶层模块</div>
         </div>
 
-        <div class="system-role-authority__table-wrap">
+        <div class="system-role-authority__table-wrap admin-authority-table-shell">
             <Table TItem="RoleFunctionDto" DataSource="roleFunctionList" TreeChildren="item => item.ChildList" DefaultExpandAllRows HidePagination>
 
                 <Column Title="菜单模块" TData="string">
@@ -600,37 +600,12 @@
         white-space: nowrap;
     }
 
-    .system-role-authority__table-wrap {
-        overflow: hidden;
-        border-radius: 18px;
-        border: 1px solid #e8eef5;
-        background: #fff;
-    }
-
-    .system-role-authority__table-wrap .ant-table-thead > tr > th {
-        padding: 16px 18px;
-        background: #f7faff;
-        color: #41556f;
-        font-weight: 700;
-        border-bottom: 1px solid #eaf0f7;
-    }
-
     .system-role-authority__table-wrap .ant-table-thead > tr > th::before {
         display: none;
     }
 
-    .system-role-authority__table-wrap .ant-table-tbody > tr > td {
-        padding: 18px;
-        border-bottom: 1px solid #eef3f8;
-        vertical-align: top;
-    }
-
     .system-role-authority__table-wrap .ant-table-tbody > tr > td:first-child {
         vertical-align: middle;
-    }
-
-    .system-role-authority__table-wrap .ant-table-tbody > tr:hover > td {
-        background: #fbfcff;
     }
 
     .system-role-authority__menu-cell {

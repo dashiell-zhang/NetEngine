@@ -154,7 +154,7 @@
 
                             <FormItem Class="llm-model-drawer__field-item">
                                 <div class="llm-model-drawer__field-label admin-required-label">端点地址</div>
-                                <Input Placeholder="如: https://api.deepseek.com/chat/completions" @bind-Value="@context.Endpoint" />
+                                <Input Placeholder="如: https://api.deepseek.com/chat/completions 或 https://api.openai.com/v1/responses" @bind-Value="@context.Endpoint" />
                             </FormItem>
 
                             <Row Gutter="24">
@@ -163,7 +163,7 @@
                                         <div class="llm-model-drawer__field-label">协议类型</div>
                                         <Select TItem="int" TItemValue="int" @bind-Value="@context.ProtocolType" Style="width: 100%">
                                             <SelectOption Value="0" Label="Chat"></SelectOption>
-                                            <SelectOption Value="1" Label="Responses（预留）" Disabled></SelectOption>
+                                            <SelectOption Value="1" Label="Responses"></SelectOption>
                                         </Select>
                                     </FormItem>
                                 </AntDesign.Col>

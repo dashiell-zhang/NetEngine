@@ -1,4 +1,5 @@
 using LLM.Compatible;
+using LLM.Responses;
 
 namespace LLM;
 
@@ -30,7 +31,12 @@ public sealed class DynamicLlmClientFactory(IHttpClientFactory httpClientFactory
         httpClient.Timeout = TimeSpan.FromSeconds(120);
         httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.ApiKey);
 
-        return new OpenAiCompatibleProviderClient(httpClient, config, config.ModelId);
+        return (LlmProtocolType)config.ProtocolType switch
+        {
+            LlmProtocolType.Chat => new OpenAiCompatibleProviderClient(httpClient, config, config.ModelId),
+            LlmProtocolType.Responses => new OpenAiResponsesLlmClient(httpClient, config),
+            _ => throw new InvalidOperationException($"Unsupported LLM protocol type: {config.ProtocolType}")
+        };
     }
 
 }

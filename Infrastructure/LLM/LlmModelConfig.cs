@@ -23,7 +23,7 @@ public sealed record LlmModelConfig : IOpenAiCompatibleSetting
     public string ModelId { get; init; }
 
     /// <summary>
-    /// 协议类型（0=Chat, 1=Responses 预留）
+    /// 协议类型（0=Chat, 1=Responses）
     /// </summary>
     public int ProtocolType { get; init; }
 }

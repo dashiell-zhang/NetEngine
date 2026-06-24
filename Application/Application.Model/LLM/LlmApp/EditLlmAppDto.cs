@@ -43,7 +43,7 @@ public class EditLlmAppDto
 
 
     /// <summary>
-    /// 额外请求参数（JSON对象字符串，直接透传到 OpenAI-compatible body 根字段）
+    /// 额外请求参数（JSON对象字符串，直接透传到当前协议请求体根字段）
     /// </summary>
     public string? ExtraBodyJson { get; set; }
 

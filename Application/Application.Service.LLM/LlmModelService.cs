@@ -3,6 +3,7 @@ using Application.Model.LLM.LlmModel;
 using Application.Model.Shared;
 using Common;
 using IdentifierGenerator;
+using LLM;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
@@ -79,6 +80,8 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
         var modelId = createLlmModel.ModelId.Trim();
         var endpoint = createLlmModel.Endpoint.Trim();
 
+        ValidateProtocolType(createLlmModel.ProtocolType);
+
         if (string.IsNullOrWhiteSpace(createLlmModel.ApiKey))
         {
             throw new CustomException("接口密钥不可以空");
@@ -128,6 +131,8 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
         var name = updateLlmModel.Name.Trim();
         var modelId = updateLlmModel.ModelId.Trim();
         var endpoint = updateLlmModel.Endpoint.Trim();
+
+        ValidateProtocolType(updateLlmModel.ProtocolType);
 
         var isHave = await db.LlmModel.Where(t => t.Id != id && t.Name == name && t.DeleteTime == null).AnyAsync();
         if (isHave)
@@ -188,6 +193,19 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
                 Name = t.Name
             })
             .ToListAsync();
+    }
+
+
+    /// <summary>
+    /// 校验 LLM 协议类型
+    /// </summary>
+    private static void ValidateProtocolType(int protocolType)
+    {
+
+        if (!Enum.IsDefined(typeof(LlmProtocolType), protocolType))
+        {
+            throw new CustomException("无效的协议类型");
+        }
     }
 
 }

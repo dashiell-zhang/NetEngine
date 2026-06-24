@@ -27,7 +27,7 @@ public class TestLlmAppRequestDto
 
 
     /// <summary>
-    /// 额外请求参数（直接透传到 OpenAI-compatible body 根字段）
+    /// 额外请求参数（直接透传到当前协议请求体根字段）
     /// </summary>
     public Dictionary<string, JsonNode>? ExtraBody { get; set; }
 

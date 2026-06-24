@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <NetEngineProjectFullPath>$([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))</NetEngineProjectFullPath>
-    <NetEngineSourceGeneratorCoreFullPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))</NetEngineSourceGeneratorCoreFullPath>
-    <NetEngineSourceGeneratorRuntimeFullPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))</NetEngineSourceGeneratorRuntimeFullPath>
-    <NetEngineInfrastructureRootFullPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)Infrastructure\))</NetEngineInfrastructureRootFullPath>
+    <NetEngineProjectFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))).ToUpperInvariant())</NetEngineProjectFullPath>
+    <NetEngineSourceGeneratorCoreFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))).ToUpperInvariant())</NetEngineSourceGeneratorCoreFullPath>
+    <NetEngineSourceGeneratorRuntimeFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))).ToUpperInvariant())</NetEngineSourceGeneratorRuntimeFullPath>
+    <NetEngineInfrastructureRootFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)Infrastructure\))).ToUpperInvariant())</NetEngineInfrastructureRootFullPath>
     <NetEngineIsInfrastructureProject>$([System.String]::Copy('$(NetEngineProjectFullPath)').StartsWith('$(NetEngineInfrastructureRootFullPath)'))</NetEngineIsInfrastructureProject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">

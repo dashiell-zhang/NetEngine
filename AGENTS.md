@@ -212,7 +212,7 @@ Agent 在本仓库中工作时，必须遵守以下原则
 - 先做最小必要验证
 - 如果改动影响多个项目或启动组合，再考虑解决方案级别构建验证
 - 除非用户明确要求，否则默认不主动编写单元测试代码
-- 不要并行执行多个 `dotnet build`，应串行构建，避免 `SourceGenerator.Core.dll` 被 `VBCSCompiler` 占用导致构建失败
+- 不要同时启动多个独立的 `dotnet build` 进程；单个 `dotnet build` 内部的 MSBuild 并行构建可以保持默认，避免共享的 `SourceGenerator.Core.dll` 被 `VBCSCompiler` 或其他构建进程占用导致构建失败
 
 ## 12. 验证命令
 

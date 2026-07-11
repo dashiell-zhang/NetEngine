@@ -32,7 +32,8 @@ public class SiteService(DatabaseContext db, IdService idService)
             ManagerEmail = kvList.Where(t => t.Key == "ManagerEmail").Select(t => t.Value).FirstOrDefault(),
             RecordNumber = kvList.Where(t => t.Key == "RecordNumber").Select(t => t.Value).FirstOrDefault(),
             SeoTitle = kvList.Where(t => t.Key == "SeoTitle").Select(t => t.Value).FirstOrDefault(),
-            SeoKeyWords = kvList.Where(t => t.Key == "SeoKeyWords").Select(t => t.Value).FirstOrDefault(),
+            SeoKeywords = kvList.Where(t => t.Key == "SeoKeywords").Select(t => t.Value).FirstOrDefault()
+                ?? kvList.Where(t => t.Key == "SeoKeyWords").Select(t => t.Value).FirstOrDefault(),
             SeoDescription = kvList.Where(t => t.Key == "SeoDescription").Select(t => t.Value).FirstOrDefault(),
             FootCode = kvList.Where(t => t.Key == "FootCode").Select(t => t.Value).FirstOrDefault()
         };
@@ -55,7 +56,7 @@ public class SiteService(DatabaseContext db, IdService idService)
         await SetSiteInfoAsync("ManagerEmail", editSite.ManagerEmail);
         await SetSiteInfoAsync("RecordNumber", editSite.RecordNumber);
         await SetSiteInfoAsync("SeoTitle", editSite.SeoTitle);
-        await SetSiteInfoAsync("SeoKeyWords", editSite.SeoKeyWords);
+        await SetSiteInfoAsync("SeoKeywords", editSite.SeoKeywords);
         await SetSiteInfoAsync("SeoDescription", editSite.SeoDescription);
         await SetSiteInfoAsync("FootCode", editSite.FootCode);
 

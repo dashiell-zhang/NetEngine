@@ -116,7 +116,7 @@
                                 </FormItem>
 
                                 <FormItem Label="SEO 关键字">
-                                    <TextArea ShowCount Placeholder="请输入 SEO 关键字" @bind-Value="@editSite.SeoKeyWords" MinRows="4" MaxRows="6" Style="width:100%;min-height:120px" />
+                                    <TextArea ShowCount Placeholder="请输入 SEO 关键字" @bind-Value="@editSite.SeoKeywords" MinRows="4" MaxRows="6" Style="width:100%;min-height:120px" />
                                 </FormItem>
                             </Form>
                         </div>
@@ -142,7 +142,7 @@
                                 </div>
                                 <div class="site-setting-page__preview-item">
                                     <span>关键字长度</span>
-                                    <strong>@CountTextLength(editSite.SeoKeyWords) 字</strong>
+                                    <strong>@CountTextLength(editSite.SeoKeywords) 字</strong>
                                 </div>
                                 <div class="site-setting-page__preview-item">
                                     <span>描述长度</span>
@@ -597,7 +597,7 @@
     /// <summary>
     /// 获取已填写字段数量
     /// </summary>
-    int GetFilledFieldCount() => CountFilledFields(editSite.WebUrl, editSite.ManagerName, editSite.ManagerAddress, editSite.ManagerPhone, editSite.ManagerEmail, editSite.RecordNumber, editSite.SeoTitle, editSite.SeoKeyWords, editSite.SeoDescription, editSite.FootCode);
+    int GetFilledFieldCount() => CountFilledFields(editSite.WebUrl, editSite.ManagerName, editSite.ManagerAddress, editSite.ManagerPhone, editSite.ManagerEmail, editSite.RecordNumber, editSite.SeoTitle, editSite.SeoKeywords, editSite.SeoDescription, editSite.FootCode);
 
 
     /// <summary>
@@ -609,7 +609,7 @@
     /// <summary>
     /// 获取 SEO 字段数量
     /// </summary>
-    int GetSeoFieldCount() => CountFilledFields(editSite.SeoTitle, editSite.SeoKeyWords, editSite.SeoDescription);
+    int GetSeoFieldCount() => CountFilledFields(editSite.SeoTitle, editSite.SeoKeywords, editSite.SeoDescription);
 
 
     /// <summary>

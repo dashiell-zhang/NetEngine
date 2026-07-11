@@ -48,7 +48,7 @@ public class SiteDto
     /// <summary>
     /// SEO关键字
     /// </summary>
-    public string? SeoKeyWords { get; set; }
+    public string? SeoKeywords { get; set; }
 
 
     /// <summary>

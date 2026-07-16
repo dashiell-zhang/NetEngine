@@ -1,0 +1,95 @@
+.login-page,
+.login-page__backdrop {
+    width: 100vw;
+    height: 100vh;
+}
+
+.login-page {
+    margin: 0;
+}
+
+.login-page__backdrop {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    background-image: url('img/login.jpg');
+    background-position: center;
+    background-size: cover;
+}
+
+.login-page__welcome {
+    position: absolute;
+    top: 40%;
+    left: 200px;
+    color: #ffffff;
+    text-align: left;
+}
+
+.login-page__welcome-title {
+    width: 100%;
+    color: #ffffff;
+    font-size: 45px;
+    font-weight: 700;
+    line-height: 60px;
+}
+
+.login-page__welcome-subtitle {
+    display: flex;
+    margin-top: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 20px;
+}
+
+.login-page__panel {
+    position: absolute;
+    top: 30%;
+    right: 18%;
+    display: inline-block;
+    min-width: 400px;
+    padding: 35px;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.login-page__panel ::deep .ant-input {
+    padding: 10px;
+}
+
+.login-page__panel ::deep .ant-input-affix-wrapper {
+    padding: 6px 11px;
+}
+
+.login-page__panel ::deep .ant-input-affix-wrapper .ant-input {
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    padding: 0;
+}
+
+.login-page__panel ::deep .ant-input-suffix {
+    margin-left: 8px;
+}
+
+.login-page__panel ::deep .login-page__submit-item {
+    margin-top: 10px;
+}
+
+.login-page__panel ::deep .login-page__submit-button {
+    width: 100%;
+    height: 40px !important;
+    padding: 10px 0 !important;
+}
+
+@media (max-width: 900px) {
+    .login-page__welcome {
+        display: none;
+    }
+
+    .login-page__panel {
+        top: 50%;
+        right: 50%;
+        width: min(400px, calc(100vw - 32px));
+        min-width: 0;
+        transform: translate(50%, -50%);
+    }
+}

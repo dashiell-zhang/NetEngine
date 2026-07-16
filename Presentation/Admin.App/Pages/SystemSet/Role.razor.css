@@ -1,0 +1,74 @@
+.system-role-page__hero {
+    background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.12), transparent 30%),
+        linear-gradient(135deg, #f8fbff 0%, #eef6ff 48%, #f4fbff 100%);
+}
+
+.system-role-page__role-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.system-role-page__role-name,
+.system-role-page__time-cell {
+    color: #12263f;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.system-role-page__role-sub {
+    min-width: 0;
+    overflow: hidden;
+    color: #708095;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.system-role-page__remark-cell {
+    max-width: 420px;
+    overflow: hidden;
+    color: #55667d;
+    font-size: 13px;
+    line-height: 1.65;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.system-role-page__link--accent {
+    color: #0f766e;
+}
+
+.system-role-drawer {
+    height: 100%;
+}
+
+.system-role-drawer__form {
+    height: 100%;
+}
+
+.system-role-drawer__section-title {
+    margin-bottom: 10px;
+}
+
+.system-role-drawer__field-item ::deep .ant-input,
+.system-role-drawer__field-item ::deep .ant-input-affix-wrapper {
+    min-height: 40px;
+    border-radius: 12px;
+}
+
+.system-role-drawer__field-item ::deep .ant-input-textarea textarea {
+    padding: 12px 14px;
+    border-radius: 12px;
+    line-height: 1.7;
+}
+
+@media (max-width: 768px) {
+    .system-role-page__action-button {
+        width: 100%;
+    }
+}

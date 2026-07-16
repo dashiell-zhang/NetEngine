@@ -5,33 +5,33 @@
 @attribute [ReuseTabsPage(Ignore = true)]
 
 
-<body>
-    <div style="width: 100vw;height: 100vh;text-align: center;position: relative;background-image: url('img/login.jpg');">
+<body class="login-page">
+    <div class="login-page__backdrop">
 
-        <div style="position:absolute; left:200px;top:40%;color:#fff">
-            <div style=" color: #fff;font-size: 45px;line-height: 60px;width: 100%;font-weight:700">
+        <div class="login-page__welcome">
+            <div class="login-page__welcome-title">
                 Welcome
             </div>
-            <div style="font-size: 20px;margin-top: 10px;font-family: ui-monospace;display:flex">
+            <div class="login-page__welcome-subtitle">
                 Hi，你来啦！
             </div>
         </div>
 
-        <div style="min-width: 400px;display: inline-block;background-color: white;border-radius: 10px;position: absolute;right:18%;top:30%; padding: 35px;">
+        <div class="login-page__panel">
             <h1>管理系统</h1>
 
-            <Form Model="@loginData" OnFinish="LoginActionAsync">
+            <Form Class="login-page__form admin-form" Model="@loginData" OnFinish="LoginActionAsync">
 
                 <FormItem>
-                    <Input @bind-Value="@context.UserName" Style="padding: 10px;" Placeholder="用户名" />
+                    <Input @bind-Value="@context.UserName" Placeholder="用户名" />
                 </FormItem>
 
                 <FormItem>
-                    <InputPassword @bind-Value="@context.Password" Style="padding: 6px;" Placeholder="密码" />
+                    <InputPassword @bind-Value="@context.Password" Placeholder="密码" />
                 </FormItem>
 
-                <FormItem Style="margin-top:10px">
-                    <Button Type="@ButtonType.Primary" HtmlType="submit" Block Loading="@submitLoading" Style="padding: 10px 0; height: 40px;">
+                <FormItem Class="login-page__submit-item">
+                    <Button Class="login-page__submit-button admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Block Loading="@submitLoading">
                         登录
                     </Button>
                 </FormItem>

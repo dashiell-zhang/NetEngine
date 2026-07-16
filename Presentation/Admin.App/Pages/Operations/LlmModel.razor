@@ -3,54 +3,54 @@
 @using System.Net.Http.Json
 @attribute [ReuseTabsPageTitle("LLM模型管理")]
 
-<div class="llm-model-page">
-    <div class="llm-model-page__hero admin-page-hero--with-actions">
+<div class="llm-model-page admin-page">
+    <div class="llm-model-page__hero admin-page__hero admin-page-hero--with-actions">
         <div>
-            <div class="llm-model-page__eyebrow">Operations</div>
-            <h2 class="llm-model-page__title">LLM 模型管理台</h2>
-            <div class="llm-model-page__subtitle">统一维护模型名称、端点地址、协议类型与密钥配置，让模型切换、停启用和后续应用接入都在同一处完成</div>
+            <div class="llm-model-page__eyebrow admin-page__eyebrow">Operations</div>
+            <h2 class="llm-model-page__title admin-page__title">LLM 模型管理台</h2>
+            <div class="llm-model-page__subtitle admin-page__subtitle">统一维护模型名称、端点地址、协议类型与密钥配置，让模型切换、停启用和后续应用接入都在同一处完成</div>
 
-            <div class="llm-model-page__hero-tools">
+            <div class="llm-model-page__hero-tools admin-page__hero-tools">
                 <Button Class="llm-model-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLlmModel()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增模型</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
             </div>
         </div>
 
-        <div class="llm-model-page__stats">
-            <div class="llm-model-page__stat-card">
-                <span class="llm-model-page__stat-label">模型总量</span>
-                <strong class="llm-model-page__stat-value">@pageList.Total</strong>
-                <span class="llm-model-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条记录</span>
+        <div class="llm-model-page__stats admin-page__stats">
+            <div class="llm-model-page__stat-card admin-page__stat-card">
+                <span class="llm-model-page__stat-label admin-page__stat-label">模型总量</span>
+                <strong class="llm-model-page__stat-value admin-page__stat-value">@pageList.Total</strong>
+                <span class="llm-model-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条记录</span>
             </div>
 
-            <div class="llm-model-page__stat-card">
-                <span class="llm-model-page__stat-label">启用筛选</span>
-                <strong class="llm-model-page__stat-value llm-model-page__stat-value--small">@(request.IsEnable == null ? "全部模型" : request.IsEnable.Value ? "仅启用" : "仅停用")</strong>
-                <span class="llm-model-page__stat-foot">快速聚焦正在对外提供服务的模型</span>
+            <div class="llm-model-page__stat-card admin-page__stat-card">
+                <span class="llm-model-page__stat-label admin-page__stat-label">启用筛选</span>
+                <strong class="llm-model-page__stat-value llm-model-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@(request.IsEnable == null ? "全部模型" : request.IsEnable.Value ? "仅启用" : "仅停用")</strong>
+                <span class="llm-model-page__stat-foot admin-page__stat-foot">快速聚焦正在对外提供服务的模型</span>
             </div>
 
-            <div class="llm-model-page__stat-card">
-                <span class="llm-model-page__stat-label">检索状态</span>
-                <strong class="llm-model-page__stat-value llm-model-page__stat-value--small">@(string.IsNullOrWhiteSpace(request.Keyword) ? "全部模型" : "关键词检索")</strong>
-                <span class="llm-model-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
+            <div class="llm-model-page__stat-card admin-page__stat-card">
+                <span class="llm-model-page__stat-label admin-page__stat-label">检索状态</span>
+                <strong class="llm-model-page__stat-value llm-model-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@(string.IsNullOrWhiteSpace(request.Keyword) ? "全部模型" : "关键词检索")</strong>
+                <span class="llm-model-page__stat-foot admin-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
             </div>
         </div>
     </div>
 
-    <Card Class="llm-model-page__card llm-model-page__card--compact" BodyStyle="padding: 16px 18px">
-        <Form Class="llm-model-page__filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
-            <FormItem Class="llm-model-page__filter-item llm-model-page__filter-item--keyword">
+    <Card Class="llm-model-page__card llm-model-page__card--compact admin-page__card admin-page__card--compact admin-page__card--filter">
+        <Form Class="llm-model-page__filter-form admin-form admin-filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
+            <FormItem Class="llm-model-page__filter-item llm-model-page__filter-item--keyword admin-filter-form__item--keyword">
                 <Input @bind-Value="@context.Keyword" Placeholder="名称 / 模型标识 / 备注 模糊检索" AllowClear />
             </FormItem>
 
-            <FormItem Class="llm-model-page__filter-item llm-model-page__filter-item--status">
+            <FormItem Class="llm-model-page__filter-item llm-model-page__filter-item--status admin-filter-form__item--status">
                 <Select TItem="bool?" TItemValue="bool?" @bind-Value="@context.IsEnable" Placeholder="请选择状态" AllowClear>
                     <SelectOption Value="@((bool?)true)" Label="启用"></SelectOption>
                     <SelectOption Value="@((bool?)false)" Label="停用"></SelectOption>
                 </Select>
             </FormItem>
 
-            <FormItem Class="llm-model-page__filter-item llm-model-page__filter-item--actions">
-                <div class="llm-model-page__filter-actions">
+            <FormItem Class="llm-model-page__filter-item llm-model-page__filter-item--actions admin-filter-form__item--actions">
+                <div class="llm-model-page__filter-actions admin-filter-form__actions">
                     <Button Class="llm-model-page__action-button llm-model-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索模型</Button>
                     <Button Class="llm-model-page__action-button llm-model-page__action-button--default admin-page-button admin-page-button--default" OnClick="HandleReset">重置条件</Button>
                 </div>
@@ -58,15 +58,15 @@
         </Form>
     </Card>
 
-    <Card Class="llm-model-page__card llm-model-page__card--compact" BodyStyle="padding: 14px 14px 10px">
+    <Card Class="llm-model-page__card llm-model-page__card--compact admin-page__card admin-page__card--compact">
         <div class="llm-model-page__list-shell admin-page-list-shell">
-            <div class="llm-model-page__table-wrap">
+            <div class="llm-model-page__table-wrap admin-page__table-wrap">
                 <Table TItem="LlmModelDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
                     <ColumnDefinitions>
                         <ActionColumn Title="模型">
-                            <div class="llm-model-page__name-cell">
-                                <div class="llm-model-page__name-title">@context.Name</div>
+                            <div class="llm-model-page__name-cell admin-page__name-cell">
+                                <div class="llm-model-page__name-title admin-page__name-title">@context.Name</div>
                                 <div class="llm-model-page__name-sub">@(string.IsNullOrWhiteSpace(context.Remark) ? "暂无备注说明" : context.Remark)</div>
                             </div>
                         </ActionColumn>
@@ -82,7 +82,7 @@
                         </ActionColumn>
 
                         <ActionColumn Title="启用状态">
-                            <Tag Class="llm-model-page__tag" Color="@(context.IsEnable ? "green" : "volcano")">@(context.IsEnable ? "启用中" : "已停用")</Tag>
+                            <Tag Class="llm-model-page__tag admin-page__status-tag" Color="@(context.IsEnable ? "green" : "volcano")">@(context.IsEnable ? "启用中" : "已停用")</Tag>
                         </ActionColumn>
 
                         <PropertyColumn Property="c => (c.UpdateTime ?? c.CreateTime).LocalDateTime" Format="yyyy-MM-dd HH:mm" Title="更新时间"></PropertyColumn>
@@ -90,7 +90,7 @@
                         <ActionColumn Title="操作">
                             <Space>
                                 <SpaceItem>
-                                    <a class="llm-model-page__link" @onclick="() => EditLlmModel(context)">编辑</a>
+                                    <a class="llm-model-page__link admin-page__link" @onclick="() => EditLlmModel(context)">编辑</a>
                                 </SpaceItem>
 
                                 <SpaceItem>
@@ -98,7 +98,7 @@
                                                 OnConfirm="_=>DeleteLlmModelAsync(context.Id)"
                                                 OkText="Yes"
                                                 CancelText="No">
-                                        <a class="llm-model-page__link llm-model-page__link--danger">删除</a>
+                                        <a class="llm-model-page__link llm-model-page__link--danger admin-page__link admin-page__link--danger">删除</a>
                                     </Popconfirm>
                                 </SpaceItem>
                             </Space>
@@ -119,49 +119,49 @@
 
 
 <Drawer Closable="true" Width="760" Visible="isShowEdit" Title='(editId == null ? "新增 LLM 模型" : "编辑 LLM 模型")' OnClose="() => isShowEdit = false">
-    <Template style="height:100%">
-        <div class="llm-model-drawer">
-            <Form Class="llm-model-drawer__form" Model="@editLlmModel" Layout="@FormLayout.Vertical" OnFinish="SaveLlmModelAsync">
+    <Template>
+        <div class="llm-model-drawer admin-drawer">
+            <Form Class="llm-model-drawer__form admin-drawer__form admin-form" Model="@editLlmModel" Layout="@FormLayout.Vertical" OnFinish="SaveLlmModelAsync">
                 <div class="llm-model-drawer__content">
                     <div class="llm-model-drawer__main">
-                        <div class="llm-model-drawer__section">
-                            <div class="llm-model-drawer__section-head">
+                        <div class="llm-model-drawer__section admin-drawer__section">
+                            <div class="llm-model-drawer__section-head admin-drawer__section-head">
                                 <div>
-                                    <div class="llm-model-drawer__section-title">基础配置</div>
+                                    <div class="llm-model-drawer__section-title admin-drawer__section-title">基础配置</div>
                                 </div>
 
-                                <div class="llm-model-drawer__switch-box">
-                                    <span class="llm-model-drawer__switch-label">是否启用</span>
+                                <div class="llm-model-drawer__switch-box admin-drawer__switch-box">
+                                    <span class="llm-model-drawer__switch-label admin-drawer__switch-label">是否启用</span>
                                     <Switch @bind-Value="@editLlmModel.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
                                 </div>
                             </div>
 
                             <Row Gutter="24">
                                 <AntDesign.Col Span="12">
-                                    <FormItem Class="llm-model-drawer__field-item">
-                                        <div class="llm-model-drawer__field-label admin-required-label">名称</div>
+                                    <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
+                                        <div class="llm-model-drawer__field-label admin-form__field-label admin-required-label">名称</div>
                                         <Input Placeholder="请输入模型名称" @bind-Value="@context.Name" />
                                     </FormItem>
                                 </AntDesign.Col>
 
                                 <AntDesign.Col Span="12">
-                                    <FormItem Class="llm-model-drawer__field-item">
-                                        <div class="llm-model-drawer__field-label admin-required-label">模型标识</div>
+                                    <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
+                                        <div class="llm-model-drawer__field-label admin-form__field-label admin-required-label">模型标识</div>
                                         <Input Placeholder="如: deepseek-v4-flash" @bind-Value="@context.ModelId" />
                                     </FormItem>
                                 </AntDesign.Col>
                             </Row>
 
-                            <FormItem Class="llm-model-drawer__field-item">
-                                <div class="llm-model-drawer__field-label admin-required-label">端点地址</div>
+                            <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
+                                <div class="llm-model-drawer__field-label admin-form__field-label admin-required-label">端点地址</div>
                                 <Input Placeholder="如: https://api.deepseek.com/chat/completions、https://api.openai.com/v1/responses 或 https://api.anthropic.com/v1/messages" @bind-Value="@context.Endpoint" />
                             </FormItem>
 
                             <Row Gutter="24">
                                 <AntDesign.Col Span="10">
-                                    <FormItem Class="llm-model-drawer__field-item">
-                                        <div class="llm-model-drawer__field-label">协议类型</div>
-                                        <Select TItem="int" TItemValue="int" @bind-Value="@context.ProtocolType" Style="width: 100%">
+                                    <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
+                                        <div class="llm-model-drawer__field-label admin-form__field-label">协议类型</div>
+                                        <Select TItem="int" TItemValue="int" @bind-Value="@context.ProtocolType">
                                             <SelectOption Value="0" Label="Chat"></SelectOption>
                                             <SelectOption Value="1" Label="Responses"></SelectOption>
                                             <SelectOption Value="2" Label="Anthropic"></SelectOption>
@@ -170,20 +170,20 @@
                                 </AntDesign.Col>
                             </Row>
 
-                            <FormItem Class="llm-model-drawer__field-item">
-                                <div class="llm-model-drawer__field-label">接口密钥</div>
+                            <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
+                                <div class="llm-model-drawer__field-label admin-form__field-label">接口密钥</div>
                                 <InputPassword Placeholder="@(editId == null ? "请输入接口密钥" : "留空则不修改")" @bind-Value="@context.ApiKey" />
                             </FormItem>
 
-                            <FormItem Class="llm-model-drawer__field-item">
-                                <div class="llm-model-drawer__field-label">备注</div>
-                                <TextArea @bind-Value="@context.Remark" MinRows="3" MaxRows="7" style="width:100%" />
+                            <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
+                                <div class="llm-model-drawer__field-label admin-form__field-label">备注</div>
+                                <TextArea @bind-Value="@context.Remark" MinRows="3" MaxRows="7" />
                             </FormItem>
                         </div>
                     </div>
                 </div>
 
-                <div class="llm-model-drawer__footer">
+                <div class="llm-model-drawer__footer admin-drawer__footer">
                     <Button Class="llm-model-page__action-button llm-model-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
                     <Button Class="llm-model-page__action-button llm-model-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
                 </div>
@@ -192,602 +192,6 @@
     </Template>
 </Drawer>
 
-<style>
-    .llm-model-page {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        padding-bottom: 12px;
-    }
-
-    .llm-model-page__hero {
-        display: grid;
-        grid-template-columns: minmax(280px, 1.35fr) minmax(320px, 1fr);
-        gap: 12px;
-        padding: 16px 18px;
-        border-radius: 22px;
-        background:
-            radial-gradient(circle at top right, rgba(37, 99, 235, 0.18), transparent 34%),
-            radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.16), transparent 32%),
-            linear-gradient(135deg, #f8fbff 0%, #edf5ff 48%, #f4fbff 100%);
-        color: #10233f;
-        border: 1px solid #e9eef5;
-        box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
-    }
-
-    .llm-model-page__eyebrow {
-        margin-bottom: 8px;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: #2563eb;
-    }
-
-    .llm-model-page__title {
-        margin: 0;
-        font-size: 26px;
-        line-height: 1.15;
-        color: #10233f;
-    }
-
-    .llm-model-page__subtitle {
-        margin-top: 6px;
-        max-width: 660px;
-        font-size: 11px;
-        line-height: 1.6;
-        color: #526075;
-    }
-
-    .llm-model-page__hero-tools {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 10px;
-    }
-
-    .llm-model-page__hero-button {
-        height: 40px;
-        padding: 0 18px;
-        border-radius: 16px;
-        border-color: #93c5fd;
-        background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
-        box-shadow: 0 10px 18px rgba(37, 99, 235, 0.22);
-    }
-
-    .llm-model-page__hero-button:hover,
-    .llm-model-page__hero-button:focus {
-        border-color: #60a5fa;
-        background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
-    }
-
-    .llm-model-page__stats {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        align-self: stretch;
-    }
-
-    .llm-model-page__stat-card {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 4px;
-        min-height: 88px;
-        padding: 10px 12px;
-        border-radius: 18px;
-        border: 1px solid #e4edf7;
-        background: rgba(255, 255, 255, 0.88);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
-    }
-
-    .llm-model-page__stat-card:nth-child(1) {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.96) 100%);
-    }
-
-    .llm-model-page__stat-card:nth-child(2) {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 253, 245, 0.96) 100%);
-    }
-
-    .llm-model-page__stat-card:nth-child(3) {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.85) 100%);
-    }
-
-    .llm-model-page__stat-label {
-        font-size: 11px;
-        color: #64748b;
-    }
-
-    .llm-model-page__stat-value {
-        font-size: 20px;
-        line-height: 1.2;
-        color: #10233f;
-    }
-
-    .llm-model-page__stat-value--small {
-        font-size: 16px;
-    }
-
-    .llm-model-page__stat-foot {
-        font-size: 11px;
-        line-height: 1.5;
-        color: #64748b;
-    }
-
-    .llm-model-page__card {
-        border-radius: 18px;
-        border: 1px solid #edf2f7;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-    }
-
-    .llm-model-page__card--compact {
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
-    }
-
-    .llm-model-page__filter-form,
-    .llm-model-page__filter-actions,
-    .llm-model-drawer__section-head,
-    .llm-model-drawer__footer,
-    .llm-model-drawer__switch-box {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    .llm-model-page__filter-item {
-        margin-bottom: 0;
-    }
-
-    .llm-model-page__filter-form .ant-form-item {
-        margin-right: 0;
-        margin-bottom: 0;
-    }
-
-    .llm-model-page__filter-item--keyword {
-        flex: 1 1 420px;
-        min-width: 320px;
-    }
-
-    .llm-model-page__filter-item--status {
-        flex: 0 0 220px;
-    }
-
-    .llm-model-page__filter-item--actions {
-        margin-left: auto;
-    }
-
-    .llm-model-page__filter-form .ant-input,
-    .llm-model-page__filter-form .ant-input-affix-wrapper,
-    .llm-model-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-        height: 44px;
-        width: 100%;
-        border-radius: 16px;
-        border-color: #dbe7f5;
-        background: #ffffff;
-        box-shadow: none;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-    }
-
-    .llm-model-page__filter-form .ant-input,
-    .llm-model-page__filter-form .ant-input-affix-wrapper,
-    .llm-model-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
-    .llm-model-page__filter-form .ant-input-affix-wrapper {
-        display: flex;
-        align-items: center;
-    }
-
-    .llm-model-page__filter-form .ant-input-affix-wrapper .ant-input {
-        height: auto;
-        padding: 0;
-        border: none;
-        background: transparent;
-        box-shadow: none;
-    }
-
-    .llm-model-page__filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-        display: flex;
-        align-items: center;
-    }
-
-    .llm-model-page__filter-form .ant-input,
-    .llm-model-page__filter-form .ant-input-affix-wrapper .ant-input,
-    .llm-model-page__filter-form .ant-select-selection-item,
-    .llm-model-page__filter-form .ant-select-selection-placeholder {
-        color: #334155;
-        font-size: 13px;
-    }
-
-    .llm-model-page__filter-form .ant-select-selection-item,
-    .llm-model-page__filter-form .ant-select-selection-placeholder {
-        line-height: 42px;
-    }
-
-    .llm-model-page__filter-form .ant-input::placeholder,
-    .llm-model-page__filter-form .ant-input-affix-wrapper .ant-input::placeholder {
-        color: #94a3b8;
-    }
-
-    .llm-model-page__filter-form .ant-input:hover,
-    .llm-model-page__filter-form .ant-input-affix-wrapper:hover,
-    .llm-model-page__filter-form .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
-        border-color: #bfdbfe;
-    }
-
-    .llm-model-page__filter-form .ant-input:focus,
-    .llm-model-page__filter-form .ant-input-focused,
-    .llm-model-page__filter-form .ant-input-affix-wrapper-focused,
-    .llm-model-page__filter-form .ant-select-focused .ant-select-selector {
-        border-color: #93c5fd;
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
-    }
-
-    .llm-model-page__action-button {
-        height: 38px;
-        padding: 0 18px;
-        border-radius: 14px;
-        font-weight: 600;
-    }
-
-    .llm-model-page__action-button--primary {
-        border-color: #93c5fd;
-        background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
-        box-shadow: 0 10px 18px rgba(37, 99, 235, 0.16);
-    }
-
-    .llm-model-page__action-button--primary:hover,
-    .llm-model-page__action-button--primary:focus {
-        background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
-    }
-
-    .llm-model-page__action-button--default {
-        border-color: #d8e2ef;
-        background: #fff;
-        color: #334155;
-    }
-
-    .llm-model-page__section-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 12px;
-        padding: 4px 4px 0;
-    }
-
-    .llm-model-page__section-title,
-    .llm-model-drawer__section-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .llm-model-page__section-desc,
-    .llm-model-drawer__section-desc {
-        margin-top: 4px;
-        font-size: 12px;
-        line-height: 1.6;
-        color: #64748b;
-    }
-
-    .llm-model-page__list-shell {
-        border: 1px solid #e8eef6;
-        border-radius: 18px;
-        overflow: hidden;
-        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
-    }
-
-    .llm-model-page__table-wrap {
-        overflow: hidden;
-        border-radius: 16px;
-    }
-
-    .llm-model-page__table-wrap .ant-table {
-        background: transparent;
-    }
-
-    .llm-model-page__table-wrap .ant-table-thead > tr > th {
-        padding: 14px 12px;
-        background: linear-gradient(180deg, #fbfdff 0%, #f3f8ff 100%);
-        color: #475569;
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        border-bottom: 1px solid #dbe7f5;
-    }
-
-    .llm-model-page__table-wrap .ant-table-thead > tr > th::before {
-        display: none;
-    }
-
-    .llm-model-page__table-wrap .ant-table-tbody > tr > td {
-        padding: 15px 12px;
-        color: #1e293b;
-        font-size: 14px;
-        border-bottom: 1px solid #eef2f7;
-        transition: background-color 0.2s ease;
-    }
-
-    .llm-model-page__table-wrap .ant-table-tbody > tr:hover > td {
-        background: #f8fbff;
-    }
-
-    .llm-model-page__table-wrap .ant-table-tbody > tr:last-child > td {
-        border-bottom: none;
-    }
-
-    .llm-model-page__name-cell {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 180px;
-    }
-
-    .llm-model-page__name-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: #10233f;
-    }
-
-    .llm-model-page__name-sub {
-        font-size: 13px;
-        line-height: 1.6;
-        color: #64748b;
-    }
-
-    .llm-model-page__endpoint {
-        max-width: 420px;
-        font-size: 14px;
-        line-height: 1.7;
-        color: #334155;
-        word-break: break-all;
-    }
-
-    .llm-model-page__tag {
-        border-radius: 999px;
-        padding: 2px 10px;
-        font-weight: 600;
-    }
-
-    .llm-model-page__link {
-        color: #2563eb;
-        font-weight: 600;
-    }
-
-    .llm-model-page__link--danger {
-        color: #dc2626;
-    }
-
-    .llm-model-page__pagination {
-        margin: 0;
-        display: flex;
-        justify-content: flex-end;
-        padding: 14px 16px 16px 16px;
-        border-top: 1px solid #eef4fb;
-        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
-    }
-
-    .llm-model-page__pagination .ant-pagination-total-text {
-        color: #64748b;
-        font-size: 12px;
-    }
-
-    .llm-model-page__pagination .ant-pagination-item,
-    .llm-model-page__pagination .ant-pagination-prev .ant-pagination-item-link,
-    .llm-model-page__pagination .ant-pagination-next .ant-pagination-item-link,
-    .llm-model-page__pagination .ant-pagination-options-size-changer.ant-select .ant-select-selector,
-    .llm-model-page__pagination .ant-pagination-options-quick-jumper input {
-        border-radius: 10px;
-        border-color: #dbe7f5;
-        box-shadow: none;
-    }
-
-    .llm-model-page__pagination .ant-pagination-item-active {
-        background: linear-gradient(180deg, #eef6ff 0%, #dbeafe 100%);
-        border-color: #93c5fd;
-    }
-
-    .llm-model-page__pagination .ant-pagination-item-active a {
-        color: #1d4ed8;
-        font-weight: 700;
-    }
-
-    .llm-model-drawer,
-    .llm-model-drawer__form {
-        height: 100%;
-    }
-
-    .llm-model-drawer__form {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .llm-model-drawer__content {
-        display: block;
-        flex: 1;
-        min-height: 0;
-    }
-
-    .llm-model-drawer__main {
-        min-height: 0;
-    }
-
-    .llm-model-drawer__section {
-        height: 100%;
-        padding: 18px;
-        border-radius: 20px;
-        border: 1px solid #e8eef6;
-        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
-    }
-
-    .llm-model-drawer__section-head {
-        justify-content: space-between;
-        margin-bottom: 18px;
-    }
-
-    .llm-model-drawer__switch-box {
-        padding: 10px 12px;
-        border-radius: 16px;
-        background: #f8fbff;
-        border: 1px solid #dbeafe;
-    }
-
-    .llm-model-drawer__switch-label,
-    .llm-model-drawer__field-label,
-    .llm-model-drawer__summary-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #334155;
-    }
-
-    .llm-model-drawer__form .ant-form-item {
-        margin-bottom: 10px;
-    }
-
-    .llm-model-drawer__main .ant-form-item {
-        margin-bottom: 14px;
-    }
-
-    .llm-model-drawer__field-item {
-        margin-bottom: 16px;
-    }
-
-    .llm-model-drawer__field-item .llm-model-drawer__field-label {
-        margin-bottom: 6px;
-    }
-
-    .llm-model-drawer__field-item .ant-input,
-    .llm-model-drawer__field-item .ant-input-password,
-    .llm-model-drawer__field-item .ant-input-password input,
-    .llm-model-drawer__field-item .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
-    .llm-model-drawer__field-item .ant-input-textarea-show-count,
-    .llm-model-drawer__field-item .ant-input-textarea textarea {
-        border-radius: 16px;
-        border-color: #dbe7f5;
-        background: #ffffff;
-        box-shadow: none;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-    }
-
-    .llm-model-drawer__field-item .ant-input,
-    .llm-model-drawer__field-item .ant-input-affix-wrapper,
-    .llm-model-drawer__field-item .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-        height: 44px;
-        width: 100%;
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
-    .llm-model-drawer__field-item .ant-input-affix-wrapper {
-        display: flex;
-        align-items: center;
-    }
-
-    .llm-model-drawer__field-item .ant-input-affix-wrapper .ant-input {
-        height: auto;
-        padding: 0;
-        border: none;
-        background: transparent;
-        box-shadow: none;
-    }
-
-    .llm-model-drawer__field-item .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-        display: flex;
-        align-items: center;
-    }
-
-    .llm-model-drawer__field-item .ant-select-selection-item,
-    .llm-model-drawer__field-item .ant-select-selection-placeholder {
-        color: #334155;
-        font-size: 13px;
-        line-height: 42px;
-    }
-
-    .llm-model-drawer__field-item .ant-input,
-    .llm-model-drawer__field-item .ant-input-affix-wrapper .ant-input {
-        color: #334155;
-        font-size: 13px;
-    }
-
-    .llm-model-drawer__field-item .ant-input::placeholder,
-    .llm-model-drawer__field-item .ant-input-affix-wrapper .ant-input::placeholder,
-    .llm-model-drawer__field-item .ant-input-textarea textarea::placeholder {
-        color: #94a3b8;
-    }
-
-    .llm-model-drawer__field-item .ant-input-textarea textarea {
-        min-height: 120px;
-        padding: 14px 16px;
-        line-height: 1.75;
-    }
-
-    .llm-model-drawer__field-item .ant-input:hover,
-    .llm-model-drawer__field-item .ant-input-affix-wrapper:hover,
-    .llm-model-drawer__field-item .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
-    .llm-model-drawer__field-item .ant-input-textarea textarea:hover {
-        border-color: #bfdbfe;
-    }
-
-    .llm-model-drawer__field-item .ant-input:focus,
-    .llm-model-drawer__field-item .ant-input-focused,
-    .llm-model-drawer__field-item .ant-input-affix-wrapper-focused,
-    .llm-model-drawer__field-item .ant-select-focused .ant-select-selector,
-    .llm-model-drawer__field-item .ant-input-textarea textarea:focus {
-        border-color: #93c5fd;
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
-    }
-
-    .llm-model-drawer__footer {
-        justify-content: flex-end;
-        margin-top: 16px;
-        padding-top: 16px;
-    }
-
-    @@media (max-width: 1200px) {
-        .llm-model-page__hero {
-            grid-template-columns: 1fr;
-        }
-
-        .llm-model-page__stats {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-    }
-
-    @@media (max-width: 900px) {
-        .llm-model-page__stats {
-            grid-template-columns: 1fr;
-        }
-
-        .llm-model-page__filter-item--actions {
-            margin-left: 0;
-        }
-
-        .llm-model-page__filter-item--status,
-        .llm-model-page__filter-item--keyword {
-            width: 100%;
-            min-width: 100%;
-            flex-basis: 100%;
-        }
-    }
-
-    @@media (max-width: 768px) {
-        .llm-model-page__hero,
-        .llm-model-drawer__section {
-            padding: 14px;
-        }
-
-        .llm-model-page__title {
-            font-size: 22px;
-        }
-    }
-</style>
 
 
 @code {

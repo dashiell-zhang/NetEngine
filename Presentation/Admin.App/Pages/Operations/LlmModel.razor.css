@@ -1,0 +1,73 @@
+.llm-model-page__hero {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.16), transparent 32%),
+        linear-gradient(135deg, #f8fbff 0%, #edf5ff 48%, #f4fbff 100%);
+}
+
+.llm-model-page__filter-form,
+.llm-model-drawer__form {
+    --admin-form-hover-border: #bfdbfe;
+    --admin-form-focus-border: #93c5fd;
+    --admin-form-focus-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
+}
+
+.llm-model-page__name-cell {
+    min-width: 180px;
+}
+
+.llm-model-page__name-title {
+    color: #10233f;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.llm-model-page__name-sub {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.llm-model-page__endpoint {
+    max-width: 420px;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.7;
+    word-break: break-all;
+}
+
+.llm-model-page__tag {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.llm-model-drawer,
+.llm-model-drawer__form {
+    height: 100%;
+}
+
+.llm-model-drawer__content {
+    display: block;
+    flex: 1;
+    min-height: 0;
+}
+
+.llm-model-drawer__main {
+    min-height: 0;
+}
+
+.llm-model-drawer__section {
+    height: 100%;
+}
+
+.llm-model-drawer__footer {
+    margin-top: 16px;
+    padding-top: 16px;
+}
+
+@media (max-width: 768px) {
+    .llm-model-page__action-button {
+        width: 100%;
+    }
+}

@@ -3,13 +3,13 @@
 @attribute [ReuseTabsPageTitle("信息维护")]
 
 <div class="site-setting-page admin-page">
-    <div class="site-setting-page__hero admin-page__hero admin-page__hero--without-actions admin-page-hero--without-actions">
+    <div class="site-setting-page__hero admin-page__hero admin-page__hero--without-actions">
         <div class="site-setting-page__hero-main">
             <div class="site-setting-page__eyebrow admin-page__eyebrow">System Settings</div>
             <h2 class="site-setting-page__title admin-page__title">站点信息维护</h2>
             <div class="site-setting-page__subtitle admin-page__subtitle">集中维护站点展示资料、联系信息与 SEO 内容，保证前台页脚、系统说明和搜索摘要使用同一套数据</div>
 
-            <div class="site-setting-page__hero-tags">
+            <div class="site-setting-page__hero-tags admin-page__hero-tools">
                 <Tag Color="@("blue")">站点信息 @GetSiteFieldCount() / 7</Tag>
                 <Tag Color="@("green")">SEO @GetSeoFieldCount() / 3</Tag>
                 <Tag Color="@("gold")">底部代码 @GetFootCodeStatus()</Tag>
@@ -51,7 +51,7 @@
 
                 <div class="site-setting-page__section-card">
                     <Form Class="site-setting-page__inner-form admin-form" Model="@editSite" Layout="@FormLayout.Vertical">
-                        <div class="site-setting-page__field-grid site-setting-page__field-grid--wide">
+                        <div class="site-setting-page__field-grid site-setting-page__field-grid--wide admin-form__field-grid">
                             <FormItem Label="网站 Url">
                                 <Input Placeholder="请输入网站 Url" @bind-Value="@editSite.WebUrl" AllowClear />
                             </FormItem>

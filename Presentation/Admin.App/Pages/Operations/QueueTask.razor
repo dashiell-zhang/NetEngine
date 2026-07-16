@@ -2,7 +2,7 @@
 @using Application.Model.TaskCenter
 @attribute [ReuseTabsPageTitle("队列任务")]
 
-<div class="queue-task-log-page admin-page">
+<div class="queue-task-log-page admin-page admin-log-page">
     <div class="queue-task-log-page__hero admin-page__hero admin-page__hero--without-actions">
         <div>
             <div class="queue-task-log-page__eyebrow admin-page__eyebrow">Operations</div>
@@ -63,12 +63,12 @@
 
     <Card Class="queue-task-log-page__card queue-task-log-page__card--compact admin-page__card admin-page__card--compact">
         <div class="queue-task-log-page__list-shell admin-page-list-shell">
-            <div class="queue-task-log-page__table-wrap admin-page__table-wrap">
+            <div class="queue-task-log-page__table-wrap admin-page__table-wrap admin-log-page__table-wrap">
                 <Table TItem="QueueTaskDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
                     <ColumnDefinitions>
                         <ActionColumn Title="任务">
-                            <div class="queue-task-log-page__task-cell">
+                            <div class="queue-task-log-page__task-cell admin-log-page__primary-cell">
                                 <div class="queue-task-log-page__task-name" title="@context.Name">@context.Name</div>
                                 <div class="queue-task-log-page__task-sub" title="@context.CallbackName">@(string.IsNullOrWhiteSpace(context.CallbackName) ? "无回调任务" : "回调: " + context.CallbackName)</div>
                             </div>
@@ -141,7 +141,7 @@
 
 <Drawer Closable="true" Width="1180" Visible="isShowDetail" Title='("队列任务详情")' OnClose="() => isShowDetail = false">
     <Template>
-        <div class="queue-task-log-drawer admin-detail-drawer">
+        <div class="queue-task-log-drawer admin-detail-drawer admin-detail-drawer--log">
             <div class="queue-task-log-drawer__overview admin-detail-drawer__overview">
                 <div class="queue-task-log-drawer__summary admin-detail-drawer__summary">
                     <div class="queue-task-log-drawer__summary-main">

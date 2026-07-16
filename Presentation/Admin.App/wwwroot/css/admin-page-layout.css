@@ -21,8 +21,7 @@
     box-shadow: 0 16px 34px rgba(59, 83, 119, 0.10);
 }
 
-.admin-page__hero--without-actions,
-.admin-page-hero--without-actions {
+.admin-page__hero--without-actions {
     min-height: 138px;
 }
 
@@ -252,6 +251,30 @@
     font-weight: 700;
 }
 
+.admin-page__entity-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.admin-page__entity-title,
+.admin-page__time-cell--strong {
+    color: #12263f;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.admin-page__entity-subtitle {
+    min-width: 0;
+    overflow: hidden;
+    color: #708095;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .admin-page__status-tag {
     padding: 3px 10px;
     border: none;
@@ -278,9 +301,33 @@
     background: #eff6ff;
 }
 
+.admin-page__sort-pill--flat {
+    min-width: 44px;
+    padding: 6px 10px;
+    border: none;
+    color: #1d4f91;
+    font-size: 12px;
+    background: #eef6ff;
+}
+
 .admin-page__time-cell {
     color: #475569;
     white-space: nowrap;
+}
+
+.admin-log-page .admin-page__stat-card:nth-child(3) {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 243, 255, 0.96) 100%);
+}
+
+.admin-log-page__table-wrap .ant-table table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.admin-log-page__primary-cell {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .admin-page-list-pagination {
@@ -330,21 +377,5 @@
         grid-template-columns: 1fr;
         min-height: auto;
         padding: 18px;
-    }
-}
-
-@media (max-width: 900px) {
-    .admin-page__stats {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .admin-page__hero {
-        padding: 18px;
-    }
-
-    .admin-page__title {
-        font-size: 24px;
     }
 }

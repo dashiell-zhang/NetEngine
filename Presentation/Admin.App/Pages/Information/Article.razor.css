@@ -154,13 +154,6 @@
         grid-column: span 2;
     }
 
-    .article-editor__info-grid,
-    .article-editor__mini-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0 16px;
-    }
-
     .article-editor ::deep .article-editor__summary-item {
         margin-bottom: 10px;
     }
@@ -362,20 +355,3 @@
     .article-editor ::deep .article-editor__content-item .edui-editor-iframeholder {
         min-height: 370px;
     }
-@media (max-width: 992px) {
-    .article-editor__workspace,
-    .article-editor__info-grid,
-    .article-editor__mini-grid {
-        grid-template-columns: 1fr;
-    }
-
-        .article-editor ::deep .article-editor__field-item--wide {
-            grid-column: auto;
-        }
-}
-
-@media (max-width: 768px) {
-    .article-page__action-button {
-        width: 100%;
-    }
-}

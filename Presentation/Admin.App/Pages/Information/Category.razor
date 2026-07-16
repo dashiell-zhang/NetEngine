@@ -56,7 +56,7 @@
                         </ActionColumn>
 
                         <ActionColumn Title="排序">
-                            <div class="category-page__sort-pill admin-page__sort-pill">@context.Sort</div>
+                            <div class="category-page__sort-pill admin-page__sort-pill admin-page__sort-pill--flat">@context.Sort</div>
                         </ActionColumn>
 
                         <ActionColumn Title="创建时间">
@@ -102,8 +102,8 @@
 
 <Drawer Closable="true" Width="700" Visible="isShowEditCategory" Title='(categoryId == default ? "新增栏目" : "编辑栏目")' OnClose="() => isShowEditCategory = false">
     <Template>
-        <div class="category-drawer admin-drawer">
-            <Form Class="category-drawer__form admin-drawer__form admin-form" Model="@editCategory" Layout="@FormLayout.Vertical" OnFinish="SaveCategoryAsync">
+        <div class="category-drawer admin-drawer admin-drawer--compact">
+            <Form Class="category-drawer__form admin-drawer__form admin-form admin-form--compact" Model="@editCategory" Layout="@FormLayout.Vertical" OnFinish="SaveCategoryAsync">
                 <div class="category-drawer__section admin-drawer__section">
                     <div class="category-drawer__section-title admin-drawer__section-title">基础资料</div>
 

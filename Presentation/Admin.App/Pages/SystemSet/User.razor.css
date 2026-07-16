@@ -11,33 +11,6 @@
     --admin-form-focus-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
 }
 
-.system-user-page__user-cell,
-.system-user-page__contact-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-}
-
-.system-user-page__user-name,
-.system-user-page__contact-main,
-.system-user-page__time-cell {
-    color: #12263f;
-    font-size: 14px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.system-user-page__user-sub,
-.system-user-page__contact-sub {
-    min-width: 0;
-    overflow: hidden;
-    color: #708095;
-    font-size: 12px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .system-user-page__role-pill {
     display: inline-flex;
     max-width: 100%;
@@ -54,20 +27,8 @@
     color: #0f766e;
 }
 
-.system-user-drawer {
-    height: 100%;
-}
-
-.system-user-drawer__form {
-    height: 100%;
-}
-
 .system-user-drawer__section + .system-user-drawer__section {
     margin-top: -4px;
-}
-
-.system-user-drawer__section-title {
-    margin-bottom: 10px;
 }
 
 .system-user-drawer__section-head {
@@ -110,30 +71,8 @@
     box-shadow: 0 10px 20px rgba(59, 83, 119, 0.08);
 }
 
-.system-user-drawer__field-item ::deep .ant-input,
-.system-user-drawer__field-item ::deep .ant-input-affix-wrapper {
-    min-height: 40px;
-    border-radius: 12px;
-}
-
 .system-user-authority__overview {
     background:
         radial-gradient(circle at top right, rgba(124, 58, 237, 0.12), transparent 32%),
         linear-gradient(135deg, #fbf9ff 0%, #f5f9ff 100%);
-}
-
-@media (max-width: 992px) {
-    .system-user-drawer__role-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 768px) {
-    .system-user-drawer__role-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .system-user-page__action-button {
-        width: 100%;
-    }
 }

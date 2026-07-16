@@ -77,19 +77,3 @@
 .schedule-task-drawer__field-item--switch {
     margin-bottom: 0;
 }
-
-@media (max-width: 900px) {
-    .schedule-task-drawer__edit-overview {
-        display: grid;
-        grid-template-columns: 1fr;
-    }
-
-    .schedule-task-drawer__create-head {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-
-    .schedule-task-drawer__create-side {
-        justify-content: flex-start;
-    }
-}

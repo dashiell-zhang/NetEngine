@@ -79,17 +79,3 @@
     height: 40px !important;
     padding: 10px 0 !important;
 }
-
-@media (max-width: 900px) {
-    .login-page__welcome {
-        display: none;
-    }
-
-    .login-page__panel {
-        top: 50%;
-        right: 50%;
-        width: min(400px, calc(100vw - 32px));
-        min-width: 0;
-        transform: translate(50%, -50%);
-    }
-}

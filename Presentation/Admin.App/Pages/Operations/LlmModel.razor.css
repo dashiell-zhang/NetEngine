@@ -5,13 +5,6 @@
         linear-gradient(135deg, #f8fbff 0%, #edf5ff 48%, #f4fbff 100%);
 }
 
-.llm-model-page__filter-form,
-.llm-model-drawer__form {
-    --admin-form-hover-border: #bfdbfe;
-    --admin-form-focus-border: #93c5fd;
-    --admin-form-focus-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
-}
-
 .llm-model-page__name-cell {
     min-width: 180px;
 }
@@ -64,10 +57,4 @@
 .llm-model-drawer__footer {
     margin-top: 16px;
     padding-top: 16px;
-}
-
-@media (max-width: 768px) {
-    .llm-model-page__action-button {
-        width: 100%;
-    }
 }

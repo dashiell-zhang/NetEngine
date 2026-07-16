@@ -53,7 +53,7 @@
                         </ActionColumn>
 
                         <ActionColumn Title="排序">
-                            <div class="system-link-page__sort-pill admin-page__sort-pill">@context.Sort</div>
+                            <div class="system-link-page__sort-pill admin-page__sort-pill admin-page__sort-pill--flat">@context.Sort</div>
                         </ActionColumn>
 
                         <ActionColumn Title="创建时间">
@@ -99,8 +99,8 @@
 
 <Drawer Closable="true" Width="700" Visible="isShowEditLink" Title='(linkId == default ? "新增友链" : "编辑友链")' OnClose="() => isShowEditLink = false">
     <Template>
-        <div class="system-link-drawer admin-drawer">
-            <Form Class="system-link-drawer__form admin-drawer__form admin-form" Model="@editLink" Layout="@FormLayout.Vertical" OnFinish="SaveLinkAsync">
+        <div class="system-link-drawer admin-drawer admin-drawer--compact">
+            <Form Class="system-link-drawer__form admin-drawer__form admin-form admin-form--compact" Model="@editLink" Layout="@FormLayout.Vertical" OnFinish="SaveLinkAsync">
                 <div class="system-link-drawer__section admin-drawer__section">
                     <div class="system-link-drawer__section-title admin-drawer__section-title">基础资料</div>
 

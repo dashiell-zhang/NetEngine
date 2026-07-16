@@ -4,7 +4,7 @@
 @attribute [ReuseTabsPageTitle("文章管理")]
 
 <div class="article-page admin-page">
-    <div class="article-page__hero admin-page__hero admin-page-hero--with-actions">
+    <div class="article-page__hero admin-page__hero admin-page__hero--with-actions">
         <div>
             <div class="article-page__eyebrow admin-page__eyebrow">Information Management</div>
             <h2 class="article-page__title admin-page__title">文章管理工作台</h2>
@@ -130,7 +130,7 @@
                 <div class="article-editor__panel admin-content-editor__main-panel">
                     <div class="article-editor__panel-title">基础资料</div>
 
-                    <div class="article-editor__info-grid">
+                    <div class="article-editor__info-grid admin-form__field-grid">
                         <FormItem Label="所属栏目" Class="article-editor__field-item">
                             <TreeSelect TItem="TreeSelectDto" TItemValue="string" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node => node.DataItem.Children" DisabledExpression="node => node.DataItem.IsDisabled" TitleExpression="node => node.DataItem.Title" KeyExpression="node => node.DataItem.Key" IsLeafExpression="node => node.DataItem.Children == null"></TreeSelect>
                         </FormItem>
@@ -166,7 +166,7 @@
                         </div>
                     </div>
 
-                    <div class="article-editor__mini-grid">
+                    <div class="article-editor__mini-grid admin-form__field-grid">
                         <FormItem Label="排序" Class="article-editor__field-item">
                             <Input Placeholder="请输入排序值" Type="InputType.Number" @bind-Value="@context.Sort" />
                         </FormItem>

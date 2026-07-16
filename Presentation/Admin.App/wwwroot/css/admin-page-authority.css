@@ -131,16 +131,3 @@
     color: #7a8799;
     font-size: 12px;
 }
-
-@media (max-width: 992px) {
-    .admin-authority__overview {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
-
-@media (max-width: 768px) {
-    .admin-authority__overview {
-        padding: 14px;
-    }
-}

@@ -1,59 +1,12 @@
-.log-page {
-    --admin-form-hover-border: #bfdbfe;
-    --admin-form-focus-border: #93c5fd;
-    --admin-form-focus-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
-    gap: 18px;
-}
-
 .log-page__hero {
-    grid-template-columns: minmax(260px, 1.4fr) minmax(320px, 1fr);
-    gap: 18px;
-    border-color: #d9ebff;
-    border-radius: 20px;
     background:
         radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 36%),
         radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 32%),
         linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f4fffd 100%);
-    box-shadow: 0 14px 32px rgba(77, 125, 173, 0.10);
-}
-
-.log-page__eyebrow {
-    margin-bottom: 10px;
-    color: #2563eb;
-    font-size: 12px;
-}
-
-.log-page__title {
-    font-size: 28px;
-    line-height: 1.2;
-}
-
-.log-page__subtitle {
-    max-width: 620px;
-    margin-top: 10px;
-    font-size: 13px;
-    line-height: 1.8;
-}
-
-.log-page__stats {
-    gap: 12px;
 }
 
 .log-page__stat-card:nth-child(3) {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 243, 255, 0.96) 100%);
-}
-
-.log-page__stat-label,
-.log-page__stat-foot {
-    font-size: 12px;
-}
-
-.log-page__stat-value {
-    font-size: 24px;
-}
-
-.log-page__stat-value--small {
-    font-size: 18px;
 }
 
 .log-page__filter-grid {
@@ -123,8 +76,6 @@
 }
 
 @media (max-width: 1200px) {
-    .log-page__hero,
-    .log-page__stats,
     .log-page__filter-grid,
     .log-drawer__meta-grid {
         grid-template-columns: 1fr;

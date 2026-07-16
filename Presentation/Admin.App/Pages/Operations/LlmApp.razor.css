@@ -5,13 +5,6 @@
         linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f4fffd 100%);
 }
 
-.llm-app-page__filter-form,
-.llm-app-drawer__form {
-    --admin-form-hover-border: #bfdbfe;
-    --admin-form-focus-border: #93c5fd;
-    --admin-form-focus-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
-}
-
 .llm-app-page__app-cell {
     display: flex;
     align-items: center;
@@ -203,20 +196,5 @@
 @media (max-width: 1280px) {
     .llm-app-drawer__content {
         grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 900px) {
-    .llm-app-drawer__section-head,
-    .llm-app-drawer__test-bar {
-        display: grid;
-        grid-template-columns: 1fr;
-        justify-content: stretch;
-    }
-}
-
-@media (max-width: 768px) {
-    .llm-app-page__action-button {
-        width: 100%;
     }
 }

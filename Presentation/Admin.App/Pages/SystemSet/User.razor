@@ -4,7 +4,7 @@
 @attribute [ReuseTabsPageTitle("用户管理")]
 
 <div class="system-user-page admin-page">
-    <div class="system-user-page__hero admin-page__hero admin-page-hero--with-actions">
+    <div class="system-user-page__hero admin-page__hero admin-page__hero--with-actions">
         <div>
             <div class="system-user-page__eyebrow admin-page__eyebrow">System Settings</div>
             <h2 class="system-user-page__title admin-page__title">用户管理工作台</h2>
@@ -61,16 +61,16 @@
 
                     <ColumnDefinitions>
                         <ActionColumn Title="用户">
-                            <div class="system-user-page__user-cell">
-                                <div class="system-user-page__user-name" title="@context.Name">@context.Name</div>
-                                <div class="system-user-page__user-sub" title="@context.UserName">@context.UserName</div>
+                            <div class="system-user-page__user-cell admin-page__entity-cell">
+                                <div class="system-user-page__user-name admin-page__entity-title" title="@context.Name">@context.Name</div>
+                                <div class="system-user-page__user-sub admin-page__entity-subtitle" title="@context.UserName">@context.UserName</div>
                             </div>
                         </ActionColumn>
 
                         <ActionColumn Title="联系方式">
-                            <div class="system-user-page__contact-cell">
-                                <div class="system-user-page__contact-main" title="@context.Phone">@context.Phone</div>
-                                <div class="system-user-page__contact-sub" title="@(string.IsNullOrWhiteSpace(context.Email) ? "未填写邮箱" : context.Email)">@(string.IsNullOrWhiteSpace(context.Email) ? "未填写邮箱" : context.Email)</div>
+                            <div class="system-user-page__contact-cell admin-page__entity-cell">
+                                <div class="system-user-page__contact-main admin-page__entity-title" title="@context.Phone">@context.Phone</div>
+                                <div class="system-user-page__contact-sub admin-page__entity-subtitle" title="@(string.IsNullOrWhiteSpace(context.Email) ? "未填写邮箱" : context.Email)">@(string.IsNullOrWhiteSpace(context.Email) ? "未填写邮箱" : context.Email)</div>
                             </div>
                         </ActionColumn>
 
@@ -79,7 +79,7 @@
                         </ActionColumn>
 
                         <ActionColumn Title="创建时间">
-                            <div class="system-user-page__time-cell admin-page__time-cell">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div class="system-user-page__time-cell admin-page__time-cell admin-page__time-cell--strong">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
                         </ActionColumn>
 
                         <ActionColumn Title="操作">
@@ -128,8 +128,8 @@
 
 <Drawer Closable="true" Width="760" Visible="isShowEditUser" Title='(userId == default ? "新增用户" : "编辑用户")' OnClose="() => isShowEditUser = false">
     <Template>
-        <div class="system-user-drawer admin-drawer">
-            <Form Class="system-user-drawer__form admin-drawer__form admin-form" Model="@editUser" Layout="@FormLayout.Vertical" OnFinish="SaveUserAsync">
+        <div class="system-user-drawer admin-drawer admin-drawer--compact">
+            <Form Class="system-user-drawer__form admin-drawer__form admin-form admin-form--compact" Model="@editUser" Layout="@FormLayout.Vertical" OnFinish="SaveUserAsync">
                 <div class="system-user-drawer__section admin-drawer__section">
                     <div class="system-user-drawer__section-title admin-drawer__section-title">基础资料</div>
 

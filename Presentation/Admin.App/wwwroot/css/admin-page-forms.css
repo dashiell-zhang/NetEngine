@@ -14,6 +14,12 @@
     line-height: 1;
 }
 
+.admin-form {
+    --admin-form-hover-border: #bfdbfe;
+    --admin-form-focus-border: #93c5fd;
+    --admin-form-focus-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
+}
+
 .admin-form__field-item {
     margin-bottom: 16px;
 }
@@ -30,6 +36,12 @@
     color: #64748b;
     font-size: 12px;
     line-height: 1.7;
+}
+
+.admin-form__field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 16px;
 }
 
 .admin-form .ant-input,
@@ -77,6 +89,35 @@
     color: #334155;
     font-size: 13px;
     line-height: 42px;
+}
+
+.admin-form.admin-form--compact .admin-form__field-item {
+    margin-bottom: 12px;
+}
+
+.admin-form.admin-form--compact .admin-form__field-label {
+    color: #42556d;
+    font-weight: 700;
+}
+
+.admin-form.admin-form--compact .ant-input,
+.admin-form.admin-form--compact .ant-input-affix-wrapper,
+.admin-form.admin-form--compact .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.admin-form.admin-form--compact .ant-select-selection-search-input {
+    min-height: 40px;
+    height: 40px;
+    border-radius: 12px;
+}
+
+.admin-form.admin-form--compact .ant-select-selection-item,
+.admin-form.admin-form--compact .ant-select-selection-placeholder {
+    line-height: 38px;
+}
+
+.admin-form.admin-form--compact .ant-input-textarea textarea {
+    padding: 12px 14px;
+    border-radius: 12px;
+    line-height: 1.7;
 }
 
 .admin-form .ant-input-textarea textarea {
@@ -154,20 +195,6 @@
 
 .admin-filter-form__item--actions {
     margin-left: auto;
-}
-
-@media (max-width: 900px) {
-    .admin-filter-form__item--actions {
-        margin-left: 0;
-    }
-
-    .admin-filter-form__item--keyword,
-    .admin-filter-form__item--status,
-    .admin-filter-form__item--time {
-        width: 100%;
-        min-width: 100%;
-        flex-basis: 100%;
-    }
 }
 
 .ant-select-dropdown:has(.ant-tree) {

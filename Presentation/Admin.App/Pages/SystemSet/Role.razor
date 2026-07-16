@@ -3,7 +3,7 @@
 @attribute [ReuseTabsPageTitle("角色管理")]
 
 <div class="system-role-page admin-page">
-    <div class="system-role-page__hero admin-page__hero admin-page-hero--with-actions">
+    <div class="system-role-page__hero admin-page__hero admin-page__hero--with-actions">
         <div>
             <div class="system-role-page__eyebrow admin-page__eyebrow">System Settings</div>
             <h2 class="system-role-page__title admin-page__title">角色管理工作台</h2>
@@ -45,9 +45,9 @@
 
                     <ColumnDefinitions>
                         <ActionColumn Title="角色">
-                            <div class="system-role-page__role-cell">
-                                <div class="system-role-page__role-name" title="@context.Name">@context.Name</div>
-                                <div class="system-role-page__role-sub" title="@context.Code">@context.Code</div>
+                            <div class="system-role-page__role-cell admin-page__entity-cell">
+                                <div class="system-role-page__role-name admin-page__entity-title" title="@context.Name">@context.Name</div>
+                                <div class="system-role-page__role-sub admin-page__entity-subtitle" title="@context.Code">@context.Code</div>
                             </div>
                         </ActionColumn>
 
@@ -56,7 +56,7 @@
                         </ActionColumn>
 
                         <ActionColumn Title="创建时间">
-                            <div class="system-role-page__time-cell admin-page__time-cell">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div class="system-role-page__time-cell admin-page__time-cell admin-page__time-cell--strong">@context.CreateTime.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</div>
                         </ActionColumn>
 
                         <ActionColumn Title="操作">
@@ -105,8 +105,8 @@
 
 <Drawer Closable="true" Width="700" Visible="isShowEditRole" Title='(roleId == default ? "新增角色" : "编辑角色")' OnClose="() => isShowEditRole = false">
     <Template>
-        <div class="system-role-drawer admin-drawer">
-            <Form Class="system-role-drawer__form admin-drawer__form admin-form" Model="@editRole" Layout="@FormLayout.Vertical" OnFinish="SaveRoleAsync">
+        <div class="system-role-drawer admin-drawer admin-drawer--compact">
+            <Form Class="system-role-drawer__form admin-drawer__form admin-form admin-form--compact" Model="@editRole" Layout="@FormLayout.Vertical" OnFinish="SaveRoleAsync">
                 <div class="system-role-drawer__section admin-drawer__section">
                     <div class="system-role-drawer__section-title admin-drawer__section-title">基础资料</div>
 

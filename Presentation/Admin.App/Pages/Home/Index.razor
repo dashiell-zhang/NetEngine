@@ -3,7 +3,7 @@
 @attribute [ReuseTabsPage(Title = "仪表盘", PinUrl = "/", Closable = false, Pin = true)]
 
 <div class="dashboard-page admin-page">
-    <div class="dashboard-page__hero admin-page__hero admin-page__hero--without-actions admin-page-hero--without-actions">
+    <div class="dashboard-page__hero admin-page__hero admin-page__hero--without-actions">
         <div>
             <div class="dashboard-page__eyebrow admin-page__eyebrow">Console Overview</div>
             <h2 class="dashboard-page__title admin-page__title">服务器运行概览</h2>
@@ -11,7 +11,7 @@
 
             @if (overviewInfos.Count > 0)
             {
-                <div class="dashboard-page__tag-list">
+                <div class="dashboard-page__tag-list admin-page__hero-tools">
                     @foreach (var info in overviewInfos)
                     {
                         <Tag Class="dashboard-page__tag">@(info.Name + "：" + info.Value)</Tag>

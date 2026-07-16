@@ -4,7 +4,7 @@
 @using System.Net.Http.Json
 @attribute [ReuseTabsPageTitle("LLM会话日志")]
 
-<div class="llm-conversation-page admin-page">
+<div class="llm-conversation-page admin-page admin-log-page">
     <div class="llm-conversation-page__hero admin-page__hero admin-page__hero--without-actions">
         <div>
             <div class="llm-conversation-page__eyebrow admin-page__eyebrow">Operations</div>
@@ -58,12 +58,12 @@
 
     <Card Class="llm-conversation-page__card llm-conversation-page__card--compact admin-page__card admin-page__card--compact">
         <div class="llm-conversation-page__list-shell admin-page-list-shell">
-            <div class="llm-conversation-page__table-wrap admin-page__table-wrap">
+            <div class="llm-conversation-page__table-wrap admin-page__table-wrap admin-log-page__table-wrap">
                 <Table TItem="LlmConversationDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
                     <ColumnDefinitions>
                         <ActionColumn Title="应用">
-                            <div class="llm-conversation-page__app-cell">
+                            <div class="llm-conversation-page__app-cell admin-log-page__primary-cell">
                                 <div class="llm-conversation-page__app-name" title="@context.LlmAppName">@context.LlmAppName</div>
                             </div>
                         </ActionColumn>
@@ -112,7 +112,7 @@
 
 <Drawer Closable="true" Width="1180" Visible="isShowDetail" Title='("LLM会话详情")' OnClose="() => isShowDetail = false">
     <Template>
-        <div class="llm-conversation-drawer admin-detail-drawer">
+        <div class="llm-conversation-drawer admin-detail-drawer admin-detail-drawer--log">
             <div class="llm-conversation-drawer__overview admin-detail-drawer__overview">
                 <div class="llm-conversation-drawer__summary admin-detail-drawer__summary">
                     <div class="llm-conversation-drawer__summary-main">

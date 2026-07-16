@@ -1,58 +1,12 @@
 .system-link-page__hero {
-    gap: 10px;
-    border-color: #dfebf8;
-    border-radius: 20px;
     background:
         radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 35%),
         radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.14), transparent 30%),
         linear-gradient(135deg, #f8fbff 0%, #eef8ff 48%, #f5fbff 100%);
 }
 
-.system-link-page__eyebrow {
-    margin-bottom: 6px;
-    color: #2563eb;
-}
-
-.system-link-page__title {
-    font-size: 24px;
-    line-height: 1.2;
-}
-
-.system-link-page__subtitle {
-    max-width: 620px;
-    font-size: 11px;
-    line-height: 1.6;
-}
-
-.system-link-page__hero-tools {
-    margin-top: 14px;
-}
-
-.system-link-page__stats {
-    gap: 10px;
-}
-
 .system-link-page__stat-card:nth-child(3) {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 248, 255, 0.92) 100%);
-}
-
-.system-link-page__stat-label {
-    color: #5a6b82;
-    font-weight: 600;
-}
-
-.system-link-page__stat-value {
-    font-size: 24px;
-    line-height: 1;
-}
-
-.system-link-page__stat-value--small {
-    font-size: 16px;
-    line-height: 1.25;
-}
-
-.system-link-page__stat-foot {
-    color: #6c7a8f;
 }
 
 .system-link-page__link-cell {
@@ -98,79 +52,8 @@
     text-decoration: underline;
 }
 
-.system-link-page__sort-pill {
-    min-width: 44px;
-    padding: 6px 10px;
-    border: none;
-    color: #1d4f91;
-    font-size: 12px;
-    background: #eef6ff;
-}
-
 .system-link-page__time-cell {
     color: #12263f;
     font-size: 14px;
     font-weight: 600;
-}
-
-.system-link-drawer {
-    height: 100%;
-    min-height: 0;
-    padding: 0;
-}
-
-.system-link-drawer__form {
-    height: 100%;
-    gap: 12px;
-}
-
-.system-link-drawer__section {
-    padding: 16px 18px;
-    border-color: #e8eef5;
-}
-
-.system-link-drawer__section-title {
-    margin-bottom: 10px;
-    color: #163250;
-}
-
-.system-link-drawer__field-item {
-    margin-bottom: 12px;
-}
-
-.system-link-drawer__field-label {
-    color: #42556d;
-    font-weight: 700;
-}
-
-.system-link-drawer ::deep .ant-input,
-.system-link-drawer ::deep .ant-input-affix-wrapper {
-    min-height: 40px;
-    height: 40px;
-    border-radius: 12px;
-}
-
-.system-link-drawer__footer {
-    margin-top: auto;
-    padding: 4px 0 0;
-    gap: 10px;
-}
-
-@media (max-width: 768px) {
-    .system-link-page__title {
-        font-size: 22px;
-    }
-
-    .system-link-drawer__section {
-        padding: 14px;
-    }
-
-    .system-link-drawer__footer {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .system-link-drawer ::deep .system-link-page__action-button {
-        width: 100%;
-    }
 }

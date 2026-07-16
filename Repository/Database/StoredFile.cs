@@ -9,7 +9,6 @@ namespace Repository.Database;
 /// 文件表
 /// </summary>
 [Index(nameof(Table)), Index(nameof(TableId)), Index(nameof(Sign))]
-[Table("File")]
 public class StoredFile : CD_User
 {
 

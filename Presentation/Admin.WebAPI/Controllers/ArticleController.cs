@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers;
+
+/// <summary>
+/// 栏目和文章管理控制器
+/// </summary>
 [SignVerifyFilter]
 [Route("[controller]/[action]")]
 [Authorize]
@@ -98,10 +102,10 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// 创建文章
     /// </summary>
     /// <param name="createArticle"></param>
-    /// <param name="fileKey">文件key</param>
+    /// <param name="uploadKey">上传批次标识</param>
     /// <returns></returns>
     [HttpPost]
-    public Task<long> CreateArticle(EditArticleDto createArticle, long fileKey) => articleService.CreateArticleAsync(createArticle, fileKey);
+    public Task<long> CreateArticle(EditArticleDto createArticle, long uploadKey) => articleService.CreateArticleAsync(createArticle, uploadKey);
 
 
 
@@ -110,9 +114,10 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// </summary>
     /// <param name="articleId"></param>
     /// <param name="updateArticle"></param>
+    /// <param name="uploadKey">上传批次标识</param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> UpdateArticle(long articleId, EditArticleDto updateArticle) => articleService.UpdateArticleAsync(articleId, updateArticle);
+    public Task<bool> UpdateArticle(long articleId, EditArticleDto updateArticle, long uploadKey) => articleService.UpdateArticleAsync(articleId, updateArticle, uploadKey);
 
 
 

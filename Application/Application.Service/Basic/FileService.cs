@@ -12,6 +12,9 @@ using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Basic;
 
+/// <summary>
+/// 提供统一文件上传、访问、绑定和删除能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IConfiguration configuration, IHttpClientFactory httpClientFactory, IFileStorage? fileStorage = null)
 {
@@ -127,6 +130,96 @@ public class FileService(IdService idService, IUserContext userContext, Database
         }
 
         throw new CustomException("文件上传失败");
+    }
+
+
+    /// <summary>
+    /// 将上传批次文件绑定到正式业务记录
+    /// </summary>
+    /// <param name="business">业务领域</param>
+    /// <param name="sign">文件标记</param>
+    /// <param name="uploadKey">上传批次标识</param>
+    /// <param name="businessId">正式业务记录标识</param>
+    /// <returns>绑定文件数量</returns>
+    public async Task<int> BindFilesAsync(string business, string sign, long uploadKey, long businessId)
+    {
+
+        var fileList = await db.StoredFile.Where(t => t.Table == business && t.Sign == sign && t.TableId == uploadKey && t.CreateUserId == userContext.UserId).ToListAsync();
+
+        foreach (var file in fileList)
+        {
+            file.TableId = businessId;
+        }
+
+        return fileList.Count;
+
+    }
+
+
+    /// <summary>
+    /// 根据正文实际引用同步上传批次和正式业务记录中的正文文件
+    /// </summary>
+    /// <param name="business">业务领域</param>
+    /// <param name="uploadKey">上传批次标识</param>
+    /// <param name="businessId">正式业务记录标识</param>
+    /// <param name="referencedFileIds">正文实际引用的文件标识</param>
+    /// <returns>保留的正文文件数量</returns>
+    public async Task<int> SyncContentFilesAsync(string business, long uploadKey, long businessId, IReadOnlyCollection<long> referencedFileIds)
+    {
+
+        var distinctFileIds = referencedFileIds.Distinct().ToHashSet();
+        var currentUserId = userContext.UserId;
+        var fileList = await db.StoredFile.Where(t => t.Table == business && t.Sign.StartsWith("content-") && (t.TableId == businessId || (t.TableId == uploadKey && t.CreateUserId == currentUserId))).ToListAsync();
+        var invalidFileIds = distinctFileIds.Except(fileList.Select(t => t.Id)).ToList();
+
+        if (invalidFileIds.Count > 0)
+        {
+            throw new CustomException("正文包含无效或不属于当前文章的文件");
+        }
+
+        var deleteTime = DateTimeOffset.UtcNow;
+
+        foreach (var file in fileList)
+        {
+            if (distinctFileIds.Contains(file.Id))
+            {
+                if (file.TableId == uploadKey)
+                {
+                    file.TableId = businessId;
+                }
+            }
+            else
+            {
+                file.DeleteTime = deleteTime;
+                file.DeleteUserId = currentUserId;
+            }
+        }
+
+        return distinctFileIds.Count;
+
+    }
+
+
+    /// <summary>
+    /// 软删除正式业务记录关联的全部文件
+    /// </summary>
+    /// <param name="business">业务领域</param>
+    /// <param name="businessId">正式业务记录标识</param>
+    /// <returns>软删除文件数量</returns>
+    public async Task<int> SoftDeleteBusinessFilesAsync(string business, long businessId)
+    {
+
+        var fileList = await db.StoredFile.Where(t => t.Table == business && t.TableId == businessId).ToListAsync();
+        var deleteTime = DateTimeOffset.UtcNow;
+
+        foreach (var file in fileList)
+        {
+            file.DeleteTime = deleteTime;
+            file.DeleteUserId = userContext.UserId;
+        }
+
+        return fileList.Count;
+
     }
 
 

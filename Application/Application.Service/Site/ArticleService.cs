@@ -12,6 +12,9 @@ using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Site;
 
+/// <summary>
+/// 提供栏目和文章业务管理能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, FileService fileService)
 {
@@ -297,9 +300,9 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// 创建文章
     /// </summary>
     /// <param name="createArticle"></param>
-    /// <param name="fileKey">文件key</param>
+    /// <param name="uploadKey">上传批次标识</param>
     /// <returns></returns>
-    public async Task<long> CreateArticleAsync(EditArticleDto createArticle, long fileKey)
+    public async Task<long> CreateArticleAsync(EditArticleDto createArticle, long uploadKey)
     {
         Article article = new()
         {
@@ -326,13 +329,8 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
 
         db.Article.Add(article);
 
-
-        var fileList = await db.StoredFile.Where(t => t.Table == "Article" && t.TableId == fileKey).ToListAsync();
-
-        foreach (var file in fileList)
-        {
-            file.TableId = article.Id;
-        }
+        await fileService.SyncContentFilesAsync("Article", uploadKey, article.Id, createArticle.ContentFileIdList ?? []);
+        await fileService.BindFilesAsync("Article", "cover", uploadKey, article.Id);
 
         await db.SaveChangesAsync();
 
@@ -345,8 +343,9 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// </summary>
     /// <param name="articleId"></param>
     /// <param name="updateArticle"></param>
+    /// <param name="uploadKey">上传批次标识</param>
     /// <returns></returns>
-    public async Task<bool> UpdateArticleAsync(long articleId, EditArticleDto updateArticle)
+    public async Task<bool> UpdateArticleAsync(long articleId, EditArticleDto updateArticle, long uploadKey)
     {
         var article = await db.Article.Where(t => t.Id == articleId).FirstOrDefaultAsync();
 
@@ -369,6 +368,9 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
             {
                 article.Digest = updateArticle.Digest;
             }
+
+            await fileService.SyncContentFilesAsync("Article", uploadKey, article.Id, updateArticle.ContentFileIdList ?? []);
+            await fileService.BindFilesAsync("Article", "cover", uploadKey, article.Id);
 
             await db.SaveChangesAsync();
 
@@ -393,10 +395,13 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
             article.DeleteTime = DateTimeOffset.UtcNow;
             article.DeleteUserId = userContext.UserId;
 
+            await fileService.SoftDeleteBusinessFilesAsync("Article", article.Id);
+
             await db.SaveChangesAsync();
         }
 
         return true;
     }
+
 
 }

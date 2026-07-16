@@ -363,13 +363,13 @@
         , outputXssFilter: true
         // xss过滤白名单 名单来源: https://raw.githubusercontent.com/leizongmin/js-xss/master/lib/default.js
         , whitList: {
-            a: ['target', 'href', 'title', 'class', 'style'],
+            a: ['target', 'href', 'title', 'class', 'style', 'data-file-id'],
             abbr: ['title', 'class', 'style'],
             address: ['class', 'style'],
             area: ['shape', 'coords', 'href', 'alt'],
             article: [],
             aside: [],
-            audio: ['autoplay', 'controls', 'loop', 'preload', 'src', 'class', 'style'],
+            audio: ['autoplay', 'controls', 'loop', 'preload', 'src', 'class', 'style', 'data-file-id'],
             b: ['class', 'style'],
             bdi: ['dir'],
             bdo: ['dir'],
@@ -400,7 +400,7 @@
             header: [],
             hr: [],
             i: ['class', 'style'],
-            img: ['src', 'alt', 'title', 'width', 'height', 'id', '_src', 'loadingclass', 'class', 'data-latex'],
+            img: ['src', 'alt', 'title', 'width', 'height', 'id', '_src', 'loadingclass', 'class', 'data-latex', 'data-file-id'],
             ins: ['datetime'],
             li: ['class', 'style'],
             mark: [],
@@ -425,7 +425,7 @@
             tt: [],
             u: [],
             ul: ['class', 'style'],
-            video: ['autoplay', 'controls', 'loop', 'preload', 'src', 'height', 'width', 'class', 'style']
+            video: ['autoplay', 'controls', 'loop', 'preload', 'src', 'height', 'width', 'class', 'style', 'data-file-id']
         }
     };
 

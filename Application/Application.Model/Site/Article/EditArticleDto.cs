@@ -34,6 +34,13 @@ public class EditArticleDto
 
 
     /// <summary>
+    /// 正文当前引用的统一文件标识列表
+    /// </summary>
+    public List<long> ContentFileIdList { get; set; } = [];
+
+
+
+    /// <summary>
     /// 是否推荐
     /// </summary>
     public bool IsRecommend { get; set; }

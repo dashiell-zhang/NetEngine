@@ -282,7 +282,8 @@
                 url: uploadDir + file.url,
                 width: width,
                 height: height,
-                align: align
+                align: align,
+                fileId: file.fileId
             });
         }
 
@@ -725,7 +726,8 @@
                         uploadVideoList.push({
                             'url': json.url,
                             'type': json.type,
-                            'original': json.original
+                            'original': json.original,
+                            'fileId': json.fileId
                         });
                         $file.append('<span class="success"></span>');
                     } else {

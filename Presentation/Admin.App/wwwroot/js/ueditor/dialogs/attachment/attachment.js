@@ -556,7 +556,8 @@
                 link = data.url;
                 list.push({
                     title: data.original || link.substr(link.lastIndexOf('/') + 1),
-                    url: prefix + link
+                    url: prefix + link,
+                    fileId: data.fileId
                 });
             }
             return list;

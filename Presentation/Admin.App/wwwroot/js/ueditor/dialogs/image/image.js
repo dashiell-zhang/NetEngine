@@ -779,6 +779,7 @@
                     _src: prefix + data.url,
                     title: data.title,
                     alt: data.original,
+                    'data-file-id': data.fileId,
                     floatStyle: align
                 });
             }

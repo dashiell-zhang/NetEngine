@@ -1,278 +1,336 @@
+using Application.Model.Basic.File;
+using Application.Service.Basic;
 using Common;
-using FileStorage;
-using WebAPI.Core.Extensions;
 
 namespace Admin.WebAPI.Libraries.Ueditor;
 
-public class UploadHandler
+/// <summary>
+/// 处理 UEditor 普通文件和 Base64 文件上传
+/// </summary>
+public class UploadHandler(UploadConfig uploadConfig, string rootPath, HttpContext httpContext, FileService fileService, long uploadKey, string sign, string fileServerUrl)
 {
 
-    public UploadConfig UploadConfig { get; private set; }
-    public UploadResult Result { get; private set; }
-
-    private readonly string rootPath;
-
-    private readonly HttpContext httpContext;
-
-    private readonly IFileStorage? fileStorage;
-
-
-    public UploadHandler(UploadConfig config, string rootPath, HttpContext httpContext) : base()
-    {
-        UploadConfig = config;
-        Result = new UploadResult() { State = UploadState.Unknown };
-
-        this.rootPath = rootPath;
-        this.httpContext = httpContext;
-
-        fileStorage = httpContext.RequestServices.GetService<IFileStorage>();
-    }
-
-
-
+    /// <summary>
+    /// 处理 UEditor 文件上传请求
+    /// </summary>
+    /// <returns>UEditor 上传响应</returns>
     public async Task<string> ProcessAsync()
     {
 
-        string value = "";
-        string uploadFileName;
-        if (UploadConfig.Base64)
+        UploadResult result = new();
+
+        try
         {
-            uploadFileName = UploadConfig.Base64Filename!;
-            byte[] uploadFileBytes = Convert.FromBase64String(httpContext.Current().Request.Form[UploadConfig.UploadFieldName!]!);
+            var form = await httpContext.Request.ReadFormAsync();
 
-            var savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
-            var localPath = Path.Combine(rootPath, savePath);
-
-            try
+            if (uploadConfig.Base64)
             {
+                var base64Value = form[uploadConfig.UploadFieldName].ToString();
 
-                if (!Directory.Exists(Path.GetDirectoryName(localPath)))
+                if (string.IsNullOrWhiteSpace(base64Value))
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
-                }
-                File.WriteAllBytes(localPath, uploadFileBytes);
-
-
-                var utcNow = DateTime.UtcNow;
-
-
-                if (fileStorage != null)
-                {
-                    string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
-
-                    var upload = await fileStorage.FileUploadAsync(localPath, basePath, true, Path.GetFileName(localPath));
-
-                    if (upload)
-                    {
-                        IOHelper.DeleteFile(localPath);
-
-                        Result.Url = Path.Combine(basePath, Path.GetFileName(localPath)).Replace("\\", "/");
-                        Result.State = UploadState.Success;
-                    }
-                    else
-                    {
-                        Result.State = UploadState.FileAccessError;
-                        Result.ErrorMessage = "文件存储转存失败";
-                    }
-                }
-                else
-                {
-                    Result.Url = savePath;
-                    Result.State = UploadState.Success;
+                    result.State = UploadState.InvalidRequest;
+                    result.ErrorMessage = "上传内容为空";
+                    return WriteResult(result);
                 }
 
-            }
-            catch (Exception e)
-            {
-                Result.State = UploadState.FileAccessError;
-                Result.ErrorMessage = e.Message;
-            }
-            finally
-            {
-                value = WriteResult();
-            }
-        }
-        else
-        {
-            var file = httpContext.Current().Request.Form.Files[UploadConfig.UploadFieldName!]!;
-            uploadFileName = file.FileName;
-
-            if (!CheckFileType(uploadFileName))
-            {
-                Result.State = UploadState.TypeNotAllow;
-                value = WriteResult();
-            }
-
-            int filelength = Convert.ToInt32(file.Length);
-
-            if (!CheckFileSize(filelength))
-            {
-                Result.State = UploadState.SizeLimitExceed;
-                value = WriteResult();
-            }
-
-            _ = new byte[file.Length];
-            try
-            {
-                file.OpenReadStream();
-
-                string savePath = PathFormatter.Format(uploadFileName, UploadConfig.PathFormat!);
-                string localPath = Path.Combine(rootPath, savePath);
+                byte[] fileBytes;
 
                 try
                 {
-
-
-
-                    if (!Directory.Exists(Path.GetDirectoryName(localPath)))
-                    {
-                        Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
-                    }
-                    using (FileStream fs = File.Create(localPath))
-                    {
-                        file.CopyTo(fs);
-                        fs.Flush();
-                    }
-
-
-                    if (fileStorage != null)
-                    {
-                        var utcNow = DateTime.UtcNow;
-
-                        string basePath = Path.Combine("uploads", utcNow.ToString("yyyy"), utcNow.ToString("MM"), utcNow.ToString("dd"));
-
-                        var upload = await fileStorage.FileUploadAsync(localPath, basePath, true, file.FileName);
-
-                        if (upload)
-                        {
-                            IOHelper.DeleteFile(localPath);
-
-                            Result.Url = Path.Combine(basePath, Path.GetFileName(localPath)).Replace("\\", "/");
-                            Result.State = UploadState.Success;
-                        }
-                        else
-                        {
-                            Result.State = UploadState.FileAccessError;
-                            Result.ErrorMessage = "文件存储转存失败";
-                        }
-                    }
-                    else
-                    {
-                        Result.Url = savePath;
-                        Result.State = UploadState.Success;
-                    }
-
+                    fileBytes = Convert.FromBase64String(base64Value);
                 }
-                catch (Exception e)
+                catch (FormatException)
                 {
-                    Result.State = UploadState.FileAccessError;
-                    Result.ErrorMessage = e.Message;
-                }
-                finally
-                {
-                    value = WriteResult();
+                    result.State = UploadState.InvalidRequest;
+                    result.ErrorMessage = "Base64 文件内容格式不正确";
+                    return WriteResult(result);
                 }
 
+                if (!CheckFileSize(fileBytes.LongLength))
+                {
+                    result.State = UploadState.SizeLimitExceed;
+                    return WriteResult(result);
+                }
+
+                return await SaveFileAsync(uploadConfig.Base64Filename, async tempFilePath => await File.WriteAllBytesAsync(tempFilePath, fileBytes));
             }
-            catch (Exception)
+
+            var file = form.Files.GetFile(uploadConfig.UploadFieldName);
+
+            if (file == null || file.Length == 0)
             {
-                Result.State = UploadState.NetworkError;
-                WriteResult();
+                result.State = UploadState.InvalidRequest;
+                result.ErrorMessage = "上传文件为空";
+                return WriteResult(result);
             }
+
+            if (!CheckFileType(file.FileName))
+            {
+                result.State = UploadState.TypeNotAllow;
+                return WriteResult(result);
+            }
+
+            if (!CheckFileSize(file.Length))
+            {
+                result.State = UploadState.SizeLimitExceed;
+                return WriteResult(result);
+            }
+
+            return await SaveFileAsync(file.FileName, async tempFilePath =>
+            {
+
+                await using FileStream fileStream = new(tempFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
+                await file.CopyToAsync(fileStream);
+
+            });
+        }
+        catch (Exception ex)
+        {
+            result.State = UploadState.FileAccessError;
+            result.ErrorMessage = ex.Message;
+            return WriteResult(result);
         }
 
-
-
-
-        return value;
     }
 
-    private string WriteResult()
+
+    /// <summary>
+    /// 将临时文件交给统一文件服务保存
+    /// </summary>
+    /// <param name="originalFileName">原始文件名</param>
+    /// <param name="writeTempFileAsync">临时文件写入方法</param>
+    /// <returns>UEditor 上传响应</returns>
+    private async Task<string> SaveFileAsync(string originalFileName, Func<string, Task> writeTempFileAsync)
     {
+
+        UploadResult result = new()
+        {
+            OriginFileName = originalFileName
+        };
+
+        if (!CheckFileType(originalFileName))
+        {
+            result.State = UploadState.TypeNotAllow;
+            return WriteResult(result);
+        }
+
+        var tempDirectory = Path.Combine(rootPath, "temps");
+        Directory.CreateDirectory(tempDirectory);
+
+        var tempFilePath = Path.Combine(tempDirectory, Guid.NewGuid() + Path.GetExtension(originalFileName).ToLowerInvariant());
+
+        try
+        {
+            await writeTempFileAsync(tempFilePath);
+
+            UploadFileDto uploadFile = new()
+            {
+                Business = "Article",
+                Key = uploadKey,
+                Sign = sign,
+                IsPublicRead = true,
+                FileName = originalFileName,
+                TempFilePath = tempFilePath
+            };
+
+            var fileId = await fileService.UploadFileAsync(rootPath, uploadFile);
+            var fileUrl = await fileService.GetFileUrlAsync(fileId);
+
+            result.State = UploadState.Success;
+            result.FileId = fileId;
+            result.Url = NormalizeResultUrl(fileUrl ?? string.Empty);
+        }
+        catch (Exception ex)
+        {
+            result.State = UploadState.FileAccessError;
+            result.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IOHelper.DeleteFile(tempFilePath);
+        }
+
+        return WriteResult(result);
+
+    }
+
+
+    /// <summary>
+    /// 检查文件扩展名是否允许
+    /// </summary>
+    /// <param name="fileName">文件名</param>
+    /// <returns>是否允许上传</returns>
+    private bool CheckFileType(string fileName)
+    {
+
+        var fileExtension = Path.GetExtension(fileName).ToLowerInvariant();
+        return uploadConfig.AllowExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase);
+
+    }
+
+
+    /// <summary>
+    /// 检查文件大小是否超过配置限制
+    /// </summary>
+    /// <param name="size">文件大小</param>
+    /// <returns>是否允许上传</returns>
+    private bool CheckFileSize(long size)
+    {
+
+        return size <= uploadConfig.SizeLimit;
+
+    }
+
+
+    /// <summary>
+    /// 将统一文件地址转换为 UEditor 前缀可拼接的相对地址
+    /// </summary>
+    /// <param name="fileUrl">统一文件访问地址</param>
+    /// <returns>UEditor 响应地址</returns>
+    private string NormalizeResultUrl(string fileUrl)
+    {
+
+        if (string.IsNullOrWhiteSpace(fileServerUrl) || !fileUrl.StartsWith(fileServerUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            return fileUrl;
+        }
+
+        var relativeUrl = fileUrl[fileServerUrl.Length..].TrimStart('/');
+        return fileServerUrl.EndsWith('/') ? relativeUrl : "/" + relativeUrl;
+
+    }
+
+
+    /// <summary>
+    /// 生成 UEditor 上传响应
+    /// </summary>
+    /// <param name="result">上传结果</param>
+    /// <returns>UEditor JSON 响应</returns>
+    private static string WriteResult(UploadResult result)
+    {
+
         return JsonHelper.ObjectToJson(new
         {
-            state = GetStateMessage(Result.State),
-            url = Result.Url,
-            title = Result.OriginFileName,
-            original = Result.OriginFileName,
-            error = Result.ErrorMessage
+            state = result.State == UploadState.Success ? "SUCCESS" : GetStateMessage(result.State),
+            url = result.Url,
+            title = result.OriginFileName,
+            original = result.OriginFileName,
+            fileId = result.FileId?.ToString(),
+            error = result.ErrorMessage
         });
+
     }
 
+
+    /// <summary>
+    /// 获取 UEditor 上传状态说明
+    /// </summary>
+    /// <param name="state">上传状态</param>
+    /// <returns>状态说明</returns>
     private static string GetStateMessage(UploadState state)
     {
+
         return state switch
         {
-            UploadState.Success => "SUCCESS",
             UploadState.FileAccessError => "文件访问出错，请检查写入权限",
             UploadState.SizeLimitExceed => "文件大小超出服务器限制",
             UploadState.TypeNotAllow => "不允许的文件格式",
             UploadState.NetworkError => "网络错误",
-            _ => "未知错误",
+            UploadState.InvalidRequest => "上传请求不正确",
+            _ => "未知错误"
         };
+
     }
 
-    private bool CheckFileType(string filename)
-    {
-        var fileExtension = Path.GetExtension(filename).ToLower();
-        return UploadConfig.AllowExtensions!.Select(x => x.ToLower()).Contains(fileExtension);
-    }
-
-    private bool CheckFileSize(int size)
-    {
-        return size < UploadConfig.SizeLimit;
-    }
 }
 
+/// <summary>
+/// 表示 UEditor 上传配置
+/// </summary>
 public class UploadConfig
 {
-    /// <summary>
-    /// 文件命名规则
-    /// </summary>
-    public string? PathFormat { get; set; }
 
     /// <summary>
-    /// 上传表单域名称
+    /// 获取或设置上传表单域名称
     /// </summary>
-    public string? UploadFieldName { get; set; }
+    public string UploadFieldName { get; set; } = string.Empty;
+
 
     /// <summary>
-    /// 上传大小限制
+    /// 获取或设置上传大小限制
     /// </summary>
-    public int SizeLimit { get; set; }
+    public long SizeLimit { get; set; }
+
 
     /// <summary>
-    /// 上传允许的文件格式
+    /// 获取或设置允许的文件扩展名
     /// </summary>
-    public string[]? AllowExtensions { get; set; }
+    public string[] AllowExtensions { get; set; } = [];
+
 
     /// <summary>
-    /// 文件是否以 Base64 的形式上传
+    /// 获取或设置文件是否以 Base64 形式上传
     /// </summary>
     public bool Base64 { get; set; }
 
+
     /// <summary>
-    /// Base64 字符串所表示的文件名
+    /// 获取或设置 Base64 文件名
     /// </summary>
-    public string? Base64Filename { get; set; }
+    public string Base64Filename { get; set; } = string.Empty;
+
 }
 
+/// <summary>
+/// 表示 UEditor 上传结果
+/// </summary>
 public class UploadResult
 {
-    public UploadState State { get; set; }
+
+    /// <summary>
+    /// 获取或设置上传状态
+    /// </summary>
+    public UploadState State { get; set; } = UploadState.Unknown;
+
+
+    /// <summary>
+    /// 获取或设置文件访问地址
+    /// </summary>
     public string? Url { get; set; }
+
+
+    /// <summary>
+    /// 获取或设置原始文件名
+    /// </summary>
     public string? OriginFileName { get; set; }
 
+
+    /// <summary>
+    /// 获取或设置统一文件标识
+    /// </summary>
+    public long? FileId { get; set; }
+
+
+    /// <summary>
+    /// 获取或设置错误信息
+    /// </summary>
     public string? ErrorMessage { get; set; }
+
 }
 
+/// <summary>
+/// 定义 UEditor 上传状态
+/// </summary>
 public enum UploadState
 {
+
     Success = 0,
     SizeLimitExceed = -1,
     TypeNotAllow = -2,
     FileAccessError = -3,
     NetworkError = -4,
-    Unknown = 1,
-}
+    InvalidRequest = -5,
+    Unknown = 1
 
+}

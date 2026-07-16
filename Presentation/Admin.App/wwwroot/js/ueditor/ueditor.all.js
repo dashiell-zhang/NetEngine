@@ -11176,6 +11176,7 @@
                     str = '<img src="' + ci.src + '" ' + (ci._src ? ' _src="' + ci._src + '" ' : '') +
                         (ci.width ? 'width="' + ci.width + '" ' : '') +
                         (ci.height ? ' height="' + ci.height + '" ' : '') +
+                        (ci['data-file-id'] ? ' data-file-id="' + utils.unhtml(ci['data-file-id']) + '" ' : '') +
                         (ci['floatStyle'] == 'left' || ci['floatStyle'] == 'right' ? ' style="float:' + ci['floatStyle'] + ';"' : '') +
                         (ci.title && ci.title != "" ? ' title="' + ci.title + '"' : '') +
                         (ci.border && ci.border != "0" ? ' border="' + ci.border + '"' : '') +
@@ -11193,6 +11194,7 @@
                         str = '<p ' + (ci['floatStyle'] == 'center' ? 'style="text-align: center" ' : '') + '><img src="' + ci.src + '" ' +
                             (ci.width ? 'width="' + ci.width + '" ' : '') + (ci._src ? ' _src="' + ci._src + '" ' : '') +
                             (ci.height ? ' height="' + ci.height + '" ' : '') +
+                            (ci['data-file-id'] ? ' data-file-id="' + utils.unhtml(ci['data-file-id']) + '" ' : '') +
                             ' style="' + (ci['floatStyle'] && ci['floatStyle'] != 'center' ? 'float:' + ci['floatStyle'] + ';' : '') +
                             (ci.border || '') + '" ' +
                             (ci.title ? ' title="' + ci.title + '"' : '') + ' /></p>';
@@ -17618,7 +17620,7 @@
          * @param toEmbed 是否以flash代替显示
          * @param addParagraph  是否需要添加P 标签
          */
-        function creatInsertStr(url, width, height, id, align, classname, type) {
+        function creatInsertStr(url, width, height, id, align, classname, type, fileId) {
 
             url = utils.unhtmlForUrl(url);
             align = utils.unhtml(align);
@@ -17631,17 +17633,20 @@
             switch (type) {
                 case 'image':
                     str = '<img ' + (id ? 'id="' + id + '"' : '') + ' width="' + width + '" height="' + height + '" _url="' + url + '" class="' + classname.replace(/\bvideo-js\b/, '') + '"' +
+                        (fileId ? ' data-file-id="' + utils.unhtml(fileId) + '"' : '') +
                         ' src="' + me.options.UEDITOR_HOME_URL + 'themes/default/images/spacer.gif" style="background:url(' + me.options.UEDITOR_HOME_URL + 'themes/default/images/videologo.gif) no-repeat center center; border:1px solid gray;' + (align ? 'float:' + align + ';' : '') + '" />'
                     break;
                 case 'embed':
                     str = '<embed type="application/x-shockwave-flash" class="' + classname + '" pluginspage="http://www.macromedia.com/go/getflashplayer"' +
                         ' src="' + utils.html(url) + '" width="' + width + '" height="' + height + '"' + (align ? ' style="float:' + align + '"' : '') +
+                        (fileId ? ' data-file-id="' + utils.unhtml(fileId) + '"' : '') +
                         ' wmode="transparent" play="true" loop="false" menu="false" allowscriptaccess="never" allowfullscreen="true" >';
                     break;
                 case 'video':
                     var ext = url.substr(url.lastIndexOf('.') + 1);
                     if (ext == 'ogv') ext = 'ogg';
                     str = '<video' + (id ? ' id="' + id + '"' : '') + ' class="' + classname + ' video-js" ' + (align ? ' style="float:' + align + '"' : '') +
+                        (fileId ? ' data-file-id="' + utils.unhtml(fileId) + '"' : '') +
                         ' controls width="' + width + '" height="' + height + '" src="' + url + '">' +
                         '<source src="' + url + '" type="video/' + ext + '" /></video>';
                     break;
@@ -17653,11 +17658,11 @@
             utils.each(root.getNodesByTagName(img2video ? 'img' : 'embed video'), function (node) {
                 var className = node.getAttr('class');
                 if (className && className.indexOf('edui-faked-video') != -1) {
-                    var html = creatInsertStr(img2video ? node.getAttr('_url') : node.getAttr('src'), node.getAttr('width'), node.getAttr('height'), null, node.getStyle('float') || '', className, img2video ? 'embed' : 'image');
+                    var html = creatInsertStr(img2video ? node.getAttr('_url') : node.getAttr('src'), node.getAttr('width'), node.getAttr('height'), null, node.getStyle('float') || '', className, img2video ? 'embed' : 'image', node.getAttr('data-file-id'));
                     node.parentNode.replaceChild(UE.uNode.createElement(html), node);
                 }
                 if (className && className.indexOf('edui-upload-video') != -1) {
-                    var html = creatInsertStr(img2video ? node.getAttr('_url') : node.getAttr('src'), node.getAttr('width'), node.getAttr('height'), null, node.getStyle('float') || '', className, img2video ? 'video' : 'image');
+                    var html = creatInsertStr(img2video ? node.getAttr('_url') : node.getAttr('src'), node.getAttr('width'), node.getAttr('height'), null, node.getStyle('float') || '', className, img2video ? 'video' : 'image', node.getAttr('data-file-id'));
                     node.parentNode.replaceChild(UE.uNode.createElement(html), node);
                 }
             })
@@ -17743,7 +17748,7 @@
                 for (var i = 0, vi, len = videoObjs.length; i < len; i++) {
                     vi = videoObjs[i];
                     cl = (type == 'upload' ? 'edui-upload-video video-js vjs-default-skin' : 'edui-faked-video');
-                    html.push(creatInsertStr(vi.url, vi.width || 420, vi.height || 280, id + i, null, cl, 'image'));
+                    html.push(creatInsertStr(vi.url, vi.width || 420, vi.height || 280, id + i, null, cl, 'image', vi.fileId));
                 }
                 me.execCommand("inserthtml", html.join(""), true);
                 var rng = this.selection.getRange();
@@ -23228,7 +23233,8 @@
                                     newSrc = catcherUrlPrefix + cj.url;
                                     domUtils.setAttributes(ci, {
                                         "src": newSrc,
-                                        "_src": newSrc
+                                        "_src": newSrc,
+                                        "data-file-id": cj.fileId
                                     });
                                     break;
                                 }
@@ -23334,6 +23340,7 @@
                                         src: opt.snapscreenUrlPrefix + rs.url,
                                         _src: opt.snapscreenUrlPrefix + rs.url,
                                         alt: rs.title || '',
+                                        'data-file-id': rs.fileId,
                                         floatStyle: opt.snapscreenImgAlign
                                     });
                                 } else {
@@ -23750,6 +23757,7 @@
                         loader.setAttribute('_src', link);
                         loader.setAttribute('title', data.title || '');
                         loader.setAttribute('alt', data.original || '');
+                        loader.setAttribute('data-file-id', data.fileId || '');
                         loader.removeAttribute('id');
                         domUtils.removeClasses(loader, 'loadingclass');
                     }
@@ -23767,7 +23775,7 @@
                     var rng = me.selection.getRange(),
                         bk = rng.createBookmark();
                     rng.selectNode(loader).select();
-                    me.execCommand('insertfile', { 'url': link });
+                    me.execCommand('insertfile', { 'url': link, 'fileId': data.fileId });
                     rng.moveToBookmark(bk).select();
                 };
             }
@@ -24510,6 +24518,7 @@
                                 loader.setAttribute('_src', link);
                                 loader.setAttribute('title', json.title || '');
                                 loader.setAttribute('alt', json.original || '');
+                                loader.setAttribute('data-file-id', json.fileId || '');
                                 loader.removeAttribute('id');
                                 domUtils.removeClasses(loader, 'loadingclass');
                             } else {
@@ -24777,7 +24786,8 @@
                             title = item.title || item.url.substr(item.url.lastIndexOf('/') + 1);
                             html += '<p style="line-height: 16px;">' +
                                 '<img style="vertical-align: middle; margin-right: 2px;" src="' + icon + '" _src="' + icon + '" />' +
-                                '<a style="font-size:12px; color:#0066cc;" href="' + item.url + '" title="' + title + '">' + title + '</a>' +
+                                '<a style="font-size:12px; color:#0066cc;" href="' + item.url + '" title="' + title + '"' +
+                                (item.fileId ? ' data-file-id="' + utils.unhtml(item.fileId) + '"' : '') + '>' + title + '</a>' +
                                 '</p>';
                         }
                         me.execCommand('insertHtml', html);
@@ -29550,7 +29560,41 @@
 })();
 
 
-function InitUeditor(inputName, height, excludedToolbarItems) {
+function DestroyUeditor(inputName) {
+    if (!window.UE || !UE.instants) {
+        return;
+    }
+
+    var editor = null,
+        instantKey = null;
+
+    for (var key in UE.instants) {
+        if (Object.prototype.hasOwnProperty.call(UE.instants, key) && UE.instants[key] && UE.instants[key].key === inputName) {
+            editor = UE.instants[key];
+            instantKey = key;
+            break;
+        }
+    }
+
+    if (!editor) {
+        return;
+    }
+
+    if (editor.textarea && editor.textarea._ueditorResizeObserver) {
+        editor.textarea._ueditorResizeObserver.disconnect();
+        delete editor.textarea._ueditorResizeObserver;
+    }
+
+    editor.destroy();
+
+    if (instantKey) {
+        delete UE.instants[instantKey];
+    }
+}
+
+function InitUeditor(inputName, height, excludedToolbarItems, uploadKey) {
+    DestroyUeditor(inputName);
+
     var target = document.getElementById(inputName);
     if (target && target.nodeName == "TEXTAREA") {
         var parentWidth = 0;
@@ -29642,6 +29686,12 @@ function InitUeditor(inputName, height, excludedToolbarItems) {
         });
 
         UEditor.addListener('ready', function () {
+            if (uploadKey) {
+                UEditor.execCommand('serverparam', {
+                    uploadKey: String(uploadKey)
+                });
+            }
+
             syncEditorLayout();
 
             if (target._ueditorResizeObserver) {
@@ -29684,4 +29734,24 @@ function InitUeditor(inputName, height, excludedToolbarItems) {
 
 function GetUeditorContent(inputName) {
     return UE.getEditor(inputName).getContent();
+}
+
+function GetUeditorFileIds(inputName) {
+    var contentContainer = document.createElement('div'),
+        fileIds = [],
+        addedFileIds = Object.create(null),
+        editor = UE.getEditor(inputName);
+
+    contentContainer.innerHTML = editor.getContent();
+
+    var nodes = contentContainer.querySelectorAll('img[data-file-id], a[data-file-id], video[data-file-id], audio[data-file-id], embed[data-file-id]');
+    for (var i = 0; i < nodes.length; i++) {
+        var fileId = (nodes[i].getAttribute('data-file-id') || '').trim();
+        if (/^\d+$/.test(fileId) && !addedFileIds[fileId]) {
+            addedFileIds[fileId] = true;
+            fileIds.push(fileId);
+        }
+    }
+
+    return fileIds;
 }

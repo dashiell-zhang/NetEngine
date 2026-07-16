@@ -644,6 +644,7 @@ function exec(scrawlObj) {
                             imgObj._src = url;
                             imgObj.alt = responseObj.original || '';
                             imgObj.title = responseObj.title || '';
+                            imgObj['data-file-id'] = responseObj.fileId;
                             editor.execCommand("insertImage", imgObj);
                             dialog.close();
                         } else {
@@ -668,4 +669,3 @@ function exec(scrawlObj) {
         addMaskLayer(lang.noScarwl + "&nbsp;&nbsp;&nbsp;<input type='button' value='" + lang.continueBtn + "'  onclick='removeMaskLayer()'/>");
     }
 }
-

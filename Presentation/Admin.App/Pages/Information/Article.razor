@@ -115,13 +115,13 @@
     RenderFragment editFooter = @<Template>
         <div class="article-editor__footer-actions">
             <Button Class="article-page__action-button article-page__action-button--primary admin-page-button admin-page-button--primary" OnClick="SaveArticleAsync" Type="@ButtonType.Primary" Loading="@saveLoading">保存文章</Button>
-            <Button Class="article-page__action-button article-page__action-button--default admin-page-button admin-page-button--default" OnClick="() => isShowEditArticle = false" @key="@("back")">取消</Button>
+            <Button Class="article-page__action-button article-page__action-button--default admin-page-button admin-page-button--default" OnClick="CloseArticleEditorAsync" @key="@("back")">取消</Button>
         </div>
     </Template>;
 }
 
 
-<Modal Title='@(articleId == default ? "新增文章" : "编辑文章")' Width="1520" MaxBodyHeight="@("calc(100vh - 150px)")" Visible="@isShowEditArticle" Class="article-editor-modal admin-content-editor-modal" Centered="true" Maximizable="true" OnCancel="() => isShowEditArticle = false" Footer="@editFooter">
+<Modal Title='@(articleId == default ? "新增文章" : "编辑文章")' Width="1520" MaxBodyHeight="@("calc(100vh - 150px)")" Visible="@isShowEditArticle" Class="article-editor-modal admin-content-editor-modal" Centered="true" Maximizable="true" OnCancel="CloseArticleEditorAsync" Footer="@editFooter">
 
     <div class="article-editor admin-content-editor">
     <Form @ref="@_editArticleForm" Model="@editArticle" Layout="@FormLayout.Vertical" Class="ueditorBody article-editor__form admin-content-editor__form admin-form">
@@ -213,6 +213,10 @@
 
 @code {
 
+    /// <summary>
+    /// 上传文章封面图片
+    /// </summary>
+    /// <param name="e">文件选择事件参数</param>
     async Task UploadImgageAsync(InputFileChangeEventArgs e)
     {
         foreach (var file in e.GetMultipleFiles())
@@ -222,7 +226,7 @@
                 var uploadResult = await imageUploadService.UploadImageAsync(file, new ImageUploadRequest
                 {
                     Business = "Article",
-                    Key = fileKey,
+                    Key = uploadKey,
                     Sign = "cover",
                     IsPublicRead = true
                 });
@@ -251,7 +255,7 @@
 
     bool isPreviewImg = false;
     string? previewImgUrl;
-    long fileKey;
+    long uploadKey;
     bool saveLoading = false;
     List<UploadFileItem> fileList = new();
 
@@ -386,6 +390,10 @@
     long articleId;
 
 
+    /// <summary>
+    /// 打开文章新增或编辑窗口
+    /// </summary>
+    /// <param name="article">待编辑文章</param>
     async Task EditArticleAsync(ArticleDto? article = null)
     {
 
@@ -401,12 +409,10 @@
 
         fileList = new();
         articleId = default;
+        uploadKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId", JsonHelper.DeserializeOpts);
 
         if (article != null)
         {
-
-            fileKey = article.Id;
-
             articleId = article.Id;
             editArticle.CategoryId = article.CategoryId.ToString();
 
@@ -432,7 +438,6 @@
         }
         else
         {
-            fileKey = await Http.GetFromJsonAsync<long>("Base/GetSnowflakeId", JsonHelper.DeserializeOpts);
             editArticle.IsDisplay = true;
             editArticle.Sort = 99;
             editArticle.CategoryId = "";
@@ -446,14 +451,24 @@
 
         await Task.WhenAll(getCategorySelectListTask, Task.Delay(200));
 
-        JS.InvokeVoidAsync("InitUeditor", "Content", 370);
+        if (!isShowEditArticle)
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync("InitUeditor", "Content", 370, null, uploadKey.ToString());
 
     }
 
 
+    /// <summary>
+    /// 保存文章信息并绑定本次上传批次
+    /// </summary>
     async Task SaveArticleAsync()
     {
         editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
+        var contentFileIdList = await JS.InvokeAsync<List<string>>("GetUeditorFileIds", "Content");
+        editArticle.ContentFileIdList = contentFileIdList.Select(t => long.TryParse(t, out var fileId) ? fileId : default).Where(t => t > 0).Distinct().ToList();
 
         if (_editArticleForm!.Validate())
         {
@@ -463,12 +478,12 @@
             {
                 if (articleId == default)
                 {
-                    using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/CreateArticle?fileKey=" + fileKey, editArticle, JsonHelper.SerializeOpts);
+                    using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/CreateArticle?uploadKey=" + uploadKey, editArticle, JsonHelper.SerializeOpts);
 
                     if (httpResponse.IsSuccessStatusCode)
                     {
                         Message.Success("添加成功");
-                        isShowEditArticle = false;
+                        await CloseArticleEditorAsync();
                         await GetArticleListAsync();
                     }
                     else if ((int)httpResponse.StatusCode != 400)
@@ -478,11 +493,11 @@
                 }
                 else
                 {
-                    using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/UpdateArticle?articleId=" + articleId, editArticle, JsonHelper.SerializeOpts);
+                    using var httpResponse = await Http.PostAsJsonAsync<EditArticleDto>("Article/UpdateArticle?articleId=" + articleId + "&uploadKey=" + uploadKey, editArticle, JsonHelper.SerializeOpts);
                     if (httpResponse.IsSuccessStatusCode)
                     {
                         Message.Success("编辑成功");
-                        isShowEditArticle = false;
+                        await CloseArticleEditorAsync();
                         await GetArticleListAsync();
                     }
                     else if ((int)httpResponse.StatusCode != 400)
@@ -501,6 +516,24 @@
                 StateHasChanged();
             }
         }
+    }
+
+
+    /// <summary>
+    /// 关闭文章编辑窗口并释放富文本编辑器实例
+    /// </summary>
+    async Task CloseArticleEditorAsync()
+    {
+
+        try
+        {
+            await JS.InvokeVoidAsync("DestroyUeditor", "Content");
+        }
+        finally
+        {
+            isShowEditArticle = false;
+        }
+
     }
 
 

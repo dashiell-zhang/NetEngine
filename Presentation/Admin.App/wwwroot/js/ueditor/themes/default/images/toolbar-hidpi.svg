@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="20" viewBox="0 0 560 20">
+    <style>
+        .icon-stroke { fill: none; stroke: #334155; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+        .icon-accent { fill: none; stroke: #2563eb; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+        .icon-fill { fill: #334155; }
+        .icon-text { fill: #334155; font-family: Arial, sans-serif; }
+    </style>
+
+    <g transform="translate(0 0)" class="icon-accent">
+        <path d="M6 5 2.5 10 6 15M14 5l3.5 5-3.5 5M12 3 8 17" />
+    </g>
+
+    <g transform="translate(20 0)" class="icon-accent">
+        <path d="M7.5 10.5 12.8 5.2a3 3 0 0 1 4.2 4.2l-6.7 6.7a4.2 4.2 0 0 1-6-6l6.8-6.8a2.7 2.7 0 0 1 3.8 3.8L8.4 13.6a1.3 1.3 0 0 1-1.8-1.8l5.6-5.6" />
+    </g>
+
+    <g transform="translate(40 0)">
+        <rect x="2.5" y="3" width="15" height="14" rx="2" class="icon-stroke" />
+        <circle cx="7" cy="7.5" r="1.4" fill="#f59e0b" />
+        <path d="m4.5 15 4.2-4 2.5 2.2 2.2-2 2.2 3.8" class="icon-accent" />
+    </g>
+
+    <g transform="translate(60 0)">
+        <rect x="2.5" y="4" width="15" height="12" rx="2" class="icon-stroke" />
+        <path d="m8 7 5 3-5 3Z" fill="#2563eb" />
+    </g>
+
+    <g transform="translate(80 0)">
+        <text x="4" y="16" class="icon-text" font-size="16" font-weight="700">B</text>
+    </g>
+
+    <g transform="translate(100 0)">
+        <text x="6" y="16" class="icon-text" font-size="16" font-style="italic">I</text>
+    </g>
+
+    <g transform="translate(120 0)">
+        <text x="3.5" y="14.5" class="icon-text" font-size="14">U</text>
+        <path d="M3 17h12" class="icon-stroke" />
+    </g>
+
+    <g transform="translate(140 0)">
+        <path d="m5 14 4-10h2l4 10M6.5 10.5h7" class="icon-stroke" />
+        <rect x="3" y="15.5" width="14" height="2" rx="1" fill="#2563eb" />
+    </g>
+
+    <g transform="translate(160 0)">
+        <text x="4" y="15" class="icon-text" font-size="14">S</text>
+        <path d="M2.5 10h14" class="icon-stroke" />
+    </g>
+
+    <g transform="translate(180 0)">
+        <text x="3" y="15" class="icon-text" font-size="13">x</text>
+        <text x="11.5" y="8" fill="#2563eb" font-family="Arial, sans-serif" font-size="7">2</text>
+    </g>
+
+    <g transform="translate(200 0)">
+        <text x="3" y="13" class="icon-text" font-size="13">x</text>
+        <text x="11.5" y="17" fill="#2563eb" font-family="Arial, sans-serif" font-size="7">2</text>
+    </g>
+
+    <g transform="translate(220 0)">
+        <path d="m4 16 9-9 3 3-9 9Z" class="icon-accent" />
+        <path d="M4 3v3M2.5 4.5h3M13 2v3M11.5 3.5h3M16 14v3M14.5 15.5h3" class="icon-stroke" />
+    </g>
+
+    <g transform="translate(240 0)">
+        <path d="m5 14 4-10h2l4 10M6.5 10.5h7" class="icon-stroke" />
+        <path d="M3 17h14" stroke="#2563eb" stroke-width="2.5" />
+    </g>
+
+    <g transform="translate(260 0)">
+        <rect x="2.5" y="11.5" width="15" height="6" rx="1.5" fill="#fde68a" />
+        <path d="m5 14 4-10h2l4 10M6.5 10.5h7" class="icon-stroke" />
+    </g>
+
+    <g transform="translate(280 0)">
+        <text x="1" y="8" class="icon-text" font-size="6">1</text>
+        <text x="1" y="14.5" class="icon-text" font-size="6">2</text>
+        <path d="M7 6h10M7 10h10M7 14h10" class="icon-stroke" />
+    </g>
+
+    <g transform="translate(300 0)">
+        <circle cx="3" cy="6" r="1.2" class="icon-fill" />
+        <circle cx="3" cy="10" r="1.2" class="icon-fill" />
+        <circle cx="3" cy="14" r="1.2" class="icon-fill" />
+        <path d="M7 6h10M7 10h10M7 14h10" class="icon-stroke" />
+    </g>
+
+    <g transform="translate(320 0)">
+        <path d="M8 5h9M8 10h9M8 15h9M4 4v12M2 6l2-2 2 2M2 14l2 2 2-2" class="icon-stroke" />
+    </g>
+
+    <g transform="translate(340 0)">
+        <text x="2" y="15" class="icon-text" font-size="14" font-weight="600">A</text>
+        <path d="M15 15V5M12.5 7.5 15 5l2.5 2.5" class="icon-accent" />
+    </g>
+
+    <g transform="translate(360 0)">
+        <text x="3" y="14" class="icon-text" font-size="13">a</text>
+        <path d="M15 5v10M12.5 12.5 15 15l2.5-2.5" class="icon-accent" />
+    </g>
+
+    <g transform="translate(380 0)" class="icon-accent">
+        <path d="m8.3 12.7-1.4 1.4a3.2 3.2 0 0 1-4.5-4.5l3-3a3.2 3.2 0 0 1 4.5 0M11.7 7.3l1.4-1.4a3.2 3.2 0 0 1 4.5 4.5l-3 3a3.2 3.2 0 0 1-4.5 0M7.5 12.5l5-5" />
+    </g>
+
+    <g transform="translate(400 0)" class="icon-accent">
+        <circle cx="10" cy="7" r="2.5" />
+        <path d="M10 2v15M5 17h10M5.5 12a5.5 5.5 0 0 0 9 0M5 5h2M13 5h2" />
+    </g>
+
+    <g transform="translate(420 0)">
+        <path d="m4 15 1-4L13.5 2.5l4 4L9 15l-5 1Z" class="icon-accent" />
+        <path d="m12 4 4 4M5 11l4 4" class="icon-stroke" />
+    </g>
+
+    <g transform="translate(440 0)">
+        <rect x="2.5" y="3" width="15" height="14" rx="1.5" class="icon-stroke" />
+        <path d="M2.5 7h15M7 7v10" class="icon-accent" />
+    </g>
+
+    <g transform="translate(460 0)" class="icon-stroke">
+        <path d="M2 10h16" />
+    </g>
+
+    <g transform="translate(480 0)">
+        <text x="2.5" y="16" class="icon-text" font-family="Georgia, serif" font-size="16">Ω</text>
+    </g>
+
+    <g transform="translate(500 0)">
+        <circle cx="8" cy="8" r="4.5" class="icon-stroke" />
+        <path d="m11.5 11.5 4 4M13 5h4M15 3l2 2-2 2M7 15H3M5 13l-2 2 2 2" class="icon-accent" />
+    </g>
+
+    <g transform="translate(520 0)">
+        <path d="M5 7V2.5h10V7M5 14H3a1.5 1.5 0 0 1-1.5-1.5v-4A1.5 1.5 0 0 1 3 7h14a1.5 1.5 0 0 1 1.5 1.5v4A1.5 1.5 0 0 1 17 14h-2M5 11h10v6.5H5Z" class="icon-stroke" />
+        <circle cx="15.5" cy="9.5" r="1" fill="#2563eb" />
+    </g>
+
+    <g transform="translate(540 0)" class="icon-accent">
+        <path d="M8 3H3v5M12 3h5v5M17 12v5h-5M8 17H3v-5" />
+    </g>
+</svg>

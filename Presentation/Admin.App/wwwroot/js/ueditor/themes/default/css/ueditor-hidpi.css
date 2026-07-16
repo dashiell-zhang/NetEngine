@@ -1,0 +1,167 @@
+.ueditorBody .edui-default :is(
+    .edui-for-source,
+    .edui-for-attachment,
+    .edui-for-insertimage,
+    .edui-for-insertvideo,
+    .edui-for-bold,
+    .edui-for-italic,
+    .edui-for-underline,
+    .edui-for-fontborder,
+    .edui-for-strikethrough,
+    .edui-for-superscript,
+    .edui-for-subscript,
+    .edui-for-autotypeset,
+    .edui-for-forecolor,
+    .edui-for-backcolor,
+    .edui-for-insertorderedlist,
+    .edui-for-insertunorderedlist,
+    .edui-for-lineheight,
+    .edui-for-touppercase,
+    .edui-for-tolowercase,
+    .edui-for-link,
+    .edui-for-anchor,
+    .edui-for-scrawl,
+    .edui-for-insertframe,
+    .edui-for-horizontal,
+    .edui-for-spechars,
+    .edui-for-searchreplace,
+    .edui-for-print,
+    .edui-for-fullscreen
+) .edui-icon {
+    background-image: url("../images/toolbar-hidpi.svg") !important;
+    background-repeat: no-repeat !important;
+    background-size: 560px 20px !important;
+}
+
+.ueditorBody .edui-default .edui-for-source .edui-icon {
+    background-position: 0 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-attachment .edui-icon {
+    background-position: -20px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-insertimage .edui-icon {
+    background-position: -40px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-insertvideo .edui-icon {
+    background-position: -60px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-bold .edui-icon {
+    background-position: -80px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-italic .edui-icon {
+    background-position: -100px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-underline .edui-icon {
+    background-position: -120px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-fontborder .edui-icon {
+    background-position: -140px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-strikethrough .edui-icon {
+    background-position: -160px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-superscript .edui-icon {
+    background-position: -180px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-subscript .edui-icon {
+    background-position: -200px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-autotypeset .edui-icon {
+    background-position: -220px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-forecolor .edui-icon {
+    background-position: -240px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-backcolor .edui-icon {
+    background-position: -260px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-insertorderedlist .edui-icon {
+    background-position: -280px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-insertunorderedlist .edui-icon {
+    background-position: -300px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-lineheight .edui-icon {
+    background-position: -320px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-touppercase .edui-icon {
+    background-position: -340px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-tolowercase .edui-icon {
+    background-position: -360px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-link .edui-icon {
+    background-position: -380px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-anchor .edui-icon {
+    background-position: -400px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-scrawl .edui-icon {
+    background-position: -420px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-insertframe .edui-icon {
+    background-position: -440px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-horizontal .edui-icon {
+    background-position: -460px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-spechars .edui-icon {
+    background-position: -480px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-searchreplace .edui-icon {
+    background-position: -500px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-print .edui-icon {
+    background-position: -520px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-for-fullscreen .edui-icon {
+    background-position: -540px 0 !important;
+}
+
+.ueditorBody .edui-default .edui-toolbar .edui-combox-body .edui-arrow,
+.ueditorBody .edui-default .edui-toolbar .edui-splitbutton-body .edui-arrow,
+.ueditorBody .edui-default .edui-toolbar .edui-menubutton-body .edui-arrow {
+    position: relative;
+    background-image: none !important;
+}
+
+.ueditorBody .edui-default .edui-toolbar .edui-combox-body .edui-arrow::after,
+.ueditorBody .edui-default .edui-toolbar .edui-splitbutton-body .edui-arrow::after,
+.ueditorBody .edui-default .edui-toolbar .edui-menubutton-body .edui-arrow::after {
+    position: absolute;
+    top: 7px;
+    left: 1px;
+    width: 5px;
+    height: 5px;
+    border-right: 1.5px solid #64748b;
+    border-bottom: 1.5px solid #64748b;
+    content: "";
+    transform: rotate(45deg);
+}

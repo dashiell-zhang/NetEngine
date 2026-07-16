@@ -42,7 +42,7 @@
             'bold', 'italic', 'underline', 'fontborder', 'strikethrough', 'superscript', 'subscript', 'autotypeset', '|', 'forecolor', 'backcolor', 'insertorderedlist', 'insertunorderedlist', '|',
             'lineheight', '|',
             'touppercase', 'tolowercase', '|',
-            'link', 'anchor', '|', 'emotion', 'scrawl', 'insertframe', '|',
+            'link', 'anchor', '|', 'scrawl', 'insertframe', '|',
             'horizontal', 'spechars',
             'searchreplace', 'print', 'fullscreen'
         ]]

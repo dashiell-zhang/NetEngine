@@ -116,7 +116,22 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
+}
+
+.admin-filter-form .ant-input,
+.admin-filter-form .ant-input-affix-wrapper,
+.admin-filter-form .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.admin-filter-form .ant-picker {
+    height: 38px;
+    padding-right: 12px;
+    padding-left: 12px;
+    border-radius: 12px;
+}
+
+.admin-filter-form .ant-select-selection-item,
+.admin-filter-form .ant-select-selection-placeholder {
+    line-height: 36px;
 }
 
 .admin-filter-form .ant-form-item {

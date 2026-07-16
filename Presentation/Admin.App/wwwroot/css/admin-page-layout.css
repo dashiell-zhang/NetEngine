@@ -122,11 +122,11 @@
 }
 
 .admin-page__card--filter > .ant-card-body {
-    padding: 16px 18px;
+    padding: 10px 14px;
 }
 
 .admin-page__card--filter-spacious > .ant-card-body {
-    padding: 22px 22px 10px;
+    padding: 16px 18px 6px;
 }
 
 .admin-page__card--body-panel > .ant-card-body {
@@ -178,7 +178,7 @@
 
 .admin-page__table-wrap .ant-table-thead > tr > th {
     height: auto;
-    padding: 16px 18px;
+    padding: 12px 16px;
     color: #173253;
     font-size: 14px;
     font-weight: 700;
@@ -194,7 +194,7 @@
 
 .admin-page__table-wrap .ant-table-tbody > tr > td {
     height: auto;
-    padding: 16px 18px;
+    padding: 9px 16px;
     color: #1e293b;
     font-size: 13px;
     vertical-align: middle;
@@ -287,7 +287,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    min-height: 56px;
+    min-height: 48px;
     margin: 0;
     padding: 0 16px;
     border-top: 1px solid #e6eef8;

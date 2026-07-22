@@ -20,7 +20,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="10.0.10" />
-		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.2" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.20.0" />
 		<PackageReference Include="AlipaySDKNet.Standard" Version="4.9.1234" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>

@@ -2,6 +2,10 @@ using SkiaSharp;
 using SkiaSharp.QrCode;
 
 namespace Common;
+
+/// <summary>
+/// 提供二维码、图片裁剪和验证码图片生成能力
+/// </summary>
 public class ImgHelper
 {
 
@@ -49,6 +53,21 @@ public class ImgHelper
             throw new ArgumentException("图片文件无法解码", nameof(fromImagePath));
         }
 
+        if (offsetX < 0 || offsetY < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(offsetX), "裁剪偏移量不能小于0");
+        }
+
+        if (width <= 0 || height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), "裁剪宽高必须大于0");
+        }
+
+        if ((long)offsetX + width > original.Width || (long)offsetY + height > original.Height)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), "裁剪区域超出源图片范围");
+        }
+
         using SKBitmap bitmap = new(width, height);
         using SKCanvas canvas = new(bitmap);
         SKRect sourceRect = new(offsetX, offsetY, offsetX + width, offsetY + height);
@@ -71,7 +90,17 @@ public class ImgHelper
     /// <returns></returns>
     public static byte[] GetVerifyCode(string text)
     {
-        int width = 128;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            throw new ArgumentException("验证码文本不能为空", nameof(text));
+        }
+
+        if (text.Length > 8)
+        {
+            throw new ArgumentOutOfRangeException(nameof(text), "验证码文本不能超过8个字符");
+        }
+
+        int width = Math.Max(128, 30 + text.Length * 32);
         int height = 45;
 
         Random random = new();

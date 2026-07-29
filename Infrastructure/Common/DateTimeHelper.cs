@@ -3,6 +3,10 @@ using System.Net;
 using System.Net.Sockets;
 
 namespace Common;
+
+/// <summary>
+/// 提供日期、时间和网络时间处理能力
+/// </summary>
 public class DateTimeHelper
 {
 
@@ -69,10 +73,10 @@ public class DateTimeHelper
     {
         return GetQuarterly(date) switch
         {
-            1 => DateOnly.Parse(date.Year + "-01-01"),
-            2 => DateOnly.Parse(date.Year + "-04-01"),
-            3 => DateOnly.Parse(date.Year + "-07-01"),
-            4 => DateOnly.Parse(date.Year + "-10-01"),
+            1 => new DateOnly(date.Year, 1, 1),
+            2 => new DateOnly(date.Year, 4, 1),
+            3 => new DateOnly(date.Year, 7, 1),
+            4 => new DateOnly(date.Year, 10, 1),
             _ => throw new Exception(),
         };
     }
@@ -112,15 +116,28 @@ public class DateTimeHelper
         }
 
         IPEndPoint ipEndPoint = new(address, 123);
-        Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        using Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
         socket.Connect(ipEndPoint);
 
         socket.ReceiveTimeout = 3000;
 
         socket.Send(ntpData);
-        socket.Receive(ntpData);
-        socket.Close();
+        int receivedLength = socket.Receive(ntpData);
+
+        if (receivedLength < ntpData.Length)
+        {
+            throw new InvalidDataException("NTP响应长度不足48字节");
+        }
+
+        int leapIndicator = ntpData[0] >> 6;
+        int mode = ntpData[0] & 0x07;
+        int stratum = ntpData[1];
+
+        if (leapIndicator == 3 || mode != 4 || stratum is < 1 or > 15)
+        {
+            throw new InvalidDataException("NTP响应状态无效");
+        }
 
         const byte serverReplyTime = 40;
 
@@ -131,9 +148,28 @@ public class DateTimeHelper
         intPart = (uint)(((intPart & 0x000000ff) << 24) + ((intPart & 0x0000ff00) << 8) + ((intPart & 0x00ff0000) >> 8) + ((intPart & 0xff000000) >> 24));
         fractPart = (uint)(((fractPart & 0x000000ff) << 24) + ((fractPart & 0x0000ff00) << 8) + ((fractPart & 0x00ff0000) >> 8) + ((fractPart & 0xff000000) >> 24));
 
-        var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
+        if (intPart == 0 && fractPart == 0)
+        {
+            throw new InvalidDataException("NTP响应未包含服务器发送时间");
+        }
 
-        var networkDateTime = (new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc)).AddMilliseconds((long)milliseconds);
+        const ulong ntpEraSeconds = 0x100000000UL;
+        DateTimeOffset ntpEpoch = new(1900, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        ulong currentNtpSeconds = (ulong)(DateTimeOffset.UtcNow - ntpEpoch).TotalSeconds;
+        ulong era = currentNtpSeconds / ntpEraSeconds;
+        ulong seconds = intPart + era * ntpEraSeconds;
+
+        if (seconds > currentNtpSeconds + ntpEraSeconds / 2 && seconds >= ntpEraSeconds)
+        {
+            seconds -= ntpEraSeconds;
+        }
+        else if (seconds + ntpEraSeconds / 2 < currentNtpSeconds)
+        {
+            seconds += ntpEraSeconds;
+        }
+
+        var milliseconds = (seconds * 1000) + ((fractPart * 1000) / ntpEraSeconds);
+        var networkDateTime = ntpEpoch.AddMilliseconds((long)milliseconds);
 
         return networkDateTime;
     }
@@ -208,6 +244,11 @@ public class DateTimeHelper
     {
         // 将GUID转换为字符串，这样可以获得标准格式
         string guidString = guid.ToString("N");
+
+        if (guidString[12] != '7')
+        {
+            throw new ArgumentException("输入Guid不是Guid V7", nameof(guid));
+        }
 
         // 从字符串中提取前12个字符（对应前6个字节）
         string timestampHex = guidString[..12];

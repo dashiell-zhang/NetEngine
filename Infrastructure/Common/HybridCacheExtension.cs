@@ -3,12 +3,17 @@ using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Common;
+
+/// <summary>
+/// 提供HybridCache常用缓存扩展能力
+/// </summary>
 public static class HybridCacheExtension
 {
 
@@ -20,11 +25,16 @@ public static class HybridCacheExtension
     /// <param name="cacheKey">缓存键</param>
     /// <param name="factory">执行委托</param>
     /// <param name="ttl">缓存有效期</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
     /// <remarks>委托版本需要自己确保key的唯一性，首选表达式版本</remarks>
-    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<T> factory, int ttl = 300)
+    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<T> factory, int ttl = 300, CancellationToken cancellationToken = default)
     {
-        return cache.GetOrCreateAsync(cacheKey, _ => new ValueTask<T>(factory()), GetHybridCacheEntryOptions(ttl));
+        return cache.GetOrCreateAsync(cacheKey, token =>
+        {
+            token.ThrowIfCancellationRequested();
+            return new ValueTask<T>(factory());
+        }, GetHybridCacheEntryOptions(ttl), cancellationToken: cancellationToken);
     }
 
 
@@ -36,11 +46,12 @@ public static class HybridCacheExtension
     /// <param name="cacheKey">缓存键</param>
     /// <param name="factory">执行委托</param>
     /// <param name="ttl">缓存有效期</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
     /// <remarks>委托版本需要自己确保key的唯一性，首选表达式版本</remarks>
-    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<Task<T>> factory, int ttl = 300)
+    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<Task<T>> factory, int ttl = 300, CancellationToken cancellationToken = default)
     {
-        return cache.GetOrCreateAsync(cacheKey, async _ => await factory(), GetHybridCacheEntryOptions(ttl));
+        return cache.GetOrCreateAsync(cacheKey, async token => await factory().WaitAsync(token), GetHybridCacheEntryOptions(ttl), cancellationToken: cancellationToken);
     }
 
 
@@ -52,11 +63,12 @@ public static class HybridCacheExtension
     /// <param name="cacheKey">缓存键</param>
     /// <param name="factory">执行委托</param>
     /// <param name="ttl">缓存有效期</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
     /// <remarks>委托版本需要自己确保key的唯一性，首选表达式版本</remarks>
-    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<ValueTask<T>> factory, int ttl = 300)
+    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, string cacheKey, Func<ValueTask<T>> factory, int ttl = 300, CancellationToken cancellationToken = default)
     {
-        return cache.GetOrCreateAsync(cacheKey, _ => factory(), GetHybridCacheEntryOptions(ttl));
+        return cache.GetOrCreateAsync(cacheKey, async token => await factory().AsTask().WaitAsync(token), GetHybridCacheEntryOptions(ttl), cancellationToken: cancellationToken);
     }
 
 
@@ -68,11 +80,18 @@ public static class HybridCacheExtension
     /// <param name="factory">执行表达式</param>
     /// <param name="ttl">缓存有效期</param>
     /// <param name="keyPrefix">表达式前缀标记</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
     /// <remarks>表达式前缀标记不传的情况下默认通过反射计算</remarks>
-    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<T>> factory, int ttl = 300, string? keyPrefix = null)
+    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<T>> factory, int ttl = 300, string? keyPrefix = null, CancellationToken cancellationToken = default)
     {
-        return cache.GetOrCreateInternalAsync(() => new ValueTask<T>(factory.Compile()()), factory, ttl, keyPrefix);
+        var prepared = PrepareMethodCall(factory, keyPrefix);
+
+        return cache.GetOrCreateAsync(prepared.Key, token =>
+        {
+            token.ThrowIfCancellationRequested();
+            return new ValueTask<T>((T)InvokePrepared(prepared)!);
+        }, GetHybridCacheEntryOptions(ttl), cancellationToken: cancellationToken);
     }
 
 
@@ -84,11 +103,14 @@ public static class HybridCacheExtension
     /// <param name="factory">执行表达式</param>
     /// <param name="ttl">缓存有效期</param>
     /// <param name="keyPrefix">表达式前缀标记</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
     /// <remarks>表达式前缀标记不传的情况下默认通过反射计算</remarks>
-    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<Task<T>>> factory, int ttl = 300, string? keyPrefix = null)
+    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<Task<T>>> factory, int ttl = 300, string? keyPrefix = null, CancellationToken cancellationToken = default)
     {
-        return cache.GetOrCreateInternalAsync(async () => await factory.Compile()(), factory, ttl, keyPrefix);
+        var prepared = PrepareMethodCall(factory, keyPrefix);
+
+        return cache.GetOrCreateAsync(prepared.Key, async token => await ((Task<T>)InvokePrepared(prepared)!).WaitAsync(token), GetHybridCacheEntryOptions(ttl), cancellationToken: cancellationToken);
     }
 
 
@@ -100,24 +122,24 @@ public static class HybridCacheExtension
     /// <param name="factory">执行表达式</param>
     /// <param name="ttl">缓存有效期</param>
     /// <param name="keyPrefix">表达式前缀标记</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
     /// <remarks>表达式前缀标记不传的情况下默认通过反射计算</remarks>
-    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<ValueTask<T>>> factory, int ttl = 300, string? keyPrefix = null)
+    public static ValueTask<T> GetOrCreateAsync<T>(this HybridCache cache, Expression<Func<ValueTask<T>>> factory, int ttl = 300, string? keyPrefix = null, CancellationToken cancellationToken = default)
     {
-        return cache.GetOrCreateInternalAsync(() => factory.Compile()(), factory, ttl, keyPrefix);
-    }
+        var prepared = PrepareMethodCall(factory, keyPrefix);
 
-
-    private static ValueTask<T> GetOrCreateInternalAsync<T>(this HybridCache cache, Func<ValueTask<T>> compiledFactory, Expression expression, int ttl, string? keyPrefix = null)
-    {
-        var key = GenerateCacheKey(expression, keyPrefix);
-
-        return cache.GetOrCreateAsync(key, _ => compiledFactory(), GetHybridCacheEntryOptions(ttl));
+        return cache.GetOrCreateAsync(prepared.Key, async token => await ((ValueTask<T>)InvokePrepared(prepared)!).AsTask().WaitAsync(token), GetHybridCacheEntryOptions(ttl), cancellationToken: cancellationToken);
     }
 
 
     private static HybridCacheEntryOptions GetHybridCacheEntryOptions(int ttl)
     {
+        if (ttl <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ttl), "缓存有效期必须大于0秒");
+        }
+
         var expiration = TimeSpan.FromSeconds(ttl);
 
         return new()
@@ -132,132 +154,86 @@ public static class HybridCacheExtension
     /// 生成缓存键的核心方法
     /// </summary>
     /// <param name="expression">方法调用表达式</param>
-    /// <returns>生成的缓存键</returns>
-    private static string GenerateCacheKey(Expression expression, string? keyPrefix = null)
+    /// <param name="keyPrefix">缓存键前缀</param>
+    /// <returns>已准备的方法调用</returns>
+    private static (MethodInfo Method, object? Target, object?[] Arguments, string Key) PrepareMethodCall(LambdaExpression expression, string? keyPrefix)
+    {
+        if (keyPrefix != null && string.IsNullOrWhiteSpace(keyPrefix))
+        {
+            throw new ArgumentException("缓存键前缀不能是空字符串或空白字符串", nameof(keyPrefix));
+        }
+
+        if (expression.Body is not MethodCallExpression methodCall)
+        {
+            throw new ArgumentException("缓存表达式必须是方法调用", nameof(expression));
+        }
+
+        if (methodCall.Method.GetParameters().Any(t => t.ParameterType.IsByRef))
+        {
+            throw new ArgumentException("缓存表达式不支持ref或out参数", nameof(expression));
+        }
+
+        object? target = methodCall.Object == null ? null : EvaluateExpression(methodCall.Object);
+        object?[] arguments = methodCall.Arguments.Select(EvaluateExpression).ToArray();
+        string key = GenerateCacheKey(methodCall.Method, target, arguments, keyPrefix);
+
+        return (methodCall.Method, target, arguments, key);
+    }
+
+
+    /// <summary>
+    /// 生成包含方法身份和参数值的缓存键
+    /// </summary>
+    /// <param name="method">方法信息</param>
+    /// <param name="target">方法目标实例</param>
+    /// <param name="arguments">已求值参数</param>
+    /// <param name="keyPrefix">缓存键前缀</param>
+    /// <returns>缓存键</returns>
+    private static string GenerateCacheKey(MethodInfo method, object? target, object?[] arguments, string? keyPrefix)
     {
         StringBuilder sb = new();
 
-        if (!string.IsNullOrWhiteSpace(keyPrefix))
+        if (keyPrefix != null)
         {
             sb.Append(keyPrefix);
             sb.Append(':');
         }
 
-        // 解析表达式
-        if (expression is LambdaExpression lambda)
+        if (target != null)
         {
-            expression = lambda.Body;
+            Type targetType = target.GetType();
+            sb.Append(targetType.FullName ?? targetType.Name);
+            sb.Append("->");
         }
 
-        if (expression is MethodCallExpression methodCall)
+        sb.Append(method.DeclaringType?.FullName ?? method.ReflectedType?.FullName ?? "UnknownType");
+        sb.Append('.');
+        sb.Append(method.Name);
+
+        if (method.IsGenericMethod)
         {
+            sb.Append('<');
+            sb.Append(string.Join(',', method.GetGenericArguments().Select(t => t.FullName)));
+            sb.Append('>');
+        }
 
-            bool isGetInstanceType = false;
+        var parameters = method.GetParameters();
+        sb.Append('(');
 
-            if (keyPrefix == null)
+        for (int index = 0; index < parameters.Length; index++)
+        {
+            if (index > 0)
             {
-                var instanceExpr = methodCall.Object;
-
-                if (instanceExpr != null)
-                {
-                    var instanceType = Expression.Lambda<Func<object>>(Expression.Convert(instanceExpr, typeof(object))).Compile()()?.GetType();
-
-                    if (instanceType != null)
-                    {
-                        sb.Append(instanceType.FullName);
-                        sb.Append('.');
-
-                        isGetInstanceType = true;
-                    }
-                }
+                sb.Append(',');
             }
 
-            if (isGetInstanceType == false && methodCall.Method.ReflectedType != null)
-            {
-                sb.Append(methodCall.Method.ReflectedType.FullName);
-                sb.Append('.');
-            }
-
-            // 添加方法名
-            sb.Append(methodCall.Method.Name);
-
-            if (methodCall.Method.IsGenericMethod)
-            {
-                sb.Append('<');
-                sb.Append(string.Join(',', methodCall.Method.GetGenericArguments().Select(t => t.FullName)));
-                sb.Append('>');
-            }
-
-            // 添加参数
-            if (methodCall.Arguments.Count > 0)
-            {
-                sb.Append('(');
-                for (int i = 0; i < methodCall.Arguments.Count; i++)
-                {
-                    if (i > 0) sb.Append(',');
-                    var argStr = GetArgumentValue(methodCall.Arguments[i]);
-                    sb.Append(argStr);
-                }
-                sb.Append(')');
-            }
-        }
-        else
-        {
-            // 如果不是方法调用，使用表达式的字符串表示
-            sb.Append(expression.ToString());
+            sb.Append(parameters[index].ParameterType.FullName);
+            sb.Append('=');
+            sb.Append(arguments[index] == null ? "null" : JsonHelper.ObjectCloneJson(arguments[index]!));
         }
 
-        string argsStr = sb.ToString();
-
-        string argsHash = CryptoHelper.SHA256HashData(argsStr);
-
-        return argsHash;
-    }
-
-
-    /// <summary>
-    /// 获取表达式参数的值并序列化为JSON
-    /// </summary>
-    /// <param name="argument">参数表达式</param>
-    /// <returns>JSON序列化后的参数值</returns>
-    private static string GetArgumentValue(Expression argument)
-    {
-        object? value = null;
-
-        // 常量表达式
-        if (argument is ConstantExpression constant)
-        {
-            value = constant.Value;
-        }
-        // 成员访问表达式
-        else if (argument is MemberExpression member)
-        {
-            var container = member.Expression == null ? null : GetArgumentValueObject(member.Expression);
-            if (member.Member is FieldInfo field)
-            {
-                value = field.GetValue(container);
-            }
-            else if (member.Member is PropertyInfo property)
-            {
-                value = property.GetValue(container);
-            }
-        }
-        // 编译并执行表达式
-        else
-        {
-            var compiled = Expression.Lambda(argument).Compile();
-            value = compiled.DynamicInvoke();
-        }
-
-        // 序列化值
-        if (value != null)
-        {
-            return JsonHelper.ObjectCloneJson(value);
-        }
-        else
-        {
-            return "null";
-        }
+        sb.Append(')');
+        return CryptoHelper.SHA256HashData(sb.ToString());
     }
 
 
@@ -266,28 +242,29 @@ public static class HybridCacheExtension
     /// </summary>
     /// <param name="expression">表达式</param>
     /// <returns>对象值</returns>
-    private static object? GetArgumentValueObject(Expression expression)
+    private static object? EvaluateExpression(Expression expression)
     {
-        if (expression is ConstantExpression constant)
-        {
-            return constant.Value;
-        }
-
-        if (expression is MemberExpression member)
-        {
-            var container = member.Expression == null ? null : GetArgumentValueObject(member.Expression);
-            if (member.Member is FieldInfo field)
-            {
-                return field.GetValue(container);
-            }
-            if (member.Member is PropertyInfo property)
-            {
-                return property.GetValue(container);
-            }
-        }
-
         var compiled = Expression.Lambda(expression).Compile();
         return compiled.DynamicInvoke();
+    }
+
+
+    /// <summary>
+    /// 调用已求值的方法和参数
+    /// </summary>
+    /// <param name="prepared">已准备的方法调用</param>
+    /// <returns>方法返回值</returns>
+    private static object? InvokePrepared((MethodInfo Method, object? Target, object?[] Arguments, string Key) prepared)
+    {
+        try
+        {
+            return prepared.Method.Invoke(prepared.Target, prepared.Arguments);
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException != null)
+        {
+            ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+            throw;
+        }
     }
 
 

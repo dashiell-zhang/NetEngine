@@ -5,6 +5,9 @@ using System.Text.Json.Serialization;
 
 namespace Common;
 
+/// <summary>
+/// 提供统一JSON序列化、反序列化和克隆能力
+/// </summary>
 public class JsonHelper
 {
 

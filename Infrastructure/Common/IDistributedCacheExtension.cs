@@ -5,7 +5,6 @@ namespace Common;
 /// <summary>
 /// 扩展分布式缓存接口
 /// </summary>
-/// </summary>
 public static class IDistributedCacheExtension
 {
 
@@ -34,13 +33,18 @@ public static class IDistributedCacheExtension
     /// </summary>
     /// <param name="key"></param>
     /// <param name="value"></param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value)
+    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value, CancellationToken cancellationToken = default)
     {
         try
         {
-            await distributedCache.SetStringAsync(key, value);
+            await distributedCache.SetStringAsync(key, value, cancellationToken);
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -82,8 +86,9 @@ public static class IDistributedCacheExtension
     /// <param name="value"></param>
     /// <param name="expirationRelativeToNow">相对过期时间</param>
     /// <param name="isSlidingExp">是否支持滑动延时</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
+    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -91,8 +96,12 @@ public static class IDistributedCacheExtension
             {
                 AbsoluteExpirationRelativeToNow = (isSlidingExp ? null : expirationRelativeToNow),
                 SlidingExpiration = (isSlidingExp ? expirationRelativeToNow : null)
-            });
+            }, cancellationToken);
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -128,13 +137,18 @@ public static class IDistributedCacheExtension
     /// <param name="key">键</param>
     /// <param name="value">值</param>
     /// <param name="absoluteExpiration">绝对过期时间</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value, DateTimeOffset absoluteExpiration)
+    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, string value, DateTimeOffset absoluteExpiration, CancellationToken cancellationToken = default)
     {
         try
         {
-            await distributedCache.SetStringAsync(key, value, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
+            await distributedCache.SetStringAsync(key, value, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration }, cancellationToken);
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -169,14 +183,19 @@ public static class IDistributedCacheExtension
     /// </summary>
     /// <param name="key"></param>
     /// <param name="value"></param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value)
+    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value, CancellationToken cancellationToken = default)
     {
         try
         {
             var valueStr = JsonHelper.ObjectToJson(value);
-            await distributedCache.SetStringAsync(key, valueStr);
+            await distributedCache.SetStringAsync(key, valueStr, cancellationToken);
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -219,8 +238,9 @@ public static class IDistributedCacheExtension
     /// <param name="value"></param>
     /// <param name="expirationRelativeToNow">相对过期时间</param>
     /// <param name="isSlidingExp">是否支持滑动延时</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false)
+    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value, TimeSpan expirationRelativeToNow, bool isSlidingExp = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -229,8 +249,12 @@ public static class IDistributedCacheExtension
             {
                 AbsoluteExpirationRelativeToNow = (isSlidingExp ? null : expirationRelativeToNow),
                 SlidingExpiration = (isSlidingExp ? expirationRelativeToNow : null)
-            });
+            }, cancellationToken);
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -267,14 +291,19 @@ public static class IDistributedCacheExtension
     /// <param name="key"></param>
     /// <param name="value"></param>
     /// <param name="absoluteExpiration">绝对过期时间</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value, DateTimeOffset absoluteExpiration)
+    public static async Task<bool> SetAsync(this IDistributedCache distributedCache, string key, object value, DateTimeOffset absoluteExpiration, CancellationToken cancellationToken = default)
     {
         try
         {
             var valueStr = JsonHelper.ObjectToJson(value);
-            await distributedCache.SetStringAsync(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration });
+            await distributedCache.SetStringAsync(key, valueStr, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteExpiration }, cancellationToken);
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -289,6 +318,7 @@ public static class IDistributedCacheExtension
     /// <typeparam name="T"></typeparam>
     /// <param name="key"></param>
     /// <returns></returns>
+    /// <remarks>缓存读取或反序列化失败时按未命中处理，避免缓存故障阻断业务</remarks>
     public static T? Get<T>(this IDistributedCache distributedCache, string key)
     {
         try
@@ -297,13 +327,10 @@ public static class IDistributedCacheExtension
 
             if (valueStr != null)
             {
-                var value = JsonHelper.JsonToObject<T>(valueStr);
-                return value;
+                return JsonHelper.JsonToObject<T>(valueStr);
             }
-            else
-            {
-                return default;
-            }
+
+            return default;
         }
         catch
         {
@@ -317,22 +344,25 @@ public static class IDistributedCacheExtension
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="key"></param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static async Task<T?> GetAsync<T>(this IDistributedCache distributedCache, string key)
+    /// <remarks>缓存读取或反序列化失败时按未命中处理，用户主动取消仍向上传播</remarks>
+    public static async Task<T?> GetAsync<T>(this IDistributedCache distributedCache, string key, CancellationToken cancellationToken = default)
     {
         try
         {
-            var valueStr = await distributedCache.GetStringAsync(key);
+            var valueStr = await distributedCache.GetStringAsync(key, cancellationToken);
 
             if (valueStr != null)
             {
-                var value = JsonHelper.JsonToObject<T>(valueStr);
-                return value;
+                return JsonHelper.JsonToObject<T>(valueStr);
             }
-            else
-            {
-                return default;
-            }
+
+            return default;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -346,9 +376,17 @@ public static class IDistributedCacheExtension
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
+    /// <remarks>该实现通过读取缓存值判断，读取失败时返回 false，使用滑动过期时会刷新缓存有效期</remarks>
     public static bool IsContainKey(this IDistributedCache distributedCache, string key)
     {
-        return distributedCache.GetString(key) != null;
+        try
+        {
+            return distributedCache.GetString(key) != null;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
 
@@ -357,10 +395,23 @@ public static class IDistributedCacheExtension
     /// 判断缓存是否存在（异步）
     /// </summary>
     /// <param name="key"></param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static async Task<bool> IsContainKeyAsync(this IDistributedCache distributedCache, string key)
+    /// <remarks>读取失败时返回 false，用户主动取消仍向上传播</remarks>
+    public static async Task<bool> IsContainKeyAsync(this IDistributedCache distributedCache, string key, CancellationToken cancellationToken = default)
     {
-        return (await distributedCache.GetStringAsync(key)) != null;
+        try
+        {
+            return (await distributedCache.GetStringAsync(key, cancellationToken)) != null;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
 }

@@ -3,6 +3,9 @@ using System.Text;
 
 namespace Common;
 
+/// <summary>
+/// 提供TOTP密钥、验证码和认证地址处理能力
+/// </summary>
 public class TotpHelper
 {
 
@@ -24,9 +27,9 @@ public class TotpHelper
     /// </summary>
     public static string GenerateBase32Secret(int secretBytes = DefaultSecretBytes)
     {
-        if (secretBytes <= 0)
+        if (secretBytes < DefaultSecretBytes)
         {
-            throw new ArgumentOutOfRangeException(nameof(secretBytes), "密钥长度必须大于 0。");
+            throw new ArgumentOutOfRangeException(nameof(secretBytes), $"密钥长度不能少于{DefaultSecretBytes}字节");
         }
 
         return Base32Encode(RandomNumberGenerator.GetBytes(secretBytes));
@@ -38,22 +41,15 @@ public class TotpHelper
     /// </summary>
     public static string BuildOtpAuthUrl(string issuer, string accountName, string base32Secret, int digits = DefaultDigits, int period = DefaultPeriod, Algo algo = Algo.Sha1)
     {
-
-        if (digits is < 6 or > 9)
-        {
-            throw new ArgumentOutOfRangeException(nameof(digits), "验证码位数必须介于 6 到 9 位之间。");
-        }
-
-        if (period <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(period), "时间步长（period）必须大于 0 秒。");
-        }
+        ValidateTotpOptions(digits, period, algo);
+        var secretBytes = ValidateAndDecodeSecret(base32Secret);
 
         string encIssuer = Uri.EscapeDataString(issuer);
         string encAccount = Uri.EscapeDataString(accountName);
+        string encSecret = Uri.EscapeDataString(Base32Encode(secretBytes));
         string algoName = algo.ToString().ToUpperInvariant();
 
-        return $"otpauth://totp/{encIssuer}:{encAccount}?secret={base32Secret}&issuer={encIssuer}&digits={digits}&period={period}&algorithm={algoName}";
+        return $"otpauth://totp/{encIssuer}:{encAccount}?secret={encSecret}&issuer={encIssuer}&digits={digits}&period={period}&algorithm={algoName}";
     }
 
 
@@ -62,9 +58,9 @@ public class TotpHelper
     /// </summary>
     public static string GenerateCode(string base32Secret, DateTimeOffset? now = null, int digits = DefaultDigits, int period = DefaultPeriod, Algo algo = Algo.Sha1)
     {
-        ValidateTotpOptions(digits, period);
+        ValidateTotpOptions(digits, period, algo);
 
-        var key = Base32Decode(base32Secret);
+        var key = ValidateAndDecodeSecret(base32Secret);
         long counter = (now ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds() / period;
         return ComputeHotp(key, counter, digits, algo);
     }
@@ -75,19 +71,19 @@ public class TotpHelper
     /// </summary>
     public static bool VerifyCode(string base32Secret, string code, int allowedDrift = 1, int digits = DefaultDigits, int period = DefaultPeriod, Algo algo = Algo.Sha1)
     {
-        ValidateTotpOptions(digits, period);
+        ValidateTotpOptions(digits, period, algo);
 
         if (allowedDrift < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(allowedDrift), "允许偏移步数必须大于或等于 0。");
         }
 
-        if (code.Length != digits || code.Any(c => c < '0' || c > '9'))
+        if (string.IsNullOrEmpty(code) || code.Length != digits || code.Any(c => c < '0' || c > '9'))
         {
             return false;
         }
 
-        var key = Base32Decode(base32Secret);
+        var key = ValidateAndDecodeSecret(base32Secret);
         long center = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / period;
 
         for (long i = -allowedDrift; i <= allowedDrift; i++)
@@ -109,7 +105,7 @@ public class TotpHelper
     /// </summary>
     private static string ComputeHotp(byte[] key, long counter, int digits, Algo algo)
     {
-        ValidateTotpOptions(digits, DefaultPeriod);
+        ValidateTotpOptions(digits, DefaultPeriod, algo);
 
 
         // 8 字节大端序计数器（栈上）
@@ -160,7 +156,7 @@ public class TotpHelper
     /// <summary>
     /// 验证TOTP参数
     /// </summary>
-    private static void ValidateTotpOptions(int digits, int period)
+    private static void ValidateTotpOptions(int digits, int period, Algo algo)
     {
         if (digits is < 6 or > 9)
         {
@@ -171,6 +167,34 @@ public class TotpHelper
         {
             throw new ArgumentOutOfRangeException(nameof(period), "时间步长（period）必须大于 0 秒。");
         }
+
+        if (!Enum.IsDefined(algo))
+        {
+            throw new ArgumentOutOfRangeException(nameof(algo), "不支持的TOTP哈希算法");
+        }
+    }
+
+
+    /// <summary>
+    /// 验证并解码Base32密钥
+    /// </summary>
+    /// <param name="base32Secret">Base32密钥</param>
+    /// <returns>密钥字节</returns>
+    private static byte[] ValidateAndDecodeSecret(string base32Secret)
+    {
+        if (string.IsNullOrWhiteSpace(base32Secret))
+        {
+            throw new ArgumentException("TOTP密钥不能为空", nameof(base32Secret));
+        }
+
+        var key = Base32Decode(base32Secret);
+
+        if (key.Length < DefaultSecretBytes)
+        {
+            throw new ArgumentException($"TOTP密钥解码后不能少于{DefaultSecretBytes}字节", nameof(base32Secret));
+        }
+
+        return key;
     }
 
 

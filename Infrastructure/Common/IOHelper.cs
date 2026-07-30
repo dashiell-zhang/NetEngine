@@ -3,6 +3,9 @@ using System.IO.Compression;
 
 namespace Common;
 
+/// <summary>
+/// 提供文件、目录和ZIP归档处理能力
+/// </summary>
 public class IOHelper
 {
 
@@ -42,19 +45,56 @@ public class IOHelper
         try
         {
             DirectoryInfo directory = new(path);
-            if (directory.Exists)
-            {
-                //将文件夹属性设置为普通,如：只读文件夹设置为普通
-                directory.Attributes = FileAttributes.Normal;
 
-                directory.Delete(true);
+            if (directory.LinkTarget != null)
+            {
+                directory.Delete();
+                return true;
             }
+
+            if (!directory.Exists)
+            {
+                return true;
+            }
+
+            if (directory.Attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                directory.Delete();
+                return true;
+            }
+
+            NormalizeAttributes(directory);
+
+            directory.Delete(true);
 
             return true;
         }
+
         catch
         {
             return false;
+        }
+
+        static void NormalizeAttributes(DirectoryInfo directory)
+        {
+            foreach (var item in directory.EnumerateFileSystemInfos())
+            {
+                if (item.Attributes.HasFlag(FileAttributes.ReparsePoint))
+                {
+                    continue;
+                }
+
+                if (item is DirectoryInfo subDirectory)
+                {
+                    NormalizeAttributes(subDirectory);
+                }
+                else
+                {
+                    item.Attributes = FileAttributes.Normal;
+                }
+            }
+
+            directory.Attributes = FileAttributes.Normal;
         }
     }
 
@@ -138,7 +178,15 @@ public class IOHelper
     public static void CompressFileZip(string filePath, string zipPath)
     {
 
-        FileInfo fileInfo = new(filePath);
+        string sourcePath = Path.GetFullPath(filePath);
+        string targetPath = Path.GetFullPath(zipPath);
+
+        if (Path.GetRelativePath(sourcePath, targetPath) == ".")
+        {
+            throw new ArgumentException("ZIP目标文件不能与待压缩文件相同", nameof(zipPath));
+        }
+
+        FileInfo fileInfo = new(sourcePath);
 
         string tempPath = Path.Combine(fileInfo.DirectoryName!, Guid.NewGuid() + "_temp");
 
@@ -151,11 +199,17 @@ public class IOHelper
         {
             fileInfo.CopyTo(Path.Combine(tempPath, fileInfo.Name));
 
-            CompressDirectoryZip(tempPath, zipPath);
+            CompressDirectoryZip(tempPath, targetPath);
         }
-        finally
+        catch
         {
             DeleteDirectory(tempPath);
+            throw;
+        }
+
+        if (!DeleteDirectory(tempPath))
+        {
+            throw new IOException($"临时目录清理失败：{tempPath}");
         }
     }
 
@@ -168,24 +222,34 @@ public class IOHelper
     public static void CompressDirectoryZip(string folderPath, string zipPath)
     {
 
-        DirectoryInfo directoryInfo = new(zipPath);
+        string sourcePath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folderPath));
+        string targetPath = Path.GetFullPath(zipPath);
+        string relativeTargetPath = Path.GetRelativePath(sourcePath, targetPath);
 
-        if (directoryInfo.Parent != null)
+        if (!relativeTargetPath.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) && relativeTargetPath != ".." && !Path.IsPathRooted(relativeTargetPath))
         {
-            directoryInfo = directoryInfo.Parent;
+            throw new ArgumentException("ZIP目标文件不能位于待压缩目录内部", nameof(zipPath));
         }
 
-        if (!directoryInfo.Exists)
+        string? targetDirectory = Path.GetDirectoryName(targetPath);
+
+        if (targetDirectory == null)
         {
-            directoryInfo.Create();
+            throw new ArgumentException("ZIP目标路径无效", nameof(zipPath));
         }
 
-        if (File.Exists(zipPath))
-        {
-            File.Delete(zipPath);
-        }
+        Directory.CreateDirectory(targetDirectory);
+        string tempZipPath = Path.Combine(targetDirectory, Path.GetFileName(targetPath) + "." + Guid.NewGuid().ToString("N") + ".tmp");
 
-        ZipFile.CreateFromDirectory(folderPath, zipPath, CompressionLevel.Optimal, false);
+        try
+        {
+            ZipFile.CreateFromDirectory(sourcePath, tempZipPath, CompressionLevel.Optimal, false);
+            File.Move(tempZipPath, targetPath, true);
+        }
+        finally
+        {
+            DeleteFile(tempZipPath);
+        }
     }
 
 

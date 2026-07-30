@@ -83,6 +83,8 @@ public partial class StringHelper
     {
         if (!string.IsNullOrEmpty(htmlText))
         {
+            htmlText = WebUtility.HtmlDecode(htmlText);
+
             //删除脚本
             htmlText = RegexRemoveHtml1().Replace(htmlText, "");
 
@@ -122,7 +124,7 @@ public partial class StringHelper
 
             htmlText = htmlText.Replace("\r\n", "");
 
-            htmlText = WebUtility.HtmlEncode(htmlText).Trim();
+            htmlText = htmlText.Trim();
 
             return htmlText;
         }
@@ -134,7 +136,7 @@ public partial class StringHelper
 
     #region RegexRemoveHtml
 
-    [GeneratedRegex(@"<script[^>]*?>.*?</script>", RegexOptions.IgnoreCase, "zh-CN")]
+    [GeneratedRegex(@"<script[^>]*?>[\s\S]*?</script>", RegexOptions.IgnoreCase, "zh-CN")]
     private static partial Regex RegexRemoveHtml1();
 
 
@@ -391,12 +393,22 @@ public partial class StringHelper
     /// <returns></returns>
     public static string ModelToUriParam(object obj, string url = "")
     {
-        PropertyInfo[] properties = obj.GetType().GetProperties();
+        PropertyInfo[] properties = obj.GetType().GetProperties().Where(t => t.CanRead && t.GetIndexParameters().Length == 0).ToArray();
         List<string> queryParts = [];
 
         foreach (var p in properties)
         {
-            var value = p.GetValue(obj, null);
+            object? value;
+
+            try
+            {
+                value = p.GetValue(obj, null);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"读取属性 {p.Name} 失败", ex);
+            }
+
             if (value == null || string.IsNullOrWhiteSpace(value.ToString()))
             {
                 continue;
@@ -406,16 +418,18 @@ public partial class StringHelper
 
             if (p.PropertyType.IsEnum || Nullable.GetUnderlyingType(p.PropertyType)?.IsEnum == true)
             {
-                // 获取枚举的整数值
-                stringValue = Convert.ToInt32(value).ToString();
+                Type enumType = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType;
+                Type underlyingType = Enum.GetUnderlyingType(enumType);
+                object underlyingValue = Convert.ChangeType(value, underlyingType, CultureInfo.InvariantCulture);
+                stringValue = ((IFormattable)underlyingValue).ToString(null, CultureInfo.InvariantCulture);
             }
             else if (value is DateTimeOffset dateTimeOffset)
             {
-                stringValue = dateTimeOffset.ToString("o", CultureInfo.InvariantCulture);
+                stringValue = dateTimeOffset.ToString("yyyy/MM/dd HH:mm:ss zzz", CultureInfo.InvariantCulture);
             }
             else if (value is DateTime dateTime)
             {
-                stringValue = dateTime.ToString("o", CultureInfo.InvariantCulture);
+                stringValue = dateTime.ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
             }
             else if (value is IFormattable formattable)
             {
@@ -486,6 +500,108 @@ public partial class StringHelper
 
 
     /// <summary>
+    /// 检查IP地址是否为可直接访问的公网地址
+    /// </summary>
+    /// <param name="ipAddress">待检查的IP地址</param>
+    /// <returns>是否为公网地址</returns>
+    public static bool IsPublicIpAddress(string ipAddress)
+    {
+        return IPAddress.TryParse(ipAddress, out var address) && IsPublicIpAddress(address);
+    }
+
+
+    /// <summary>
+    /// 检查IP地址是否为可直接访问的公网地址
+    /// </summary>
+    /// <param name="ipAddress">待检查的IP地址</param>
+    /// <returns>是否为公网地址</returns>
+    public static bool IsPublicIpAddress(IPAddress ipAddress)
+    {
+        if (ipAddress.IsIPv4MappedToIPv6)
+        {
+            return IsPublicIpAddress(ipAddress.MapToIPv4());
+        }
+
+        if (IPAddress.IsLoopback(ipAddress))
+        {
+            return false;
+        }
+
+        byte[] bytes = ipAddress.GetAddressBytes();
+
+        if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            return bytes[0] switch
+            {
+                0 => false,
+                10 => false,
+                100 when bytes[1] is >= 64 and <= 127 => false,
+                127 => false,
+                169 when bytes[1] == 254 => false,
+                172 when bytes[1] is >= 16 and <= 31 => false,
+                192 when bytes[1] == 0 && bytes[2] == 0 => false,
+                192 when bytes[1] == 0 && bytes[2] == 2 => false,
+                192 when bytes[1] == 88 && bytes[2] == 99 => false,
+                192 when bytes[1] == 168 => false,
+                198 when bytes[1] is 18 or 19 => false,
+                198 when bytes[1] == 51 && bytes[2] == 100 => false,
+                203 when bytes[1] == 0 && bytes[2] == 113 => false,
+                >= 224 => false,
+                _ => true
+            };
+        }
+
+        if (ipAddress.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            return false;
+        }
+
+        if (ipAddress.Equals(IPAddress.IPv6Any) || ipAddress.Equals(IPAddress.IPv6None) || ipAddress.IsIPv6LinkLocal || ipAddress.IsIPv6Multicast || ipAddress.IsIPv6SiteLocal)
+        {
+            return false;
+        }
+
+        // 仅允许当前全球单播地址空间 2000::/3
+        if ((bytes[0] & 0xE0) != 0x20)
+        {
+            return false;
+        }
+
+        // 2001::/23 包含IETF协议分配、基准测试和过渡地址
+        if (bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] <= 0x01)
+        {
+            return false;
+        }
+
+        // 2001:db8::/32 为文档示例地址
+        if (bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0x0D && bytes[3] == 0xB8)
+        {
+            return false;
+        }
+
+        // 2002::/16 为6to4过渡地址
+        if (bytes[0] == 0x20 && bytes[1] == 0x02)
+        {
+            return false;
+        }
+
+        // 3ffe::/16 为已归还的旧6bone地址
+        if (bytes[0] == 0x3F && bytes[1] == 0xFE)
+        {
+            return false;
+        }
+
+        // 3fff::/20 为文档示例地址
+        if (bytes[0] == 0x3F && bytes[1] == 0xFF && (bytes[2] & 0xF0) == 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /// <summary>
     /// 检查IPv6地址是否是局域网IP
     /// </summary>
     /// <param name="ipv6Address"></param>
@@ -510,7 +626,7 @@ public partial class StringHelper
         var bytes = ipAddress.GetAddressBytes();
 
         //检查是否是 ULA 地址
-        if (bytes[0] >= 0xfc)
+        if ((bytes[0] & 0xFE) == 0xFC)
         {
             return true;
         }

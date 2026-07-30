@@ -12,7 +12,7 @@ namespace Admin.WebAPI.Controllers;
 [Authorize]
 [Route("[controller]/[action]")]
 [ApiController]
-public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfiguration configuration, FileService fileService, IHttpClientFactory httpClientFactory) : ControllerBase
+public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfiguration configuration, FileService fileService) : ControllerBase
 {
 
     /// <summary>
@@ -42,7 +42,7 @@ public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfigur
 
         if (action == "catchimage")
         {
-            CrawlerHandler crawlerHandler = new(rootPath, HttpContext, fileService, httpClientFactory, new()
+            CrawlerHandler crawlerHandler = new(rootPath, HttpContext, fileService, new()
             {
                 AllowExtensions = Config.GetStringList("catcherAllowFiles", fileServerUrl),
                 SizeLimit = Config.GetInt("catcherMaxSize", fileServerUrl)

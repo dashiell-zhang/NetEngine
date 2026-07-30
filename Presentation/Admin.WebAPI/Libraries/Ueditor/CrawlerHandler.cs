@@ -9,7 +9,7 @@ namespace Admin.WebAPI.Libraries.Ueditor;
 /// <summary>
 /// 处理 UEditor 远程图片抓取
 /// </summary>
-public class CrawlerHandler(string rootPath, HttpContext httpContext, FileService fileService, IHttpClientFactory httpClientFactory, CrawlerConfig crawlerConfig, long uploadKey, string fileServerUrl)
+public class CrawlerHandler(string rootPath, HttpContext httpContext, FileService fileService, CrawlerConfig crawlerConfig, long uploadKey, string fileServerUrl)
 {
 
     /// <summary>
@@ -69,7 +69,9 @@ public class CrawlerHandler(string rootPath, HttpContext httpContext, FileServic
 
         try
         {
-            if (!Uri.TryCreate(sourceUrl, UriKind.Absolute, out var sourceUri) || !await IsExternalAddressAsync(sourceUri))
+            CancellationToken cancellationToken = httpContext.RequestAborted;
+
+            if (!Uri.TryCreate(sourceUrl, UriKind.Absolute, out var sourceUri) || !await IsExternalAddressAsync(sourceUri, cancellationToken))
             {
                 result.State = "INVALID_Url";
                 return result;
@@ -84,13 +86,20 @@ public class CrawlerHandler(string rootPath, HttpContext httpContext, FileServic
                 return result;
             }
 
-            var httpClient = httpClientFactory.CreateClient();
+            using SocketsHttpHandler handler = new()
+            {
+                AllowAutoRedirect = true,
+                MaxAutomaticRedirections = 5,
+                UseProxy = false,
+                ConnectCallback = ConnectPublicAddressAsync
+            };
+            using HttpClient httpClient = new(handler);
             using HttpRequestMessage request = new(HttpMethod.Get, sourceUri)
             {
                 Version = HttpVersion.Version20,
                 VersionPolicy = HttpVersionPolicy.RequestVersionOrLower
             };
-            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
             if (response.StatusCode != HttpStatusCode.OK)
             {
@@ -110,18 +119,31 @@ public class CrawlerHandler(string rootPath, HttpContext httpContext, FileServic
                 return result;
             }
 
-            var fileBytes = await response.Content.ReadAsByteArrayAsync();
-
-            if (fileBytes.LongLength > crawlerConfig.SizeLimit)
-            {
-                result.State = "文件大小超出服务器限制";
-                return result;
-            }
-
             var tempDirectory = Path.Combine(rootPath, "temps");
             Directory.CreateDirectory(tempDirectory);
-            tempFilePath = Path.Combine(tempDirectory, Guid.NewGuid() + extension);
-            await File.WriteAllBytesAsync(tempFilePath, fileBytes);
+            string candidateTempFilePath = Path.Combine(tempDirectory, Guid.NewGuid() + extension);
+
+            await using (Stream contentStream = await response.Content.ReadAsStreamAsync(cancellationToken))
+            await using (FileStream tempFileStream = new(candidateTempFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous | FileOptions.SequentialScan))
+            {
+                tempFilePath = candidateTempFilePath;
+                byte[] buffer = new byte[81920];
+                long totalBytes = 0;
+                int bytesRead;
+
+                while ((bytesRead = await contentStream.ReadAsync(buffer, cancellationToken)) > 0)
+                {
+                    totalBytes += bytesRead;
+
+                    if (totalBytes > crawlerConfig.SizeLimit)
+                    {
+                        result.State = "文件大小超出服务器限制";
+                        return result;
+                    }
+
+                    await tempFileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                }
+            }
 
             UploadFileDto uploadFile = new()
             {
@@ -139,6 +161,10 @@ public class CrawlerHandler(string rootPath, HttpContext httpContext, FileServic
             result.State = "SUCCESS";
             result.FileId = fileId;
             result.ServerUrl = NormalizeResultUrl(fileUrl ?? string.Empty);
+        }
+        catch (OperationCanceledException) when (httpContext.RequestAborted.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -161,8 +187,9 @@ public class CrawlerHandler(string rootPath, HttpContext httpContext, FileServic
     /// 判断远程地址是否为外部网络地址
     /// </summary>
     /// <param name="uri">远程地址</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns>是否允许抓取</returns>
-    private static async Task<bool> IsExternalAddressAsync(Uri uri)
+    private static async Task<bool> IsExternalAddressAsync(Uri uri, CancellationToken cancellationToken)
     {
 
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
@@ -170,9 +197,9 @@ public class CrawlerHandler(string rootPath, HttpContext httpContext, FileServic
             return false;
         }
 
-        if (uri.HostNameType == UriHostNameType.IPv4)
+        if (uri.HostNameType is UriHostNameType.IPv4 or UriHostNameType.IPv6)
         {
-            return !StringHelper.IsLanIpAddressV4(IPAddress.Parse(uri.DnsSafeHost).ToString());
+            return StringHelper.IsPublicIpAddress(IPAddress.Parse(uri.DnsSafeHost));
         }
 
         if (uri.HostNameType != UriHostNameType.Dns)
@@ -180,10 +207,53 @@ public class CrawlerHandler(string rootPath, HttpContext httpContext, FileServic
             return false;
         }
 
-        var addresses = await Dns.GetHostAddressesAsync(uri.DnsSafeHost);
-        var ipv4Addresses = addresses.Where(t => t.AddressFamily == AddressFamily.InterNetwork).ToList();
+        var addresses = await Dns.GetHostAddressesAsync(uri.DnsSafeHost, cancellationToken);
 
-        return ipv4Addresses.Count > 0 && ipv4Addresses.All(t => !StringHelper.IsLanIpAddressV4(t.ToString()));
+        return addresses.Length > 0 && addresses.All(StringHelper.IsPublicIpAddress);
+
+    }
+
+
+    /// <summary>
+    /// 连接经过公网地址校验的远程终结点
+    /// </summary>
+    /// <param name="context">HTTP连接上下文</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>已连接的网络流</returns>
+    private static async ValueTask<Stream> ConnectPublicAddressAsync(SocketsHttpConnectionContext context, CancellationToken cancellationToken)
+    {
+
+        var addresses = await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host, cancellationToken);
+
+        if (addresses.Length == 0 || addresses.Any(t => !StringHelper.IsPublicIpAddress(t)))
+        {
+            throw new HttpRequestException("远程主机解析到了非公网地址");
+        }
+
+        Exception? lastException = null;
+
+        foreach (var address in addresses)
+        {
+            Socket socket = new(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+            try
+            {
+                await socket.ConnectAsync(new IPEndPoint(address, context.DnsEndPoint.Port), cancellationToken);
+                return new NetworkStream(socket, ownsSocket: true);
+            }
+            catch (Exception ex) when (ex is SocketException or OperationCanceledException)
+            {
+                socket.Dispose();
+                lastException = ex;
+
+                if (ex is OperationCanceledException)
+                {
+                    throw;
+                }
+            }
+        }
+
+        throw new HttpRequestException("无法连接远程主机", lastException);
 
     }
 

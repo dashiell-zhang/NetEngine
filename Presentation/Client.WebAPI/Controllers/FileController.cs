@@ -25,9 +25,11 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
     /// <summary>
     /// 远程单文件上传接口
     /// </summary>
+    /// <param name="uploadFile">远程文件上传信息</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns>文件ID</returns>
     [HttpPost]
-    public Task<long> RemoteUploadFile(RemoteUploadFileDto uploadFile) => fileService.RemoteUploadFileAsync(savePath, uploadFile);
+    public Task<long> RemoteUploadFile(RemoteUploadFileDto uploadFile, CancellationToken cancellationToken) => fileService.RemoteUploadFileAsync(savePath, uploadFile, cancellationToken);
 
 
 

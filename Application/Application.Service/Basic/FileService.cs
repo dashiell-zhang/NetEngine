@@ -97,8 +97,9 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// </summary>
     /// <param name="savePath">文件存储基础路径</param>
     /// <param name="remoteUploadFile"></param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns>文件ID</returns>
-    public async Task<long> RemoteUploadFileAsync(string savePath, RemoteUploadFileDto remoteUploadFile)
+    public async Task<long> RemoteUploadFileAsync(string savePath, RemoteUploadFileDto remoteUploadFile, CancellationToken cancellationToken = default)
     {
 
         var tempDirPath = Path.Combine(savePath, "temps");
@@ -112,24 +113,32 @@ public class FileService(IdService idService, IUserContext userContext, Database
 
         var httpClient = httpClientFactory.CreateClient();
 
-        var tempFilePath = await httpClient.DownloadFileAsync(remoteUploadFile.FileUrl, tempDirPath, tempFileName);
+        string tempFilePath;
 
-        if (tempFilePath != null)
+        try
         {
-            UploadFileDto uploadFile = new()
-            {
-                Business = remoteUploadFile.Business,
-                Key = remoteUploadFile.Key,
-                Sign = remoteUploadFile.Sign,
-                IsPublicRead = remoteUploadFile.IsPublicRead,
-                FileName = remoteUploadFile.FileName,
-                TempFilePath = tempFilePath
-            };
-
-            return await UploadFileAsync(savePath, uploadFile);
+            tempFilePath = await httpClient.DownloadFileAsync(remoteUploadFile.FileUrl, tempDirPath, tempFileName, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new CustomException("远程文件下载失败", ex);
         }
 
-        throw new CustomException("文件上传失败");
+        UploadFileDto uploadFile = new()
+        {
+            Business = remoteUploadFile.Business,
+            Key = remoteUploadFile.Key,
+            Sign = remoteUploadFile.Sign,
+            IsPublicRead = remoteUploadFile.IsPublicRead,
+            FileName = remoteUploadFile.FileName,
+            TempFilePath = tempFilePath
+        };
+
+        return await UploadFileAsync(savePath, uploadFile);
     }
 
 

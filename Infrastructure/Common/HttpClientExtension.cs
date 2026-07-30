@@ -13,8 +13,16 @@ public static class HttpClientExtension
     /// <summary>
     /// 下载远程文件保存到本地（异步）
     /// </summary>
-    public static async Task<string?> DownloadFileAsync(this HttpClient httpClient, string url, string folderPath, string? fileName = null, CancellationToken cancellationToken = default)
+    /// <param name="httpClient">HTTP 客户端</param>
+    /// <param name="url">请求地址</param>
+    /// <param name="folderPath">保存目录</param>
+    /// <param name="fileName">保存文件名</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>下载文件的完整路径</returns>
+    public static async Task<string> DownloadFileAsync(this HttpClient httpClient, string url, string folderPath, string? fileName = null, CancellationToken cancellationToken = default)
     {
+        string? tempFilePath = null;
+
         try
         {
             if (!Directory.Exists(folderPath))
@@ -28,16 +36,28 @@ public static class HttpClientExtension
             fileName = GetDownloadFileName(url, httpResponse, fileName);
 
             string filePath = Path.Combine(folderPath, fileName);
+            tempFilePath = filePath + "." + Guid.NewGuid().ToString("N") + ".download";
 
-            await using var fileStream = File.Create(filePath);
-            await using var contentStream = await httpResponse.Content.ReadAsStreamAsync(cancellationToken);
-            await contentStream.CopyToAsync(fileStream, cancellationToken);
+            await using (var contentStream = await httpResponse.Content.ReadAsStreamAsync(cancellationToken))
+            await using (var fileStream = File.Create(tempFilePath))
+            {
+                await contentStream.CopyToAsync(fileStream, cancellationToken);
+                await fileStream.FlushAsync(cancellationToken);
+            }
+
+            File.Move(tempFilePath, filePath, true);
+            tempFilePath = null;
 
             return filePath;
         }
         catch
         {
-            return null;
+            if (tempFilePath != null)
+            {
+                IOHelper.DeleteFile(tempFilePath);
+            }
+
+            throw;
         }
     }
 
@@ -72,12 +92,15 @@ public static class HttpClientExtension
     /// <summary>
     /// Get方式获取远程资源
     /// </summary>
+    /// <param name="httpClient">HTTP 客户端</param>
     /// <param name="url">请求地址</param>
     /// <param name="headers">自定义Header集合</param>
+    /// <param name="options">自定义请求选项</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
+    public static async Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default, CancellationToken cancellationToken = default)
     {
-        HttpRequestMessage request = new()
+        using HttpRequestMessage request = new()
         {
             RequestUri = new Uri(url),
             Method = HttpMethod.Get,
@@ -87,7 +110,7 @@ public static class HttpClientExtension
 
         request.SetHeadersAndOptions(headers, options);
 
-        return httpClient.SendAsync(request);
+        return await httpClient.SendAsync(request, cancellationToken);
     }
 
 
@@ -95,14 +118,17 @@ public static class HttpClientExtension
     /// <summary>
     /// Post json或xml 数据到指定url
     /// </summary>
+    /// <param name="httpClient">HTTP 客户端</param>
     /// <param name="url">Url</param>
     /// <param name="data">数据</param>
     /// <param name="type">json,xml</param>
     /// <param name="headers">自定义Header集合</param>
+    /// <param name="options">自定义请求选项</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default, CancellationToken cancellationToken = default)
+    public static async Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string url, string data, string type, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default, CancellationToken cancellationToken = default)
     {
-        HttpRequestMessage request = new()
+        using HttpRequestMessage request = new()
         {
             RequestUri = new Uri(url),
             Method = HttpMethod.Post,
@@ -129,7 +155,7 @@ public static class HttpClientExtension
 
         request.SetHeadersAndOptions(headers, options);
 
-        return httpClient.SendAsync(request, cancellationToken);
+        return await httpClient.SendAsync(request, cancellationToken);
     }
 
 
@@ -137,13 +163,15 @@ public static class HttpClientExtension
     /// <summary>
     /// Delete 方式发出请求
     /// </summary>
+    /// <param name="httpClient">HTTP 客户端</param>
     /// <param name="url">Url</param>
     /// <param name="headers">自定义Header集合</param>
-    /// <param name="httpClientName">httpClient名称</param>
+    /// <param name="options">自定义请求选项</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
+    public static async Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, string url, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default, CancellationToken cancellationToken = default)
     {
-        HttpRequestMessage request = new()
+        using HttpRequestMessage request = new()
         {
             RequestUri = new Uri(url),
             Method = HttpMethod.Delete,
@@ -153,7 +181,7 @@ public static class HttpClientExtension
 
         request.SetHeadersAndOptions(headers, options);
 
-        return httpClient.SendAsync(request);
+        return await httpClient.SendAsync(request, cancellationToken);
     }
 
 
@@ -162,13 +190,16 @@ public static class HttpClientExtension
     /// <summary>
     /// Post表单数据到指定url
     /// </summary>
+    /// <param name="httpClient">HTTP 客户端</param>
     /// <param name="url"></param>
     /// <param name="formItems">Post表单内容</param>
     /// <param name="headers">自定义Header集合</param>
+    /// <param name="options">自定义请求选项</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static Task<HttpResponseMessage> PostFormAsync(this HttpClient httpClient, string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
+    public static async Task<HttpResponseMessage> PostFormAsync(this HttpClient httpClient, string url, Dictionary<string, string> formItems, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default, CancellationToken cancellationToken = default)
     {
-        HttpRequestMessage request = new()
+        using HttpRequestMessage request = new()
         {
             RequestUri = new Uri(url),
             Method = HttpMethod.Post,
@@ -183,7 +214,7 @@ public static class HttpClientExtension
 
         request.SetHeadersAndOptions(headers, options);
 
-        return httpClient.SendAsync(request);
+        return await httpClient.SendAsync(request, cancellationToken);
     }
 
 
@@ -192,13 +223,16 @@ public static class HttpClientExtension
     /// <summary>
     /// Post文件和数据到指定url
     /// </summary>
+    /// <param name="httpClient">HTTP 客户端</param>
     /// <param name="url"></param>
     /// <param name="formItems">Post表单内容</param>
     /// <param name="headers">自定义Header集合</param>
+    /// <param name="options">自定义请求选项</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public static Task<HttpResponseMessage> PostFormDataAsync(this HttpClient httpClient, string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default)
+    public static async Task<HttpResponseMessage> PostFormDataAsync(this HttpClient httpClient, string url, List<PostFormDataItem> formItems, Dictionary<string, string>? headers = default, Dictionary<string, object>? options = default, CancellationToken cancellationToken = default)
     {
-        HttpRequestMessage request = new()
+        using HttpRequestMessage request = new()
         {
             RequestUri = new Uri(url),
             Method = HttpMethod.Post,
@@ -206,13 +240,18 @@ public static class HttpClientExtension
             VersionPolicy = httpClient.DefaultVersionPolicy
         };
 
-        string boundary = "----" + DateTime.UtcNow.Ticks.ToString("x");
-
-        MultipartFormDataContent content = new(boundary);
         foreach (var item in formItems)
         {
             ValidatePostFormDataItem(item);
+        }
 
+        string boundary = "----" + Guid.NewGuid().ToString("N");
+
+        MultipartFormDataContent content = new(boundary);
+        request.Content = content;
+
+        foreach (var item in formItems)
+        {
             if (item.IsFile)
             {
                 //上传文件
@@ -225,11 +264,9 @@ public static class HttpClientExtension
             }
         }
 
-        request.Content = content;
-
         request.SetHeadersAndOptions(headers, options);
 
-        return httpClient.SendAsync(request);
+        return await httpClient.SendAsync(request, cancellationToken);
     }
 
 
@@ -283,11 +320,16 @@ public static class HttpClientExtension
         {
             get
             {
-                if (FileContent == null || FileContent.Length == 0)
+                if (FileContent == null)
+                {
                     return false;
+                }
 
-                if (FileContent != null && FileContent.Length > 0 && string.IsNullOrWhiteSpace(FileName))
+                if (string.IsNullOrWhiteSpace(FileName))
+                {
                     throw new Exception("上传文件时 FileName 属性值不能为空");
+                }
+
                 return true;
             }
         }
@@ -302,7 +344,7 @@ public static class HttpClientExtension
 
 
         /// <summary>
-        /// 上传的文件内容
+        /// 上传的文件内容，发送完成后由本方法释放
         /// </summary>
         public Stream? FileContent { set; get; }
 

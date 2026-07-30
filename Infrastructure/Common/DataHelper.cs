@@ -11,6 +11,9 @@ using NPOI.XSSF.UserModel;
 
 namespace Common;
 
+/// <summary>
+/// 提供DataTable、实体集合和Excel之间的数据转换能力
+/// </summary>
 public partial class DataHelper
 {
 
@@ -20,7 +23,7 @@ public partial class DataHelper
     /// <typeparam name="T"></typeparam>
     /// <param name="table"></param>
     /// <returns></returns>
-    public static List<T> DataTableToList<T>(DataTable table) where T : class
+    public static List<T> DataTableToList<T>(DataTable table) where T : class, new()
     {
         if (table.Rows.Count == 0)
         {
@@ -60,7 +63,7 @@ public partial class DataHelper
     /// <typeparam name="T"></typeparam>
     /// <param name="table"></param>
     /// <returns></returns>
-    public static List<T> DataTableToListDisplayName<T>(DataTable table) where T : class
+    public static List<T> DataTableToListDisplayName<T>(DataTable table) where T : class, new()
     {
         if (table.Rows.Count == 0)
         {
@@ -257,141 +260,85 @@ public partial class DataHelper
     /// <returns>返回datatable</returns>
     public static DataTable? ExcelToDataTable(string filePath, bool isHaveColumnName)
     {
-        DataTable? dataTable = null;
+        string extension = Path.GetExtension(filePath);
 
-        IWorkbook? workbook = null;
-
-        try
+        using var fs = File.OpenRead(filePath);
+        using IWorkbook workbook = extension.ToLowerInvariant() switch
         {
-            using (var fs = File.OpenRead(filePath))
-            {
-                ISheet? sheet = null;
+            ".xlsx" => new XSSFWorkbook(fs),
+            ".xls" => new HSSFWorkbook(fs),
+            _ => throw new ArgumentException("文件格式不支持，仅支持.xls和.xlsx格式", nameof(filePath))
+        };
 
-                if (filePath.IndexOf(".xlsx") > 0)
-                {
-                    workbook = new XSSFWorkbook(fs);
-                }
-                else if (filePath.IndexOf(".xls") > 0)
-                {
-                    workbook = new HSSFWorkbook(fs);
-                }
-                else
-                {
-                    throw new ArgumentException("文件格式不支持，仅支持.xls和.xlsx格式");
-                }
-
-                if (workbook != null)
-                {
-                    int startRow = 0;
-
-                    sheet = workbook.GetSheetAt(0);//读取第一个sheet，当然也可以循环读取每个sheet
-                    dataTable = new();
-                    if (sheet != null)
-                    {
-                        int rowCount = sheet.LastRowNum;//总行数
-                        if (rowCount > 0)
-                        {
-                            IRow firstRow = sheet.GetRow(0);//第一行
-                            int cellCount = GetEffectiveColumnCount(firstRow);//列数
-
-                            DataColumn column;
-                            ICell cell;
-
-                            //构建datatable的列
-                            if (isHaveColumnName)
-                            {
-                                startRow = 1;//如果第一行是列名，则从第二行开始读取
-                                for (int i = firstRow.FirstCellNum; i < cellCount; ++i)
-                                {
-                                    cell = firstRow.GetCell(i);
-                                    if (cell != null)
-                                    {
-                                        if (!string.IsNullOrWhiteSpace(cell.StringCellValue))
-                                        {
-                                            column = new(cell.StringCellValue.Trim());
-                                            dataTable.Columns.Add(column);
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                for (int i = firstRow.FirstCellNum; i < cellCount; ++i)
-                                {
-                                    column = new($"column{i + 1}");
-                                    dataTable.Columns.Add(column);
-                                }
-                            }
-
-                            //填充行
-                            for (int i = startRow; i <= rowCount; ++i)
-                            {
-                                IRow row = sheet.GetRow(i);
-                                if (row == null || row.Cells.Count == 0) continue;
-
-                                //跳过空行(所有列都为空的 视为空行)
-                                if (!row.Cells.Any(it => IsCellHasValue(it))) continue;
-
-                                DataRow dataRow = dataTable.NewRow();
-                                int dataColumnIndex = 0;
-                                for (int j = row.FirstCellNum; j < cellCount; ++j)
-                                {
-                                    cell = row.GetCell(j);
-                                    if (cell == null)
-                                    {
-                                        dataRow[dataColumnIndex] = "";
-                                    }
-                                    else
-                                    {
-                                        //CellType(Unknown = -1,Numeric = 0,String = 1,Formula = 2,Blank = 3,Boolean = 4,Error = 5,)
-                                        switch (cell.CellType)
-                                        {
-                                            case CellType.Boolean:
-                                                {
-                                                    dataRow[dataColumnIndex] = cell.BooleanCellValue;
-                                                    break;
-                                                }
-
-                                            case CellType.Blank:
-                                                dataRow[dataColumnIndex] = "";
-                                                break;
-                                            case CellType.Numeric:
-                                                //NPOI中数字和日期都是NUMERIC类型的，这里对其进行判断是否是日期类型
-                                                if (DateUtil.IsCellDateFormatted(cell))//日期类型
-                                                {
-                                                    dataRow[dataColumnIndex] = cell.DateCellValue;
-                                                }
-                                                else//其他数字类型
-                                                {
-                                                    dataRow[dataColumnIndex] = cell.NumericCellValue;
-                                                }
-                                                break;
-                                            case CellType.Formula:
-                                                dataRow[dataColumnIndex] = GetFormulaCellValue(cell);
-                                                break;
-                                            case CellType.String:
-                                                dataRow[dataColumnIndex] = cell.StringCellValue;
-                                                break;
-                                        }
-                                    }
-                                    dataColumnIndex++;
-                                }
-                                dataTable.Rows.Add(dataRow);
-                            }
-                        }
-                    }
-                }
-            }
-            return dataTable;
-        }
-        catch (Exception)
+        if (workbook.NumberOfSheets == 0)
         {
             return null;
         }
-        finally
+
+        ISheet sheet = workbook.GetSheetAt(0);
+        IRow? firstRow = sheet.GetRow(0);
+
+        if (firstRow == null)
         {
-            workbook?.Dispose();
+            return new DataTable();
         }
+
+        int cellCount = GetEffectiveColumnCount(firstRow);
+        DataTable dataTable = new();
+        List<int> sourceColumnIndexes = [];
+        DataFormatter formatter = new(CultureInfo.CurrentCulture);
+
+        for (int cellIndex = 0; cellIndex < cellCount; cellIndex++)
+        {
+            string columnName;
+
+            if (isHaveColumnName)
+            {
+                var headerCell = firstRow.GetCell(cellIndex);
+                columnName = headerCell == null ? string.Empty : formatter.FormatCellValue(headerCell).Trim();
+
+                if (string.IsNullOrWhiteSpace(columnName))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                columnName = $"column{cellIndex + 1}";
+            }
+
+            if (dataTable.Columns.Contains(columnName))
+            {
+                throw new InvalidDataException($"Excel表头存在重复列：{columnName}");
+            }
+
+            dataTable.Columns.Add(new DataColumn(columnName, typeof(object)));
+            sourceColumnIndexes.Add(cellIndex);
+        }
+
+        int startRow = isHaveColumnName ? 1 : 0;
+
+        for (int rowIndex = startRow; rowIndex <= sheet.LastRowNum; rowIndex++)
+        {
+            IRow? row = sheet.GetRow(rowIndex);
+
+            if (row == null || !sourceColumnIndexes.Any(t => IsCellHasValue(row.GetCell(t))))
+            {
+                continue;
+            }
+
+            DataRow dataRow = dataTable.NewRow();
+
+            for (int dataColumnIndex = 0; dataColumnIndex < sourceColumnIndexes.Count; dataColumnIndex++)
+            {
+                var cell = row.GetCell(sourceColumnIndexes[dataColumnIndex]);
+                dataRow[dataColumnIndex] = GetCellValue(cell);
+            }
+
+            dataTable.Rows.Add(dataRow);
+        }
+
+        return dataTable;
 
         static int GetEffectiveColumnCount(IRow row)
         {
@@ -409,14 +356,39 @@ public partial class DataHelper
         }
 
         //判断单元格是否包含有效值
-        static bool IsCellHasValue(ICell cell)
+        static bool IsCellHasValue(ICell? cell)
         {
+            if (cell == null)
+            {
+                return false;
+            }
+
             return cell.CellType switch
             {
                 CellType.Blank => false,
                 CellType.String => !string.IsNullOrWhiteSpace(cell.StringCellValue),
                 CellType.Formula => !string.IsNullOrWhiteSpace(cell.ToString()),
                 _ => true
+            };
+        }
+
+
+        static object GetCellValue(ICell? cell)
+        {
+            if (cell == null)
+            {
+                return string.Empty;
+            }
+
+            return cell.CellType switch
+            {
+                CellType.Boolean => cell.BooleanCellValue,
+                CellType.Blank => string.Empty,
+                CellType.Numeric => DateUtil.IsCellDateFormatted(cell) ? cell.DateCellValue.HasValue ? cell.DateCellValue.Value : string.Empty : cell.NumericCellValue,
+                CellType.Formula => GetFormulaCellValue(cell),
+                CellType.String => cell.StringCellValue,
+                CellType.Error => string.Empty,
+                _ => cell.ToString() ?? string.Empty
             };
         }
 
@@ -454,7 +426,7 @@ public partial class DataHelper
         IRow row1 = sheet1.CreateRow(0);
 
         T model = new();
-        var dict = PropertyHelper.GetPropertiesDisplayName(model);
+        var dict = PropertyHelper.GetProperties(model);
 
         int x = 0;
         foreach (var item in dict)
@@ -489,7 +461,7 @@ public partial class DataHelper
     /// <summary>
     /// 将 List 数据转换为 Excel 文件流(使用DisplayName)
     /// </summary>
-    public static byte[] ListToExcelDispalyName<T>(List<T> list) where T : notnull, new()
+    public static byte[] ListToExcelDisplayName<T>(List<T> list) where T : notnull, new()
     {
         //创建Excel文件的对象
         using XSSFWorkbook book = new();
@@ -566,6 +538,11 @@ public partial class DataHelper
 
                     foreach (string field in fieldList)
                     {
+                        if (propertyValue == null)
+                        {
+                            break;
+                        }
+
                         var property = propertyValue?.GetType().GetProperties()
                       .FirstOrDefault(p => p.Name.Equals(field, StringComparison.OrdinalIgnoreCase));
 
@@ -609,33 +586,45 @@ public partial class DataHelper
     }
 
 
+    /// <summary>
+    /// 表示Excel导出模板
+    /// </summary>
     public class ExcelTemplate
     {
 
         /// <summary>
         /// 列的集合
         /// </summary>
-        public List<ColumnProperty> ColumnList { get; set; }
+        public List<ColumnProperty> ColumnList { get; set; } = [];
 
 
+        /// <summary>
+        /// 表示Excel模板列
+        /// </summary>
         public class ColumnProperty
         {
 
             /// <summary>
             /// 标题
             /// </summary>
-            public string Title { get; set; }
+            public string Title { get; set; } = string.Empty;
 
 
             /// <summary>
             /// 字段名
             /// </summary>
-            public string Field { get; set; }
+            public string Field { get; set; } = string.Empty;
 
         }
     }
 
 
+    /// <summary>
+    /// 将属性值写入Excel单元格
+    /// </summary>
+    /// <param name="dataRow">目标数据行</param>
+    /// <param name="cellIndex">目标单元格索引</param>
+    /// <param name="propertyValue">待写入的属性值</param>
     private static void ToExcelSetValue(IRow dataRow, int cellIndex, object? propertyValue)
     {
         if (propertyValue != null)
@@ -656,15 +645,44 @@ public partial class DataHelper
             }
             else if (propertyValue.GetType() == typeof(long))
             {
-                cell.SetCellValue((long)propertyValue);
+                long value = (long)propertyValue;
+
+                if (value is >= -999999999999999 and <= 999999999999999)
+                {
+                    cell.SetCellValue((double)value);
+                }
+                else
+                {
+                    cell.SetCellValue(value.ToString(CultureInfo.InvariantCulture));
+                }
             }
             else if (propertyValue.GetType() == typeof(ulong))
             {
-                cell.SetCellValue((ulong)propertyValue);
+                ulong value = (ulong)propertyValue;
+
+                if (value <= 999999999999999)
+                {
+                    cell.SetCellValue((double)value);
+                }
+                else
+                {
+                    cell.SetCellValue(value.ToString(CultureInfo.InvariantCulture));
+                }
             }
             else if (propertyValue.GetType() == typeof(decimal))
             {
-                cell.SetCellValue((double)(decimal)propertyValue);
+                decimal value = (decimal)propertyValue;
+                string decimalText = value.ToString(CultureInfo.InvariantCulture);
+                string significantDigits = decimalText.TrimStart('-').Replace(".", "").TrimStart('0').TrimEnd('0');
+
+                if (significantDigits.Length <= 15)
+                {
+                    cell.SetCellValue((double)value);
+                }
+                else
+                {
+                    cell.SetCellValue(decimalText);
+                }
             }
             else if (propertyValue.GetType() == typeof(float))
             {
@@ -672,21 +690,20 @@ public partial class DataHelper
             }
             else if (propertyValue.GetType() == typeof(DateTimeOffset))
             {
-                var tempV = propertyValue as DateTimeOffset?;
-
-                DateTimeOffset chinaTime = TimeZoneInfo.ConvertTime(tempV!.Value.ToUniversalTime(), TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai"));
-
-                dataRow.CreateCell(cellIndex).SetCellValue(chinaTime.ToString("yyyy/MM/dd HH:mm:ss"));
+                DateTimeOffset chinaTime = TimeZoneInfo.ConvertTime(((DateTimeOffset)propertyValue).ToUniversalTime(), TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai"));
+                cell.SetCellValue(chinaTime.ToString("yyyy/MM/dd HH:mm:ss"));
             }
             else if (propertyValue.GetType() == typeof(DateTime))
             {
-                var tempV = propertyValue as DateTime?;
-
-                dataRow.CreateCell(cellIndex).SetCellValue(tempV!.Value.ToString("yyyy/MM/dd HH:mm:ss"));
+                cell.SetCellValue(((DateTime)propertyValue).ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture));
+            }
+            else if (propertyValue.GetType() == typeof(bool))
+            {
+                cell.SetCellValue((bool)propertyValue);
             }
             else
             {
-                dataRow.CreateCell(cellIndex).SetCellValue(propertyValue.ToString());
+                cell.SetCellValue(propertyValue.ToString());
             }
         }
         else

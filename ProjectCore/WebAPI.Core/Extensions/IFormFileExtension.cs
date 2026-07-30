@@ -1,6 +1,10 @@
 using Common;
 
 namespace WebAPI.Core.Extensions;
+
+/// <summary>
+/// 提供上传文件的数据转换扩展能力
+/// </summary>
 public static class IFormFileExtension
 {
 
@@ -14,7 +18,7 @@ public static class IFormFileExtension
     /// <param name="file"></param>
     /// <returns></returns>
     /// <exception cref="CustomException"></exception>
-    public static List<T> ExcelToList<T>(this IFormFile file) where T : class
+    public static List<T> ExcelToList<T>(this IFormFile file) where T : class, new()
     {
         var fileExtension = Path.GetExtension(file.FileName)?.ToLower();
 
@@ -37,17 +41,24 @@ public static class IFormFileExtension
                     fs.Flush();
                 }
 
-                var dataTable = DataHelper.ExcelToDataTable(fullPath, true);
-
-                if (dataTable != null)
+                try
                 {
-                    var dataList = DataHelper.DataTableToListDisplayName<T>(dataTable);
+                    var dataTable = DataHelper.ExcelToDataTable(fullPath, true);
 
-                    return dataList;
+                    if (dataTable == null)
+                    {
+                        throw new CustomException($"文件内容解析失败");
+                    }
+
+                    return DataHelper.DataTableToListDisplayName<T>(dataTable);
                 }
-                else
+                catch (CustomException)
                 {
-                    throw new CustomException($"文件内容解析失败");
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new CustomException($"文件内容解析失败", ex);
                 }
             }
             finally

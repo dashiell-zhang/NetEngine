@@ -47,6 +47,26 @@ public class Program
 
         builder.Services.AddPooledDbContextFactory<DatabaseContext>(options => { }, maxPoolSize);
 
+        var readConnectionString = builder.Configuration.GetConnectionString("dbReadConnection");
+
+        if (string.IsNullOrWhiteSpace(readConnectionString))
+        {
+            readConnectionString = connectionString;
+        }
+
+        NpgsqlDataSourceBuilder readDataSourceBuilder = new(readConnectionString);
+
+        NpgsqlConnectionStringBuilder readConnectionStringBuilder = new(readConnectionString);
+        int readMaxPoolSize = readConnectionStringBuilder.MaxPoolSize;
+
+        builder.Services.AddDbContextPool<ReadDatabaseContext>((serviceProvider, options) =>
+        {
+            options.UseNpgsql(readDataSourceBuilder.Build());
+            options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+        }, readMaxPoolSize);
+
+        builder.Services.AddPooledDbContextFactory<ReadDatabaseContext>(options => { }, readMaxPoolSize);
+
 
         builder.AddCommonServices();
 

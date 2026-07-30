@@ -6,8 +6,29 @@ using System.Xml;
 
 namespace Repository;
 
-public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbContext(options)
+/// <summary>
+/// 数据库写入上下文
+/// </summary>
+public class DatabaseContext : DbContext
 {
+
+    /// <summary>
+    /// 创建数据库写入上下文
+    /// </summary>
+    public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
+    {
+
+    }
+
+
+    /// <summary>
+    /// 创建派生数据库上下文
+    /// </summary>
+    protected DatabaseContext(DbContextOptions options) : base(options)
+    {
+
+    }
+
 
     #region 表实体声明
 

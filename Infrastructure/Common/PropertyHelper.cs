@@ -2,8 +2,19 @@ using System.Collections;
 using System.Reflection;
 
 namespace Common;
+
+/// <summary>
+/// 提供对象属性读取、比较、赋值和克隆能力
+/// </summary>
 public class PropertyHelper
 {
+
+    [ThreadStatic]
+    private static Dictionary<object, Dictionary<Type, object>>? cloneMap;
+
+
+    [ThreadStatic]
+    private static int cloneDepth;
 
     /// <summary>  
     /// 反射得到实体类的字段名称和值  
@@ -15,7 +26,7 @@ public class PropertyHelper
     {
         Dictionary<object, object?> ret = [];
 
-        PropertyInfo[] properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        PropertyInfo[] properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(t => t.CanRead && t.GetIndexParameters().Length == 0).ToArray();
 
         foreach (PropertyInfo item in properties)
         {
@@ -48,7 +59,7 @@ public class PropertyHelper
     {
         Dictionary<object, object?> ret = [];
 
-        PropertyInfo[] properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        PropertyInfo[] properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(t => t.CanRead && t.GetIndexParameters().Length == 0).ToArray();
 
         foreach (PropertyInfo item in properties)
         {
@@ -82,7 +93,7 @@ public class PropertyHelper
     {
         var retValue = "";
 
-        var fields = typeof(T).GetProperties();
+        var fields = typeof(T).GetProperties().Where(t => t.CanRead && t.GetIndexParameters().Length == 0).ToArray();
 
         for (int i = 0; i < fields.Length; i++)
         {
@@ -147,49 +158,76 @@ public class PropertyHelper
     /// <param name="right">=号右边</param>
     public static void Assignment<T>(T left, T right) where T : class, new()
     {
-        Type type = left.GetType();
+        ArgumentNullException.ThrowIfNull(left);
+        ArgumentNullException.ThrowIfNull(right);
 
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
+        if (ReferenceEquals(left, right))
         {
+            return;
+        }
 
-            if (left is IDictionary leftDict && right is IDictionary rightDict)
+        bool isRootClone = cloneDepth == 0;
+
+        if (isRootClone)
+        {
+            cloneMap = new(ReferenceEqualityComparer.Instance);
+        }
+
+        cloneDepth++;
+
+        try
+        {
+            RegisterClone(right, left.GetType(), left);
+            Type type = left.GetType();
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
             {
+
+                if (left is not IDictionary leftDict || right is not IDictionary rightDict)
+                {
+                    throw new ArgumentException("左右对象的实际类型必须都是 Dictionary");
+                }
+
                 var keyType = type.GetGenericArguments()[0];
                 var valueType = type.GetGenericArguments()[1];
+                List<DictionaryEntry> clonedEntries = [];
 
                 foreach (DictionaryEntry entry in rightDict)
                 {
                     var clonedKey = Clone(entry.Key, keyType);
                     var clonedValue = Clone(entry.Value!, valueType);
-                    leftDict.Add(clonedKey!, clonedValue);
+                    clonedEntries.Add(new DictionaryEntry(clonedKey!, clonedValue));
                 }
+
+                ReplaceDictionaryContents(leftDict, clonedEntries);
+
             }
-
-        }
-        else if (typeof(IList).IsAssignableFrom(typeof(T)) && typeof(T) != typeof(string))  // 检查T是否为集合类型
-        {
-            if (left is IList leftList && right is IList rightList)
+            else if (!type.IsArray && typeof(IList).IsAssignableFrom(type))  // 检查是否为集合类型
             {
-                var rightEnumerator = rightList.GetEnumerator();
+                if (left is not IList leftList || right is not IList rightList)
+                {
+                    throw new ArgumentException("左右对象的实际类型必须都是集合");
+                }
 
+                var rightEnumerator = rightList.GetEnumerator();
                 var elementType = GetListElementType(rightList.GetType());
+                List<object?> clonedItems = [];
 
                 while (rightEnumerator.MoveNext())
                 {
                     var clonedValue = Clone(rightEnumerator.Current, elementType);
 
-                    leftList.Add(clonedValue);
+                    clonedItems.Add(clonedValue);
                 }
+
+                ReplaceListContents(leftList, clonedItems);
+
             }
-
-        }
-        else
-        {
-            var properties = type.GetProperties();
-
-            foreach (var prop in properties)
+            else
             {
-                if (prop.CanWrite)
+                var properties = type.GetProperties().Where(t => t.CanRead && t.CanWrite && t.GetIndexParameters().Length == 0);
+
+                foreach (var prop in properties)
                 {
                     var value = prop.GetValue(right);
 
@@ -199,10 +237,36 @@ public class PropertyHelper
                 }
             }
         }
+        finally
+        {
+            cloneDepth--;
+
+            if (isRootClone)
+            {
+                cloneMap = null;
+            }
+        }
 
         static object? Clone(object? original, Type type)
         {
             if (original == null) return null;
+
+            if (TryGetClone(original, type, out var existingClone))
+            {
+                return existingClone;
+            }
+
+            Type runtimeType = original.GetType();
+
+            if (type.IsAssignableFrom(runtimeType))
+            {
+                type = runtimeType;
+            }
+
+            if (TryGetClone(original, type, out existingClone))
+            {
+                return existingClone;
+            }
 
             if (type.IsValueType || type == typeof(string) || type == typeof(object))
             {
@@ -212,11 +276,14 @@ public class PropertyHelper
             {
                 var sourceArray = (Array)original;
                 var elementType = type.GetElementType() ?? typeof(object);
-                var clonedArray = Array.CreateInstance(elementType, sourceArray.Length);
+                int[] lengths = Enumerable.Range(0, sourceArray.Rank).Select(sourceArray.GetLength).ToArray();
+                int[] lowerBounds = Enumerable.Range(0, sourceArray.Rank).Select(sourceArray.GetLowerBound).ToArray();
+                var clonedArray = type.IsSZArray ? Array.CreateInstance(elementType, lengths[0]) : Array.CreateInstance(elementType, lengths, lowerBounds);
+                RegisterClone(original, type, clonedArray);
 
-                for (int i = 0; i < sourceArray.Length; i++)
+                foreach (var indices in EnumerateArrayIndices(sourceArray))
                 {
-                    clonedArray.SetValue(Clone(sourceArray.GetValue(i), elementType), i);
+                    clonedArray.SetValue(Clone(sourceArray.GetValue(indices), elementType), indices);
                 }
 
                 return clonedArray;
@@ -229,6 +296,7 @@ public class PropertyHelper
                 }
 
                 var elementType = GetListElementType(type);
+                RegisterClone(original, type, clonedList);
 
                 foreach (var item in sourceList)
                 {
@@ -245,6 +313,7 @@ public class PropertyHelper
             {
                 var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(type);
                 var clonedObject = Activator.CreateInstance(type);
+                RegisterClone(original, type, clonedObject!);
                 cloneMethod.Invoke(null, [clonedObject, original]);
                 return clonedObject!;
             }
@@ -260,7 +329,14 @@ public class PropertyHelper
     /// <param name="obj"></param>
     public static T? Clone<T>(T obj) where T : class, new()
     {
-        Type type = typeof(T);
+        ArgumentNullException.ThrowIfNull(obj);
+
+        Type type = obj.GetType();
+
+        if (type.GetConstructor(Type.EmptyTypes) == null)
+        {
+            throw new NotSupportedException($"类型 {type.FullName} 必须具有公共无参构造函数");
+        }
 
         var clonedObject = Activator.CreateInstance(type);
 
@@ -280,131 +356,173 @@ public class PropertyHelper
     /// <param name="right">=号右边</param>
     public static void AssignmentDifferentType<L, R>(L left, R right) where L : class, new() where R : class, new()
     {
-        Type ltype = left.GetType();
-        Type rtype = right.GetType();
+        ArgumentNullException.ThrowIfNull(left);
+        ArgumentNullException.ThrowIfNull(right);
 
-        if (ltype.IsGenericType && ltype.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
+        if (ReferenceEquals(left, right))
         {
-            if (rtype.IsGenericType && rtype.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
-            {
-                if (left is IDictionary leftDict && right is IDictionary rightDict)
-                {
-                    var lKeyType = ltype.GetGenericArguments()[0];
-                    var rKeyType = rtype.GetGenericArguments()[0];
-
-                    if (lKeyType == rKeyType)
-                    {
-                        var lValueType = ltype.GetGenericArguments()[1];
-                        var rValueType = rtype.GetGenericArguments()[1];
-
-                        foreach (DictionaryEntry entry in rightDict)
-                        {
-                            var clonedKey = Clone(entry.Key, lKeyType, rKeyType);
-
-                            if (entry.Value == null)
-                            {
-                                if (IsNullable(lValueType))
-                                {
-                                    leftDict.Add(clonedKey!, null);
-                                }
-                            }
-                            else
-                            {
-                                var clonedValue = Clone(entry.Value, lValueType, rValueType);
-
-                                if (clonedValue != null)
-                                {
-                                    leftDict.Add(clonedKey!, clonedValue);
-                                }
-                            }
-
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception("左右都必须是 Dictionary 的Key必须是同一个类型");
-                    }
-                }
-            }
-            else
-            {
-                throw new Exception("左右都必须是 Dictionary 类型");
-            }
+            return;
         }
-        else if (typeof(IList).IsAssignableFrom(typeof(L)) && typeof(L) != typeof(string))  // 检查T是否为集合类型
+
+        bool isRootClone = cloneDepth == 0;
+
+        if (isRootClone)
         {
+            cloneMap = new(ReferenceEqualityComparer.Instance);
+        }
 
-            if (typeof(IList).IsAssignableFrom(typeof(R)) && typeof(R) != typeof(string))
+        cloneDepth++;
+
+        try
+        {
+            RegisterClone(right, left.GetType(), left);
+            Type ltype = left.GetType();
+            Type rtype = right.GetType();
+
+            if (ltype.IsGenericType && ltype.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
             {
-                if (left is IList leftList && right is IList rightList)
+                if (rtype.IsGenericType && rtype.GetGenericTypeDefinition() == typeof(Dictionary<,>)) // 检查是否为 Dictionary 类型
                 {
-
-                    var lType = GetListElementType(leftList.GetType());
-                    var rType = GetListElementType(rightList.GetType());
-
-                    var rightEnumerator = rightList.GetEnumerator();
-
-                    while (rightEnumerator.MoveNext())
+                    if (left is IDictionary leftDict && right is IDictionary rightDict)
                     {
-                        if (rightEnumerator.Current == null)
+                        var lKeyType = ltype.GetGenericArguments()[0];
+                        var rKeyType = rtype.GetGenericArguments()[0];
+
+                        if (lKeyType == rKeyType)
                         {
-                            leftList.Add(null);
+                            var lValueType = ltype.GetGenericArguments()[1];
+                            var rValueType = rtype.GetGenericArguments()[1];
+                            List<DictionaryEntry> clonedEntries = [];
+
+                            foreach (DictionaryEntry entry in rightDict)
+                            {
+                                var clonedKey = Clone(entry.Key, lKeyType);
+
+                                if (entry.Value == null)
+                                {
+                                    if (IsNullable(lValueType))
+                                    {
+                                        clonedEntries.Add(new DictionaryEntry(clonedKey!, null));
+                                    }
+                                    else
+                                    {
+                                        throw new ArgumentException($"字典值不能从 null 赋值给 {lValueType.FullName}");
+                                    }
+                                }
+                                else
+                                {
+                                    var clonedValue = Clone(entry.Value, lValueType);
+
+                                    if (clonedValue == null)
+                                    {
+                                        throw new ArgumentException($"字典值不能从 {rValueType.FullName} 赋值给 {lValueType.FullName}");
+                                    }
+
+                                    clonedEntries.Add(new DictionaryEntry(clonedKey!, clonedValue));
+                                }
+
+                            }
+
+                            ReplaceDictionaryContents(leftDict, clonedEntries);
                         }
                         else
                         {
-                            var clonedValue = Clone(rightEnumerator.Current, lType, rType);
+                            throw new Exception("左右都必须是 Dictionary 的Key必须是同一个类型");
+                        }
+                    }
+                }
+                else
+                {
+                    throw new Exception("左右都必须是 Dictionary 类型");
+                }
+            }
+            else if (!ltype.IsArray && typeof(IList).IsAssignableFrom(ltype))  // 检查是否为集合类型
+            {
 
-                            if (clonedValue != null)
+                if (typeof(IList).IsAssignableFrom(rtype))
+                {
+                    if (left is IList leftList && right is IList rightList)
+                    {
+                        var lType = GetListElementType(leftList.GetType());
+                        var rType = GetListElementType(rightList.GetType());
+                        var rightEnumerator = rightList.GetEnumerator();
+                        List<object?> clonedItems = [];
+
+                        while (rightEnumerator.MoveNext())
+                        {
+                            if (rightEnumerator.Current == null)
                             {
-                                leftList.Add(clonedValue);
+                                if (!IsNullable(lType))
+                                {
+                                    throw new ArgumentException($"集合元素不能从 null 赋值给 {lType.FullName}");
+                                }
+
+                                clonedItems.Add(null);
+                            }
+                            else
+                            {
+                                var clonedValue = Clone(rightEnumerator.Current, lType);
+
+                                if (clonedValue == null)
+                                {
+                                    throw new ArgumentException($"集合元素不能从 {rType.FullName} 赋值给 {lType.FullName}");
+                                }
+
+                                clonedItems.Add(clonedValue);
                             }
                         }
 
-
-
+                        ReplaceListContents(leftList, clonedItems);
                     }
+                }
+                else
+                {
+                    throw new Exception("左右都必须是 集合 类型");
                 }
             }
             else
             {
-                throw new Exception("左右都必须是 集合 类型");
-            }
-        }
-        else
-        {
-            var lProperties = ltype.GetProperties().Where(prop => prop.CanWrite);
-            var rProperties = rtype.GetProperties().Where(prop => prop.CanRead);
+                var lProperties = ltype.GetProperties().Where(prop => prop.CanWrite && prop.GetIndexParameters().Length == 0);
+                var rProperties = rtype.GetProperties().Where(prop => prop.CanRead && prop.GetIndexParameters().Length == 0);
 
-            foreach (var lProp in lProperties)
-            {
-                var rProp = rProperties.FirstOrDefault(p => p.Name == lProp.Name);
-
-                if (rProp != null)
+                foreach (var lProp in lProperties)
                 {
-                    object? rValue = rProp.GetValue(right);
+                    var rProp = rProperties.FirstOrDefault(p => p.Name == lProp.Name);
 
-                    Type lType = lProp.PropertyType;
-
-                    if (rValue != null)
+                    if (rProp != null)
                     {
-                        Type rType = rProp.PropertyType;
+                        object? rValue = rProp.GetValue(right);
 
-                        var clonedValue = Clone(rValue, lType, rType);
+                        Type lType = lProp.PropertyType;
 
-                        if (clonedValue != null || IsNullable(lType))
+                        if (rValue != null)
                         {
-                            lProp.SetValue(left, clonedValue);
-                        }
-                    }
-                    else
-                    {
-                        if (IsNullable(lType))
-                        {
-                            lProp.SetValue(left, null);
-                        }
+                            var clonedValue = Clone(rValue, lType);
 
+                            if (clonedValue != null)
+                            {
+                                lProp.SetValue(left, clonedValue);
+                            }
+                        }
+                        else
+                        {
+                            if (IsNullable(lType))
+                            {
+                                lProp.SetValue(left, null);
+                            }
+
+                        }
                     }
                 }
+            }
+        }
+        finally
+        {
+            cloneDepth--;
+
+            if (isRootClone)
+            {
+                cloneMap = null;
             }
         }
 
@@ -425,70 +543,319 @@ public class PropertyHelper
             return isNullable;
         }
 
-        static object? Clone(object original, Type lType, Type rType)
+        static object? Clone(object original, Type targetType)
         {
-            if (lType.IsValueType || lType == typeof(string) || lType == typeof(object) || rType.IsValueType || rType == typeof(string) || rType == typeof(object))
+            if (TryGetClone(original, targetType, out var existingClone))
             {
-                if (lType == rType)
-                {
-                    return original;
-                }
-
-                return lType.IsAssignableFrom(rType) ? original : null;
+                return existingClone;
             }
 
-            if (lType.IsArray && rType.IsArray && original is Array sourceArray)
-            {
-                var lElementType = lType.GetElementType() ?? typeof(object);
-                var rElementType = rType.GetElementType() ?? typeof(object);
-                var clonedArray = Array.CreateInstance(lElementType, sourceArray.Length);
+            Type sourceType = original.GetType();
+            Type effectiveTargetType = targetType;
 
-                for (int i = 0; i < sourceArray.Length; i++)
+            if (!targetType.IsValueType && targetType.IsAssignableFrom(sourceType))
+            {
+                effectiveTargetType = sourceType;
+            }
+
+            if (TryGetClone(original, effectiveTargetType, out existingClone))
+            {
+                return existingClone;
+            }
+
+            if (effectiveTargetType.IsValueType || effectiveTargetType == typeof(string) || sourceType.IsValueType || sourceType == typeof(string))
+            {
+                return effectiveTargetType.IsAssignableFrom(sourceType) ? original : null;
+            }
+
+            if (effectiveTargetType.IsArray && sourceType.IsArray && original is Array sourceArray)
+            {
+                if (effectiveTargetType.GetArrayRank() != sourceType.GetArrayRank() || sourceArray.Rank != sourceType.GetArrayRank())
                 {
-                    var item = sourceArray.GetValue(i);
-                    clonedArray.SetValue(item == null ? null : Clone(item, lElementType, rElementType), i);
+                    throw new ArgumentException($"数组维度不一致，无法从 {sourceType.FullName} 赋值给 {effectiveTargetType.FullName}");
+                }
+
+                var targetElementType = effectiveTargetType.GetElementType() ?? typeof(object);
+                int[] lengths = Enumerable.Range(0, sourceArray.Rank).Select(sourceArray.GetLength).ToArray();
+                int[] lowerBounds = Enumerable.Range(0, sourceArray.Rank).Select(sourceArray.GetLowerBound).ToArray();
+                var clonedArray = effectiveTargetType.IsSZArray ? Array.CreateInstance(targetElementType, lengths[0]) : Array.CreateInstance(targetElementType, lengths, lowerBounds);
+                RegisterClone(original, effectiveTargetType, clonedArray);
+
+                foreach (var indices in EnumerateArrayIndices(sourceArray))
+                {
+                    var item = sourceArray.GetValue(indices);
+                    object? clonedItem;
+
+                    if (item == null)
+                    {
+                        if (!IsNullable(targetElementType))
+                        {
+                            throw new ArgumentException($"数组元素不能从 null 赋值给 {targetElementType.FullName}");
+                        }
+
+                        clonedItem = null;
+                    }
+                    else
+                    {
+                        clonedItem = Clone(item, targetElementType);
+
+                        if (clonedItem == null)
+                        {
+                            throw new ArgumentException($"数组元素不能从 {item.GetType().FullName} 赋值给 {targetElementType.FullName}");
+                        }
+                    }
+
+                    clonedArray.SetValue(clonedItem, indices);
                 }
 
                 return clonedArray;
             }
 
-            if (typeof(IList).IsAssignableFrom(lType) && typeof(IList).IsAssignableFrom(rType))
+            if (typeof(IList).IsAssignableFrom(effectiveTargetType) && typeof(IList).IsAssignableFrom(sourceType))
             {
-                if (lType.IsInterface || lType.IsAbstract || lType.GetConstructor(Type.EmptyTypes) == null || Activator.CreateInstance(lType) is not IList clonedList || original is not IList sourceList)
+                if (effectiveTargetType.IsInterface || effectiveTargetType.IsAbstract || effectiveTargetType.GetConstructor(Type.EmptyTypes) == null || Activator.CreateInstance(effectiveTargetType) is not IList clonedList || original is not IList sourceList)
                 {
-                    return lType.IsAssignableFrom(rType) ? original : null;
+                    return effectiveTargetType.IsAssignableFrom(sourceType) ? original : null;
                 }
 
-                var lElementType = GetListElementType(lType);
-                var rElementType = GetListElementType(rType);
+                var targetElementType = GetListElementType(effectiveTargetType);
+                RegisterClone(original, effectiveTargetType, clonedList);
 
                 foreach (var item in sourceList)
                 {
-                    clonedList.Add(item == null ? null : Clone(item, lElementType, rElementType));
+                    if (item == null)
+                    {
+                        if (!IsNullable(targetElementType))
+                        {
+                            throw new ArgumentException($"集合元素不能从 null 赋值给 {targetElementType.FullName}");
+                        }
+
+                        clonedList.Add(null);
+                    }
+                    else
+                    {
+                        var clonedItem = Clone(item, targetElementType);
+
+                        if (clonedItem == null)
+                        {
+                            throw new ArgumentException($"集合元素不能从 {item.GetType().FullName} 赋值给 {targetElementType.FullName}");
+                        }
+
+                        clonedList.Add(clonedItem);
+                    }
                 }
 
                 return clonedList;
             }
 
-            if (lType.IsInterface || lType.IsAbstract || lType.GetConstructor(Type.EmptyTypes) == null)
+            if (effectiveTargetType.IsInterface || effectiveTargetType.IsAbstract || effectiveTargetType.GetConstructor(Type.EmptyTypes) == null)
             {
-                return lType.IsAssignableFrom(rType) ? original : null;
+                return effectiveTargetType.IsAssignableFrom(sourceType) ? original : null;
             }
 
-            if (lType == rType)
+            if (effectiveTargetType == sourceType)
             {
 
-                var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(lType);
-                var clonedObject = Activator.CreateInstance(lType);
+                var cloneMethod = typeof(PropertyHelper).GetMethod("Assignment")!.MakeGenericMethod(effectiveTargetType);
+                var clonedObject = Activator.CreateInstance(effectiveTargetType);
+                RegisterClone(original, effectiveTargetType, clonedObject!);
                 cloneMethod.Invoke(null, [clonedObject, original]);
                 return clonedObject;
             }
             else
             {
-                var cloneMethod = typeof(PropertyHelper).GetMethod("AssignmentDifferentType")!.MakeGenericMethod(lType, rType);
-                var clonedObject = Activator.CreateInstance(lType);
+                var cloneMethod = typeof(PropertyHelper).GetMethod("AssignmentDifferentType")!.MakeGenericMethod(effectiveTargetType, sourceType);
+                var clonedObject = Activator.CreateInstance(effectiveTargetType);
+                RegisterClone(original, effectiveTargetType, clonedObject!);
                 cloneMethod.Invoke(null, [clonedObject, original]);
                 return clonedObject;
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// 获取源对象指定目标类型或兼容类型的克隆实例
+    /// </summary>
+    /// <param name="source">源对象</param>
+    /// <param name="targetType">目标类型</param>
+    /// <param name="clone">克隆实例</param>
+    /// <returns>是否存在对应克隆实例</returns>
+    private static bool TryGetClone(object source, Type targetType, out object clone)
+    {
+        if (cloneMap != null && cloneMap.TryGetValue(source, out var targetClones) && targetClones.TryGetValue(targetType, out var existingClone))
+        {
+            clone = existingClone;
+            return true;
+        }
+
+        if (cloneMap != null && cloneMap.TryGetValue(source, out targetClones))
+        {
+            var compatibleClone = targetClones.Values.FirstOrDefault(targetType.IsInstanceOfType);
+
+            if (compatibleClone != null)
+            {
+                targetClones[targetType] = compatibleClone;
+                clone = compatibleClone;
+                return true;
+            }
+        }
+
+        clone = null!;
+        return false;
+    }
+
+
+    /// <summary>
+    /// 记录源对象指定目标类型的克隆实例
+    /// </summary>
+    /// <param name="source">源对象</param>
+    /// <param name="targetType">目标类型</param>
+    /// <param name="clone">克隆实例</param>
+    private static void RegisterClone(object source, Type targetType, object clone)
+    {
+        if (!cloneMap!.TryGetValue(source, out var targetClones))
+        {
+            targetClones = [];
+            cloneMap.Add(source, targetClones);
+        }
+
+        targetClones[targetType] = clone;
+    }
+
+
+    /// <summary>
+    /// 替换字典内容并在失败时恢复原数据
+    /// </summary>
+    /// <param name="target">目标字典</param>
+    /// <param name="entries">新字典条目</param>
+    private static void ReplaceDictionaryContents(IDictionary target, IReadOnlyCollection<DictionaryEntry> entries)
+    {
+        List<DictionaryEntry> originalEntries = [];
+
+        foreach (DictionaryEntry entry in target)
+        {
+            originalEntries.Add(entry);
+        }
+
+        try
+        {
+            target.Clear();
+
+            foreach (DictionaryEntry entry in entries)
+            {
+                target.Add(entry.Key, entry.Value);
+            }
+        }
+        catch (Exception replaceException)
+        {
+            try
+            {
+                RestoreDictionaryContents(target, originalEntries);
+            }
+            catch (Exception restoreException)
+            {
+                throw new AggregateException("字典内容替换失败，且无法恢复原数据", replaceException, restoreException);
+            }
+
+            throw;
+        }
+
+        static void RestoreDictionaryContents(IDictionary target, IReadOnlyCollection<DictionaryEntry> entries)
+        {
+            target.Clear();
+
+            foreach (DictionaryEntry entry in entries)
+            {
+                target.Add(entry.Key, entry.Value);
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// 替换列表内容并在失败时恢复原数据
+    /// </summary>
+    /// <param name="target">目标列表</param>
+    /// <param name="items">新列表元素</param>
+    private static void ReplaceListContents(IList target, IReadOnlyCollection<object?> items)
+    {
+        List<object?> originalItems = [];
+
+        foreach (var item in target)
+        {
+            originalItems.Add(item);
+        }
+
+        try
+        {
+            target.Clear();
+
+            foreach (var item in items)
+            {
+                target.Add(item);
+            }
+        }
+        catch (Exception replaceException)
+        {
+            try
+            {
+                RestoreListContents(target, originalItems);
+            }
+            catch (Exception restoreException)
+            {
+                throw new AggregateException("列表内容替换失败，且无法恢复原数据", replaceException, restoreException);
+            }
+
+            throw;
+        }
+
+        static void RestoreListContents(IList target, IReadOnlyCollection<object?> items)
+        {
+            target.Clear();
+
+            foreach (var item in items)
+            {
+                target.Add(item);
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// 枚举数组中的全部索引组合
+    /// </summary>
+    /// <param name="array">数组</param>
+    /// <returns>索引组合</returns>
+    private static IEnumerable<int[]> EnumerateArrayIndices(Array array)
+    {
+        int[] indices = new int[array.Rank];
+
+        foreach (var item in EnumerateDimension(0))
+        {
+            yield return item;
+        }
+
+        IEnumerable<int[]> EnumerateDimension(int dimension)
+        {
+            int lowerBound = array.GetLowerBound(dimension);
+            int upperBound = array.GetUpperBound(dimension);
+
+            for (int index = lowerBound; index <= upperBound; index++)
+            {
+                indices[dimension] = index;
+
+                if (dimension == array.Rank - 1)
+                {
+                    yield return (int[])indices.Clone();
+                }
+                else
+                {
+                    foreach (var item in EnumerateDimension(dimension + 1))
+                    {
+                        yield return item;
+                    }
+                }
             }
         }
     }

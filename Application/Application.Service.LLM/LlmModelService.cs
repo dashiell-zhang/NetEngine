@@ -2,6 +2,7 @@ using Application.Interface;
 using Application.Model.LLM.LlmModel;
 using Application.Model.Shared;
 using Common;
+using DistributedLock;
 using IdentifierGenerator;
 using LLM;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,7 @@ namespace Application.Service.LLM;
 /// LLM 模型配置服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LlmModelService(DatabaseContext db, IdService idService, IUserContext userContext)
+public class LlmModelService(DatabaseContext db, IdService idService, IUserContext userContext, IDistributedLock distributedLock)
 {
 
     /// <summary>
@@ -89,6 +90,12 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
 
         var apiKey = createLlmModel.ApiKey.Trim();
 
+        using var lockHandle = await distributedLock.TryLockAsync("llm:model:name:" + name);
+        if (lockHandle == null)
+        {
+            throw new CustomException("当前模型名称正在处理中，请稍后重试");
+        }
+
         var isHave = await db.LlmModel.Where(t => t.Name == name && t.DeleteTime == null).AnyAsync();
         if (isHave)
         {
@@ -121,6 +128,24 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
     public async Task<bool> UpdateLlmModelAsync(long id, EditLlmModelDto updateLlmModel)
     {
 
+        var name = updateLlmModel.Name.Trim();
+        var modelId = updateLlmModel.ModelId.Trim();
+        var endpoint = updateLlmModel.Endpoint.Trim();
+
+        ValidateProtocolType(updateLlmModel.ProtocolType);
+
+        using var lockHandle = await distributedLock.TryLockAsync("llm:model:name:" + name);
+        if (lockHandle == null)
+        {
+            throw new CustomException("当前模型名称正在处理中，请稍后重试");
+        }
+
+        using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + id);
+        if (modelLockHandle == null)
+        {
+            throw new CustomException("当前模型正在处理中，请稍后重试");
+        }
+
         var llmModel = await db.LlmModel.Where(t => t.Id == id && t.DeleteTime == null).FirstOrDefaultAsync();
 
         if (llmModel == null)
@@ -128,16 +153,19 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
             throw new CustomException("无效的 id");
         }
 
-        var name = updateLlmModel.Name.Trim();
-        var modelId = updateLlmModel.ModelId.Trim();
-        var endpoint = updateLlmModel.Endpoint.Trim();
-
-        ValidateProtocolType(updateLlmModel.ProtocolType);
-
         var isHave = await db.LlmModel.Where(t => t.Id != id && t.Name == name && t.DeleteTime == null).AnyAsync();
         if (isHave)
         {
             throw new CustomException("名称已存在");
+        }
+
+        if (llmModel.IsEnable && !updateLlmModel.IsEnable)
+        {
+            var hasEnabledLlmApp = await db.LlmApp.Where(t => t.LlmModelId == id && t.IsEnable && t.DeleteTime == null).AnyAsync();
+            if (hasEnabledLlmApp)
+            {
+                throw new CustomException("当前模型下存在已启用的 LLM 应用，无法禁用");
+            }
         }
 
         llmModel.Name = name;
@@ -165,10 +193,22 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
     public async Task<bool> DeleteLlmModelAsync(long id)
     {
 
+        using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + id);
+        if (modelLockHandle == null)
+        {
+            throw new CustomException("当前模型正在处理中，请稍后重试");
+        }
+
         var llmModel = await db.LlmModel.Where(t => t.Id == id && t.DeleteTime == null).FirstOrDefaultAsync();
 
         if (llmModel != null)
         {
+            var hasLlmApp = await db.LlmApp.Where(t => t.LlmModelId == id && t.DeleteTime == null).AnyAsync();
+            if (hasLlmApp)
+            {
+                throw new CustomException("当前模型下存在 LLM 应用，无法删除");
+            }
+
             llmModel.DeleteTime = DateTimeOffset.UtcNow;
             llmModel.DeleteUserId = userContext.UserId;
             await db.SaveChangesAsync();

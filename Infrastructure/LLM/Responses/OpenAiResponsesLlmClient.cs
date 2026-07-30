@@ -98,14 +98,14 @@ public sealed class OpenAiResponsesLlmClient(HttpClient httpClient, LlmModelConf
             {
                 dto = JsonSerializer.Deserialize<ResponseStreamEventDto>(data, JsonOptions);
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                continue;
+                throw new InvalidOperationException("OpenAI Responses stream returned invalid JSON.", ex);
             }
 
             if (dto == null)
             {
-                continue;
+                throw new InvalidOperationException("OpenAI Responses stream returned an empty JSON payload.");
             }
 
             var chunk = MapStreamEvent(dto, request.Model);
@@ -114,6 +114,7 @@ public sealed class OpenAiResponsesLlmClient(HttpClient httpClient, LlmModelConf
                 yield return chunk;
             }
         }
+
     }
 
 
@@ -243,8 +244,13 @@ public sealed class OpenAiResponsesLlmClient(HttpClient httpClient, LlmModelConf
                 dto.ResponseId);
         }
 
-        if (string.Equals(dto.Type, "response.completed", StringComparison.Ordinal) && dto.Response != null)
+        if (string.Equals(dto.Type, "response.completed", StringComparison.Ordinal))
         {
+            if (dto.Response == null)
+            {
+                throw new InvalidOperationException("OpenAI Responses completed event is missing the response payload.");
+            }
+
             var usage = dto.Response.Usage == null
                 ? null
                 : new Usage(dto.Response.Usage.InputTokens, dto.Response.Usage.OutputTokens, dto.Response.Usage.TotalTokens);
@@ -256,19 +262,41 @@ public sealed class OpenAiResponsesLlmClient(HttpClient httpClient, LlmModelConf
                 dto.Response.Id);
         }
 
-        if (string.Equals(dto.Type, "response.failed", StringComparison.Ordinal) && dto.Response != null)
+        if (string.Equals(dto.Type, "response.failed", StringComparison.Ordinal))
         {
-            var message = dto.Response.Error?.Message ?? "OpenAI Responses response failed.";
+            var message = dto.Response?.Error?.Message ?? dto.Error?.Message ?? dto.Message ?? "OpenAI Responses response failed.";
+            var code = dto.Response?.Error?.Code ?? dto.Error?.Code ?? dto.Code;
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                message += $" ({code})";
+            }
+
+            throw new InvalidOperationException(message);
+        }
+
+        if (string.Equals(dto.Type, "response.incomplete", StringComparison.Ordinal))
+        {
+            var reason = dto.Response?.IncompleteDetails?.Reason;
+            var message = string.IsNullOrWhiteSpace(reason)
+                ? "OpenAI Responses response is incomplete."
+                : $"OpenAI Responses response is incomplete: {reason}";
             throw new InvalidOperationException(message);
         }
 
         if (string.Equals(dto.Type, "error", StringComparison.Ordinal))
         {
             var message = dto.Message ?? dto.Error?.Message ?? "OpenAI Responses stream returned an error.";
+            var code = dto.Error?.Code ?? dto.Code;
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                message += $" ({code})";
+            }
+
             throw new InvalidOperationException(message);
         }
 
         return null;
+
     }
 
 
@@ -368,6 +396,13 @@ public sealed class OpenAiResponsesLlmClient(HttpClient httpClient, LlmModelConf
         /// </summary>
         [JsonPropertyName("error")]
         public ResponseErrorDto? Error { get; set; }
+
+
+        /// <summary>
+        /// 响应不完整详情
+        /// </summary>
+        [JsonPropertyName("incomplete_details")]
+        public ResponseIncompleteDetailsDto? IncompleteDetails { get; set; }
     }
 
 
@@ -381,6 +416,7 @@ public sealed class OpenAiResponsesLlmClient(HttpClient httpClient, LlmModelConf
         /// </summary>
         [JsonPropertyName("type")]
         public string? Type { get; set; }
+
 
         /// <summary>
         /// 输出角色
@@ -426,6 +462,13 @@ public sealed class OpenAiResponsesLlmClient(HttpClient httpClient, LlmModelConf
         [JsonPropertyName("type")]
         public string? Type { get; set; }
 
+
+        /// <summary>
+        /// 错误代码
+        /// </summary>
+        [JsonPropertyName("code")]
+        public string? Code { get; set; }
+
         /// <summary>
         /// 响应标识
         /// </summary>
@@ -464,10 +507,32 @@ public sealed class OpenAiResponsesLlmClient(HttpClient httpClient, LlmModelConf
     private sealed class ResponseErrorDto
     {
         /// <summary>
+        /// 错误代码
+        /// </summary>
+        [JsonPropertyName("code")]
+        public string? Code { get; set; }
+
+
+        /// <summary>
         /// 错误消息
         /// </summary>
         [JsonPropertyName("message")]
         public string? Message { get; set; }
+    }
+
+
+    /// <summary>
+    /// Responses API 响应不完整详情数据结构
+    /// </summary>
+    private sealed class ResponseIncompleteDetailsDto
+    {
+
+        /// <summary>
+        /// 响应不完整原因
+        /// </summary>
+        [JsonPropertyName("reason")]
+        public string? Reason { get; set; }
+
     }
 
 

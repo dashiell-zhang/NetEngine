@@ -18,6 +18,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\LLM\LLM.csproj" />
 		<ProjectReference Include="..\..\Repository\Repository.csproj" />
 		<ProjectReference Include="..\Application.Interface\Application.Interface.csproj" />

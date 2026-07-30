@@ -77,10 +77,9 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
     /// <summary>
     /// 以流式方式发起对话请求 通过 SSE data 行增量返回
     /// </summary>
-    public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(
-        ChatRequest request,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(ChatRequest request, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+
         ValidateSettings(settings);
 
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -138,19 +137,25 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
             {
                 dto = JsonSerializer.Deserialize<ChatCompletionStreamResponseDto>(data, JsonOptions);
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                // 非 JSON 片段或不完整片段直接跳过
-                continue;
+                throw new InvalidOperationException($"{ProviderName} stream returned invalid JSON.", ex);
             }
 
             if (dto == null)
             {
-                continue;
+                throw new InvalidOperationException($"{ProviderName} stream returned an empty JSON payload.");
+            }
+
+            if (dto.Error.HasValue)
+            {
+                var message = ExtractErrorMessage(dto.Error.Value) ?? $"{ProviderName} stream returned an error.";
+                throw new InvalidOperationException(message);
             }
 
             yield return Map(dto, model);
         }
+
     }
 
 
@@ -252,6 +257,48 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
 
 
     /// <summary>
+    /// 提取 OpenAI 兼容流式错误消息
+    /// </summary>
+    private static string? ExtractErrorMessage(JsonElement error)
+    {
+
+        if (error.ValueKind == JsonValueKind.String)
+        {
+            return error.GetString();
+        }
+
+        if (error.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        var message = error.TryGetProperty("message", out var messageNode) && messageNode.ValueKind == JsonValueKind.String
+            ? messageNode.GetString()
+            : null;
+        var code = error.TryGetProperty("code", out var codeNode) && codeNode.ValueKind == JsonValueKind.String
+            ? codeNode.GetString()
+            : null;
+        var type = error.TryGetProperty("type", out var typeNode) && typeNode.ValueKind == JsonValueKind.String
+            ? typeNode.GetString()
+            : null;
+
+        var details = new[] { code, type }
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        if (details.Count == 0)
+        {
+            return message;
+        }
+
+        var detailText = string.Join(", ", details);
+        return string.IsNullOrWhiteSpace(message) ? detailText : $"{message} ({detailText})";
+
+    }
+
+
+    /// <summary>
     /// 将角色枚举转换为 OpenAI 兼容协议的字符串值
     /// </summary>
     private static string RoleToString(ChatRole role) => role switch
@@ -338,6 +385,8 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
         /// </summary>
         [JsonPropertyName("usage")]
         public UsageDto? Usage { get; set; }
+
+
     }
 
 
@@ -394,6 +443,13 @@ public abstract class OpenAiCompatibleLlmClient<TSetting>(HttpClient httpClient,
         /// </summary>
         [JsonPropertyName("usage")]
         public UsageDto? Usage { get; set; }
+
+
+        /// <summary>
+        /// 流式错误详情
+        /// </summary>
+        [JsonPropertyName("error")]
+        public JsonElement? Error { get; set; }
     }
 
 

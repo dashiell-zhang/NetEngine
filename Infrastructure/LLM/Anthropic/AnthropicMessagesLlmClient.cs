@@ -95,14 +95,14 @@ public sealed class AnthropicMessagesLlmClient(HttpClient httpClient, LlmModelCo
             {
                 dto = JsonSerializer.Deserialize<AnthropicStreamEventDto>(data, JsonOptions);
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                continue;
+                throw new InvalidOperationException("Anthropic stream returned invalid JSON.", ex);
             }
 
             if (dto == null)
             {
-                continue;
+                throw new InvalidOperationException("Anthropic stream returned an empty JSON payload.");
             }
 
             if (string.Equals(dto.Type, "message_start", StringComparison.Ordinal) && dto.Message != null)
@@ -149,9 +149,15 @@ public sealed class AnthropicMessagesLlmClient(HttpClient httpClient, LlmModelCo
             if (string.Equals(dto.Type, "error", StringComparison.Ordinal))
             {
                 var message = dto.Error?.Message ?? "Anthropic stream returned an error.";
+                if (!string.IsNullOrWhiteSpace(dto.Error?.Type))
+                {
+                    message += $" ({dto.Error.Type})";
+                }
+
                 throw new InvalidOperationException(message);
             }
         }
+
     }
 
 
@@ -483,6 +489,13 @@ public sealed class AnthropicMessagesLlmClient(HttpClient httpClient, LlmModelCo
     /// </summary>
     private sealed class AnthropicErrorDto
     {
+        /// <summary>
+        /// 错误类型
+        /// </summary>
+        [JsonPropertyName("type")]
+        public string? Type { get; set; }
+
+
         /// <summary>
         /// 错误消息
         /// </summary>

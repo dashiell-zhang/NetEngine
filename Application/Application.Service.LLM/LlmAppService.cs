@@ -2,6 +2,7 @@ using Application.Interface;
 using Application.Model.LLM.LlmApp;
 using Application.Model.Shared;
 using Common;
+using DistributedLock;
 using IdentifierGenerator;
 using LLM;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ namespace Application.Service.LLM;
 /// LLM 应用配置服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmAppService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver)
+public partial class LlmAppService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, IDistributedLock distributedLock)
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();
@@ -90,17 +91,25 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         ValidateExtraBodyJson(createLlmApp.ExtraBodyJson);
 
+        using var lockHandle = await distributedLock.TryLockAsync("llm:app:code:" + code);
+        if (lockHandle == null)
+        {
+            throw new CustomException("当前应用 Code 正在处理中，请稍后重试");
+        }
+
+        using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + createLlmApp.LlmModelId);
+        if (modelLockHandle == null)
+        {
+            throw new CustomException("当前关联模型正在处理中，请稍后重试");
+        }
+
         var isHave = await db.LlmApp.Where(t => t.Code == code && t.DeleteTime == null).AnyAsync();
         if (isHave)
         {
             throw new CustomException("Code 已存在");
         }
 
-        var modelExists = await db.LlmModel.Where(t => t.Id == createLlmApp.LlmModelId && t.DeleteTime == null).AnyAsync();
-        if (!modelExists)
-        {
-            throw new CustomException("无效的 LlmModelId");
-        }
+        await ValidateLlmModelStateAsync(createLlmApp.LlmModelId, createLlmApp.IsEnable);
 
         LlmApp llmApp = new()
         {
@@ -142,17 +151,25 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         ValidateExtraBodyJson(updateLlmApp.ExtraBodyJson);
 
+        using var lockHandle = await distributedLock.TryLockAsync("llm:app:code:" + code);
+        if (lockHandle == null)
+        {
+            throw new CustomException("当前应用 Code 正在处理中，请稍后重试");
+        }
+
+        using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + updateLlmApp.LlmModelId);
+        if (modelLockHandle == null)
+        {
+            throw new CustomException("当前关联模型正在处理中，请稍后重试");
+        }
+
         var isHave = await db.LlmApp.Where(t => t.Id != id && t.Code == code && t.DeleteTime == null).AnyAsync();
         if (isHave)
         {
             throw new CustomException("Code 已存在");
         }
 
-        var modelExists = await db.LlmModel.Where(t => t.Id == updateLlmApp.LlmModelId && t.DeleteTime == null).AnyAsync();
-        if (!modelExists)
-        {
-            throw new CustomException("无效的 LlmModelId");
-        }
+        await ValidateLlmModelStateAsync(updateLlmApp.LlmModelId, updateLlmApp.IsEnable);
 
         llmApp.Code = code;
         llmApp.Name = name;
@@ -195,10 +212,10 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     public async Task<TestLlmAppResultDto> TestLlmAppAsync(TestLlmAppRequestDto request, CancellationToken cancellationToken = default)
     {
 
-        var config = await configResolver.GetConfigAsync(request.LlmModelId)
+        var config = await configResolver.GetConfigAsync(request.LlmModelId, cancellationToken)
             ?? throw new CustomException("无效的 LlmModelId 或模型已禁用");
 
-        var client = await llmClientFactory.GetClientAsync(request.LlmModelId, configResolver);
+        var client = llmClientFactory.CreateClient(config);
 
         var parameters = request.Parameters == null
             ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -323,6 +340,30 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
     [GeneratedRegex(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}|\s]+)\s*(?:\|\s*(?<comment>[^{}]*?))?\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex KeyRegex();
+
+
+    /// <summary>
+    /// 校验 LLM 应用关联模型的状态
+    /// </summary>
+    private async Task ValidateLlmModelStateAsync(long llmModelId, bool appIsEnable)
+    {
+
+        var modelIsEnable = await db.LlmModel
+            .Where(t => t.Id == llmModelId && t.DeleteTime == null)
+            .Select(t => (bool?)t.IsEnable)
+            .FirstOrDefaultAsync();
+
+        if (!modelIsEnable.HasValue)
+        {
+            throw new CustomException("无效的 LlmModelId");
+        }
+
+        if (appIsEnable && !modelIsEnable.Value)
+        {
+            throw new CustomException("启用的 LLM 应用不可以关联已禁用模型");
+        }
+
+    }
 
 
     /// <summary>

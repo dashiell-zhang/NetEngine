@@ -107,6 +107,6 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// LLM 调用测试
     /// </summary>
     [HttpPost]
-    public Task<TestLlmAppResultDto> TestLlmApp(TestLlmAppRequestDto request) => llmAppService.TestLlmAppAsync(request);
+    public Task<TestLlmAppResultDto> TestLlmApp(TestLlmAppRequestDto request, CancellationToken cancellationToken) => llmAppService.TestLlmAppAsync(request, cancellationToken);
 
 }

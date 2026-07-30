@@ -4,6 +4,7 @@ using IdentifierGenerator;
 using LLM;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
@@ -18,7 +19,7 @@ namespace Application.Service.LLM;
 /// LLM 调用服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmInvokeService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver)
+public partial class LlmInvokeService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, ILogger<LlmInvokeService> logger)
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();
@@ -65,11 +66,11 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
             ExtraBody: extraBody
         );
 
-        var client = await llmClientFactory.GetClientAsync(app.LlmModelId, configResolver);
+        var client = llmClientFactory.CreateClient(config);
         var response = await client.ChatAsync(request, cancellationToken);
 
         var assistantContent = response.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
-        await SaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantContent, cancellationToken);
+        await TrySaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantContent, cancellationToken);
 
         return response;
     }
@@ -127,8 +128,9 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
             ExtraBody: extraBody
         );
 
-        var client = await llmClientFactory.GetClientAsync(app.LlmModelId, configResolver);
+        var client = llmClientFactory.CreateClient(config);
         var assistantBuilder = new StringBuilder(2048);
+        var isCompleted = false;
         await foreach (var chunk in client.ChatStreamAsync(request, cancellationToken).WithCancellation(cancellationToken))
         {
             var delta = chunk.Choices.FirstOrDefault()?.Delta?.Content;
@@ -137,10 +139,18 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
                 assistantBuilder.Append(delta);
             }
 
+            if (chunk.Choices.Any(t => !string.IsNullOrWhiteSpace(t.FinishReason)))
+            {
+                isCompleted = true;
+            }
+
             yield return chunk;
         }
 
-        await SaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantBuilder.ToString(), cancellationToken);
+        if (isCompleted)
+        {
+            await TrySaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantBuilder.ToString(), cancellationToken);
+        }
     }
 
 
@@ -267,24 +277,48 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
 
 
     /// <summary>
-    /// 保存对话记录
+    /// 尝试保存成功的对话记录
     /// </summary>
-    private async Task SaveConversationAsync(long llmAppId, string systemPrompt, string userPrompt, string assistantContent, CancellationToken cancellationToken)
+    private async Task TrySaveConversationAsync(long llmAppId, string systemPrompt, string userPrompt, string assistantContent, CancellationToken cancellationToken)
     {
 
-        long? createUserId = userContext.IsAuthenticated ? userContext.UserId : null;
-
-        db.LlmConversation.Add(new LlmConversation
+        LlmConversation? conversation = null;
+        try
         {
-            Id = idService.GetId(),
-            LlmAppId = llmAppId,
-            SystemContent = systemPrompt ?? string.Empty,
-            UserContent = userPrompt ?? string.Empty,
-            AssistantContent = assistantContent ?? string.Empty,
-            CreateUserId = createUserId
-        });
+            long? createUserId = userContext.IsAuthenticated ? userContext.UserId : null;
 
-        await db.SaveChangesAsync(cancellationToken);
+            conversation = new LlmConversation
+            {
+                Id = idService.GetId(),
+                LlmAppId = llmAppId,
+                SystemContent = systemPrompt ?? string.Empty,
+                UserContent = userPrompt ?? string.Empty,
+                AssistantContent = assistantContent ?? string.Empty,
+                CreateUserId = createUserId
+            };
+
+            db.LlmConversation.Add(conversation);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            if (conversation != null)
+            {
+                db.Entry(conversation).State = EntityState.Detached;
+            }
+
+            throw;
+        }
+        catch (Exception ex)
+        {
+            if (conversation != null)
+            {
+                db.Entry(conversation).State = EntityState.Detached;
+            }
+
+            logger.LogError(ex, "保存 LLM 对话记录失败 LlmAppId={LlmAppId}", llmAppId);
+        }
+
     }
 
 

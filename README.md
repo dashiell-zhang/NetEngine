@@ -191,11 +191,11 @@ public virtual async Task ProcessOrder(long orderId) { ... }
 
 ### [Retry]
 
-方法执行出现异常时自动重试，全部重试失败后将最后一次异常向上抛出
+方法执行出现非取消异常时自动重试，全部重试失败后将最后一次异常向上抛出。是否适合重试以及操作是否幂等由调用方负责判断
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `MaxRetries` | `int` | `3` | 最大重试次数 |
+| `MaxRetries` | `int` | `3` | 最大额外重试次数，不包含首次执行 |
 | `DelaySeconds` | `int` | `0` | 每次重试前的等待时长（秒），`0` 表示不等待 |
 
 ```csharp
@@ -207,6 +207,10 @@ public virtual async Task<string> FetchRemoteData() { ... }
 [Retry(MaxRetries = 5, DelaySeconds = 2)]
 public virtual async Task SendNotification() { ... }
 ```
+
+`MaxRetries = 3` 表示首次执行失败后最多再重试 3 次，因此目标方法最多执行 4 次。`MaxRetries` 和 `DelaySeconds` 均不能小于 `0`
+
+如果方法包含 `CancellationToken` 参数，取消请求会终止后续重试和重试等待
 
 ### 多行为组合
 

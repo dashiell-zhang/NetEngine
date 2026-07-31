@@ -4,14 +4,14 @@ using SourceGenerator.Runtime.Pipeline.Behaviors;
 namespace SourceGenerator.Runtime.Attributes;
 
 /// <summary>
-/// 为标注的方法开启自动重试，执行出现异常时最多重试指定次数
+/// 为标注的方法开启自动重试 非取消异常出现时最多额外重试指定次数
 /// </summary>
 [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
 public class RetryAttribute : ProxyBehaviorAttribute<RetryBehavior, RetryOptions>
 {
 
     /// <summary>
-    /// 最大重试次数，默认 3 次
+    /// 最大额外重试次数 默认 3 次 不包含首次执行
     /// </summary>
     public int MaxRetries { get; set; } = 3;
 

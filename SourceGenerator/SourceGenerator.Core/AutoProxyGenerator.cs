@@ -75,6 +75,22 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
                 }
 
+                foreach (var result in AutoProxyEligibility.GetUnsupportedProxyBehaviors(typeSymbol))
+                {
+                    hasInvalidMethod = true;
+                    var location = result.Attribute.ApplicationSyntaxReference?.GetSyntax(spc.CancellationToken).GetLocation()
+                        ?? result.Method.Locations.FirstOrDefault()
+                        ?? typeSymbol.Locations.FirstOrDefault();
+
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        UnsupportedProxyBehaviorDescriptor,
+                        location,
+                        typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        result.Method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        result.BehaviorName,
+                        result.Reason));
+                }
+
                 if (hasInvalidMethod)
                 {
                     return;
@@ -126,6 +142,18 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
     /// <summary>
+    /// 当代理行为无法在目标方法的实际代理路径执行时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor UnsupportedProxyBehaviorDescriptor = new(
+        id: "AutoProxy004",
+        title: "AutoProxy 行为与方法代理路径不兼容",
+        messageFormat: "类型 {0} 的方法 {1} 上的代理行为 {2} 无法执行：{3}",
+        category: "AutoProxyGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
     /// 处理器执行上下文 保存生成时的编译上下文 目标类型及相关特性信息
     /// </summary>
     private readonly struct HandlerContext
@@ -158,6 +186,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         private static readonly SymbolDisplayFormat SourceTypeDisplayFormat = SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
             SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
             | SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
+
+        private static readonly SymbolDisplayFormat MethodKeyTypeDisplayFormat = new(globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces, genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
 
 
         /// <summary>
@@ -289,7 +319,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         case IMethodSymbol m:
                             if (!ShouldGenerateExplicitInterfaceMethod(cls, m, out var impl))
                                 break;
-                            AppendExplicitInterfaceMethod(sb, iface, m, impl, classFull, ns);
+                            AppendExplicitInterfaceMethod(sb, cls, iface, m, impl, classFull, ns);
                             break;
                         
                         case IPropertySymbol p:
@@ -441,7 +471,11 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 sb.AppendLine("        object? __argsObj = null;");
             }
 
+            var requiresArgumentsKey = method.GetAttributes().Any(AutoProxyEligibility.RequiresArgumentsKey);
+            AppendArgumentsKeySnapshot(sb, method, requiresArgumentsKey);
+
             sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + rawMethodName + "\";");
+            AppendMethodKey(sb, method.ContainingType, method, typeFullName);
             sb.AppendLine("        var __logger = __sp?.GetService<ILoggerFactory>()?.CreateLogger(\"ProxyRuntime\");");
 
             var hasByRef = hasByRefAny;
@@ -454,12 +488,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             {
                 if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                 {
-                    var include = !hasByRef || CanUseAsFilter(a);
-                    if (include)
-                    {
-                        behaviorSnippets.Add($"new {behaviorFull}()");
-                        if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
-                    }
+                    behaviorSnippets.Add($"new {behaviorFull}()");
+                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
                 }
             }
             
@@ -467,8 +497,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             
             var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid) || isAsyncEnumerable;
             var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
-            
-            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+            var cancellationTokenExpression = GetCancellationTokenExpression(method);
+
+            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
             
             if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
@@ -707,7 +738,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
-                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
                     sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper([global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
@@ -876,7 +907,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <summary>
         /// 为接口方法生成在代理类中的显式接口实现 并注入行为管道和日志逻辑
         /// </summary>
-        private static void AppendExplicitInterfaceMethod(StringBuilder sb, INamedTypeSymbol iface, IMethodSymbol method, IMethodSymbol? impl, string typeFullName, string currentNamespace)
+        private static void AppendExplicitInterfaceMethod(StringBuilder sb, INamedTypeSymbol cls, INamedTypeSymbol iface, IMethodSymbol method, IMethodSymbol? impl, string typeFullName, string currentNamespace)
         {
             // 在编译期根据接口方法和实现方法上的特性构建行为管道配置
             var isGenericTask = method.ReturnType is INamedTypeSymbol nts && nts.IsGenericType && IsType(nts.ConstructedFrom, "System.Threading.Tasks.Task");
@@ -967,7 +998,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 sb.AppendLine("        object? __argsObj = null;");
             }
 
+            var requiresArgumentsKey = method.GetAttributes().Any(AutoProxyEligibility.RequiresArgumentsKey)
+                || (impl?.GetAttributes().Any(AutoProxyEligibility.RequiresArgumentsKey) ?? false);
+            AppendArgumentsKeySnapshot(sb, method, requiresArgumentsKey);
+
             sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + rawMethodName + "\";");
+            AppendMethodKey(sb, cls, method, typeFullName);
             sb.AppendLine("        var __logger = __sp?.GetService<ILoggerFactory>()?.CreateLogger(\"ProxyRuntime\");");
 
             var hasByRef2 = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
@@ -980,14 +1016,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             {
                 if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                 {
-                    var include = !hasByRef2 || CanUseAsFilter(a);
+                    behaviorSnippets.Add($"new {behaviorFull}()");
 
-                    if (include)
-                    {
-                        behaviorSnippets.Add($"new {behaviorFull}()");
-
-                        if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
-                    }
+                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
                 }
             }
 
@@ -997,14 +1028,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                     {
-                        var include = !hasByRef2 || CanUseAsFilter(a);
+                        behaviorSnippets.Add($"new {behaviorFull}()");
 
-                        if (include)
-                        {
-                            behaviorSnippets.Add($"new {behaviorFull}()");
-
-                            if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
-                        }
+                        if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
                     }
                 }
             }
@@ -1014,8 +1040,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid) || isAsyncEnumerable;
 
             var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
+            var cancellationTokenExpression = GetCancellationTokenExpression(method);
 
-            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
             
             if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
@@ -1231,7 +1258,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     tArg = TrimCurrentNamespace(tArg, currentNamespace);
                     var callExpr3 = "base." + methodName + typeParams + "(" + argList + ")";
                     sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
-                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, Args = __argsObj, TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
                     sb.AppendLine($"        async IAsyncEnumerable<{tArg}> __streamWrapper([global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){{");
@@ -1379,41 +1406,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         {
             behaviorFull = string.Empty;
             optSetter = null;
-            var attrClass = a.AttributeClass as INamedTypeSymbol;
 
-            if (attrClass is null) return false;
-
-            INamedTypeSymbol? proxyBase = null;
-
-            for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
-            {
-                var constructed = t.ConstructedFrom ?? t;
-                if (constructed is INamedTypeSymbol nt && IsNamedType(nt, "SourceGenerator.Runtime.Attributes", "ProxyBehaviorAttribute"))
-                {
-                    proxyBase = t; // 保留具体泛型基类 以便读取 TypeArguments 信息
-                    break;
-                }
-            }
-
-            if (proxyBase is null) return false;
-
-            ITypeSymbol? behaviorTypeSymbol = null;
-            INamedTypeSymbol? optionsTypeSymbol = null;
-
-            if (proxyBase.IsGenericType)
-            {
-                if (proxyBase.TypeArguments.Length == 1)
-                {
-                    behaviorTypeSymbol = proxyBase.TypeArguments[0];
-                }
-                else if (proxyBase.TypeArguments.Length == 2)
-                {
-                    behaviorTypeSymbol = proxyBase.TypeArguments[0];
-                    optionsTypeSymbol = proxyBase.TypeArguments[1] as INamedTypeSymbol;
-                }
-            }
-
-            if (behaviorTypeSymbol is null) return false;
+            if (!AutoProxyEligibility.TryGetProxyBehaviorTypes(a, out var behaviorTypeSymbol, out var optionsTypeSymbol) || behaviorTypeSymbol is null)
+                return false;
 
             behaviorFull = FormatType(behaviorTypeSymbol, string.Empty);
 
@@ -1434,54 +1429,11 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     optFull = optFull.Substring("Options.".Length);
                 }
-                var init = assigns.Count > 0 ? " { " + string.Join(", ", assigns) + " }" : string.Empty;
+                var init = assigns.Count > 0 ? " { " + string.Join(", ", assigns) + " }" : "()";
                 optSetter = $"__ctx.SetFeature(new {optFull}{init});";
             }
 
             return true;
-        }
-
-
-        /// <summary>
-        /// 判断行为特性对应的行为类型是否实现同步过滤接口 从而可参与带 ref 的同步调用管道
-        /// </summary>
-        private static bool CanUseAsFilter(AttributeData a)
-        {
-            // 尝试判断行为类型是否实现 IInvocationBehavior 以便在带 ref 的同步调用路径中参与过滤
-            var attrClass = a.AttributeClass as INamedTypeSymbol;
-
-            if (attrClass is null) return false;
-
-            INamedTypeSymbol? proxyBase = null;
-
-            for (var t = attrClass; t is not null; t = t.BaseType as INamedTypeSymbol)
-            {
-                var constructed = t.ConstructedFrom ?? t;
-                if (constructed is INamedTypeSymbol nt && IsNamedType(nt, "SourceGenerator.Runtime.Attributes", "ProxyBehaviorAttribute"))
-                {
-                    proxyBase = t;
-                    break;
-                }
-            }
-
-            if (proxyBase is null) return false;
-
-            ITypeSymbol? behaviorTypeSymbol = null;
-
-            if (proxyBase.IsGenericType && proxyBase.TypeArguments.Length >= 1)
-            {
-                behaviorTypeSymbol = proxyBase.TypeArguments[0];
-            }
-
-            if (behaviorTypeSymbol is INamedTypeSymbol nts)
-            {
-                foreach (var itf in nts.AllInterfaces)
-                {
-                    if (IsType(itf, "SourceGenerator.Runtime.Pipeline.IInvocationBehavior")) return true;
-                }
-            }
-
-            return false;
         }
 
 
@@ -2003,6 +1955,155 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
 
             return updates.Count == 0 ? string.Empty : string.Join(" ", updates);
+        }
+
+
+        /// <summary>
+        /// 生成当前调用用于构建缓存键和锁键的规范化参数快照代码
+        /// </summary>
+        /// <param name="sb">目标源码构建器</param>
+        /// <param name="method">当前代理方法</param>
+        /// <param name="requiresArgumentsKey">是否需要生成规范化参数内容</param>
+        private static void AppendArgumentsKeySnapshot(StringBuilder sb, IMethodSymbol method, bool requiresArgumentsKey)
+        {
+
+            if (!requiresArgumentsKey)
+            {
+                sb.AppendLine("        var __isArgumentsKeyComplete = true;");
+                sb.AppendLine("        string? __argumentsKey = null;");
+                return;
+            }
+
+            if (method.Parameters.Length == 0)
+            {
+                sb.AppendLine("        var __isArgumentsKeyComplete = true;");
+                sb.AppendLine("        string? __argumentsKey = \"[]\";");
+                return;
+            }
+
+            sb.AppendLine("        var __argumentsKeyParts = new string?[" + method.Parameters.Length + "];");
+            sb.AppendLine("        var __isArgumentsKeyComplete = true;");
+
+            for (var index = 0; index < method.Parameters.Length; index++)
+            {
+                var parameter = method.Parameters[index];
+
+                if (IsType(parameter.Type, "System.Threading.CancellationToken"))
+                {
+                    sb.AppendLine("        __argumentsKeyParts[" + index + "] = \"\\\"<cancellation-token>\\\"\";");
+                    continue;
+                }
+
+                if (parameter.RefKind == RefKind.Out
+                    || parameter.Type.IsRefLikeType
+                    || parameter.Type.TypeKind == TypeKind.Pointer
+                    || parameter.Type is IFunctionPointerTypeSymbol
+                    || TryGetSkipPlaceholder(parameter.Type, out _))
+                {
+                    sb.AppendLine("        __isArgumentsKeyComplete = false;");
+                    continue;
+                }
+
+                var parameterName = EscapeIdentifier(parameter.Name);
+                var keyVariableName = "__argumentKey" + index;
+                sb.Append("        if (JsonUtil.TryToCanonicalJson(").Append(parameterName).Append(", out var ").Append(keyVariableName).AppendLine("))");
+                sb.AppendLine("        {");
+                sb.Append("            __argumentsKeyParts[").Append(index).Append("] = ").Append(keyVariableName).AppendLine(";");
+                sb.AppendLine("        }");
+                sb.AppendLine("        else");
+                sb.AppendLine("        {");
+                sb.AppendLine("            __isArgumentsKeyComplete = false;");
+                sb.AppendLine("        }");
+            }
+
+            sb.AppendLine("        string? __argumentsKey = __isArgumentsKeyComplete ? \"[\" + string.Join(\",\", __argumentsKeyParts) + \"]\" : null;");
+
+        }
+
+
+        /// <summary>
+        /// 生成包含完整方法签名和运行时泛型类型的方法标识代码
+        /// </summary>
+        /// <param name="sb">目标源码构建器</param>
+        /// <param name="targetType">当前代理目标类型</param>
+        /// <param name="method">当前代理方法</param>
+        /// <param name="typeFullName">代理目标类型完整名称</param>
+        private static void AppendMethodKey(StringBuilder sb, INamedTypeSymbol targetType, IMethodSymbol method, string typeFullName)
+        {
+
+            var parameterTypes = method.Parameters.Select(parameter =>
+            {
+                var modifier = parameter.RefKind switch
+                {
+                    RefKind.Ref => "ref ",
+                    RefKind.Out => "out ",
+                    RefKind.In => "in ",
+                    _ => string.Empty
+                };
+
+                return modifier + parameter.Type.ToDisplayString(MethodKeyTypeDisplayFormat);
+            });
+            var assemblyName = targetType.ContainingAssembly?.Name ?? method.ContainingAssembly?.Name ?? string.Empty;
+            var signature = assemblyName
+                + "|"
+                + typeFullName
+                + "."
+                + method.Name
+                + "``"
+                + method.Arity
+                + "("
+                + string.Join(",", parameterTypes)
+                + ")";
+            var escapedSignature = EscapeStringLiteral(signature);
+            var runtimeTypeExpressions = new List<string>();
+
+            if (GetAllTypeParameters(targetType).Count > 0)
+            {
+                runtimeTypeExpressions.Add("(GetType().BaseType?.AssemblyQualifiedName ?? GetType().BaseType?.FullName ?? \"" + EscapeStringLiteral(typeFullName) + "\")");
+            }
+
+            foreach (var typeParameter in method.TypeParameters)
+            {
+                var typeParameterName = EscapeIdentifier(typeParameter.Name);
+                runtimeTypeExpressions.Add("(typeof(" + typeParameterName + ").AssemblyQualifiedName ?? typeof(" + typeParameterName + ").FullName ?? typeof(" + typeParameterName + ").Name)");
+            }
+
+            if (runtimeTypeExpressions.Count == 0)
+            {
+                sb.AppendLine("        var __methodKey = \"" + escapedSignature + "\";");
+                return;
+            }
+
+            sb.AppendLine("        var __methodKey = \"" + escapedSignature + "|runtime=\" + string.Join(\"|\", new string[] { " + string.Join(", ", runtimeTypeExpressions) + " });");
+
+        }
+
+
+        /// <summary>
+        /// 将文本转义为可安全写入 C# 字符串字面量的内容
+        /// </summary>
+        /// <param name="value">待转义文本</param>
+        /// <returns>转义后的字符串字面量内容</returns>
+        private static string EscapeStringLiteral(string value)
+            => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+
+        /// <summary>
+        /// 获取当前方法可用于代理行为的取消令牌表达式
+        /// </summary>
+        /// <param name="method">当前代理方法</param>
+        /// <returns>取消令牌参数表达式或默认值</returns>
+        private static string GetCancellationTokenExpression(IMethodSymbol method)
+        {
+
+            var cancellationToken = method.Parameters.FirstOrDefault(parameter =>
+                parameter.RefKind == RefKind.None
+                && IsType(parameter.Type, "System.Threading.CancellationToken"));
+
+            return cancellationToken is null
+                ? "default"
+                : EscapeIdentifier(cancellationToken.Name);
+
         }
 
 

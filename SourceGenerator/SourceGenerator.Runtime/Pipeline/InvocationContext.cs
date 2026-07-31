@@ -15,9 +15,33 @@ public sealed class InvocationContext
 
 
     /// <summary>
+    /// 当前调用用于生成缓存键和锁键的完整方法标识
+    /// </summary>
+    public required string MethodKey { get; init; }
+
+
+    /// <summary>
     /// 方法调用的参数快照 一般为可序列化对象
     /// </summary>
     public object? Args { get; init; }
+
+
+    /// <summary>
+    /// 当前调用按照参数声明顺序生成的规范化参数内容
+    /// </summary>
+    public string? ArgumentsKey { get; init; }
+
+
+    /// <summary>
+    /// 当前调用的全部参数是否成功生成规范化内容
+    /// </summary>
+    public bool IsArgumentsKeyComplete { get; init; }
+
+
+    /// <summary>
+    /// 当前调用用于取消重试等待等异步操作的取消令牌
+    /// </summary>
+    public CancellationToken CancellationToken { get; init; }
 
 
     /// <summary>

@@ -11,8 +11,16 @@ namespace SourceGenerator.Runtime.Pipeline.Behaviors;
 public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
 {
 
+    /// <summary>
+    /// 根据配置获取分布式锁并在锁范围内执行后续调用
+    /// </summary>
+    /// <typeparam name="T">调用返回值类型</typeparam>
+    /// <param name="ctx">当前调用上下文</param>
+    /// <param name="next">后续行为或目标方法</param>
+    /// <returns>后续调用返回值</returns>
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
+
         var opt = ctx.GetFeature<ConcurrencyLimitOptions>();
         if (opt is null) return await next();
 
@@ -23,8 +31,13 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
         var semaphore = opt.Semaphore <= 0 ? 1 : opt.Semaphore;
         var expiry = opt.ExpirySeconds <= 0 ? default : TimeSpan.FromSeconds(opt.ExpirySeconds);
 
+        if (opt.IsUseParameter && (!ctx.IsArgumentsKeyComplete || ctx.ArgumentsKey is null))
+        {
+            throw new InvalidOperationException($"方法 {ctx.Method} 的参数无法生成稳定的并发限制键");
+        }
+
         var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
-        var key = "ConcurrencyLimit_" + ComposeKeySeed(ctx, opt.IsUseParameter);
+        var key = "ConcurrencyLimit_" + InvocationKey.ComposeHash(ctx, opt.IsUseParameter);
 
         IDisposable? handle = null;
         try
@@ -58,14 +71,8 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
                 if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit release error {methodForLog}: {ex.Message}");
             }
         }
+
     }
 
-
-    private static string ComposeKeySeed(InvocationContext ctx, bool isUseParameter)
-    {
-        var method = ctx.Method ?? string.Empty;
-        if (!isUseParameter) return method;
-        return method + "_" + (ctx.Args is null ? string.Empty : JsonUtil.ToJson(ctx.Args));
-    }
 
 }

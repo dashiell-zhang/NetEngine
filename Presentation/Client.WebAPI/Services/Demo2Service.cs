@@ -20,7 +20,7 @@ public class Demo2Service
     }
 
 
-    [Cacheable(TtlSeconds = 120)]
+    [Logging]
     public virtual int Add(ref int a, int b)
     {
         var s = a + b;
@@ -61,4 +61,3 @@ public class Demo2Service
 
 
 }
-

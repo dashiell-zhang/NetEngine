@@ -1,8 +1,6 @@
 using DistributedLock;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 
 namespace SourceGenerator.Runtime.Pipeline.Behaviors;
@@ -32,7 +30,15 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         }
 
         var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
-        var cacheKey = ComposeCacheKey(ctx);
+
+        if (!ctx.IsArgumentsKeyComplete || ctx.ArgumentsKey is null)
+        {
+            if (ctx.Log) ctx.Logger?.LogWarning($"Cache bypassed because arguments key is incomplete {methodForLog}");
+            return await next();
+        }
+
+        var keyHash = InvocationKey.ComposeHash(ctx, includeArguments: true);
+        var cacheKey = ComposeCacheKey(keyHash);
 
         var get = await TryGetAsync<T>(ctx, cacheKey, ctx.Logger, ctx.Log, methodForLog);
         if (get.hit) return get.value;
@@ -43,7 +49,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
             return await ExecuteAndSetAsync(ctx, next, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog);
         }
 
-        var lockKey = ComposeLockKey(cacheKey);
+        var lockKey = ComposeLockKey(keyHash);
         IDisposable lockHandle;
 
         try
@@ -86,24 +92,17 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
 
     /// <summary>
-    /// 组合当前调用的缓存种子字符串 用于生成缓存键
+    /// 生成当前调用摘要对应的缓存键
     /// </summary>
-    private static string ComposeSeed(InvocationContext ctx)
-        => (ctx.Method ?? string.Empty) + (ctx.Args is null ? string.Empty : JsonUtil.ToJson(ctx.Args));
+    private static string ComposeCacheKey(string keyHash)
+        => "CacheData_" + keyHash;
 
 
     /// <summary>
-    /// 生成当前调用对应的缓存键
+    /// 生成当前调用摘要对应的防击穿锁键
     /// </summary>
-    private static string ComposeCacheKey(InvocationContext ctx)
-        => "CacheData_" + Sha256Hex(ComposeSeed(ctx));
-
-
-    /// <summary>
-    /// 生成当前缓存键对应的防击穿锁键
-    /// </summary>
-    private static string ComposeLockKey(string cacheKey)
-        => "CacheDataLock_" + cacheKey;
+    private static string ComposeLockKey(string keyHash)
+        => "CacheDataLock_" + keyHash;
 
 
     /// <summary>
@@ -167,18 +166,4 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
             if (log) logger?.LogInformation($"Cache write error {method}: {ex.Message}");
         }
     }
-
-
-    /// <summary>
-    /// 计算字符串的 SHA-256 哈希并返回十六进制表示
-    /// </summary>
-    private static string Sha256Hex(string s)
-    {
-        var bytes = Encoding.UTF8.GetBytes(s);
-        var hash = SHA256.HashData(bytes);
-        var sb = new StringBuilder(hash.Length * 2);
-        foreach (var b in hash) sb.Append(b.ToString("x2"));
-        return sb.ToString();
-    }
-
 }

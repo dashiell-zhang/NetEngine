@@ -7,7 +7,7 @@ public class RetryOptions
 {
 
     /// <summary>
-    /// 最大重试次数
+    /// 最大额外重试次数 不包含首次执行
     /// </summary>
     public int MaxRetries { get; init; } = 3;
 

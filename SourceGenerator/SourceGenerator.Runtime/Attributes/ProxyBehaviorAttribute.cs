@@ -8,7 +8,7 @@ namespace SourceGenerator.Runtime.Attributes;
 public abstract class ProxyBehaviorAttribute : Attribute
 {
     /// <summary>
-    /// 运行时行为类型（必须实现 IInvocationBehavior）。生成器主要通过泛型基类识别行为与可选项类型，BehaviorType 作为兜底。
+    /// 运行时行为类型 必须实现 IInvocationAsyncBehavior 特殊同步代理路径还必须实现 IInvocationBehavior
     /// </summary>
     public Type BehaviorType { get; }
 
@@ -38,4 +38,3 @@ public abstract class ProxyBehaviorAttribute<TBehavior, TOptions> : ProxyBehavio
 {
     protected ProxyBehaviorAttribute() : base(typeof(TBehavior)) { }
 }
-

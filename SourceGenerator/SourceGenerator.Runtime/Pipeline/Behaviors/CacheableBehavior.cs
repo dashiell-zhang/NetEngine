@@ -23,6 +23,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     /// </summary>
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
+
         var cache = ctx.GetFeature<Options.CacheableOptions>();
 
         if (cache is null || !ctx.HasReturnValue)
@@ -39,37 +40,48 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         var lockSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedLock)) as IDistributedLock;
         if (lockSvc is null)
         {
-            var resultWithoutLock = await next();
-            await SetAsync(ctx, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog, resultWithoutLock);
-            return resultWithoutLock;
+            return await ExecuteAndSetAsync(ctx, next, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog);
         }
 
-        IDisposable? lockHandle = null;
+        var lockKey = ComposeLockKey(cacheKey);
+        IDisposable lockHandle;
+
         try
         {
-            var lockKey = ComposeLockKey(cacheKey);
             lockHandle = await lockSvc.LockAsync(lockKey, TimeSpan.FromSeconds(CacheLockExpirySeconds));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            if (ctx.Log) ctx.Logger?.LogWarning($"Cache stampede lock error {methodForLog}: {ex.Message}");
+            return await ExecuteAndSetAsync(ctx, next, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog);
+        }
+
+        try
+        {
             if (ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock acquired {methodForLog}");
 
             get = await TryGetAsync<T>(ctx, cacheKey, ctx.Logger, ctx.Log, methodForLog);
             if (get.hit) return get.value;
 
-            var result = await next();
-            await SetAsync(ctx, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog, result);
-            return result;
+            return await ExecuteAndSetAsync(ctx, next, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog);
         }
         finally
         {
             try
             {
-                lockHandle?.Dispose();
-                if (lockHandle is not null && ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock released {methodForLog}");
+                lockHandle.Dispose();
+                if (ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock released {methodForLog}");
             }
             catch (Exception ex)
             {
                 if (ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock release error {methodForLog}: {ex.Message}");
             }
         }
+
     }
 
 
@@ -92,6 +104,19 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     /// </summary>
     private static string ComposeLockKey(string cacheKey)
         => "CacheDataLock_" + cacheKey;
+
+
+    /// <summary>
+    /// 执行业务回源并在成功后尝试写入缓存
+    /// </summary>
+    private static async ValueTask<T> ExecuteAndSetAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next, string cacheKey, Options.CacheableOptions cache, ILogger? logger, bool log, string method)
+    {
+
+        var result = await next();
+        await SetAsync(ctx, cacheKey, cache, logger, log, method, result);
+        return result;
+
+    }
 
 
     /// <summary>

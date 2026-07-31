@@ -8,5 +8,5 @@ public sealed class CacheableOptions
     /// <summary>
     /// 缓存数据的生存时间 秒
     /// </summary>
-    public int TtlSeconds { get; init; }
+    public int TtlSeconds { get; init; } = 60;
 }

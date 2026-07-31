@@ -70,7 +70,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         // 使用 ForAttributeWithMetadataName 直接筛选出带有 [RegisterService] 的类型，避免手动遍历语法树
         var candidates = context.SyntaxProvider.ForAttributeWithMetadataName(
             RegisterServiceAttributeMetadataName,
-            static (node, _) => node is ClassDeclarationSyntax,
+            static (node, _) => node is ClassDeclarationSyntax or RecordDeclarationSyntax,
             static (syntaxContext, _) =>
                 new ServiceCandidate(
                     (INamedTypeSymbol)syntaxContext.TargetSymbol!,
@@ -177,7 +177,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 var keyExpr = GetKeyExpression(attrData);
 
                 var hasAutoProxy = HasAutoProxy(typeSymbol, autoProxyAttributeSymbol);
-                var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateCompleteProxy(typeSymbol);
+                var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateCompleteProxy(typeSymbol, compilation);
                 CollectNamespaces(usingNamespaces, typeSymbol);
 
                 // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型
@@ -376,8 +376,9 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             ? "NetEngine.Generated"
             : typeSymbol.ContainingNamespace.ToDisplayString();
 
-        var minimal = $"{typeSymbol.Name}_Proxy";
-        var full = $"{proxyNs}.{typeSymbol.Name}_Proxy";
+        var proxyTypeName = AutoProxyEligibility.GetProxyTypeName(typeSymbol);
+        var minimal = proxyTypeName;
+        var full = $"{proxyNs}.{proxyTypeName}";
         var genericArity = GetAllTypeParameterCount(typeSymbol);
         var openGenericMinimalTypeof = genericArity > 0
             ? "typeof(" + minimal + BuildOpenGenericAritySuffix(genericArity) + ")"
@@ -706,9 +707,8 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             if (typedConstant.Value is null)
                 return null;
 
-            // 使用 Roslyn 自带的 ToCSharpString 生成常量/typeof/枚举等表达式，
-            // 这样可以支持 string、数字、bool、enum、typeof(...) 等所有合法属性值。
-            var expr = typedConstant.ToCSharpString();
+            if (!AutoProxyEligibility.TryFormatAttributeArgument(typedConstant, out var expr))
+                return null;
 
             // 保险起见，防止出现字面量 "null"
             if (string.Equals(expr, "null", StringComparison.Ordinal))

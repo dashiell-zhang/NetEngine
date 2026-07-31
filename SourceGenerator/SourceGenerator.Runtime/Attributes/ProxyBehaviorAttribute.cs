@@ -30,8 +30,10 @@ public abstract class ProxyBehaviorAttribute<TBehavior> : ProxyBehaviorAttribute
 
 
 /// <summary>
-/// 带选项版本。TOptions 会被生成器映射 Attribute 的同名命名参数到对应可写属性，
-/// 并在运行时通过 InvocationContext.Features 传递给行为使用。
+/// 带选项版本
+/// TOptions 会由生成器映射 Attribute 中显式提供的同名命名参数到对应可写属性
+/// 未显式提供的配置使用 TOptions 自身默认值并通过 InvocationContext.Features 传递给行为
+/// 行为特性构造函数参数不参与配置映射并会由生成器报告诊断
 /// </summary>
 public abstract class ProxyBehaviorAttribute<TBehavior, TOptions> : ProxyBehaviorAttribute
     where TOptions : class

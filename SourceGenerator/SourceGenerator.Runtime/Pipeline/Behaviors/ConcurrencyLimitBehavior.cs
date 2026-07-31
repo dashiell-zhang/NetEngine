@@ -39,6 +39,8 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
         var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
         var key = "ConcurrencyLimit_" + InvocationKey.ComposeHash(ctx, opt.IsUseParameter);
 
+        ctx.CancellationToken.ThrowIfCancellationRequested();
+
         IDisposable? handle = null;
         try
         {
@@ -57,18 +59,22 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
             }
 
             if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit acquired {methodForLog} semaphore={semaphore} expirySeconds={opt.ExpirySeconds}");
+            ctx.CancellationToken.ThrowIfCancellationRequested();
             return await next();
         }
         finally
         {
-            try
+            if (handle is not null)
             {
-                handle?.Dispose();
-                if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit released {methodForLog}");
-            }
-            catch (Exception ex)
-            {
-                if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit release error {methodForLog}: {ex.Message}");
+                try
+                {
+                    handle.Dispose();
+                    if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit released {methodForLog}");
+                }
+                catch (Exception ex)
+                {
+                    if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit release error {methodForLog}: {ex.Message}");
+                }
             }
         }
 

@@ -8,7 +8,7 @@ namespace SourceGenerator.Runtime.Attributes;
 public abstract class ProxyBehaviorAttribute : Attribute
 {
     /// <summary>
-    /// 运行时行为类型 必须实现 IInvocationAsyncBehavior 特殊同步代理路径还必须实现 IInvocationBehavior
+    /// 运行时行为类型必须实现 IInvocationAsyncBehavior 同步方法和异步流代理路径还必须实现 IInvocationBehavior
     /// </summary>
     public Type BehaviorType { get; }
 

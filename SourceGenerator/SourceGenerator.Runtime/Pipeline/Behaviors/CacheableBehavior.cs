@@ -41,9 +41,9 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
 
     /// <summary>
-    /// 缓存回源保护锁的默认失效时长 秒
+    /// 缓存回源保护锁的默认租约时长
     /// </summary>
-    private const int CacheLockExpirySeconds = 60;
+    private static readonly TimeSpan CacheLockExpiry = TimeSpan.FromSeconds(60);
 
     /// <summary>
     /// 尝试从缓存中读取结果 未命中时调用下游并将结果写入缓存
@@ -96,7 +96,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
         try
         {
-            lockHandle = await lockSvc.LockAsync(lockKey, TimeSpan.FromSeconds(CacheLockExpirySeconds));
+            lockHandle = await lockSvc.LockAsync(lockKey, CacheLockExpiry);
         }
         catch (OperationCanceledException)
         {
@@ -107,6 +107,8 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
             if (ctx.Log) ctx.Logger?.LogWarning($"Cache stampede lock error {methodForLog}: {ex.Message}");
             return await ExecuteAndSetAsync(cacheSvc, next, cacheKey, cache, ctx.Logger, ctx.Log, methodForLog, ctx.CancellationToken);
         }
+
+        var leaseRenewer = new DistributedLockLeaseRenewer(lockSvc, lockHandle, CacheLockExpiry, lockKey, methodForLog, ctx.Logger);
 
         try
         {
@@ -120,6 +122,8 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         }
         finally
         {
+            await leaseRenewer.StopAsync();
+
             try
             {
                 lockHandle.Dispose();
@@ -151,9 +155,20 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     /// <summary>
     /// 执行业务回源并在成功后尝试写入缓存
     /// </summary>
+    /// <typeparam name="T">调用返回值类型</typeparam>
+    /// <param name="cacheSvc">分布式缓存服务</param>
+    /// <param name="next">后续行为或目标方法</param>
+    /// <param name="cacheKey">结果缓存键</param>
+    /// <param name="cache">缓存行为配置</param>
+    /// <param name="logger">调用日志记录器</param>
+    /// <param name="log">是否记录调用日志</param>
+    /// <param name="method">调用方法摘要</param>
+    /// <param name="cancellationToken">调用取消令牌</param>
+    /// <returns>业务方法返回结果</returns>
     private static async ValueTask<T> ExecuteAndSetAsync<T>(IDistributedCache cacheSvc, Func<ValueTask<T>> next, string cacheKey, Options.CacheableOptions cache, ILogger? logger, bool log, string method, CancellationToken cancellationToken)
     {
 
+        cancellationToken.ThrowIfCancellationRequested();
         var result = await next();
         await SetAsync(cacheSvc, cacheKey, cache, logger, log, method, result, cancellationToken);
         return result;
@@ -223,10 +238,25 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
 
     /// <summary>
-    /// 将方法返回结果写入分布式缓存
+    /// 在业务成功后尽力将返回结果写入分布式缓存
     /// </summary>
+    /// <typeparam name="T">调用返回值类型</typeparam>
+    /// <param name="cacheSvc">分布式缓存服务</param>
+    /// <param name="cacheKey">结果缓存键</param>
+    /// <param name="cache">缓存行为配置</param>
+    /// <param name="logger">调用日志记录器</param>
+    /// <param name="log">是否记录调用日志</param>
+    /// <param name="method">调用方法摘要</param>
+    /// <param name="value">业务方法返回结果</param>
+    /// <param name="cancellationToken">调用取消令牌</param>
     private static async Task SetAsync<T>(IDistributedCache cacheSvc, string cacheKey, Options.CacheableOptions cache, ILogger? logger, bool log, string method, T value, CancellationToken cancellationToken)
     {
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            if (log) logger?.LogInformation($"Cache write skipped because request was canceled after method completed {method}");
+            return;
+        }
 
         try
         {
@@ -254,6 +284,10 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache.TtlSeconds)
             }, cancellationToken);
             if (log) logger?.LogInformation($"Cache set {method} ttl={cache.TtlSeconds}");
+        }
+        catch (OperationCanceledException)
+        {
+            if (log) logger?.LogInformation($"Cache write canceled after method completed {method}");
         }
         catch (Exception ex)
         {

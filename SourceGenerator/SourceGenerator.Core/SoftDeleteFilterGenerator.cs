@@ -103,6 +103,8 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
     /// <summary>
     /// 生成完整的软删除过滤器配置源码（配置类 + 扩展方法）
     /// </summary>
+    /// <param name="entities">需要生成软删除过滤器的实体类型</param>
+    /// <returns>完整生成源码</returns>
     private static string BuildSource(IReadOnlyList<INamedTypeSymbol> entities)
     {
         var sb = new StringBuilder();
@@ -110,20 +112,8 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
         sb.AppendLine("#nullable enable");
         sb.AppendLine("using Microsoft.EntityFrameworkCore;");
 
-        var namespaces = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var entity in entities)
-        {
-            var ns = entity.ContainingNamespace?.ToDisplayString();
-            if (!string.IsNullOrWhiteSpace(ns))
-            {
-                namespaces.Add(ns!);
-            }
-        }
-
-        foreach (var ns in namespaces.OrderBy(n => n, StringComparer.Ordinal))
-        {
-            sb.Append("using ").Append(ns).AppendLine(";");
-        }
+        var typeNameResolver = GeneratedEntityTypeNameResolver.Create(entities);
+        typeNameResolver.AppendUsingDirectives(sb);
 
         sb.AppendLine();
         sb.AppendLine("namespace Repository.Database.Generated;");
@@ -136,7 +126,7 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
 
         foreach (var entity in entities)
         {
-            var entityDisplay = entity.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            var entityDisplay = typeNameResolver.GetTypeName(entity);
 
             sb.Append("        modelBuilder.Entity<")
               .Append(entityDisplay)

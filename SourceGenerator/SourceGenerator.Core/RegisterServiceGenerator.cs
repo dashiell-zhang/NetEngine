@@ -19,6 +19,30 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
     private const string AutoProxyAttributeMetadataName = "SourceGenerator.Runtime.Attributes.AutoProxyAttribute";
 
+
+    /// <summary>
+    /// 当服务实现存在多个直接业务接口且未显式选择时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor AmbiguousServiceTypeDescriptor = new(
+        id: "RegisterService001",
+        title: "RegisterService 服务类型不明确",
+        messageFormat: "类型 {0} 实现了多个直接业务接口：{1}，请通过 RegisterServiceAttribute 构造参数显式指定服务类型",
+        category: "RegisterServiceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当显式服务类型不是实现类自身或已实现接口时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor InvalidServiceTypeDescriptor = new(
+        id: "RegisterService002",
+        title: "RegisterService 服务类型无效",
+        messageFormat: "显式服务类型 {0} 不是实现类 {1} 自身或其已实现接口",
+        category: "RegisterServiceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     private sealed class ServiceCandidate
     {
 
@@ -65,6 +89,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
     /// <summary>
     /// 初始化增量生成器，配置基于 RegisterService 特性生成 DI 注册代码的管道
     /// </summary>
+    /// <param name="context">增量生成器初始化上下文</param>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // 使用 ForAttributeWithMetadataName 直接筛选出带有 [RegisterService] 的类型，避免手动遍历语法树
@@ -176,6 +201,12 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 var lifetime = GetLifetime(attrData) ?? "Transient";
                 var keyExpr = GetKeyExpression(attrData);
 
+                if (!TrySelectServiceType(typeSymbol, attrData, out var selectedServiceType, out var diagnostic))
+                {
+                    spc.ReportDiagnostic(diagnostic!);
+                    continue;
+                }
+
                 var hasAutoProxy = HasAutoProxy(typeSymbol, autoProxyAttributeSymbol);
                 var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateCompleteProxy(typeSymbol, compilation);
                 CollectNamespaces(usingNamespaces, typeSymbol);
@@ -185,24 +216,22 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                     ? GetProxyDisplay(typeSymbol)
                     : GetDisplay(typeSymbol);
 
-                var iface = typeSymbol.AllInterfaces.FirstOrDefault();
-                if (iface is not null)
+                if (selectedServiceType is not null)
                 {
-                    CollectNamespaces(usingNamespaces, iface);
+                    CollectNamespaces(usingNamespaces, selectedServiceType);
                 }
 
                 DisplayInfo? serviceInfo = null;
-                if (iface is not null)
+                var registersAsSelf = selectedServiceType is null
+                                      || SymbolEqualityComparer.Default.Equals(selectedServiceType, typeSymbol);
+
+                if (!registersAsSelf)
                 {
-                    serviceInfo = GetDisplay(iface);
+                    serviceInfo = GetDisplay(selectedServiceType!);
                 }
 
-                // serviceDisplay: 作为泛型 TService 使用的类型
-                // 1. 优先使用第一个接口（典型接口编程场景）；
-                // 2. 如果没有接口但带 [AutoProxy]，则使用原始类类型，形成
-                //    AddScoped<Demo2Service, Demo2Service_Proxy>() 这样的注册；
-                // 3. 否则为 null，走 self 注册。
-                if (serviceInfo is null && canUseAutoProxy)
+                // 自注册的 AutoProxy 服务需要将原始类型作为服务类型并将代理作为实现类型
+                if (registersAsSelf && canUseAutoProxy)
                 {
                     serviceInfo = GetDisplay(typeSymbol);
                 }
@@ -345,6 +374,152 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             var hintName = $"{extClassName}_RegisterServices.g.cs";
             spc.AddSource(hintName, sb.ToString());
         });
+    }
+
+
+    /// <summary>
+    /// 根据显式配置或直接业务接口选择唯一的 DI 服务类型
+    /// </summary>
+    /// <param name="implementationType">服务实现类型</param>
+    /// <param name="attribute">RegisterService 特性数据</param>
+    /// <param name="serviceType">选择出的服务类型，为 null 时表示实现类自注册</param>
+    /// <param name="diagnostic">服务类型无法确定时产生的诊断</param>
+    /// <returns>成功确定注册规则时返回 true</returns>
+    private static bool TrySelectServiceType(INamedTypeSymbol implementationType, AttributeData attribute, out INamedTypeSymbol? serviceType, out Diagnostic? diagnostic)
+    {
+
+        serviceType = null;
+        diagnostic = null;
+
+        if (attribute.ConstructorArguments.Length > 0)
+        {
+            var configuredSymbol = attribute.ConstructorArguments[0].Value as ITypeSymbol;
+            var configuredType = configuredSymbol as INamedTypeSymbol;
+            var matchedType = configuredType is null ? null : FindConfiguredServiceType(implementationType, configuredType);
+
+            if (matchedType is null)
+            {
+                diagnostic = Diagnostic.Create(
+                    InvalidServiceTypeDescriptor,
+                    GetAttributeLocation(attribute, implementationType),
+                    configuredSymbol?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) ?? "null",
+                    implementationType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
+
+                return false;
+            }
+
+            serviceType = matchedType;
+            return true;
+        }
+
+        var directInterfaces = GetDirectBusinessInterfaces(implementationType);
+        if (directInterfaces.Length == 0)
+            return true;
+
+        if (directInterfaces.Length == 1)
+        {
+            serviceType = directInterfaces[0];
+            return true;
+        }
+
+        diagnostic = Diagnostic.Create(
+            AmbiguousServiceTypeDescriptor,
+            GetAttributeLocation(attribute, implementationType),
+            implementationType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+            string.Join(", ", directInterfaces.Select(static interfaceType => interfaceType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat))));
+
+        return false;
+
+    }
+
+
+    /// <summary>
+    /// 查找显式服务类型对应的实现类自身或已实现接口
+    /// </summary>
+    /// <param name="implementationType">服务实现类型</param>
+    /// <param name="configuredType">特性中显式配置的服务类型</param>
+    /// <returns>用于生成注册的实际类型符号，配置无效时返回 null</returns>
+    private static INamedTypeSymbol? FindConfiguredServiceType(INamedTypeSymbol implementationType, INamedTypeSymbol configuredType)
+    {
+
+        if (MatchesConfiguredType(implementationType, configuredType))
+            return implementationType;
+
+        if (configuredType.TypeKind != TypeKind.Interface)
+            return null;
+
+        return implementationType.AllInterfaces.FirstOrDefault(interfaceType => MatchesConfiguredType(interfaceType, configuredType));
+
+    }
+
+
+    /// <summary>
+    /// 判断实际类型是否匹配显式配置的普通类型或开放泛型类型
+    /// </summary>
+    /// <param name="actualType">实现类实际使用的类型</param>
+    /// <param name="configuredType">特性中配置的类型</param>
+    /// <returns>两个类型可以表示同一个服务契约时返回 true</returns>
+    private static bool MatchesConfiguredType(INamedTypeSymbol actualType, INamedTypeSymbol configuredType)
+    {
+
+        if (configuredType.IsUnboundGenericType)
+        {
+            return SymbolEqualityComparer.Default.Equals(actualType.OriginalDefinition, configuredType.OriginalDefinition);
+        }
+
+        return SymbolEqualityComparer.Default.Equals(actualType, configuredType);
+
+    }
+
+
+    /// <summary>
+    /// 获取实现类直接声明且最具体的业务接口
+    /// </summary>
+    /// <param name="implementationType">服务实现类型</param>
+    /// <returns>按完整类型名称排序的直接业务接口</returns>
+    private static INamedTypeSymbol[] GetDirectBusinessInterfaces(INamedTypeSymbol implementationType)
+    {
+
+        var directInterfaces = implementationType.Interfaces
+            .Where(static interfaceType => !IsInfrastructureInterface(interfaceType))
+            .ToArray();
+
+        return directInterfaces
+            .Where(candidate => !directInterfaces.Any(other => !SymbolEqualityComparer.Default.Equals(candidate, other)
+                                                               && other.AllInterfaces.Contains(candidate, SymbolEqualityComparer.Default)))
+            .OrderBy(static interfaceType => interfaceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
+            .ToArray();
+
+    }
+
+
+    /// <summary>
+    /// 判断接口是否属于不应自动作为业务服务契约的基础设施接口
+    /// </summary>
+    /// <param name="interfaceType">待检查的接口</param>
+    /// <returns>接口为 IDisposable 或 IAsyncDisposable 时返回 true</returns>
+    private static bool IsInfrastructureInterface(INamedTypeSymbol interfaceType)
+    {
+
+        var metadataName = interfaceType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+        return string.Equals(metadataName, "System.IDisposable", StringComparison.Ordinal)
+               || string.Equals(metadataName, "System.IAsyncDisposable", StringComparison.Ordinal);
+
+    }
+
+
+    /// <summary>
+    /// 获取 RegisterService 特性对应的源码位置
+    /// </summary>
+    /// <param name="attribute">RegisterService 特性数据</param>
+    /// <param name="implementationType">特性标记的实现类型</param>
+    /// <returns>优先指向特性声明的诊断位置</returns>
+    private static Location? GetAttributeLocation(AttributeData attribute, INamedTypeSymbol implementationType)
+    {
+
+        return attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation()
+               ?? implementationType.Locations.FirstOrDefault();
+
     }
 
 

@@ -17,6 +17,18 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 {
 
     /// <summary>
+    /// 当后台服务或其外层类型包含未绑定类型参数时报告的诊断
+    /// </summary>
+    private static readonly DiagnosticDescriptor UnsupportedOpenGenericBackgroundServiceDescriptor = new(
+        id: "BackgroundService001",
+        title: "开放泛型后台服务无法自动注册",
+        messageFormat: "后台服务 {0} 包含未绑定类型参数，无法通过 AddHostedService<T>() 注册；请将泛型基类改为 abstract，或声明具体的闭合后台服务类型",
+        category: "BackgroundServiceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
     /// 初始化增量生成器，配置语法筛选与源代码输出管道
     /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -130,6 +142,14 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
                 if (!seenTypes.Add(typeSymbol))
                     continue;
+
+                if (ContainsUnboundTypeParameters(typeSymbol))
+                {
+                    var diagnosticLocation = typeSymbol.Locations.FirstOrDefault(static location => location.IsInSource) ?? Location.None;
+                    var typeDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                    spc.ReportDiagnostic(Diagnostic.Create(UnsupportedOpenGenericBackgroundServiceDescriptor, diagnosticLocation, typeDisplay));
+                    continue;
+                }
 
                 CollectNamespaces(usingNamespaces, typeSymbol);
 
@@ -261,6 +281,27 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
 
     /// <summary>
+    /// 判断后台服务自身或任一外层类型是否声明了未绑定类型参数
+    /// </summary>
+    /// <param name="typeSymbol">待检查的后台服务类型</param>
+    /// <returns>如果完整类型链中存在类型参数则返回 true</returns>
+    private static bool ContainsUnboundTypeParameters(INamedTypeSymbol typeSymbol)
+    {
+
+        for (var current = typeSymbol; current is not null; current = current.ContainingType)
+        {
+            if (current.TypeParameters.Length > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+
+    /// <summary>
     /// 判断给定类型是否继承自指定的基类类型
     /// </summary>
     /// <param name="type">要检查的类型。</param>
@@ -349,4 +390,3 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
     }
 
 }
-

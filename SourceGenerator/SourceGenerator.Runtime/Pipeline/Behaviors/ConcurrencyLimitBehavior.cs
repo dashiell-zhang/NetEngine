@@ -29,7 +29,7 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
         if (lockSvc is null) return await next();
 
         var semaphore = opt.Semaphore <= 0 ? 1 : opt.Semaphore;
-        var expiry = opt.ExpirySeconds <= 0 ? default : TimeSpan.FromSeconds(opt.ExpirySeconds);
+        var expiry = opt.ExpirySeconds <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromSeconds(opt.ExpirySeconds);
 
         if (opt.IsUseParameter && (!ctx.IsArgumentsKeyComplete || ctx.ArgumentsKey is null))
         {
@@ -42,6 +42,7 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
         ctx.CancellationToken.ThrowIfCancellationRequested();
 
         IDisposable? handle = null;
+        DistributedLockLeaseRenewer? leaseRenewer = null;
         try
         {
             if (opt.IsBlock)
@@ -58,7 +59,9 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
                 handle = await lockSvc.LockAsync(key, expiry, semaphore);
             }
 
-            if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit acquired {methodForLog} semaphore={semaphore} expirySeconds={opt.ExpirySeconds}");
+            leaseRenewer = new DistributedLockLeaseRenewer(lockSvc, handle, expiry, key, methodForLog, ctx.Logger);
+
+            if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit acquired {methodForLog} semaphore={semaphore} expirySeconds={expiry.TotalSeconds}");
             ctx.CancellationToken.ThrowIfCancellationRequested();
             return await next();
         }
@@ -66,6 +69,11 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
         {
             if (handle is not null)
             {
+                if (leaseRenewer is not null)
+                {
+                    await leaseRenewer.StopAsync();
+                }
+
                 try
                 {
                     handle.Dispose();

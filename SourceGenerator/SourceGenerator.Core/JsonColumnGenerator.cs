@@ -82,7 +82,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         // 从 [JsonColumn] 属性本身出发增量收集，避免遍历所有实体属性
         var jsonColumnProperties = context.SyntaxProvider.ForAttributeWithMetadataName(
                 JsonColumnAttributeMetadataName,
-                static (node, _) => node is PropertyDeclarationSyntax,
+                static (node, _) => node is PropertyDeclarationSyntax or IndexerDeclarationSyntax,
                 static (ctx, _) => ctx.TargetSymbol as IPropertySymbol)
             .Where(static p => p is not null)!;
 
@@ -151,6 +151,10 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// <summary>
     /// 分析单个带 [JsonColumn] 的属性是否能生成映射
     /// </summary>
+    /// <param name="property">带 JsonColumn 特性的属性</param>
+    /// <param name="dbSetEntities">当前 DbContext 引用的实体集合</param>
+    /// <param name="symbols">生成器使用的框架类型符号</param>
+    /// <returns>属性分析结果，不属于 DbSet 实体时返回 null</returns>
     private static JsonColumnAnalysis? AnalyzeJsonColumnProperty(IPropertySymbol property, ImmutableHashSet<INamedTypeSymbol> dbSetEntities, GeneratorSymbols symbols)
     {
         if (property.ContainingType is not INamedTypeSymbol entityType)
@@ -158,6 +162,51 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
         if (!dbSetEntities.Contains(entityType))
             return null;
+
+        if (!IsTypeAccessibleFromGeneratedCode(entityType))
+        {
+            var diagnostic = Diagnostic.Create(
+                InaccessibleEntityTypeDescriptor,
+                entityType.Locations.FirstOrDefault() ?? property.Locations.FirstOrDefault(),
+                property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                entityType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
+
+            return new JsonColumnAnalysis(entityType, null, diagnostic);
+        }
+
+        var unsupportedPropertyReason = GetUnsupportedPropertyReason(property);
+        if (unsupportedPropertyReason is not null)
+        {
+            var diagnostic = Diagnostic.Create(
+                UnsupportedPropertyDescriptor,
+                property.Locations.FirstOrDefault(),
+                property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                unsupportedPropertyReason);
+
+            return new JsonColumnAnalysis(entityType, null, diagnostic);
+        }
+
+        if (!IsAccessibleFromGeneratedCode(property.DeclaredAccessibility))
+        {
+            var diagnostic = Diagnostic.Create(
+                InaccessiblePropertyDescriptor,
+                property.Locations.FirstOrDefault(),
+                property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                $"属性访问级别 {GetAccessibilityText(property.DeclaredAccessibility)} 不受支持");
+
+            return new JsonColumnAnalysis(entityType, null, diagnostic);
+        }
+
+        if (property.GetMethod is not null && !IsAccessibleFromGeneratedCode(property.GetMethod.DeclaredAccessibility))
+        {
+            var diagnostic = Diagnostic.Create(
+                InaccessiblePropertyDescriptor,
+                property.GetMethod.Locations.FirstOrDefault() ?? property.Locations.FirstOrDefault(),
+                property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                $"getter 访问级别 {GetAccessibilityText(property.GetMethod.DeclaredAccessibility)} 不受支持");
+
+            return new JsonColumnAnalysis(entityType, null, diagnostic);
+        }
 
         var (ownedType, isCollection) = GetOwnedType(property.Type, symbols.List, symbols.Dictionary);
         if (ownedType is null || !IsSupportedJsonColumnRootType(ownedType))
@@ -184,6 +233,90 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         }
 
         return new JsonColumnAnalysis(entityType, new JsonNavigation(property.Name, isCollection), null);
+    }
+
+
+    /// <summary>
+    /// 判断实体及其所有外层类型能否由同程序集的顶层生成代码访问
+    /// </summary>
+    /// <param name="type">待检查的实体类型</param>
+    /// <returns>实体类型可访问时返回 true</returns>
+    private static bool IsTypeAccessibleFromGeneratedCode(INamedTypeSymbol type)
+    {
+
+        for (var current = type; current is not null; current = current.ContainingType)
+        {
+            if (current.IsFileLocal || !IsAccessibleFromGeneratedCode(current.DeclaredAccessibility))
+                return false;
+        }
+
+        return true;
+
+    }
+
+
+    /// <summary>
+    /// 获取无法生成属性访问表达式的声明形态原因
+    /// </summary>
+    /// <param name="property">待检查的 JsonColumn 属性</param>
+    /// <returns>不支持原因，属性形态合法时返回 null</returns>
+    private static string? GetUnsupportedPropertyReason(IPropertySymbol property)
+    {
+
+        if (property.IsStatic)
+            return "静态属性不受支持";
+
+        if (property.IsIndexer)
+            return "索引器属性不受支持";
+
+        if (!property.ExplicitInterfaceImplementations.IsDefaultOrEmpty)
+            return "显式接口实现属性不受支持";
+
+        if (property.RefKind != RefKind.None)
+            return "ref 返回属性不受支持";
+
+        if (property.GetMethod is null)
+            return "属性必须声明 getter";
+
+        return null;
+
+    }
+
+
+    /// <summary>
+    /// 判断访问级别能否通过同程序集且不依赖继承的生成代码访问
+    /// </summary>
+    /// <param name="accessibility">待检查的访问级别</param>
+    /// <returns>生成代码可以直接访问时返回 true</returns>
+    private static bool IsAccessibleFromGeneratedCode(Accessibility accessibility)
+    {
+
+        return accessibility is Accessibility.Public
+               or Accessibility.Internal
+               or Accessibility.ProtectedOrInternal;
+
+    }
+
+
+    /// <summary>
+    /// 获取用于诊断消息的访问级别文本
+    /// </summary>
+    /// <param name="accessibility">访问级别</param>
+    /// <returns>C# 访问修饰符文本</returns>
+    private static string GetAccessibilityText(Accessibility accessibility)
+    {
+
+        return accessibility switch
+        {
+            Accessibility.Public => "public",
+            Accessibility.Internal => "internal",
+            Accessibility.Protected => "protected",
+            Accessibility.Private => "private",
+            Accessibility.ProtectedOrInternal => "protected internal",
+            Accessibility.ProtectedAndInternal => "private protected",
+            _ => accessibility.ToString()
+        };
+
     }
 
 
@@ -393,6 +526,8 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// <summary>
     /// 根据收集到的实体配置生成 JsonColumn 映射扩展方法源码
     /// </summary>
+    /// <param name="configs">需要生成 JSON 列映射的实体配置</param>
+    /// <returns>完整生成源码</returns>
     private static string BuildSource(ImmutableArray<JsonEntityConfig> configs)
     {
         var sb = new StringBuilder();
@@ -400,20 +535,8 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         sb.AppendLine("#nullable enable");
         sb.AppendLine("using Microsoft.EntityFrameworkCore;");
 
-        var namespaces = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var config in configs)
-        {
-            var ns = config.EntityType.ContainingNamespace?.ToDisplayString();
-            if (!string.IsNullOrWhiteSpace(ns))
-            {
-                namespaces.Add(ns!);
-            }
-        }
-
-        foreach (var ns in namespaces.OrderBy(n => n, StringComparer.Ordinal))
-        {
-            sb.Append("using ").Append(ns).AppendLine(";");
-        }
+        var typeNameResolver = GeneratedEntityTypeNameResolver.Create(configs.Select(static config => config.EntityType));
+        typeNameResolver.AppendUsingDirectives(sb);
 
         sb.AppendLine();
         sb.AppendLine("namespace Repository.Database.Generated;");
@@ -425,7 +548,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
         foreach (var config in configs.OrderBy(c => c.EntityType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), StringComparer.Ordinal))
         {
-            AppendEntityMapping(sb, config);
+            AppendEntityMapping(sb, config, typeNameResolver);
         }
 
         sb.AppendLine("    }");
@@ -438,9 +561,13 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// <summary>
     /// 为单个实体生成 Entity 级 JSON 拥有者配置
     /// </summary>
-    private static void AppendEntityMapping(StringBuilder sb, JsonEntityConfig config)
+    /// <param name="sb">目标源码构建器</param>
+    /// <param name="config">当前实体的 JSON 列配置</param>
+    /// <param name="typeNameResolver">实体类型名称解析器</param>
+    private static void AppendEntityMapping(StringBuilder sb, JsonEntityConfig config, GeneratedEntityTypeNameResolver typeNameResolver)
     {
-        var entityName = config.EntityType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+
+        var entityName = typeNameResolver.GetTypeName(config.EntityType);
 
         sb.Append("        modelBuilder.Entity<").Append(entityName).AppendLine(">(builder =>");
         sb.AppendLine("        {");
@@ -603,6 +730,42 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         id: "JsonColumn002",
         title: "JsonColumn 类型存在循环嵌套",
         messageFormat: "JsonColumn 属性 {0} 的类型 {1} 存在循环嵌套：{2}",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当 JsonColumn 所属实体或外层类型无法被生成代码访问时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor InaccessibleEntityTypeDescriptor = new(
+        id: "JsonColumn003",
+        title: "JsonColumn 实体类型无法访问",
+        messageFormat: "JsonColumn 属性 {0} 所属的实体类型 {1} 或其外层类型无法被生成代码访问",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当 JsonColumn 属性声明形态无法生成访问表达式时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor UnsupportedPropertyDescriptor = new(
+        id: "JsonColumn004",
+        title: "JsonColumn 属性声明不受支持",
+        messageFormat: "JsonColumn 属性 {0} 无法生成映射：{1}",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当 JsonColumn 属性或 getter 无法被生成代码访问时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor InaccessiblePropertyDescriptor = new(
+        id: "JsonColumn005",
+        title: "JsonColumn 属性无法访问",
+        messageFormat: "JsonColumn 属性 {0} 无法被生成代码访问：{1}",
         category: "JsonColumnGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

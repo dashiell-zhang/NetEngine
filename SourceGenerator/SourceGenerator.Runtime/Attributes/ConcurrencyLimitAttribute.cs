@@ -23,7 +23,7 @@ public class ConcurrencyLimitAttribute : ProxyBehaviorAttribute<ConcurrencyLimit
 
 
     /// <summary>
-    /// 锁的失效时长（秒）
+    /// 单次锁租约时长且等待获取锁时也作为最长等待时长 秒 默认 60 秒
     /// </summary>
     public int ExpirySeconds { get; set; } = 0;
 

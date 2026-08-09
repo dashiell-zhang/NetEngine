@@ -9,17 +9,69 @@ public static class ProxyRuntime
 {
 
     /// <summary>
-    /// 在同步调用场景下执行行为管道 并返回结果
+    /// 在同步调用场景下执行同步行为管道并返回结果
     /// </summary>
     /// <typeparam name="T">返回值类型</typeparam>
     /// <param name="ctx">调用上下文</param>
-    /// <param name="inner">实际执行目标方法的委托 以 ValueTask 形式返回</param>
+    /// <param name="inner">实际执行目标方法的同步委托</param>
     /// <returns>目标方法最终返回值</returns>
+    public static T Execute<T>(InvocationContext ctx, Func<T> inner)
+    {
+
+        var behaviors = GetSynchronousBehaviors(ctx);
+
+        try
+        {
+            foreach (var behavior in behaviors)
+            {
+                behavior.OnBefore(ctx);
+            }
+
+            var result = inner();
+
+            foreach (var behavior in behaviors)
+            {
+                behavior.OnAfter(ctx, result);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            foreach (var behavior in behaviors)
+            {
+                behavior.OnException(ctx, ex);
+            }
+
+            throw;
+        }
+
+    }
+
+
+    /// <summary>
+    /// 兼容旧版生成代码执行能够同步完成的 ValueTask 委托
+    /// </summary>
+    /// <typeparam name="T">返回值类型</typeparam>
+    /// <param name="ctx">调用上下文</param>
+    /// <param name="inner">旧版生成代码使用的 ValueTask 委托</param>
+    /// <returns>目标方法最终返回值</returns>
+    [Obsolete("同步代理不再支持异步行为管道，请改用接收 Func<T> 的 Execute 重载")]
     public static T Execute<T>(InvocationContext ctx, Func<ValueTask<T>> inner)
     {
-        var behaviors = ctx.Behaviors ?? new IInvocationAsyncBehavior[] { new Pipeline.Behaviors.LoggingBehavior() };
 
-        return InvocationPipeline.ExecuteAsync<T>(ctx, inner, behaviors).GetAwaiter().GetResult();
+        return Execute<T>(ctx, () =>
+        {
+            var pendingResult = inner();
+
+            if (!pendingResult.IsCompletedSuccessfully)
+            {
+                throw new InvalidOperationException("同步代理不能等待尚未完成的异步操作，请将目标方法返回类型改为 Task 或 ValueTask");
+            }
+
+            return pendingResult.Result;
+        });
+
     }
 
 
@@ -83,6 +135,32 @@ public static class ProxyRuntime
         await InvocationPipeline
             .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, behaviors)
             .ConfigureAwait(false);
+    }
+
+
+    /// <summary>
+    /// 获取当前调用中全部可用于同步代理路径的行为
+    /// </summary>
+    /// <param name="ctx">调用上下文</param>
+    /// <returns>同步行为列表</returns>
+    private static IReadOnlyList<IInvocationBehavior> GetSynchronousBehaviors(InvocationContext ctx)
+    {
+
+        var behaviors = ctx.Behaviors ?? new IInvocationAsyncBehavior[] { new Pipeline.Behaviors.LoggingBehavior() };
+        var synchronousBehaviors = new IInvocationBehavior[behaviors.Count];
+
+        for (var i = 0; i < behaviors.Count; i++)
+        {
+            if (behaviors[i] is not IInvocationBehavior synchronousBehavior)
+            {
+                throw new InvalidOperationException($"行为 {behaviors[i].GetType().FullName} 不支持同步代理方法，请将目标方法返回类型改为 Task 或 ValueTask");
+            }
+
+            synchronousBehaviors[i] = synchronousBehavior;
+        }
+
+        return synchronousBehaviors;
+
     }
 
 }

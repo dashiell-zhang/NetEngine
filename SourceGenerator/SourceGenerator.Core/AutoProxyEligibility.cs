@@ -1286,7 +1286,9 @@ internal static class AutoProxyEligibility
             {
                 var reason = IsAsyncStreamReturn(method.ReturnType)
                     ? "异步流方法当前使用同步过滤管道，行为类型必须同时实现 IInvocationBehavior"
-                    : "方法包含 ref、out、in、ref-like 参数或 ref 返回值，行为类型必须同时实现 IInvocationBehavior";
+                    : !IsTaskOrValueTaskReturn(method.ReturnType)
+                        ? "同步方法不能执行异步行为管道，行为类型必须同时实现 IInvocationBehavior；需要异步行为时请将方法返回类型改为 Task 或 ValueTask"
+                        : "方法包含 ref、out、in、ref-like 参数或 ref 返回值，行为类型必须同时实现 IInvocationBehavior";
 
                 yield return CreateUnsupportedBehaviorResult(method, attribute, reason);
                 continue;
@@ -1914,7 +1916,8 @@ internal static class AutoProxyEligibility
     /// <param name="method">待检查的方法</param>
     /// <returns>如果方法必须使用同步行为接口则返回 true</returns>
     private static bool RequiresSynchronousBehavior(IMethodSymbol method)
-        => method.ReturnsByRef
+        => !IsTaskOrValueTaskReturn(method.ReturnType)
+           || method.ReturnsByRef
            || method.ReturnsByRefReadonly
            || method.Parameters.Any(parameter => parameter.RefKind != RefKind.None || parameter.Type.IsRefLikeType)
            || IsAsyncStreamReturn(method.ReturnType);
@@ -1933,10 +1936,10 @@ internal static class AutoProxyEligibility
 
         var constructed = namedType.ConstructedFrom;
 
-        if (IsType(constructed, "System.Collections.Generic.IAsyncEnumerable"))
+        if (IsNamedType(constructed, "System.Collections.Generic", "IAsyncEnumerable", 1))
             return true;
 
-        if (IsType(constructed, "System.Threading.Tasks.Task") || IsType(constructed, "System.Threading.Tasks.ValueTask"))
+        if (IsNamedType(constructed, "System.Threading.Tasks", "Task") || IsNamedType(constructed, "System.Threading.Tasks", "ValueTask"))
             return IsAsyncStreamReturn(namedType.TypeArguments[0]);
 
         return false;
@@ -2120,12 +2123,8 @@ internal static class AutoProxyEligibility
         if (returnType is not INamedTypeSymbol named)
             return false;
 
-        var type = named.IsGenericType && named.ConstructedFrom is INamedTypeSymbol constructedFrom
-            ? constructedFrom
-            : named;
-
-        return IsType(type, "System.Threading.Tasks.Task")
-               || IsType(type, "System.Threading.Tasks.ValueTask");
+        return IsNamedType(named, "System.Threading.Tasks", "Task")
+               || IsNamedType(named, "System.Threading.Tasks", "ValueTask");
 
     }
 

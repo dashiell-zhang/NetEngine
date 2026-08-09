@@ -28,9 +28,15 @@ public sealed class InMemoryLock : IDistributedLock
     /// </summary>
     /// <param name="lockHandle">锁句柄</param>
     /// <param name="expiry">新的失效时长</param>
+    /// <param name="cancellationToken">取消续期等待的令牌</param>
     /// <returns>续期是否成功</returns>
-    public Task<bool> RenewAsync(IDisposable lockHandle, TimeSpan expiry)
+    public Task<bool> RenewAsync(IDistributedLockHandle lockHandle, TimeSpan expiry, CancellationToken cancellationToken = default)
     {
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled<bool>(cancellationToken);
+        }
 
         if (expiry == default)
         {
@@ -54,7 +60,7 @@ public sealed class InMemoryLock : IDistributedLock
     /// <param name="expiry">锁的失效时长与最长等待时长</param>
     /// <param name="semaphore">可同时持有锁的名额数量</param>
     /// <returns>成功获取的锁句柄</returns>
-    public async Task<IDisposable> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
+    public async Task<IDistributedLockHandle> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
     {
 
         var handle = await TryAcquireAsync(key, expiry, semaphore, wait: true);
@@ -70,7 +76,7 @@ public sealed class InMemoryLock : IDistributedLock
     /// <param name="expiry">锁的失效时长</param>
     /// <param name="semaphore">可同时持有锁的名额数量</param>
     /// <returns>成功返回锁句柄 失败返回 null</returns>
-    public Task<IDisposable?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
+    public Task<IDistributedLockHandle?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
     {
 
         return TryAcquireAsync(key, expiry, semaphore, wait: false);
@@ -86,7 +92,7 @@ public sealed class InMemoryLock : IDistributedLock
     /// <param name="semaphore">可同时持有锁的名额数量</param>
     /// <param name="wait">是否等待直到超时</param>
     /// <returns>成功返回句柄 失败返回 null</returns>
-    private static async Task<IDisposable?> TryAcquireAsync(string key, TimeSpan expiry, int semaphore, bool wait)
+    private static async Task<IDistributedLockHandle?> TryAcquireAsync(string key, TimeSpan expiry, int semaphore, bool wait)
     {
 
         if (string.IsNullOrWhiteSpace(key))

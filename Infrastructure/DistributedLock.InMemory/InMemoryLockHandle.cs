@@ -7,7 +7,7 @@ namespace DistributedLock.InMemory
     /// 内存锁句柄
     /// 释放时归还名额并触发分组清理
     /// </summary>
-    internal sealed class InMemoryLockHandle : IDisposable
+    internal sealed class InMemoryLockHandle : IDistributedLockHandle
     {
 
         /// <summary>
@@ -96,6 +96,18 @@ namespace DistributedLock.InMemory
             }
 
             ReleaseLock();
+
+        }
+
+
+        /// <summary>
+        /// 异步释放锁并立即返回已经完成的等待结果
+        /// </summary>
+        public ValueTask DisposeAsync()
+        {
+
+            Dispose();
+            return ValueTask.CompletedTask;
 
         }
 

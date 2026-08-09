@@ -6,13 +6,19 @@ namespace DistributedLock.Redis;
 /// <summary>
 /// Redis 分布式锁句柄
 /// </summary>
-public sealed class RedisLockHandle : IDisposable
+public sealed class RedisLockHandle : IDistributedLockHandle
 {
 
     /// <summary>
-    /// 是否已经触发释放
+    /// 释放任务同步对象
     /// </summary>
-    private int disposed;
+    private readonly object releaseLock = new();
+
+
+    /// <summary>
+    /// 已经启动的唯一释放任务
+    /// </summary>
+    private Task? releaseTask;
 
 
     /// <summary>
@@ -36,7 +42,18 @@ public sealed class RedisLockHandle : IDisposable
     /// <summary>
     /// 当前句柄是否已经释放
     /// </summary>
-    public bool IsDisposed => Volatile.Read(ref disposed) != 0;
+    public bool IsDisposed
+    {
+        get
+        {
+
+            lock (releaseLock)
+            {
+                return releaseTask is not null;
+            }
+
+        }
+    }
 
 
     /// <summary>
@@ -61,25 +78,47 @@ public sealed class RedisLockHandle : IDisposable
     public void Dispose()
     {
 
-        if (Interlocked.Exchange(ref disposed, 1) != 0)
-        {
-            return;
-        }
-
-        _ = ReleaseAsync();
+        _ = ObserveReleaseAsync(GetOrStartReleaseTask());
 
     }
 
 
     /// <summary>
-    /// 异步释放当前持有的 Redis 锁并观察释放异常
+    /// 异步释放当前持有的 Redis 锁并向调用方传播释放异常
     /// </summary>
-    private async Task ReleaseAsync()
+    public ValueTask DisposeAsync()
+    {
+
+        return new ValueTask(GetOrStartReleaseTask());
+
+    }
+
+
+    /// <summary>
+    /// 获取或启动唯一的 Redis 解锁任务
+    /// </summary>
+    /// <returns>当前句柄共享的释放任务</returns>
+    private Task GetOrStartReleaseTask()
+    {
+
+        lock (releaseLock)
+        {
+            return releaseTask ??= Database.LockReleaseAsync(LockKey, LockValue);
+        }
+
+    }
+
+
+    /// <summary>
+    /// 为同步兼容入口观察并记录异步释放异常
+    /// </summary>
+    /// <param name="task">需要观察的释放任务</param>
+    private async Task ObserveReleaseAsync(Task task)
     {
 
         try
         {
-            await Database.LockReleaseAsync(LockKey, LockValue);
+            await task;
         }
         catch (Exception ex)
         {

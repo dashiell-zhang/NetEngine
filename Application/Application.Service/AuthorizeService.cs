@@ -87,7 +87,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
         if (userId == default)
         {
 
-            using (await distLock.LockAsync("GetTokenByWeiXinMiniAppCode" + openId))
+            await using (await distLock.LockAsync("GetTokenByWeiXinMiniAppCode" + openId))
             {
 
                 userId = await userIdQuery.FirstOrDefaultAsync();
@@ -603,7 +603,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
             string key = "IssueNewToken" + tokenId;
 
-            using var lockHandle = await distLock.TryLockAsync(key);
+            await using var lockHandle = await distLock.TryLockAsync(key);
             if (lockHandle != null)
             {
                 var newToken = await distributedCache.GetStringAsync(tokenId + "newToken");
@@ -612,7 +612,8 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
                 {
                     newToken = await GetTokenByUserIdAsync(userId, tokenId);
 
-                    if (await distLock.TryLockAsync("ClearExpireToken") != null)
+                    await using var clearExpireTokenLockHandle = await distLock.TryLockAsync("ClearExpireToken");
+                    if (clearExpireTokenLockHandle != null)
                     {
                         var clearTime = DateTime.UtcNow.AddDays(-7);
                         var clearList = await db.UserToken.Where(t => t.CreateTime < clearTime).ToListAsync();

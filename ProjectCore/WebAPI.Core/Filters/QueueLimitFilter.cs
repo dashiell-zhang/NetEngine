@@ -40,11 +40,15 @@ public class QueueLimitFilter : Attribute, IAsyncActionFilter
     /// </summary>
     public int Expiry { get; set; }
 
-
-
+    /// <summary>
+    /// 获取请求级分布式锁并按照配置执行排队或阻断
+    /// </summary>
+    /// <param name="context">当前操作筛选器上下文</param>
+    /// <param name="next">后续操作委托</param>
+    /// <returns>筛选器执行任务</returns>
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        IDisposable? lockHandle = null;
+        IDistributedLockHandle? lockHandle = null;
 
         try
         {
@@ -106,7 +110,10 @@ public class QueueLimitFilter : Attribute, IAsyncActionFilter
         {
             if (Expiry <= 0)
             {
-                lockHandle?.Dispose();
+                if (lockHandle is not null)
+                {
+                    await lockHandle.DisposeAsync();
+                }
             }
         }
         catch (Exception ex)

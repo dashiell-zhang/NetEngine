@@ -90,7 +90,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         }
 
         var lockKey = ComposeLockKey(keyHash);
-        IDisposable lockHandle;
+        IDistributedLockHandle lockHandle;
 
         ctx.CancellationToken.ThrowIfCancellationRequested();
 
@@ -126,12 +126,12 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
             try
             {
-                lockHandle.Dispose();
+                await lockHandle.DisposeAsync();
                 if (ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock released {methodForLog}");
             }
             catch (Exception ex)
             {
-                if (ctx.Log) ctx.Logger?.LogInformation($"Cache stampede lock release error {methodForLog}: {ex.Message}");
+                ctx.Logger?.LogError(ex, "Cache stampede lock release error {Method}", methodForLog);
             }
         }
 

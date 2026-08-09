@@ -41,7 +41,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             if (typeSymbol.TypeKind == TypeKind.Class)
             {
-                var classHandler = new ClassProxyHandler();
+                var classHandler = new ClassProxyHandler(compilation);
                 var validation = AutoProxyEligibility.Validate(typeSymbol);
 
                 if (!validation.CanGenerate)
@@ -72,15 +72,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         UnsupportedPointerMethodDescriptor,
                         method.Locations.FirstOrDefault() ?? typeSymbol.Locations.FirstOrDefault(),
                         method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
-                }
-
-                foreach (var property in AutoProxyEligibility.GetUnsupportedPointerProperties(typeSymbol))
-                {
-                    hasInvalidMethod = true;
-                    spc.ReportDiagnostic(Diagnostic.Create(
-                        UnsupportedPointerMethodDescriptor,
-                        property.Locations.FirstOrDefault() ?? typeSymbol.Locations.FirstOrDefault(),
-                        property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
                 }
 
                 foreach (var method in AutoProxyEligibility.GetUnsupportedRefLikeReturnMethods(typeSymbol))
@@ -242,6 +233,76 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
         /// <summary>
+        /// 类型文本会裁剪为相对名称的固定导入命名空间
+        /// </summary>
+        private static readonly string[] ShortenedNamespacePrefixes =
+        {
+            "System.Collections.Generic",
+            "System.Net.Http",
+            "System.Threading",
+            "System.Threading.Tasks",
+            "SourceGenerator.Runtime",
+            "SourceGenerator.Runtime.Options",
+            "SourceGenerator.Runtime.Pipeline",
+            "SourceGenerator.Runtime.Pipeline.Behaviors"
+        };
+
+
+        /// <summary>
+        /// 当前生成任务使用的编译上下文
+        /// </summary>
+        private readonly Compilation compilation;
+
+
+        /// <summary>
+        /// 代理生成文件固定导入的命名空间
+        /// </summary>
+        private readonly INamespaceSymbol[] fixedImportedNamespaces;
+
+
+        /// <summary>
+        /// 当前生成代理所在的命名空间符号
+        /// </summary>
+        private INamespaceSymbol? generatedNamespace;
+
+
+        /// <summary>
+        /// 代理类和代理方法作用域中可能遮蔽类型或根命名空间的类型名称
+        /// </summary>
+        private readonly HashSet<string> scopedTypeNames = new(StringComparer.Ordinal);
+
+
+        /// <summary>
+        /// 创建类代理生成处理器
+        /// </summary>
+        /// <param name="compilation">当前编译上下文</param>
+        public ClassProxyHandler(Compilation compilation)
+        {
+
+            this.compilation = compilation;
+            fixedImportedNamespaces = new[]
+                {
+                    "Microsoft.Extensions.DependencyInjection",
+                    "Microsoft.Extensions.Logging",
+                    "System",
+                    "System.Collections.Generic",
+                    "System.Net.Http",
+                    "System.Threading",
+                    "System.Threading.Tasks",
+                    "SourceGenerator.Runtime",
+                    "SourceGenerator.Runtime.Pipeline",
+                    "SourceGenerator.Runtime.Pipeline.Behaviors",
+                    "SourceGenerator.Runtime.Options"
+                }
+                .Select(namespaceName => FindNamespace(compilation.GlobalNamespace, namespaceName))
+                .Where(static namespaceSymbol => namespaceSymbol is not null)
+                .Select(static namespaceSymbol => namespaceSymbol!)
+                .ToArray();
+
+        }
+
+
+        /// <summary>
         /// 判断当前处理器是否可以处理给定类型
         /// </summary>
         public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
@@ -262,18 +323,20 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <summary>
         /// 为指定类生成派生代理类的完整源码
         /// </summary>
-        private static string GenerateDerivedProxy(INamedTypeSymbol cls)
+        private string GenerateDerivedProxy(INamedTypeSymbol cls)
         {
             var ns = cls.ContainingNamespace.IsGlobalNamespace
                 ? "NetEngine.Generated"
                 : cls.ContainingNamespace.ToDisplayString();
+            generatedNamespace = FindNamespace(compilation.GlobalNamespace, ns);
+            CollectScopedTypeNames(cls);
 
             // 使用包含和不包含 global:: 前缀的完全限定类型名
             var classFull = FormatType(cls).Replace("global::", string.Empty);
-            var classLocal = TrimCurrentNamespace(classFull, ns);
+            var classLocal = FormatType(cls, ns);
             var proxyName = AutoProxyEligibility.GetProxyTypeName(cls);
             var typeParamsDecl = BuildTypeParametersDecl(cls);
-            var typeParamConstraints = BuildTypeParameterConstraints(cls);
+            var typeParamConstraints = BuildTypeParameterConstraints(cls, ns);
 
             var sb = new StringBuilder();
             sb.AppendLine("// <auto-generated/>");
@@ -296,7 +359,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             // 代理类继承原始实现类型 只列出需要在代理中显式实现的接口
             var minimalInterfaces = GetInterfacesNeedingExplicitImplementations(cls);
-            var ifaceList = minimalInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", minimalInterfaces.Select(i => TrimCurrentNamespace(i, ns)));
+            var ifaceList = minimalInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", minimalInterfaces.Select(interfaceType => FormatType(interfaceType, ns)));
             var proxyAccessibility = AutoProxyEligibility.GetProxyAccessibilityText(cls);
             
             // 使用完全限定的基类类型 避免全局命名空间或嵌套类型的解析问题
@@ -387,23 +450,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                             AppendExplicitInterfaceMethod(sb, cls, iface, m, impl, classFull, ns);
                             break;
                         
-                        case IPropertySymbol p:
-                            {
-                                if (!AutoProxyEligibility.ShouldGenerateExplicitInterfaceProperty(cls, p, out _))
-                                    break;
-
-                                AppendExplicitInterfaceProperty(sb, iface, p, cls, ns);
-                            }
-                            break;
-                        
-                        case IEventSymbol e:
-                            {
-                                if (!AutoProxyEligibility.ShouldGenerateExplicitInterfaceEvent(cls, e, out _))
-                                    break;
-
-                                AppendExplicitInterfaceEvent(sb, iface, e, cls, ns);
-                            }
-                            break;
                     }
                 }
             }
@@ -440,15 +486,16 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("            IAsyncEnumerator<" + itemType + "> __e;");
             sb.AppendLine("            try { __e = " + sourceExpression + ".GetAsyncEnumerator(__enumerationCancellationToken); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             sb.AppendLine("            var __faulted = false;");
+            sb.AppendLine("            Exception? __primaryException = null;");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
             sb.AppendLine("                while (true)");
             sb.AppendLine("                {");
             sb.AppendLine("                    bool __moved;");
-            sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { __faulted = true; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+            sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { __primaryException = __ex; __faulted = true; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             sb.AppendLine("                    if (!__moved) { __completedNaturally = true; break; }");
             sb.AppendLine("                    " + itemType + " __item;");
-            sb.AppendLine("                    try { __item = __e.Current; } catch (Exception __ex) { __faulted = true; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+            sb.AppendLine("                    try { __item = __e.Current; } catch (Exception __ex) { __primaryException = __ex; __faulted = true; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             sb.AppendLine("                    __enumeratedCount++;");
             sb.AppendLine("                    if (__capturedItems.Count < AsyncStreamResultSnapshot.DefaultCaptureLimit)");
             sb.AppendLine("                    {");
@@ -459,7 +506,17 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("            }");
             sb.AppendLine("            finally");
             sb.AppendLine("            {");
-            sb.AppendLine("                try { await __e.DisposeAsync(); } catch (Exception __ex) { if (!__faulted) { __faulted = true; foreach (var __f in __filters) __f.OnException(__ctx, __ex); } throw; }");
+            sb.AppendLine("                try { await __e.DisposeAsync(); }");
+            sb.AppendLine("                catch (Exception __disposeException)");
+            sb.AppendLine("                {");
+            sb.AppendLine("                    if (__primaryException is null)");
+            sb.AppendLine("                    {");
+            sb.AppendLine("                        __faulted = true;");
+            sb.AppendLine("                        foreach (var __f in __filters) __f.OnException(__ctx, __disposeException);");
+            sb.AppendLine("                        throw;");
+            sb.AppendLine("                    }");
+            sb.AppendLine("                    __ctx.Logger?.LogError(__disposeException, \"异步流枚举器释放失败，已保留原始枚举异常 {PrimaryExceptionType}\", __primaryException.GetType().FullName);");
+            sb.AppendLine("                }");
             sb.AppendLine("                if (!__faulted)");
             sb.AppendLine("                {");
             sb.AppendLine("                    var __streamResult = new AsyncStreamResultSnapshot { EnumeratedCount = __enumeratedCount, CompletedNaturally = __completedNaturally, Truncated = __enumeratedCount > __capturedItems.Count, CapturedItems = __capturedItems };");
@@ -512,7 +569,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <param name="typeFullName">当前代理目标类型完整名称</param>
         /// <param name="callTarget">原始方法调用目标</param>
         /// <param name="currentNamespace">当前生成代码命名空间</param>
-        private static void AppendDerivedOverride(StringBuilder sb, INamedTypeSymbol targetType, IMethodSymbol method, string typeFullName, string callTarget, string currentNamespace)
+        private void AppendDerivedOverride(StringBuilder sb, INamedTypeSymbol targetType, IMethodSymbol method, string typeFullName, string callTarget, string currentNamespace)
         {
             
             var isGenericTask = method.ReturnType is INamedTypeSymbol nts && nts.IsGenericType && IsType(nts.ConstructedFrom, "System.Threading.Tasks.Task");
@@ -549,8 +606,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
 
             var returnTypeFullText = FormatType(method.ReturnType);
-            var returnType = TrimCurrentNamespace(returnTypeFullText, currentNamespace);
-            returnType = TrimCurrentNamespace(returnType, currentNamespace);
+            var returnType = FormatType(method.ReturnType, currentNamespace);
             
             var methodName = EscapeIdentifier(method.Name);
             var rawMethodName = method.Name;
@@ -600,7 +656,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             if (method.Parameters.Length > 0)
             {
-                var dictType = TrimCurrentNamespace("System.Collections.Generic.Dictionary<string, string?>", currentNamespace);
+                var dictType = FormatArgumentsDictionaryType(currentNamespace);
                 sb.AppendLine("        var __argsDict = new " + dictType + "(" + method.Parameters.Length + ");");
                 
                 foreach (var p in method.Parameters)
@@ -846,8 +902,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         var tArgText = returnTypeFullText.Substring("global::System.Threading.Tasks.Task<".Length);
                         
                         tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
-                        tArgText = TrimCurrentNamespace(tArgText, currentNamespace);
-                        
                         sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
                     }
                     else if (string.Equals(returnTypeFullText, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
@@ -860,8 +914,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         var tArgText = returnTypeFullText.Substring("global::System.Threading.Tasks.ValueTask<".Length);
                         
                         tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
-                        tArgText = TrimCurrentNamespace(tArgText, currentNamespace);
-                        
                         sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) );");
                     }
                     else if (string.Equals(returnTypeFullText, "global::System.Threading.Tasks.ValueTask", StringComparison.Ordinal))
@@ -908,7 +960,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <summary>
         /// 为接口方法生成在代理类中的显式接口实现 并注入行为管道和日志逻辑
         /// </summary>
-        private static void AppendExplicitInterfaceMethod(StringBuilder sb, INamedTypeSymbol cls, INamedTypeSymbol iface, IMethodSymbol method, IMethodSymbol? impl, string typeFullName, string currentNamespace)
+        private void AppendExplicitInterfaceMethod(StringBuilder sb, INamedTypeSymbol cls, INamedTypeSymbol iface, IMethodSymbol method, IMethodSymbol? impl, string typeFullName, string currentNamespace)
         {
             // 在编译期根据接口方法和实现方法上的特性构建行为管道配置
             var isGenericTask = method.ReturnType is INamedTypeSymbol nts && nts.IsGenericType && IsType(nts.ConstructedFrom, "System.Threading.Tasks.Task");
@@ -945,7 +997,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
 
             var returnTypeFullText = FormatType(method.ReturnType);
-            var returnType = TrimCurrentNamespace(returnTypeFullText, currentNamespace);
+            var returnType = FormatType(method.ReturnType, currentNamespace);
 
             var ifaceDisplay = FormatType(iface, currentNamespace);
 
@@ -1011,7 +1063,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             if (method.Parameters.Length > 0)
             {
-                var dictType = TrimCurrentNamespace("System.Collections.Generic.Dictionary<string, string?>", currentNamespace);
+                var dictType = FormatArgumentsDictionaryType(currentNamespace);
                 sb.AppendLine("        var __argsDict = new " + dictType + "(" + method.Parameters.Length + ");");
 
                 foreach (var p in method.Parameters)
@@ -1191,7 +1243,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 if (isAsyncEnumerable)
                 {
                     var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
-                    tArg = TrimCurrentNamespace(tArg, currentNamespace);
                     var callExpr3 = "base." + methodName + typeParams + "(" + argList + ")";
                     sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
                       .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
@@ -1238,8 +1289,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         var tArgText = returnTypeFullText.Substring("global::System.Threading.Tasks.Task<".Length);
                        
                         tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
-                        tArgText = TrimCurrentNamespace(tArgText, currentNamespace);
-                       
                         sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {call});");
                     }
                     else if (string.Equals(returnTypeFullText, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
@@ -1252,8 +1301,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         var tArgText = returnTypeFullText.Substring("global::System.Threading.Tasks.ValueTask<".Length);
                         
                         tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
-                        tArgText = TrimCurrentNamespace(tArgText, currentNamespace);
-                        
                         sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {call} );");
                     }
                     else if (string.Equals(returnTypeFullText, "global::System.Threading.Tasks.ValueTask", StringComparison.Ordinal))
@@ -1272,72 +1319,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
         /// <summary>
-        /// 为接口属性生成在代理类中的显式接口实现 直接转发到基类属性
-        /// </summary>
-        private static void AppendExplicitInterfaceProperty(StringBuilder sb, INamedTypeSymbol iface, IPropertySymbol prop, INamedTypeSymbol cls, string currentNamespace)
-        {
-            var typeName = FormatType(prop.Type, currentNamespace);
-
-            var returnModifier = prop.ReturnsByRefReadonly
-                ? "ref readonly "
-                : prop.ReturnsByRef
-                    ? "ref "
-                    : string.Empty;
-
-            var ifaceDisplay = FormatType(iface, currentNamespace);
-
-            var propName = EscapeIdentifier(prop.Name);
-
-            var declarationName = prop.IsIndexer
-                ? ifaceDisplay + ".this[" + string.Join(", ", prop.Parameters.Select(parameter => FormatParameter(parameter, includeDefault: false, currentNamespace))) + "]"
-                : ifaceDisplay + "." + propName;
-
-            var baseAccess = prop.IsIndexer
-                ? "base[" + string.Join(", ", prop.Parameters.Select(FormatArgument)) + "]"
-                : "base." + propName;
-
-            sb.Append("    ").Append(returnModifier).Append(typeName).Append(' ').Append(declarationName).AppendLine()
-              .AppendLine("    {");
-
-            if (prop.GetMethod is not null)
-            {
-                var getterRefModifier = prop.ReturnsByRef || prop.ReturnsByRefReadonly ? "ref " : string.Empty;
-                sb.AppendLine("        get => " + getterRefModifier + baseAccess + ";");
-            }
-
-            if (prop.SetMethod is not null)
-            {
-                var setterKeyword = prop.SetMethod.IsInitOnly ? "init" : "set";
-                sb.AppendLine("        " + setterKeyword + " => " + baseAccess + " = value;");
-            }
-
-            sb.AppendLine("    }");
-        }
-
-
-        /// <summary>
-        /// 为接口事件生成在代理类中的显式接口实现 直接转发到基类事件
-        /// </summary>
-        private static void AppendExplicitInterfaceEvent(StringBuilder sb, INamedTypeSymbol iface, IEventSymbol ev, INamedTypeSymbol cls, string currentNamespace)
-        {
-            var typeName = FormatType(ev.Type, currentNamespace);
-
-            var ifaceDisplay = FormatType(iface, currentNamespace);
-
-            var eventName = EscapeIdentifier(ev.Name);
-
-            sb.Append("    event ").Append(typeName).Append(' ').Append(ifaceDisplay).Append('.').Append(eventName).AppendLine()
-              .AppendLine("    {")
-              .AppendLine("        add => base." + eventName + " += value;")
-              .AppendLine("        remove => base." + eventName + " -= value;")
-              .AppendLine("    }");
-        }
-
-
-        /// <summary>
         /// 从行为特性中提取行为类型和可选配置初始化代码
         /// </summary>
-        private static bool TryGetBehaviorSpec(AttributeData a, out string behaviorFull, out string? optSetter)
+        private bool TryGetBehaviorSpec(AttributeData a, out string behaviorFull, out string? optSetter)
         {
             behaviorFull = string.Empty;
             optSetter = null;
@@ -1521,7 +1505,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <param name="includeDefault">是否保留默认值和调用方契约特性</param>
         /// <param name="currentNamespace">当前生成代码命名空间</param>
         /// <returns>可直接写入参数声明的源码</returns>
-        private static string FormatParameter(IParameterSymbol p, bool includeDefault, string? currentNamespace = null)
+        private string FormatParameter(IParameterSymbol p, bool includeDefault, string? currentNamespace = null)
         {
             var type = FormatType(p.Type, currentNamespace);
 
@@ -1553,7 +1537,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// </summary>
         /// <param name="parameter">包含默认值的参数</param>
         /// <returns>可直接写入参数声明的常量表达式</returns>
-        private static string FormatDefaultValue(IParameterSymbol parameter)
+        private string FormatDefaultValue(IParameterSymbol parameter)
         {
 
             var value = parameter.ExplicitDefaultValue;
@@ -1714,17 +1698,191 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <summary>
         /// 将类型符号格式化为可安全输出到 C# 源码中的类型文本
         /// </summary>
-        private static string FormatType(ITypeSymbol type, string? currentNamespace = null)
+        private string FormatType(ITypeSymbol type, string? currentNamespace = null)
         {
 
             var typeName = type.ToDisplayString(SourceTypeDisplayFormat);
 
             if (!string.IsNullOrEmpty(currentNamespace))
             {
+                if (RequiresGlobalQualification(type, currentNamespace!))
+                    return typeName;
+
                 typeName = TrimCurrentNamespace(typeName, currentNamespace!);
             }
 
             return typeName;
+
+        }
+
+
+        /// <summary>
+        /// 格式化代理内部参数快照字典类型并避免被业务同名类型遮蔽
+        /// </summary>
+        /// <param name="currentNamespace">当前生成代码命名空间</param>
+        /// <returns>可安全使用的字典类型文本</returns>
+        private string FormatArgumentsDictionaryType(string currentNamespace)
+        {
+
+            var dictionaryType = compilation.GetTypeByMetadataName("System.Collections.Generic.Dictionary`2");
+            return dictionaryType is not null && RequiresGlobalQualification(dictionaryType, currentNamespace)
+                ? "global::System.Collections.Generic.Dictionary<string, string?>"
+                : "Dictionary<string, string?>";
+
+        }
+
+
+        /// <summary>
+        /// 判断类型引用在当前代理作用域中是否必须保留 global 限定
+        /// </summary>
+        /// <param name="type">待格式化的类型</param>
+        /// <param name="currentNamespace">当前生成代码命名空间</param>
+        /// <returns>移除 global 后可能改变绑定目标时返回 true</returns>
+        private bool RequiresGlobalQualification(ITypeSymbol type, string currentNamespace)
+        {
+
+            if (type is IArrayTypeSymbol arrayType)
+                return RequiresGlobalQualification(arrayType.ElementType, currentNamespace);
+
+            if (type is IPointerTypeSymbol pointerType)
+                return RequiresGlobalQualification(pointerType.PointedAtType, currentNamespace);
+
+            if (type is IFunctionPointerTypeSymbol functionPointerType)
+            {
+                return RequiresGlobalQualification(functionPointerType.Signature.ReturnType, currentNamespace)
+                       || functionPointerType.Signature.Parameters.Any(parameter => RequiresGlobalQualification(parameter.Type, currentNamespace));
+            }
+
+            if (type is not INamedTypeSymbol namedType)
+                return false;
+
+            for (var current = namedType; current is not null; current = current.ContainingType)
+            {
+                foreach (var typeArgument in current.TypeArguments)
+                {
+                    if (RequiresGlobalQualification(typeArgument, currentNamespace))
+                        return true;
+                }
+            }
+
+            var rootType = GeneratedTypeNameCollisionDetector.GetRootType(namedType);
+            var namespaceName = rootType.ContainingNamespace.IsGlobalNamespace
+                ? string.Empty
+                : rootType.ContainingNamespace.ToDisplayString();
+
+            if (string.Equals(namespaceName, currentNamespace, StringComparison.Ordinal))
+            {
+                return scopedTypeNames.Contains(rootType.Name);
+            }
+
+            if (namespaceName.StartsWith(currentNamespace + ".", StringComparison.Ordinal))
+            {
+                var relativeNamespace = namespaceName.Substring(currentNamespace.Length + 1);
+                var firstSegment = relativeNamespace.Split('.')[0];
+                return scopedTypeNames.Contains(firstSegment);
+            }
+
+            if (scopedTypeNames.Contains(rootType.Name))
+                return true;
+
+            var scopeNamespaces = generatedNamespace is null
+                ? fixedImportedNamespaces
+                : fixedImportedNamespaces.Concat(new[] { generatedNamespace }).ToArray();
+
+            if (string.Equals(namespaceName, "System", StringComparison.Ordinal))
+            {
+                return GeneratedTypeNameCollisionDetector.HasRootConflict(rootType, scopeNamespaces, Array.Empty<INamespaceSymbol>());
+            }
+
+            var shortenedPrefix = ShortenedNamespacePrefixes
+                .Where(prefix => string.Equals(namespaceName, prefix, StringComparison.Ordinal)
+                                 || namespaceName.StartsWith(prefix + ".", StringComparison.Ordinal))
+                .OrderByDescending(static prefix => prefix.Length)
+                .FirstOrDefault();
+
+            if (shortenedPrefix is not null)
+            {
+                if (string.Equals(namespaceName, shortenedPrefix, StringComparison.Ordinal))
+                {
+                    return GeneratedTypeNameCollisionDetector.HasRootConflict(rootType, scopeNamespaces, Array.Empty<INamespaceSymbol>());
+                }
+
+                var relativeNamespace = namespaceName.Substring(shortenedPrefix.Length + 1);
+                var firstSegment = relativeNamespace.Split('.')[0];
+                return scopedTypeNames.Contains(firstSegment) || CountMatchingNamespaces(firstSegment, 0, scopeNamespaces) > 1;
+            }
+
+            if (string.IsNullOrEmpty(namespaceName))
+            {
+                return CountMatchingNamespaces(rootType.Name, rootType.Arity, scopeNamespaces) > 0;
+            }
+
+            var namespaceRoot = namespaceName.Split('.')[0];
+            return scopedTypeNames.Contains(namespaceRoot) || CountMatchingNamespaces(namespaceRoot, 0, scopeNamespaces) > 0;
+
+        }
+
+
+        /// <summary>
+        /// 收集代理类型作用域内可能遮蔽类型名称的类型参数和嵌套类型
+        /// </summary>
+        /// <param name="type">当前代理目标类型</param>
+        private void CollectScopedTypeNames(INamedTypeSymbol type)
+        {
+
+            scopedTypeNames.Clear();
+
+            foreach (var typeParameter in GetAllTypeParameters(type))
+            {
+                scopedTypeNames.Add(typeParameter.Name);
+            }
+
+            foreach (var method in AutoProxyEligibility.GetEffectiveProxyMethods(type))
+            {
+                foreach (var typeParameter in method.TypeParameters)
+                {
+                    scopedTypeNames.Add(typeParameter.Name);
+                }
+            }
+
+            foreach (var interfaceType in type.AllInterfaces)
+            {
+                foreach (var method in interfaceType.GetMembers().OfType<IMethodSymbol>())
+                {
+                    if (!AutoProxyEligibility.ShouldGenerateExplicitInterfaceMethod(type, method, out _))
+                        continue;
+
+                    foreach (var typeParameter in method.TypeParameters)
+                    {
+                        scopedTypeNames.Add(typeParameter.Name);
+                    }
+                }
+            }
+
+            for (var current = type; current is not null; current = current.BaseType)
+            {
+                foreach (var nestedType in current.GetTypeMembers())
+                {
+                    scopedTypeNames.Add(nestedType.Name);
+                }
+            }
+
+        }
+
+
+        /// <summary>
+        /// 统计作用域命名空间中包含指定根成员的不同命名空间数量
+        /// </summary>
+        /// <param name="name">根成员名称</param>
+        /// <param name="arity">类型泛型参数数量</param>
+        /// <param name="namespaces">待检查的命名空间</param>
+        /// <returns>包含匹配根成员的命名空间数量</returns>
+        private static int CountMatchingNamespaces(string name, int arity, IEnumerable<INamespaceSymbol> namespaces)
+        {
+
+            return namespaces
+                .GroupBy(static namespaceSymbol => namespaceSymbol.ToDisplayString(), StringComparer.Ordinal)
+                .Count(group => group.Any(namespaceSymbol => GeneratedTypeNameCollisionDetector.NamespaceContainsRootMember(namespaceSymbol, name, arity)));
 
         }
 
@@ -1736,19 +1894,41 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         {
             if (string.IsNullOrEmpty(typeName)) return typeName;
 
-            // 先移除 global:: 前缀
-            typeName = typeName.Replace("global::", string.Empty);
-
-            // 移除当前命名空间前缀
+            // 只裁剪由 Roslyn 输出的完整当前命名空间前缀 避免误删外部命名空间中的同名片段
             if (!string.IsNullOrEmpty(currentNamespace))
             {
-                typeName = typeName.Replace(currentNamespace + ".", string.Empty);
+                typeName = typeName.Replace("global::" + currentNamespace + ".", string.Empty);
             }
 
             // 常用 BCL 命名空间前缀去除，便于输出简洁类型名
-            typeName = typeName.Replace("System.Collections.Generic.", string.Empty)
-                               .Replace("System.Threading.Tasks.", string.Empty)
+            typeName = typeName.Replace("global::System.Collections.Generic.", string.Empty)
+                               .Replace("global::System.Threading.Tasks.", string.Empty)
                                ;
+
+            // 常用类型简化需要在移除剩余 global 前缀前处理
+            typeName = typeName.Replace("global::System.Net.Http.HttpClient", "HttpClient")
+                               .Replace("global::System.Net.Http.HttpRequestMessage", "HttpRequestMessage")
+                               .Replace("global::System.Net.Http.HttpResponseMessage", "HttpResponseMessage")
+                               .Replace("global::System.Threading.CancellationToken", "CancellationToken")
+                               .Replace("global::System.Threading.CancellationTokenSource", "CancellationTokenSource")
+                               .Replace("global::SourceGenerator.Runtime.Pipeline.Behaviors.", string.Empty)
+                               .Replace("global::SourceGenerator.Runtime.Pipeline.", string.Empty)
+                               .Replace("global::SourceGenerator.Runtime.Options.", string.Empty)
+                               .Replace("global::SourceGenerator.Runtime.", string.Empty);
+
+            // 其余类型保留完整命名空间但去掉 global 前缀以维持生成代码可读性
+            typeName = typeName.Replace("global::", string.Empty);
+
+            // 兼容生成器内部手工构造的少量类型文本 只处理完整前缀避免误伤外部命名空间片段
+            if (typeName.StartsWith("System.Collections.Generic.", StringComparison.Ordinal))
+            {
+                typeName = typeName.Substring("System.Collections.Generic.".Length);
+            }
+            else if (typeName.StartsWith("System.Threading.Tasks.", StringComparison.Ordinal))
+            {
+                typeName = typeName.Substring("System.Threading.Tasks.".Length);
+            }
+
             // 对于形如 System.Int32 / System.String / System.Guid 这种明显只有一段的 System.* 类型名，
             // 可以安全移除 System. 前缀（避免误伤 System.Threading.* / System.Net.* 等多段命名空间）
             if (typeName.StartsWith("System.", StringComparison.Ordinal))
@@ -1763,16 +1943,25 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     typeName = afterSystem;
                 }
             }
-            // 常用类型简化（确保生成代码不出现 Net.* / Threading.* 这种根命名空间）
-            typeName = typeName.Replace("System.Net.Http.HttpClient", "HttpClient")
-                               .Replace("System.Net.Http.HttpRequestMessage", "HttpRequestMessage")
-                               .Replace("System.Net.Http.HttpResponseMessage", "HttpResponseMessage")
-                               .Replace("System.Threading.CancellationToken", "CancellationToken")
-                               .Replace("System.Threading.CancellationTokenSource", "CancellationTokenSource");
-            // 常用 Runtime 命名空间前缀去除
-            typeName = typeName.Replace("SourceGenerator.Runtime.Pipeline.Behaviors.", string.Empty)
-                               .Replace("SourceGenerator.Runtime.Pipeline.", string.Empty)
-                               .Replace("SourceGenerator.Runtime.", string.Empty);
+            // 兼容不包含 global 前缀的手工类型文本 仅处理整个类型名的已知前缀
+            var knownPrefixes = new[]
+            {
+                "System.Net.Http.",
+                "System.Threading.",
+                "SourceGenerator.Runtime.Pipeline.Behaviors.",
+                "SourceGenerator.Runtime.Pipeline.",
+                "SourceGenerator.Runtime.Options.",
+                "SourceGenerator.Runtime."
+            };
+
+            foreach (var knownPrefix in knownPrefixes)
+            {
+                if (typeName.StartsWith(knownPrefix, StringComparison.Ordinal))
+                {
+                    typeName = typeName.Substring(knownPrefix.Length);
+                    break;
+                }
+            }
 
             return typeName;
         }
@@ -2059,6 +2248,28 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
         /// <summary>
+        /// 从编译的合并全局命名空间中查找指定命名空间
+        /// </summary>
+        /// <param name="globalNamespace">编译的全局命名空间</param>
+        /// <param name="namespaceName">以点分隔的完整命名空间名称</param>
+        /// <returns>找到的命名空间 不存在时返回 null</returns>
+        private static INamespaceSymbol? FindNamespace(INamespaceSymbol globalNamespace, string namespaceName)
+        {
+
+            var current = globalNamespace;
+            foreach (var segment in namespaceName.Split('.'))
+            {
+                current = current.GetNamespaceMembers().FirstOrDefault(namespaceSymbol => string.Equals(namespaceSymbol.Name, segment, StringComparison.Ordinal));
+                if (current is null)
+                    return null;
+            }
+
+            return current;
+
+        }
+
+
+        /// <summary>
         /// 为带 ref 或 out 参数的方法构建调用后刷新参数快照的代码片段
         /// </summary>
         private static string BuildArgsUpdateSnippet(IMethodSymbol method)
@@ -2253,7 +2464,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <summary>
         /// 构建代理类的类型参数约束部分 为所有提升的类型参数添加约束
         /// </summary>
-        private static string BuildTypeParameterConstraints(INamedTypeSymbol cls)
+        private string BuildTypeParameterConstraints(INamedTypeSymbol cls, string currentNamespace)
         {
             // 为所有提升后的类型参数应用约束 包含外层类型的参数
             var allTps = GetAllTypeParameters(cls);
@@ -2285,7 +2496,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 // 然后输出具体的类型或接口约束
                 foreach (var ct in tp.ConstraintTypes)
                 {
-                    parts.Add(FormatType(ct));
+                    parts.Add(FormatType(ct, currentNamespace));
                 }
 
                 // 最后输出 new() 约束
@@ -2341,9 +2552,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <summary>
         /// 获取需要在代理类中生成显式实现的接口列表
         /// </summary>
-        private static string[] GetInterfacesNeedingExplicitImplementations(INamedTypeSymbol cls)
+        private static INamedTypeSymbol[] GetInterfacesNeedingExplicitImplementations(INamedTypeSymbol cls)
         {
-            var set = new HashSet<string>();
+            var set = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
             foreach (var iface in cls.AllInterfaces)
             {
                 foreach (var member in iface.GetMembers())
@@ -2352,15 +2563,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     {
                         case IMethodSymbol m:
                             if (AutoProxyEligibility.ShouldGenerateExplicitInterfaceMethod(cls, m, out _))
-                                set.Add(FormatType(iface));
-                            break;
-                        case IPropertySymbol p:
-                            if (AutoProxyEligibility.ShouldGenerateExplicitInterfaceProperty(cls, p, out _))
-                                set.Add(FormatType(iface));
-                            break;
-                        case IEventSymbol e:
-                            if (AutoProxyEligibility.ShouldGenerateExplicitInterfaceEvent(cls, e, out _))
-                                set.Add(FormatType(iface));
+                                set.Add(iface);
                             break;
                     }
                 }

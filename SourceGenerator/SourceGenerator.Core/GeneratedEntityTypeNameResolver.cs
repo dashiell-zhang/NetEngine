@@ -72,9 +72,10 @@ internal sealed class GeneratedEntityTypeNameResolver
     /// </summary>
     /// <param name="entityTypes">生成文件中实际使用的实体类型</param>
     /// <returns>可用于输出 using 和实体名称的解析器</returns>
-    public static GeneratedEntityTypeNameResolver Create(IEnumerable<INamedTypeSymbol> entityTypes)
+    public static GeneratedEntityTypeNameResolver Create(IEnumerable<INamedTypeSymbol> entityTypes, IEnumerable<INamespaceSymbol>? fixedImportedNamespaces = null)
     {
 
+        var fixedNamespaces = fixedImportedNamespaces?.ToArray() ?? Array.Empty<INamespaceSymbol>();
         var distinctTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
         foreach (var entityType in entityTypes)
         {
@@ -95,13 +96,13 @@ internal sealed class GeneratedEntityTypeNameResolver
         var reservedNames = new HashSet<string>(ReservedTypeNames, StringComparer.Ordinal);
         foreach (var entityType in orderedTypes)
         {
-            reservedNames.Add(GetRootType(entityType).Name);
+            reservedNames.Add(GeneratedTypeNameCollisionDetector.GetRootType(entityType).Name);
         }
 
         var aliasedTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
         foreach (var entityType in orderedTypes)
         {
-            var rootType = GetRootType(entityType);
+            var rootType = GeneratedTypeNameCollisionDetector.GetRootType(entityType);
             if (rootNameCounts[GetRootTypeKey(entityType)] > 1
                 || ReservedTypeNames.Contains(rootType.Name, StringComparer.Ordinal)
                 || entityType.IsGenericType
@@ -111,12 +112,19 @@ internal sealed class GeneratedEntityTypeNameResolver
             }
         }
 
+        foreach (var entityType in orderedTypes.Where(entityType => !aliasedTypes.Contains(entityType)))
+        {
+            var rootType = GeneratedTypeNameCollisionDetector.GetRootType(entityType);
+            if (fixedNamespaces.Any(namespaceSymbol => GeneratedTypeNameCollisionDetector.NamespaceContainsRootMember(namespaceSymbol, rootType.Name, rootType.Arity)))
+            {
+                aliasedTypes.Add(entityType);
+            }
+        }
+
         var importedNamespaces = orderedTypes
             .Where(entityType => !aliasedTypes.Contains(entityType))
             .Select(static entityType => entityType.ContainingNamespace)
             .Where(static namespaceSymbol => !IsImplicitlyImportedNamespace(namespaceSymbol))
-            .GroupBy(static namespaceSymbol => namespaceSymbol.ToDisplayString(), StringComparer.Ordinal)
-            .Select(static group => group.First())
             .ToArray();
 
         foreach (var namespaceSymbol in importedNamespaces)
@@ -135,16 +143,11 @@ internal sealed class GeneratedEntityTypeNameResolver
             .Where(entityType => !aliasedTypes.Contains(entityType))
             .Select(static entityType => entityType.ContainingNamespace)
             .Where(static namespaceSymbol => !IsImplicitlyImportedNamespace(namespaceSymbol))
-            .GroupBy(static namespaceSymbol => namespaceSymbol.ToDisplayString(), StringComparer.Ordinal)
-            .Select(static group => group.First())
             .ToArray();
 
         foreach (var entityType in orderedTypes.Where(entityType => !aliasedTypes.Contains(entityType)))
         {
-            var rootType = GetRootType(entityType);
-            var matchingNamespaceCount = importedNamespaces.Count(namespaceSymbol => NamespaceContainsRootMember(namespaceSymbol, rootType.Name, rootType.Arity));
-
-            if (matchingNamespaceCount > 1)
+            if (GeneratedTypeNameCollisionDetector.HasConflict(entityType, importedNamespaces, fixedNamespaces))
             {
                 aliasedTypes.Add(entityType);
             }
@@ -205,8 +208,7 @@ internal sealed class GeneratedEntityTypeNameResolver
     private static bool NamespaceContainsRootMember(INamespaceSymbol namespaceSymbol, string name, int arity)
     {
 
-        return namespaceSymbol.GetTypeMembers(name).Any(type => type.Arity == arity)
-               || namespaceSymbol.GetNamespaceMembers().Any(childNamespace => string.Equals(childNamespace.Name, name, StringComparison.Ordinal));
+        return GeneratedTypeNameCollisionDetector.NamespaceContainsRootMember(namespaceSymbol, name, arity);
 
     }
 
@@ -305,27 +307,8 @@ internal sealed class GeneratedEntityTypeNameResolver
     private static string GetRootTypeKey(INamedTypeSymbol entityType)
     {
 
-        var rootType = GetRootType(entityType);
+        var rootType = GeneratedTypeNameCollisionDetector.GetRootType(entityType);
         return rootType.Name + "`" + rootType.Arity.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-    }
-
-
-    /// <summary>
-    /// 获取实体引用中的最外层类型
-    /// </summary>
-    /// <param name="entityType">实体类型</param>
-    /// <returns>最外层命名类型</returns>
-    private static INamedTypeSymbol GetRootType(INamedTypeSymbol entityType)
-    {
-
-        var current = entityType;
-        while (current.ContainingType is not null)
-        {
-            current = current.ContainingType;
-        }
-
-        return current;
 
     }
 

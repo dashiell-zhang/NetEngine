@@ -11,8 +11,6 @@ namespace SourceGenerator.Core;
 internal static class AutoProxyEligibility
 {
 
-    private const string AutoProxyAttributeMetadataName = "SourceGenerator.Runtime.Attributes.AutoProxyAttribute";
-
     private const string ProxyBehaviorAttributeNamespace = "SourceGenerator.Runtime.Attributes";
 
     private const string ProxyBehaviorAttributeName = "ProxyBehaviorAttribute";
@@ -49,7 +47,6 @@ internal static class AutoProxyEligibility
         => CanGenerateProxy(type)
            && !GetUnsupportedAsyncByRefMethods(type).Any()
            && !GetUnsupportedPointerMethods(type).Any()
-           && !GetUnsupportedPointerProperties(type).Any()
            && !GetUnsupportedRefLikeReturnMethods(type).Any()
            && !GetUnsupportedDefaultInterfaceMethods(type).Any()
            && !GetUnsupportedProxyBehaviors(type, compilation).Any();
@@ -65,7 +62,8 @@ internal static class AutoProxyEligibility
 
         foreach (var method in type.GetMembers().OfType<IMethodSymbol>())
         {
-            if (ShouldGenerateDerivedOverride(method))
+            if (ShouldGenerateDerivedOverride(method)
+                && method.GetAttributes().Any(IsProxyBehaviorAttribute))
                 yield return method;
         }
 
@@ -223,29 +221,6 @@ internal static class AutoProxyEligibility
 
 
     /// <summary>
-    /// 获取包含指针或函数指针签名且需要生成显式实现的接口属性
-    /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <returns>不可生成显式实现的指针属性列表</returns>
-    public static IEnumerable<IPropertySymbol> GetUnsupportedPointerProperties(INamedTypeSymbol type)
-    {
-
-        foreach (var iface in type.AllInterfaces)
-        {
-            foreach (var property in iface.GetMembers().OfType<IPropertySymbol>())
-            {
-                if (!ShouldGenerateExplicitInterfaceProperty(type, property, out _))
-                    continue;
-
-                if (IsPointerType(property.Type) || property.Parameters.Any(parameter => IsPointerType(parameter.Type)))
-                    yield return property;
-            }
-        }
-
-    }
-
-
-    /// <summary>
     /// 获取返回引用结构且无法进入运行时泛型管道的方法
     /// </summary>
     /// <param name="type">待检查的目标类型</param>
@@ -295,6 +270,9 @@ internal static class AutoProxyEligibility
                     continue;
 
                 if (!IsDefaultInterfaceMethod(method))
+                    continue;
+
+                if (!method.GetAttributes().Any(IsProxyBehaviorAttribute))
                     continue;
 
                 if (!HasClassImplementation(type, method))
@@ -672,7 +650,7 @@ internal static class AutoProxyEligibility
 
 
     /// <summary>
-    /// 获取 AutoProxy 基类中被当前类型直接继承的代理行为方法
+    /// 获取基类中被当前类型直接继承的代理行为方法
     /// </summary>
     /// <param name="type">当前代理目标类型</param>
     /// <returns>有效继承的代理行为方法列表</returns>
@@ -688,9 +666,6 @@ internal static class AutoProxyEligibility
             foreach (var method in baseMethods)
             {
                 if (closerMethods.Any(closerMethod => BlocksInheritedMethod(type, closerMethod, method)))
-                    continue;
-
-                if (!HasAutoProxyAttribute(baseType))
                     continue;
 
                 if (!method.GetAttributes().Any(IsProxyBehaviorAttribute))
@@ -778,17 +753,6 @@ internal static class AutoProxyEligibility
         return true;
 
     }
-
-
-    /// <summary>
-    /// 判断类型自身是否显式标注 AutoProxy
-    /// </summary>
-    /// <param name="type">待检查的类型</param>
-    /// <returns>如果类型自身标注 AutoProxy 则返回 true</returns>
-    private static bool HasAutoProxyAttribute(INamedTypeSymbol type)
-        => type.GetAttributes().Any(attribute =>
-            attribute.AttributeClass is not null
-            && IsType(attribute.AttributeClass, AutoProxyAttributeMetadataName));
 
 
     /// <summary>
@@ -1123,81 +1087,16 @@ internal static class AutoProxyEligibility
 
         impl = type.FindImplementationForInterfaceMember(method) as IMethodSymbol;
 
+        var hasInterfaceBehavior = method.GetAttributes().Any(IsProxyBehaviorAttribute);
+        var hasImplementationBehavior = impl?.GetAttributes().Any(IsProxyBehaviorAttribute) == true;
+        if (!hasInterfaceBehavior && !hasImplementationBehavior)
+            return false;
+
         if (impl is not null && impl.ExplicitInterfaceImplementations.Length > 0)
             return false;
 
         if (impl is not null && (impl.IsVirtual || impl.IsAbstract || impl.IsOverride))
             return false;
-
-        return true;
-
-    }
-
-
-    /// <summary>
-    /// 判断接口属性是否需要由代理生成显式实现
-    /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <param name="property">待检查的接口属性</param>
-    /// <param name="implementation">接口属性在目标类型中的实现</param>
-    /// <returns>如果需要生成显式接口实现则返回 true</returns>
-    public static bool ShouldGenerateExplicitInterfaceProperty(INamedTypeSymbol type, IPropertySymbol property, out IPropertySymbol? implementation)
-    {
-
-        implementation = null;
-
-        if (property.IsStatic || property.DeclaredAccessibility != Accessibility.Public)
-            return false;
-
-        implementation = type.FindImplementationForInterfaceMember(property) as IPropertySymbol;
-
-        if (implementation is not null && implementation.ExplicitInterfaceImplementations.Length > 0)
-            return false;
-
-        if (implementation is not null)
-        {
-            var getter = implementation.GetMethod;
-            var setter = implementation.SetMethod;
-
-            if ((getter is not null && (getter.IsVirtual || getter.IsAbstract || getter.IsOverride))
-                || (setter is not null && (setter.IsVirtual || setter.IsAbstract || setter.IsOverride)))
-                return false;
-        }
-
-        return true;
-
-    }
-
-
-    /// <summary>
-    /// 判断接口事件是否需要由代理生成显式实现
-    /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <param name="eventSymbol">待检查的接口事件</param>
-    /// <param name="implementation">接口事件在目标类型中的实现</param>
-    /// <returns>如果需要生成显式接口实现则返回 true</returns>
-    public static bool ShouldGenerateExplicitInterfaceEvent(INamedTypeSymbol type, IEventSymbol eventSymbol, out IEventSymbol? implementation)
-    {
-
-        implementation = null;
-
-        if (eventSymbol.IsStatic || eventSymbol.DeclaredAccessibility != Accessibility.Public)
-            return false;
-
-        implementation = type.FindImplementationForInterfaceMember(eventSymbol) as IEventSymbol;
-
-        if (implementation is not null && implementation.ExplicitInterfaceImplementations.Length > 0)
-            return false;
-
-        if (implementation is not null)
-        {
-            var addMethod = implementation.AddMethod;
-            var removeMethod = implementation.RemoveMethod;
-
-            if ((addMethod is not null && (addMethod.IsVirtual || addMethod.IsAbstract || addMethod.IsOverride))
-                || (removeMethod is not null && (removeMethod.IsVirtual || removeMethod.IsAbstract || removeMethod.IsOverride)))
-                return false;
-        }
 
         return true;
 

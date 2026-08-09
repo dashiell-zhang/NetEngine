@@ -43,6 +43,30 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+
+    /// <summary>
+    /// 当服务实现或服务契约无法由生成代码访问时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor InaccessibleRegistrationTypeDescriptor = new(
+        id: "RegisterService003",
+        title: "RegisterService 类型无法访问",
+        messageFormat: "类型 {0} 的{1} {2} 无法由顶层生成代码访问",
+        category: "RegisterServiceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当服务实现没有 public 实例构造函数时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor MissingPublicConstructorDescriptor = new(
+        id: "RegisterService004",
+        title: "RegisterService 服务无法构造",
+        messageFormat: "服务实现类型 {0} 没有可由依赖注入使用的 public 实例构造函数",
+        category: "RegisterServiceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     private sealed class ServiceCandidate
     {
 
@@ -111,7 +135,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             var (serviceCandidates, compilation) = (tuple.Left, tuple.Right);
 
             var usingNamespaces = new HashSet<string>(StringComparer.Ordinal);
-            var nameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var importedNamespaceSymbols = new List<INamespaceSymbol>();
             var registrationInfos = new List<RegistrationInfo>();
 
             static void AddNamespace(HashSet<string> nsSet, string? nsValue)
@@ -123,19 +147,19 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 }
             }
 
-            static void CollectNamespaces(HashSet<string> nsSet, ITypeSymbol symbol)
+            static void CollectNamespaces(HashSet<string> nsSet, List<INamespaceSymbol> namespaceSymbols, ITypeSymbol symbol)
             {
                 // 数组类型递归到元素类型
                 if (symbol is IArrayTypeSymbol arrayType)
                 {
-                    CollectNamespaces(nsSet, arrayType.ElementType);
+                    CollectNamespaces(nsSet, namespaceSymbols, arrayType.ElementType);
                     return;
                 }
 
                 // 指针类型递归到指向类型
                 if (symbol is IPointerTypeSymbol pointerType)
                 {
-                    CollectNamespaces(nsSet, pointerType.PointedAtType);
+                    CollectNamespaces(nsSet, namespaceSymbols, pointerType.PointedAtType);
                     return;
                 }
 
@@ -143,6 +167,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 if (symbol.ContainingNamespace is { IsGlobalNamespace: false } ns)
                 {
                     nsSet.Add(ns.ToDisplayString());
+                    namespaceSymbols.Add(ns);
                 }
 
                 // 泛型参数与嵌套类型的命名空间
@@ -150,12 +175,12 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 {
                     foreach (var arg in named.TypeArguments)
                     {
-                        CollectNamespaces(nsSet, arg);
+                        CollectNamespaces(nsSet, namespaceSymbols, arg);
                     }
 
                     if (named.ContainingType is not null)
                     {
-                        CollectNamespaces(nsSet, named.ContainingType);
+                        CollectNamespaces(nsSet, namespaceSymbols, named.ContainingType);
                     }
                 }
             }
@@ -171,21 +196,6 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
             var registrations = new StringBuilder();
 
-            void AddCount(string? name)
-            {
-                if (string.IsNullOrWhiteSpace(name))
-                    return;
-                var key = name!;
-                if (nameCounts.TryGetValue(key, out var count))
-                {
-                    nameCounts[key] = count + 1;
-                }
-                else
-                {
-                    nameCounts[key] = 1;
-                }
-            }
-
             foreach (var candidate in serviceCandidates)
             {
                 var typeSymbol = candidate.Type;
@@ -198,6 +208,27 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                     continue;
 
                 var attrData = candidate.Attribute;
+
+                if (!GeneratedCodeAccessibility.IsTypeReferenceAccessible(typeSymbol))
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        InaccessibleRegistrationTypeDescriptor,
+                        GetAttributeLocation(attrData, typeSymbol),
+                        typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        "服务实现类型",
+                        typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                    continue;
+                }
+
+                if (!GeneratedCodeAccessibility.HasPublicInstanceConstructor(typeSymbol))
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        MissingPublicConstructorDescriptor,
+                        GetAttributeLocation(attrData, typeSymbol),
+                        typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                    continue;
+                }
+
                 var lifetime = GetLifetime(attrData) ?? "Transient";
                 var keyExpr = GetKeyExpression(attrData);
 
@@ -207,9 +238,20 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                     continue;
                 }
 
+                if (selectedServiceType is not null && !GeneratedCodeAccessibility.IsTypeReferenceAccessible(selectedServiceType))
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        InaccessibleRegistrationTypeDescriptor,
+                        GetAttributeLocation(attrData, typeSymbol),
+                        typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        "服务契约类型",
+                        selectedServiceType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                    continue;
+                }
+
                 var hasAutoProxy = HasAutoProxy(typeSymbol, autoProxyAttributeSymbol);
                 var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateCompleteProxy(typeSymbol, compilation);
-                CollectNamespaces(usingNamespaces, typeSymbol);
+                CollectNamespaces(usingNamespaces, importedNamespaceSymbols, typeSymbol);
 
                 // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型
                 var implInfo = canUseAutoProxy
@@ -218,7 +260,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
                 if (selectedServiceType is not null)
                 {
-                    CollectNamespaces(usingNamespaces, selectedServiceType);
+                    CollectNamespaces(usingNamespaces, importedNamespaceSymbols, selectedServiceType);
                 }
 
                 DisplayInfo? serviceInfo = null;
@@ -239,24 +281,24 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 AddNamespace(usingNamespaces, serviceInfo?.Namespace);
                 AddNamespace(usingNamespaces, implInfo.Namespace);
 
-                AddCount(implInfo.ConflictKey);
-                AddCount(serviceInfo?.ConflictKey);
-
                 registrationInfos.Add(new RegistrationInfo(lifetime, keyExpr, implInfo, serviceInfo));
             }
 
+            var fixedImportedNamespaces = new[] { servicesSymbol.ContainingNamespace };
+
             foreach (var info in registrationInfos)
             {
-                var implDisplay = nameCounts[info.Impl.ConflictKey] > 1 ? info.Impl.Full : info.Impl.Minimal;
+                var implHasConflict = NeedsFullTypeName(info.Impl, importedNamespaceSymbols, fixedImportedNamespaces);
+                var implDisplay = implHasConflict ? info.Impl.Full : info.Impl.Minimal;
                 var serviceDisplay = info.Service is null
                     ? null
-                    : nameCounts[info.Service.ConflictKey] > 1
+                    : NeedsFullTypeName(info.Service, importedNamespaceSymbols, fixedImportedNamespaces)
                         ? info.Service.Full
                         : info.Service.Minimal;
-                var implTypeof = nameCounts[info.Impl.ConflictKey] > 1 ? info.Impl.OpenGenericFullTypeof : info.Impl.OpenGenericMinimalTypeof;
+                var implTypeof = implHasConflict ? info.Impl.OpenGenericFullTypeof : info.Impl.OpenGenericMinimalTypeof;
                 var serviceTypeof = info.Service is null
                     ? null
-                    : nameCounts[info.Service.ConflictKey] > 1
+                    : NeedsFullTypeName(info.Service, importedNamespaceSymbols, fixedImportedNamespaces)
                         ? info.Service.OpenGenericFullTypeof
                         : info.Service.OpenGenericMinimalTypeof;
 
@@ -523,12 +565,45 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 判断注册类型是否需要使用完整限定名称避免导入冲突
+    /// </summary>
+    /// <param name="displayInfo">注册类型显示信息</param>
+    /// <param name="importedNamespaces">生成文件导入的业务命名空间</param>
+    /// <param name="fixedImportedNamespaces">生成文件固定导入的框架命名空间</param>
+    /// <returns>需要使用完整限定名称时返回 true</returns>
+    private static bool NeedsFullTypeName(DisplayInfo displayInfo, IEnumerable<INamespaceSymbol> importedNamespaces, IEnumerable<INamespaceSymbol> fixedImportedNamespaces)
+    {
+
+        if (displayInfo.IsGeneratedType)
+        {
+            if (displayInfo.SourceType.ContainingNamespace.IsGlobalNamespace)
+                return false;
+
+            return GeneratedTypeNameCollisionDetector.HasGeneratedTypeConflict(
+                displayInfo.RootName,
+                displayInfo.RootArity,
+                displayInfo.SourceType.ContainingNamespace,
+                importedNamespaces,
+                fixedImportedNamespaces);
+        }
+
+        return displayInfo.SourceType.ContainingNamespace.IsGlobalNamespace
+               || GeneratedTypeNameCollisionDetector.HasConflict(displayInfo.SourceType, importedNamespaces, fixedImportedNamespaces);
+
+    }
+
+
+    /// <summary>
+    /// 构建服务注册类型的短名称与完整名称信息
+    /// </summary>
+    /// <param name="typeSymbol">服务注册使用的类型</param>
+    /// <returns>类型名称显示信息</returns>
     private static DisplayInfo GetDisplay(INamedTypeSymbol typeSymbol)
     {
         // 生成最小限定名和命名空间限定名（不加 global::），供冲突时回退
         var minimal = typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        var full = typeSymbol.ToDisplayString(
-            SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
+        var full = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var ns = typeSymbol.ContainingNamespace is { IsGlobalNamespace: false }
             ? typeSymbol.ContainingNamespace.ToDisplayString()
             : null;
@@ -540,10 +615,16 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             ? "typeof(" + BuildOpenGenericTypeName(typeSymbol, includeNamespace: true) + ")"
             : null;
 
-        return new DisplayInfo(minimal, full, ns, openGenericMinimalTypeof, openGenericFullTypeof);
+        var rootType = GeneratedTypeNameCollisionDetector.GetRootType(typeSymbol);
+        return new DisplayInfo(minimal, full, ns, openGenericMinimalTypeof, openGenericFullTypeof, typeSymbol, rootType.Name, rootType.Arity, isGeneratedType: false);
     }
 
 
+    /// <summary>
+    /// 构建生成代理类型的短名称与完整名称信息
+    /// </summary>
+    /// <param name="typeSymbol">代理对应的原始类型</param>
+    /// <returns>代理类型名称显示信息</returns>
     private static DisplayInfo GetProxyDisplay(INamedTypeSymbol typeSymbol)
     {
         // AutoProxy 场景下的代理类型名称和命名空间
@@ -553,7 +634,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
         var proxyTypeName = AutoProxyEligibility.GetProxyTypeName(typeSymbol);
         var minimal = proxyTypeName;
-        var full = $"{proxyNs}.{proxyTypeName}";
+        var full = $"global::{proxyNs}.{proxyTypeName}";
         var genericArity = GetAllTypeParameterCount(typeSymbol);
         var openGenericMinimalTypeof = genericArity > 0
             ? "typeof(" + minimal + BuildOpenGenericAritySuffix(genericArity) + ")"
@@ -562,7 +643,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             ? "typeof(" + full + BuildOpenGenericAritySuffix(genericArity) + ")"
             : null;
 
-        return new DisplayInfo(minimal, full, proxyNs, openGenericMinimalTypeof, openGenericFullTypeof);
+        return new DisplayInfo(minimal, full, proxyNs, openGenericMinimalTypeof, openGenericFullTypeof, typeSymbol, proxyTypeName, genericArity, isGeneratedType: true);
     }
 
 
@@ -611,9 +692,13 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         }
 
         var sb = new StringBuilder();
-        if (includeNamespace && typeSymbol.ContainingNamespace is { IsGlobalNamespace: false } ns)
+        if (includeNamespace)
         {
-            sb.Append(ns.ToDisplayString()).Append('.');
+            sb.Append("global::");
+            if (typeSymbol.ContainingNamespace is { IsGlobalNamespace: false } ns)
+            {
+                sb.Append(ns.ToDisplayString()).Append('.');
+            }
         }
 
         var first = true;
@@ -663,15 +748,34 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 保存服务注册类型的短名称 完整名称和冲突判断信息
+    /// </summary>
     private sealed class DisplayInfo
     {
-        public DisplayInfo(string minimal, string full, string? ns, string? openGenericMinimalTypeof, string? openGenericFullTypeof)
+        /// <summary>
+        /// 创建服务注册类型名称显示信息
+        /// </summary>
+        /// <param name="minimal">最短类型显示名</param>
+        /// <param name="full">完整类型显示名</param>
+        /// <param name="ns">类型所在命名空间</param>
+        /// <param name="openGenericMinimalTypeof">开放泛型最短 typeof 表达式</param>
+        /// <param name="openGenericFullTypeof">开放泛型完整 typeof 表达式</param>
+        /// <param name="sourceType">原始类型符号</param>
+        /// <param name="rootName">根类型名称</param>
+        /// <param name="rootArity">根类型泛型参数数量</param>
+        /// <param name="isGeneratedType">是否表示生成类型</param>
+        public DisplayInfo(string minimal, string full, string? ns, string? openGenericMinimalTypeof, string? openGenericFullTypeof, INamedTypeSymbol sourceType, string rootName, int rootArity, bool isGeneratedType)
         {
             Minimal = minimal;
             Full = full;
             Namespace = ns;
             OpenGenericMinimalTypeof = openGenericMinimalTypeof;
             OpenGenericFullTypeof = openGenericFullTypeof;
+            SourceType = sourceType;
+            RootName = rootName;
+            RootArity = rootArity;
+            IsGeneratedType = isGeneratedType;
         }
 
         /// <summary>
@@ -690,11 +794,6 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         public string? Namespace { get; }
 
         /// <summary>
-        /// 用于判断是否需要完整限定名的冲突键
-        /// </summary>
-        public string ConflictKey => OpenGenericMinimalTypeof ?? Minimal;
-
-        /// <summary>
         /// 开放泛型注册使用的最短 typeof 表达式
         /// </summary>
         public string? OpenGenericMinimalTypeof { get; }
@@ -703,6 +802,26 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         /// 开放泛型注册使用的完整 typeof 表达式
         /// </summary>
         public string? OpenGenericFullTypeof { get; }
+
+        /// <summary>
+        /// 当前显示信息对应的原始类型符号
+        /// </summary>
+        public INamedTypeSymbol SourceType { get; }
+
+        /// <summary>
+        /// 参与导入冲突判断的根类型名称
+        /// </summary>
+        public string RootName { get; }
+
+        /// <summary>
+        /// 参与导入冲突判断的根类型泛型参数数量
+        /// </summary>
+        public int RootArity { get; }
+
+        /// <summary>
+        /// 当前显示信息是否表示尚未加入编译的代理类型
+        /// </summary>
+        public bool IsGeneratedType { get; }
     }
 
 

@@ -41,7 +41,7 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
 
         ctx.CancellationToken.ThrowIfCancellationRequested();
 
-        IDisposable? handle = null;
+        IDistributedLockHandle? handle = null;
         DistributedLockLeaseRenewer? leaseRenewer = null;
         try
         {
@@ -76,12 +76,12 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
 
                 try
                 {
-                    handle.Dispose();
+                    await handle.DisposeAsync();
                     if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit released {methodForLog}");
                 }
                 catch (Exception ex)
                 {
-                    if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit release error {methodForLog}: {ex.Message}");
+                    ctx.Logger?.LogError(ex, "ConcurrencyLimit release error {Method}", methodForLog);
                 }
             }
         }

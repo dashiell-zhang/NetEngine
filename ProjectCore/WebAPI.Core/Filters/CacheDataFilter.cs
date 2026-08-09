@@ -26,14 +26,18 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
     /// </summary>
     public bool IsUseToken { get; set; }
 
-
-
+    /// <summary>
+    /// 读取或写入请求缓存并在需要时使用分布式锁防止缓存击穿
+    /// </summary>
+    /// <param name="context">当前操作筛选器上下文</param>
+    /// <param name="next">后续操作委托</param>
+    /// <returns>筛选器执行任务</returns>
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
 
         string cacheKey = "";
-        IDisposable? lockHandle = null;
+        IDistributedLockHandle? lockHandle = null;
 
         try
         {
@@ -118,7 +122,10 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
                 }
             }
 
-            lockHandle?.Dispose();
+            if (lockHandle is not null)
+            {
+                await lockHandle.DisposeAsync();
+            }
         }
         catch (Exception ex)
         {

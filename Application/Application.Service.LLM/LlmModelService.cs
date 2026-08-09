@@ -90,7 +90,7 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
 
         var apiKey = createLlmModel.ApiKey.Trim();
 
-        using var lockHandle = await distributedLock.TryLockAsync("llm:model:name:" + name);
+        await using var lockHandle = await distributedLock.TryLockAsync("llm:model:name:" + name);
         if (lockHandle == null)
         {
             throw new CustomException("当前模型名称正在处理中，请稍后重试");
@@ -134,13 +134,13 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
 
         ValidateProtocolType(updateLlmModel.ProtocolType);
 
-        using var lockHandle = await distributedLock.TryLockAsync("llm:model:name:" + name);
+        await using var lockHandle = await distributedLock.TryLockAsync("llm:model:name:" + name);
         if (lockHandle == null)
         {
             throw new CustomException("当前模型名称正在处理中，请稍后重试");
         }
 
-        using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + id);
+        await using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + id);
         if (modelLockHandle == null)
         {
             throw new CustomException("当前模型正在处理中，请稍后重试");
@@ -193,7 +193,7 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
     public async Task<bool> DeleteLlmModelAsync(long id)
     {
 
-        using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + id);
+        await using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + id);
         if (modelLockHandle == null)
         {
             throw new CustomException("当前模型正在处理中，请稍后重试");

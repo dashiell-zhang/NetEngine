@@ -71,7 +71,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// <returns></returns>
     public async Task<long> CreateRoleAsync(EditRoleDto role)
     {
-        using (var lockHandle = await distLock.TryLockAsync("roleCode" + role.Code))
+        await using (var lockHandle = await distLock.TryLockAsync("roleCode" + role.Code))
         {
             if (lockHandle != null)
             {
@@ -108,7 +108,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// <returns></returns>
     public async Task<bool> UpdateRoleAsync(long roleId, EditRoleDto role)
     {
-        using (var lockHandle = await distLock.TryLockAsync("roleCode" + role.Code))
+        await using (var lockHandle = await distLock.TryLockAsync("roleCode" + role.Code))
         {
             if (lockHandle != null)
             {

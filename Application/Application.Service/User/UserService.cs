@@ -139,7 +139,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     {
         string key = "userName:" + createUser.UserName.ToLower();
 
-        using (var handle = await distLock.TryLockAsync(key))
+        await using (var handle = await distLock.TryLockAsync(key))
         {
             if (handle != null)
             {
@@ -195,7 +195,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     {
         string key = "userName:" + updateUser.UserName.ToLower();
 
-        using (var handle = await distLock.TryLockAsync(key))
+        await using (var handle = await distLock.TryLockAsync(key))
         {
             if (handle != null)
             {

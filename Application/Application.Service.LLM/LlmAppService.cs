@@ -91,13 +91,13 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         ValidateExtraBodyJson(createLlmApp.ExtraBodyJson);
 
-        using var lockHandle = await distributedLock.TryLockAsync("llm:app:code:" + code);
+        await using var lockHandle = await distributedLock.TryLockAsync("llm:app:code:" + code);
         if (lockHandle == null)
         {
             throw new CustomException("当前应用 Code 正在处理中，请稍后重试");
         }
 
-        using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + createLlmApp.LlmModelId);
+        await using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + createLlmApp.LlmModelId);
         if (modelLockHandle == null)
         {
             throw new CustomException("当前关联模型正在处理中，请稍后重试");
@@ -151,13 +151,13 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
 
         ValidateExtraBodyJson(updateLlmApp.ExtraBodyJson);
 
-        using var lockHandle = await distributedLock.TryLockAsync("llm:app:code:" + code);
+        await using var lockHandle = await distributedLock.TryLockAsync("llm:app:code:" + code);
         if (lockHandle == null)
         {
             throw new CustomException("当前应用 Code 正在处理中，请稍后重试");
         }
 
-        using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + updateLlmApp.LlmModelId);
+        await using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + updateLlmApp.LlmModelId);
         if (modelLockHandle == null)
         {
             throw new CustomException("当前关联模型正在处理中，请稍后重试");

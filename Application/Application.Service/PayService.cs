@@ -1008,7 +1008,7 @@ public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClien
         }
         else
         {
-            using (await distributedLock.LockAsync(mchId + "GetWeiXinPayCertificates" + "lock"))
+            await using (await distributedLock.LockAsync(mchId + "GetWeiXinPayCertificates" + "lock"))
             {
                 weiXinPayCertificates = await distributedCache.GetAsync<WeiXinPayCertificatesDto>(cacheKey);
 

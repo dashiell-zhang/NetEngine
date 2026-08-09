@@ -43,9 +43,12 @@ public class RedisLock : IDistributedLock
     /// </summary>
     /// <param name="lockHandle">锁句柄</param>
     /// <param name="expiry">新的失效时长</param>
+    /// <param name="cancellationToken">取消续期等待的令牌</param>
     /// <returns>是否续期成功</returns>
-    public async Task<bool> RenewAsync(IDisposable lockHandle, TimeSpan expiry)
+    public async Task<bool> RenewAsync(IDistributedLockHandle lockHandle, TimeSpan expiry, CancellationToken cancellationToken = default)
     {
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (lockHandle is not RedisLockHandle redisLockHandle || redisLockHandle.IsDisposed)
         {
@@ -59,11 +62,43 @@ public class RedisLock : IDistributedLock
 
         try
         {
-            return await redisLockHandle.Database.LockExtendAsync(redisLockHandle.LockKey, redisLockHandle.LockValue, expiry);
+            var renewalTask = redisLockHandle.Database.LockExtendAsync(redisLockHandle.LockKey, redisLockHandle.LockValue, expiry);
+
+            try
+            {
+                return await renewalTask.WaitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _ = ObserveCompletionAsync(renewalTask);
+                throw;
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
             return false;
+        }
+
+    }
+
+
+    /// <summary>
+    /// 观察无法由 StackExchange.Redis 取消的底层续期任务
+    /// </summary>
+    /// <param name="task">已经提交到底层连接的续期任务</param>
+    private static async Task ObserveCompletionAsync(Task task)
+    {
+
+        try
+        {
+            await task;
+        }
+        catch
+        {
         }
 
     }
@@ -76,7 +111,7 @@ public class RedisLock : IDistributedLock
     /// <param name="expiry">失效时长和最长等待时长</param>
     /// <param name="semaphore">允许同时持有锁的名额数量</param>
     /// <returns>成功获取的锁句柄</returns>
-    public async Task<IDisposable> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
+    public async Task<IDistributedLockHandle> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
     {
 
         if (expiry == default)
@@ -130,7 +165,7 @@ public class RedisLock : IDistributedLock
     /// <param name="expiry">失效时长</param>
     /// <param name="semaphore">允许同时持有锁的名额数量</param>
     /// <returns>成功返回锁句柄，失败返回 null</returns>
-    public async Task<IDisposable?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
+    public async Task<IDistributedLockHandle?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
     {
 
         if (expiry == default)

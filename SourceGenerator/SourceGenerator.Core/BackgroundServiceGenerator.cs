@@ -29,6 +29,30 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
 
     /// <summary>
+    /// 当后台服务的外层类型无法由生成代码访问时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor InaccessibleBackgroundServiceDescriptor = new(
+        id: "BackgroundService002",
+        title: "后台服务类型无法访问",
+        messageFormat: "后台服务 {0} 或其外层类型无法由顶层生成代码访问",
+        category: "BackgroundServiceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当后台服务没有 public 实例构造函数时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor MissingPublicConstructorDescriptor = new(
+        id: "BackgroundService003",
+        title: "后台服务无法构造",
+        messageFormat: "后台服务 {0} 没有可由依赖注入使用的 public 实例构造函数",
+        category: "BackgroundServiceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
     /// 初始化增量生成器，配置语法筛选与源代码输出管道
     /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -66,22 +90,22 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
             var (typeSymbols, compilation) = (tuple.Left, tuple.Right);
 
             var usingNamespaces = new HashSet<string>(StringComparer.Ordinal);
-            var nameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var importedNamespaceSymbols = new List<INamespaceSymbol>();
             var registrationsInfo = new List<DisplayInfo>();
 
-            static void CollectNamespaces(HashSet<string> nsSet, ITypeSymbol symbol)
+            static void CollectNamespaces(HashSet<string> nsSet, List<INamespaceSymbol> namespaceSymbols, ITypeSymbol symbol)
             {
                 // 处理数组类型的元素命名空间
                 if (symbol is IArrayTypeSymbol arrayType)
                 {
-                    CollectNamespaces(nsSet, arrayType.ElementType);
+                    CollectNamespaces(nsSet, namespaceSymbols, arrayType.ElementType);
                     return;
                 }
 
                 // 处理指针类型的目标命名空间
                 if (symbol is IPointerTypeSymbol pointerType)
                 {
-                    CollectNamespaces(nsSet, pointerType.PointedAtType);
+                    CollectNamespaces(nsSet, namespaceSymbols, pointerType.PointedAtType);
                     return;
                 }
 
@@ -89,6 +113,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                 if (symbol.ContainingNamespace is { IsGlobalNamespace: false } ns)
                 {
                     nsSet.Add(ns.ToDisplayString());
+                    namespaceSymbols.Add(ns);
                 }
 
                 // 泛型参数与嵌套类型的命名空间
@@ -96,12 +121,12 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                 {
                     foreach (var arg in named.TypeArguments)
                     {
-                        CollectNamespaces(nsSet, arg);
+                        CollectNamespaces(nsSet, namespaceSymbols, arg);
                     }
 
                     if (named.ContainingType is not null)
                     {
-                        CollectNamespaces(nsSet, named.ContainingType);
+                        CollectNamespaces(nsSet, namespaceSymbols, named.ContainingType);
                     }
                 }
             }
@@ -123,18 +148,6 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
             // seenTypes 用于避免同一个符号被重复注册（例如多次局部声明等极端情况）
             var seenTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
 
-            void AddCount(string name)
-            {
-                if (nameCounts.TryGetValue(name, out var count))
-                {
-                    nameCounts[name] = count + 1;
-                }
-                else
-                {
-                    nameCounts[name] = 1;
-                }
-            }
-
             foreach (var typeSymbol in typeSymbols)
             {
                 if (!InheritsFrom(typeSymbol, bgServiceSymbol))
@@ -142,6 +155,14 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
                 if (!seenTypes.Add(typeSymbol))
                     continue;
+
+                if (!GeneratedCodeAccessibility.IsTypeReferenceAccessible(typeSymbol))
+                {
+                    var diagnosticLocation = typeSymbol.Locations.FirstOrDefault(static location => location.IsInSource) ?? Location.None;
+                    var typeDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                    spc.ReportDiagnostic(Diagnostic.Create(InaccessibleBackgroundServiceDescriptor, diagnosticLocation, typeDisplay));
+                    continue;
+                }
 
                 if (ContainsUnboundTypeParameters(typeSymbol))
                 {
@@ -151,16 +172,27 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                CollectNamespaces(usingNamespaces, typeSymbol);
+                if (!GeneratedCodeAccessibility.HasPublicInstanceConstructor(typeSymbol))
+                {
+                    var diagnosticLocation = typeSymbol.Locations.FirstOrDefault(static location => location.IsInSource) ?? Location.None;
+                    var typeDisplay = typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                    spc.ReportDiagnostic(Diagnostic.Create(MissingPublicConstructorDescriptor, diagnosticLocation, typeDisplay));
+                    continue;
+                }
+
+                CollectNamespaces(usingNamespaces, importedNamespaceSymbols, typeSymbol);
 
                 var implDisplay = GetDisplay(typeSymbol);
-                AddCount(implDisplay.Minimal);
                 registrationsInfo.Add(implDisplay);
             }
 
+            var fixedImportedNamespaces = new[] { servicesSymbol.ContainingNamespace };
+
             foreach (var impl in registrationsInfo)
             {
-                var display = nameCounts[impl.Minimal] > 1 ? impl.Full : impl.Minimal;
+                var hasConflict = impl.TypeSymbol.ContainingNamespace.IsGlobalNamespace
+                                  || GeneratedTypeNameCollisionDetector.HasConflict(impl.TypeSymbol, importedNamespaceSymbols, fixedImportedNamespaces);
+                var display = hasConflict ? impl.Full : impl.Minimal;
                 var call = BuildBackgroundRegistrationCall(display);
                 registrations.Append("        ").AppendLine(call);
             }
@@ -333,34 +365,63 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
     }
 
 
+    /// <summary>
+    /// 构建后台服务类型的短名称与完整名称信息
+    /// </summary>
+    /// <param name="typeSymbol">后台服务类型</param>
+    /// <returns>类型名称显示信息</returns>
     private static DisplayInfo GetDisplay(INamedTypeSymbol typeSymbol)
     {
         // 生成最小限定名和命名空间限定名（不加 global::），供冲突时回退
         var minimal = typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        var full = typeSymbol.ToDisplayString(
-            SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
+        var full = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var ns = typeSymbol.ContainingNamespace is { IsGlobalNamespace: false }
             ? typeSymbol.ContainingNamespace.ToDisplayString()
             : null;
 
-        return new DisplayInfo(minimal, full, ns);
+        return new DisplayInfo(minimal, full, ns, typeSymbol);
     }
 
 
+    /// <summary>
+    /// 保存后台服务类型的短名称和完整名称信息
+    /// </summary>
     private sealed class DisplayInfo
     {
-        public DisplayInfo(string minimal, string full, string? ns)
+        /// <summary>
+        /// 创建后台服务类型名称显示信息
+        /// </summary>
+        /// <param name="minimal">最短类型显示名</param>
+        /// <param name="full">完整类型显示名</param>
+        /// <param name="ns">类型所在命名空间</param>
+        /// <param name="typeSymbol">后台服务类型符号</param>
+        public DisplayInfo(string minimal, string full, string? ns, INamedTypeSymbol typeSymbol)
         {
             Minimal = minimal;
             Full = full;
             Namespace = ns;
+            TypeSymbol = typeSymbol;
         }
 
+        /// <summary>
+        /// 当前命名空间下可用的最短类型显示名
+        /// </summary>
         public string Minimal { get; }
 
+        /// <summary>
+        /// 包含命名空间的完整类型显示名
+        /// </summary>
         public string Full { get; }
 
+        /// <summary>
+        /// 类型所在命名空间
+        /// </summary>
         public string? Namespace { get; }
+
+        /// <summary>
+        /// 当前显示信息对应的后台服务类型符号
+        /// </summary>
+        public INamedTypeSymbol TypeSymbol { get; }
     }
 
 

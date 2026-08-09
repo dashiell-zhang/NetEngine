@@ -31,7 +31,7 @@ internal sealed class DistributedLockLeaseRenewer
     /// <summary>
     /// 当前持有的锁句柄
     /// </summary>
-    private readonly IDisposable lockHandle;
+    private readonly IDistributedLockHandle lockHandle;
 
 
     /// <summary>
@@ -91,7 +91,7 @@ internal sealed class DistributedLockLeaseRenewer
     /// <param name="lockKey">用于错误日志的锁键</param>
     /// <param name="method">用于错误日志的业务方法信息</param>
     /// <param name="logger">当前调用使用的日志记录器</param>
-    public DistributedLockLeaseRenewer(IDistributedLock distributedLock, IDisposable lockHandle, TimeSpan expiry, string lockKey, string method, ILogger? logger)
+    public DistributedLockLeaseRenewer(IDistributedLock distributedLock, IDistributedLockHandle lockHandle, TimeSpan expiry, string lockKey, string method, ILogger? logger)
     {
 
         if (expiry <= TimeSpan.Zero)
@@ -203,8 +203,12 @@ internal sealed class DistributedLockLeaseRenewer
         try
         {
             lastRenewalException = null;
-            var renewed = await distributedLock.RenewAsync(lockHandle, expiry);
+            var renewed = await distributedLock.RenewAsync(lockHandle, expiry, stopSource.Token);
             return renewed;
+        }
+        catch (OperationCanceledException) when (stopSource.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

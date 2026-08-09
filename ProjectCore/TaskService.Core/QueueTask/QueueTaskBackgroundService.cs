@@ -208,6 +208,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
     {
         CancellationTokenSource? renewLeaseTokenSource = null;
         Task? renewLeaseTask = null;
+        IDistributedLockHandle? lockActionState = null;
         object? returnObject = null;
         bool isReturnVoid = false;
 
@@ -225,7 +226,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
             var idService = scope.ServiceProvider.GetRequiredService<IdService>();
 
-            using var lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, DefaultLeaseDuration, queueTaskInfo.Semaphore);
+            lockActionState = await distLock.TryLockAsync(queueTaskInfo.Name, DefaultLeaseDuration, queueTaskInfo.Semaphore);
             if (lockActionState == null)
             {
                 await ReleaseClaimAsync(queueTaskId);
@@ -312,6 +313,19 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
         finally
         {
             await StopLeaseRenewAsync(renewLeaseTokenSource, renewLeaseTask);
+
+            if (lockActionState is not null)
+            {
+                try
+                {
+                    await lockActionState.DisposeAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Release distributed lock failed for queue task {QueueTaskId}", queueTaskId);
+                }
+            }
+
             runingTaskList.TryRemove(queueTaskId, out _);
         }
     }
@@ -379,7 +393,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
             async Task UpdateParentState(long parentTaskId, long currentTaskId)
             {
-                using (await distLock.LockAsync(parentTaskId.ToString()))
+                await using (await distLock.LockAsync(parentTaskId.ToString()))
                 {
                     var isSameLevelHaveWait = await db.QueueTask.Where(t => t.ParentTaskId == parentTaskId && t.Id != currentTaskId && t.ChildSuccessTime == null).AnyAsync();
 
@@ -417,7 +431,12 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
     /// <summary>
     /// 在任务执行期间持续延长数据库租约和并发锁
     /// </summary>
-    private async Task RenewLeaseAsync(long queueTaskId, QueueTaskInfo queueTaskInfo, IDisposable lockHandle, CancellationToken cancellationToken)
+    /// <param name="queueTaskId">队列任务编号</param>
+    /// <param name="queueTaskInfo">队列任务运行信息</param>
+    /// <param name="lockHandle">当前持有的并发锁句柄</param>
+    /// <param name="cancellationToken">停止续期的取消令牌</param>
+    /// <returns>续期循环任务</returns>
+    private async Task RenewLeaseAsync(long queueTaskId, QueueTaskInfo queueTaskInfo, IDistributedLockHandle lockHandle, CancellationToken cancellationToken)
     {
         var renewInterval = GetLeaseRenewInterval(DefaultLeaseDuration);
 
@@ -434,9 +453,9 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
 
             try
             {
-                if (!await distLock.RenewAsync(lockHandle, DefaultLeaseDuration))
+                if (!await distLock.RenewAsync(lockHandle, DefaultLeaseDuration, cancellationToken))
                 {
-                    logger.LogWarning("Renew distributed lock failed for queue task {QueueTaskId}", queueTaskId);
+                    logger.LogError("Renew distributed lock failed for queue task {QueueTaskId}", queueTaskId);
                     continue;
                 }
 
@@ -452,6 +471,10 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
                 await db.SaveChangesAsync(cancellationToken);
             }
             catch (DbUpdateConcurrencyException)
+            {
+                return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 return;
             }

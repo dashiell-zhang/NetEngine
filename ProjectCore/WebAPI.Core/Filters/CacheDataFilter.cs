@@ -35,6 +35,7 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
+        var cancellationToken = context.HttpContext.RequestAborted;
 
         string cacheKey = "";
         IDistributedLockHandle? lockHandle = null;
@@ -53,7 +54,7 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
 
             cacheKey = "CacheData_" + CryptoHelper.MD5HashData(cacheKey);
 
-            var cacheInfo = await distributedCache.GetAsync<object>(cacheKey);
+            var cacheInfo = await distributedCache.GetAsync<object>(cacheKey, cancellationToken);
 
             if (cacheInfo != null)
             {
@@ -76,16 +77,16 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
                 {
                     var expiryTime = TimeSpan.FromSeconds(60);
 
-                    lockHandle = await distributedLock.TryLockAsync(cacheKey, expiryTime);
+                    lockHandle = await distributedLock.TryLockAsync(cacheKey, expiryTime, cancellationToken: cancellationToken);
                     if (lockHandle != null)
                     {
                         break;
                     }
                     else
                     {
-                        await Task.Delay(200);
+                        await Task.Delay(200, cancellationToken);
 
-                        cacheInfo = await distributedCache.GetAsync<object>(cacheKey);
+                        cacheInfo = await distributedCache.GetAsync<object>(cacheKey, cancellationToken);
 
                         if (cacheInfo != null)
                         {
@@ -104,33 +105,51 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
                 }
             }
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CacheDataFilter>>();
             logger.LogError(ex, "缓存模块异常-In");
         }
 
-        var actionExecutedContext = await next();
-
         try
         {
-            if (actionExecutedContext.Result is ObjectResult objectResult && objectResult.Value != null)
+            var actionExecutedContext = await next();
+
+            try
             {
-                if (objectResult.Value != null)
+                if (actionExecutedContext.Result is ObjectResult objectResult && objectResult.Value != null)
                 {
-                    await distributedCache.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(TTL));
+                    await distributedCache.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(TTL), cancellationToken: cancellationToken);
                 }
             }
-
-            if (lockHandle is not null)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                await lockHandle.DisposeAsync();
+                throw;
+            }
+            catch (Exception ex)
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CacheDataFilter>>();
+                logger.LogError(ex, "缓存模块异常-Out");
             }
         }
-        catch (Exception ex)
+        finally
         {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CacheDataFilter>>();
-            logger.LogError(ex, "缓存模块异常-Out");
+            if (lockHandle is not null)
+            {
+                try
+                {
+                    await lockHandle.DisposeAsync();
+                }
+                catch (Exception ex)
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CacheDataFilter>>();
+                    logger.LogError(ex, "缓存模块释放分布式锁异常");
+                }
+            }
         }
 
     }

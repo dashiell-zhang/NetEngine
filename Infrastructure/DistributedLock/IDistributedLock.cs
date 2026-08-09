@@ -12,8 +12,9 @@ public interface IDistributedLock
     /// <param name="key">锁的名称，不可重复</param>
     /// <param name="expiry">失效时长</param>
     /// <param name="semaphore">信号量</param>
+    /// <param name="cancellationToken">取消锁等待的令牌</param>
     /// <returns>成功获取的锁句柄</returns>
-    Task<IDistributedLockHandle> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1);
+    Task<IDistributedLockHandle> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1, CancellationToken cancellationToken = default);
 
 
     /// <summary>
@@ -22,8 +23,9 @@ public interface IDistributedLock
     /// <param name="key">锁的名称，不可重复</param>
     /// <param name="expiry">失效时长</param>
     /// <param name="semaphore">信号量</param>
+    /// <param name="cancellationToken">取消锁获取的令牌</param>
     /// <returns>成功获取的锁句柄 获取失败时返回 null</returns>
-    Task<IDistributedLockHandle?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1);
+    Task<IDistributedLockHandle?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1, CancellationToken cancellationToken = default);
 
 
     /// <summary>

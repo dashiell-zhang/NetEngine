@@ -97,6 +97,28 @@ internal static class GeneratedTypeNameCollisionDetector
 
 
     /// <summary>
+    /// 从编译的合并全局命名空间中查找指定命名空间
+    /// </summary>
+    /// <param name="globalNamespace">编译的全局命名空间</param>
+    /// <param name="namespaceName">以点分隔的完整命名空间名称</param>
+    /// <returns>找到的命名空间 不存在时返回 null</returns>
+    public static INamespaceSymbol? FindNamespace(INamespaceSymbol globalNamespace, string namespaceName)
+    {
+
+        var current = globalNamespace;
+        foreach (var segment in namespaceName.Split('.'))
+        {
+            current = current.GetNamespaceMembers().FirstOrDefault(namespaceSymbol => string.Equals(namespaceSymbol.Name, segment, StringComparison.Ordinal));
+            if (current is null)
+                return null;
+        }
+
+        return current;
+
+    }
+
+
+    /// <summary>
     /// 判断命名空间是否包含指定名称和泛型参数数量的根成员
     /// </summary>
     /// <param name="namespaceSymbol">待检查的命名空间</param>

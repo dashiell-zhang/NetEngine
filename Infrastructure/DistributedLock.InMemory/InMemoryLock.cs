@@ -59,11 +59,12 @@ public sealed class InMemoryLock : IDistributedLock
     /// <param name="key">锁名称</param>
     /// <param name="expiry">锁的失效时长与最长等待时长</param>
     /// <param name="semaphore">可同时持有锁的名额数量</param>
+    /// <param name="cancellationToken">取消锁等待的令牌</param>
     /// <returns>成功获取的锁句柄</returns>
-    public async Task<IDistributedLockHandle> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
+    public async Task<IDistributedLockHandle> LockAsync(string key, TimeSpan expiry = default, int semaphore = 1, CancellationToken cancellationToken = default)
     {
 
-        var handle = await TryAcquireAsync(key, expiry, semaphore, wait: true);
+        var handle = await TryAcquireAsync(key, expiry, semaphore, wait: true, cancellationToken);
         return handle ?? throw new TimeoutException("获取锁" + key + "超时失败");
 
     }
@@ -75,11 +76,12 @@ public sealed class InMemoryLock : IDistributedLock
     /// <param name="key">锁名称</param>
     /// <param name="expiry">锁的失效时长</param>
     /// <param name="semaphore">可同时持有锁的名额数量</param>
+    /// <param name="cancellationToken">取消锁获取的令牌</param>
     /// <returns>成功返回锁句柄 失败返回 null</returns>
-    public Task<IDistributedLockHandle?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1)
+    public Task<IDistributedLockHandle?> TryLockAsync(string key, TimeSpan expiry = default, int semaphore = 1, CancellationToken cancellationToken = default)
     {
 
-        return TryAcquireAsync(key, expiry, semaphore, wait: false);
+        return TryAcquireAsync(key, expiry, semaphore, wait: false, cancellationToken);
 
     }
 
@@ -91,9 +93,12 @@ public sealed class InMemoryLock : IDistributedLock
     /// <param name="expiry">锁的失效时长</param>
     /// <param name="semaphore">可同时持有锁的名额数量</param>
     /// <param name="wait">是否等待直到超时</param>
+    /// <param name="cancellationToken">取消锁等待的令牌</param>
     /// <returns>成功返回句柄 失败返回 null</returns>
-    private static async Task<IDistributedLockHandle?> TryAcquireAsync(string key, TimeSpan expiry, int semaphore, bool wait)
+    private static async Task<IDistributedLockHandle?> TryAcquireAsync(string key, TimeSpan expiry, int semaphore, bool wait, CancellationToken cancellationToken)
     {
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (string.IsNullOrWhiteSpace(key))
         {
@@ -123,6 +128,8 @@ public sealed class InMemoryLock : IDistributedLock
         {
             while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 for (int i = 0; i < semaphore; i++)
                 {
                     var slot = group.Slots.GetOrAdd(i, static _ => new SemaphoreSlim(1, 1));
@@ -154,7 +161,7 @@ public sealed class InMemoryLock : IDistributedLock
                     return null;
                 }
 
-                await Task.Delay(remaining < RetryInterval ? remaining : RetryInterval);
+                await Task.Delay(remaining < RetryInterval ? remaining : RetryInterval, cancellationToken);
 
                 if (Stopwatch.GetElapsedTime(startTimestamp) >= expiry)
                 {

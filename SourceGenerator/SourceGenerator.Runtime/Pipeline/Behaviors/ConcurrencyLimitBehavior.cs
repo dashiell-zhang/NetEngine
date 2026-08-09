@@ -47,7 +47,7 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
         {
             if (opt.IsBlock)
             {
-                handle = await lockSvc.TryLockAsync(key, expiry, semaphore);
+                handle = await lockSvc.TryLockAsync(key, expiry, semaphore, ctx.CancellationToken);
                 if (handle is null)
                 {
                     if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit blocked {methodForLog}");
@@ -56,7 +56,7 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
             }
             else
             {
-                handle = await lockSvc.LockAsync(key, expiry, semaphore);
+                handle = await lockSvc.LockAsync(key, expiry, semaphore, ctx.CancellationToken);
             }
 
             leaseRenewer = new DistributedLockLeaseRenewer(lockSvc, handle, expiry, key, methodForLog, ctx.Logger);

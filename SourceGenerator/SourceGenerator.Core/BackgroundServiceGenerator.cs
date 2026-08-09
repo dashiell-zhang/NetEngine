@@ -16,6 +16,10 @@ namespace SourceGenerator.Core;
 public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 {
 
+    private const string GeneratedNamespaceName = "NetEngine.Generated";
+
+    private const string GeneratedExtensionClassName = "ServiceCollectionExtensions";
+
     /// <summary>
     /// 当后台服务或其外层类型包含未绑定类型参数时报告的诊断
     /// </summary>
@@ -186,11 +190,16 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                 registrationsInfo.Add(implDisplay);
             }
 
-            var fixedImportedNamespaces = new[] { servicesSymbol.ContainingNamespace };
+            var generatedNamespaceSymbol = GeneratedTypeNameCollisionDetector.FindNamespace(compilation.GlobalNamespace, GeneratedNamespaceName);
+            var fixedImportedNamespaces = generatedNamespaceSymbol is null
+                ? new[] { servicesSymbol.ContainingNamespace }
+                : new[] { servicesSymbol.ContainingNamespace, generatedNamespaceSymbol };
 
             foreach (var impl in registrationsInfo)
             {
-                var hasConflict = impl.TypeSymbol.ContainingNamespace.IsGlobalNamespace
+                var rootType = GeneratedTypeNameCollisionDetector.GetRootType(impl.TypeSymbol);
+                var hasConflict = string.Equals(rootType.Name, GeneratedExtensionClassName, StringComparison.Ordinal)
+                                  || impl.TypeSymbol.ContainingNamespace.IsGlobalNamespace
                                   || GeneratedTypeNameCollisionDetector.HasConflict(impl.TypeSymbol, importedNamespaceSymbols, fixedImportedNamespaces);
                 var display = hasConflict ? impl.Full : impl.Minimal;
                 var call = BuildBackgroundRegistrationCall(display);
@@ -201,9 +210,9 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
             var safeAssemblyName = SanitizeIdentifier(assemblyName);
 
-            var ns = "NetEngine.Generated";
+            var ns = GeneratedNamespaceName;
 
-            var extClassName = "ServiceCollectionExtensions";
+            var extClassName = GeneratedExtensionClassName;
 
             // 每个模块统一生成 RegisterBackgroundServices_{AssemblyName}
             var methodName = "RegisterBackgroundServices_" + safeAssemblyName;

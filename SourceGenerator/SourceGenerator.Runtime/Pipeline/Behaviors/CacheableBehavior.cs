@@ -96,7 +96,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
         try
         {
-            lockHandle = await lockSvc.LockAsync(lockKey, CacheLockExpiry);
+            lockHandle = await lockSvc.LockAsync(lockKey, CacheLockExpiry, cancellationToken: ctx.CancellationToken);
         }
         catch (OperationCanceledException)
         {

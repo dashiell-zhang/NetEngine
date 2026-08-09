@@ -1,5 +1,6 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using StackExchange.Redis;
-using System.Diagnostics;
 
 namespace DistributedLock.Redis;
 
@@ -19,6 +20,12 @@ public sealed class RedisLockHandle : IDistributedLockHandle
     /// 已经启动的唯一释放任务
     /// </summary>
     private Task? releaseTask;
+
+
+    /// <summary>
+    /// Redis 锁日志记录器
+    /// </summary>
+    private readonly ILogger logger;
 
 
     /// <summary>
@@ -57,17 +64,31 @@ public sealed class RedisLockHandle : IDistributedLockHandle
 
 
     /// <summary>
+    /// 创建使用空日志记录器的 Redis 分布式锁句柄
+    /// </summary>
+    /// <param name="database">Redis 数据库</param>
+    /// <param name="lockKey">锁键</param>
+    /// <param name="lockValue">当前持有者的唯一所有权令牌</param>
+    public RedisLockHandle(IDatabase database, string lockKey, string lockValue) : this(database, lockKey, lockValue, NullLogger.Instance)
+    {
+
+    }
+
+
+    /// <summary>
     /// 创建 Redis 分布式锁句柄
     /// </summary>
     /// <param name="database">Redis 数据库</param>
     /// <param name="lockKey">锁键</param>
     /// <param name="lockValue">当前持有者的唯一所有权令牌</param>
-    public RedisLockHandle(IDatabase database, string lockKey, string lockValue)
+    /// <param name="logger">Redis 锁日志记录器</param>
+    public RedisLockHandle(IDatabase database, string lockKey, string lockValue, ILogger logger)
     {
 
         Database = database;
         LockKey = lockKey;
         LockValue = lockValue;
+        this.logger = logger;
 
     }
 
@@ -78,13 +99,13 @@ public sealed class RedisLockHandle : IDistributedLockHandle
     public void Dispose()
     {
 
-        _ = ObserveReleaseAsync(GetOrStartReleaseTask());
+        _ = GetOrStartReleaseTask();
 
     }
 
 
     /// <summary>
-    /// 异步释放当前持有的 Redis 锁并向调用方传播释放异常
+    /// 异步释放当前持有的 Redis 锁并等待释放错误完成记录
     /// </summary>
     public ValueTask DisposeAsync()
     {
@@ -103,26 +124,31 @@ public sealed class RedisLockHandle : IDistributedLockHandle
 
         lock (releaseLock)
         {
-            return releaseTask ??= Database.LockReleaseAsync(LockKey, LockValue);
+            return releaseTask ??= ReleaseAsync();
         }
 
     }
 
 
     /// <summary>
-    /// 为同步兼容入口观察并记录异步释放异常
+    /// 释放 Redis 锁并记录错误且不影响业务执行结果
     /// </summary>
-    /// <param name="task">需要观察的释放任务</param>
-    private async Task ObserveReleaseAsync(Task task)
+    private async Task ReleaseAsync()
     {
 
         try
         {
-            await task;
+            await Database.LockReleaseAsync(LockKey, LockValue);
         }
         catch (Exception ex)
         {
-            Trace.TraceWarning("释放 Redis 锁失败 {0}: {1}", LockKey, ex.Message);
+            try
+            {
+                logger.LogError(ex, "Release Redis distributed lock failed for key {LockKey} Business execution result will be preserved", LockKey);
+            }
+            catch
+            {
+            }
         }
 
     }

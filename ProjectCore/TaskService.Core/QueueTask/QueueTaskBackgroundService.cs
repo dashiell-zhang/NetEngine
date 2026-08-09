@@ -439,6 +439,7 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
     private async Task RenewLeaseAsync(long queueTaskId, QueueTaskInfo queueTaskInfo, IDistributedLockHandle lockHandle, CancellationToken cancellationToken)
     {
         var renewInterval = GetLeaseRenewInterval(DefaultLeaseDuration);
+        var distributedLockLeaseLost = false;
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -451,14 +452,29 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
                 return;
             }
 
+            if (!distributedLockLeaseLost)
+            {
+                try
+                {
+                    if (!await distLock.RenewAsync(lockHandle, DefaultLeaseDuration, cancellationToken))
+                    {
+                        distributedLockLeaseLost = true;
+                        logger.LogError("Distributed lock lease lost for queue task {QueueTaskId} Business execution and database lease renewal will continue", queueTaskId);
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    distributedLockLeaseLost = true;
+                    logger.LogError(ex, "Renew distributed lock failed for queue task {QueueTaskId} Business execution and database lease renewal will continue", queueTaskId);
+                }
+            }
+
             try
             {
-                if (!await distLock.RenewAsync(lockHandle, DefaultLeaseDuration, cancellationToken))
-                {
-                    logger.LogError("Renew distributed lock failed for queue task {QueueTaskId}", queueTaskId);
-                    continue;
-                }
-
                 await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
                 var queueTask = await db.QueueTask.FirstOrDefaultAsync(t => t.Id == queueTaskId, cancellationToken);
@@ -470,9 +486,9 @@ public class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILogge
                 queueTask.LeaseExpireTime = DateTimeOffset.UtcNow.Add(DefaultLeaseDuration);
                 await db.SaveChangesAsync(cancellationToken);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                return;
+                logger.LogError(ex, "Renew database lease concurrency conflict for queue task {QueueTaskId} Business execution will continue and renewal will retry", queueTaskId);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

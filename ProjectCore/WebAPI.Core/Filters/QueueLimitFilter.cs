@@ -49,6 +49,7 @@ public class QueueLimitFilter : Attribute, IAsyncActionFilter
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         IDistributedLockHandle? lockHandle = null;
+        var cancellationToken = context.HttpContext.RequestAborted;
 
         try
         {
@@ -79,7 +80,7 @@ public class QueueLimitFilter : Attribute, IAsyncActionFilter
                     expiryTime = TimeSpan.FromSeconds(Expiry);
                 }
 
-                lockHandle = await distLock.TryLockAsync(key, expiryTime);
+                lockHandle = await distLock.TryLockAsync(key, expiryTime, cancellationToken: cancellationToken);
                 if (lockHandle != null)
                 {
                     break;
@@ -93,10 +94,14 @@ public class QueueLimitFilter : Attribute, IAsyncActionFilter
                     }
                     else
                     {
-                        await Task.Delay(200);
+                        await Task.Delay(200, cancellationToken);
                     }
                 }
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -104,22 +109,24 @@ public class QueueLimitFilter : Attribute, IAsyncActionFilter
             logger.LogError(ex, "队列限制模块异常-In");
         }
 
-        await next();
-
         try
         {
-            if (Expiry <= 0)
+            await next();
+        }
+        finally
+        {
+            if (Expiry <= 0 && lockHandle is not null)
             {
-                if (lockHandle is not null)
+                try
                 {
                     await lockHandle.DisposeAsync();
                 }
+                catch (Exception ex)
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<QueueLimitFilter>>();
+                    logger.LogError(ex, "队列限制模块释放分布式锁异常");
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<QueueLimitFilter>>();
-            logger.LogError(ex, "队列限制模块异常-Out");
         }
     }
 }

@@ -19,6 +19,10 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
     private const string AutoProxyAttributeMetadataName = "SourceGenerator.Runtime.Attributes.AutoProxyAttribute";
 
+    private const string GeneratedNamespaceName = "NetEngine.Generated";
+
+    private const string GeneratedExtensionClassName = "ServiceCollectionExtensions";
+
 
     /// <summary>
     /// 当服务实现存在多个直接业务接口且未显式选择时抛出的诊断定义
@@ -63,6 +67,18 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         id: "RegisterService004",
         title: "RegisterService 服务无法构造",
         messageFormat: "服务实现类型 {0} 没有可由依赖注入使用的 public 实例构造函数",
+        category: "RegisterServiceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当开放泛型服务参数无法按位置闭合实现类型时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor InvalidOpenGenericMappingDescriptor = new(
+        id: "RegisterService005",
+        title: "RegisterService 开放泛型映射无效",
+        messageFormat: "开放泛型服务 {0} 无法闭合实现类型 {1}：{2}",
         category: "RegisterServiceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -249,6 +265,24 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                     continue;
                 }
 
+                var registersAsSelf = selectedServiceType is null
+                                      || SymbolEqualityComparer.Default.Equals(selectedServiceType, typeSymbol);
+                var configuredServiceType = attrData.ConstructorArguments.FirstOrDefault().Value as INamedTypeSymbol;
+                var requestsOpenGenericService = configuredServiceType?.IsUnboundGenericType == true;
+
+                if (!registersAsSelf
+                    && (requestsOpenGenericService || ContainsTypeParameter(typeSymbol) || ContainsTypeParameter(selectedServiceType!))
+                    && !HasValidOpenGenericMapping(typeSymbol, selectedServiceType!, out var mappingReason))
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        InvalidOpenGenericMappingDescriptor,
+                        GetAttributeLocation(attrData, typeSymbol),
+                        selectedServiceType!.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        typeSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        mappingReason));
+                    continue;
+                }
+
                 var hasAutoProxy = HasAutoProxy(typeSymbol, autoProxyAttributeSymbol);
                 var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateCompleteProxy(typeSymbol, compilation);
                 CollectNamespaces(usingNamespaces, importedNamespaceSymbols, typeSymbol);
@@ -264,9 +298,6 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 }
 
                 DisplayInfo? serviceInfo = null;
-                var registersAsSelf = selectedServiceType is null
-                                      || SymbolEqualityComparer.Default.Equals(selectedServiceType, typeSymbol);
-
                 if (!registersAsSelf)
                 {
                     serviceInfo = GetDisplay(selectedServiceType!);
@@ -284,7 +315,10 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 registrationInfos.Add(new RegistrationInfo(lifetime, keyExpr, implInfo, serviceInfo));
             }
 
-            var fixedImportedNamespaces = new[] { servicesSymbol.ContainingNamespace };
+            var generatedNamespaceSymbol = GeneratedTypeNameCollisionDetector.FindNamespace(compilation.GlobalNamespace, GeneratedNamespaceName);
+            var fixedImportedNamespaces = generatedNamespaceSymbol is null
+                ? new[] { servicesSymbol.ContainingNamespace }
+                : new[] { servicesSymbol.ContainingNamespace, generatedNamespaceSymbol };
 
             foreach (var info in registrationInfos)
             {
@@ -312,8 +346,8 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
             // 命名空间统一为 NetEngine.Generated，通过不同的方法名区分不同程序集：
             // RegisterServices_{AssemblyName}
-            var ns = "NetEngine.Generated";
-            var extClassName = "ServiceCollectionExtensions";
+            var ns = GeneratedNamespaceName;
+            var extClassName = GeneratedExtensionClassName;
             var methodName = "RegisterServices_" + safeAssemblyName;
 
             // 启动项目（控制台 / 桌面应用等）才会生成聚合的 BatchRegisterServices
@@ -575,6 +609,9 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
     private static bool NeedsFullTypeName(DisplayInfo displayInfo, IEnumerable<INamespaceSymbol> importedNamespaces, IEnumerable<INamespaceSymbol> fixedImportedNamespaces)
     {
 
+        if (string.Equals(displayInfo.RootName, GeneratedExtensionClassName, StringComparison.Ordinal))
+            return true;
+
         if (displayInfo.IsGeneratedType)
         {
             if (displayInfo.SourceType.ContainingNamespace.IsGlobalNamespace)
@@ -745,6 +782,87 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         }
 
         return count;
+    }
+
+
+    /// <summary>
+    /// 校验开放泛型服务参数能否按依赖注入容器的闭合顺序映射到实现类型
+    /// </summary>
+    /// <param name="implementationType">开放泛型实现类型</param>
+    /// <param name="serviceType">实现类实际声明的服务接口</param>
+    /// <param name="reason">映射无效时的原因</param>
+    /// <returns>服务参数与实现参数能够按位置一一对应时返回 true</returns>
+    private static bool HasValidOpenGenericMapping(INamedTypeSymbol implementationType, INamedTypeSymbol serviceType, out string reason)
+    {
+
+        var implementationParameters = GetAllTypeParameters(implementationType);
+        var serviceArguments = GetAllTypeArguments(serviceType);
+
+        if (implementationParameters.Length == 0)
+        {
+            reason = "实现类型没有可用于开放泛型注册的类型参数";
+            return false;
+        }
+
+        if (implementationParameters.Length != serviceArguments.Length)
+        {
+            reason = $"服务参数数量 {serviceArguments.Length} 与实现参数数量 {implementationParameters.Length} 不一致";
+            return false;
+        }
+
+        for (var index = 0; index < implementationParameters.Length; index++)
+        {
+            if (serviceArguments[index] is ITypeParameterSymbol serviceParameter
+                && SymbolEqualityComparer.Default.Equals(serviceParameter, implementationParameters[index]))
+            {
+                continue;
+            }
+
+            reason = $"第 {index + 1} 个服务参数必须直接对应实现参数 {implementationParameters[index].Name}";
+            return false;
+        }
+
+        reason = string.Empty;
+        return true;
+
+    }
+
+
+    /// <summary>
+    /// 获取实现类型及其外层类型从外到内声明的全部泛型参数
+    /// </summary>
+    /// <param name="typeSymbol">实现类型</param>
+    /// <returns>按运行时闭合顺序排列的泛型参数</returns>
+    private static ITypeParameterSymbol[] GetAllTypeParameters(INamedTypeSymbol typeSymbol)
+    {
+
+        var containingTypes = new Stack<INamedTypeSymbol>();
+        for (var current = typeSymbol; current is not null; current = current.ContainingType)
+        {
+            containingTypes.Push(current);
+        }
+
+        return containingTypes.SelectMany(static type => type.TypeParameters).ToArray();
+
+    }
+
+
+    /// <summary>
+    /// 获取服务类型及其外层类型从外到内使用的全部泛型参数
+    /// </summary>
+    /// <param name="typeSymbol">服务类型</param>
+    /// <returns>按运行时闭合顺序排列的类型参数</returns>
+    private static ITypeSymbol[] GetAllTypeArguments(INamedTypeSymbol typeSymbol)
+    {
+
+        var containingTypes = new Stack<INamedTypeSymbol>();
+        for (var current = typeSymbol; current is not null; current = current.ContainingType)
+        {
+            containingTypes.Push(current);
+        }
+
+        return containingTypes.SelectMany(static type => type.TypeArguments).ToArray();
+
     }
 
 

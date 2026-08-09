@@ -26,7 +26,7 @@
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.10" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.22.0" />
-		<PackageReference Include="SkiaSharp.Views.Blazor" Version="4.150.1" />
+		<PackageReference Include="SkiaSharp.Views.Blazor" Version="4.151.1" />
 	</ItemGroup>
 
 	<ItemGroup>

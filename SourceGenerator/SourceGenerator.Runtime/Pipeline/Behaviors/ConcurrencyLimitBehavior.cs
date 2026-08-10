@@ -26,7 +26,10 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
 
         var lockSvc = ctx.ServiceProvider?.GetService<IDistributedLock>();
 
-        if (lockSvc is null) return await next();
+        if (lockSvc is null)
+        {
+            throw new InvalidOperationException($"方法 {ctx.Method} 使用了并发限制，但未注册 IDistributedLock 服务");
+        }
 
         var semaphore = opt.Semaphore <= 0 ? 1 : opt.Semaphore;
         var expiry = opt.ExpirySeconds <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromSeconds(opt.ExpirySeconds);

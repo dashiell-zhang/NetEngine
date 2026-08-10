@@ -92,9 +92,9 @@ public class DatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplySoftDeleteFilters();
+        modelBuilder.ApplySoftDeleteFilters(this);
 
-        modelBuilder.ApplyJsonColumns();
+        modelBuilder.ApplyJsonColumns(this);
 
 
 #if DEBUG

@@ -9,7 +9,7 @@ using System.Text;
 namespace SourceGenerator.Core;
 
 /// <summary>
-/// 为继承自 CD 的实体生成全局软删除过滤器配置
+/// 按 DbContext 为继承自 CD 的实体生成软删除过滤器配置
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
@@ -34,9 +34,15 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
 
 
     /// <summary>
-    /// 用于对 <see cref="INamedTypeSymbol"/> 做集合去重的比较器
+    /// 当 DbContext 无法作为生成扩展方法的参数类型时抛出的诊断定义
     /// </summary>
-    private static readonly IEqualityComparer<INamedTypeSymbol> NamedSymbolComparer = new NamedTypeSymbolEqualityComparer();
+    private static readonly DiagnosticDescriptor UnsupportedDbContextDescriptor = new(
+        id: "SoftDelete002",
+        title: "DbContext 类型无法用于软删除生成代码",
+        messageFormat: "DbContext 类型 {0} 无法由顶层非泛型生成代码引用",
+        category: "SoftDeleteFilterGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 
 
     /// <summary>
@@ -47,8 +53,10 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
         // 编译级获取 CD 类型符号
         var cdSymbol = context.CompilationProvider.Select((c, _) => c.GetTypeByMetadataName(CdMetadataName));
 
-        // 编译级收集所有 DbSet<T> 中声明的实体类型
-        var dbSetEntities = context.CompilationProvider.Select(static (c, _) => GetDbSetEntityTypes(c));
+        // 编译级获取 DbContext 与 DbSet 类型符号
+        var dbContextSymbols = context.CompilationProvider.Select(static (c, _) => (
+            DbContext: c.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbContext"),
+            DbSet: c.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbSet`1")));
 
         // 获取生成文件固定导入的 EF Core 命名空间
         var modelBuilderSymbol = context.CompilationProvider.Select(static (c, _) => c.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.ModelBuilder"));
@@ -60,7 +68,17 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
             {
                 var symbol = syntaxContext.SemanticModel.GetDeclaredSymbol(syntaxContext.Node);
                 return symbol as INamedTypeSymbol;
-            });
+            })
+            .Where(static type => type is not null)!
+            .Select(static (type, _) => type!);
+
+        // 按 DbContext 保留其直接声明的 DbSet 实体集合
+        var dbContextGroups = classSymbols.Combine(dbContextSymbols)
+            .Select(static (tuple, _) => DbContextEntityDiscovery.CreateGroup(tuple.Left, tuple.Right.DbContext, tuple.Right.DbSet))
+            .Where(static group => group is not null)!
+            .Select(static (group, _) => group!)
+            .Collect()
+            .Select(static (groups, _) => DbContextEntityDiscovery.NormalizeGroups(groups));
 
         // 过滤出：继承自 CD 且为具体类的类型符号
         var softDeleteTypes = classSymbols.Combine(cdSymbol)
@@ -80,46 +98,63 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
             .Where(static t => t is not null)!
             .Select(static (t, _) => t!);
 
-        // 收集软删实体 + CD 类型符号 + DbSet 声明的实体集合
-        var collected = softDeleteTypes.Collect().Combine(cdSymbol).Combine(dbSetEntities).Combine(modelBuilderSymbol);
+        // 收集软删实体 + CD 类型符号 + DbContext 实体分组
+        var collected = softDeleteTypes.Collect().Combine(cdSymbol).Combine(dbContextGroups).Combine(modelBuilderSymbol);
 
         context.RegisterSourceOutput(collected, static (spc, tuple) =>
         {
             var entities = tuple.Left.Left.Left;
             var cd = tuple.Left.Left.Right;
-            var dbSetTypes = tuple.Left.Right;
+            var dbContextEntityGroups = tuple.Left.Right;
             var modelBuilder = tuple.Right;
 
-            if (cd is null || entities.IsDefaultOrEmpty)
+            if (cd is null || modelBuilder is null || dbContextEntityGroups.IsDefaultOrEmpty)
                 return;
 
-            // 仅对真正出现在 DbSet<T> 中的实体生成过滤器，跳过基础抽象 / 复用类
-            var filtered = entities.Where(e => dbSetTypes.Contains(e, SymbolEqualityComparer.Default));
+            var softDeleteEntitySet = new HashSet<INamedTypeSymbol>(entities, SymbolEqualityComparer.Default);
+            var reportedInaccessibleEntities = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            var generatedGroups = ImmutableArray.CreateBuilder<DbContextEntityGroup>(dbContextEntityGroups.Length);
 
-            var candidates = filtered.Distinct(NamedSymbolComparer)
-                                     .OrderBy(t => t.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat))
-                                     .ToArray();
-
-            var accessibleEntities = new List<INamedTypeSymbol>(candidates.Length);
-            foreach (var entity in candidates)
+            foreach (var group in dbContextEntityGroups)
             {
-                if (GeneratedCodeAccessibility.IsTypeReferenceAccessible(entity))
+                if (!DbContextEntityDiscovery.CanReferenceContextType(group.DbContextType))
                 {
-                    accessibleEntities.Add(entity);
+                    var contextLocation = group.DbContextType.Locations.FirstOrDefault(static location => location.IsInSource) ?? Location.None;
+                    var contextDisplay = group.DbContextType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                    spc.ReportDiagnostic(Diagnostic.Create(UnsupportedDbContextDescriptor, contextLocation, contextDisplay));
                     continue;
                 }
 
-                var diagnosticLocation = entity.Locations.FirstOrDefault(static location => location.IsInSource) ?? Location.None;
-                var entityDisplay = entity.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
-                spc.ReportDiagnostic(Diagnostic.Create(InaccessibleEntityDescriptor, diagnosticLocation, entityDisplay));
+                var groupEntities = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
+
+                foreach (var entity in group.EntityTypes)
+                {
+                    if (!softDeleteEntitySet.Contains(entity))
+                    {
+                        continue;
+                    }
+
+                    if (GeneratedCodeAccessibility.IsTypeReferenceAccessible(entity))
+                    {
+                        groupEntities.Add(entity);
+                        continue;
+                    }
+
+                    if (reportedInaccessibleEntities.Add(entity))
+                    {
+                        var diagnosticLocation = entity.Locations.FirstOrDefault(static location => location.IsInSource) ?? Location.None;
+                        var entityDisplay = entity.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                        spc.ReportDiagnostic(Diagnostic.Create(InaccessibleEntityDescriptor, diagnosticLocation, entityDisplay));
+                    }
+                }
+
+                generatedGroups.Add(new DbContextEntityGroup(group.DbContextType, groupEntities.ToImmutable()));
             }
 
-            var distinct = accessibleEntities.ToArray();
-
-            if (distinct.Length == 0)
+            if (generatedGroups.Count == 0)
                 return;
 
-            var source = BuildSource(distinct, modelBuilder?.ContainingNamespace);
+            var source = BuildSource(generatedGroups.ToImmutable(), modelBuilder.ContainingNamespace);
             spc.AddSource("SoftDeleteFilters.g.cs", source);
         });
     }
@@ -130,17 +165,27 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
     /// </summary>
     private static bool InheritsFromCd(INamedTypeSymbol type, INamedTypeSymbol cdSymbol)
     {
-        return InheritsFrom(type, cdSymbol);
+
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            if (SymbolEqualityComparer.Default.Equals(current, cdSymbol))
+            {
+                return true;
+            }
+        }
+
+        return false;
+
     }
 
 
     /// <summary>
     /// 生成完整的软删除过滤器配置源码（配置类 + 扩展方法）
     /// </summary>
-    /// <param name="entities">需要生成软删除过滤器的实体类型</param>
+    /// <param name="groups">按 DbContext 隔离的软删除实体分组</param>
     /// <param name="fixedImportedNamespace">生成文件固定导入的 EF Core 命名空间</param>
     /// <returns>完整生成源码</returns>
-    private static string BuildSource(IReadOnlyList<INamedTypeSymbol> entities, INamespaceSymbol? fixedImportedNamespace)
+    private static string BuildSource(ImmutableArray<DbContextEntityGroup> groups, INamespaceSymbol? fixedImportedNamespace)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// <auto-generated />");
@@ -150,6 +195,7 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
         var fixedImportedNamespaces = fixedImportedNamespace is null
             ? Array.Empty<INamespaceSymbol>()
             : new[] { fixedImportedNamespace };
+        var entities = groups.SelectMany(static group => group.EntityTypes);
         var typeNameResolver = GeneratedEntityTypeNameResolver.Create(entities, fixedImportedNamespaces);
         typeNameResolver.AppendUsingDirectives(sb);
 
@@ -157,95 +203,45 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
         sb.AppendLine("namespace Repository.Database.Generated;");
         sb.AppendLine();
 
-        sb.AppendLine("public static class SoftDeleteModelBuilderExtensions")
-          .AppendLine("{")
-          .AppendLine("    public static void ApplySoftDeleteFilters(this ModelBuilder modelBuilder)")
-          .AppendLine("    {");
+        sb.AppendLine("/// <summary>")
+          .AppendLine("/// 提供按 DbContext 隔离的软删除模型配置")
+          .AppendLine("/// </summary>")
+          .AppendLine("public static class SoftDeleteModelBuilderExtensions")
+          .AppendLine("{");
 
-        foreach (var entity in entities)
+        foreach (var group in groups)
         {
-            var entityDisplay = typeNameResolver.GetTypeName(entity);
+            var contextDisplay = group.DbContextType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-            sb.Append("        modelBuilder.Entity<")
-              .Append(entityDisplay)
-              .AppendLine(">().HasQueryFilter(e => e.DeleteTime == null);");
+            sb.AppendLine()
+              .AppendLine("    /// <summary>")
+              .AppendLine("    /// 应用当前 DbContext 直接声明实体的软删除过滤器")
+              .AppendLine("    /// </summary>")
+              .AppendLine("    /// <param name=\"modelBuilder\">当前 EF Core 模型构建器</param>")
+              .AppendLine("    /// <param name=\"context\">用于编译期选择配置重载的 DbContext</param>")
+              .Append("    public static void ApplySoftDeleteFilters(this ModelBuilder modelBuilder, ")
+              .Append(contextDisplay)
+              .AppendLine(" context)")
+              .AppendLine("    {")
+              .AppendLine();
+
+            foreach (var entity in group.EntityTypes)
+            {
+                var entityDisplay = typeNameResolver.GetTypeName(entity);
+
+                sb.Append("        modelBuilder.Entity<")
+                  .Append(entityDisplay)
+                  .AppendLine(">().HasQueryFilter(e => e.DeleteTime == null);");
+            }
+
+            sb.AppendLine()
+              .AppendLine("    }")
+              .AppendLine();
         }
 
-        sb.AppendLine("    }")
-          .AppendLine("}");
+        sb.AppendLine("}");
 
         return sb.ToString();
-    }
-
-
-    /// <summary>
-    /// 扫描编译中的所有 DbContext，收集其公开的 DbSet&lt;T&gt; 所引用的实体类型
-    /// </summary>
-    private static ImmutableHashSet<INamedTypeSymbol> GetDbSetEntityTypes(Compilation compilation)
-    {
-        var dbContextSymbol = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbContext");
-        var dbSetSymbol = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbSet`1");
-
-        if (dbContextSymbol is null || dbSetSymbol is null)
-            return ImmutableHashSet<INamedTypeSymbol>.Empty;
-
-        var result = ImmutableHashSet.CreateBuilder<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-
-        foreach (var tree in compilation.SyntaxTrees)
-        {
-            var semanticModel = compilation.GetSemanticModel(tree);
-            var root = tree.GetRoot();
-
-            foreach (var classDecl in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
-            {
-                if (semanticModel.GetDeclaredSymbol(classDecl) is not INamedTypeSymbol typeSymbol)
-                    continue;
-
-                if (!InheritsFrom(typeSymbol, dbContextSymbol))
-                    continue;
-
-                foreach (var prop in typeSymbol.GetMembers().OfType<IPropertySymbol>())
-                {
-                    if (prop.Type is not INamedTypeSymbol namedType)
-                        continue;
-
-                    if (!SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, dbSetSymbol))
-                        continue;
-
-                    if (namedType.TypeArguments.Length == 1 && namedType.TypeArguments[0] is INamedTypeSymbol entityType)
-                    {
-                        result.Add(entityType);
-                    }
-                }
-            }
-        }
-
-        return result.ToImmutable();
-    }
-
-
-    /// <summary>
-    /// 基于 Roslyn 符号的命名类型比较器，用于去重
-    /// </summary>
-    private sealed class NamedTypeSymbolEqualityComparer : IEqualityComparer<INamedTypeSymbol>
-    {
-        public bool Equals(INamedTypeSymbol? x, INamedTypeSymbol? y) => SymbolEqualityComparer.Default.Equals(x, y);
-
-        public int GetHashCode(INamedTypeSymbol obj) => SymbolEqualityComparer.Default.GetHashCode(obj);
-    }
-
-
-    /// <summary>
-    /// 判断指定类型是否在继承链上包含指定基类
-    /// </summary>
-    private static bool InheritsFrom(INamedTypeSymbol type, INamedTypeSymbol baseType)
-    {
-        for (var t = type; t is not null; t = t.BaseType)
-        {
-            if (SymbolEqualityComparer.Default.Equals(t, baseType))
-                return true;
-        }
-        return false;
     }
 
 }

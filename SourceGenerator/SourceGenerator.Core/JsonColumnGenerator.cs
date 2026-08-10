@@ -21,7 +21,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     private const string JsonColumnAttributeMetadataName = "Repository.Attributes.JsonColumnAttribute";
 
     /// <summary>
-    /// 仅在包含该 DbContext 的项目中输出生成文件，避免在无关项目里产生空的 g.cs
+    /// 仅在包含该 DbContext 的项目中输出生成文件 避免在无关项目里产生空的 g.cs
     /// </summary>
     private const string DatabaseContextTypeMetadataName = "Repository.DatabaseContext";
 
@@ -52,9 +52,11 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     {
         var isDatabaseProject = context.CompilationProvider.Select(static (compilation, _) =>
         {
+
             var databaseContextType = compilation.GetTypeByMetadataName(DatabaseContextTypeMetadataName);
-            return databaseContextType is not null &&
-                   SymbolEqualityComparer.Default.Equals(databaseContextType.ContainingAssembly, compilation.Assembly);
+            return databaseContextType is not null
+                   && SymbolEqualityComparer.Default.Equals(databaseContextType.ContainingAssembly, compilation.Assembly);
+
         });
 
         var symbols = context.CompilationProvider.Select(static (compilation, _) =>
@@ -67,17 +69,20 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                 compilation.GetTypeByMetadataName(DictionaryMetadataName));
         });
 
-        // 以 DbContext 为入口增量收集 DbSet<T> 中的实体类型，避免每次改动都扫描所有语法树
+        // 以 DbContext 为入口增量收集直接声明的 DbSet<T> 实体并保留上下文归属
         var dbContextCandidates = context.SyntaxProvider.CreateSyntaxProvider(
                 static (node, _) => node is ClassDeclarationSyntax cds && cds.BaseList is not null,
                 static (ctx, _) => ctx.SemanticModel.GetDeclaredSymbol((ClassDeclarationSyntax)ctx.Node) as INamedTypeSymbol)
-            .Where(static t => t is not null)!;
+            .Where(static type => type is not null)!
+            .Select(static (type, _) => type!);
 
-        var dbSetEntities = dbContextCandidates
+        var dbContextGroups = dbContextCandidates
             .Combine(symbols)
-            .Select(static (t, _) => GetDbSetEntityTypesFromDbContext(t.Left!, t.Right.DbContext, t.Right.DbSet))
+            .Select(static (tuple, _) => DbContextEntityDiscovery.CreateGroup(tuple.Left, tuple.Right.DbContext, tuple.Right.DbSet))
+            .Where(static group => group is not null)!
+            .Select(static (group, _) => group!)
             .Collect()
-            .Select(static (arrays, _) => MergeEntityTypes(arrays));
+            .Select(static (groups, _) => DbContextEntityDiscovery.NormalizeGroups(groups));
 
         // 从 [JsonColumn] 属性本身出发增量收集，避免遍历所有实体属性
         var jsonColumnProperties = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -87,28 +92,41 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             .Where(static p => p is not null)!;
 
         var jsonColumnAnalyses = jsonColumnProperties
-            .Combine(dbSetEntities)
+            .Combine(dbContextGroups)
             .Combine(symbols)
             .Select(static (t, _) => AnalyzeJsonColumnProperty(t.Left.Left!, t.Left.Right, t.Right))
             .Where(static r => r is not null)!
             .Select(static (r, _) => r!);
 
-        context.RegisterSourceOutput(jsonColumnAnalyses.Collect().Combine(symbols).Combine(isDatabaseProject), static (spc, t) =>
+        context.RegisterSourceOutput(jsonColumnAnalyses.Collect().Combine(dbContextGroups).Combine(symbols).Combine(isDatabaseProject), static (spc, t) =>
         {
+
             if (!t.Right)
                 return;
 
-            var analyses = t.Left.Left;
+            var analyses = t.Left.Left.Left;
+            var dbContextEntityGroups = t.Left.Left.Right;
             var symbols = t.Left.Right;
 
-            if (symbols.ModelBuilder is null)
+            if (symbols.ModelBuilder is null || dbContextEntityGroups.IsDefaultOrEmpty)
                 return;
 
-            if (analyses.IsDefaultOrEmpty)
+            var generatedGroups = ImmutableArray.CreateBuilder<DbContextEntityGroup>(dbContextEntityGroups.Length);
+            foreach (var group in dbContextEntityGroups)
             {
-                spc.AddSource("JsonColumnMappings.g.cs", BuildSource(ImmutableArray<JsonEntityConfig>.Empty, symbols.ModelBuilder.ContainingNamespace));
-                return;
+                if (!DbContextEntityDiscovery.CanReferenceContextType(group.DbContextType))
+                {
+                    var contextLocation = group.DbContextType.Locations.FirstOrDefault(static location => location.IsInSource) ?? Location.None;
+                    var contextDisplay = group.DbContextType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                    spc.ReportDiagnostic(Diagnostic.Create(UnsupportedDbContextDescriptor, contextLocation, contextDisplay));
+                    continue;
+                }
+
+                generatedGroups.Add(group);
             }
+
+            if (generatedGroups.Count == 0)
+                return;
 
             var entityMap = new Dictionary<INamedTypeSymbol, ImmutableArray<JsonNavigation>.Builder>(SymbolEqualityComparer.Default);
             var entityNavVisited = new Dictionary<INamedTypeSymbol, HashSet<string>>(SymbolEqualityComparer.Default);
@@ -142,7 +160,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             foreach (var kv in entityMap)
                 configsBuilder.Add(new JsonEntityConfig(kv.Key, kv.Value.ToImmutable()));
 
-            var source = BuildSource(configsBuilder.ToImmutable(), symbols.ModelBuilder.ContainingNamespace);
+            var source = BuildSource(configsBuilder.ToImmutable(), generatedGroups.ToImmutable(), symbols.ModelBuilder.ContainingNamespace);
             spc.AddSource("JsonColumnMappings.g.cs", source);
         });
     }
@@ -152,15 +170,15 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// 分析单个带 [JsonColumn] 的属性是否能生成映射
     /// </summary>
     /// <param name="property">带 JsonColumn 特性的属性</param>
-    /// <param name="dbSetEntities">当前 DbContext 引用的实体集合</param>
+    /// <param name="dbContextGroups">按 DbContext 隔离的实体分组</param>
     /// <param name="symbols">生成器使用的框架类型符号</param>
     /// <returns>属性分析结果，不属于 DbSet 实体时返回 null</returns>
-    private static JsonColumnAnalysis? AnalyzeJsonColumnProperty(IPropertySymbol property, ImmutableHashSet<INamedTypeSymbol> dbSetEntities, GeneratorSymbols symbols)
+    private static JsonColumnAnalysis? AnalyzeJsonColumnProperty(IPropertySymbol property, ImmutableArray<DbContextEntityGroup> dbContextGroups, GeneratorSymbols symbols)
     {
         if (property.ContainingType is not INamedTypeSymbol entityType)
             return null;
 
-        if (!dbSetEntities.Contains(entityType))
+        if (!DbContextEntityDiscovery.ContainsEntity(dbContextGroups, entityType))
             return null;
 
         if (!IsTypeAccessibleFromGeneratedCode(entityType))
@@ -527,9 +545,10 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// 根据收集到的实体配置生成 JsonColumn 映射扩展方法源码
     /// </summary>
     /// <param name="configs">需要生成 JSON 列映射的实体配置</param>
+    /// <param name="groups">按 DbContext 隔离的实体分组</param>
     /// <param name="fixedImportedNamespace">生成文件固定导入的 EF Core 命名空间</param>
     /// <returns>完整生成源码</returns>
-    private static string BuildSource(ImmutableArray<JsonEntityConfig> configs, INamespaceSymbol? fixedImportedNamespace)
+    private static string BuildSource(ImmutableArray<JsonEntityConfig> configs, ImmutableArray<DbContextEntityGroup> groups, INamespaceSymbol? fixedImportedNamespace)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// <auto-generated />");
@@ -545,17 +564,44 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("namespace Repository.Database.Generated;");
         sb.AppendLine();
+        sb.AppendLine("/// <summary>");
+        sb.AppendLine("/// 提供按 DbContext 隔离的 JSON 列模型配置");
+        sb.AppendLine("/// </summary>");
         sb.AppendLine("public static class JsonColumnModelBuilderExtensions");
         sb.AppendLine("{");
-        sb.AppendLine("    public static void ApplyJsonColumns(this ModelBuilder modelBuilder)");
-        sb.AppendLine("    {");
 
-        foreach (var config in configs.OrderBy(c => c.EntityType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), StringComparer.Ordinal))
+        var configMap = new Dictionary<INamedTypeSymbol, JsonEntityConfig>(SymbolEqualityComparer.Default);
+        foreach (var config in configs)
         {
-            AppendEntityMapping(sb, config, typeNameResolver);
+            configMap[config.EntityType] = config;
         }
 
-        sb.AppendLine("    }");
+        foreach (var group in groups)
+        {
+            var contextDisplay = group.DbContextType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+            sb.AppendLine();
+            sb.AppendLine("    /// <summary>");
+            sb.AppendLine("    /// 应用当前 DbContext 直接声明实体的 JSON 列映射");
+            sb.AppendLine("    /// </summary>");
+            sb.AppendLine("    /// <param name=\"modelBuilder\">当前 EF Core 模型构建器</param>");
+            sb.AppendLine("    /// <param name=\"context\">用于编译期选择配置重载的 DbContext</param>");
+            sb.Append("    public static void ApplyJsonColumns(this ModelBuilder modelBuilder, ").Append(contextDisplay).AppendLine(" context)");
+            sb.AppendLine("    {");
+            sb.AppendLine();
+
+            foreach (var entityType in group.EntityTypes)
+            {
+                if (configMap.TryGetValue(entityType, out var config))
+                {
+                    AppendEntityMapping(sb, config, typeNameResolver);
+                }
+            }
+
+            sb.AppendLine("    }");
+            sb.AppendLine();
+        }
+
         sb.AppendLine("}");
 
         return sb.ToString();
@@ -646,76 +692,6 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
 
     /// <summary>
-    /// 从单个 DbContext 类型（及其基类链）中收集 DbSet&lt;T&gt; 声明的实体类型
-    /// </summary>
-    private static ImmutableArray<INamedTypeSymbol> GetDbSetEntityTypesFromDbContext(INamedTypeSymbol dbContextType, INamedTypeSymbol? dbContextSymbol, INamedTypeSymbol? dbSetSymbol)
-    {
-        if (dbContextSymbol is null || dbSetSymbol is null)
-            return ImmutableArray<INamedTypeSymbol>.Empty;
-
-        if (!InheritsFrom(dbContextType, dbContextSymbol))
-            return ImmutableArray<INamedTypeSymbol>.Empty;
-
-        var builder = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
-        var visited = new HashSet<string>(StringComparer.Ordinal);
-
-        for (var current = dbContextType; current is not null; current = current.BaseType)
-        {
-            foreach (var prop in current.GetMembers().OfType<IPropertySymbol>())
-            {
-                if (prop.Type is not INamedTypeSymbol namedType)
-                    continue;
-
-                if (!SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, dbSetSymbol))
-                    continue;
-
-                if (namedType.TypeArguments.Length == 1 && namedType.TypeArguments[0] is INamedTypeSymbol entityType)
-                {
-                    var key = entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                    if (visited.Add(key))
-                    {
-                        builder.Add(entityType);
-                    }
-                }
-            }
-        }
-
-        return builder.ToImmutable();
-    }
-
-
-    private static ImmutableHashSet<INamedTypeSymbol> MergeEntityTypes(ImmutableArray<ImmutableArray<INamedTypeSymbol>> entityTypeGroups)
-    {
-        if (entityTypeGroups.IsDefaultOrEmpty)
-            return ImmutableHashSet<INamedTypeSymbol>.Empty;
-
-        var builder = ImmutableHashSet.CreateBuilder<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-        foreach (var group in entityTypeGroups)
-        {
-            foreach (var entityType in group)
-            {
-                builder.Add(entityType);
-            }
-        }
-        return builder.ToImmutable();
-    }
-
-
-    /// <summary>
-    /// 判断类型是否在继承链上派生自指定基类
-    /// </summary>
-    private static bool InheritsFrom(INamedTypeSymbol type, INamedTypeSymbol baseType)
-    {
-        for (var current = type; current is not null; current = current.BaseType)
-        {
-            if (SymbolEqualityComparer.Default.Equals(current, baseType))
-                return true;
-        }
-        return false;
-    }
-
-
-    /// <summary>
     /// 当 JsonColumn 属性类型不受支持时抛出的诊断定义
     /// </summary>
     private static readonly DiagnosticDescriptor UnsupportedTypeDescriptor = new(
@@ -770,6 +746,18 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         id: "JsonColumn005",
         title: "JsonColumn 属性无法访问",
         messageFormat: "JsonColumn 属性 {0} 无法被生成代码访问：{1}",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 当 DbContext 无法作为生成扩展方法的参数类型时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor UnsupportedDbContextDescriptor = new(
+        id: "JsonColumn006",
+        title: "DbContext 类型无法用于 JSON 列生成代码",
+        messageFormat: "DbContext 类型 {0} 无法由顶层非泛型生成代码引用",
         category: "JsonColumnGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

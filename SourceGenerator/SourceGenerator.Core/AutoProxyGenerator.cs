@@ -706,7 +706,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
             var cancellationTokenExpression = GetCancellationTokenExpression(method);
 
-            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
             
             if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
@@ -859,7 +859,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
-                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = System.Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = System.Guid.CreateVersion7(), HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
                     AppendAsyncStreamWrapper(sb, tArg, callExpr, sourceIsParameter: false, invokeBefore: true);
@@ -1116,7 +1116,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
             var cancellationTokenExpression = GetCancellationTokenExpression(method);
 
-            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
             
             if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
 
@@ -1245,7 +1245,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
                     var callExpr3 = "base." + methodName + typeParams + "(" + argList + ")";
                     sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
-                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), Log = true, HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
                     sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
                     sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
                     AppendAsyncStreamWrapper(sb, tArg, callExpr3, sourceIsParameter: false, invokeBefore: true);

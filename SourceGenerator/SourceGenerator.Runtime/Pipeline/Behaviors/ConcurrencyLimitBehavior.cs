@@ -53,7 +53,7 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
                 handle = await lockSvc.TryLockAsync(key, expiry, semaphore, ctx.CancellationToken);
                 if (handle is null)
                 {
-                    if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit blocked {methodForLog}");
+                    ctx.Logger?.LogInformation($"ConcurrencyLimit blocked {methodForLog}");
                     throw new InvalidOperationException("请勿频繁操作");
                 }
             }
@@ -64,7 +64,7 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
 
             leaseRenewer = new DistributedLockLeaseRenewer(lockSvc, handle, expiry, key, methodForLog, ctx.Logger);
 
-            if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit acquired {methodForLog} semaphore={semaphore} expirySeconds={expiry.TotalSeconds}");
+            ctx.Logger?.LogInformation($"ConcurrencyLimit acquired {methodForLog} semaphore={semaphore} expirySeconds={expiry.TotalSeconds}");
             ctx.CancellationToken.ThrowIfCancellationRequested();
             return await next();
         }
@@ -80,7 +80,7 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
                 try
                 {
                     await handle.DisposeAsync();
-                    if (ctx.Log) ctx.Logger?.LogInformation($"ConcurrencyLimit released {methodForLog}");
+                    ctx.Logger?.LogInformation($"ConcurrencyLimit released {methodForLog}");
                 }
                 catch (Exception ex)
                 {

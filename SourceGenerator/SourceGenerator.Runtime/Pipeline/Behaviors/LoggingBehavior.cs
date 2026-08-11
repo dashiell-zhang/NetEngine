@@ -80,7 +80,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
         var logger = ctx.Logger;
-        var logInfo = ctx.Log && logger?.IsEnabled(LogLevel.Information) == true;
+        var logInfo = logger?.IsEnabled(LogLevel.Information) == true;
         var logError = logger?.IsEnabled(LogLevel.Error) == true;
 
         if (!logInfo)
@@ -209,7 +209,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         
         ctx.SetFeature(new LoggingState { StartTicks = Stopwatch.GetTimestamp() });
 
-        if (ctx.Log && logger?.IsEnabled(LogLevel.Information) == true)
+        if (logger?.IsEnabled(LogLevel.Information) == true)
         {
             var callerChain = BuildCallerChainArray();
             
@@ -238,7 +238,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         var logger = ctx.Logger;
         var st = ctx.GetFeature<LoggingState>();
 
-        if (ctx.Log && logger?.IsEnabled(LogLevel.Information) == true)
+        if (logger?.IsEnabled(LogLevel.Information) == true)
         {
             var payload = new Dictionary<string, object?>
             {
@@ -312,4 +312,3 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
 
 
 }
-

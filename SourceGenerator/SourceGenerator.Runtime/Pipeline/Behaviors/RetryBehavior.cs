@@ -49,13 +49,13 @@ public sealed class RetryBehavior : IInvocationAsyncBehavior
             {
                 if (execution >= maxExecutions)
                 {
-                    if (ctx.Log) ctx.Logger?.LogError($"Retry exhausted executions={execution}/{maxExecutions} {methodForLog}: {ex.Message}");
+                    ctx.Logger?.LogError($"Retry exhausted executions={execution}/{maxExecutions} {methodForLog}: {ex.Message}");
                     throw;
                 }
 
                 ctx.CancellationToken.ThrowIfCancellationRequested();
 
-                if (ctx.Log) ctx.Logger?.LogWarning($"Retry scheduled retry={execution}/{maxRetries} nextExecution={execution + 1}/{maxExecutions} {methodForLog}: {ex.Message}");
+                ctx.Logger?.LogWarning($"Retry scheduled retry={execution}/{maxRetries} nextExecution={execution + 1}/{maxExecutions} {methodForLog}: {ex.Message}");
 
                 if (delaySeconds > 0)
                 {

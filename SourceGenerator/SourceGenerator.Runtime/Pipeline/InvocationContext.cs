@@ -51,12 +51,6 @@ public sealed class InvocationContext
 
 
     /// <summary>
-    /// 是否启用日志记录
-    /// </summary>
-    public bool Log { get; init; }
-
-
-    /// <summary>
     /// 是否存在返回值
     /// </summary>
     public bool HasReturnValue { get; init; }

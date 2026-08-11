@@ -46,6 +46,16 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     private const string DictionaryMetadataName = "System.Collections.Generic.Dictionary`2";
 
     /// <summary>
+    /// NotMapped 特性的完整元数据名称
+    /// </summary>
+    private const string NotMappedAttributeMetadataName = "System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute";
+
+    /// <summary>
+    /// JSON 列内部复杂类型允许的最大递归深度
+    /// </summary>
+    private const int MaxAnalysisDepth = 128;
+
+    /// <summary>
     /// 增量生成入口 配置对编译对象的扫描与源码输出
     /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -66,7 +76,8 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
                 compilation.GetTypeByMetadataName(DbContextMetadataName),
                 compilation.GetTypeByMetadataName(DbSetMetadataName),
                 compilation.GetTypeByMetadataName(ListMetadataName),
-                compilation.GetTypeByMetadataName(DictionaryMetadataName));
+                compilation.GetTypeByMetadataName(DictionaryMetadataName),
+                compilation.GetTypeByMetadataName(NotMappedAttributeMetadataName));
         });
 
         // 以 DbContext 为入口增量收集直接声明的 DbSet<T> 实体并保留上下文归属
@@ -238,14 +249,28 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             return new JsonColumnAnalysis(entityType, null, diagnostic);
         }
 
-        if (TryFindCyclicNesting(ownedType, symbols.List, symbols.Dictionary, out var cycle))
+        var nestingAnalysis = AnalyzeCyclicNesting(ownedType, symbols.List, symbols.Dictionary, symbols.NotMappedAttribute);
+        if (nestingAnalysis.Status == NestingAnalysisStatus.Cycle)
         {
             var diagnostic = Diagnostic.Create(
                 CyclicNestingDescriptor,
-                cycle.TriggerProperty.Locations.FirstOrDefault() ?? property.Locations.FirstOrDefault(),
+                nestingAnalysis.TriggerProperty?.Locations.FirstOrDefault() ?? property.Locations.FirstOrDefault(),
                 property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
                 ownedType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                cycle.Path);
+                nestingAnalysis.Path);
+
+            return new JsonColumnAnalysis(entityType, null, diagnostic);
+        }
+
+        if (nestingAnalysis.Status == NestingAnalysisStatus.DepthExceeded)
+        {
+            var diagnostic = Diagnostic.Create(
+                AnalysisDepthExceededDescriptor,
+                nestingAnalysis.TriggerProperty?.Locations.FirstOrDefault() ?? property.Locations.FirstOrDefault(),
+                property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                ownedType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                MaxAnalysisDepth,
+                nestingAnalysis.Path);
 
             return new JsonColumnAnalysis(entityType, null, diagnostic);
         }
@@ -376,84 +401,99 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     }
 
 
-    private sealed class CycleInfo
+    /// <summary>
+    /// 表示 JSON 列内部复杂类型的分析结果
+    /// </summary>
+    private enum NestingAnalysisStatus
     {
-        public CycleInfo(IPropertySymbol triggerProperty, string path)
-        {
-            TriggerProperty = triggerProperty;
-            Path = path;
-        }
 
-        public IPropertySymbol TriggerProperty { get; }
+        None,
+        Cycle,
+        DepthExceeded
 
-        public string Path { get; }
     }
 
 
-    private static bool TryFindCyclicNesting(INamedTypeSymbol rootType, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol, out CycleInfo cycle)
+    /// <summary>
+    /// 分析 JSON 列内部复杂类型是否存在循环或超过递归深度限制
+    /// </summary>
+    /// <param name="rootType">JSON 列根复杂类型</param>
+    /// <param name="listSymbol">List 泛型类型符号</param>
+    /// <param name="dictionarySymbol">Dictionary 泛型类型符号</param>
+    /// <param name="notMappedAttributeSymbol">NotMapped 特性类型符号</param>
+    /// <returns>分析状态、触发属性和分析路径</returns>
+    private static (NestingAnalysisStatus Status, IPropertySymbol? TriggerProperty, string? Path) AnalyzeCyclicNesting(INamedTypeSymbol rootType, INamedTypeSymbol? listSymbol, INamedTypeSymbol? dictionarySymbol, INamedTypeSymbol? notMappedAttributeSymbol)
     {
-        // 仅对复杂类型做循环检测：基础类型/值类型/枚举在前面已被过滤
+
         var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
         var recursionStack = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
         var parentEdge = new Dictionary<ITypeSymbol, (ITypeSymbol Parent, IPropertySymbol ViaProperty)>(SymbolEqualityComparer.Default);
 
-        var remainingDepth = 128; // 保护：避免极端情况下递归过深
-        CycleInfo? foundCycle = null;
+        IPropertySymbol? triggerProperty = null;
+        string? analysisPath = null;
 
-        bool Dfs(INamedTypeSymbol type)
+        NestingAnalysisStatus Dfs(INamedTypeSymbol type, int depth)
         {
-            if (remainingDepth-- <= 0)
-                return false;
 
             visited.Add(type);
             recursionStack.Add(type);
 
-            foreach (var prop in GetAllInstanceProperties(type))
+            foreach (var prop in GetAllMappedProperties(type, notMappedAttributeSymbol))
             {
                 var next = TryGetNestedComplexType(prop.Type, listSymbol, dictionarySymbol);
                 if (next is null)
                     continue;
 
-                if (!visited.Contains(next))
+                if (recursionStack.Contains(next))
                 {
-                    parentEdge[next] = (type, prop);
-                    if (Dfs(next))
-                        return true;
+                    triggerProperty = prop;
+                    analysisPath = BuildCyclePath(type, prop, next, parentEdge);
+                    return NestingAnalysisStatus.Cycle;
                 }
-                else if (recursionStack.Contains(next))
+
+                if (visited.Contains(next))
+                    continue;
+
+                if (depth >= MaxAnalysisDepth)
                 {
-                    foundCycle = BuildCycleInfo(type, prop, next, parentEdge);
-                    return true;
+                    triggerProperty = prop;
+                    analysisPath = BuildDepthLimitPath(type, prop, next, parentEdge);
+                    return NestingAnalysisStatus.DepthExceeded;
                 }
+
+                parentEdge[next] = (type, prop);
+                var nestedStatus = Dfs(next, depth + 1);
+                if (nestedStatus != NestingAnalysisStatus.None)
+                    return nestedStatus;
             }
 
             recursionStack.Remove(type);
-            return false;
+            return NestingAnalysisStatus.None;
+
         }
 
-        if (Dfs(rootType) && foundCycle is not null)
-        {
-            cycle = foundCycle;
-            return true;
-        }
+        var status = Dfs(rootType, 0);
+        return (status, triggerProperty, analysisPath);
 
-        cycle = null!;
-        return false;
     }
 
 
-    private static CycleInfo BuildCycleInfo(
-        INamedTypeSymbol currentType,
-        IPropertySymbol triggerProperty,
-        INamedTypeSymbol targetType,
-        Dictionary<ITypeSymbol, (ITypeSymbol Parent, IPropertySymbol ViaProperty)> parentEdge)
+    /// <summary>
+    /// 构造形成循环的属性路径
+    /// </summary>
+    /// <param name="currentType">当前分析类型</param>
+    /// <param name="triggerProperty">形成回环的属性</param>
+    /// <param name="targetType">回环指向的祖先类型</param>
+    /// <param name="parentEdge">类型与父级属性的访问关系</param>
+    /// <returns>可用于诊断消息的循环路径</returns>
+    private static string BuildCyclePath(INamedTypeSymbol currentType, IPropertySymbol triggerProperty, INamedTypeSymbol targetType, Dictionary<ITypeSymbol, (ITypeSymbol Parent, IPropertySymbol ViaProperty)> parentEdge)
     {
-        var edges = new List<(INamedTypeSymbol From, IPropertySymbol Property, INamedTypeSymbol To)>();
 
-        // 回边：currentType --triggerProperty--> targetType
-        edges.Add((currentType, triggerProperty, targetType));
+        var edges = new List<(INamedTypeSymbol From, IPropertySymbol Property, INamedTypeSymbol To)>
+        {
+            (currentType, triggerProperty, targetType)
+        };
 
-        // 沿 parentEdge 追溯 currentType 到 targetType 的 DFS 树路径，构造 targetType -> ... -> currentType
         ITypeSymbol cursor = currentType;
         while (!SymbolEqualityComparer.Default.Equals(cursor, targetType))
         {
@@ -466,29 +506,103 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
         edges.Reverse();
 
-        var parts = new List<string>(edges.Count + 1);
-        foreach (var e in edges)
-        {
-            parts.Add($"{e.From.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)}.{e.Property.Name}");
-        }
-        parts.Add(edges[edges.Count - 1].To.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
+        return FormatNestingPath(edges);
 
-        return new CycleInfo(triggerProperty, string.Join(" -> ", parts));
     }
 
 
-    private static IEnumerable<IPropertySymbol> GetAllInstanceProperties(INamedTypeSymbol type)
+    /// <summary>
+    /// 构造达到分析深度限制时的完整属性路径
+    /// </summary>
+    /// <param name="currentType">当前分析类型</param>
+    /// <param name="triggerProperty">触发深度限制的属性</param>
+    /// <param name="targetType">准备继续分析的下一层类型</param>
+    /// <param name="parentEdge">类型与父级属性的访问关系</param>
+    /// <returns>从根类型到下一层类型的分析路径</returns>
+    private static string BuildDepthLimitPath(INamedTypeSymbol currentType, IPropertySymbol triggerProperty, INamedTypeSymbol targetType, Dictionary<ITypeSymbol, (ITypeSymbol Parent, IPropertySymbol ViaProperty)> parentEdge)
     {
+
+        var edges = new List<(INamedTypeSymbol From, IPropertySymbol Property, INamedTypeSymbol To)>
+        {
+            (currentType, triggerProperty, targetType)
+        };
+
+        ITypeSymbol cursor = currentType;
+        while (parentEdge.TryGetValue(cursor, out var edge))
+        {
+            edges.Add(((INamedTypeSymbol)edge.Parent, edge.ViaProperty, (INamedTypeSymbol)cursor));
+            cursor = edge.Parent;
+        }
+
+        edges.Reverse();
+
+        return FormatNestingPath(edges);
+
+    }
+
+
+    /// <summary>
+    /// 将类型和属性访问边格式化为诊断路径
+    /// </summary>
+    /// <param name="edges">按访问顺序排列的类型与属性关系</param>
+    /// <returns>可读的属性访问路径</returns>
+    private static string FormatNestingPath(List<(INamedTypeSymbol From, IPropertySymbol Property, INamedTypeSymbol To)> edges)
+    {
+
+        var parts = new List<string>(edges.Count + 1);
+        foreach (var edge in edges)
+        {
+            parts.Add($"{edge.From.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)}.{edge.Property.Name}");
+        }
+
+        parts.Add(edges[edges.Count - 1].To.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
+
+        return string.Join(" -> ", parts);
+
+    }
+
+
+    /// <summary>
+    /// 枚举当前项目约定下参与 EF Core JSON 映射的属性
+    /// </summary>
+    /// <param name="type">待分析类型</param>
+    /// <param name="notMappedAttributeSymbol">NotMapped 特性类型符号</param>
+    /// <returns>需要继续分析的属性集合</returns>
+    private static IEnumerable<IPropertySymbol> GetAllMappedProperties(INamedTypeSymbol type, INamedTypeSymbol? notMappedAttributeSymbol)
+    {
+
         for (var current = type; current is not null; current = current.BaseType)
         {
-            foreach (var prop in current.GetMembers().OfType<IPropertySymbol>())
+            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
             {
-                if (prop.IsStatic || prop.IsIndexer)
-                    continue;
-
-                yield return prop;
+                if (IsMappedPropertyCandidate(property, notMappedAttributeSymbol))
+                    yield return property;
             }
         }
+
+    }
+
+
+    /// <summary>
+    /// 判断属性是否符合当前项目的 EF Core JSON 映射约定
+    /// </summary>
+    /// <param name="property">待判断属性</param>
+    /// <param name="notMappedAttributeSymbol">NotMapped 特性类型符号</param>
+    /// <returns>属性应参与循环检测时返回 true</returns>
+    private static bool IsMappedPropertyCandidate(IPropertySymbol property, INamedTypeSymbol? notMappedAttributeSymbol)
+    {
+
+        if (property.IsStatic || property.IsIndexer || property.DeclaredAccessibility != Accessibility.Public)
+            return false;
+
+        if (property.GetMethod is null || property.SetMethod is null)
+            return false;
+
+        if (notMappedAttributeSymbol is null)
+            return true;
+
+        return !property.GetAttributes().Any(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, notMappedAttributeSymbol));
+
     }
 
 
@@ -763,15 +877,43 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         isEnabledByDefault: true);
 
 
+    /// <summary>
+    /// 当 JsonColumn 内部类型超过分析深度限制时抛出的诊断定义
+    /// </summary>
+    private static readonly DiagnosticDescriptor AnalysisDepthExceededDescriptor = new(
+        id: "JsonColumn007",
+        title: "JsonColumn 类型分析超过深度限制",
+        messageFormat: "JsonColumn 属性 {0} 的类型 {1} 分析深度超过限制 {2}：{3}",
+        category: "JsonColumnGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    /// <summary>
+    /// 保存生成器分析所需的框架类型符号
+    /// </summary>
     private sealed class GeneratorSymbols
     {
-        public GeneratorSymbols(INamedTypeSymbol? modelBuilder, INamedTypeSymbol? dbContext, INamedTypeSymbol? dbSet, INamedTypeSymbol? list, INamedTypeSymbol? dictionary)
+
+        /// <summary>
+        /// 创建生成器分析所需的框架类型符号集合
+        /// </summary>
+        /// <param name="modelBuilder">ModelBuilder 类型符号</param>
+        /// <param name="dbContext">DbContext 类型符号</param>
+        /// <param name="dbSet">DbSet 泛型类型符号</param>
+        /// <param name="list">List 泛型类型符号</param>
+        /// <param name="dictionary">Dictionary 泛型类型符号</param>
+        /// <param name="notMappedAttribute">NotMapped 特性类型符号</param>
+        public GeneratorSymbols(INamedTypeSymbol? modelBuilder, INamedTypeSymbol? dbContext, INamedTypeSymbol? dbSet, INamedTypeSymbol? list, INamedTypeSymbol? dictionary, INamedTypeSymbol? notMappedAttribute)
         {
+
             ModelBuilder = modelBuilder;
             DbContext = dbContext;
             DbSet = dbSet;
             List = list;
             Dictionary = dictionary;
+            NotMappedAttribute = notMappedAttribute;
+
         }
 
         public INamedTypeSymbol? ModelBuilder { get; }
@@ -783,6 +925,12 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         public INamedTypeSymbol? List { get; }
 
         public INamedTypeSymbol? Dictionary { get; }
+
+        /// <summary>
+        /// NotMapped 特性类型符号
+        /// </summary>
+        public INamedTypeSymbol? NotMappedAttribute { get; }
+
     }
 
 

@@ -75,9 +75,9 @@ public sealed class InvocationContext
 
 
     /// <summary>
-    /// 异步调用管道中注册的行为列表
+    /// 当前调用管道中注册的行为列表
     /// </summary>
-    public IReadOnlyList<IInvocationAsyncBehavior>? Behaviors { get; init; }
+    public required IReadOnlyList<IInvocationAsyncBehavior> Behaviors { get; init; }
 
 
     // 用于行为之间传递特定数据或配置的特性存储容器

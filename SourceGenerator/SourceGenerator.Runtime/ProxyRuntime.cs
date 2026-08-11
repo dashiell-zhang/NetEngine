@@ -84,9 +84,7 @@ public static class ProxyRuntime
     /// <returns>封装目标方法返回值的 ValueTask</returns>
     public static ValueTask<T> ExecuteAsync<T>(InvocationContext ctx, Func<ValueTask<T>> inner)
     {
-        var behaviors = ctx.Behaviors ?? new IInvocationAsyncBehavior[] { new Pipeline.Behaviors.LoggingBehavior() };
-
-        return InvocationPipeline.ExecuteAsync<T>(ctx, inner, behaviors);
+        return InvocationPipeline.ExecuteAsync<T>(ctx, inner, ctx.Behaviors);
     }
 
 
@@ -99,10 +97,8 @@ public static class ProxyRuntime
     /// <returns>封装目标方法返回值的 Task</returns>
     public static Task<T> ExecuteAsync<T>(InvocationContext ctx, Func<Task<T>> inner)
     {
-        var behaviors = ctx.Behaviors ?? new IInvocationAsyncBehavior[] { new Pipeline.Behaviors.LoggingBehavior() };
-
         return InvocationPipeline
-            .ExecuteAsync<T>(ctx, async () => await inner().ConfigureAwait(false), behaviors)
+            .ExecuteAsync<T>(ctx, async () => await inner().ConfigureAwait(false), ctx.Behaviors)
             .AsTask();
     }
 
@@ -115,10 +111,8 @@ public static class ProxyRuntime
     /// <returns>表示调用完成的 Task</returns>
     public static Task ExecuteTask(InvocationContext ctx, Func<Task> inner)
     {
-        var behaviors = ctx.Behaviors ?? new IInvocationAsyncBehavior[] { new Pipeline.Behaviors.LoggingBehavior() };
-
         return InvocationPipeline
-            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, behaviors)
+            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, ctx.Behaviors)
             .AsTask();
     }
 
@@ -130,10 +124,8 @@ public static class ProxyRuntime
     /// <param name="inner">实际执行目标方法的 ValueTask 异步委托</param>
     public static async ValueTask ExecuteTask(InvocationContext ctx, Func<ValueTask> inner)
     {
-        var behaviors = ctx.Behaviors ?? new IInvocationAsyncBehavior[] { new Pipeline.Behaviors.LoggingBehavior() };
-
         await InvocationPipeline
-            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, behaviors)
+            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, ctx.Behaviors)
             .ConfigureAwait(false);
     }
 
@@ -146,7 +138,7 @@ public static class ProxyRuntime
     private static IReadOnlyList<IInvocationBehavior> GetSynchronousBehaviors(InvocationContext ctx)
     {
 
-        var behaviors = ctx.Behaviors ?? new IInvocationAsyncBehavior[] { new Pipeline.Behaviors.LoggingBehavior() };
+        var behaviors = ctx.Behaviors;
         var synchronousBehaviors = new IInvocationBehavior[behaviors.Count];
 
         for (var i = 0; i < behaviors.Count; i++)

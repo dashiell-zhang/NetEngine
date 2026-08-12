@@ -50,32 +50,6 @@ public static class ProxyRuntime
 
 
     /// <summary>
-    /// 兼容旧版生成代码执行能够同步完成的 ValueTask 委托
-    /// </summary>
-    /// <typeparam name="T">返回值类型</typeparam>
-    /// <param name="ctx">调用上下文</param>
-    /// <param name="inner">旧版生成代码使用的 ValueTask 委托</param>
-    /// <returns>目标方法最终返回值</returns>
-    [Obsolete("同步代理不再支持异步行为管道，请改用接收 Func<T> 的 Execute 重载")]
-    public static T Execute<T>(InvocationContext ctx, Func<ValueTask<T>> inner)
-    {
-
-        return Execute<T>(ctx, () =>
-        {
-            var pendingResult = inner();
-
-            if (!pendingResult.IsCompletedSuccessfully)
-            {
-                throw new InvalidOperationException("同步代理不能等待尚未完成的异步操作，请将目标方法返回类型改为 Task 或 ValueTask");
-            }
-
-            return pendingResult.Result;
-        });
-
-    }
-
-
-    /// <summary>
     /// 在 ValueTask 异步调用场景下执行行为管道
     /// </summary>
     /// <typeparam name="T">返回值类型</typeparam>

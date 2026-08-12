@@ -37,11 +37,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             if (ctx.TargetSymbol is not INamedTypeSymbol typeSymbol)
                 return;
 
-            var attrData = ctx.Attributes.FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == AutoProxyAttributeMetadataName);
-
             if (typeSymbol.TypeKind == TypeKind.Class)
             {
-                var classHandler = new ClassProxyHandler(compilation);
                 var validation = AutoProxyEligibility.Validate(typeSymbol);
 
                 if (!validation.CanGenerate)
@@ -114,10 +111,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     return;
                 }
 
-                if (classHandler.CanHandle(typeSymbol, attrData))
-                {
-                    classHandler.Execute(new HandlerContext(spc, typeSymbol, attrData));
-                }
+                var classHandler = new ClassProxyHandler(compilation);
+                classHandler.Execute(spc, typeSymbol);
             }
         });
     }
@@ -193,27 +188,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         category: "AutoProxyGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
-
-
-    /// <summary>
-    /// 处理器执行上下文 保存生成时的编译上下文 目标类型及相关特性信息
-    /// </summary>
-    private readonly struct HandlerContext
-    {
-        public SourceProductionContext Context { get; }
-
-        public INamedTypeSymbol Type { get; }
-
-        public AttributeData? Attribute { get; }
-
-
-        public HandlerContext(SourceProductionContext context, INamedTypeSymbol type, AttributeData? attribute)
-        {
-            Context = context;
-            Type = type;
-            Attribute = attribute;
-        }
-    }
 
 
     /// <summary>
@@ -303,20 +277,15 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
         /// <summary>
-        /// 判断当前处理器是否可以处理给定类型
+        /// 生成指定类型的代理源码并输出到编译上下文
         /// </summary>
-        public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
-            => AutoProxyEligibility.CanGenerateProxy(type);
-
-
-        /// <summary>
-        /// 执行代理生成逻辑 并将生成结果输出到编译上下文
-        /// </summary>
-        public void Execute(in HandlerContext ctx)
+        /// <param name="context">源码生成输出上下文</param>
+        /// <param name="type">目标类型</param>
+        public void Execute(SourceProductionContext context, INamedTypeSymbol type)
         {
-            var src = GenerateDerivedProxy(ctx.Type);
-            var hint = GetSafeHintName(ctx.Type) + ".g.cs";
-            ctx.Context.AddSource(hint, src);
+            var src = GenerateDerivedProxy(type);
+            var hint = GetSafeHintName(type) + ".g.cs";
+            context.AddSource(hint, src);
         }
 
 

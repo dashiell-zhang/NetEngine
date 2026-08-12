@@ -97,10 +97,10 @@ public static class JsonUtil
 
 
     /// <summary>
-    /// 将对象序列化为 JSON 字符串 在失败时退回为 ToString 结果
+    /// 将对象序列化为 JSON 字符串 在序列化和字符串转换失败时返回固定占位符
     /// </summary>
     /// <param name="value">待序列化的对象</param>
-    /// <returns>JSON 字符串或回退字符串</returns>
+    /// <returns>JSON 字符串 回退字符串或失败占位符</returns>
     public static string ToJson(object? value)
     {
         try
@@ -109,7 +109,14 @@ public static class JsonUtil
         }
         catch
         {
-            return value?.ToString() ?? "<null>";
+            try
+            {
+                return value?.ToString() ?? "<null>";
+            }
+            catch
+            {
+                return "<serialization-failed>";
+            }
         }
     }
 

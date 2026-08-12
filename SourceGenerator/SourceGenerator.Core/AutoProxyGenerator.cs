@@ -756,9 +756,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         }
                         else
                         {
-                            sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
-                              .Append(EscapeIdentifier(p.Name)).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = Convert.ToString(")
-                              .Append(EscapeIdentifier(p.Name)).Append("); }").AppendLine();
+                            sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
+                              .Append(EscapeIdentifier(p.Name)).Append(");").AppendLine();
                         }
                     }
                 }
@@ -1089,9 +1088,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         }
                         else
                         {
-                            sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
-                              .Append(EscapeIdentifier(p.Name)).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = Convert.ToString(")
-                              .Append(EscapeIdentifier(p.Name)).Append("); }").AppendLine();
+                            sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
+                              .Append(EscapeIdentifier(p.Name)).Append(");").AppendLine();
                         }
                     }
                 }
@@ -2242,7 +2240,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     else
                     {
                         var parameterName = EscapeIdentifier(p.Name);
-                        updates.Add($"try {{ __argsDict[\"{p.Name}\"] = JsonUtil.ToJson({parameterName}); }} catch {{ __argsDict[\"{p.Name}\"] = Convert.ToString({parameterName}); }}");
+                        updates.Add($"__argsDict[\"{p.Name}\"] = JsonUtil.ToJson({parameterName});");
                     }
                 }
             }

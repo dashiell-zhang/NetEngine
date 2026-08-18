@@ -1,0 +1,14 @@
+[Unit]
+Description={{ProjectNameLower}}-admin-webapi
+
+[Service]
+WorkingDirectory={{DeployRoot}}/adminwebapi
+ExecStart={{DeployRoot}}/adminwebapi/Admin.WebAPI --urls="http://127.0.0.1:{{Port.AdminWebAPI}}"
+Restart=always
+RestartSec=60
+KillSignal=SIGINT
+SyslogIdentifier={{ProjectNameLower}}-admin-webapi
+User=root
+
+[Install]
+WantedBy=multi-user.target

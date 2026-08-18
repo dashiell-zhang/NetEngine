@@ -1,0 +1,72 @@
+sources:
+  repo_0:
+    type: codeup
+    name: {{YunXiao.Codeup.Name}}
+    endpoint: {{YunXiao.Codeup.Endpoint}}
+    branch: {{YunXiao.Codeup.Branch}}
+    certificate:
+      type: serviceConnection
+      serviceConnection: {{YunXiao.Codeup.ServiceConnection}}
+defaultWorkspace: repo_0
+stages:
+  stage_0:
+    name: 阶段1
+    jobs:
+      job_0:
+        name: 构建
+        runsOn:
+          group: public/cn-hangzhou
+          labels: linux,amd64
+          container: mcr.microsoft.com/dotnet/sdk:10.0
+          instanceType: DEFAULT
+        timeoutMinutes: 5
+        steps:
+          step_0:
+            name: 自定义环境构建
+            step: Command
+            with:
+              run: |-
+                apt update
+                apt install -y python3
+                dotnet workload install wasm-tools
+                cd Presentation/Admin.App
+                sed -i 's|https://localhost:9833/|https://{{Host.AdminWebAPI.Domain}}/|g' Program.cs
+                cat Program.cs
+                dotnet publish "Admin.App.csproj" -c Release -o publish
+              givenExecShell: sh
+              ifGivenShell: true
+              executeUser: root
+          step_1:
+            name: 上传制品
+            step: ArtifactUpload
+            with:
+              uploadType: flowPublic
+              artifact: app_${PIPELINE_ID}
+              version: ${DATETIME}
+              filePath:
+              - Presentation/Admin.App/publish/wwwroot
+              includePathInArtifact: false
+        driven: auto
+        plugins: []
+  stage_1:
+    name: 部署
+    jobs:
+      job_0:
+        name: 部署
+        component: VMDeploy
+        driven: auto
+        with:
+          downloadArtifact: true
+          artifact: $[stages.stage_0.job_0.step_1.artifacts.app_${PIPELINE_ID}]
+          useEncode: false
+          pauseStrategy: noPause
+          machineGroup: {{YunXiao.MachineGroup}}
+          run: |-
+            rm {{DeployRoot}}/adminapp/*
+            tar zxvf /var/appdata/flow/{{ProjectNameLower}}adminapp.tgz -C {{DeployRoot}}/adminapp/
+            rm /var/appdata/flow/{{ProjectNameLower}}adminapp.tgz
+            chmod 777 -R {{DeployRoot}}/adminapp/*
+          artifactDownloadPath: /var/appdata/flow/{{ProjectNameLower}}adminapp.tgz
+          executeUser: root
+          batchNumber: 1
+        plugins: []

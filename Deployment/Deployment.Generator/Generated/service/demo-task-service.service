@@ -1,0 +1,14 @@
+[Unit]
+Description=demo-task-service
+
+[Service]
+WorkingDirectory=/var/appdata/demo/taskservice
+ExecStart=/var/appdata/demo/taskservice/TaskService
+Restart=always
+RestartSec=60
+KillSignal=SIGINT
+SyslogIdentifier=demo-task-service
+User=root
+
+[Install]
+WantedBy=multi-user.target

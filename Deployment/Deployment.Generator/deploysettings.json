@@ -1,0 +1,34 @@
+{
+  "ProjectName": "demo",
+  "Host": {
+    "AdminApp": {
+      "Domain": "admin.example.com",
+      "CertificateFile": "ssl/admin.example.com.pem",
+      "CertificateKeyFile": "ssl/admin.example.com.key"
+    },
+    "AdminWebAPI": {
+      "Domain": "admin-webapi.example.com",
+      "CertificateFile": "ssl/admin-webapi.example.com.pem",
+      "CertificateKeyFile": "ssl/admin-webapi.example.com.key"
+    },
+    "ClientWebAPI": {
+      "Domain": "client-webapi.example.com",
+      "CertificateFile": "ssl/client-webapi.example.com.pem",
+      "CertificateKeyFile": "ssl/client-webapi.example.com.key"
+    }
+  },
+  "Port": {
+    "AdminWebAPI": 30011,
+    "ClientWebAPI": 30012
+  },
+  "DeployRoot": "/var/appdata/demo",
+  "YunXiao": {
+    "Codeup": {
+      "Name": "DemoProject",
+      "Endpoint": "https://codeup.aliyun.com/example/demo-project.git",
+      "Branch": "main",
+      "ServiceConnection": "demo-service-connection"
+    },
+    "MachineGroup": "demo-machine-group"
+  }
+}

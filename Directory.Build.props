@@ -4,7 +4,9 @@
     <NetEngineSourceGeneratorCoreFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))).ToUpperInvariant())</NetEngineSourceGeneratorCoreFullPath>
     <NetEngineSourceGeneratorRuntimeFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))).ToUpperInvariant())</NetEngineSourceGeneratorRuntimeFullPath>
     <NetEngineInfrastructureRootFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)Infrastructure\))).ToUpperInvariant())</NetEngineInfrastructureRootFullPath>
+    <NetEngineDeploymentRootFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)Deployment\))).ToUpperInvariant())</NetEngineDeploymentRootFullPath>
     <NetEngineIsInfrastructureProject>$([System.String]::Copy('$(NetEngineProjectFullPath)').StartsWith('$(NetEngineInfrastructureRootFullPath)'))</NetEngineIsInfrastructureProject>
+    <NetEngineIsDeploymentProject>$([System.String]::Copy('$(NetEngineProjectFullPath)').StartsWith('$(NetEngineDeploymentRootFullPath)'))</NetEngineIsDeploymentProject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
@@ -16,7 +18,8 @@
                       Condition="
                         ('$(NetEngineProjectFullPath)' != '$(NetEngineSourceGeneratorCoreFullPath)') and
                         ('$(NetEngineProjectFullPath)' != '$(NetEngineSourceGeneratorRuntimeFullPath)') and
-                        ('$(NetEngineIsInfrastructureProject)' != 'True')
+                        ('$(NetEngineIsInfrastructureProject)' != 'True') and
+                        ('$(NetEngineIsDeploymentProject)' != 'True')
                       " />
   </ItemGroup>
   <ItemGroup>
@@ -24,7 +27,8 @@
                       Condition="
                         ('$(NetEngineProjectFullPath)' != '$(NetEngineSourceGeneratorRuntimeFullPath)') and
                         ('$(NetEngineProjectFullPath)' != '$(NetEngineSourceGeneratorCoreFullPath)') and
-                        ('$(NetEngineIsInfrastructureProject)' != 'True')
+                        ('$(NetEngineIsInfrastructureProject)' != 'True') and
+                        ('$(NetEngineIsDeploymentProject)' != 'True')
                       " />
   </ItemGroup>
   <!-- CompilerGeneratedFilesOutputPath is set in Directory.Build.targets (needs TargetFramework/IntermediateOutputPath). -->

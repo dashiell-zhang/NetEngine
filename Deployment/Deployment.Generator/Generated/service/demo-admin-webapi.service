@@ -1,0 +1,14 @@
+[Unit]
+Description=demo-admin-webapi
+
+[Service]
+WorkingDirectory=/var/appdata/demo/adminwebapi
+ExecStart=/var/appdata/demo/adminwebapi/Admin.WebAPI --urls="http://127.0.0.1:30011"
+Restart=always
+RestartSec=60
+KillSignal=SIGINT
+SyslogIdentifier=demo-admin-webapi
+User=root
+
+[Install]
+WantedBy=multi-user.target

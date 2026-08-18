@@ -1,0 +1,14 @@
+[Unit]
+Description={{ProjectNameLower}}-client-webapi
+
+[Service]
+WorkingDirectory={{DeployRoot}}/clientwebapi
+ExecStart={{DeployRoot}}/clientwebapi/Client.WebAPI --urls="http://127.0.0.1:{{Port.ClientWebAPI}}"
+Restart=always
+RestartSec=60
+KillSignal=SIGINT
+SyslogIdentifier={{ProjectNameLower}}-client-webapi
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,70 @@
+sources:
+  repo_0:
+    type: codeup
+    name: DemoProject
+    endpoint: https://codeup.aliyun.com/example/demo-project.git
+    branch: main
+    certificate:
+      type: serviceConnection
+      serviceConnection: demo-service-connection
+defaultWorkspace: repo_0
+stages:
+  stage_0:
+    name: 阶段1
+    jobs:
+      job_0:
+        name: 构建
+        runsOn:
+          group: public/cn-hangzhou
+          labels: linux,amd64
+          container: mcr.microsoft.com/dotnet/sdk:10.0
+          instanceType: DEFAULT
+        timeoutMinutes: 5
+        steps:
+          step_0:
+            name: 自定义环境构建
+            step: Command
+            with:
+              run: |-
+                dotnet --version
+                cd Presentation/TaskService
+                dotnet publish "TaskService.csproj" -c Release -r linux-x64 -o publish /p:SelfContained=true
+              givenExecShell: sh
+              ifGivenShell: true
+              executeUser: root
+          step_1:
+            name: 上传制品
+            step: ArtifactUpload
+            with:
+              uploadType: flowPublic
+              artifact: app_${PIPELINE_ID}
+              version: ${DATETIME}
+              filePath:
+              - Presentation/TaskService/publish
+              includePathInArtifact: false
+        driven: auto
+        plugins: []
+  stage_1:
+    name: 部署
+    jobs:
+      job_0:
+        name: 部署
+        component: VMDeploy
+        driven: auto
+        with:
+          downloadArtifact: true
+          artifact: $[stages.stage_0.job_0.step_1.artifacts.app_${PIPELINE_ID}]
+          useEncode: false
+          pauseStrategy: firstBatchPause
+          machineGroup: demo-machine-group
+          run: |-
+            systemctl stop demo-task-service.service
+            rm /var/appdata/demo/taskservice/*
+            tar zxvf /var/appdata/flow/demotask.tgz -C /var/appdata/demo/taskservice/
+            rm /var/appdata/flow/demotask.tgz
+            chmod 777 -R /var/appdata/demo/taskservice/*
+            systemctl start demo-task-service.service
+          artifactDownloadPath: /var/appdata/flow/demotask.tgz
+          executeUser: root
+          batchNumber: 2
+        plugins: []

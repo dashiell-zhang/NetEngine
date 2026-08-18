@@ -1,0 +1,14 @@
+[Unit]
+Description={{ProjectNameLower}}-task-service
+
+[Service]
+WorkingDirectory={{DeployRoot}}/taskservice
+ExecStart={{DeployRoot}}/taskservice/TaskService
+Restart=always
+RestartSec=60
+KillSignal=SIGINT
+SyslogIdentifier={{ProjectNameLower}}-task-service
+User=root
+
+[Install]
+WantedBy=multi-user.target

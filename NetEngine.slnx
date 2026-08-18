@@ -11,6 +11,9 @@
     <Project Path="Application/Application.Service.LLM/Application.Service.LLM.csproj" />
     <Project Path="Application/Application.Service.SMS/Application.Service.SMS.csproj" />
   </Folder>
+  <Folder Name="/Deployment/">
+    <Project Path="Deployment/Deployment.Generator/Deployment.Generator.csproj" />
+  </Folder>
   <Folder Name="/Infrastructure/">
     <Project Path="Infrastructure/LLM/LLM.csproj" />
     <Project Path="Infrastructure/Common/Common.csproj" />

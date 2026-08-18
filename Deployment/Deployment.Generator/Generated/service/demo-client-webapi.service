@@ -1,0 +1,14 @@
+[Unit]
+Description=demo-client-webapi
+
+[Service]
+WorkingDirectory=/var/appdata/demo/clientwebapi
+ExecStart=/var/appdata/demo/clientwebapi/Client.WebAPI --urls="http://127.0.0.1:30012"
+Restart=always
+RestartSec=60
+KillSignal=SIGINT
+SyslogIdentifier=demo-client-webapi
+User=root
+
+[Install]
+WantedBy=multi-user.target

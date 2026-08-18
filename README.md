@@ -1,262 +1,23 @@
 # NetEngine
 
-基于 .NET 10 的分层解决方案，包含 Web API、Blazor WASM 管理端、任务调度、EF Core、源码生成器以及常用基础设施能力
+基于 .NET 10 的分层解决方案，包含 Web API、Blazor WebAssembly 管理端、任务调度、EF Core、源码生成器以及常用基础设施能力
 
 设计目标：
 
 - 保持分层清晰，避免把业务逻辑堆进宿主层
 - 尽量复用已有模式，减少无意义包装
-- 维持接近 ASP.NET Core / EF Core 官方风格的写法
-
-## 项目现状
-
-当前解决方案根文件为 `NetEngine.slnx`
-
-### Application
-
-- `Application.Interface`
-  - 放跨层公共抽象
-  - 当前主要承载 `IUserContext` 这类被 `ProjectCore` 和应用服务共同依赖的接口
-- `Application.Model`
-  - 放 DTO、请求模型、返回模型、配置模型
-  - `Admin.App` 直接引用这一层以复用前后端契约
-- `Application.Service`
-  - 放通用应用服务实现
-  - 当前主要包含用户、站点、基础能力、授权、支付、消息、任务中心等服务
-- `Application.Service.LLM`
-  - 放 LLM 相关应用服务实现
-  - 已从 `Application.Service` 独立拆出，用于按宿主收敛注册范围
-  - 当前包含 `LlmAppService`、`LlmConversationManageService`、`LlmInvokeService`
-- `Application.Service.SMS`
-  - 放短信发送相关应用服务实现
-  - 已从 `MessageService` 中独立拆出，用于避免通过可空依赖兜底
-  - 当前包含 `SmsService`
-
-### Repository
-
-- `Repository`
-  - EF Core 实体、`DatabaseContext`、数据库映射、拦截器、持久化逻辑
-- `Repository.Tool`
-  - 迁移和数据库工具宿主
-
-### Infrastructure
-
-- `Common`
-  - 通用工具、扩展方法、Json 等基础能力
-- `DistributedLock` / `DistributedLock.Redis` / `DistributedLock.InMemory`
-  - 分布式锁抽象、Redis 实现、内存实现
-- `FileStorage` / `FileStorage.AliCloud` / `FileStorage.TencentCloud`
-  - 文件存储抽象与云厂商实现
-- `SMS` / `SMS.AliCloud` / `SMS.TencentCloud`
-  - 短信抽象与云厂商实现
-- `Logger.DataBase` / `Logger.LocalFile`
-  - 数据库日志与本地文件日志
-- `IdentifierGenerator`
-  - ID 生成能力
-- `LLM`
-  - LLM 客户端抽象、工厂与 OpenAI Compatible Provider 实现
-
-### ProjectCore
-
-- `WebAPI.Core`
-  - Web API 宿主公共能力
-  - 包含认证、Swagger、过滤器、健康检查、用户上下文接入等
-- `TaskService.Core`
-  - 任务宿主公共能力
-  - 包含队列任务、定时任务、初始化和同步逻辑
-
-### Presentation
-
-- `Client.WebAPI`
-  - 对外 API 宿主
-  - 当前引用 `Application.Service` 和 `Application.Service.LLM`
-- `Admin.WebAPI`
-  - 管理端 API 宿主
-  - 当前引用 `Application.Service` 和 `Application.Service.LLM`
-- `Admin.App`
-  - Blazor WebAssembly 管理前端
-  - 当前直接引用 `Application.Model`
-- `TaskService`
-  - Worker Service 任务宿主
-  - 当前引用 `Application.Service` 和 `Application.Service.SMS`
-  - 不引用 `Application.Service.LLM`
-
-### SourceGenerator
-
-- `SourceGenerator.Core`
-  - 编译期源码生成器
-- `SourceGenerator.Runtime`
-  - 生成代码运行时支持
-
-### InitData
-
-- 初始化数据文件
-
-## 当前依赖边界
-
-当前结构更接近下面这套关系：
-
-- `Presentation` 调用 `Application`
-- `Application` 依赖 `Repository` 和 `Infrastructure`
-- `ProjectCore` 依赖 `Application.Interface` 与 `Repository`
-- `Admin.App` 只复用 `Application.Model`
-
-这套边界的重点是：
-
-- `Application.Interface` 不是“所有服务都要有接口”的接口层
-- 它更适合承载跨宿主、跨公共层要依赖的抽象
-- 应用服务可以直接以具体类注入
-- 只有宿主特化明显、依赖特征强的应用域才值得继续拆项目
-
-## 服务注册方式
-
-仓库通过源码生成器自动生成 DI 注册扩展
-
-- `BatchRegisterServices()`
-  - 注册当前启动项目及其所引用程序集内标记了 `[RegisterService]` 的服务
-- `BatchRegisterBackgroundServices()`
-  - 注册当前启动项目及其所引用程序集内符合条件的后台服务
-
-这意味着：
-
-- 服务是否被宿主注册，取决于宿主是否引用了对应类库
-- 将宿主特化服务拆成独立项目，可以天然收敛注册范围
-
-`Application.Service.LLM` 的拆分就是基于这个原则完成的
-
-## AutoProxy 行为说明
-
-`[AutoProxy]` 标注在服务类上，由源码生成器在编译期生成派生代理类，拦截虚方法并在调用前后插入行为管道。
-
-前提条件：
-
-- 服务类上标注 `[AutoProxy]`
-- 需要被拦截的方法必须是 `virtual`
-- 通过 `BatchRegisterServices()` 注册后，DI 容器会自动注入代理类
-
-### [Logging]
-
-记录方法的调用前（executing）、调用后（executed）和异常（exception）三个阶段，输出结构化 JSON 日志
-
-日志字段包括：`event`、`method`、`traceId`、`args`、`caller`（业务调用链）、`durationMs`、`result`
-
-无参数，直接标注即可：
-
-```csharp
-[Logging]
-public virtual async Task<string> GetData(int id) { ... }
-```
-
-`[Logging]` 同时实现了同步行为接口，对含 `ref/out` 参数的方法同样生效
-
-### [Cacheable]
-
-对有返回值的方法开启分布式缓存，缓存键由方法名和入参的 JSON 序列化结果计算 SHA-256 得出
-
-依赖 `IDistributedCache`
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `TtlSeconds` | `int` | `60` | 缓存有效期（秒） |
-
-```csharp
-[Cacheable(TtlSeconds = 300)]
-public virtual async Task<UserDto> GetUser(long userId) { ... }
-```
-
-仅对有返回值的方法生效，`void` 和 `Task` 方法不会写入缓存
-
-### [ConcurrencyLimit]
-
-基于分布式锁限制方法的并发执行数量
-
-依赖 `IDistributedLock`
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `IsUseParameter` | `bool` | `false` | 是否将入参纳入锁 key 计算，区分不同参数的调用 |
-| `IsBlock` | `bool` | `false` | 未获取到锁时直接抛出异常（`true`）还是等待排队（`false`） |
-| `ExpirySeconds` | `int` | `0` | 锁的最大持有时长（秒），`0` 表示不限 |
-| `Semaphore` | `int` | `1` | 允许同时持有锁的并发数 |
-
-```csharp
-// 全局同一时刻只允许一个调用执行，未获取锁时直接拒绝
-[ConcurrencyLimit(IsBlock = true)]
-public virtual async Task SyncData() { ... }
-
-// 按入参区分锁，允许 3 个并发，等待排队
-[ConcurrencyLimit(IsUseParameter = true, Semaphore = 3)]
-public virtual async Task ProcessOrder(long orderId) { ... }
-```
-
-### [Retry]
-
-方法执行出现非取消异常时自动重试，全部重试失败后将最后一次异常向上抛出。是否适合重试以及操作是否幂等由调用方负责判断
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `MaxRetries` | `int` | `3` | 最大额外重试次数，不包含首次执行 |
-| `DelaySeconds` | `int` | `0` | 每次重试前的等待时长（秒），`0` 表示不等待 |
-
-```csharp
-// 失败后立即重试，最多 3 次
-[Retry]
-public virtual async Task<string> FetchRemoteData() { ... }
-
-// 失败后等待 2 秒再重试，最多 5 次
-[Retry(MaxRetries = 5, DelaySeconds = 2)]
-public virtual async Task SendNotification() { ... }
-```
-
-`MaxRetries = 3` 表示首次执行失败后最多再重试 3 次，因此目标方法最多执行 4 次。`MaxRetries` 和 `DelaySeconds` 均不能小于 `0`
-
-如果方法包含 `CancellationToken` 参数，取消请求会终止后续重试和重试等待
-
-### 多行为组合
-
-多个行为可以组合使用，按声明顺序依次执行：
-
-```csharp
-[Logging]
-[Retry(MaxRetries = 3, DelaySeconds = 1)]
-[Cacheable(TtlSeconds = 120)]
-public virtual async Task<List<ProductDto>> GetProducts() { ... }
-```
-
-执行顺序为 `Logging → Retry → Cacheable → 实际方法`，即日志包裹重试，重试包裹缓存读写
+- 维持接近 ASP.NET Core 与 EF Core 官方风格的写法
 
 ## 主要能力
 
-- JWT 认证与权限控制
-- 请求签名校验与 RSA 字段解密
-- PostgreSQL + EF Core
-- Redis 分布式缓存、HybridCache、本地缓存
+- JWT 认证、权限控制、请求签名校验与 RSA 字段解密
+- PostgreSQL、EF Core、Redis、HybridCache 与本地缓存
 - Redis 分布式锁与内存锁
-- 文件存储抽象与阿里云 / 腾讯云实现
-- 短信抽象与阿里云 / 腾讯云实现
-- 数据库日志与本地文件日志
+- 文件存储、短信、数据库日志与本地文件日志
 - 队列任务与定时任务调度
-- OpenAI Compatible 风格的 LLM 调用能力
-
-## LLM 现状
-
-当前 LLM 相关能力分成两层：
-
-- `Infrastructure/LLM`
-  - 提供 `ILlmClientFactory`、Provider 注册扩展、客户端实现
-- `Application/Application.Service.LLM`
-  - 提供基于业务语义的应用服务
-  - `LlmAppService` 负责 LLM 应用配置管理
-  - `LlmConversationManageService` 负责对话记录查询
-  - `LlmInvokeService` 负责按 `LlmApp.Code` 发起调用
-
-当前宿主引用关系：
-
-- `Admin.WebAPI`：引用 `Application.Service.LLM`
-- `Client.WebAPI`：引用 `Application.Service.LLM`
-- `TaskService`：不引用 `Application.Service.LLM`
-
-这样可以避免“某个宿主根本不用 LLM 应用服务，却因为全量注册导致启动时报缺失依赖”
+- OpenAI Chat Completions、Responses 与 Anthropic Messages 协议的 LLM 调用能力
+- 编译期服务注册、方法代理与 EF Core 辅助代码生成
+- Nginx、systemd 与云效流水线部署配置生成
 
 ## 快速开始
 
@@ -264,8 +25,42 @@ public virtual async Task<List<ProductDto>> GetProducts() { ... }
 
 - .NET 10 SDK
 - PostgreSQL
-- Redis
-- 可选的云厂商配置，如短信、文件存储、LLM Provider
+- Redis 或 Garnet
+- 可选使用 Docker 启动 PostgreSQL 与 Redis
+- 可选的云厂商配置，如短信、文件存储和 LLM Provider
+
+### 启动本地依赖
+
+电脑已安装 Docker 时，可以执行以下命令启动本地开发使用的 Redis 和 PostgreSQL：
+
+```powershell
+docker run -d --name redis -p 6379:6379 redis:latest redis-server --save ""
+docker run -d --name postgres -e TZ=Asia/Shanghai -e POSTGRES_PASSWORD=123456 -p 5432:5432 postgres:latest
+```
+
+也可以直接安装 Windows 版 Redis/Garnet 与 PostgreSQL，不要求必须使用 Docker
+
+使用其他安装方式、端口、账号或密码时，需要同步修改项目中的数据库和 Redis 连接字符串
+
+仓库默认 PostgreSQL 连接信息为：
+
+```text
+Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456
+```
+
+配置文件位置：
+
+| 配置 | 位置 |
+|---|---|
+| PostgreSQL | `Presentation/Admin.WebAPI/appsettings*.json` |
+| PostgreSQL | `Presentation/Client.WebAPI/appsettings*.json` |
+| PostgreSQL | `Presentation/TaskService/appsettings*.json` |
+| PostgreSQL 迁移工具 | `Repository.Tool/Program.cs` |
+| Redis | `Presentation/Admin.WebAPI/appsettings*.json` |
+| Redis | `Presentation/Client.WebAPI/appsettings*.json` |
+| Redis | `Presentation/TaskService/appsettings*.json` |
+
+仓库默认 Redis 连接字符串可以直接连接上面的 Redis 容器
 
 ### 构建
 
@@ -274,117 +69,87 @@ dotnet restore
 dotnet build NetEngine.slnx
 ```
 
-### 常用启动命令
+### 创建数据库结构
+
+如果尚未安装 EF Core 命令行工具，可以先执行：
+
+```powershell
+dotnet tool install --global dotnet-ef
+```
+
+当前项目还没有迁移文件时，先在解决方案根目录生成初始迁移：
+
+```powershell
+dotnet ef migrations add InitialCreate --project Repository.Tool --startup-project Repository.Tool
+```
+
+然后根据迁移创建或更新数据库：
+
+```powershell
+dotnet ef database update --project Repository.Tool --startup-project Repository.Tool
+```
+
+已经存在迁移文件时，只需要执行数据库更新命令
+
+### 初始化并启动管理后台
+
+启动管理端 API：
+
+```powershell
+dotnet run --project Presentation/Admin.WebAPI/Admin.WebAPI.csproj
+```
+
+浏览器访问 `https://localhost:9833/swagger`，在 Swagger 中执行 `POST /Authorize/InitData`，初始化管理员、角色和权限基础数据
+
+该接口只允许在 `Development` 环境执行，可以重复调用并更新初始化数据
+
+保持 `Admin.WebAPI` 运行，并在另一个终端启动管理端：
+
+```powershell
+dotnet run --project Presentation/Admin.App/Admin.App.csproj
+```
+
+浏览器访问 `https://localhost:16701`，使用 `admin` / `123456` 登录
+
+### 其他宿主
 
 ```powershell
 dotnet run --project Presentation/Client.WebAPI/Client.WebAPI.csproj
-dotnet run --project Presentation/Admin.WebAPI/Admin.WebAPI.csproj
-dotnet run --project Presentation/Admin.App/Admin.App.csproj
 dotnet run --project Presentation/TaskService/TaskService.csproj
 ```
 
-### 健康检查
+## 使用文档
 
-- `Client.WebAPI`：`/healthz`
-- `Admin.WebAPI`：`/healthz`
-- `TaskService`：Worker Service 宿主，无 HTTP 健康检查路由
+详细使用说明统一放在 [Docs](Docs/README.md)：
 
-## 配置说明
+| 文档 | 主要内容 |
+|---|---|
+| [架构与项目边界](Docs/Architecture.md) | 分层职责、依赖方向、宿主引用与项目拆分原则 |
+| [WebAPI 公共能力](Docs/WebAPI.md) | 公共启动链路、配置、CORS、认证、Swagger 与健康检查 |
+| [WebAPI 过滤器](Docs/WebAPIFilters.md) | 异常、缓存、ETag、并发限制、RSA 解密和签名校验 |
+| [源码生成器](Docs/SourceGenerator.md) | 自动 DI、后台服务、AutoProxy 与 EF Core 代码生成 |
+| [TaskService](Docs/TaskService.md) | 定时任务、队列任务、调度、回调、子任务与重试 |
+| [分布式锁](Docs/DistributedLock.md) | Redis 锁、内存锁、并发信号量与租约续期 |
+| [LLM 调用](Docs/LLM.md) | 模型配置、提示词模板、普通调用与流式调用 |
+| [部署配置生成器](Docs/Deployment.md) | Nginx、systemd 与云效流水线配置生成 |
 
-常见配置位于各宿主的 `appsettings.json` 与 `appsettings.Development.json`
+## 项目结构
 
-重点配置项包括：
+解决方案文件为 `NetEngine.slnx`
 
-- `ConnectionStrings:dbConnection`
-- `ConnectionStrings:redisConnection`
-- `Cors:AllowedOriginList`
-- `JWT`
-- `RSA`
-- `LLM:Providers`
-- `AliCloudFileStorage` / `TencentCloudFileStorage`
-- `FileServerUrl`
+| 目录 | 职责 |
+|---|---|
+| `Application` | 应用层接口、DTO、请求与返回模型、通用及宿主特化应用服务 |
+| `Repository` | EF Core 实体、上下文、映射、拦截器、持久化逻辑与迁移工具 |
+| `Infrastructure` | 缓存、锁、文件、短信、日志、LLM、ID 生成等基础设施实现 |
+| `ProjectCore` | WebAPI 与 TaskService 宿主共用能力 |
+| `Presentation` | Client API、Admin API、Blazor 管理端与任务宿主 |
+| `SourceGenerator` | 编译期源码生成器及生成代码运行时支持 |
+| `InitData` | 管理员、角色、权限等初始化数据文件 |
+| `Deployment` | 部署配置生成器、模板、输入配置与生成产物 |
+| `Docs` | 公共能力和工具的详细使用文档 |
 
-### CORS 配置
-
-`Client.WebAPI` 与 `Admin.WebAPI` 共用 `ProjectCore/WebAPI.Core` 中的跨域校验逻辑，白名单从各自宿主的 `appsettings.json` 与 `appsettings.Development.json` 读取
-
-示例配置：
-
-```json
-{
-  "Cors": {
-    "AllowedOriginList": [
-      "*.xxx.com",
-      "localhost",
-      "localhost:6000",
-      "https://admin.xxx.com",
-      "https://localhost:5173",
-      "*"
-    ]
-  }
-}
-```
-
-支持的写法：
-
-- `*` 表示全部放通
-- `*.xxx.com` 表示按子域名匹配，不限制协议和端口
-- `xxx.com` 表示按主机匹配，不限制协议和端口
-- `localhost` 表示按主机匹配，不限制端口
-- `localhost:6000` 表示同时校验主机和端口
-- `https://xxx.com` 表示同时校验协议和主机
-- `https://localhost:6000` 表示同时校验协议、主机和端口
-
-环境建议：
-
-- `appsettings.json` 放正式环境白名单
-- `appsettings.Development.json` 放本地开发白名单
-- 开发环境会覆盖同名配置节，因此可以单独为本地调试增加 `localhost` 或指定端口
-
-安全提示：
-
-- 仓库内配置默认按本地开发或示例值理解
-- 不要把真实密钥、真实连接串、真实密码提交进仓库
-
-## TaskService 说明
-
-- 任务宿主位于 `Presentation/TaskService`
-- 公共任务能力位于 `ProjectCore/TaskService.Core`
-- Debug 模式下启动后会进入交互式启用流程
-- 队列任务和定时任务优先复用现有 Builder、Attribute 与注册方式
-
-### 定时任务（ScheduleTask）
-
-通过 `[ScheduleTask]` 标记方法，支持 Cron 表达式驱动的周期性触发
-
-```csharp
-[ScheduleTask(Name = "ShowTime", Cron = "0/1 * * * * ?")]
-public async Task ShowTime() { }
-```
-
-`SkipIfRunning` 参数控制防重入行为，设为 `true` 时若上次执行尚未完成则跳过本次触发
-
-```csharp
-[ScheduleTask(Name = "ShowTime", Cron = "0/1 * * * * ?", SkipIfRunning = true)]
-public async Task ShowTime() { }
-```
-
-### 队列任务（QueueTask）
-
-通过 `[QueueTask]` 标记方法，支持异步入队、回调、`Semaphore` 控制并发数
-
-## Admin.App 说明
-
-- 项目位于 `Presentation/Admin.App`
-- 目标框架为 `net10.0-browser`
-- 当前直接复用 `Application.Model` 中的 DTO 与请求模型
-
-## 数据库说明
-
-- 默认数据库为 PostgreSQL
-- EF Core 核心实现位于 `Repository`
-- 涉及结构调整时，应同步关注实体、`DatabaseContext`、映射与调用点
-- 如需迁移工具支持，优先看 `Repository.Tool`
+整体依赖方向为 `Presentation -> Application -> Repository / Infrastructure`，公共宿主能力位于 `ProjectCore`。详细职责、宿主引用关系和拆分原则见 [架构与项目边界](Docs/Architecture.md)
 
 ## 许可协议
 

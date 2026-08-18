@@ -13,46 +13,48 @@ Agent 在本仓库中工作时，必须遵守以下原则
 - 优先做小范围、可验证、可维护的修改
 - 代码风格尽量贴近当前仓库以及微软官方 ASP.NET Core 与 EF Core 常见写法
 
-## 2. 解决方案结构
+## 2. 文档与解决方案结构
 
-### 2.1 Application
+### 2.1 文档职责
 
-- `Application.Interface`
-  - 应用层接口定义
-- `Application.Model`
-  - DTO、请求模型、返回模型
-- `Application.Service`
-  - 业务编排与业务逻辑实现
+- `AGENTS.md` 负责约束 Agent 的分析、修改、验证与协作方式
+- 根目录 `README.md` 负责项目简介、快速启动、文档入口与目录概览
+- `Docs` 负责公共能力和工具的详细使用方式
+- 文档用于说明稳定的使用约定，实际代码是运行行为的最终依据
 
-### 2.2 Repository
+修改对应能力前，应先阅读相关专题文档，并继续检查文档指向的实际代码
 
-- `Repository`
-  - EF Core 实体、`DatabaseContext`、拦截器、数据库访问逻辑
-- `Repository.Tool`
-  - EF Core 迁移与数据库工具宿主
+| 修改范围 | 必读文档 |
+|---|---|
+| 分层、依赖方向或项目拆分 | `Docs/Architecture.md` |
+| WebAPI 宿主、公共配置、中间件、认证或健康检查 | `Docs/WebAPI.md` |
+| WebAPI 过滤器 | `Docs/WebAPIFilters.md` |
+| 服务注册、代理或 EF Core 生成能力 | `Docs/SourceGenerator.md` |
+| 定时任务或队列任务 | `Docs/TaskService.md` |
+| 分布式锁或并发信号量 | `Docs/DistributedLock.md` |
+| LLM 应用配置、调用或 Provider 扩展 | `Docs/LLM.md` |
+| 部署配置、模板或生成器 | `Docs/Deployment.md` |
 
-### 2.3 Infrastructure
+### 2.2 解决方案结构
 
-- 各类基础设施实现
-- 包括缓存、分布式锁、日志、短信、文件存储、LLM、ID 生成等能力
+| 目录或项目 | 职责 |
+|---|---|
+| `Application.Interface` | 跨宿主、跨公共层共享的应用抽象，不要求所有应用服务都定义接口 |
+| `Application.Model` | DTO、请求模型、返回模型与配置模型 |
+| `Application.Service` | 通用业务编排与业务逻辑实现 |
+| `Application.Service.LLM` | LLM 相关应用服务 |
+| `Application.Service.SMS` | 短信发送相关应用服务 |
+| `Repository` | EF Core 实体、上下文、映射、拦截器与持久化逻辑 |
+| `Repository.Tool` | EF Core 迁移与数据库工具宿主 |
+| `Infrastructure` | 缓存、锁、日志、短信、文件存储、LLM、ID 生成等基础设施实现 |
+| `ProjectCore` | `WebAPI.Core` 与 `TaskService.Core` 公共宿主能力 |
+| `Presentation` | `Client.WebAPI`、`Admin.WebAPI`、`Admin.App` 与 `TaskService` 宿主 |
+| `SourceGenerator` | 编译期源码生成器及生成代码运行时支持 |
+| `InitData` | 初始化数据文件 |
+| `Deployment` | 部署配置生成器、模板、输入配置与生成产物 |
+| `Docs` | 公共能力与工具的详细使用文档 |
 
-### 2.4 ProjectCore
-
-- 公共宿主能力
-- 包括 `WebAPI.Core` 与 `TaskService.Core`
-
-### 2.5 Presentation
-
-- 宿主与表现层项目
-- 包括 `Client.WebAPI`、`Admin.WebAPI`、`Admin.App`、`TaskService`
-
-### 2.6 SourceGenerator
-
-- 编译期源码生成器与其运行时支持代码
-
-### 2.7 InitData
-
-- 初始化数据文件
+详细分层职责、宿主引用关系与项目拆分原则见 `Docs/Architecture.md`
 
 ## 3. 分层与职责规范
 
@@ -96,6 +98,8 @@ Agent 在本仓库中工作时，必须遵守以下原则
 
 本仓库通过 `Directory.Build.props` 自动接入源码生成器
 
+- 普通业务项目会隐式引用 `SourceGenerator.Core` 和 `SourceGenerator.Runtime`
+- `Infrastructure`、`Deployment` 与源码生成器自身不参与这套隐式引用
 - 服务注册优先通过 `BatchRegisterServices()`
 - 后台服务注册优先通过 `BatchRegisterBackgroundServices()`
 - 代理拦截能力由 `SourceGenerator.Runtime` 支持
@@ -105,8 +109,10 @@ Agent 在本仓库中工作时，必须遵守以下原则
 
 - 先检查是否已有基于特性的生成式做法
 - 能复用生成器时，不手写重复的 DI 注册代码
+- 不要在已经由全局规则接入的项目中重复添加源码生成器或运行时引用
 - 需要代理拦截的方法，保持与现有模式一致，通常应保留 `virtual`
 - 不要破坏启动项目现有的生成注册链路
+- 具体注册范围、特性和生成规则以 `Docs/SourceGenerator.md` 为准
 
 ## 5. 代码风格规范
 
@@ -151,6 +157,8 @@ Agent 在本仓库中工作时，必须遵守以下原则
 - 公共中间件与宿主扩展能力通常位于 `ProjectCore/WebAPI.Core`
 - 健康检查路径为 `/healthz`
 - Swagger 默认按开发环境使用理解，除非现有代码明确说明其他行为
+- 调整公共启动链路、CORS、JWT、RSA 或健康检查前，先阅读 `Docs/WebAPI.md`
+- 调整过滤器前，先阅读 `Docs/WebAPIFilters.md`
 
 修改 API 行为时，至少同时检查以下位置
 
@@ -172,7 +180,7 @@ Agent 在本仓库中工作时，必须遵守以下原则
 
 - 新增配置项前，先检查对应宿主下的 `appsettings.json` 与 `appsettings.Development.json`
 - 优先复用现有配置节名称、绑定方式与 Options 模式
-- 不提交真实密钥、真实连接串或真实密码
+- 未得到用户明确授权时，不主动把真实密钥、真实连接串或真实密码写入仓库配置
 - 仓库中的密钥类配置默认视为示例值或本地开发值
 
 ## 9. TaskService 规范
@@ -182,24 +190,41 @@ Agent 在本仓库中工作时，必须遵守以下原则
 - 队列任务与定时任务应优先复用现有 Builder、Attribute 与注册方式
 - Debug 模式下 `TaskService` 存在交互式启用流程
 - 修改任务宿主时，不要轻易破坏该调试行为
+- 修改任务声明、入队、调度、回调或重试逻辑前，先阅读 `Docs/TaskService.md`
 
-## 10. 前端规范
+## 10. LLM 规范
+
+- LLM 基础设施能力位于 `Infrastructure/LLM`
+- LLM 业务调用能力位于 `Application/Application.Service.LLM`
+- 业务代码应优先通过 `LlmInvokeService` 调用，不要直接依赖具体 Provider 客户端
+- 宿主只在确实使用 LLM 时引用 `Application.Service.LLM`
+- 模型、应用、提示词和调用方式以 `Docs/LLM.md` 为准
+
+## 11. 部署生成器规范
+
+- 部署生成器位于 `Deployment/Deployment.Generator`
+- 修改配置、模板或生成逻辑前，先阅读 `Docs/Deployment.md`
+- 不要直接修改 `Generated` 中的文件
+- 生成器每次运行都会使用当前配置和模板完整替换 `Generated`
+
+## 12. 前端规范
 
 - `Presentation/Admin.App` 为 Blazor WebAssembly 项目
 - `Presentation/Admin.WebAPI` 负责管理端 API 与静态资源相关宿主职责
 - 修改 `.razor` 页面时，优先保持当前项目现有组件风格与结构
 - 如无明确要求，不做大规模界面风格重写
 
-## 11. 工作方式规范
+## 13. 工作方式规范
 
-### 11.1 修改前
+### 13.1 修改前
 
 - 先阅读将要修改的文件及其相邻调用链
 - 至少向上或向下多看一层
 - 先搜索仓库内是否已有相同问题的现成实现
 - 优先确认是否已有生成器、扩展方法或共享基础能力可复用
+- 根据本文件的文档路由阅读对应的 `Docs` 专题文档
 
-### 11.2 修改时
+### 13.2 修改时
 
 - 修改范围尽量收敛
 - 不做与当前任务无关的大型重构
@@ -207,14 +232,16 @@ Agent 在本仓库中工作时，必须遵守以下原则
 - 优先沿用当前层已经存在的实现模式
 - 如果问题本质是宿主引用范围过大导致无关基础设施依赖外溢，优先通过拆分宿主特化应用类库来收敛注册范围
 
-### 11.3 修改后
+### 13.3 修改后
 
 - 先做最小必要验证
 - 如果改动影响多个项目或启动组合，再考虑解决方案级别构建验证
 - 除非用户明确要求，否则默认不主动编写单元测试代码
 - 不要同时启动多个独立的 `dotnet build` 进程；单个 `dotnet build` 内部的 MSBuild 并行构建可以保持默认，避免共享的 `SourceGenerator.Core.dll` 被 `VBCSCompiler` 或其他构建进程占用导致构建失败
+- 仅修改 Markdown 时不要求执行 `dotnet build`，但应检查相对链接、代码块配对、UTF-8 without BOM 与 `git diff --check`
+- 文档说明与实际代码不一致时，应以代码行为为依据并同步修正文档
 
-## 12. 验证命令
+## 14. 验证命令
 
 以下命令可在仓库根目录按需执行
 
@@ -227,7 +254,7 @@ dotnet run --project Presentation/Admin.App/Admin.App.csproj
 dotnet run --project Presentation/TaskService/TaskService.csproj
 ```
 
-## 13. 决策优先级
+## 15. 决策优先级
 
 面对多个实现方案时，按以下顺序决策
 
@@ -236,7 +263,7 @@ dotnet run --project Presentation/TaskService/TaskService.csproj
 3. 添加最小必要代码
 4. 最后才考虑引入新的抽象
 
-## 14. 明确禁止事项
+## 16. 明确禁止事项
 
 - 不要新增无必要的包装层
 - 不要绕过现有生成式 DI 注册链路，除非确有必要

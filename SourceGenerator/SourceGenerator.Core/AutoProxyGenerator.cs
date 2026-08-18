@@ -37,11 +37,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             if (ctx.TargetSymbol is not INamedTypeSymbol typeSymbol)
                 return;
 
-            var attrData = ctx.Attributes.FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == AutoProxyAttributeMetadataName);
-
             if (typeSymbol.TypeKind == TypeKind.Class)
             {
-                var classHandler = new ClassProxyHandler(compilation);
                 var validation = AutoProxyEligibility.Validate(typeSymbol);
 
                 if (!validation.CanGenerate)
@@ -114,10 +111,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     return;
                 }
 
-                if (classHandler.CanHandle(typeSymbol, attrData))
-                {
-                    classHandler.Execute(new HandlerContext(spc, typeSymbol, attrData));
-                }
+                var classHandler = new ClassProxyHandler(compilation);
+                classHandler.Execute(spc, typeSymbol);
             }
         });
     }
@@ -196,31 +191,87 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
     /// <summary>
-    /// 处理器执行上下文 保存生成时的编译上下文 目标类型及相关特性信息
-    /// </summary>
-    private readonly struct HandlerContext
-    {
-        public SourceProductionContext Context { get; }
-
-        public INamedTypeSymbol Type { get; }
-
-        public AttributeData? Attribute { get; }
-
-
-        public HandlerContext(SourceProductionContext context, INamedTypeSymbol type, AttributeData? attribute)
-        {
-            Context = context;
-            Type = type;
-            Attribute = attribute;
-        }
-    }
-
-
-    /// <summary>
     /// 针对类类型的代理生成处理器 负责生成派生代理类源码
     /// </summary>
     private sealed class ClassProxyHandler
     {
+
+        /// <summary>
+        /// 代理方法返回类型类别
+        /// </summary>
+        private enum ProxyReturnTypeKind
+        {
+            Void,
+            Synchronous,
+            Task,
+            TaskOfT,
+            ValueTask,
+            ValueTaskOfT,
+            AsyncEnumerable,
+            TaskOfAsyncEnumerable,
+            ValueTaskOfAsyncEnumerable
+        }
+
+
+        /// <summary>
+        /// 保存代理方法返回类型的统一分析结果
+        /// </summary>
+        private readonly struct ProxyReturnTypeInfo
+        {
+
+            /// <summary>
+            /// 返回类型类别
+            /// </summary>
+            public ProxyReturnTypeKind Kind { get; }
+
+
+            /// <summary>
+            /// Task 或 ValueTask 的泛型结果类型
+            /// </summary>
+            public ITypeSymbol? ResultType { get; }
+
+
+            /// <summary>
+            /// 异步流元素类型
+            /// </summary>
+            public ITypeSymbol? StreamItemType { get; }
+
+
+            /// <summary>
+            /// 是否属于可等待返回类型
+            /// </summary>
+            public bool IsAwaitable => Kind is ProxyReturnTypeKind.Task or ProxyReturnTypeKind.TaskOfT or ProxyReturnTypeKind.ValueTask or ProxyReturnTypeKind.ValueTaskOfT or ProxyReturnTypeKind.TaskOfAsyncEnumerable or ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
+
+
+            /// <summary>
+            /// 是否属于异步流返回类型
+            /// </summary>
+            public bool IsAsyncStream => Kind is ProxyReturnTypeKind.AsyncEnumerable or ProxyReturnTypeKind.TaskOfAsyncEnumerable or ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
+
+
+            /// <summary>
+            /// 是否包含需要传递给行为管道的返回值
+            /// </summary>
+            public bool HasReturnValue => Kind is not ProxyReturnTypeKind.Void and not ProxyReturnTypeKind.Task and not ProxyReturnTypeKind.ValueTask;
+
+
+            /// <summary>
+            /// 创建代理方法返回类型分析结果
+            /// </summary>
+            /// <param name="kind">返回类型类别</param>
+            /// <param name="resultType">Task 或 ValueTask 的泛型结果类型</param>
+            /// <param name="streamItemType">异步流元素类型</param>
+            public ProxyReturnTypeInfo(ProxyReturnTypeKind kind, ITypeSymbol? resultType = null, ITypeSymbol? streamItemType = null)
+            {
+
+                Kind = kind;
+                ResultType = resultType;
+                StreamItemType = streamItemType;
+
+            }
+
+        }
+
 
         private const string ProxyBehaviorAttributeMetadataName = "SourceGenerator.Runtime.Attributes.ProxyBehaviorAttribute";
 
@@ -303,20 +354,15 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
         /// <summary>
-        /// 判断当前处理器是否可以处理给定类型
+        /// 生成指定类型的代理源码并输出到编译上下文
         /// </summary>
-        public bool CanHandle(INamedTypeSymbol type, AttributeData? attribute)
-            => AutoProxyEligibility.CanGenerateProxy(type);
-
-
-        /// <summary>
-        /// 执行代理生成逻辑 并将生成结果输出到编译上下文
-        /// </summary>
-        public void Execute(in HandlerContext ctx)
+        /// <param name="context">源码生成输出上下文</param>
+        /// <param name="type">目标类型</param>
+        public void Execute(SourceProductionContext context, INamedTypeSymbol type)
         {
-            var src = GenerateDerivedProxy(ctx.Type);
-            var hint = GetSafeHintName(ctx.Type) + ".g.cs";
-            ctx.Context.AddSource(hint, src);
+            var src = GenerateDerivedProxy(type);
+            var hint = GetSafeHintName(type) + ".g.cs";
+            context.AddSource(hint, src);
         }
 
 
@@ -561,6 +607,70 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
         /// <summary>
+        /// 分析代理方法的返回类型
+        /// </summary>
+        /// <param name="method">待分析的代理方法</param>
+        /// <returns>统一的返回类型分析结果</returns>
+        private static ProxyReturnTypeInfo GetProxyReturnTypeInfo(IMethodSymbol method)
+        {
+
+            if (method.ReturnsVoid)
+                return new ProxyReturnTypeInfo(ProxyReturnTypeKind.Void);
+
+            if (method.ReturnType is not INamedTypeSymbol returnType)
+                return new ProxyReturnTypeInfo(ProxyReturnTypeKind.Synchronous);
+
+            if (TryGetAsyncEnumerableItemType(returnType, out var streamItemType))
+                return new ProxyReturnTypeInfo(ProxyReturnTypeKind.AsyncEnumerable, streamItemType: streamItemType);
+
+            if (IsNamedType(returnType, "System.Threading.Tasks", "Task", 0))
+                return new ProxyReturnTypeInfo(ProxyReturnTypeKind.Task);
+
+            if (IsNamedType(returnType, "System.Threading.Tasks", "Task", 1))
+            {
+                var resultType = returnType.TypeArguments[0];
+                return TryGetAsyncEnumerableItemType(resultType, out streamItemType)
+                    ? new ProxyReturnTypeInfo(ProxyReturnTypeKind.TaskOfAsyncEnumerable, resultType, streamItemType)
+                    : new ProxyReturnTypeInfo(ProxyReturnTypeKind.TaskOfT, resultType);
+            }
+
+            if (IsNamedType(returnType, "System.Threading.Tasks", "ValueTask", 0))
+                return new ProxyReturnTypeInfo(ProxyReturnTypeKind.ValueTask);
+
+            if (IsNamedType(returnType, "System.Threading.Tasks", "ValueTask", 1))
+            {
+                var resultType = returnType.TypeArguments[0];
+                return TryGetAsyncEnumerableItemType(resultType, out streamItemType)
+                    ? new ProxyReturnTypeInfo(ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable, resultType, streamItemType)
+                    : new ProxyReturnTypeInfo(ProxyReturnTypeKind.ValueTaskOfT, resultType);
+            }
+
+            return new ProxyReturnTypeInfo(ProxyReturnTypeKind.Synchronous);
+
+        }
+
+
+        /// <summary>
+        /// 尝试获取异步流的元素类型
+        /// </summary>
+        /// <param name="type">待检查的类型</param>
+        /// <param name="itemType">识别到的异步流元素类型</param>
+        /// <returns>如果类型是异步流则返回 true</returns>
+        private static bool TryGetAsyncEnumerableItemType(ITypeSymbol type, out ITypeSymbol? itemType)
+        {
+
+            itemType = null;
+
+            if (type is not INamedTypeSymbol namedType || !IsNamedType(namedType, "System.Collections.Generic", "IAsyncEnumerable", 1))
+                return false;
+
+            itemType = namedType.TypeArguments[0];
+            return true;
+
+        }
+
+
+        /// <summary>
         /// 为可重写的实例方法生成派生类中的 override 方法实现 并注入日志和行为管道
         /// </summary>
         /// <param name="sb">目标源码构建器</param>
@@ -572,40 +682,15 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         private void AppendDerivedOverride(StringBuilder sb, INamedTypeSymbol targetType, IMethodSymbol method, string typeFullName, string callTarget, string currentNamespace)
         {
             
-            var isGenericTask = method.ReturnType is INamedTypeSymbol nts && nts.IsGenericType && IsType(nts.ConstructedFrom, "System.Threading.Tasks.Task");
-            
-            var isTask = method.ReturnType is INamedTypeSymbol nts0 && !nts0.IsGenericType && IsType(nts0, "System.Threading.Tasks.Task");
-            
-            var isGenericValueTask = method.ReturnType is INamedTypeSymbol nts2 && nts2.IsGenericType && IsType(nts2.ConstructedFrom, "System.Threading.Tasks.ValueTask");
-            
-            var isValueTask = method.ReturnType is INamedTypeSymbol nts3 && !nts3.IsGenericType && IsType(nts3, "System.Threading.Tasks.ValueTask");
-            
-            var isAsyncEnumerable = (method.ReturnType is INamedTypeSymbol nts4 && nts4.IsGenericType && IsType(nts4.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable"))
-                || method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal);
-            
-            var isTaskOfAsyncEnumerable = isGenericTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t1 && (
-                (t1.IsGenericType && IsType(t1.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
-                t1.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
-            
-            var isValueTaskOfAsyncEnumerable = isGenericValueTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t2 && (
-                (t2.IsGenericType && IsType(t2.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
-                t2.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
-            
-            if (!isTaskOfAsyncEnumerable)
-            {
-                var rtText2 = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (rtText2.StartsWith("global::System.Threading.Tasks.Task<global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
-                    isTaskOfAsyncEnumerable = true;
-            }
-            
-            if (!isValueTaskOfAsyncEnumerable)
-            {
-                var rtText2 = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (rtText2.StartsWith("global::System.Threading.Tasks.ValueTask<global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
-                    isValueTaskOfAsyncEnumerable = true;
-            }
+            var returnTypeInfo = GetProxyReturnTypeInfo(method);
+            var isTask = returnTypeInfo.Kind == ProxyReturnTypeKind.Task;
+            var isGenericTask = returnTypeInfo.Kind is ProxyReturnTypeKind.TaskOfT or ProxyReturnTypeKind.TaskOfAsyncEnumerable;
+            var isValueTask = returnTypeInfo.Kind == ProxyReturnTypeKind.ValueTask;
+            var isGenericValueTask = returnTypeInfo.Kind is ProxyReturnTypeKind.ValueTaskOfT or ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
+            var isAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.AsyncEnumerable;
+            var isTaskOfAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.TaskOfAsyncEnumerable;
+            var isValueTaskOfAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
 
-            var returnTypeFullText = FormatType(method.ReturnType);
             var returnType = FormatType(method.ReturnType, currentNamespace);
             
             var methodName = EscapeIdentifier(method.Name);
@@ -621,7 +706,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             
             var hasByRefAny = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
             
-            var needsAsync = hasByRefAny && (isTask || isGenericTask || isValueTask || isGenericValueTask);
+            var needsAsync = hasByRefAny && returnTypeInfo.IsAwaitable;
 
             var behaviorSnippets = new List<string>();
 
@@ -647,13 +732,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
               .Append('(').Append(paramList).Append(')').AppendLine()
               .AppendLine("    {");
 
-            if ((isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable) && behaviorSnippets.Count == 0)
-            {
-                sb.AppendLine("        return " + callTarget + "." + methodName + typeParams + "(" + argList + ");");
-                sb.AppendLine("    }").AppendLine().AppendLine();
-                return;
-            }
-
             if (method.Parameters.Length > 0)
             {
                 var dictType = FormatArgumentsDictionaryType(currentNamespace);
@@ -678,9 +756,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         }
                         else
                         {
-                            sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
-                              .Append(EscapeIdentifier(p.Name)).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = Convert.ToString(")
-                              .Append(EscapeIdentifier(p.Name)).Append("); }").AppendLine();
+                            sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
+                              .Append(EscapeIdentifier(p.Name)).Append(");").AppendLine();
                         }
                     }
                 }
@@ -702,8 +779,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             
             sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
             
-            var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid) || isAsyncEnumerable;
-            var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
+            var __hasReturn = returnTypeInfo.HasReturnValue;
+            var __allowRet = __hasReturn && IsAllowReturnSerialization(method, returnTypeInfo);
             var cancellationTokenExpression = GetCancellationTokenExpression(method);
 
             sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
@@ -718,7 +795,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 if (isAsyncEnumerable)
                 {
                     // 对异步枚举结果进行包装 在迭代过程中收集每个元素的 JSON 并在完成后统一记录日志
-                    var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
+                    var tArg = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     
                     AppendAsyncStreamWrapper(sb, tArg, callExpr, sourceIsParameter: false, invokeBefore: true);
@@ -750,7 +827,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isTaskOfAsyncEnumerable)
                 {
-                    var tItem = FormatType(((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0], currentNamespace);
+                    var tItem = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     
                     AppendAsyncStreamWrapper(sb, tItem, "__s", sourceIsParameter: true, invokeBefore: false);
@@ -781,7 +858,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isValueTaskOfAsyncEnumerable)
                 {
-                    var tItem = FormatType(((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0], currentNamespace);
+                    var tItem = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
                     var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
                     AppendAsyncStreamWrapper(sb, tItem, "__s", sourceIsParameter: true, invokeBefore: false);
                     AppendAsyncStreamPreparationWrapper(sb, tItem, callExpr, returnsValueTask: true);
@@ -853,22 +930,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
             else
             {
-                if (isAsyncEnumerable)
-                {
-                    var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
-                    
-                    var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
-                    sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
-                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = System.Guid.CreateVersion7(), HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
-                    sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
-                    sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
-                    AppendAsyncStreamWrapper(sb, tArg, callExpr, sourceIsParameter: false, invokeBefore: true);
-                    sb.AppendLine($"        return __streamWrapper();");
-                    sb.AppendLine("    }").AppendLine().AppendLine();
-                    return;
-                }
-
-            var runtime = "ProxyRuntime";
+                var runtime = "ProxyRuntime";
                 
                 if (isTask)
                 {
@@ -876,7 +938,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isGenericTask)
                 {
-                    var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
+                    var tArg = FormatType(returnTypeInfo.ResultType!);
                     sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
                 }
                 else if (isValueTask)
@@ -885,7 +947,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isGenericValueTask)
                 {
-                    var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
+                    var tArg = FormatType(returnTypeInfo.ResultType!);
                     sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) );");
                 }
                 else if (method.ReturnsVoid)
@@ -896,34 +958,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else
                 {
-                    // 兜底保护 如果编译期检测未识别为 Task 或 Task<T> 则根据返回类型字符串进行判断
-                    if (returnTypeFullText.StartsWith("global::System.Threading.Tasks.Task<", StringComparison.Ordinal))
-                    {
-                        var tArgText = returnTypeFullText.Substring("global::System.Threading.Tasks.Task<".Length);
-                        
-                        tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
-                        sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-                    }
-                    else if (string.Equals(returnTypeFullText, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
-                    {
-                        sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-                    }
-                    // 兜底保护 如果编译期检测未识别为 ValueTask 或 ValueTask<T> 则根据返回类型字符串进行判断
-                    else if (returnTypeFullText.StartsWith("global::System.Threading.Tasks.ValueTask<", StringComparison.Ordinal))
-                    {
-                        var tArgText = returnTypeFullText.Substring("global::System.Threading.Tasks.ValueTask<".Length);
-                        
-                        tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
-                        sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) );");
-                    }
-                    else if (string.Equals(returnTypeFullText, "global::System.Threading.Tasks.ValueTask", StringComparison.Ordinal))
-                    {
-                        sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-                    }
+                    sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
                 }
             }
 
@@ -963,40 +998,15 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         private void AppendExplicitInterfaceMethod(StringBuilder sb, INamedTypeSymbol cls, INamedTypeSymbol iface, IMethodSymbol method, IMethodSymbol? impl, string typeFullName, string currentNamespace)
         {
             // 在编译期根据接口方法和实现方法上的特性构建行为管道配置
-            var isGenericTask = method.ReturnType is INamedTypeSymbol nts && nts.IsGenericType && IsType(nts.ConstructedFrom, "System.Threading.Tasks.Task");
+            var returnTypeInfo = GetProxyReturnTypeInfo(method);
+            var isTask = returnTypeInfo.Kind == ProxyReturnTypeKind.Task;
+            var isGenericTask = returnTypeInfo.Kind is ProxyReturnTypeKind.TaskOfT or ProxyReturnTypeKind.TaskOfAsyncEnumerable;
+            var isValueTask = returnTypeInfo.Kind == ProxyReturnTypeKind.ValueTask;
+            var isGenericValueTask = returnTypeInfo.Kind is ProxyReturnTypeKind.ValueTaskOfT or ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
+            var isAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.AsyncEnumerable;
+            var isTaskOfAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.TaskOfAsyncEnumerable;
+            var isValueTaskOfAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
 
-            var isTask = method.ReturnType is INamedTypeSymbol nts0 && !nts0.IsGenericType && IsType(nts0, "System.Threading.Tasks.Task");
-
-            var isGenericValueTask = method.ReturnType is INamedTypeSymbol nts2 && nts2.IsGenericType && IsType(nts2.ConstructedFrom, "System.Threading.Tasks.ValueTask");
-
-            var isValueTask = method.ReturnType is INamedTypeSymbol nts3 && !nts3.IsGenericType && IsType(nts3, "System.Threading.Tasks.ValueTask");
-
-            var isAsyncEnumerable = (method.ReturnType is INamedTypeSymbol nts4 && nts4.IsGenericType && IsType(nts4.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable"))
-                || method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal);
-
-            var isTaskOfAsyncEnumerable = isGenericTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t1 && (
-                (t1.IsGenericType && IsType(t1.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
-                t1.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
-
-            var isValueTaskOfAsyncEnumerable = isGenericValueTask && ((INamedTypeSymbol)method.ReturnType).TypeArguments[0] is INamedTypeSymbol t2 && (
-                (t2.IsGenericType && IsType(t2.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable")) ||
-                t2.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", System.StringComparison.Ordinal));
-
-            if (!isTaskOfAsyncEnumerable)
-            {
-                var returnTypeText = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (returnTypeText.StartsWith("global::System.Threading.Tasks.Task<global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
-                    isTaskOfAsyncEnumerable = true;
-            }
-
-            if (!isValueTaskOfAsyncEnumerable)
-            {
-                var returnTypeText = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (returnTypeText.StartsWith("global::System.Threading.Tasks.ValueTask<global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
-                    isValueTaskOfAsyncEnumerable = true;
-            }
-
-            var returnTypeFullText = FormatType(method.ReturnType);
             var returnType = FormatType(method.ReturnType, currentNamespace);
 
             var ifaceDisplay = FormatType(iface, currentNamespace);
@@ -1015,7 +1025,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var hasByRef2_head = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
 
-            var needsAsync2 = hasByRef2_head && (isTask || isGenericTask || isValueTask || isGenericValueTask);
+            var needsAsync2 = hasByRef2_head && returnTypeInfo.IsAwaitable;
 
             var behaviorSnippets = new List<string>();
 
@@ -1054,13 +1064,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
               .Append('(').Append(paramList).Append(')').AppendLine()
               .AppendLine("    {");
 
-            if ((isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable) && behaviorSnippets.Count == 0)
-            {
-                sb.AppendLine("        return base." + methodName + typeParams + "(" + argList + ");");
-                sb.AppendLine("    }").AppendLine().AppendLine();
-                return;
-            }
-
             if (method.Parameters.Length > 0)
             {
                 var dictType = FormatArgumentsDictionaryType(currentNamespace);
@@ -1085,9 +1088,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         }
                         else
                         {
-                            sb.Append("        try { __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
-                              .Append(EscapeIdentifier(p.Name)).Append("); } catch { __argsDict[\"").Append(p.Name).Append("\"] = Convert.ToString(")
-                              .Append(EscapeIdentifier(p.Name)).Append("); }").AppendLine();
+                            sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
+                              .Append(EscapeIdentifier(p.Name)).Append(");").AppendLine();
                         }
                     }
                 }
@@ -1111,9 +1113,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
 
-            var __hasReturn = isGenericTask || isGenericValueTask || (!isTask && !isValueTask && !method.ReturnsVoid) || isAsyncEnumerable;
+            var __hasReturn = returnTypeInfo.HasReturnValue;
 
-            var __allowRet = __hasReturn && IsAllowReturnSerialization(method);
+            var __allowRet = __hasReturn && IsAllowReturnSerialization(method, returnTypeInfo);
             var cancellationTokenExpression = GetCancellationTokenExpression(method);
 
             sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
@@ -1129,7 +1131,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 
                 if (isAsyncEnumerable)
                 {
-                    var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
+                    var tArg = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
                     var callExpr2 = "base." + methodName + typeParams + "(" + argList + ")";
                     AppendAsyncStreamWrapper(sb, tArg, callExpr2, sourceIsParameter: false, invokeBefore: true);
                     sb.AppendLine($"        return __streamWrapper();");
@@ -1156,7 +1158,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isTaskOfAsyncEnumerable)
                 {
-                    var tItem = FormatType(((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0], currentNamespace);
+                    var tItem = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
                     AppendAsyncStreamWrapper(sb, tItem, "__s", sourceIsParameter: true, invokeBefore: false);
                     AppendAsyncStreamPreparationWrapper(sb, tItem, call, returnsValueTask: false);
                 }
@@ -1180,7 +1182,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isValueTaskOfAsyncEnumerable)
                 {
-                    var tItem = FormatType(((INamedTypeSymbol)((INamedTypeSymbol)method.ReturnType).TypeArguments[0]).TypeArguments[0], currentNamespace);
+                    var tItem = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
                     AppendAsyncStreamWrapper(sb, tItem, "__s", sourceIsParameter: true, invokeBefore: false);
                     AppendAsyncStreamPreparationWrapper(sb, tItem, call, returnsValueTask: true);
                 }
@@ -1240,20 +1242,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
             else
             {
-                if (isAsyncEnumerable)
-                {
-                    var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
-                    var callExpr3 = "base." + methodName + typeParams + "(" + argList + ")";
-                    sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };")
-                      .AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = true, AllowReturnSerialization = true, ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
-                    sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
-                    sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
-                    AppendAsyncStreamWrapper(sb, tArg, callExpr3, sourceIsParameter: false, invokeBefore: true);
-                    sb.AppendLine($"        return __streamWrapper();");
-                    sb.AppendLine("    }").AppendLine().AppendLine();
-                    return;
-                }
-
                 var runtime = "ProxyRuntime";
                 
                 if (isTask)
@@ -1262,7 +1250,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isGenericTask)
                 {
-                    var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
+                    var tArg = FormatType(returnTypeInfo.ResultType!);
                     
                     sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {call});");
                 }
@@ -1272,7 +1260,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isGenericValueTask)
                 {
-                    var tArg = FormatType(((INamedTypeSymbol)method.ReturnType).TypeArguments[0], currentNamespace);
+                    var tArg = FormatType(returnTypeInfo.ResultType!);
                     
                     sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {call} );");
                 }
@@ -1283,34 +1271,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else
                 {
-                    // 兜底保护 如果编译期检测未识别为 Task 或 Task<T> 则根据返回类型字符串进行判断
-                    if (returnTypeFullText.StartsWith("global::System.Threading.Tasks.Task<", StringComparison.Ordinal))
-                    {
-                        var tArgText = returnTypeFullText.Substring("global::System.Threading.Tasks.Task<".Length);
-                       
-                        tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
-                        sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {call});");
-                    }
-                    else if (string.Equals(returnTypeFullText, "global::System.Threading.Tasks.Task", StringComparison.Ordinal))
-                    {
-                        sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {call});");
-                    }
-                    // 兜底保护 如果编译期检测未识别为 ValueTask 或 ValueTask<T> 则根据返回类型字符串进行判断
-                    else if (returnTypeFullText.StartsWith("global::System.Threading.Tasks.ValueTask<", StringComparison.Ordinal))
-                    {
-                        var tArgText = returnTypeFullText.Substring("global::System.Threading.Tasks.ValueTask<".Length);
-                        
-                        tArgText = tArgText.EndsWith(">", StringComparison.Ordinal) ? tArgText.Substring(0, tArgText.Length - 1) : tArgText;
-                        sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArgText}>(__ctx, () => {call} );");
-                    }
-                    else if (string.Equals(returnTypeFullText, "global::System.Threading.Tasks.ValueTask", StringComparison.Ordinal))
-                    {
-                        sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {call});");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => {call});");
-                    }
+                    sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => {call});");
                 }
             }
 
@@ -2156,35 +2117,25 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <summary>
         /// 判断方法返回值类型在日志中是否允许进行序列化输出
         /// </summary>
-        private static bool IsAllowReturnSerialization(IMethodSymbol method)
+        /// <param name="method">待检查的代理方法</param>
+        /// <param name="returnTypeInfo">统一的返回类型分析结果</param>
+        /// <returns>如果返回值允许序列化则返回 true</returns>
+        private static bool IsAllowReturnSerialization(IMethodSymbol method, ProxyReturnTypeInfo returnTypeInfo)
         {
-            var rt = method.ReturnType;
 
             // 异步流类型使用占位符记录日志 视为可记录类型
-            if ((rt is INamedTypeSymbol nts4 && nts4.IsGenericType && IsType(nts4.ConstructedFrom, "System.Collections.Generic.IAsyncEnumerable"))
-                || rt.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).StartsWith("global::System.Collections.Generic.IAsyncEnumerable<", StringComparison.Ordinal))
+            if (returnTypeInfo.IsAsyncStream)
                 return true;
 
             // 无返回值的 Task 或 ValueTask
-            if (rt is INamedTypeSymbol ntsTask && !ntsTask.IsGenericType && IsType(ntsTask, "System.Threading.Tasks.Task"))
-                return false;
-
-            if (rt is INamedTypeSymbol ntsVt && !ntsVt.IsGenericType && IsType(ntsVt, "System.Threading.Tasks.ValueTask"))
+            if (returnTypeInfo.Kind is ProxyReturnTypeKind.Void or ProxyReturnTypeKind.Task or ProxyReturnTypeKind.ValueTask)
                 return false;
 
             // 对 Task<T> 和 ValueTask<T> 进行解包 使用其泛型参数做判断
-            if (rt is INamedTypeSymbol ntsG && ntsG.IsGenericType)
-            {
-                if (IsType(ntsG.ConstructedFrom, "System.Threading.Tasks.Task") || IsType(ntsG.ConstructedFrom, "System.Threading.Tasks.ValueTask"))
-                {
-                    var tArg = ntsG.TypeArguments[0];
-                    return IsReturnTypeLoggableCore(tArg);
-                }
-            }
+            if (returnTypeInfo.Kind is ProxyReturnTypeKind.TaskOfT or ProxyReturnTypeKind.ValueTaskOfT)
+                return returnTypeInfo.ResultType is not null && IsReturnTypeLoggableCore(returnTypeInfo.ResultType);
 
-            if (method.ReturnsVoid) return false;
-
-            return IsReturnTypeLoggableCore(rt);
+            return IsReturnTypeLoggableCore(method.ReturnType);
         }
 
 
@@ -2289,7 +2240,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     else
                     {
                         var parameterName = EscapeIdentifier(p.Name);
-                        updates.Add($"try {{ __argsDict[\"{p.Name}\"] = JsonUtil.ToJson({parameterName}); }} catch {{ __argsDict[\"{p.Name}\"] = Convert.ToString({parameterName}); }}");
+                        updates.Add($"__argsDict[\"{p.Name}\"] = JsonUtil.ToJson({parameterName});");
                     }
                 }
             }

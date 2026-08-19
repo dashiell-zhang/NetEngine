@@ -17,10 +17,12 @@ Presentation/TaskService/appsettings.Development.json
 ```
 
 - `dbConnection`：读写数据库连接
-- `dbReadConnection`：只读连接；为空时回退到 `dbConnection`
+- `dbReadConnection`：只读连接；为空时回退到 `dbConnection`；宿主构建读取连接时会自动追加 `Options=-c default_transaction_read_only=on`
 - `redisConnection`：队列任务跨实例并发锁和其他 Redis 能力
 
 本地依赖、数据库迁移和初始化方式见根目录 [README](../README.md#快速开始)
+
+读写上下文的选择、只读账号要求和多读库配置见 [数据库读写分离](DatabaseReadWriteSeparation.md)
 
 新增具体任务时，在 `Presentation/TaskService/Tasks` 中创建 `public` 类并继承 `TaskBase`。宿主会把当前程序集中的公开任务类注册为 Scoped 服务，初始化服务再扫描任务方法：
 

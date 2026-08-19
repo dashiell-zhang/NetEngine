@@ -128,6 +128,7 @@ dotnet run --project Presentation/TaskService/TaskService.csproj
 | [WebAPI 公共能力](Docs/WebAPI.md) | 公共启动链路、配置、CORS、认证、Swagger 与健康检查 |
 | [WebAPI 过滤器](Docs/WebAPIFilters.md) | 异常、缓存、ETag、并发限制、RSA 解密和签名校验 |
 | [源码生成器](Docs/SourceGenerator.md) | 自动 DI、后台服务、AutoProxy 与 EF Core 代码生成 |
+| [数据库读写分离](Docs/DatabaseReadWriteSeparation.md) | 读写上下文用法、读库连接配置、一致性和多读库方案 |
 | [TaskService](Docs/TaskService.md) | 定时任务、队列任务、调度、回调、子任务与重试 |
 | [分布式锁](Docs/DistributedLock.md) | Redis 锁、内存锁、并发信号量与租约续期 |
 | [LLM 调用](Docs/LLM.md) | 模型配置、提示词模板、普通调用与流式调用 |

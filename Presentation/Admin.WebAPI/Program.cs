@@ -50,9 +50,11 @@ public class Program
             readConnectionString = connectionString;
         }
 
-        NpgsqlDataSourceBuilder readDataSourceBuilder = new(readConnectionString);
-
         NpgsqlConnectionStringBuilder readConnectionStringBuilder = new(readConnectionString);
+        const string readOnlyOption = "-c default_transaction_read_only=on";
+        readConnectionStringBuilder.Options = string.IsNullOrWhiteSpace(readConnectionStringBuilder.Options) ? readOnlyOption : $"{readConnectionStringBuilder.Options} {readOnlyOption}";
+
+        NpgsqlDataSourceBuilder readDataSourceBuilder = new(readConnectionStringBuilder.ConnectionString);
         int readMaxPoolSize = readConnectionStringBuilder.MaxPoolSize;
 
         builder.Services.AddDbContextPool<ReadDatabaseContext>((serviceProvider, options) =>

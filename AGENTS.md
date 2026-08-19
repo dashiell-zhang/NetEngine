@@ -30,6 +30,7 @@ Agent 在本仓库中工作时，必须遵守以下原则
 | WebAPI 宿主、公共配置、中间件、认证或健康检查 | `Docs/WebAPI.md` |
 | WebAPI 过滤器 | `Docs/WebAPIFilters.md` |
 | 服务注册、代理或 EF Core 生成能力 | `Docs/SourceGenerator.md` |
+| 数据库上下文、读写分离或读库配置 | `Docs/DatabaseReadWriteSeparation.md` |
 | 定时任务或队列任务 | `Docs/TaskService.md` |
 | 分布式锁或并发信号量 | `Docs/DistributedLock.md` |
 | LLM 应用配置、调用或 Provider 扩展 | `Docs/LLM.md` |

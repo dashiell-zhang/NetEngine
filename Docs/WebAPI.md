@@ -35,7 +35,7 @@ app.MapHealthChecks("/healthz");
 | 配置节 | 用途 |
 |---|---|
 | `ConnectionStrings:dbConnection` | 主数据库连接字符串 |
-| `ConnectionStrings:dbReadConnection` | 只读数据库连接字符串；为空时回退到主库 |
+| `ConnectionStrings:dbReadConnection` | 只读数据库连接字符串；为空时回退到主库；宿主构建读取连接时会自动追加 `Options=-c default_transaction_read_only=on` |
 | `ConnectionStrings:redisConnection` | 分布式缓存、Redis 锁和 Redis 客户端连接字符串 |
 | `Cors:AllowedOriginList` | 允许跨域访问的来源列表 |
 | `JWT` | Token 签发和验证配置 |
@@ -45,6 +45,8 @@ app.MapHealthChecks("/healthz");
 | `FileServerUrl` | 文件访问地址 |
 
 开发环境会加载 `appsettings.Development.json` 并覆盖同名配置。新增配置前，应同时确认两个 WebAPI 宿主是否都需要该配置
+
+读写上下文的选择、只读账号要求、保存后立即刷新和多读库配置见 [数据库读写分离](DatabaseReadWriteSeparation.md)
 
 LLM 模型与应用配置保存在数据库中，不使用宿主配置文件中的 `LLM:Providers` 配置节，详细说明见 [LLM 调用](LLM.md)
 
@@ -139,6 +141,7 @@ WebAPI 启动后，Debug 构建会在控制台输出 Swagger 地址
 
 - `CacheHealthCheck`：通过 `IDistributedCache` 验证缓存写入
 - `DatabaseHealthCheck`：通过 `DatabaseContext` 验证数据库连接
+- `ReadDatabaseHealthCheck`：通过 `ReadDatabaseContext` 验证数据库读取连接
 
 健康检查后台发布器启动后延迟 10 秒执行，之后每 60 秒运行一次。`TaskService` 是 Worker Service 宿主，不提供 `/healthz` HTTP 路由
 

@@ -7,8 +7,12 @@ using Repository;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Basic;
+
+/// <summary>
+/// 提供公共基础数据查询与验证码生成能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
+public class BaseService(ReadDatabaseContext readDb, IDistributedCache distributedCache)
 {
 
     /// <summary>
@@ -24,17 +28,17 @@ public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
 
         if (provinceId == 0 && cityId == 0)
         {
-            list = await db.RegionProvince.Select(t => new RegionDto { Id = t.Id, Name = t.Province }).ToListAsync();
+            list = await readDb.RegionProvince.Select(t => new RegionDto { Id = t.Id, Name = t.Province }).ToListAsync();
         }
 
         if (provinceId != 0)
         {
-            list = await db.RegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new RegionDto { Id = t.Id, Name = t.City }).ToListAsync();
+            list = await readDb.RegionCity.Where(t => t.ProvinceId == provinceId).Select(t => new RegionDto { Id = t.Id, Name = t.City }).ToListAsync();
         }
 
         if (cityId != 0)
         {
-            list = await db.RegionArea.Where(t => t.CityId == cityId).Select(t => new RegionDto { Id = t.Id, Name = t.Area }).ToListAsync();
+            list = await readDb.RegionArea.Where(t => t.CityId == cityId).Select(t => new RegionDto { Id = t.Id, Name = t.Area }).ToListAsync();
         }
 
         return list;
@@ -47,7 +51,7 @@ public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
     /// <returns></returns>
     public async Task<List<RegionDto>> GetRegionAllAsync()
     {
-        var list = await db.RegionProvince.Select(t => new RegionDto
+        var list = await readDb.RegionProvince.Select(t => new RegionDto
         {
             Id = t.Id,
             Name = t.Province,
@@ -68,15 +72,15 @@ public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
 
 
     /// <summary>
-    /// 图像验证码生成
+    /// 获取指定组ID的KV键值对
     /// </summary>
-    /// <param name="sign">标记</param>
+    /// <param name="groupId">配置组ID</param>
     /// <returns></returns>
     public async Task<Dictionary<string, string>> GetValueListAsync(long groupId)
     {
         Dictionary<string, string> keyValuePairs = [];
 
-        var list = await db.AppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new
+        var list = await readDb.AppSetting.Where(t => t.Module == "Dictionary" && t.GroupId == groupId).Select(t => new
         {
             t.Key,
             t.Value
@@ -92,9 +96,9 @@ public class BaseService(DatabaseContext db, IDistributedCache distributedCache)
 
 
     /// <summary>
-    /// 获取指定组ID的KV键值对
+    /// 生成图像验证码
     /// </summary>
-    /// <param name="groupId"></param>
+    /// <param name="sign">验证码标记</param>
     /// <returns></returns>
     public async Task<byte[]> GetVerifyCodeAsync(Guid sign)
     {

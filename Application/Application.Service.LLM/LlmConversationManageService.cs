@@ -11,7 +11,7 @@ namespace Application.Service.LLM;
 /// LLM 对话记录管理服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LlmConversationManageService(DatabaseContext db)
+public class LlmConversationManageService(ReadDatabaseContext readDb)
 {
 
     /// <summary>
@@ -22,8 +22,7 @@ public class LlmConversationManageService(DatabaseContext db)
 
         PageListDto<LlmConversationDto> result = new();
 
-        var query = db.LlmConversation
-            .AsNoTracking()
+        var query = readDb.LlmConversation
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.Keyword))

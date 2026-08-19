@@ -255,7 +255,8 @@ public static class WebApplicationBuilderExtension
         #region 注册健康检测服务
         builder.Services.AddHealthChecks()
             .AddCheck<CacheHealthCheck>("CacheHealthCheck")
-            .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck");
+            .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck")
+            .AddCheck<ReadDatabaseHealthCheck>("ReadDatabaseHealthCheck");
 
 
         builder.Services.Configure<HealthCheckPublisherOptions>(options =>

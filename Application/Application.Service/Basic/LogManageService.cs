@@ -7,8 +7,11 @@ using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Basic;
 
+/// <summary>
+/// 提供日志查询管理能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LogManageService(DatabaseContext db)
+public class LogManageService(ReadDatabaseContext readDb)
 {
 
     /// <summary>
@@ -18,7 +21,7 @@ public class LogManageService(DatabaseContext db)
     {
         PageListDto<LogDto> result = new();
 
-        var query = db.Log.AsNoTracking().AsQueryable();
+        var query = readDb.Log.AsQueryable();
 
         // 添加检索条件
         if (!string.IsNullOrWhiteSpace(request.Project))

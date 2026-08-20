@@ -26,6 +26,11 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         var logInfo = logger?.IsEnabled(LogLevel.Information) == true;
         var logError = logger?.IsEnabled(LogLevel.Error) == true;
 
+        if (!logInfo && !logError)
+        {
+            return await next();
+        }
+
         if (!logInfo)
         {
             try
@@ -137,10 +142,17 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     public void OnBefore(InvocationContext ctx)
     {
         var logger = ctx.Logger;
-        
+        var logInfo = logger?.IsEnabled(LogLevel.Information) == true;
+        var logError = logger?.IsEnabled(LogLevel.Error) == true;
+
+        if (!logInfo && !logError)
+        {
+            return;
+        }
+
         ctx.SetFeature(new LoggingState { StartTicks = Stopwatch.GetTimestamp() });
 
-        if (logger?.IsEnabled(LogLevel.Information) == true)
+        if (logInfo)
         {
             var payload = new Dictionary<string, object?>
             {
@@ -163,10 +175,10 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     public void OnAfter(InvocationContext ctx, object? result)
     {
         var logger = ctx.Logger;
-        var st = ctx.GetFeature<LoggingState>();
 
         if (logger?.IsEnabled(LogLevel.Information) == true)
         {
+            var st = ctx.GetFeature<LoggingState>();
             var payload = new Dictionary<string, object?>
             {
                 ["event"] = "executed",
@@ -199,11 +211,10 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     public void OnException(InvocationContext ctx, Exception ex)
     {
         var logger = ctx.Logger;
-        
-        var st = ctx.GetFeature<LoggingState>();
 
         if (logger?.IsEnabled(LogLevel.Error) == true)
         {
+            var st = ctx.GetFeature<LoggingState>();
             var exPayload = new Dictionary<string, object?>
             {
                 ["event"] = "exception",

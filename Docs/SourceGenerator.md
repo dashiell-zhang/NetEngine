@@ -123,7 +123,7 @@ public class ProductService
 
 ### Logging
 
-`[Logging]` 记录 executing、executed 和 exception 阶段的结构化日志，包括方法、追踪标识、参数、调用链、耗时和结果等信息
+`[Logging]` 记录 executing、executed 和 exception 阶段的结构化日志，包括方法、追踪标识、参数、耗时、结果和异常堆栈等信息
 
 ```csharp
 [Logging]

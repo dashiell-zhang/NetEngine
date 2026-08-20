@@ -108,7 +108,7 @@ public sealed class NpgsqlPartitionMigrationsSqlGenerator : NpgsqlMigrationsSqlG
 
 
     /// <summary>
-    /// 校验已有表的分区 Annotation 变更并忽略只影响未来分区的间隔变化
+    /// 校验已有表的分区 Annotation 变更并忽略只影响未来分区的周期变化
     /// </summary>
     /// <param name="operation">修改表操作</param>
     /// <param name="model">EF Core 关系模型</param>
@@ -496,10 +496,10 @@ public sealed class NpgsqlPartitionMigrationsSqlGenerator : NpgsqlMigrationsSqlG
 
 
     /// <summary>
-    /// 判断修改表操作是否只变更允许向前生效的间隔策略
+    /// 判断修改表操作是否只变更允许向前生效的周期策略
     /// </summary>
     /// <param name="operation">修改表操作</param>
-    /// <returns>只包含 IntervalHours 变化时返回 true</returns>
+    /// <returns>只包含分区周期策略变化时返回 true</returns>
     private static bool ContainsOnlyPolicyChanges(AlterTableOperation operation)
     {
 

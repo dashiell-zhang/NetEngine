@@ -2,6 +2,7 @@ using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Repository.Attributes;
 
 namespace Repository.Partitioning;
 
@@ -12,24 +13,21 @@ public sealed class PartitionTableDefinition
 {
 
     /// <summary>
-    /// 一个小时包含的毫秒数
-    /// </summary>
-    private const long HourMilliseconds = 60L * 60 * 1000;
-
-    /// <summary>
     /// 创建分区表定义
     /// </summary>
     /// <param name="schema">数据库 Schema</param>
     /// <param name="tableName">父表名称</param>
     /// <param name="keyColumnName">分区键数据库列名称</param>
-    /// <param name="intervalHours">单个子分区包含的小时数</param>
-    public PartitionTableDefinition(string? schema, string tableName, string keyColumnName, int intervalHours)
+    /// <param name="interval">单个子分区包含的周期数量</param>
+    /// <param name="unit">分区周期单位</param>
+    public PartitionTableDefinition(string? schema, string tableName, string keyColumnName, int interval, PartitionUnit unit)
     {
 
         Schema = schema;
         TableName = tableName;
         KeyColumnName = keyColumnName;
-        IntervalHours = intervalHours;
+        Interval = interval;
+        Unit = unit;
 
     }
 
@@ -53,9 +51,15 @@ public sealed class PartitionTableDefinition
 
 
     /// <summary>
-    /// 单个子分区包含的小时数
+    /// 单个子分区包含的周期数量
     /// </summary>
-    public int IntervalHours { get; }
+    public int Interval { get; }
+
+
+    /// <summary>
+    /// 分区周期单位
+    /// </summary>
+    public PartitionUnit Unit { get; }
 
 
     /// <summary>
@@ -103,26 +107,22 @@ public sealed class PartitionTableDefinition
         }
 
         var keyColumn = GetRequiredAnnotation<string>(annotatable, PartitionAnnotationNames.KeyColumn, tableName);
-        var intervalHours = GetRequiredAnnotation<int>(annotatable, PartitionAnnotationNames.IntervalHours, tableName);
+        var interval = GetRequiredAnnotation<int>(annotatable, PartitionAnnotationNames.Interval, tableName);
+        var unitName = GetRequiredAnnotation<string>(annotatable, PartitionAnnotationNames.Unit, tableName);
 
-        if (intervalHours <= 0)
+        if (interval <= 0)
         {
-            throw new InvalidOperationException($"分区表 {tableName} 的分区间隔小时数必须大于 0");
+            throw new InvalidOperationException($"分区表 {tableName} 的分区周期数量必须大于 0");
         }
 
-        return new PartitionTableDefinition(schema, tableName, keyColumn, intervalHours);
+        if (!Enum.TryParse<PartitionUnit>(unitName, false, out var unit)
+            || !Enum.IsDefined(unit)
+            || !string.Equals(unit.ToString(), unitName, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"分区表 {tableName} 的分区周期单位 {unitName} 不受支持");
+        }
 
-    }
-
-
-    /// <summary>
-    /// 按配置的小时数计算固定间隔毫秒数
-    /// </summary>
-    /// <returns>固定间隔毫秒数</returns>
-    public long GetIntervalMilliseconds()
-    {
-
-        return checked(IntervalHours * HourMilliseconds);
+        return new PartitionTableDefinition(schema, tableName, keyColumn, interval, unit);
 
     }
 
@@ -141,10 +141,8 @@ public sealed class PartitionTableDefinition
             throw new InvalidOperationException($"当前时间早于雪花纪元，无法为分区表 {TableName} 计算范围");
         }
 
-        var intervalMilliseconds = GetIntervalMilliseconds();
-        var partitionIndex = (currentMilliseconds - SnowflakeIdLayout.EpochMilliseconds) / intervalMilliseconds;
-        var startMilliseconds = checked(SnowflakeIdLayout.EpochMilliseconds + partitionIndex * intervalMilliseconds);
-        return CreateRangeFromMilliseconds(startMilliseconds);
+        var startTime = AlignRangeStart(PartitionTimeLayout.ToPartitionTime(utcNow));
+        return CreateRange(startTime, AddInterval(startTime));
 
     }
 
@@ -163,22 +161,117 @@ public sealed class PartitionTableDefinition
             throw new InvalidOperationException($"分区表 {TableName} 的已有上界 {startId} 不是完整毫秒对应的最小雪花 ID");
         }
 
-        return CreateRangeFromMilliseconds(startTime.ToUnixTimeMilliseconds());
+        var partitionStartTime = PartitionTimeLayout.ToPartitionTime(startTime);
+        var alignedStartTime = AlignRangeStart(partitionStartTime);
+        var endTime = AddInterval(alignedStartTime);
+        return CreateRange(partitionStartTime, endTime);
 
     }
 
 
     /// <summary>
-    /// 从起始 Unix 毫秒创建固定时长分区范围
+    /// 将指定时间对齐到当前分区策略的范围起点
     /// </summary>
-    /// <param name="startMilliseconds">范围起始 Unix 毫秒</param>
-    /// <returns>固定时长分区范围</returns>
-    private PartitionRange CreateRangeFromMilliseconds(long startMilliseconds)
+    /// <param name="partitionTime">固定 UTC+8 下的时间</param>
+    /// <returns>包含指定时间的范围起点</returns>
+    private DateTimeOffset AlignRangeStart(DateTimeOffset partitionTime)
     {
 
-        var endMilliseconds = checked(startMilliseconds + GetIntervalMilliseconds());
-        var startTime = DateTimeOffset.FromUnixTimeMilliseconds(startMilliseconds);
-        var endTime = DateTimeOffset.FromUnixTimeMilliseconds(endMilliseconds);
+        var anchor = PartitionTimeLayout.Anchor;
+
+        return Unit switch
+        {
+            PartitionUnit.Hour => AlignFixedTicks(partitionTime, anchor, checked(TimeSpan.TicksPerHour * Interval)),
+            PartitionUnit.Day => AlignFixedTicks(partitionTime, anchor, checked(TimeSpan.TicksPerDay * Interval)),
+            PartitionUnit.Month => anchor.AddMonths(CalculateAlignedMonthOffset(partitionTime, anchor)),
+            PartitionUnit.Year => anchor.AddYears(CalculateAlignedYearOffset(partitionTime, anchor)),
+            _ => throw new InvalidOperationException($"分区表 {TableName} 的分区周期单位 {Unit} 不受支持")
+        };
+
+    }
+
+
+    /// <summary>
+    /// 按当前单位增加一个完整分区周期
+    /// </summary>
+    /// <param name="startTime">固定 UTC+8 下的范围起点</param>
+    /// <returns>增加一个周期后的时间</returns>
+    private DateTimeOffset AddInterval(DateTimeOffset startTime)
+    {
+
+        return Unit switch
+        {
+            PartitionUnit.Hour => startTime.AddHours(Interval),
+            PartitionUnit.Day => startTime.AddDays(Interval),
+            PartitionUnit.Month => startTime.AddMonths(Interval),
+            PartitionUnit.Year => startTime.AddYears(Interval),
+            _ => throw new InvalidOperationException($"分区表 {TableName} 的分区周期单位 {Unit} 不受支持")
+        };
+
+    }
+
+
+    /// <summary>
+    /// 按固定 Tick 周期对齐时间
+    /// </summary>
+    /// <param name="time">需要对齐的时间</param>
+    /// <param name="anchor">对齐锚点</param>
+    /// <param name="intervalTicks">单个周期包含的 Tick 数量</param>
+    /// <returns>包含指定时间的周期起点</returns>
+    private static DateTimeOffset AlignFixedTicks(DateTimeOffset time, DateTimeOffset anchor, long intervalTicks)
+    {
+
+        var elapsedTicks = checked(time.Ticks - anchor.Ticks);
+        var alignedTicks = checked(anchor.Ticks + elapsedTicks / intervalTicks * intervalTicks);
+        return new DateTimeOffset(alignedTicks, PartitionTimeLayout.Offset);
+
+    }
+
+
+    /// <summary>
+    /// 计算从锚点开始按自然月对齐后的月份偏移量
+    /// </summary>
+    /// <param name="time">需要对齐的时间</param>
+    /// <param name="anchor">对齐锚点</param>
+    /// <returns>对齐后的月份偏移量</returns>
+    private int CalculateAlignedMonthOffset(DateTimeOffset time, DateTimeOffset anchor)
+    {
+
+        var monthOffset = checked((time.Year - anchor.Year) * 12 + time.Month - anchor.Month);
+        return monthOffset / Interval * Interval;
+
+    }
+
+
+    /// <summary>
+    /// 计算从锚点开始按自然年对齐后的年份偏移量
+    /// </summary>
+    /// <param name="time">需要对齐的时间</param>
+    /// <param name="anchor">对齐锚点</param>
+    /// <returns>对齐后的年份偏移量</returns>
+    private int CalculateAlignedYearOffset(DateTimeOffset time, DateTimeOffset anchor)
+    {
+
+        var yearOffset = time.Year - anchor.Year;
+        return yearOffset / Interval * Interval;
+
+    }
+
+
+    /// <summary>
+    /// 根据固定 UTC+8 起止时间创建雪花 ID 分区范围
+    /// </summary>
+    /// <param name="startTime">范围起始时间</param>
+    /// <param name="endTime">范围结束时间</param>
+    /// <returns>雪花 ID 分区范围</returns>
+    private PartitionRange CreateRange(DateTimeOffset startTime, DateTimeOffset endTime)
+    {
+
+        if (endTime <= startTime)
+        {
+            throw new InvalidOperationException($"分区表 {TableName} 计算出的时间范围无效");
+        }
+
         return new PartitionRange(SnowflakeIdLayout.GetMinIdByTime(startTime), SnowflakeIdLayout.GetMinIdByTime(endTime), startTime, endTime);
 
     }

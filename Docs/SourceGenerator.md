@@ -255,7 +255,9 @@ modelBuilder.ApplyJsonColumns(this);
 modelBuilder.ApplyPartitionTables(this);
 ```
 
-生成配置把分区策略、实际列名和时间间隔写入 EF Core Annotation，随后由 Repository 中的模型校验、Migration SQL 生成器和运行维护服务共同使用
+生成配置把分区策略、实际列名、周期数量和周期单位写入 EF Core Annotation，随后由 Repository 中的模型校验、Migration SQL 生成器和运行维护服务共同使用
+
+实体通过两个必填参数声明周期，例如 `[PartitionTable(1, PartitionUnit.Month)]`。当前支持 `Hour`、`Day`、`Month`、`Year`，时间边界固定按照 UTC+8 计算
 
 当前只支持雪花 `long Id` 的 PostgreSQL `RANGE` 分区。完整声明、迁移和维护规则见 [PostgreSQL 分区表](PostgreSqlPartitionTable.md)
 

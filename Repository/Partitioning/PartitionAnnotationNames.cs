@@ -25,9 +25,15 @@ public static class PartitionAnnotationNames
 
 
     /// <summary>
-    /// 分区间隔小时数 Annotation
+    /// 分区周期数量 Annotation
     /// </summary>
-    public const string IntervalHours = "PartitionTable:IntervalHours";
+    public const string Interval = "PartitionTable:Interval";
+
+
+    /// <summary>
+    /// 分区周期单位 Annotation
+    /// </summary>
+    public const string Unit = "PartitionTable:Unit";
 
 
     /// <summary>
@@ -49,7 +55,7 @@ public static class PartitionAnnotationNames
     public static IReadOnlyList<string> GetAll()
     {
 
-        return [Strategy, KeyColumn, KeyType, IntervalHours];
+        return [Strategy, KeyColumn, KeyType, Interval, Unit];
 
     }
 

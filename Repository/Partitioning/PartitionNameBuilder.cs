@@ -20,13 +20,13 @@ public static class PartitionNameBuilder
     /// 根据父表和实际起始时间创建子分区名称
     /// </summary>
     /// <param name="tableName">父表名称</param>
-    /// <param name="startTime">子分区起始 UTC 时间</param>
+    /// <param name="startTime">子分区起始时间</param>
     /// <returns>稳定的子分区名称</returns>
     public static string Create(string tableName, DateTimeOffset startTime)
     {
 
-        var utcStartTime = startTime.ToUniversalTime();
-        var timeSuffix = utcStartTime.ToString("yyyyMMddHH", CultureInfo.InvariantCulture);
+        var partitionStartTime = PartitionTimeLayout.ToPartitionTime(startTime);
+        var timeSuffix = partitionStartTime.ToString("yyyyMMddHH", CultureInfo.InvariantCulture);
         var suffix = "_p" + timeSuffix;
         var fullName = tableName + suffix;
 

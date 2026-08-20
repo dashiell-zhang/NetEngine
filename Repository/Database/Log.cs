@@ -6,7 +6,7 @@ namespace Repository.Database;
 /// <summary>
 /// 日志表
 /// </summary>
-[PartitionTable(IntervalHours = 744)]
+[PartitionTable(1, PartitionUnit.Month)]
 public class Log : CD
 {
 

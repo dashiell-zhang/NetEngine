@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Repository.Attributes;
 using Repository.Bases;
 
 namespace Repository.Partitioning;
@@ -15,8 +16,9 @@ public static class PartitionModelBuilder
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <param name="modelBuilder">EF Core 模型构建器</param>
-    /// <param name="intervalHours">单个子分区包含的小时数</param>
-    public static void Configure<TEntity>(ModelBuilder modelBuilder, int intervalHours) where TEntity : class
+    /// <param name="interval">单个子分区包含的周期数量</param>
+    /// <param name="unit">分区周期单位</param>
+    public static void Configure<TEntity>(ModelBuilder modelBuilder, int interval, PartitionUnit unit) where TEntity : class
     {
 
         var entityBuilder = modelBuilder.Entity<TEntity>();
@@ -24,9 +26,14 @@ public static class PartitionModelBuilder
         var entityName = entityType.ClrType.FullName ?? entityType.Name;
         var keyPropertyName = nameof(CD.Id);
 
-        if (intervalHours <= 0)
+        if (interval <= 0)
         {
-            throw new InvalidOperationException($"实体 {entityName} 的分区间隔小时数必须大于 0");
+            throw new InvalidOperationException($"实体 {entityName} 的分区周期数量必须大于 0");
+        }
+
+        if (!Enum.IsDefined(unit))
+        {
+            throw new InvalidOperationException($"实体 {entityName} 的分区周期单位 {unit} 不受支持");
         }
 
         var keyProperty = entityType.FindProperty(keyPropertyName) ?? throw new InvalidOperationException($"实体 {entityName} 不存在分区键属性 {keyPropertyName}");
@@ -71,7 +78,8 @@ public static class PartitionModelBuilder
         entityBuilder.HasAnnotation(PartitionAnnotationNames.Strategy, PartitionAnnotationNames.RangeStrategy);
         entityBuilder.HasAnnotation(PartitionAnnotationNames.KeyColumn, keyColumnName);
         entityBuilder.HasAnnotation(PartitionAnnotationNames.KeyType, PartitionAnnotationNames.SnowflakeIdKeyType);
-        entityBuilder.HasAnnotation(PartitionAnnotationNames.IntervalHours, intervalHours);
+        entityBuilder.HasAnnotation(PartitionAnnotationNames.Interval, interval);
+        entityBuilder.HasAnnotation(PartitionAnnotationNames.Unit, unit.ToString());
 
     }
 

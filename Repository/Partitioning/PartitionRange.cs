@@ -11,8 +11,8 @@ public sealed class PartitionRange
     /// </summary>
     /// <param name="startId">包含的起始雪花 ID</param>
     /// <param name="endId">不包含的结束雪花 ID</param>
-    /// <param name="startTime">范围起始 UTC 时间</param>
-    /// <param name="endTime">范围结束 UTC 时间</param>
+    /// <param name="startTime">范围起始固定 UTC+8 时间</param>
+    /// <param name="endTime">范围结束固定 UTC+8 时间</param>
     public PartitionRange(long startId, long endId, DateTimeOffset startTime, DateTimeOffset endTime)
     {
 
@@ -37,13 +37,13 @@ public sealed class PartitionRange
 
 
     /// <summary>
-    /// 范围起始 UTC 时间
+    /// 范围起始固定 UTC+8 时间
     /// </summary>
     public DateTimeOffset StartTime { get; }
 
 
     /// <summary>
-    /// 范围结束 UTC 时间
+    /// 范围结束固定 UTC+8 时间
     /// </summary>
     public DateTimeOffset EndTime { get; }
 

@@ -15,9 +15,10 @@
 
 - PostgreSQL `RANGE` 分区
 - 单列雪花 `long Id` 分区键
-- 固定小时数间隔
+- 小时、天、自然月和自然年周期
+- 固定 UTC+8 分区边界
 - 新表随 EF Migration 直接创建为分区表
-- `IntervalHours` 向后续新分区生效
+- `Interval` 和 `Unit` 向后续新分区生效
 - 多宿主和多实例通过可续期分布式锁协调维护
 
 当前不支持：
@@ -28,25 +29,26 @@
 - 自动创建早于最老已有分区的历史范围
 - `DEFAULT` 分区
 
-## 选择分区间隔
+## 选择分区周期
 
-分区间隔使用 `IntervalHours` 表示固定小时数，不表示自然月、季度或自然周
+分区周期由数量 `Interval` 和单位 `PartitionUnit` 共同决定
 
 | 示例 | 含义 | 常见场景 |
 |---|---|---|
-| `1` | 每小时一个分区 | 写入量很高且需要细粒度维护 |
-| `6` | 每 6 小时一个分区 | 小时间隔与对象数量之间的折中 |
-| `24` | 每 24 小时一个分区 | 通常建议优先采用的起点 |
-| `168` | 每 168 小时，也就是 7 天一个分区 | 日写入量较低的表 |
-| `720` | 每 720 小时，也就是 30 天一个分区 | 写入量较低且不要求自然月对齐 |
+| `[PartitionTable(1, PartitionUnit.Hour)]` | 每小时一个分区 | 写入量很高且需要细粒度维护 |
+| `[PartitionTable(6, PartitionUnit.Hour)]` | 每 6 小时一个分区 | 小时间隔与对象数量之间的折中 |
+| `[PartitionTable(1, PartitionUnit.Day)]` | 每天一个分区 | 通常建议优先采用的起点 |
+| `[PartitionTable(7, PartitionUnit.Day)]` | 每 7 天一个分区 | 日写入量较低的表 |
+| `[PartitionTable(1, PartitionUnit.Month)]` | 每个自然月一个分区 | 按月查询或归档的表 |
+| `[PartitionTable(1, PartitionUnit.Year)]` | 每个自然年一个分区 | 写入量很低且长期保存的表 |
 
 选择时需要平衡：
 
-- 间隔越小，单个分区越小，但数据库对象和后续维护次数越多
-- 间隔越大，分区数量越少，但单个分区数据量和索引体积更大
+- 周期越小，单个分区越小，但数据库对象和后续维护次数越多
+- 周期越大，分区数量越少，但单个分区数据量和索引体积更大
 - Repository 后台服务启动后立即检查一次，随后每 10 分钟检查，因此首版允许的最小单位是小时
 
-建议先根据预估写入量选择 `24` 或 `168`，上线后可以调整，新间隔只影响尚未创建的后续分区
+建议先根据预估写入量选择 `1 Day` 或 `7 Day`，上线后可以调整，新周期只影响尚未创建的后续分区
 
 ## 新表接入流程
 
@@ -63,7 +65,7 @@ namespace Repository.Database;
 /// <summary>
 /// 访问记录表
 /// </summary>
-[PartitionTable(IntervalHours = 24)]
+[PartitionTable(1, PartitionUnit.Day)]
 public class VisitLog : CD
 {
 
@@ -78,8 +80,8 @@ public class VisitLog : CD
 这个声明表示：
 
 - PostgreSQL 父表使用 `PARTITION BY RANGE ("Id")`
-- 每个新子分区覆盖固定 1 天
-- 分区时间边界统一使用 UTC
+- 每个新子分区覆盖 UTC+8 下的一个自然日
+- 分区时间边界和名称统一使用固定 UTC+8
 - `Id` 按 `SnowflakeIdLayout` 中的雪花纪元和位布局换算
 
 ### 2. 加入 DatabaseContext
@@ -131,12 +133,12 @@ CREATE TABLE "VisitLog" (
 随后应出现一个初始子分区：
 
 ```sql
-CREATE TABLE "VisitLog_p2026082000"
+CREATE TABLE "VisitLog_p2026080100"
 PARTITION OF "VisitLog"
-FOR VALUES FROM (306580134297600000) TO (306761328230400000);
+FOR VALUES FROM (303077051596800000) TO (308694063513600000);
 ```
 
-具体名称和数字边界由 SQL 生成时的 UTC 时间及注解间隔决定，不要照抄示例值
+具体名称和数字边界由 SQL 生成时刻、UTC+8 边界及 Attribute 周期决定，不要照抄示例值
 
 ### 6. 执行 Migration
 
@@ -163,16 +165,19 @@ Migration 只创建一个初始子分区，不会批量创建历史或未来分�
 ## Attribute 参数
 
 ```csharp
-[PartitionTable(IntervalHours = intervalHours)]
+[PartitionTable(interval, unit)]
 ```
 
 | 参数 | 当前允许值 | 说明 |
 |---|---|---|
-| `IntervalHours` | 大于 `0` 的整数 | 单个新分区包含的小时数 |
+| `interval` | 大于 `0` 的整数常量 | 单个新分区包含的周期数量 |
+| `unit` | `Hour`、`Day`、`Month`、`Year` | 分区周期单位 |
 
 分区策略固定为 PostgreSQL `RANGE`，分区键固定为实体的雪花 `long Id`，因此 Attribute 不暴露策略和分区键参数
 
-`IntervalHours` 应显式填写，不要依赖整数默认值。一天填写 `24`，七天填写 `168`
+两个参数都是必填构造参数。一天填写 `(1, PartitionUnit.Day)`，七天填写 `(7, PartitionUnit.Day)`，自然月填写 `(1, PartitionUnit.Month)`
+
+EF Core 模型和 Migration 使用 `PartitionTable:Interval` 保存整数数量，使用 `PartitionTable:Unit` 保存 `Hour`、`Day`、`Month` 或 `Year` 字符串
 
 ## EF Core 模型约束
 
@@ -217,28 +222,31 @@ Migration 只创建一个初始子分区，不会批量创建历史或未来分�
 
 雪花纪元和各段位数属于持久化数据布局。已有数据投入使用后，不应把它们当成普通配置随意修改
 
-### 固定时长
+### UTC+8 周期边界
 
-`IntervalHours` 始终按固定小时数计算：
+所有分区周期使用固定 `UTC+8`，不读取服务器本地时区，也不依赖 Windows 或 Linux 时区名称：
 
-```text
-分区时长 = IntervalHours × 60 × 60 × 1000 毫秒
-```
+- `Hour` 从 UTC+8 的整点开始
+- `Day` 从 UTC+8 的 00:00 开始
+- `Month` 从 UTC+8 每月 1 日 00:00 开始，并使用真实自然月长度
+- `Year` 从 UTC+8 每年 1 月 1 日 00:00 开始，并使用真实自然年长度
 
-`168` 小时不保证从周一开始，`720` 小时也不等于自然月
+多周期使用 `1970-01-01 00:00:00 +08:00` 作为固定对齐锚点。`7 Day` 表示从该锚点连续划分的七天范围，不额外表达自然周；`3 Month` 会对齐到一月、四月、七月和十月
+
+UTC+8 只影响时间边界的计算和名称。最终 PostgreSQL 范围仍由两个绝对时间对应的雪花 ID 表示
 
 ### 子分区名称
 
 - 子分区使用 `{父表名}_pyyyyMMddHH`
-- 名称使用实际范围的 UTC 开始时间
+- 名称使用实际范围的 UTC+8 开始时间
 - 超过 PostgreSQL 63 字节标识符限制时会截短并增加稳定哈希
 
 ## Migration 的时间语义
 
-初始子分区以 Migration SQL 的生成时间为准：
+初始子分区以 Migration SQL 的生成时刻为准，再对齐到该时刻所在的 UTC+8 周期：
 
-- `dotnet ef database update`：以命令生成并执行 SQL 时的 UTC 时间为准
-- `dotnet ef migrations script`：以生成 SQL 文件时的 UTC 时间为准
+- `dotnet ef database update`：以命令生成并执行 SQL 时的时刻为准
+- `dotnet ef migrations script`：以生成 SQL 文件时的时刻为准
 
 如果 SQL 文件在生成后跨越了一个或多个分区周期才执行，脚本中的初始分区可能已经过期。此时必须在开放写入前确认 Repository 后台服务已经补齐当前和后续三个范围
 
@@ -262,14 +270,17 @@ Migration 只创建一个初始子分区，不会批量创建历史或未来分�
 
 自动维护只向前创建，不会自动补充早于最老已有分区的范围，也不会删除历史分区
 
-## 调整 IntervalHours
+三个后续分区表示三个实际范围。例如月策略会预建后续三个自然月，年策略会预建后续三个自然年；过渡分区存在时也计为一个实际范围
 
-`IntervalHours` 可以修改，但只对尚未创建的后续分区生效：
+## 调整分区周期
+
+`Interval` 和 `Unit` 可以修改，但只对尚未创建的后续分区生效：
 
 - 已有子分区保持原边界
 - 已经预建的旧粒度未来分区保持不变
 - 不自动拆分、合并、删除或搬迁数据
 - 新策略从数据库实际最右上界继续创建
+- 最右上界不符合新策略自然边界时，先创建一个过渡分区衔接到下一个自然边界
 
 例如已有两个日分区：
 
@@ -278,13 +289,14 @@ Migration 只创建一个初始子分区，不会批量创建历史或未来分�
 [2026-08-20, 2026-08-21)
 ```
 
-把 `IntervalHours` 改成 `168` 后，下一个新分区是：
+把策略改成 `[PartitionTable(1, PartitionUnit.Month)]`，假设数据库实际最右上界是 `2026-08-21 00:00:00 +08:00`，新分区依次为：
 
 ```text
-[2026-08-21, 2026-08-28)
+过渡分区：[2026-08-21 00:00:00 +08:00, 2026-09-01 00:00:00 +08:00)
+月分区：  [2026-09-01 00:00:00 +08:00, 2026-10-01 00:00:00 +08:00)
 ```
 
-只修改 `IntervalHours` 时，Migration 会记录策略 Annotation 变化并更新 ModelSnapshot。执行 Migration 时不会修改父表和已有子表，只会在 Migration History 中登记这次 Migration
+只修改 `Interval` 或 `Unit` 时，Migration 会记录策略 Annotation 变化并更新 ModelSnapshot。执行 Migration 时不会修改父表和已有子表，只会在 Migration History 中登记这次 Migration
 
 推荐发布顺序：
 
@@ -294,12 +306,12 @@ Migration 只创建一个初始子分区，不会批量创建历史或未来分�
 4. 部署使用新模型的服务端宿主
 5. 确认新版本后台服务执行成功
 
-不要让使用不同分区间隔的新旧服务端宿主同时运行。分布式锁只能让它们串行执行，不能判断哪一个版本的策略更新
+不要让使用不同分区周期的新旧服务端宿主同时运行。分布式锁只能让它们串行执行，不能判断哪一个版本的策略更新
 
 ## Migration 回滚注意事项
 
 - 回滚首次创建分区表的 Migration 会删除父表及其子分区，表内数据也会随之删除
-- 回滚仅修改 `IntervalHours` 的 Migration 不会重建已有子分区
+- 回滚仅修改 `Interval` 或 `Unit` 的 Migration 不会重建已有子分区
 - 回滚策略 Migration 时，应同时回滚实体 Attribute 和服务端宿主版本，避免代码模型与 Migration 版本不一致
 - 生产环境执行任何 Down Migration 前都应单独审核生成 SQL 和数据影响
 
@@ -416,13 +428,13 @@ ORDER BY child.relname;
 | 子分区名称已存在但范围不一致 | 同名表或人工分区与期望冲突 | 核对对象所属父表和实际范围，不要让后台服务自动覆盖 |
 | 分布式锁续期失败 | Redis 不可用、网络异常或维护耗时异常 | 恢复 Redis，检查数据库 DDL 阻塞后等待下轮维护 |
 | Npgsql SQL 结构兼容异常 | Npgsql 升级改变了建表 SQL 形态 | 暂停生成或执行 Migration，适配并重新做真实数据库验证 |
-| 调整间隔后旧分区没有变化 | 这是预期行为 | 新策略只影响最右边界之后尚未创建的分区 |
+| 调整周期后旧分区没有变化 | 这是预期行为 | 新策略只影响最右边界之后尚未创建的分区 |
 
 ## 上线检查清单
 
 - [ ] 目标是新表，不是数据库中已经存在的普通表
 - [ ] 实体已加入 `DatabaseContext` 的直接 `DbSet<TEntity>`
-- [ ] Attribute 明确配置了 `IntervalHours`
+- [ ] Attribute 明确配置了大于 `0` 的 `Interval` 和受支持的 `PartitionUnit`
 - [ ] 主键和全部唯一约束、唯一索引都包含 `Id`
 - [ ] 所有写宿主均已注册 `PostgresPatchInterceptor`
 - [ ] `dotnet build NetEngine.slnx` 已通过
@@ -442,11 +454,15 @@ ORDER BY child.relname;
 
 ### 是否支持小时分区
 
-支持。例如 `IntervalHours = 6` 表示每 6 小时一个固定时长分区
+支持。例如 `[PartitionTable(6, PartitionUnit.Hour)]` 表示每 6 小时一个分区，边界按照固定 UTC+8 对齐
 
 ### 是否可以从每天一张改成每 7 天一张
 
-可以。把 `IntervalHours` 从 `24` 改为 `168` 即可；已有日分区保持不变，新建分区从数据库实际最右上界开始使用 168 小时间隔
+可以。把 `[PartitionTable(1, PartitionUnit.Day)]` 改为 `[PartitionTable(7, PartitionUnit.Day)]` 即可；已有日分区保持不变，新建分区从数据库实际最右上界连续衔接到新的七天周期
+
+### 月分区是固定 30 天或 31 天吗
+
+不是。`PartitionUnit.Month` 使用 UTC+8 下的自然月，会正确处理 28、29、30 和 31 天月份；`PartitionUnit.Year` 同样使用自然年并正确处理闰年
 
 ### 为什么不创建 DEFAULT 分区
 
@@ -464,8 +480,9 @@ ORDER BY child.relname;
 
 | 位置 | 职责 |
 |---|---|
-| `Repository/Attributes/PartitionTableAttribute.cs` | 实体分区声明 |
+| `Repository/Attributes/PartitionTableAttribute.cs` | 实体分区声明和分区周期单位 |
 | `SourceGenerator/SourceGenerator.Core/PartitionTableGenerator.cs` | 生成 EF Core 分区模型配置 |
 | `Repository/Partitioning` | 模型校验、边界计算、Migration SQL 生成与运行维护 |
+| `Repository/Partitioning/PartitionTimeLayout.cs` | 固定 UTC+8 偏移和对齐锚点 |
 | `Infrastructure/IdentifierGenerator/SnowflakeIdLayout.cs` | 雪花 ID 持久化布局和时间换算 |
 | `Repository/Partitioning/PartitionMaintenanceBackgroundService.cs` | 自动维护后台服务入口 |

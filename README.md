@@ -12,7 +12,7 @@
 
 - JWT 认证、权限控制、请求签名校验与 RSA 字段解密
 - PostgreSQL、EF Core、Redis、HybridCache 与本地缓存
-- 基于雪花 ID 的 PostgreSQL RANGE 分区表迁移与自动维护
+- 基于雪花 ID、固定 UTC+8 周期的 PostgreSQL RANGE 分区表迁移与自动维护
 - Redis 分布式锁与内存锁
 - 文件存储、短信、数据库日志与本地文件日志
 - 队列任务与定时任务调度
@@ -130,7 +130,7 @@ dotnet run --project Presentation/TaskService/TaskService.csproj
 | [WebAPI 过滤器](Docs/WebAPIFilters.md) | 异常、缓存、ETag、并发限制、RSA 解密和签名校验 |
 | [源码生成器](Docs/SourceGenerator.md) | 自动 DI、后台服务、AutoProxy 与 EF Core 代码生成 |
 | [数据库读写分离](Docs/DatabaseReadWriteSeparation.md) | 读写上下文用法、读库连接配置、一致性和多读库方案 |
-| [PostgreSQL 分区表](Docs/PostgreSqlPartitionTable.md) | 实体注解、Migration 建表、间隔调整与子分区维护 |
+| [PostgreSQL 分区表](Docs/PostgreSqlPartitionTable.md) | 实体注解、UTC+8 周期单位、Migration 建表与子分区维护 |
 | [TaskService](Docs/TaskService.md) | 定时任务、队列任务、调度、回调、子任务与重试 |
 | [分布式锁](Docs/DistributedLock.md) | Redis 锁、内存锁、并发信号量与租约续期 |
 | [LLM 调用](Docs/LLM.md) | 模型配置、提示词模板、普通调用与流式调用 |

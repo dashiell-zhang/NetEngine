@@ -96,22 +96,14 @@ public sealed class PartitionTableGenerator : IIncrementalGenerator
     private static PartitionCandidate? CreateCandidate(INamedTypeSymbol entityType, AttributeData attribute)
     {
 
-        if (attribute.ConstructorArguments.Length != 0)
+        if (attribute.ConstructorArguments.Length != 2
+            || attribute.ConstructorArguments[0].Value is not int interval
+            || attribute.ConstructorArguments[1].Value is not int unit)
         {
             return null;
         }
 
-        var intervalHours = 0;
-
-        foreach (var argument in attribute.NamedArguments)
-        {
-            if (argument.Key == "IntervalHours" && argument.Value.Value is int intervalHoursValue)
-            {
-                intervalHours = intervalHoursValue;
-            }
-        }
-
-        return new PartitionCandidate(entityType, intervalHours);
+        return new PartitionCandidate(entityType, interval, unit);
 
     }
 
@@ -168,7 +160,9 @@ public sealed class PartitionTableGenerator : IIncrementalGenerator
                 builder.Append("        PartitionModelBuilder.Configure<")
                     .Append(entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
                     .Append(">(modelBuilder, ")
-                    .Append(candidate.IntervalHours)
+                    .Append(candidate.Interval)
+                    .Append(", (global::Repository.Attributes.PartitionUnit)")
+                    .Append(candidate.Unit)
                     .AppendLine(");");
             }
 
@@ -193,12 +187,14 @@ public sealed class PartitionTableGenerator : IIncrementalGenerator
         /// 创建分区实体编译期配置
         /// </summary>
         /// <param name="entityType">实体类型</param>
-        /// <param name="intervalHours">单个子分区包含的小时数</param>
-        public PartitionCandidate(INamedTypeSymbol entityType, int intervalHours)
+        /// <param name="interval">单个子分区包含的周期数量</param>
+        /// <param name="unit">分区周期单位值</param>
+        public PartitionCandidate(INamedTypeSymbol entityType, int interval, int unit)
         {
 
             EntityType = entityType;
-            IntervalHours = intervalHours;
+            Interval = interval;
+            Unit = unit;
 
         }
 
@@ -210,9 +206,15 @@ public sealed class PartitionTableGenerator : IIncrementalGenerator
 
 
         /// <summary>
-        /// 单个子分区包含的小时数
+        /// 单个子分区包含的周期数量
         /// </summary>
-        public int IntervalHours { get; }
+        public int Interval { get; }
+
+
+        /// <summary>
+        /// 分区周期单位值
+        /// </summary>
+        public int Unit { get; }
 
     }
 

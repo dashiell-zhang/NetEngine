@@ -227,7 +227,8 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
             if (definitions.TryGetValue(identity, out var existingDefinition))
             {
                 if (existingDefinition.KeyColumnName != definition.KeyColumnName
-                    || existingDefinition.IntervalHours != definition.IntervalHours)
+                    || existingDefinition.Interval != definition.Interval
+                    || existingDefinition.Unit != definition.Unit)
                 {
                     throw new InvalidOperationException($"表 {definition.TableName} 的多个实体映射包含不一致的分区定义");
                 }
@@ -609,10 +610,12 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
         existingPartitions.Sort((left, right) => left.StartId.CompareTo(right.StartId));
 
         logger.LogInformation(
-            "已创建 PostgreSQL 子分区 {Schema}.{Partition}，父表 {Parent}，范围 [{StartId}, {EndId})",
+            "已创建 PostgreSQL 子分区 {Schema}.{Partition}，父表 {Parent}，策略 {Interval} {Unit}，范围 [{StartId}, {EndId})",
             parent.Schema,
             partitionName,
             parent.Name,
+            definition.Interval,
+            definition.Unit,
             range.StartId,
             range.EndId);
 

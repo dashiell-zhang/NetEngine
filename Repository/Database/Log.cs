@@ -1,3 +1,4 @@
+using Repository.Attributes;
 using Repository.Bases;
 
 namespace Repository.Database;
@@ -5,6 +6,7 @@ namespace Repository.Database;
 /// <summary>
 /// 日志表
 /// </summary>
+[PartitionTable(IntervalHours = 744)]
 public class Log : CD
 {
 

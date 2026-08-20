@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Repository.Migrations;
+namespace Repository.Partitioning;
 
 /// <summary>
-/// 提供 NetEngine PostgreSQL Migration 服务替换入口
+/// 提供 PostgreSQL 分区 Migration 服务替换入口
 /// </summary>
 public static class NpgsqlMigrationOptionsBuilderExtensions
 {
@@ -17,11 +17,11 @@ public static class NpgsqlMigrationOptionsBuilderExtensions
     /// </summary>
     /// <param name="optionsBuilder">DbContext 选项构建器</param>
     /// <returns>当前 DbContext 选项构建器</returns>
-    public static DbContextOptionsBuilder UseNetEnginePostgreSqlMigrations(this DbContextOptionsBuilder optionsBuilder)
+    public static DbContextOptionsBuilder UsePostgreSqlPartitioning(this DbContextOptionsBuilder optionsBuilder)
     {
 
-        optionsBuilder.ReplaceService<IRelationalAnnotationProvider, NetEngineNpgsqlAnnotationProvider>();
-        optionsBuilder.ReplaceService<IMigrationsSqlGenerator, NetEngineNpgsqlMigrationsSqlGenerator>();
+        optionsBuilder.ReplaceService<IRelationalAnnotationProvider, NpgsqlPartitionAnnotationProvider>();
+        optionsBuilder.ReplaceService<IMigrationsSqlGenerator, NpgsqlPartitionMigrationsSqlGenerator>();
         return optionsBuilder;
 
     }

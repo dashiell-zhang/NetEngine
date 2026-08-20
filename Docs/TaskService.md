@@ -208,11 +208,11 @@ Debug 模式不运行每分钟的数据库配置同步，因此控制台选择�
 
 可以通过管理后台的任务配置功能，或 Admin.WebAPI 的 `Operations` 接口查看和修改配置。修改后最多等待一个同步周期生效
 
-### PostgreSQL 分区维护任务
+### PostgreSQL 分区自动维护
 
-宿主内置 `Database.EnsurePartitions` 定时任务，默认每 10 分钟检查一次带 `[PartitionTable]` 的实体。该任务不会在 TaskService 启动时立即执行，新发现时也保持默认不启用
+PostgreSQL 分区维护由 Repository 内置后台服务负责，不属于 TaskService 的队列任务或定时任务，也不写入 `TaskSetting`
 
-使用分区表时，需要按本节现有流程显式启用该任务。它会使用分布式锁协调多实例，并由 Repository 查询系统目录和创建必要子分区。完整行为见 [PostgreSQL 分区表](PostgreSqlPartitionTable.md)
+TaskService 通过 `BatchRegisterBackgroundServices()` 自动承载该服务，启动完成前检查一次，此后每 10 分钟检查。`Client.WebAPI` 和 `Admin.WebAPI` 也会承载同一服务，多宿主和多实例由分布式锁协调。完整行为见 [PostgreSQL 分区表](PostgreSqlPartitionTable.md)
 
 ## 队列执行和失败处理
 

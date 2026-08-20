@@ -6,14 +6,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations;
-using Repository.Partitioning;
 
-namespace Repository.Migrations;
+namespace Repository.Partitioning;
 
 /// <summary>
 /// 扩展 Npgsql Migration SQL 以创建 PostgreSQL RANGE 分区父表和初始子分区
 /// </summary>
-public sealed class NetEngineNpgsqlMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
+public sealed class NpgsqlPartitionMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 {
 
     /// <summary>
@@ -23,11 +22,11 @@ public sealed class NetEngineNpgsqlMigrationsSqlGenerator : NpgsqlMigrationsSqlG
 
 
     /// <summary>
-    /// 创建 NetEngine PostgreSQL Migration SQL 生成器
+    /// 创建 PostgreSQL 分区 Migration SQL 生成器
     /// </summary>
     /// <param name="dependencies">Migration SQL 生成器依赖</param>
     /// <param name="npgsqlSingletonOptions">Npgsql 单例选项</param>
-    public NetEngineNpgsqlMigrationsSqlGenerator(MigrationsSqlGeneratorDependencies dependencies, INpgsqlSingletonOptions npgsqlSingletonOptions) : base(dependencies, npgsqlSingletonOptions)
+    public NpgsqlPartitionMigrationsSqlGenerator(MigrationsSqlGeneratorDependencies dependencies, INpgsqlSingletonOptions npgsqlSingletonOptions) : base(dependencies, npgsqlSingletonOptions)
     {
 
     }

@@ -22,6 +22,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.11" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
 	</ItemGroup>
 

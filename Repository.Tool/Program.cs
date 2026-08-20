@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using NetEngine.Generated;
 using Npgsql;
-using Repository.Migrations;
+using Repository.Partitioning;
+using Repository.Tool.Tasks;
 
 namespace Repository.Tool;
 
@@ -28,10 +28,10 @@ internal class Program
                         NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
 
                         options.UseNpgsql(dataSourceBuilder.Build(), x => x.MigrationsAssembly("Repository.Tool"));
-                        options.UseNetEnginePostgreSqlMigrations();
+                        options.UsePostgreSqlPartitioning();
                     });
 
-                    services.BatchRegisterBackgroundServices();
+                    services.AddHostedService<SyncJsonIndexTask>();
 
                 }).Build();
 

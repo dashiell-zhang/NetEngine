@@ -1,7 +1,9 @@
 using DistributedLock;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SourceGenerator.Runtime.Attributes;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
@@ -12,17 +14,24 @@ namespace Repository.Partitioning;
 /// <summary>
 /// 检查 PostgreSQL 分区父表并按实体当前策略创建必要的后续子分区
 /// </summary>
+[RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributedLock distributedLock, ILogger<PartitionMaintenanceService> logger)
 {
 
     /// <summary>
     /// 多实例分区维护使用的分布式锁名称
     /// </summary>
-    private const string LockName = "Database.EnsurePartitions";
+    private const string LockName = "PostgreSql.PartitionMaintenance";
 
 
     /// <summary>
-    /// 单张父表单次任务最多创建的子分区数量
+    /// 当前分区之后需要保持的连续子分区数量
+    /// </summary>
+    private const int FuturePartitionCount = 3;
+
+
+    /// <summary>
+    /// 单张父表单次维护最多创建的子分区数量
     /// </summary>
     private const int MaxCreateCountPerTable = 32;
 
@@ -49,7 +58,7 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
 
 
     /// <summary>
-    /// 检查全部已声明分区实体并保证当前写入范围及一个后续范围存在
+    /// 检查全部已声明分区实体并保证当前写入范围及三个后续范围存在
     /// </summary>
     /// <param name="cancellationToken">取消任务的令牌</param>
     public async Task EnsurePartitionsAsync(CancellationToken cancellationToken = default)
@@ -64,7 +73,7 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
         await using var lockHandle = await distributedLock.TryLockAsync(LockName, LockLease, cancellationToken: cancellationToken);
         if (lockHandle is null)
         {
-            logger.LogInformation("另一个实例正在维护 PostgreSQL 分区，本次任务跳过");
+            logger.LogInformation("另一个实例正在维护 PostgreSQL 分区，本轮维护跳过");
             return;
         }
 
@@ -239,7 +248,7 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
     /// </summary>
     /// <param name="connection">已打开的数据库连接</param>
     /// <param name="definition">分区表定义</param>
-    /// <param name="utcNow">本轮任务统一使用的 UTC 时间</param>
+    /// <param name="utcNow">本轮维护统一使用的 UTC 时间</param>
     /// <param name="cancellationToken">取消任务的令牌</param>
     private async Task EnsureTableAsync(DbConnection connection, PartitionTableDefinition definition, DateTimeOffset utcNow, CancellationToken cancellationToken)
     {
@@ -432,7 +441,7 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
 
 
     /// <summary>
-    /// 根据数据库实际最右边界计算恢复当前写入并预建一个后续分区所需的范围
+    /// 根据数据库实际最右边界计算恢复当前写入并预建三个后续分区所需的范围
     /// </summary>
     /// <param name="definition">分区表定义</param>
     /// <param name="partitions">已有子分区</param>
@@ -446,23 +455,15 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
         if (partitions.Count == 0)
         {
             var currentRange = definition.CreateInitialRange(utcNow);
-            return [currentRange, definition.CreateNextRange(currentRange.EndId)];
+            var initialRanges = new List<PartitionRange> { currentRange };
+            AppendFutureRanges(definition, initialRanges, currentRange.EndId);
+            return initialRanges;
         }
 
         var currentPartition = partitions.FirstOrDefault(partition => partition.StartId <= currentId && currentId < partition.EndId);
         if (currentPartition is not null)
         {
-            if (partitions.Any(partition => partition.StartId == currentPartition.EndId))
-            {
-                return [];
-            }
-
-            if (partitions.Any(partition => partition.StartId > currentPartition.EndId))
-            {
-                throw new InvalidOperationException($"分区表 {definition.TableName} 的当前分区之后存在范围空洞，无法安全预建后续分区");
-            }
-
-            return [definition.CreateNextRange(currentPartition.EndId)];
+            return BuildMissingFutureRanges(definition, partitions, currentPartition.EndId);
         }
 
         var rightmostPartition = partitions[^1];
@@ -474,7 +475,7 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
         var requiredRanges = new List<PartitionRange>();
         var nextRange = definition.CreateNextRange(rightmostPartition.EndId);
 
-        while (!(nextRange.StartId <= currentId && currentId < nextRange.EndId))
+        while (true)
         {
             requiredRanges.Add(nextRange);
             if (requiredRanges.Count > MaxCreateCountPerTable)
@@ -482,12 +483,72 @@ public sealed class PartitionMaintenanceService(DatabaseContext db, IDistributed
                 return requiredRanges;
             }
 
+            if (nextRange.StartId <= currentId && currentId < nextRange.EndId)
+            {
+                AppendFutureRanges(definition, requiredRanges, nextRange.EndId);
+                return requiredRanges;
+            }
+
             nextRange = definition.CreateNextRange(nextRange.EndId);
         }
 
-        requiredRanges.Add(nextRange);
-        requiredRanges.Add(definition.CreateNextRange(nextRange.EndId));
+    }
+
+
+    /// <summary>
+    /// 从当前分区结束边界开始补足三个连续的未来子分区
+    /// </summary>
+    /// <param name="definition">分区表定义</param>
+    /// <param name="partitions">已有子分区</param>
+    /// <param name="startId">当前分区结束边界</param>
+    /// <returns>需要创建的未来范围</returns>
+    private static List<PartitionRange> BuildMissingFutureRanges(PartitionTableDefinition definition, List<ExistingPartition> partitions, long startId)
+    {
+
+        var requiredRanges = new List<PartitionRange>();
+        var nextStartId = startId;
+
+        for (var index = 0; index < FuturePartitionCount; index++)
+        {
+            var existingPartition = partitions.FirstOrDefault(partition => partition.StartId == nextStartId);
+            if (existingPartition is not null)
+            {
+                nextStartId = existingPartition.EndId;
+                continue;
+            }
+
+            if (partitions.Any(partition => partition.StartId > nextStartId))
+            {
+                throw new InvalidOperationException($"分区表 {definition.TableName} 的当前分区之后存在范围空洞，无法安全预建后续分区");
+            }
+
+            var range = definition.CreateNextRange(nextStartId);
+            requiredRanges.Add(range);
+            nextStartId = range.EndId;
+        }
+
         return requiredRanges;
+
+    }
+
+
+    /// <summary>
+    /// 从指定边界连续追加三个未来子分区范围
+    /// </summary>
+    /// <param name="definition">分区表定义</param>
+    /// <param name="ranges">需要追加范围的集合</param>
+    /// <param name="startId">首个未来分区的起始边界</param>
+    private static void AppendFutureRanges(PartitionTableDefinition definition, List<PartitionRange> ranges, long startId)
+    {
+
+        var nextStartId = startId;
+
+        for (var index = 0; index < FuturePartitionCount; index++)
+        {
+            var range = definition.CreateNextRange(nextStartId);
+            ranges.Add(range);
+            nextStartId = range.EndId;
+        }
 
     }
 

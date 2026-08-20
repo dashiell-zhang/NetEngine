@@ -12,7 +12,7 @@
 
 - JWT 认证、权限控制、请求签名校验与 RSA 字段解密
 - PostgreSQL、EF Core、Redis、HybridCache 与本地缓存
-- 基于雪花 ID 的 PostgreSQL RANGE 分区表迁移与定时维护
+- 基于雪花 ID 的 PostgreSQL RANGE 分区表迁移与自动维护
 - Redis 分布式锁与内存锁
 - 文件存储、短信、数据库日志与本地文件日志
 - 队列任务与定时任务调度

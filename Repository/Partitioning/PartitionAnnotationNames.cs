@@ -9,25 +9,25 @@ public static class PartitionAnnotationNames
     /// <summary>
     /// 分区策略 Annotation
     /// </summary>
-    public const string Strategy = "NetEngine:PartitionStrategy";
+    public const string Strategy = "PartitionTable:Strategy";
 
 
     /// <summary>
     /// 分区键数据库列名称 Annotation
     /// </summary>
-    public const string KeyColumn = "NetEngine:PartitionKeyColumn";
+    public const string KeyColumn = "PartitionTable:KeyColumn";
 
 
     /// <summary>
     /// 分区键类型 Annotation
     /// </summary>
-    public const string KeyType = "NetEngine:PartitionKeyType";
+    public const string KeyType = "PartitionTable:KeyType";
 
 
     /// <summary>
     /// 分区间隔小时数 Annotation
     /// </summary>
-    public const string IntervalHours = "NetEngine:PartitionIntervalHours";
+    public const string IntervalHours = "PartitionTable:IntervalHours";
 
 
     /// <summary>

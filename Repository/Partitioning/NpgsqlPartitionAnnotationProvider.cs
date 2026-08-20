@@ -3,21 +3,20 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
-using Repository.Partitioning;
 
-namespace Repository.Migrations;
+namespace Repository.Partitioning;
 
 /// <summary>
 /// 在保留 Npgsql Annotation 的同时把实体分区元数据投影到关系表
 /// </summary>
-public sealed class NetEngineNpgsqlAnnotationProvider : NpgsqlAnnotationProvider
+public sealed class NpgsqlPartitionAnnotationProvider : NpgsqlAnnotationProvider
 {
 
     /// <summary>
-    /// 创建 NetEngine PostgreSQL Annotation 提供器
+    /// 创建 PostgreSQL 分区 Annotation 提供器
     /// </summary>
     /// <param name="dependencies">关系 Annotation 提供器依赖</param>
-    public NetEngineNpgsqlAnnotationProvider(RelationalAnnotationProviderDependencies dependencies) : base(dependencies)
+    public NpgsqlPartitionAnnotationProvider(RelationalAnnotationProviderDependencies dependencies) : base(dependencies)
     {
 
     }
@@ -28,7 +27,7 @@ public sealed class NetEngineNpgsqlAnnotationProvider : NpgsqlAnnotationProvider
     /// </summary>
     /// <param name="table">关系表</param>
     /// <param name="designTime">是否为设计时模型</param>
-    /// <returns>Npgsql 和 NetEngine 分区 Annotation</returns>
+    /// <returns>Npgsql 和分区表 Annotation</returns>
     public override IEnumerable<IAnnotation> For(ITable table, bool designTime)
     {
 

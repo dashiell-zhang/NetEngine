@@ -9,7 +9,6 @@ using NetEngine.Generated;
 using Npgsql;
 using Repository;
 using Repository.Interceptors;
-using Repository.Partitioning;
 using SMS.AliCloud;
 using StackExchange.Redis;
 using System.Reflection;
@@ -87,7 +86,6 @@ class Program
 
                 services.BatchRegisterServices();
                 services.BatchRegisterBackgroundServices();
-                services.AddScoped<PartitionMaintenanceService>();
 
 
                 //注册所有 TaskBase的子类

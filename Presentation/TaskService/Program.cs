@@ -9,6 +9,7 @@ using NetEngine.Generated;
 using Npgsql;
 using Repository;
 using Repository.Interceptors;
+using Repository.Partitioning;
 using SMS.AliCloud;
 using StackExchange.Redis;
 using System.Reflection;
@@ -18,8 +19,15 @@ using TaskService.Core.ScheduleTask;
 
 namespace TaskService;
 
+/// <summary>
+/// 队列任务和定时任务宿主入口
+/// </summary>
 class Program
 {
+    /// <summary>
+    /// 启动队列任务和定时任务宿主
+    /// </summary>
+    /// <param name="args">命令行参数</param>
     static void Main(string[] args)
     {
         ThreadPool.GetMinThreads(out int minWorkerThreads, out int minCompletionPortThreads);
@@ -79,6 +87,7 @@ class Program
 
                 services.BatchRegisterServices();
                 services.BatchRegisterBackgroundServices();
+                services.AddScoped<PartitionMaintenanceService>();
 
 
                 //注册所有 TaskBase的子类

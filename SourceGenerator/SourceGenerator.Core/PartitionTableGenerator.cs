@@ -1,0 +1,219 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
+
+namespace SourceGenerator.Core;
+
+/// <summary>
+/// 为标记 PartitionTable 特性的 DbSet 实体生成分区模型配置
+/// </summary>
+[Generator(LanguageNames.CSharp)]
+public sealed class PartitionTableGenerator : IIncrementalGenerator
+{
+
+    /// <summary>
+    /// PartitionTable 特性的完整元数据名称
+    /// </summary>
+    private const string PartitionTableAttributeMetadataName = "Repository.Attributes.PartitionTableAttribute";
+
+
+    /// <summary>
+    /// 分区模型配置器的完整元数据名称
+    /// </summary>
+    private const string PartitionModelBuilderMetadataName = "Repository.Partitioning.PartitionModelBuilder";
+
+
+    /// <summary>
+    /// 配置增量生成管道并输出按 DbContext 隔离的分区模型配置
+    /// </summary>
+    /// <param name="context">增量生成器初始化上下文</param>
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+
+        var dbContextSymbols = context.CompilationProvider.Select(static (compilation, _) => (
+            DbContext: compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbContext"),
+            DbSet: compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbSet`1")));
+
+        var partitionSymbols = context.CompilationProvider.Select(static (compilation, _) => (
+            Attribute: compilation.GetTypeByMetadataName(PartitionTableAttributeMetadataName),
+            ModelBuilder: compilation.GetTypeByMetadataName(PartitionModelBuilderMetadataName)));
+
+        var classSymbols = context.SyntaxProvider.CreateSyntaxProvider(
+                static (node, _) => node is ClassDeclarationSyntax,
+                static (syntaxContext, _) => syntaxContext.SemanticModel.GetDeclaredSymbol(syntaxContext.Node) as INamedTypeSymbol)
+            .Where(static type => type is not null)!
+            .Select(static (type, _) => type!);
+
+        var dbContextGroups = classSymbols.Combine(dbContextSymbols)
+            .Select(static (tuple, _) => DbContextEntityDiscovery.CreateGroup(tuple.Left, tuple.Right.DbContext, tuple.Right.DbSet))
+            .Where(static group => group is not null)!
+            .Select(static (group, _) => group!)
+            .Collect()
+            .Select(static (groups, _) => DbContextEntityDiscovery.NormalizeGroups(groups));
+
+        var candidates = context.SyntaxProvider.ForAttributeWithMetadataName(
+                PartitionTableAttributeMetadataName,
+                static (node, _) => node is ClassDeclarationSyntax,
+                static (syntaxContext, _) => CreateCandidate((INamedTypeSymbol)syntaxContext.TargetSymbol, syntaxContext.Attributes[0]))
+            .Where(static candidate => candidate is not null)!
+            .Select(static (candidate, _) => candidate!);
+
+        context.RegisterSourceOutput(candidates.Collect().Combine(dbContextGroups).Combine(partitionSymbols), static (sourceProductionContext, tuple) =>
+        {
+
+            var groups = tuple.Left.Right;
+            var symbols = tuple.Right;
+            if (groups.IsDefaultOrEmpty || symbols.Attribute is null || symbols.ModelBuilder is null)
+            {
+                return;
+            }
+
+            var candidateMap = new Dictionary<INamedTypeSymbol, PartitionCandidate>(SymbolEqualityComparer.Default);
+            foreach (var candidate in tuple.Left.Left)
+            {
+                candidateMap[candidate.EntityType] = candidate;
+            }
+
+            var source = BuildSource(groups, candidateMap);
+            sourceProductionContext.AddSource("PartitionTableMappings.g.cs", source);
+
+        });
+
+    }
+
+
+    /// <summary>
+    /// 从实体特性参数创建分区候选配置
+    /// </summary>
+    /// <param name="entityType">实体类型</param>
+    /// <param name="attribute">分区特性数据</param>
+    /// <returns>能够读取构造参数时返回分区候选配置</returns>
+    private static PartitionCandidate? CreateCandidate(INamedTypeSymbol entityType, AttributeData attribute)
+    {
+
+        if (attribute.ConstructorArguments.Length != 0)
+        {
+            return null;
+        }
+
+        var intervalHours = 0;
+
+        foreach (var argument in attribute.NamedArguments)
+        {
+            if (argument.Key == "IntervalHours" && argument.Value.Value is int intervalHoursValue)
+            {
+                intervalHours = intervalHoursValue;
+            }
+        }
+
+        return new PartitionCandidate(entityType, intervalHours);
+
+    }
+
+
+    /// <summary>
+    /// 生成分区模型配置扩展源码
+    /// </summary>
+    /// <param name="groups">DbContext 实体分组</param>
+    /// <param name="candidateMap">分区实体配置</param>
+    /// <returns>完整生成源码</returns>
+    private static string BuildSource(ImmutableArray<DbContextEntityGroup> groups, Dictionary<INamedTypeSymbol, PartitionCandidate> candidateMap)
+    {
+
+        var builder = new StringBuilder();
+        builder.AppendLine("// <auto-generated />")
+            .AppendLine("#nullable enable")
+            .AppendLine("using Microsoft.EntityFrameworkCore;")
+            .AppendLine("using Repository.Partitioning;")
+            .AppendLine()
+            .AppendLine("namespace Repository.Database.Generated;")
+            .AppendLine()
+            .AppendLine("/// <summary>")
+            .AppendLine("/// 提供按 DbContext 隔离的 PostgreSQL 分区模型配置")
+            .AppendLine("/// </summary>")
+            .AppendLine("public static class PartitionTableModelBuilderExtensions")
+            .AppendLine("{");
+
+        foreach (var group in groups)
+        {
+            if (!DbContextEntityDiscovery.CanReferenceContextType(group.DbContextType))
+            {
+                continue;
+            }
+
+            builder.AppendLine()
+                .AppendLine("    /// <summary>")
+                .AppendLine("    /// 应用当前 DbContext 直接声明实体的 PostgreSQL 分区配置")
+                .AppendLine("    /// </summary>")
+                .AppendLine("    /// <param name=\"modelBuilder\">当前 EF Core 模型构建器</param>")
+                .AppendLine("    /// <param name=\"context\">用于编译期选择配置重载的 DbContext</param>")
+                .Append("    public static void ApplyPartitionTables(this ModelBuilder modelBuilder, ")
+                .Append(group.DbContextType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                .AppendLine(" context)")
+                .AppendLine("    {")
+                .AppendLine();
+
+            foreach (var entityType in group.EntityTypes)
+            {
+                if (!candidateMap.TryGetValue(entityType, out var candidate))
+                {
+                    continue;
+                }
+
+                builder.Append("        PartitionModelBuilder.Configure<")
+                    .Append(entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                    .Append(">(modelBuilder, ")
+                    .Append(candidate.IntervalHours)
+                    .AppendLine(");");
+            }
+
+            builder.AppendLine()
+                .AppendLine("    }")
+                .AppendLine();
+        }
+
+        builder.AppendLine("}");
+        return builder.ToString();
+
+    }
+
+
+    /// <summary>
+    /// 保存单个分区实体的编译期配置
+    /// </summary>
+    private sealed class PartitionCandidate
+    {
+
+        /// <summary>
+        /// 创建分区实体编译期配置
+        /// </summary>
+        /// <param name="entityType">实体类型</param>
+        /// <param name="intervalHours">单个子分区包含的小时数</param>
+        public PartitionCandidate(INamedTypeSymbol entityType, int intervalHours)
+        {
+
+            EntityType = entityType;
+            IntervalHours = intervalHours;
+
+        }
+
+
+        /// <summary>
+        /// 实体类型
+        /// </summary>
+        public INamedTypeSymbol EntityType { get; }
+
+
+        /// <summary>
+        /// 单个子分区包含的小时数
+        /// </summary>
+        public int IntervalHours { get; }
+
+    }
+
+}

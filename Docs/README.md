@@ -12,6 +12,7 @@
 | [分布式锁](DistributedLock.md) | 需要防止重复执行或限制跨实例并发时 | Redis 锁、内存锁、等待与立即返回、租约续期 |
 | [源码生成器](SourceGenerator.md) | 新增服务、后台服务、代理行为或 EF Core 映射时 | 自动 DI、AutoProxy、软删除过滤器、JSON 列映射 |
 | [数据库读写分离](DatabaseReadWriteSeparation.md) | 迁移查询、配置读库或规划多个读副本时 | 读写上下文、连接配置、一致性边界和健康检查 |
+| [PostgreSQL 分区表](PostgreSqlPartitionTable.md) | 为新实体声明雪花 ID 分区或维护后续子分区时 | 实体注解、Migration SQL、间隔调整和 TaskService 维护 |
 | [TaskService](TaskService.md) | 新增定时任务或队列任务时 | 任务声明、入队、启用、调度、回调、子任务和重试 |
 | [WebAPI 过滤器](WebAPIFilters.md) | 为 Controller 或 Action 增加通用 HTTP 行为时 | 异常、缓存、ETag、并发限制、RSA 解密和签名校验 |
 | [LLM 调用](LLM.md) | 使用模型生成文本或扩展 LLM 协议时 | 模型与应用配置、提示词模板、普通和流式调用 |
@@ -25,6 +26,7 @@
 - 修改并发控制、缓存防击穿或任务执行锁：阅读 [分布式锁](DistributedLock.md)
 - 调整 API 宿主、公共配置、CORS 或认证：阅读 [WebAPI 公共能力](WebAPI.md)
 - 迁移数据库查询或配置只读副本：阅读 [数据库读写分离](DatabaseReadWriteSeparation.md)
+- 为新表启用雪花 ID 分区：阅读 [PostgreSQL 分区表](PostgreSqlPartitionTable.md)
 - 新增任务宿主能力：阅读 [TaskService](TaskService.md)
 - 新增或调整 Controller 过滤器：阅读 [WebAPI 过滤器](WebAPIFilters.md)
 - 调用模型或扩展 LLM Provider：阅读 [LLM 调用](LLM.md)

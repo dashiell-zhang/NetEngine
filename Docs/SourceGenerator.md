@@ -247,6 +247,18 @@ modelBuilder.ApplyJsonColumns(this);
 
 当前根属性仅支持复杂类型或 `List<T>`，不支持把 `Dictionary<TKey, TValue>` 作为根属性，也不支持静态属性、索引器、无 getter 属性和循环嵌套。违反约束时会产生 `JsonColumn001` 至 `JsonColumn007` 编译诊断
 
+## EF Core PostgreSQL 分区表
+
+生成器会发现 DbSet 实体上的 `[PartitionTable]`，并为对应 DbContext 输出：
+
+```csharp
+modelBuilder.ApplyPartitionTables(this);
+```
+
+生成配置把分区策略、实际列名和时间间隔写入 EF Core Annotation，随后由 Repository 中的模型校验、Migration SQL 生成器和运行维护服务共同使用
+
+当前只支持雪花 `long Id` 的 PostgreSQL `RANGE` 分区。完整声明、迁移和维护规则见 [PostgreSQL 分区表](PostgreSqlPartitionTable.md)
+
 ## 新增能力时的检查清单
 
 - 新服务是否可以直接使用 `[RegisterService]`
@@ -256,4 +268,5 @@ modelBuilder.ApplyJsonColumns(this);
 - 被拦截方法是否可代理，并且调用方是否通过 DI 获取服务
 - 缓存和并发行为所需的 `IDistributedCache`、`IDistributedLock` 是否已经注册
 - 新的 `CD` 实体或 `[JsonColumn]` 属性是否已加入正确 DbContext
+- 新分区实体是否满足主键和所有唯一约束包含雪花 ID 分区键
 - 构建后是否检查了生成代码和编译诊断

@@ -231,8 +231,6 @@ WebAPI 公共健康检查同时包含：
 - `LogManageService`
 - `LlmConversationManageService`
 
-其他候选调用、风险分级和建议迁移顺序见 [只读数据库上下文迁移检查清单](ReadDatabaseContextMigrationChecklist.md)
-
 ## 上线检查清单
 
 - 三个宿主都提供正确的 `dbConnection` 和 `dbReadConnection`
@@ -249,6 +247,5 @@ WebAPI 公共健康检查同时包含：
 
 - [WebAPI 公共能力](WebAPI.md)
 - [TaskService](TaskService.md)
-- [只读数据库上下文迁移检查清单](ReadDatabaseContextMigrationChecklist.md)
 - [Npgsql 故障转移和负载均衡](https://www.npgsql.org/doc/failover-and-load-balancing.html)
 - [Npgsql 连接字符串参数](https://www.npgsql.org/doc/connection-string-parameters)

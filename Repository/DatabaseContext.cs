@@ -90,6 +90,10 @@ public class DatabaseContext : DbContext
     #endregion
 
 
+    /// <summary>
+    /// 配置数据库实体映射、过滤器和分区元数据
+    /// </summary>
+    /// <param name="modelBuilder">EF Core 模型构建器</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplySoftDeleteFilters(this);
@@ -135,6 +139,8 @@ public class DatabaseContext : DbContext
             });
         }
 #endif
+
+        modelBuilder.ApplyPartitionTables(this);
     }
 
 
@@ -231,8 +237,12 @@ public class DatabaseContext : DbContext
     }
 
 
+    /// <summary>
+    /// 在保存前更新实体的更新时间
+    /// </summary>
     internal void PreprocessingChangeTracker()
     {
+
         var list = this.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
 
         foreach (var item in list)
@@ -244,8 +254,8 @@ public class DatabaseContext : DbContext
                 updateTime.CurrentValue = DateTimeOffset.UtcNow;
             }
 
-
         }
+
     }
 
 

@@ -6,9 +6,19 @@ using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 
 namespace IdentifierGenerator;
+
+/// <summary>
+/// 生成使用固定雪花布局的全局唯一 ID
+/// </summary>
 public class IdService
 {
 
+    /// <summary>
+    /// 创建雪花 ID 生成服务并分配数据中心和机器编号
+    /// </summary>
+    /// <param name="config">ID 生成配置</param>
+    /// <param name="distributedLock">节点编号分配锁</param>
+    /// <param name="distributedCache">节点编号占用缓存</param>
     public IdService(IOptionsMonitor<IdSetting> config, IDistributedLock distributedLock, IDistributedCache distributedCache)
     {
         if (config.CurrentValue.DataCenterId == null || config.CurrentValue.MachineId == null)
@@ -50,14 +60,13 @@ public class IdService
             machineId = config.CurrentValue.MachineId.Value;
 
             // 使用位运算直接计算掩码和最大值，更高效且清晰
-            maxMachineId = -1L ^ (-1L << (int)machineIdBits);
-            maxDataCenterId = -1L ^ (-1L << (int)dataCenterIdBits);
-            sequenceMask = -1L ^ (-1L << (int)sequenceBits);
+            maxMachineId = -1L ^ (-1L << SnowflakeIdLayout.MachineIdBits);
+            maxDataCenterId = -1L ^ (-1L << SnowflakeIdLayout.DataCenterIdBits);
+            sequenceMask = -1L ^ (-1L << SnowflakeIdLayout.SequenceBits);
 
             // 计算移位数
-            machineIdShift = sequenceBits;
-            dataCenterIdShift = sequenceBits + machineIdBits;
-            timestampLeftShift = sequenceBits + machineIdBits + dataCenterIdBits;
+            machineIdShift = SnowflakeIdLayout.SequenceBits;
+            dataCenterIdShift = SnowflakeIdLayout.SequenceBits + SnowflakeIdLayout.MachineIdBits;
 
             if (dataCenterId < 0 || dataCenterId > maxDataCenterId)
             {
@@ -80,20 +89,12 @@ public class IdService
     private long sequence = 0L; //计数从零开始
     private long lastTimestamp = -1L; //最后时间戳
 
-    private readonly long twepoch = 1640995200000L; // UTC 2022-01-01 00:00:00
-
-    private readonly long machineIdBits = 5L;
-    private readonly long dataCenterIdBits = 5L;
-    private readonly long sequenceBits = 11L;
-
     private readonly long maxMachineId;
     private readonly long maxDataCenterId;
     private readonly long sequenceMask;
 
     private readonly long machineIdShift;
     private readonly long dataCenterIdShift;
-    private readonly long timestampLeftShift;
-
     // 使用 object 作为锁对象是更通用的做法
     private readonly object syncRoot = new object();
 
@@ -136,7 +137,7 @@ public class IdService
 
             // 通过位运算拼接ID
             // 逻辑：(时间戳 - 起始时间) 左移 | 数据中心ID 左移 | 机器ID 左移 | 序列号
-            return ((timestamp - twepoch) << (int)timestampLeftShift)
+            return ((timestamp - SnowflakeIdLayout.EpochMilliseconds) << SnowflakeIdLayout.TimestampLeftShift)
                    | (dataCenterId << (int)dataCenterIdShift)
                    | (machineId << (int)machineIdShift)
                    | sequence;
@@ -151,8 +152,7 @@ public class IdService
     /// <returns>ID中包含的UTC时间</returns>
     public DateTimeOffset GetTimeById(long id)
     {
-        long timestamp = (id >> (int)timestampLeftShift) + twepoch;
-        return DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
+        return SnowflakeIdLayout.GetTimeById(id);
     }
 
 
@@ -163,11 +163,7 @@ public class IdService
     /// <returns>该毫秒对应的最小ID</returns>
     public long GetMinIdByTime(DateTimeOffset startTime)
     {
-        long timestamp = startTime.ToUnixTimeMilliseconds();
-
-        // 最小ID即为该时间戳左移相应位数，数据中心、机器码和序列号部分都为0。
-
-        return (timestamp - twepoch) << (int)timestampLeftShift;
+        return SnowflakeIdLayout.GetMinIdByTime(startTime);
     }
 
 

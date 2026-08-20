@@ -261,15 +261,6 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
             var runtimeType = value?.GetType();
             var serializationType = runtimeType ?? typeof(T);
             var serializedValue = JsonSerializer.SerializeToElement(value, serializationType, CacheJsonOptions);
-            var roundTripValue = serializedValue.Deserialize(serializationType, CacheJsonOptions);
-
-            if (!JsonUtil.TryToCanonicalJson(value, out var originalSnapshot)
-                || !JsonUtil.TryToCanonicalJson(roundTripValue, out var roundTripSnapshot)
-                || !string.Equals(originalSnapshot, roundTripSnapshot, StringComparison.Ordinal))
-            {
-                logger?.LogWarning($"Cache bypassed because result cannot round-trip without semantic loss {method}");
-                return;
-            }
 
             var entry = new CacheEntry
             {

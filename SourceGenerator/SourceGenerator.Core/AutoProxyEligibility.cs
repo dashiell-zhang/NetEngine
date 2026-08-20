@@ -23,6 +23,8 @@ internal static class AutoProxyEligibility
 
     private const string ConcurrencyLimitBehaviorMetadataName = "SourceGenerator.Runtime.Pipeline.Behaviors.ConcurrencyLimitBehavior";
 
+    private const string LoggingBehaviorMetadataName = "SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior";
+
     private const string RetryBehaviorMetadataName = "SourceGenerator.Runtime.Pipeline.Behaviors.RetryBehavior";
 
     private const string SetsRequiredMembersAttributeMetadataName = "System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute";
@@ -438,6 +440,27 @@ internal static class AutoProxyEligibility
         => TryGetProxyBehaviorTypes(attribute, out var behaviorType, out _)
            && behaviorType is not null
            && UsesArgumentsKey(behaviorType, attribute);
+
+
+    /// <summary>
+    /// 判断代理行为特性是否需要生成供日志或自定义行为读取的参数快照
+    /// </summary>
+    /// <param name="attribute">待检查的代理行为特性</param>
+    /// <returns>如果行为需要参数快照则返回 true</returns>
+    public static bool RequiresArgumentsSnapshot(AttributeData attribute)
+    {
+
+        if (!TryGetProxyBehaviorTypes(attribute, out var behaviorType, out _) || behaviorType is null)
+            return false;
+
+        if (IsType(behaviorType, LoggingBehaviorMetadataName))
+            return true;
+
+        return !IsType(behaviorType, CacheableBehaviorMetadataName)
+               && !IsType(behaviorType, RetryBehaviorMetadataName)
+               && !IsType(behaviorType, ConcurrencyLimitBehaviorMetadataName);
+
+    }
 
 
     /// <summary>

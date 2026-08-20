@@ -712,7 +712,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var optionsSetters = new List<string>();
 
-            foreach (var a in method.GetAttributes())
+            var methodAttributes = method.GetAttributes();
+
+            foreach (var a in methodAttributes)
             {
                 if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                 {
@@ -732,43 +734,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
               .Append('(').Append(paramList).Append(')').AppendLine()
               .AppendLine("    {");
 
-            if (method.Parameters.Length > 0)
-            {
-                var dictType = FormatArgumentsDictionaryType(currentNamespace);
-                sb.AppendLine("        var __argsDict = new " + dictType + "(" + method.Parameters.Length + ");");
-                
-                foreach (var p in method.Parameters)
-                {
-                    var isOut = p.RefKind == RefKind.Out;
-                    
-                    var isRefLike = p.Type.IsRefLikeType;
-                    if (isOut || isRefLike)
-                    {
-                        sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = null;").AppendLine();
-                    }
-                    else
-                    {
-                        if (TryGetSkipPlaceholder(p.Type, out var __ph))
-                        {
-                            sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = \"")
-                              .Append(__ph.Replace("\\", "\\\\").Replace("\"", "\\\""))
-                              .Append("\";").AppendLine();
-                        }
-                        else
-                        {
-                            sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
-                              .Append(EscapeIdentifier(p.Name)).Append(");").AppendLine();
-                        }
-                    }
-                }
-                sb.AppendLine("        object? __argsObj = __argsDict;");
-            }
-            else
-            {
-                sb.AppendLine("        object? __argsObj = null;");
-            }
+            var requiresArgumentsSnapshot = methodAttributes.Any(AutoProxyEligibility.RequiresArgumentsSnapshot);
+            AppendArgumentsSnapshot(sb, method, currentNamespace, requiresArgumentsSnapshot);
 
-            var requiresArgumentsKey = method.GetAttributes().Any(AutoProxyEligibility.RequiresArgumentsKey);
+            var requiresArgumentsKey = methodAttributes.Any(AutoProxyEligibility.RequiresArgumentsKey);
             AppendArgumentsKeySnapshot(sb, method, requiresArgumentsKey);
 
             sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + rawMethodName + "\";");
@@ -805,7 +774,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 if (isTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
@@ -835,7 +804,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isGenericTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
@@ -865,7 +834,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isValueTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
@@ -889,7 +858,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isGenericValueTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
@@ -916,14 +885,14 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (method.ReturnsVoid)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     
                     sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("        return;");
                 }
                 else
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     
                     sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 }
@@ -1031,7 +1000,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var optionsSetters = new List<string>();
 
-            foreach (var a in method.GetAttributes())
+            var methodAttributes = method.GetAttributes();
+            IEnumerable<AttributeData> implementationAttributes = impl is null ? Array.Empty<AttributeData>() : impl.GetAttributes();
+
+            foreach (var a in methodAttributes)
             {
                 if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                 {
@@ -1041,16 +1013,13 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
             }
 
-            if (impl is not null)
+            foreach (var a in implementationAttributes)
             {
-                foreach (var a in impl.GetAttributes())
+                if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
                 {
-                    if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
-                    {
-                        behaviorSnippets.Add($"new {behaviorFull}()");
+                    behaviorSnippets.Add($"new {behaviorFull}()");
 
-                        if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
-                    }
+                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
                 }
             }
 
@@ -1064,45 +1033,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
               .Append('(').Append(paramList).Append(')').AppendLine()
               .AppendLine("    {");
 
-            if (method.Parameters.Length > 0)
-            {
-                var dictType = FormatArgumentsDictionaryType(currentNamespace);
-                sb.AppendLine("        var __argsDict = new " + dictType + "(" + method.Parameters.Length + ");");
+            var requiresArgumentsSnapshot = methodAttributes.Any(AutoProxyEligibility.RequiresArgumentsSnapshot)
+                || implementationAttributes.Any(AutoProxyEligibility.RequiresArgumentsSnapshot);
+            AppendArgumentsSnapshot(sb, method, currentNamespace, requiresArgumentsSnapshot);
 
-                foreach (var p in method.Parameters)
-                {
-                    var isOut = p.RefKind == RefKind.Out;
-                    var isRefLike = p.Type.IsRefLikeType;
-
-                    if (isOut || isRefLike)
-                    {
-                        sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = null;").AppendLine();
-                    }
-                    else
-                    {
-                        if (TryGetSkipPlaceholder(p.Type, out var __ph))
-                        {
-                            sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = \"")
-                              .Append(__ph.Replace("\\", "\\\\").Replace("\"", "\\\""))
-                              .Append("\";").AppendLine();
-                        }
-                        else
-                        {
-                            sb.Append("        __argsDict[\"").Append(p.Name).Append("\"] = JsonUtil.ToJson(")
-                              .Append(EscapeIdentifier(p.Name)).Append(");").AppendLine();
-                        }
-                    }
-                }
-
-                sb.AppendLine("        object? __argsObj = __argsDict;");
-            }
-            else
-            {
-                sb.AppendLine("        object? __argsObj = null;");
-            }
-
-            var requiresArgumentsKey = method.GetAttributes().Any(AutoProxyEligibility.RequiresArgumentsKey)
-                || (impl?.GetAttributes().Any(AutoProxyEligibility.RequiresArgumentsKey) ?? false);
+            var requiresArgumentsKey = methodAttributes.Any(AutoProxyEligibility.RequiresArgumentsKey)
+                || implementationAttributes.Any(AutoProxyEligibility.RequiresArgumentsKey);
             AppendArgumentsKeySnapshot(sb, method, requiresArgumentsKey);
 
             sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + rawMethodName + "\";");
@@ -1141,7 +1077,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 
                 if (isTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
@@ -1164,7 +1100,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isGenericTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
@@ -1188,7 +1124,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isValueTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
@@ -1206,7 +1142,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isGenericValueTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
@@ -1224,19 +1160,19 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else if (isByRefReturn)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     var refLocalModifier = method.ReturnsByRefReadonly ? "ref readonly var" : "ref var";
                     sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + refLocalModifier + " __ret = ref " + call + "; var __snap = __ret; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 }
                 else if (method.ReturnsVoid)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                     sb.AppendLine("        return;");
                 }
                 else
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
                 }
             }
@@ -2221,10 +2157,63 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
         /// <summary>
-        /// 为带 ref 或 out 参数的方法构建调用后刷新参数快照的代码片段
+        /// 根据代理行为需要生成供日志或自定义行为读取的参数快照代码
         /// </summary>
-        private static string BuildArgsUpdateSnippet(IMethodSymbol method)
+        /// <param name="sb">目标源码构建器</param>
+        /// <param name="method">当前代理方法</param>
+        /// <param name="currentNamespace">当前生成源码所在命名空间</param>
+        /// <param name="requiresArgumentsSnapshot">是否需要生成参数快照</param>
+        private void AppendArgumentsSnapshot(StringBuilder sb, IMethodSymbol method, string currentNamespace, bool requiresArgumentsSnapshot)
         {
+
+            if (!requiresArgumentsSnapshot || method.Parameters.Length == 0)
+            {
+                sb.AppendLine("        object? __argsObj = null;");
+                return;
+            }
+
+            var dictType = FormatArgumentsDictionaryType(currentNamespace);
+            sb.AppendLine("        var __argsDict = new " + dictType + "(" + method.Parameters.Length + ");");
+
+            foreach (var parameter in method.Parameters)
+            {
+                var isOut = parameter.RefKind == RefKind.Out;
+                var isRefLike = parameter.Type.IsRefLikeType;
+
+                if (isOut || isRefLike)
+                {
+                    sb.Append("        __argsDict[\"").Append(parameter.Name).Append("\"] = null;").AppendLine();
+                }
+                else if (TryGetSkipPlaceholder(parameter.Type, out var placeholder))
+                {
+                    sb.Append("        __argsDict[\"").Append(parameter.Name).Append("\"] = \"")
+                      .Append(placeholder.Replace("\\", "\\\\").Replace("\"", "\\\""))
+                      .Append("\";").AppendLine();
+                }
+                else
+                {
+                    sb.Append("        __argsDict[\"").Append(parameter.Name).Append("\"] = JsonUtil.ToJson(")
+                      .Append(EscapeIdentifier(parameter.Name)).Append(");").AppendLine();
+                }
+            }
+
+            sb.AppendLine("        object? __argsObj = __argsDict;");
+
+        }
+
+
+        /// <summary>
+        /// 为带 ref out 或 in 参数的方法构建调用后刷新参数快照的代码片段
+        /// </summary>
+        /// <param name="method">当前代理方法</param>
+        /// <param name="requiresArgumentsSnapshot">是否需要刷新参数快照</param>
+        /// <returns>参数快照刷新代码 不需要刷新时返回空字符串</returns>
+        private static string BuildArgsUpdateSnippet(IMethodSymbol method, bool requiresArgumentsSnapshot)
+        {
+
+            if (!requiresArgumentsSnapshot)
+                return string.Empty;
+
             var updates = new List<string>();
 
             foreach (var p in method.Parameters)

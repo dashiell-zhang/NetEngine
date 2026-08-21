@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Shared;
 using Application.Model.Site.Article;
 using Application.Service.Site;
@@ -53,7 +54,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="createCategory"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<long> CreateCategory(EditCategoryDto createCategory) => articleService.CreateCategoryAsync(createCategory);
+    public Task<long> CreateCategory(EditCategoryDto createCategory) => articleService.CreateCategoryAsync(User.GetUserId(), createCategory);
 
 
 
@@ -74,7 +75,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="id"></param>
     /// <returns></returns>
     [HttpDelete]
-    public Task<bool> DeleteCategory(long id) => articleService.DeleteCategoryAsync(id);
+    public Task<bool> DeleteCategory(long id) => articleService.DeleteCategoryAsync(User.GetUserId(), id);
 
 
 
@@ -105,7 +106,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="uploadKey">上传批次标识</param>
     /// <returns></returns>
     [HttpPost]
-    public Task<long> CreateArticle(EditArticleDto createArticle, long uploadKey) => articleService.CreateArticleAsync(createArticle, uploadKey);
+    public Task<long> CreateArticle(EditArticleDto createArticle, long uploadKey) => articleService.CreateArticleAsync(User.GetUserId(), createArticle, uploadKey);
 
 
 
@@ -117,7 +118,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="uploadKey">上传批次标识</param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> UpdateArticle(long articleId, EditArticleDto updateArticle, long uploadKey) => articleService.UpdateArticleAsync(articleId, updateArticle, uploadKey);
+    public Task<bool> UpdateArticle(long articleId, EditArticleDto updateArticle, long uploadKey) => articleService.UpdateArticleAsync(User.GetUserId(), articleId, updateArticle, uploadKey);
 
 
 
@@ -127,7 +128,7 @@ public class ArticleController(ArticleService articleService) : ControllerBase
     /// <param name="id"></param>
     /// <returns></returns>
     [HttpDelete]
-    public Task<bool> DeleteArticle(long id) => articleService.DeleteArticleAsync(id);
+    public Task<bool> DeleteArticle(long id) => articleService.DeleteArticleAsync(User.GetUserId(), id);
 
 
 }

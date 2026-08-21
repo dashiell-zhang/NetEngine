@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Basic.Log;
 using Application.Model.LLM.LlmConversation;
 using Application.Model.LLM.LlmApp;
@@ -12,6 +13,9 @@ using WebAPI.Core.Filters;
 
 namespace Admin.WebAPI.Controllers;
 
+/// <summary>
+/// 系统运维与配置管理控制器
+/// </summary>
 [SignVerifyFilter]
 [Route("[controller]/[action]")]
 [Authorize]
@@ -37,7 +41,7 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// 更新任务配置信息
     /// </summary>
     [HttpPost]
-    public Task<bool> UpdateTaskSetting(long taskSettingId, EditTaskSettingDto updateTaskSetting) => taskSettingService.UpdateTaskSettingAsync(taskSettingId, updateTaskSetting);
+    public Task<bool> UpdateTaskSetting(long taskSettingId, EditTaskSettingDto updateTaskSetting) => taskSettingService.UpdateTaskSettingAsync(User.GetUserId(), taskSettingId, updateTaskSetting);
 
 
     /// <summary>
@@ -51,7 +55,7 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// 新增带参定时任务（动态添加支持参数的 ScheduleTask）
     /// </summary>
     [HttpPost]
-    public Task<long> CreateScheduleTask(CreateScheduleTaskDto createTaskSetting) => taskSettingService.CreateScheduleTaskAsync(createTaskSetting);
+    public Task<long> CreateScheduleTask(CreateScheduleTaskDto createTaskSetting) => taskSettingService.CreateScheduleTaskAsync(User.GetUserId(), createTaskSetting);
 
 
     /// <summary>
@@ -86,27 +90,27 @@ public class OperationsController(LogManageService logManageService, TaskSetting
     /// 创建 LLM 应用配置
     /// </summary>
     [HttpPost]
-    public Task<long> CreateLlmApp(EditLlmAppDto createLlmApp) => llmAppService.CreateLlmAppAsync(createLlmApp);
+    public Task<long> CreateLlmApp(EditLlmAppDto createLlmApp) => llmAppService.CreateLlmAppAsync(User.GetUserId(), createLlmApp);
 
 
     /// <summary>
     /// 更新 LLM 应用配置
     /// </summary>
     [HttpPost]
-    public Task<bool> UpdateLlmApp(long id, EditLlmAppDto updateLlmApp) => llmAppService.UpdateLlmAppAsync(id, updateLlmApp);
+    public Task<bool> UpdateLlmApp(long id, EditLlmAppDto updateLlmApp) => llmAppService.UpdateLlmAppAsync(User.GetUserId(), id, updateLlmApp);
 
 
     /// <summary>
     /// 删除 LLM 应用配置
     /// </summary>
     [HttpDelete]
-    public Task<bool> DeleteLlmApp(long id) => llmAppService.DeleteLlmAppAsync(id);
+    public Task<bool> DeleteLlmApp(long id) => llmAppService.DeleteLlmAppAsync(User.GetUserId(), id);
 
 
     /// <summary>
     /// LLM 调用测试
     /// </summary>
     [HttpPost]
-    public Task<TestLlmAppResultDto> TestLlmApp(TestLlmAppRequestDto request, CancellationToken cancellationToken) => llmAppService.TestLlmAppAsync(request, cancellationToken);
+    public Task<TestLlmAppResultDto> TestLlmApp(TestLlmAppRequestDto request, CancellationToken cancellationToken) => llmAppService.TestLlmAppAsync(User.GetUserId(), request, cancellationToken);
 
 }

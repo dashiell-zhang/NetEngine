@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.Shared;
 using Application.Model.User.User;
 using Common;
@@ -15,21 +14,23 @@ using SourceGenerator.Runtime.Attributes;
 using System.Text;
 
 namespace Application.Service.User;
+
+/// <summary>
+/// 提供用户资料、角色和功能权限管理能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class UserService(DatabaseContext db, IDistributedCache distributedCache, IUserContext userContext, IDistributedLock distLock, IdService idService)
+public class UserService(DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distLock, IdService idService)
 {
 
 
     /// <summary>
     /// 通过 UserId 获取用户信息 
     /// </summary>
-    /// <param name="userId">用户ID</param>
+    /// <param name="targetUserId">目标用户ID</param>
     /// <returns></returns>
-    public Task<UserDto?> GetUserAsync(long? userId)
+    public Task<UserDto?> GetUserAsync(long targetUserId)
     {
-        userId ??= userContext.UserId;
-
-        var user = db.User.Where(t => t.Id == userId).Select(t => new UserDto
+        var user = db.User.Where(t => t.Id == targetUserId).Select(t => new UserDto
         {
             Id = t.Id,
             Name = t.Name,
@@ -47,9 +48,10 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <summary>
     /// 通过短信验证码修改账户手机号
     /// </summary>
-    /// <param name="keyValue">key 为新手机号，value 为短信验证码</param>
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="request">手机号修改请求</param>
     /// <returns></returns>
-    public async Task<bool> EditUserPhoneBySmsAsync(EditUserPhoneBySmsDto request)
+    public async Task<bool> EditUserPhoneBySmsAsync(long actorUserId, EditUserPhoneBySmsDto request)
     {
         string key = "VerifyPhone_" + request.NewPhone;
 
@@ -57,11 +59,11 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
 
         if (string.IsNullOrEmpty(code) == false && code == request.SmsCode)
         {
-            var user = await db.User.Where(t => t.Id == userContext.UserId).FirstOrDefaultAsync();
+            var user = await db.User.Where(t => t.Id == actorUserId).FirstOrDefaultAsync();
 
             if (user != null)
             {
-                var checkPhone = await db.User.Where(t => t.Id != userContext.UserId && t.Phone == request.NewPhone).CountAsync();
+                var checkPhone = await db.User.Where(t => t.Id != actorUserId && t.Phone == request.NewPhone).CountAsync();
 
                 if (checkPhone == 0)
                 {
@@ -133,9 +135,10 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <summary>
     /// 创建用户
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="createUser"></param>
     /// <returns></returns>
-    public async Task<long?> CreateUserAsync(EditUserDto createUser)
+    public async Task<long?> CreateUserAsync(long actorUserId, EditUserDto createUser)
     {
         string key = "userName:" + createUser.UserName.ToLower();
 
@@ -157,7 +160,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                         Phone = createUser.Phone
                     };
                     user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(createUser.Password, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                    user.CreateUserId = userContext.UserId;
+                    user.CreateUserId = actorUserId;
 
                     user.Email = createUser.Email;
                     db.User.Add(user);
@@ -168,7 +171,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                         {
                             Id = idService.GetId(),
                             UserId = user.Id,
-                            CreateUserId = userContext.UserId,
+                            CreateUserId = actorUserId,
                             RoleId = item
                         };
 
@@ -188,10 +191,11 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <summary>
     /// 更新用户信息
     /// </summary>
-    /// <param name="userId"></param>
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="targetUserId">目标用户ID</param>
     /// <param name="updateUser"></param>
     /// <returns></returns>
-    public async Task<bool> UpdateUserAsync(long userId, EditUserDto updateUser)
+    public async Task<bool> UpdateUserAsync(long actorUserId, long targetUserId, EditUserDto updateUser)
     {
         string key = "userName:" + updateUser.UserName.ToLower();
 
@@ -199,17 +203,17 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
         {
             if (handle != null)
             {
-                var isHaveUserName = await db.User.Where(t => t.Id != userId && t.UserName == updateUser.UserName).AnyAsync();
+                var isHaveUserName = await db.User.Where(t => t.Id != targetUserId && t.UserName == updateUser.UserName).AnyAsync();
 
                 if (!isHaveUserName)
                 {
                     var roleIds = updateUser.RoleIds.Select(t => long.Parse(t)).ToList();
 
-                    var user = await db.User.Where(t => t.Id == userId).FirstOrDefaultAsync();
+                    var user = await db.User.Where(t => t.Id == targetUserId).FirstOrDefaultAsync();
 
                     if (user != null)
                     {
-                        user.UpdateUserId = userContext.UserId;
+                        user.UpdateUserId = actorUserId;
 
                         user.Name = updateUser.Name;
                         user.UserName = updateUser.UserName;
@@ -232,7 +236,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                             else
                             {
                                 item.DeleteTime = DateTimeOffset.UtcNow;
-                                item.DeleteUserId = userContext.UserId;
+                                item.DeleteUserId = actorUserId;
                             }
                         }
 
@@ -241,8 +245,8 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                             UserRole userRole = new()
                             {
                                 Id = idService.GetId(),
-                                UserId = userId,
-                                CreateUserId = userContext.UserId,
+                                UserId = targetUserId,
+                                CreateUserId = actorUserId,
                                 RoleId = item
                             };
 
@@ -268,16 +272,17 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <summary>
     /// 删除用户
     /// </summary>
-    /// <param name="id"></param>
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="targetUserId">目标用户ID</param>
     /// <returns></returns>
-    public async Task<bool> DeleteUserAsync(long id)
+    public async Task<bool> DeleteUserAsync(long actorUserId, long targetUserId)
     {
-        var user = await db.User.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var user = await db.User.Where(t => t.Id == targetUserId).FirstOrDefaultAsync();
 
         if (user != null)
         {
             user.DeleteTime = DateTimeOffset.UtcNow;
-            user.DeleteUserId = userContext.UserId;
+            user.DeleteUserId = actorUserId;
 
             await db.SaveChangesAsync();
         }
@@ -322,9 +327,10 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <summary>
     /// 设置用户的功能
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="setUserFunction"></param>
     /// <returns></returns>
-    public async Task<bool> SetUserFunctionAsync(SetUserFunctionDto setUserFunction)
+    public async Task<bool> SetUserFunctionAsync(long actorUserId, SetUserFunctionDto setUserFunction)
     {
         var roleIds = await db.UserRole.Where(t => t.UserId == setUserFunction.UserId).Select(t => t.RoleId).ToListAsync();
 
@@ -335,7 +341,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
             if (functionAuthorize.Id == default)
             {
                 functionAuthorize.Id = idService.GetId();
-                functionAuthorize.CreateUserId = userContext.UserId;
+                functionAuthorize.CreateUserId = actorUserId;
 
                 functionAuthorize.FunctionId = setUserFunction.FunctionId;
                 functionAuthorize.UserId = setUserFunction.UserId;
@@ -352,7 +358,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                 if (functionAuthorize.RoleId == null)
                 {
                     functionAuthorize.DeleteTime = DateTimeOffset.UtcNow;
-                    functionAuthorize.DeleteUserId = userContext.UserId;
+                    functionAuthorize.DeleteUserId = actorUserId;
 
                     await db.SaveChangesAsync();
 
@@ -391,9 +397,10 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <summary>
     /// 设置用户角色
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="setUserRole"></param>
     /// <returns></returns>
-    public async Task<bool> SetUserRoleAsync(SetUserRoleDto setUserRole)
+    public async Task<bool> SetUserRoleAsync(long actorUserId, SetUserRoleDto setUserRole)
     {
         var userRole = await db.UserRole.Where(t => t.RoleId == setUserRole.RoleId && t.UserId == setUserRole.UserId).FirstOrDefaultAsync();
 
@@ -404,7 +411,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
                 userRole = new UserRole
                 {
                     Id = idService.GetId(),
-                    CreateUserId = userContext.UserId,
+                    CreateUserId = actorUserId,
                     UserId = setUserRole.UserId,
                     RoleId = setUserRole.RoleId
                 };
@@ -419,7 +426,7 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
             if (userRole != null)
             {
                 userRole.DeleteTime = DateTimeOffset.UtcNow;
-                userRole.DeleteUserId = userContext.UserId;
+                userRole.DeleteUserId = actorUserId;
 
                 await db.SaveChangesAsync();
             }

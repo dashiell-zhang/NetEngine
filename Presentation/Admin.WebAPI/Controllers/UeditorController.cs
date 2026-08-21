@@ -1,4 +1,5 @@
 using Admin.WebAPI.Libraries.Ueditor;
+using WebAPI.Core.Extensions;
 using Application.Service.Basic;
 using Common;
 using Microsoft.AspNetCore.Authorization;
@@ -40,9 +41,11 @@ public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfigur
             return WriteError("uploadKey 参数为空或格式不正确");
         }
 
+        var actorUserId = User.GetUserId();
+
         if (action == "catchimage")
         {
-            CrawlerHandler crawlerHandler = new(rootPath, HttpContext, fileService, new()
+            CrawlerHandler crawlerHandler = new(actorUserId, rootPath, HttpContext, fileService, new()
             {
                 AllowExtensions = Config.GetStringList("catcherAllowFiles", fileServerUrl),
                 SizeLimit = Config.GetInt("catcherMaxSize", fileServerUrl)
@@ -53,13 +56,13 @@ public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfigur
 
         UploadHandler? uploadHandler = action switch
         {
-            "uploadimage" => CreateUploadHandler(new()
+            "uploadimage" => CreateUploadHandler(actorUserId, new()
             {
                 AllowExtensions = Config.GetStringList("imageAllowFiles", fileServerUrl),
                 SizeLimit = Config.GetInt("imageMaxSize", fileServerUrl),
                 UploadFieldName = Config.GetString("imageFieldName", fileServerUrl)
             }, parsedUploadKey, "content-image", fileServerUrl),
-            "uploadscrawl" => CreateUploadHandler(new()
+            "uploadscrawl" => CreateUploadHandler(actorUserId, new()
             {
                 AllowExtensions = [".png"],
                 SizeLimit = Config.GetInt("scrawlMaxSize", fileServerUrl),
@@ -67,13 +70,13 @@ public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfigur
                 Base64 = true,
                 Base64Filename = "scrawl.png"
             }, parsedUploadKey, "content-scrawl", fileServerUrl),
-            "uploadvideo" => CreateUploadHandler(new()
+            "uploadvideo" => CreateUploadHandler(actorUserId, new()
             {
                 AllowExtensions = Config.GetStringList("videoAllowFiles", fileServerUrl),
                 SizeLimit = Config.GetInt("videoMaxSize", fileServerUrl),
                 UploadFieldName = Config.GetString("videoFieldName", fileServerUrl)
             }, parsedUploadKey, "content-video", fileServerUrl),
-            "uploadfile" => CreateUploadHandler(new()
+            "uploadfile" => CreateUploadHandler(actorUserId, new()
             {
                 AllowExtensions = Config.GetStringList("fileAllowFiles", fileServerUrl),
                 SizeLimit = Config.GetInt("fileMaxSize", fileServerUrl),
@@ -90,15 +93,16 @@ public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfigur
     /// <summary>
     /// 创建 UEditor 上传处理器
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="uploadConfig">上传配置</param>
     /// <param name="uploadKey">上传批次标识</param>
     /// <param name="sign">文件类型标记</param>
     /// <param name="fileServerUrl">文件服务地址</param>
     /// <returns>UEditor 上传处理器</returns>
-    private UploadHandler CreateUploadHandler(UploadConfig uploadConfig, long uploadKey, string sign, string fileServerUrl)
+    private UploadHandler CreateUploadHandler(long actorUserId, UploadConfig uploadConfig, long uploadKey, string sign, string fileServerUrl)
     {
 
-        return new(uploadConfig, webHostEnvironment.WebRootPath, HttpContext, fileService, uploadKey, sign, fileServerUrl);
+        return new(actorUserId, uploadConfig, webHostEnvironment.WebRootPath, HttpContext, fileService, uploadKey, sign, fileServerUrl);
 
     }
 

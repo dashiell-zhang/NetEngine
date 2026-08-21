@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Authorize;
 using Application.Service;
 using IdentifierGenerator;
@@ -46,7 +47,7 @@ public class AuthorizeController(AuthorizeService authorizeService, DatabaseCont
     [SignVerifyFilter]
     [Authorize]
     [HttpGet]
-    public Task<Dictionary<string, string>> GetFunctionList(string? sign) => authorizeService.GetFunctionListAsync(sign);
+    public Task<Dictionary<string, string>> GetFunctionList(string? sign) => authorizeService.GetFunctionListAsync(User.GetUserId(), sign);
 
 
 

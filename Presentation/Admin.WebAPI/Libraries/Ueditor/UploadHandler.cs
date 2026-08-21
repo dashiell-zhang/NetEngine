@@ -7,7 +7,7 @@ namespace Admin.WebAPI.Libraries.Ueditor;
 /// <summary>
 /// 处理 UEditor 普通文件和 Base64 文件上传
 /// </summary>
-public class UploadHandler(UploadConfig uploadConfig, string rootPath, HttpContext httpContext, FileService fileService, long uploadKey, string sign, string fileServerUrl)
+public class UploadHandler(long actorUserId, UploadConfig uploadConfig, string rootPath, HttpContext httpContext, FileService fileService, long uploadKey, string sign, string fileServerUrl)
 {
 
     /// <summary>
@@ -134,7 +134,7 @@ public class UploadHandler(UploadConfig uploadConfig, string rootPath, HttpConte
                 TempFilePath = tempFilePath
             };
 
-            var fileId = await fileService.UploadFileAsync(rootPath, uploadFile);
+            var fileId = await fileService.UploadFileAsync(actorUserId, rootPath, uploadFile);
             var fileUrl = await fileService.GetFileUrlAsync(fileId);
 
             result.State = UploadState.Success;

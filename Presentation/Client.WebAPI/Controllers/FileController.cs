@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Basic.File;
 using Application.Service.Basic;
 using Common;
@@ -29,7 +30,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>文件ID</returns>
     [HttpPost]
-    public Task<long> RemoteUploadFile(RemoteUploadFileDto uploadFile, CancellationToken cancellationToken) => fileService.RemoteUploadFileAsync(savePath, uploadFile, cancellationToken);
+    public Task<long> RemoteUploadFile(RemoteUploadFileDto uploadFile, CancellationToken cancellationToken) => fileService.RemoteUploadFileAsync(User.GetUserId(), savePath, uploadFile, cancellationToken);
 
 
 
@@ -74,7 +75,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
                     TempFilePath = tempFilePath,
                 };
 
-                return await fileService.UploadFileAsync(savePath, uploadFile);
+                return await fileService.UploadFileAsync(User.GetUserId(), savePath, uploadFile);
             }
             finally
             {
@@ -215,7 +216,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
     /// <param name="id">文件ID</param>
     /// <returns></returns>
     [HttpDelete]
-    public Task<bool> DeleteFile(long id) => fileService.DeleteFileAsync(id);
+    public Task<bool> DeleteFile(long id) => fileService.DeleteFileAsync(User.GetUserId(), id);
 
 
 }

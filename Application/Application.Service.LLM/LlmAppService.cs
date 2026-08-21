@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.LLM.LlmApp;
 using Application.Model.Shared;
 using Common;
@@ -19,7 +18,7 @@ namespace Application.Service.LLM;
 /// LLM 应用配置服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmAppService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, IDistributedLock distributedLock)
+public partial class LlmAppService(DatabaseContext db, IdService idService, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, IDistributedLock distributedLock)
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();
@@ -82,7 +81,10 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     /// <summary>
     /// 创建 LLM 应用配置
     /// </summary>
-    public async Task<long> CreateLlmAppAsync(EditLlmAppDto createLlmApp)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="createLlmApp">应用配置创建内容</param>
+    /// <returns>应用配置ID</returns>
+    public async Task<long> CreateLlmAppAsync(long actorUserId, EditLlmAppDto createLlmApp)
     {
 
         var code = createLlmApp.Code.Trim();
@@ -122,7 +124,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
             ExtraBodyJson = createLlmApp.ExtraBodyJson,
             IsEnable = createLlmApp.IsEnable,
             Remark = createLlmApp.Remark,
-            CreateUserId = userContext.UserId
+            CreateUserId = actorUserId
         };
 
         db.LlmApp.Add(llmApp);
@@ -135,7 +137,11 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     /// <summary>
     /// 更新 LLM 应用配置
     /// </summary>
-    public async Task<bool> UpdateLlmAppAsync(long id, EditLlmAppDto updateLlmApp)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="id">应用配置ID</param>
+    /// <param name="updateLlmApp">应用配置修改内容</param>
+    /// <returns>是否更新成功</returns>
+    public async Task<bool> UpdateLlmAppAsync(long actorUserId, long id, EditLlmAppDto updateLlmApp)
     {
 
         var llmApp = await db.LlmApp.Where(t => t.Id == id && t.DeleteTime == null).FirstOrDefaultAsync();
@@ -179,7 +185,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
         llmApp.ExtraBodyJson = updateLlmApp.ExtraBodyJson;
         llmApp.IsEnable = updateLlmApp.IsEnable;
         llmApp.Remark = updateLlmApp.Remark;
-        llmApp.UpdateUserId = userContext.UserId;
+        llmApp.UpdateUserId = actorUserId;
 
         await db.SaveChangesAsync();
 
@@ -190,7 +196,10 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     /// <summary>
     /// 删除 LLM 应用配置
     /// </summary>
-    public async Task<bool> DeleteLlmAppAsync(long id)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="id">应用配置ID</param>
+    /// <returns>是否删除成功</returns>
+    public async Task<bool> DeleteLlmAppAsync(long actorUserId, long id)
     {
 
         var llmApp = await db.LlmApp.Where(t => t.Id == id && t.DeleteTime == null).FirstOrDefaultAsync();
@@ -198,7 +207,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
         if (llmApp != null)
         {
             llmApp.DeleteTime = DateTimeOffset.UtcNow;
-            llmApp.DeleteUserId = userContext.UserId;
+            llmApp.DeleteUserId = actorUserId;
             await db.SaveChangesAsync();
         }
 
@@ -209,7 +218,11 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
     /// <summary>
     /// 调用测试（不依赖数据库保存）
     /// </summary>
-    public async Task<TestLlmAppResultDto> TestLlmAppAsync(TestLlmAppRequestDto request, CancellationToken cancellationToken = default)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="request">LLM 应用测试内容</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>LLM 应用测试结果</returns>
+    public async Task<TestLlmAppResultDto> TestLlmAppAsync(long actorUserId, TestLlmAppRequestDto request, CancellationToken cancellationToken = default)
     {
 
         var config = await configResolver.GetConfigAsync(request.LlmModelId, cancellationToken)
@@ -254,7 +267,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, IUse
             new ChatRequest(
                 config.ModelId,
                 messages,
-                userContext.UserId == default ? null : userContext.UserId.ToString(),
+                actorUserId.ToString(),
                 request.ExtraBody),
             cancellationToken);
 

@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.AppSetting;
 using Application.Model.Authorize;
 using Application.Model.Message;
@@ -22,8 +21,11 @@ using System.Text;
 
 namespace Application.Service;
 
+/// <summary>
+/// 提供登录、Token、密码和功能授权能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, QueueTaskService queueTaskService)
+public class AuthorizeService(DatabaseContext db, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, QueueTaskService queueTaskService)
 {
 
 
@@ -195,14 +197,15 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <summary>
     /// 获取授权功能列表
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="sign">模块标记</param>
     /// <returns></returns>
-    public async Task<Dictionary<string, string>> GetFunctionListAsync(string? sign)
+    public async Task<Dictionary<string, string>> GetFunctionListAsync(long actorUserId, string? sign)
     {
 
-        var roleIds = await db.UserRole.AsNoTracking().Where(t => t.UserId == userContext.UserId).Select(t => t.RoleId).ToListAsync();
+        var roleIds = await db.UserRole.AsNoTracking().Where(t => t.UserId == actorUserId).Select(t => t.RoleId).ToListAsync();
 
-        var query = db.FunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == userContext.UserId);
+        var query = db.FunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == actorUserId);
 
         if (sign != null)
         {
@@ -320,12 +323,13 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <summary>
     /// 通过老密码修改密码
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="updatePassword"></param>
     /// <returns></returns>
-    public async Task<bool> UpdatePasswordByOldPasswordAsync(UpdatePasswordByOldPasswordDto updatePassword)
+    public async Task<bool> UpdatePasswordByOldPasswordAsync(long actorUserId, UpdatePasswordByOldPasswordDto updatePassword)
     {
 
-        var user = await db.User.Where(t => t.Id == userContext.UserId).FirstOrDefaultAsync();
+        var user = await db.User.Where(t => t.Id == actorUserId).FirstOrDefaultAsync();
 
         if (user != null)
         {
@@ -352,12 +356,13 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
     /// <summary>
     /// 通过短信验证码修改账户密码</summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="updatePassword"></param>
     /// <returns></returns>
-    public async Task<bool> UpdatePasswordBySMSAsync(UpdatePasswordBySMSDto updatePassword)
+    public async Task<bool> UpdatePasswordBySMSAsync(long actorUserId, UpdatePasswordBySMSDto updatePassword)
     {
 
-        string phone = await db.User.Where(t => t.Id == userContext.UserId).Select(t => t.Phone).FirstAsync();
+        string phone = await db.User.Where(t => t.Id == actorUserId).Select(t => t.Phone).FirstAsync();
 
         string key = "VerifyPhone_" + phone;
 
@@ -366,14 +371,14 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
         if (string.IsNullOrEmpty(code) == false && code == updatePassword.SmsCode)
         {
-            var user = await db.User.Where(t => t.Id == userContext.UserId).FirstOrDefaultAsync();
+            var user = await db.User.Where(t => t.Id == actorUserId).FirstOrDefaultAsync();
 
             if (user != null)
             {
                 user.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(updatePassword.NewPassword, Encoding.UTF8.GetBytes(user.Id.ToString()), KeyDerivationPrf.HMACSHA256, 1000, 32));
-                user.UpdateUserId = userContext.UserId;
+                user.UpdateUserId = actorUserId;
 
-                var tokenList = await db.UserToken.Where(t => t.UserId == userContext.UserId).ToListAsync();
+                var tokenList = await db.UserToken.Where(t => t.UserId == actorUserId).ToListAsync();
 
                 db.UserToken.RemoveRange(tokenList);
 
@@ -550,19 +555,19 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <summary>
     /// 用户功能授权检测
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="module">模块名称</param>
+    /// <param name="route">路由地址</param>
     /// <returns></returns>
-    public async Task<bool> CheckFunctionAuthorizeAsync(string module, string route)
+    public async Task<bool> CheckFunctionAuthorizeAsync(long actorUserId, string module, string route)
     {
-
-        var userId = userContext.UserId;
-
         var functionId = await db.FunctionRoute.Where(t => t.Module == module && t.Route == route).Select(t => t.FunctionId).FirstOrDefaultAsync();
 
         if (functionId != default)
         {
-            var roleIds = await db.UserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
+            var roleIds = await db.UserRole.Where(t => t.UserId == actorUserId).Select(t => t.RoleId).ToListAsync();
 
-            var functionAuthorizeId = await db.FunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)).Select(t => t.Id).FirstOrDefaultAsync();
+            var functionAuthorizeId = await db.FunctionAuthorize.Where(t => t.FunctionId == functionId && (roleIds.Contains(t.RoleId!.Value) || t.UserId == actorUserId)).Select(t => t.Id).FirstOrDefaultAsync();
 
             if (functionAuthorizeId != default)
             {
@@ -583,23 +588,21 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
     /// <summary>
     /// 签发新的Token
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="tokenId">当前Token ID</param>
+    /// <param name="notBefore">当前Token生效时间戳</param>
+    /// <param name="expiresAt">当前Token过期时间戳</param>
     /// <returns></returns>
-    public async Task<string?> IssueNewTokenAsync()
+    public async Task<string?> IssueNewTokenAsync(long actorUserId, long tokenId, long notBefore, long expiresAt)
     {
-        var nbf = long.Parse(userContext.Claims.First(t => t.Type == "nbf").Value);
-        var exp = long.Parse(userContext.Claims.First(t => t.Type == "exp").Value);
-
-        var nbfTime = DateTimeOffset.FromUnixTimeSeconds(nbf);
-        var expTime = DateTimeOffset.FromUnixTimeSeconds(exp);
+        var nbfTime = DateTimeOffset.FromUnixTimeSeconds(notBefore);
+        var expTime = DateTimeOffset.FromUnixTimeSeconds(expiresAt);
 
         var lifeSpan = nbfTime + (expTime - nbfTime) * 0.5;
 
         //当前Token有效期不足一半时签发新的Token
         if (lifeSpan < DateTimeOffset.UtcNow)
         {
-
-            var tokenId = long.Parse(userContext.Claims.First(t => t.Type == "tokenId").Value);
-            var userId = userContext.UserId;
 
             string key = "IssueNewToken" + tokenId;
 
@@ -610,7 +613,7 @@ public class AuthorizeService(DatabaseContext db, IUserContext userContext, IDis
 
                 if (newToken == null)
                 {
-                    newToken = await GetTokenByUserIdAsync(userId, tokenId);
+                    newToken = await GetTokenByUserIdAsync(actorUserId, tokenId);
 
                     await using var clearExpireTokenLockHandle = await distLock.TryLockAsync("ClearExpireToken");
                     if (clearExpireTokenLockHandle != null)

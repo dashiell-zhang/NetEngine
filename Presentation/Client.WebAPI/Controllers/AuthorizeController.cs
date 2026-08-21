@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Authorize;
 using Application.Service;
 using IdentifierGenerator;
@@ -71,7 +72,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     [Authorize]
     [CacheDataFilter(TTL = 60, IsUseToken = true)]
     [HttpGet]
-    public Task<Dictionary<string, string>> GetFunctionList(string sign) => authorizeService.GetFunctionListAsync(sign);
+    public Task<Dictionary<string, string>> GetFunctionList(string sign) => authorizeService.GetFunctionListAsync(User.GetUserId(), sign);
 
 
 
@@ -103,7 +104,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     [Authorize]
     [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
     [HttpPost]
-    public Task<bool> UpdatePasswordByOldPassword(UpdatePasswordByOldPasswordDto updatePassword) => authorizeService.UpdatePasswordByOldPasswordAsync(updatePassword);
+    public Task<bool> UpdatePasswordByOldPassword(UpdatePasswordByOldPasswordDto updatePassword) => authorizeService.UpdatePasswordByOldPasswordAsync(User.GetUserId(), updatePassword);
 
 
 
@@ -114,7 +115,7 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     [Authorize]
     [QueueLimitFilter(IsBlock = true, IsUseParameter = false, IsUseToken = true)]
     [HttpPost]
-    public Task<bool> UpdatePasswordBySMS(UpdatePasswordBySMSDto updatePassword) => authorizeService.UpdatePasswordBySMSAsync(updatePassword);
+    public Task<bool> UpdatePasswordBySMS(UpdatePasswordBySMSDto updatePassword) => authorizeService.UpdatePasswordBySMSAsync(User.GetUserId(), updatePassword);
 
 
 

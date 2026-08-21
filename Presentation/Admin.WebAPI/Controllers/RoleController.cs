@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Shared;
 using Application.Model.User.Role;
 using Application.Service.User;
@@ -8,6 +9,9 @@ using WebAPI.Core.Filters;
 namespace Admin.WebAPI.Controllers;
 
 
+/// <summary>
+/// 角色数据操作控制器
+/// </summary>
 [SignVerifyFilter]
 [Route("[controller]/[action]")]
 [Authorize]
@@ -85,7 +89,7 @@ public class RoleController(RoleService roleService) : ControllerBase
     /// <param name="setRoleFunction"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> SetRoleFunction(SetRoleFunctionDto setRoleFunction) => roleService.SetRoleFunctionAsync(setRoleFunction);
+    public Task<bool> SetRoleFunction(SetRoleFunctionDto setRoleFunction) => roleService.SetRoleFunctionAsync(User.GetUserId(), setRoleFunction);
 
 
 

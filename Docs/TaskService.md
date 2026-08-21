@@ -34,6 +34,8 @@ public class ProductTask(ProductService productService) : TaskBase
 
 任务类可以通过构造函数注入应用服务和基础设施抽象。业务逻辑仍应放在 Application 层，任务方法主要负责触发和编排
 
+TaskService 不读取当前 HTTP 用户上下文。任务代表某个用户继续执行时，应由 WebAPI 入队端从可信认证上下文取得 `actorUserId`，写入任务参数并继续传给 Application Service；真正的系统任务调用允许系统身份的方法时传入 `null`，不要使用 `0` 伪造用户身份
+
 ## 定时任务
 
 ### 声明无参数任务
@@ -237,4 +239,5 @@ TaskService 通过 `BatchRegisterBackgroundServices()` 自动承载该服务，�
 - 重复执行是否安全，涉及多步数据修改时是否使用事务
 - 回调任务与子任务是否也已声明并启用
 - TaskService 的 PostgreSQL 和 Redis 配置是否正确
+- 代表用户执行的任务是否通过任务参数传递可信 `actorUserId`
 - Debug 时是否在控制台启用，非 Debug 时是否在任务配置中启用

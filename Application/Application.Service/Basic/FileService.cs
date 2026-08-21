@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.Basic.File;
 using Common;
 using FileStorage;
@@ -16,16 +15,17 @@ namespace Application.Service.Basic;
 /// 提供统一文件上传、访问、绑定和删除能力
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class FileService(IdService idService, IUserContext userContext, DatabaseContext db, IConfiguration configuration, IHttpClientFactory httpClientFactory, IFileStorage? fileStorage = null)
+public class FileService(IdService idService, DatabaseContext db, IConfiguration configuration, IHttpClientFactory httpClientFactory, IFileStorage? fileStorage = null)
 {
 
     /// <summary>
     /// 文件上传
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="savePath">文件存储基础路径</param>
     /// <param name="uploadFile"></param>
     /// <returns></returns>
-    public async Task<long> UploadFileAsync(string savePath, UploadFileDto uploadFile)
+    public async Task<long> UploadFileAsync(long actorUserId, string savePath, UploadFileDto uploadFile)
     {
         var utcNow = DateTime.UtcNow;
 
@@ -77,7 +77,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
                 Table = uploadFile.Business,
                 TableId = uploadFile.Key,
                 Sign = uploadFile.Sign,
-                CreateUserId = userContext.UserId
+                CreateUserId = actorUserId
             };
 
             db.StoredFile.Add(f);
@@ -95,11 +95,12 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <summary>
     /// 远程单文件上传接口
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="savePath">文件存储基础路径</param>
     /// <param name="remoteUploadFile"></param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>文件ID</returns>
-    public async Task<long> RemoteUploadFileAsync(string savePath, RemoteUploadFileDto remoteUploadFile, CancellationToken cancellationToken = default)
+    public async Task<long> RemoteUploadFileAsync(long actorUserId, string savePath, RemoteUploadFileDto remoteUploadFile, CancellationToken cancellationToken = default)
     {
 
         var tempDirPath = Path.Combine(savePath, "temps");
@@ -138,22 +139,23 @@ public class FileService(IdService idService, IUserContext userContext, Database
             TempFilePath = tempFilePath
         };
 
-        return await UploadFileAsync(savePath, uploadFile);
+        return await UploadFileAsync(actorUserId, savePath, uploadFile);
     }
 
 
     /// <summary>
     /// 将上传批次文件绑定到正式业务记录
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="business">业务领域</param>
     /// <param name="sign">文件标记</param>
     /// <param name="uploadKey">上传批次标识</param>
     /// <param name="businessId">正式业务记录标识</param>
     /// <returns>绑定文件数量</returns>
-    public async Task<int> BindFilesAsync(string business, string sign, long uploadKey, long businessId)
+    public async Task<int> BindFilesAsync(long actorUserId, string business, string sign, long uploadKey, long businessId)
     {
 
-        var fileList = await db.StoredFile.Where(t => t.Table == business && t.Sign == sign && t.TableId == uploadKey && t.CreateUserId == userContext.UserId).ToListAsync();
+        var fileList = await db.StoredFile.Where(t => t.Table == business && t.Sign == sign && t.TableId == uploadKey && t.CreateUserId == actorUserId).ToListAsync();
 
         foreach (var file in fileList)
         {
@@ -168,17 +170,17 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <summary>
     /// 根据正文实际引用同步上传批次和正式业务记录中的正文文件
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="business">业务领域</param>
     /// <param name="uploadKey">上传批次标识</param>
     /// <param name="businessId">正式业务记录标识</param>
     /// <param name="referencedFileIds">正文实际引用的文件标识</param>
     /// <returns>保留的正文文件数量</returns>
-    public async Task<int> SyncContentFilesAsync(string business, long uploadKey, long businessId, IReadOnlyCollection<long> referencedFileIds)
+    public async Task<int> SyncContentFilesAsync(long actorUserId, string business, long uploadKey, long businessId, IReadOnlyCollection<long> referencedFileIds)
     {
 
         var distinctFileIds = referencedFileIds.Distinct().ToHashSet();
-        var currentUserId = userContext.UserId;
-        var fileList = await db.StoredFile.Where(t => t.Table == business && t.Sign.StartsWith("content-") && (t.TableId == businessId || (t.TableId == uploadKey && t.CreateUserId == currentUserId))).ToListAsync();
+        var fileList = await db.StoredFile.Where(t => t.Table == business && t.Sign.StartsWith("content-") && (t.TableId == businessId || (t.TableId == uploadKey && t.CreateUserId == actorUserId))).ToListAsync();
         var invalidFileIds = distinctFileIds.Except(fileList.Select(t => t.Id)).ToList();
 
         if (invalidFileIds.Count > 0)
@@ -200,7 +202,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
             else
             {
                 file.DeleteTime = deleteTime;
-                file.DeleteUserId = currentUserId;
+                file.DeleteUserId = actorUserId;
             }
         }
 
@@ -212,10 +214,11 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <summary>
     /// 软删除正式业务记录关联的全部文件
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="business">业务领域</param>
     /// <param name="businessId">正式业务记录标识</param>
     /// <returns>软删除文件数量</returns>
-    public async Task<int> SoftDeleteBusinessFilesAsync(string business, long businessId)
+    public async Task<int> SoftDeleteBusinessFilesAsync(long actorUserId, string business, long businessId)
     {
 
         var fileList = await db.StoredFile.Where(t => t.Table == business && t.TableId == businessId).ToListAsync();
@@ -224,7 +227,7 @@ public class FileService(IdService idService, IUserContext userContext, Database
         foreach (var file in fileList)
         {
             file.DeleteTime = deleteTime;
-            file.DeleteUserId = userContext.UserId;
+            file.DeleteUserId = actorUserId;
         }
 
         return fileList.Count;
@@ -278,16 +281,17 @@ public class FileService(IdService idService, IUserContext userContext, Database
     /// <summary>
     /// 通过文件ID删除文件方法
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="id">文件ID</param>
     /// <returns></returns>
-    public async Task<bool> DeleteFileAsync(long id)
+    public async Task<bool> DeleteFileAsync(long actorUserId, long id)
     {
         var file = await db.StoredFile.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (file != null)
         {
             file.DeleteTime = DateTimeOffset.UtcNow;
-            file.DeleteUserId = userContext.UserId;
+            file.DeleteUserId = actorUserId;
 
             await db.SaveChangesAsync();
 

@@ -18,7 +18,7 @@
 ```text
 Presentation ──> Application ──> Repository
        │               └───────> Infrastructure
-       └───────> ProjectCore ──> Application.Interface / Repository
+       └───────> ProjectCore ──> Application.Model / Repository
 
 Admin.App ──> Application.Model
 ```
@@ -29,13 +29,17 @@ Admin.App ──> Application.Model
 
 | 项目 | 职责 |
 |---|---|
-| `Application.Interface` | 放置需要被应用层和公共宿主层共同依赖的抽象，例如 `IUserContext` |
+| `Application.Interface` | 预留需要被多个应用层或宿主共同依赖的应用抽象 |
 | `Application.Model` | DTO、请求模型、返回模型和配置模型，也是管理前端复用的契约层 |
 | `Application.Service` | 用户、站点、授权、支付、消息、任务中心等通用应用服务 |
 | `Application.Service.LLM` | LLM 应用配置、对话管理和模型调用服务 |
 | `Application.Service.SMS` | 短信发送相关应用服务 |
 
 `Application.Interface` 不是要求所有应用服务都定义接口的传统接口层。应用服务可以直接以具体类注入，只有跨宿主或公共层确实需要共同引用的抽象才放入这里
+
+Controller 直接通过 `ControllerBase.User` 和 WebAPI.Core 的 Claims 扩展解析身份，当前认证用户通过 `actorUserId` 或 `targetUserId` 明确传入 Application Service。应用服务不读取 HTTP 请求上下文
+
+`Application.Service` 和 `Application.Service.LLM` 直接引用 `Application.Model`，不通过 `Application.Interface` 间接获得 DTO 项目引用
 
 ## Repository
 

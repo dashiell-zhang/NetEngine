@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.User.User;
 using Application.Service.User;
 using Microsoft.AspNetCore.Authorization;
@@ -24,7 +25,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [CacheDataFilter(TTL = 60, IsUseToken = true)]
-    public Task<UserDto?> GetUser(long? userId) => userService.GetUserAsync(userId);
+    public Task<UserDto?> GetUser(long? userId) => userService.GetUserAsync(userId ?? User.GetUserId());
 
 
 
@@ -34,7 +35,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> EditUserPhoneBySms(EditUserPhoneBySmsDto request) => userService.EditUserPhoneBySmsAsync(request);
+    public Task<bool> EditUserPhoneBySms(EditUserPhoneBySmsDto request) => userService.EditUserPhoneBySmsAsync(User.GetUserId(), request);
 
 
 }

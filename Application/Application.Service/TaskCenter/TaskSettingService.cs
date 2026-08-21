@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
 using Common;
@@ -12,8 +11,11 @@ using System.Text.Json;
 
 namespace Application.Service.TaskCenter;
 
+/// <summary>
+/// 提供任务配置查询和维护能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class TaskSettingService(DatabaseContext db, IUserContext userContext, IdService idService)
+public class TaskSettingService(DatabaseContext db, IdService idService)
 {
     private const string ArgsDefaultParameter = "__args_default__";
 
@@ -58,7 +60,11 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
     /// <summary>
     /// 更新任务配置信息
     /// </summary>
-    public async Task<bool> UpdateTaskSettingAsync(long taskSettingId, EditTaskSettingDto updateTaskSetting)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="taskSettingId">任务配置ID</param>
+    /// <param name="updateTaskSetting">任务配置修改内容</param>
+    /// <returns>是否更新成功</returns>
+    public async Task<bool> UpdateTaskSettingAsync(long actorUserId, long taskSettingId, EditTaskSettingDto updateTaskSetting)
     {
         var taskSetting = await db.TaskSetting.Where(t => t.Id == taskSettingId).FirstOrDefaultAsync();
 
@@ -72,7 +78,7 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
         taskSetting.Cron = updateTaskSetting.Cron;
         taskSetting.IsEnable = updateTaskSetting.IsEnable;
         taskSetting.Remark = updateTaskSetting.Remark;
-        taskSetting.UpdateUserId = userContext.UserId;
+        taskSetting.UpdateUserId = actorUserId;
 
         await db.SaveChangesAsync();
 
@@ -97,7 +103,10 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
     /// <summary>
     /// 新增带参定时任务（用于动态添加可带参的 ScheduleTask 实例）
     /// </summary>
-    public async Task<long> CreateScheduleTaskAsync(CreateScheduleTaskDto createTaskSetting)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="createTaskSetting">定时任务创建内容</param>
+    /// <returns>任务配置ID</returns>
+    public async Task<long> CreateScheduleTaskAsync(long actorUserId, CreateScheduleTaskDto createTaskSetting)
     {
         try
         {
@@ -126,7 +135,7 @@ public class TaskSettingService(DatabaseContext db, IUserContext userContext, Id
             Cron = createTaskSetting.Cron,
             IsEnable = createTaskSetting.IsEnable,
             Remark = createTaskSetting.Remark,
-            CreateUserId = userContext.UserId
+            CreateUserId = actorUserId
         };
 
         db.TaskSetting.Add(taskSetting);

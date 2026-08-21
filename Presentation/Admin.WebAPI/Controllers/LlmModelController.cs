@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.LLM.LlmModel;
 using Application.Model.Shared;
 using Application.Service.LLM;
@@ -37,20 +38,20 @@ public class LlmModelController(LlmModelService llmModelService) : ControllerBas
     /// 创建 LLM 模型配置
     /// </summary>
     [HttpPost]
-    public Task<long> CreateLlmModel(EditLlmModelDto createLlmModel) => llmModelService.CreateLlmModelAsync(createLlmModel);
+    public Task<long> CreateLlmModel(EditLlmModelDto createLlmModel) => llmModelService.CreateLlmModelAsync(User.GetUserId(), createLlmModel);
 
 
     /// <summary>
     /// 更新 LLM 模型配置
     /// </summary>
     [HttpPost]
-    public Task<bool> UpdateLlmModel(long id, EditLlmModelDto updateLlmModel) => llmModelService.UpdateLlmModelAsync(id, updateLlmModel);
+    public Task<bool> UpdateLlmModel(long id, EditLlmModelDto updateLlmModel) => llmModelService.UpdateLlmModelAsync(User.GetUserId(), id, updateLlmModel);
 
 
     /// <summary>
     /// 删除 LLM 模型配置
     /// </summary>
     [HttpDelete]
-    public Task<bool> DeleteLlmModel(long id) => llmModelService.DeleteLlmModelAsync(id);
+    public Task<bool> DeleteLlmModel(long id) => llmModelService.DeleteLlmModelAsync(User.GetUserId(), id);
 
 }

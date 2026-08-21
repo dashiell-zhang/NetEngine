@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.Shared;
 using Application.Model.Site.Link;
 using Common;
@@ -9,8 +8,12 @@ using Repository;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Site;
+
+/// <summary>
+/// 提供友情链接查询和维护能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LinkService(DatabaseContext db, IdService idService, IUserContext userContext)
+public class LinkService(DatabaseContext db, IdService idService)
 {
 
 
@@ -66,16 +69,17 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// <summary>
     /// 创建友情链接
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="createLink"></param>
     /// <returns></returns>
-    public async Task<long> CreateLinkAsync(EditLinkDto createLink)
+    public async Task<long> CreateLinkAsync(long actorUserId, EditLinkDto createLink)
     {
         Repository.Database.Link link = new()
         {
             Id = idService.GetId(),
             Name = createLink.Name,
             Url = createLink.Url,
-            CreateUserId = userContext.UserId,
+            CreateUserId = actorUserId,
             Sort = createLink.Sort
         };
 
@@ -116,16 +120,17 @@ public class LinkService(DatabaseContext db, IdService idService, IUserContext u
     /// <summary>
     /// 删除友情链接
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="id"></param>
     /// <returns></returns>
-    public async Task<bool> DeleteLinkAsync(long id)
+    public async Task<bool> DeleteLinkAsync(long actorUserId, long id)
     {
         var link = await db.Link.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (link != null)
         {
             link.DeleteTime = DateTimeOffset.UtcNow;
-            link.DeleteUserId = userContext.UserId;
+            link.DeleteUserId = actorUserId;
 
             await db.SaveChangesAsync();
 

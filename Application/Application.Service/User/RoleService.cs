@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.Shared;
 using Application.Model.User.Role;
 using Common;
@@ -12,8 +11,12 @@ using Repository.Database.Enums;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.User;
+
+/// <summary>
+/// 提供角色和角色功能权限管理能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class RoleService(DatabaseContext db, IdService idService, IUserContext userContext, IDistributedLock distLock)
+public class RoleService(DatabaseContext db, IdService idService, IDistributedLock distLock)
 {
 
     /// 获取角色列表
@@ -200,9 +203,10 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
     /// <summary>
     /// 设置角色的功能
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="setRoleFunction"></param>
     /// <returns></returns>
-    public async Task<bool> SetRoleFunctionAsync(SetRoleFunctionDto setRoleFunction)
+    public async Task<bool> SetRoleFunctionAsync(long actorUserId, SetRoleFunctionDto setRoleFunction)
     {
 
         var functionAuthorize = await db.FunctionAuthorize.Where(t => t.RoleId == setRoleFunction.RoleId && t.FunctionId == setRoleFunction.FunctionId).FirstOrDefaultAsync() ?? new FunctionAuthorize();
@@ -215,7 +219,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
             if (functionAuthorize.Id == default)
             {
                 functionAuthorize.Id = idService.GetId();
-                functionAuthorize.CreateUserId = userContext.UserId;
+                functionAuthorize.CreateUserId = actorUserId;
 
                 db.FunctionAuthorize.Add(functionAuthorize);
             }
@@ -225,7 +229,7 @@ public class RoleService(DatabaseContext db, IdService idService, IUserContext u
             if (functionAuthorize.Id != default)
             {
                 functionAuthorize.DeleteTime = DateTimeOffset.UtcNow;
-                functionAuthorize.DeleteUserId = userContext.UserId;
+                functionAuthorize.DeleteUserId = actorUserId;
             }
         }
 

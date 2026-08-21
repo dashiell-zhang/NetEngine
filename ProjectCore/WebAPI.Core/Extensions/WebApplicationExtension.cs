@@ -1,10 +1,17 @@
 using WebAPI.Core.Libraries;
 
 namespace WebAPI.Core.Extensions;
+
+/// <summary>
+/// Web 应用程序公共扩展
+/// </summary>
 public static class WebApplicationExtension
 {
 
 
+    /// <summary>
+    /// 注册 WebAPI 公共中间件
+    /// </summary>
     public static void UseCommonMiddleware(this WebApplication app)
     {
         app.UseForwardedHeaders();
@@ -36,14 +43,14 @@ public static class WebApplicationExtension
         app.UseHsts();
 
 
-        //注册跨域信息
-        app.UseCors("cors");
-
         app.UseHttpsRedirection();
 
         app.UseRouting();
 
-        //注册用户认证机制,必须放在 UseCors UseRouting 之后
+        //注册跨域信息
+        app.UseCors("cors");
+
+        //注册用户认证机制 必须放在 UseRouting 和 UseCors 之后
         app.UseAuthentication();
         app.UseAuthorization();
 

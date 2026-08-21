@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Shared;
 using Application.Model.User.User;
 using Application.Service.User;
@@ -32,7 +33,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="userId">用户ID</param>
     /// <returns></returns>
     [HttpGet]
-    public Task<UserDto?> GetUser(long? userId) => userService.GetUserAsync(userId);
+    public Task<UserDto?> GetUser(long? userId) => userService.GetUserAsync(userId ?? User.GetUserId());
 
 
     /// <summary>
@@ -41,7 +42,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="createUser"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<long?> CreateUser(EditUserDto createUser) => userService.CreateUserAsync(createUser);
+    public Task<long?> CreateUser(EditUserDto createUser) => userService.CreateUserAsync(User.GetUserId(), createUser);
 
 
     /// <summary>
@@ -51,7 +52,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="updateUser"></param>
     /// <returns></returns>
     [HttpPost]
-    public Task<bool> UpdateUser(long userId, EditUserDto updateUser) => userService.UpdateUserAsync(userId, updateUser);
+    public Task<bool> UpdateUser(long userId, EditUserDto updateUser) => userService.UpdateUserAsync(User.GetUserId(), userId, updateUser);
 
 
     /// <summary>
@@ -60,7 +61,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <param name="id"></param>
     /// <returns></returns>
     [HttpDelete]
-    public Task<bool> DeleteUser(long id) => userService.DeleteUserAsync(id);
+    public Task<bool> DeleteUser(long id) => userService.DeleteUserAsync(User.GetUserId(), id);
 
 
     /// <summary>
@@ -79,7 +80,7 @@ public class UserController(UserService userService) : ControllerBase
     /// <returns></returns>
     [QueueLimitFilter()]
     [HttpPost]
-    public Task<bool> SetUserFunction(SetUserFunctionDto setUserFunction) => userService.SetUserFunctionAsync(setUserFunction);
+    public Task<bool> SetUserFunction(SetUserFunctionDto setUserFunction) => userService.SetUserFunctionAsync(User.GetUserId(), setUserFunction);
 
 
     /// <summary>
@@ -98,6 +99,6 @@ public class UserController(UserService userService) : ControllerBase
     /// <returns></returns>
     [QueueLimitFilter()]
     [HttpPost]
-    public Task<bool> SetUserRole(SetUserRoleDto setUserRole) => userService.SetUserRoleAsync(setUserRole);
+    public Task<bool> SetUserRole(SetUserRoleDto setUserRole) => userService.SetUserRoleAsync(User.GetUserId(), setUserRole);
 
 }

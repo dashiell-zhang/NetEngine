@@ -1,4 +1,3 @@
-using Application.Interface;
 using Common;
 using IdentifierGenerator;
 using LLM;
@@ -19,7 +18,7 @@ namespace Application.Service.LLM;
 /// LLM 调用服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmInvokeService(DatabaseContext db, IdService idService, IUserContext userContext, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, ILogger<LlmInvokeService> logger)
+public partial class LlmInvokeService(DatabaseContext db, IdService idService, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, ILogger<LlmInvokeService> logger)
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();
@@ -28,7 +27,12 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     /// <summary>
     /// 按 LLM 应用 Code 调用对话接口，返回完整响应
     /// </summary>
-    public async Task<ChatResponse> ChatAsync(string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
+    /// <param name="actorUserId">可空行为发起人用户ID</param>
+    /// <param name="code">LLM 应用编码</param>
+    /// <param name="parameters">提示词参数</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>完整对话响应</returns>
+    public async Task<ChatResponse> ChatAsync(long? actorUserId, string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
     {
 
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable && t.DeleteTime == null).FirstOrDefaultAsync(cancellationToken);
@@ -70,7 +74,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         var response = await client.ChatAsync(request, cancellationToken);
 
         var assistantContent = response.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
-        await TrySaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantContent, cancellationToken);
+        await TrySaveConversationAsync(actorUserId, app.Id, systemPrompt, userPrompt, assistantContent, cancellationToken);
 
         return response;
     }
@@ -79,10 +83,15 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     /// <summary>
     /// 按 LLM 应用 Code 调用对话接口，返回首条文本内容
     /// </summary>
-    public async Task<string?> ChatContentAsync(string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
+    /// <param name="actorUserId">可空行为发起人用户ID</param>
+    /// <param name="code">LLM 应用编码</param>
+    /// <param name="parameters">提示词参数</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>首条文本内容</returns>
+    public async Task<string?> ChatContentAsync(long? actorUserId, string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
     {
 
-        var response = await ChatAsync(code, parameters, cancellationToken);
+        var response = await ChatAsync(actorUserId, code, parameters, cancellationToken);
         return response.Choices.FirstOrDefault()?.Message.Content;
     }
 
@@ -90,7 +99,12 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     /// <summary>
     /// 按 LLM 应用 Code 调用流式对话接口
     /// </summary>
-    public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(string code, Dictionary<string, string> parameters, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    /// <param name="actorUserId">可空行为发起人用户ID</param>
+    /// <param name="code">LLM 应用编码</param>
+    /// <param name="parameters">提示词参数</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>流式对话响应</returns>
+    public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(long? actorUserId, string code, Dictionary<string, string> parameters, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable && t.DeleteTime == null).FirstOrDefaultAsync(cancellationToken);
@@ -149,7 +163,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
 
         if (isCompleted)
         {
-            await TrySaveConversationAsync(app.Id, systemPrompt, userPrompt, assistantBuilder.ToString(), cancellationToken);
+            await TrySaveConversationAsync(actorUserId, app.Id, systemPrompt, userPrompt, assistantBuilder.ToString(), cancellationToken);
         }
     }
 
@@ -279,14 +293,19 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     /// <summary>
     /// 尝试保存成功的对话记录
     /// </summary>
-    private async Task TrySaveConversationAsync(long llmAppId, string systemPrompt, string userPrompt, string assistantContent, CancellationToken cancellationToken)
+    /// <param name="actorUserId">可空行为发起人用户ID</param>
+    /// <param name="llmAppId">LLM 应用ID</param>
+    /// <param name="systemPrompt">系统提示词</param>
+    /// <param name="userPrompt">用户提示词</param>
+    /// <param name="assistantContent">助手回复内容</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns></returns>
+    private async Task TrySaveConversationAsync(long? actorUserId, long llmAppId, string systemPrompt, string userPrompt, string assistantContent, CancellationToken cancellationToken)
     {
 
         LlmConversation? conversation = null;
         try
         {
-            long? createUserId = userContext.IsAuthenticated ? userContext.UserId : null;
-
             conversation = new LlmConversation
             {
                 Id = idService.GetId(),
@@ -294,7 +313,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
                 SystemContent = systemPrompt ?? string.Empty,
                 UserContent = userPrompt ?? string.Empty,
                 AssistantContent = assistantContent ?? string.Empty,
-                CreateUserId = createUserId
+                CreateUserId = actorUserId
             };
 
             db.LlmConversation.Add(conversation);

@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.LLM.LlmModel;
 using Application.Model.Shared;
 using Common;
@@ -17,7 +16,7 @@ namespace Application.Service.LLM;
 /// LLM 模型配置服务
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LlmModelService(DatabaseContext db, IdService idService, IUserContext userContext, IDistributedLock distributedLock)
+public class LlmModelService(DatabaseContext db, IdService idService, IDistributedLock distributedLock)
 {
 
     /// <summary>
@@ -74,7 +73,10 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
     /// <summary>
     /// 创建 LLM 模型配置
     /// </summary>
-    public async Task<long> CreateLlmModelAsync(EditLlmModelDto createLlmModel)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="createLlmModel">模型配置创建内容</param>
+    /// <returns>模型配置ID</returns>
+    public async Task<long> CreateLlmModelAsync(long actorUserId, EditLlmModelDto createLlmModel)
     {
 
         var name = createLlmModel.Name.Trim();
@@ -112,7 +114,7 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
             ProtocolType = createLlmModel.ProtocolType,
             IsEnable = createLlmModel.IsEnable,
             Remark = createLlmModel.Remark,
-            CreateUserId = userContext.UserId
+            CreateUserId = actorUserId
         };
 
         db.LlmModel.Add(llmModel);
@@ -125,7 +127,11 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
     /// <summary>
     /// 更新 LLM 模型配置
     /// </summary>
-    public async Task<bool> UpdateLlmModelAsync(long id, EditLlmModelDto updateLlmModel)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="id">模型配置ID</param>
+    /// <param name="updateLlmModel">模型配置修改内容</param>
+    /// <returns>是否更新成功</returns>
+    public async Task<bool> UpdateLlmModelAsync(long actorUserId, long id, EditLlmModelDto updateLlmModel)
     {
 
         var name = updateLlmModel.Name.Trim();
@@ -179,7 +185,7 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
         llmModel.ProtocolType = updateLlmModel.ProtocolType;
         llmModel.IsEnable = updateLlmModel.IsEnable;
         llmModel.Remark = updateLlmModel.Remark;
-        llmModel.UpdateUserId = userContext.UserId;
+        llmModel.UpdateUserId = actorUserId;
 
         await db.SaveChangesAsync();
 
@@ -190,7 +196,10 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
     /// <summary>
     /// 删除 LLM 模型配置
     /// </summary>
-    public async Task<bool> DeleteLlmModelAsync(long id)
+    /// <param name="actorUserId">行为发起人用户ID</param>
+    /// <param name="id">模型配置ID</param>
+    /// <returns>是否删除成功</returns>
+    public async Task<bool> DeleteLlmModelAsync(long actorUserId, long id)
     {
 
         await using var modelLockHandle = await distributedLock.TryLockAsync("llm:model:id:" + id);
@@ -210,7 +219,7 @@ public class LlmModelService(DatabaseContext db, IdService idService, IUserConte
             }
 
             llmModel.DeleteTime = DateTimeOffset.UtcNow;
-            llmModel.DeleteUserId = userContext.UserId;
+            llmModel.DeleteUserId = actorUserId;
             await db.SaveChangesAsync();
         }
 

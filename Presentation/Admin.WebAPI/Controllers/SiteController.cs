@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Shared;
 using Application.Model.Site.Link;
 using Application.Model.Site.Site;
@@ -57,7 +58,7 @@ public class SiteController(SiteService siteService, LinkService linkService) : 
     /// 创建友情链接
     /// </summary>
     [HttpPost]
-    public Task<long> CreateLink(EditLinkDto createLink) => linkService.CreateLinkAsync(createLink);
+    public Task<long> CreateLink(EditLinkDto createLink) => linkService.CreateLinkAsync(User.GetUserId(), createLink);
 
 
     /// <summary>
@@ -71,7 +72,7 @@ public class SiteController(SiteService siteService, LinkService linkService) : 
     /// 删除友情链接
     /// </summary>
     [HttpDelete]
-    public Task<bool> DeleteLink(long id) => linkService.DeleteLinkAsync(id);
+    public Task<bool> DeleteLink(long id) => linkService.DeleteLinkAsync(User.GetUserId(), id);
 
 
 

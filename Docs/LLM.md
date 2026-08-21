@@ -37,7 +37,9 @@ builder.Services.AddLlmClientFactory();
 - `AddHttpClient()` 提供 `IHttpClientFactory`
 - `AddLlmClientFactory()` 注册单例 `ILlmClientFactory`
 
-宿主还需要已有的 `DatabaseContext`、`IdService` 和 `IUserContext` 注册。管理模型与应用配置时还会使用 `IDistributedLock`
+宿主还需要已有的 `DatabaseContext` 和 `IdService` 注册。管理模型与应用配置时还会使用 `IDistributedLock`
+
+`LlmInvokeService` 不读取当前 HTTP 用户上下文。调用方通过第一个参数显式传入 `long? actorUserId`：认证调用传真实用户 ID，匿名或系统调用传 `null`
 
 当前 `Admin.WebAPI` 和 `Client.WebAPI` 已完成上述引用和注册。`TaskService` 没有引用 `Application.Service.LLM`，因此不会自动注册 LLM 应用服务；如果任务需要调用 LLM，应先评估宿主边界，再显式增加项目引用和基础服务注册
 
@@ -145,7 +147,7 @@ LLM 相关业务编排建议继续放在 `Application.Service.LLM` 中，由具�
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class ArticleSummaryService(LlmInvokeService llmInvokeService)
 {
-    public Task<string?> SummarizeAsync(string content, CancellationToken cancellationToken)
+    public Task<string?> SummarizeAsync(long? actorUserId, string content, CancellationToken cancellationToken)
     {
         Dictionary<string, string> parameters = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -153,7 +155,7 @@ public class ArticleSummaryService(LlmInvokeService llmInvokeService)
             ["language"] = "中文"
         };
 
-        return llmInvokeService.ChatContentAsync("article-summary", parameters, cancellationToken);
+        return llmInvokeService.ChatContentAsync(actorUserId, "article-summary", parameters, cancellationToken);
     }
 }
 ```
@@ -166,6 +168,7 @@ public class ArticleSummaryService(LlmInvokeService llmInvokeService)
 
 ```csharp
 var response = await llmInvokeService.ChatAsync(
+    actorUserId,
     "article-summary",
     parameters,
     cancellationToken);
@@ -191,7 +194,7 @@ var responseId = response.Id;
 var result = new StringBuilder();
 
 await foreach (var chunk in llmInvokeService
-    .ChatStreamAsync("article-summary", parameters, cancellationToken)
+    .ChatStreamAsync(actorUserId, "article-summary", parameters, cancellationToken)
     .WithCancellation(cancellationToken))
 {
     var delta = chunk.Choices.FirstOrDefault()?.Delta?.Content;
@@ -241,7 +244,7 @@ await foreach (var chunk in llmInvokeService
 - 渲染后的 System 提示词
 - 渲染后的 User 提示词
 - Assistant 返回文本
-- 已认证用户的用户 ID；匿名调用时为空
+- 调用方明确传入的 `actorUserId`；匿名或系统调用时为空
 
 非流式调用记录第一条 Choice 的文本。流式调用只有在完整消费到带 `FinishReason` 的结束分片后才保存；提前停止枚举或上游没有返回结束原因时不会保存
 
@@ -290,6 +293,7 @@ await foreach (var chunk in llmInvokeService
 ## 使用检查清单
 
 - 调用方是否优先使用 `LlmInvokeService`
+- 是否显式传入可信的 `actorUserId`，匿名或系统调用是否传入 `null`
 - LLM 相关业务服务是否放在 `Application.Service.LLM`
 - 宿主是否引用该项目并注册 `BatchRegisterServices()`、`AddHttpClient()`、`AddLlmClientFactory()`
 - 模型 Endpoint 是否是与协议匹配的完整请求地址

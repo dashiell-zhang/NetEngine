@@ -28,7 +28,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\Infrastructure\FileStorage\FileStorage.csproj" />
 		<ProjectReference Include="..\..\Repository\Repository.csproj" />
-		<ProjectReference Include="..\Application.Interface\Application.Interface.csproj" />
+		<ProjectReference Include="..\Application.Model\Application.Model.csproj" />
 	</ItemGroup>
 
 </Project>

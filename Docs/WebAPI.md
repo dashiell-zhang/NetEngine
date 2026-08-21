@@ -105,6 +105,14 @@ Controller 或 Action 使用 `[Authorize]` 后，除了要求用户已经通过�
 
 Swagger 会为需要授权且没有 `[AllowAnonymous]` 的接口添加 Bearer Token 输入支持
 
+### 用户身份边界
+
+Controller 直接通过 ASP.NET Core 提供的 `ControllerBase.User` 获取当前请求用户，并使用 WebAPI.Core 的 `ClaimsPrincipalExtension.GetUserId()` 解析用户 ID。PermissionService 从 `AuthorizationHandlerContext.User` 读取相同的可信身份和 Token 续签 Claims
+
+Controller 将解析结果以 `actorUserId` 或 `targetUserId` 明确传给 Application Service，客户端 DTO 不承载当前操作人的用户 ID。允许匿名的调用使用 `GetUserIdOrNull()`，未认证时传入 `null`
+
+Application Service 不读取 HTTP 请求上下文。需要后台任务代表用户继续执行时，由入队端把可信 `actorUserId` 写入任务参数
+
 ## RSA 字段解密
 
 使用 `RSADecryptFilter` 时，宿主需要提供：

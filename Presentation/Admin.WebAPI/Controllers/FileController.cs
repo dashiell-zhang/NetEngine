@@ -1,3 +1,4 @@
+using WebAPI.Core.Extensions;
 using Application.Model.Basic.File;
 using Application.Service.Basic;
 using Common;
@@ -65,7 +66,7 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
                     TempFilePath = tempFilePath,
                 };
 
-                return await fileService.UploadFileAsync(savePath, uploadFile);
+                return await fileService.UploadFileAsync(User.GetUserId(), savePath, uploadFile);
             }
             finally
             {
@@ -197,7 +198,7 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
     /// <param name="id">文件ID</param>
     /// <returns></returns>
     [HttpDelete]
-    public Task<bool> DeleteFile(long id) => fileService.DeleteFileAsync(id);
+    public Task<bool> DeleteFile(long id) => fileService.DeleteFileAsync(User.GetUserId(), id);
 
 
 }

@@ -9,7 +9,7 @@ namespace Admin.WebAPI.Libraries.Ueditor;
 /// <summary>
 /// 处理 UEditor 远程图片抓取
 /// </summary>
-public class CrawlerHandler(string rootPath, HttpContext httpContext, FileService fileService, CrawlerConfig crawlerConfig, long uploadKey, string fileServerUrl)
+public class CrawlerHandler(long actorUserId, string rootPath, HttpContext httpContext, FileService fileService, CrawlerConfig crawlerConfig, long uploadKey, string fileServerUrl)
 {
 
     /// <summary>
@@ -155,7 +155,7 @@ public class CrawlerHandler(string rootPath, HttpContext httpContext, FileServic
                 TempFilePath = tempFilePath
             };
 
-            var fileId = await fileService.UploadFileAsync(rootPath, uploadFile);
+            var fileId = await fileService.UploadFileAsync(actorUserId, rootPath, uploadFile);
             var fileUrl = await fileService.GetFileUrlAsync(fileId);
 
             result.State = "SUCCESS";

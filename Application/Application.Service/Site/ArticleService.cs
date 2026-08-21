@@ -1,4 +1,3 @@
-using Application.Interface;
 using Application.Model.Shared;
 using Application.Model.Site.Article;
 using Application.Service.Basic;
@@ -16,7 +15,7 @@ namespace Application.Service.Site;
 /// 提供栏目和文章业务管理能力
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class ArticleService(IUserContext userContext, DatabaseContext db, IdService idService, FileService fileService)
+public class ArticleService(DatabaseContext db, IdService idService, FileService fileService)
 {
 
     /// <summary>
@@ -110,14 +109,15 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <summary>
     /// 创建栏目
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="createCategory"></param>
     /// <returns></returns>
-    public async Task<long> CreateCategoryAsync(EditCategoryDto createCategory)
+    public async Task<long> CreateCategoryAsync(long actorUserId, EditCategoryDto createCategory)
     {
         Category category = new()
         {
             Id = idService.GetId(),
-            CreateUserId = userContext.UserId,
+            CreateUserId = actorUserId,
             Name = createCategory.Name,
             ParentId = createCategory.ParentId,
             Remark = createCategory.Remark,
@@ -191,9 +191,10 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <summary>
     /// 删除栏目
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="id"></param>
     /// <returns></returns>
-    public async Task<bool> DeleteCategoryAsync(long id)
+    public async Task<bool> DeleteCategoryAsync(long actorUserId, long id)
     {
         var category = await db.Category.Where(t => t.Id == id).FirstOrDefaultAsync();
 
@@ -212,7 +213,7 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
             }
 
             category.DeleteTime = DateTimeOffset.UtcNow;
-            category.DeleteUserId = userContext.UserId;
+            category.DeleteUserId = actorUserId;
 
             await db.SaveChangesAsync();
 
@@ -299,15 +300,16 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <summary>
     /// 创建文章
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="createArticle"></param>
     /// <param name="uploadKey">上传批次标识</param>
     /// <returns></returns>
-    public async Task<long> CreateArticleAsync(EditArticleDto createArticle, long uploadKey)
+    public async Task<long> CreateArticleAsync(long actorUserId, EditArticleDto createArticle, long uploadKey)
     {
         Article article = new()
         {
             Id = idService.GetId(),
-            CreateUserId = userContext.UserId,
+            CreateUserId = actorUserId,
             Title = createArticle.Title,
             Content = createArticle.Content,
             CategoryId = long.Parse(createArticle.CategoryId),
@@ -329,8 +331,8 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
 
         db.Article.Add(article);
 
-        await fileService.SyncContentFilesAsync("Article", uploadKey, article.Id, createArticle.ContentFileIdList ?? []);
-        await fileService.BindFilesAsync("Article", "cover", uploadKey, article.Id);
+        await fileService.SyncContentFilesAsync(actorUserId, "Article", uploadKey, article.Id, createArticle.ContentFileIdList ?? []);
+        await fileService.BindFilesAsync(actorUserId, "Article", "cover", uploadKey, article.Id);
 
         await db.SaveChangesAsync();
 
@@ -341,11 +343,12 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <summary>
     /// 更新文章信息
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="articleId"></param>
     /// <param name="updateArticle"></param>
     /// <param name="uploadKey">上传批次标识</param>
     /// <returns></returns>
-    public async Task<bool> UpdateArticleAsync(long articleId, EditArticleDto updateArticle, long uploadKey)
+    public async Task<bool> UpdateArticleAsync(long actorUserId, long articleId, EditArticleDto updateArticle, long uploadKey)
     {
         var article = await db.Article.Where(t => t.Id == articleId).FirstOrDefaultAsync();
 
@@ -369,8 +372,8 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
                 article.Digest = updateArticle.Digest;
             }
 
-            await fileService.SyncContentFilesAsync("Article", uploadKey, article.Id, updateArticle.ContentFileIdList ?? []);
-            await fileService.BindFilesAsync("Article", "cover", uploadKey, article.Id);
+            await fileService.SyncContentFilesAsync(actorUserId, "Article", uploadKey, article.Id, updateArticle.ContentFileIdList ?? []);
+            await fileService.BindFilesAsync(actorUserId, "Article", "cover", uploadKey, article.Id);
 
             await db.SaveChangesAsync();
 
@@ -384,18 +387,19 @@ public class ArticleService(IUserContext userContext, DatabaseContext db, IdServ
     /// <summary>
     /// 删除文章
     /// </summary>
+    /// <param name="actorUserId">行为发起人用户ID</param>
     /// <param name="id"></param>
     /// <returns></returns>
-    public async Task<bool> DeleteArticleAsync(long id)
+    public async Task<bool> DeleteArticleAsync(long actorUserId, long id)
     {
         var article = await db.Article.Where(t => t.Id == id).FirstOrDefaultAsync();
 
         if (article != null)
         {
             article.DeleteTime = DateTimeOffset.UtcNow;
-            article.DeleteUserId = userContext.UserId;
+            article.DeleteUserId = actorUserId;
 
-            await fileService.SoftDeleteBusinessFilesAsync("Article", article.Id);
+            await fileService.SoftDeleteBusinessFilesAsync(actorUserId, "Article", article.Id);
 
             await db.SaveChangesAsync();
         }

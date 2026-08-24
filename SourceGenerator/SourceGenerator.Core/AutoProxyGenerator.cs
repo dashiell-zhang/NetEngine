@@ -415,6 +415,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             
             sb.AppendLine("{")
               .AppendLine("    private readonly IServiceProvider? __sp;")
+              .AppendLine("    private readonly ILogger? __logger;")
               .AppendLine();
 
             // 构造函数生成规则 镜像基类公开构造函数 并在必要时添加以 IServiceProvider 开头的重载
@@ -445,6 +446,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 if (firstSpName is not null)
                 {
                     sb.AppendLine("        __sp = " + firstSpName + ";");
+                    sb.AppendLine("        __logger = __sp?.GetService<ILoggerFactory>()?.CreateLogger(\"ProxyRuntime\");");
                 }
 
                 sb.AppendLine("    }")
@@ -472,6 +474,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                   .AppendLine("        : base(" + argList + ")")
                   .AppendLine("    {")
                   .AppendLine("        __sp = sp;")
+                  .AppendLine("        __logger = __sp.GetService<ILoggerFactory>()?.CreateLogger(\"ProxyRuntime\");")
                   .AppendLine("    }")
                   .AppendLine()
                   .AppendLine();
@@ -742,7 +745,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + rawMethodName + "\";");
             AppendMethodKey(sb, targetType, method, typeFullName);
-            sb.AppendLine("        var __logger = __sp?.GetService<ILoggerFactory>()?.CreateLogger(\"ProxyRuntime\");");
 
             var hasByRef = hasByRefAny;
             
@@ -1043,7 +1045,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + rawMethodName + "\";");
             AppendMethodKey(sb, cls, method, typeFullName);
-            sb.AppendLine("        var __logger = __sp?.GetService<ILoggerFactory>()?.CreateLogger(\"ProxyRuntime\");");
 
             var hasByRef2 = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
 

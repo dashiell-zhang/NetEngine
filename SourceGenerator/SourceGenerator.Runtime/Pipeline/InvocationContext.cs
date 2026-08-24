@@ -8,6 +8,8 @@ namespace SourceGenerator.Runtime.Pipeline;
 public sealed class InvocationContext
 {
 
+    private Dictionary<Type, object>? features;
+
     /// <summary>
     /// 方法的标识名称 一般为类型名加方法名
     /// </summary>
@@ -80,8 +82,10 @@ public sealed class InvocationContext
     public required IReadOnlyList<IInvocationAsyncBehavior> Behaviors { get; init; }
 
 
-    // 用于行为之间传递特定数据或配置的特性存储容器
-    public Dictionary<Type, object> Features { get; } = new();
+    /// <summary>
+    /// 用于行为之间传递特定数据或配置的特性存储容器
+    /// </summary>
+    public Dictionary<Type, object> Features => features ??= [];
 
 
     /// <summary>
@@ -90,7 +94,7 @@ public sealed class InvocationContext
     /// <typeparam name="T">特性类型</typeparam>
     /// <returns>对应类型的特性实例或 null</returns>
     public T? GetFeature<T>() where T : class
-        => Features.TryGetValue(typeof(T), out var value) ? (T)value : null;
+        => features?.TryGetValue(typeof(T), out var value) == true ? (T)value : null;
 
 
     /// <summary>

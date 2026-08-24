@@ -523,7 +523,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             var sourceParameter = sourceIsParameter ? "IAsyncEnumerable<" + itemType + "> __s, " : string.Empty;
 
             sb.AppendLine("        async IAsyncEnumerable<" + itemType + "> __streamWrapper(" + sourceParameter + "[global::System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken __enumerationCancellationToken = default){");
-            sb.AppendLine("            var __capturedItems = new List<object?>(AsyncStreamResultSnapshot.DefaultCaptureLimit);");
             sb.AppendLine("            long __enumeratedCount = 0;");
             sb.AppendLine("            var __completedNaturally = false;");
 
@@ -531,6 +530,24 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             {
                 sb.AppendLine("            try { foreach (var __f in __filters) __f.OnBefore(__ctx); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             }
+
+            sb.AppendLine("            List<object?>? __capturedItems = null;");
+            sb.AppendLine("            try");
+            sb.AppendLine("            {");
+            sb.AppendLine("                foreach (var __f in __filters)");
+            sb.AppendLine("                {");
+            sb.AppendLine("                    if (__f is IAsyncStreamResultCaptureBehavior __captureBehavior && __captureBehavior.ShouldCaptureAsyncStreamItems(__ctx))");
+            sb.AppendLine("                    {");
+            sb.AppendLine("                        __capturedItems = new List<object?>(AsyncStreamResultSnapshot.DefaultCaptureLimit);");
+            sb.AppendLine("                        break;");
+            sb.AppendLine("                    }");
+            sb.AppendLine("                }");
+            sb.AppendLine("            }");
+            sb.AppendLine("            catch (Exception __ex)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+            sb.AppendLine("                throw;");
+            sb.AppendLine("            }");
 
             sb.AppendLine("            IAsyncEnumerator<" + itemType + "> __e;");
             sb.AppendLine("            try { __e = " + sourceExpression + ".GetAsyncEnumerator(__enumerationCancellationToken); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
@@ -546,7 +563,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("                    " + itemType + " __item;");
             sb.AppendLine("                    try { __item = __e.Current; } catch (Exception __ex) { __primaryException = __ex; __faulted = true; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             sb.AppendLine("                    __enumeratedCount++;");
-            sb.AppendLine("                    if (__capturedItems.Count < AsyncStreamResultSnapshot.DefaultCaptureLimit)");
+            sb.AppendLine("                    if (__capturedItems is not null && __capturedItems.Count < AsyncStreamResultSnapshot.DefaultCaptureLimit)");
             sb.AppendLine("                    {");
             sb.AppendLine("                        try { __capturedItems.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __capturedItems.Add(Convert.ToString(__item)); }");
             sb.AppendLine("                    }");
@@ -568,7 +585,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("                }");
             sb.AppendLine("                if (!__faulted)");
             sb.AppendLine("                {");
-            sb.AppendLine("                    var __streamResult = new AsyncStreamResultSnapshot { EnumeratedCount = __enumeratedCount, CompletedNaturally = __completedNaturally, Truncated = __enumeratedCount > __capturedItems.Count, CapturedItems = __capturedItems };");
+            sb.AppendLine("                    var __capturedItemCount = __capturedItems?.Count ?? 0;");
+            sb.AppendLine("                    var __capturedItemSnapshot = __capturedItems is null ? (IReadOnlyList<object?>)Array.Empty<object?>() : __capturedItems;");
+            sb.AppendLine("                    var __streamResult = new AsyncStreamResultSnapshot { EnumeratedCount = __enumeratedCount, CompletedNaturally = __completedNaturally, Truncated = __enumeratedCount > __capturedItemCount, CapturedItems = __capturedItemSnapshot };");
             sb.AppendLine("                    try { foreach (var __f in __filters) __f.OnAfter(__ctx, __streamResult); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
             sb.AppendLine("                }");
             sb.AppendLine("            }");

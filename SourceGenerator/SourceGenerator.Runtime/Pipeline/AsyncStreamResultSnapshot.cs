@@ -7,7 +7,7 @@ public sealed class AsyncStreamResultSnapshot
 {
 
     /// <summary>
-    /// 默认允许保留的异步流元素数量
+    /// 启用元素捕获时默认允许保留的异步流元素数量
     /// </summary>
     public const int DefaultCaptureLimit = 100;
 
@@ -25,13 +25,13 @@ public sealed class AsyncStreamResultSnapshot
 
 
     /// <summary>
-    /// 是否存在未保留到快照中的元素
+    /// 是否存在未保留到快照中的元素 未启用捕获且已枚举元素时也为 true
     /// </summary>
     public bool Truncated { get; init; }
 
 
     /// <summary>
-    /// 按枚举顺序保留的有限元素快照
+    /// 按枚举顺序保留的有限元素快照 未请求捕获时为空
     /// </summary>
     public IReadOnlyList<object?> CapturedItems { get; init; } = Array.Empty<object?>();
 

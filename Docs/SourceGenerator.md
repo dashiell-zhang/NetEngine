@@ -211,6 +211,8 @@ public virtual Task<ProductDto> GetAsync(long id)
 
 执行顺序为 `Logging → Retry → Cacheable → 实际方法`
 
+异步流方法会在实际枚举期间执行同步 Behavior 生命周期，并在枚举完成或调用方提前释放时向 `OnAfter()` 传递 `AsyncStreamResultSnapshot`。快照始终包含枚举数量、是否自然完成和是否存在未保留元素；默认不复制流元素。确实需要读取元素快照的自定义同步 Behavior 应同时实现 `IAsyncStreamResultCaptureBehavior`，启用后最多按枚举顺序保留前 100 项。`LoggingBehavior` 仅在 Information 日志启用且允许记录返回值时请求捕获
+
 ## EF Core 软删除过滤器
 
 生成器会查找 DbContext 直接声明的 `DbSet<T>`。实体继承 `Repository.Bases.CD` 时，会为该实体生成：

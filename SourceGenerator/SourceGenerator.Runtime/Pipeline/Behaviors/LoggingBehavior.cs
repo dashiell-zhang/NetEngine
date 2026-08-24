@@ -6,7 +6,7 @@ namespace SourceGenerator.Runtime.Pipeline.Behaviors;
 /// <summary>
 /// 在调用前后和异常时记录结构化日志 支持异步和同步行为接口
 /// </summary>
-public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehavior
+public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehavior, IAsyncStreamResultCaptureBehavior
 {
 
     /// <summary>
@@ -134,6 +134,17 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             throw;
         }
     }
+
+
+    /// <summary>
+    /// 判断当前调用是否需要为结果日志捕获异步流元素
+    /// </summary>
+    /// <param name="context">当前调用上下文</param>
+    /// <returns>Information 日志启用且允许记录返回值时返回 true</returns>
+    public bool ShouldCaptureAsyncStreamItems(InvocationContext context)
+        => context.HasReturnValue
+           && context.AllowReturnSerialization
+           && context.Logger?.IsEnabled(LogLevel.Information) == true;
 
 
     /// <summary>

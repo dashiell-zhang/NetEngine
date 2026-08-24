@@ -46,7 +46,7 @@ public static class JsonUtil
     {
 
         /// <summary>
-        /// 包含成员种类和声明类型的稳定名称
+        /// 包含声明类型和属性名称的稳定名称
         /// </summary>
         public required string Name { get; init; }
 
@@ -54,13 +54,7 @@ public static class JsonUtil
         /// <summary>
         /// 待读取的公开属性
         /// </summary>
-        public PropertyInfo? Property { get; init; }
-
-
-        /// <summary>
-        /// 待读取的实例字段
-        /// </summary>
-        public FieldInfo? Field { get; init; }
+        public required PropertyInfo Property { get; init; }
 
 
         /// <summary>
@@ -69,7 +63,7 @@ public static class JsonUtil
         /// <param name="instance">目标对象</param>
         /// <returns>当前成员值</returns>
         public object? GetValue(object instance)
-            => Property is not null ? Property.GetValue(instance) : Field!.GetValue(instance);
+            => Property.GetValue(instance);
 
     }
 
@@ -91,8 +85,7 @@ public static class JsonUtil
     private static readonly JsonSerializerOptions KeyJsonOpts = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        IncludeFields = true
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
 
@@ -218,20 +211,14 @@ public static class JsonUtil
             }
             else if (IsDictionaryType(runtimeType) && value is IEnumerable dictionary)
             {
-                if (!TryWriteCanonicalDictionary(writer, value, dictionary, activeReferences))
+                if (!TryWriteCanonicalDictionary(writer, dictionary, activeReferences))
                     return false;
             }
             else if (value is IEnumerable enumerable)
             {
-                if (IsSetType(runtimeType))
-                {
-                    if (!TryWriteCanonicalSet(writer, value, enumerable, activeReferences))
-                        return false;
-                }
-                else if (!TryWriteCanonicalEnumerable(writer, enumerable, sortItems: false, activeReferences))
-                {
+                if (!IsSupportedCanonicalSequence(value, runtimeType)
+                    || !TryWriteCanonicalSequence(writer, enumerable, activeReferences))
                     return false;
-                }
             }
             else if (!TryWriteCanonicalObject(writer, value, runtimeType, activeReferences))
             {
@@ -336,11 +323,10 @@ public static class JsonUtil
     /// 按键和值的规范化内容排序后写入字典
     /// </summary>
     /// <param name="writer">目标 JSON 写入器</param>
-    /// <param name="dictionaryObject">字典对象</param>
     /// <param name="dictionary">待写入的字典枚举内容</param>
     /// <param name="activeReferences">当前递归路径中的引用对象</param>
     /// <returns>如果所有字典项均可稳定写入则返回 true</returns>
-    private static bool TryWriteCanonicalDictionary(Utf8JsonWriter writer, object dictionaryObject, IEnumerable dictionary, HashSet<object> activeReferences)
+    private static bool TryWriteCanonicalDictionary(Utf8JsonWriter writer, IEnumerable dictionary, HashSet<object> activeReferences)
     {
 
         var entries = new List<(string Key, string Value)>();
@@ -374,13 +360,6 @@ public static class JsonUtil
                 : string.Compare(left.Value, right.Value, StringComparison.Ordinal);
         });
 
-        writer.WriteStartObject();
-        writer.WritePropertyName("$comparer");
-
-        if (!TryWriteCollectionComparer(writer, dictionaryObject, activeReferences))
-            return false;
-
-        writer.WritePropertyName("$entries");
         writer.WriteStartArray();
 
         foreach (var entry in entries)
@@ -394,81 +373,6 @@ public static class JsonUtil
         }
 
         writer.WriteEndArray();
-        writer.WriteEndObject();
-        return true;
-
-    }
-
-
-    /// <summary>
-    /// 按照元素规范化内容排序并连同比较器写入无序集合
-    /// </summary>
-    /// <param name="writer">目标 JSON 写入器</param>
-    /// <param name="setObject">集合对象</param>
-    /// <param name="set">集合枚举内容</param>
-    /// <param name="activeReferences">当前递归路径中的引用对象</param>
-    /// <returns>如果比较器和所有元素均可稳定写入则返回 true</returns>
-    private static bool TryWriteCanonicalSet(Utf8JsonWriter writer, object setObject, IEnumerable set, HashSet<object> activeReferences)
-    {
-
-        writer.WriteStartObject();
-        writer.WritePropertyName("$comparer");
-
-        if (!TryWriteCollectionComparer(writer, setObject, activeReferences))
-            return false;
-
-        writer.WritePropertyName("$items");
-
-        if (!TryWriteCanonicalEnumerable(writer, set, sortItems: true, activeReferences))
-            return false;
-
-        writer.WriteEndObject();
-        return true;
-
-    }
-
-
-    /// <summary>
-    /// 写入集合公开的比较器类型及其实例状态
-    /// </summary>
-    /// <param name="writer">目标 JSON 写入器</param>
-    /// <param name="collection">集合对象</param>
-    /// <param name="activeReferences">当前递归路径中的引用对象</param>
-    /// <returns>如果比较器可以稳定写入则返回 true</returns>
-    private static bool TryWriteCollectionComparer(Utf8JsonWriter writer, object collection, HashSet<object> activeReferences)
-    {
-
-        var collectionType = collection.GetType();
-        var comparerProperty = collectionType.GetProperty("Comparer", BindingFlags.Instance | BindingFlags.Public)
-            ?? collectionType.GetProperty("KeyComparer", BindingFlags.Instance | BindingFlags.Public);
-
-        if (comparerProperty?.GetMethod is null)
-        {
-            writer.WriteNullValue();
-            return true;
-        }
-
-        var comparer = comparerProperty.GetValue(collection);
-
-        if (comparer is null)
-        {
-            writer.WriteNullValue();
-            return true;
-        }
-
-        if (TryCreateCanonicalJson(comparer, activeReferences, out var comparerJson))
-        {
-            writer.WriteRawValue(comparerJson);
-            return true;
-        }
-
-        var comparerType = comparer.GetType();
-        var comparerMembers = CanonicalMembers.GetOrAdd(comparerType, BuildCanonicalMembers);
-
-        if (comparerMembers.Length != 0)
-            return false;
-
-        writer.WriteStringValue(GetStableTypeName(comparerType) + "|stateless");
         return true;
 
     }
@@ -517,65 +421,30 @@ public static class JsonUtil
 
 
     /// <summary>
-    /// 写入有序序列或按照元素规范化内容排序后的集合
+    /// 按照现有元素顺序写入已物化序列
     /// </summary>
     /// <param name="writer">目标 JSON 写入器</param>
     /// <param name="enumerable">待写入的序列</param>
-    /// <param name="sortItems">是否将元素作为无序集合排序</param>
     /// <param name="activeReferences">当前递归路径中的引用对象</param>
     /// <returns>如果所有元素均可稳定写入则返回 true</returns>
-    private static bool TryWriteCanonicalEnumerable(Utf8JsonWriter writer, IEnumerable enumerable, bool sortItems, HashSet<object> activeReferences)
+    private static bool TryWriteCanonicalSequence(Utf8JsonWriter writer, IEnumerable enumerable, HashSet<object> activeReferences)
     {
 
-        if (!sortItems)
-        {
-            writer.WriteStartArray();
-            var itemCount = 0;
-
-            foreach (var item in enumerable)
-            {
-                if (itemCount >= MaxCanonicalCollectionItems)
-                    return false;
-
-                if (!TryWriteCanonicalValue(writer, item, activeReferences))
-                    return false;
-
-                if (writer.BytesCommitted + writer.BytesPending > MaxCanonicalJsonBytes)
-                    return false;
-
-                itemCount++;
-            }
-
-            writer.WriteEndArray();
-            return true;
-        }
-
-        var items = new List<string>();
-        var totalItemLength = 0L;
+        writer.WriteStartArray();
+        var itemCount = 0;
 
         foreach (var item in enumerable)
         {
-            if (items.Count >= MaxCanonicalCollectionItems)
+            if (itemCount >= MaxCanonicalCollectionItems)
                 return false;
 
-            if (!TryCreateCanonicalJson(item, activeReferences, out var itemJson))
+            if (!TryWriteCanonicalValue(writer, item, activeReferences))
                 return false;
 
-            totalItemLength += itemJson.Length;
-
-            if (totalItemLength > MaxCanonicalJsonBytes)
+            if (writer.BytesCommitted + writer.BytesPending > MaxCanonicalJsonBytes)
                 return false;
 
-            items.Add(itemJson);
-        }
-
-        items.Sort(StringComparer.Ordinal);
-
-        writer.WriteStartArray();
-
-        foreach (var item in items)
-        {
-            writer.WriteRawValue(item);
+            itemCount++;
         }
 
         writer.WriteEndArray();
@@ -585,7 +454,17 @@ public static class JsonUtil
 
 
     /// <summary>
-    /// 按公开属性和全部实例字段写入普通对象
+    /// 判断序列是否属于可以安全重复读取的常见已物化类型
+    /// </summary>
+    /// <param name="value">待检查的序列对象</param>
+    /// <param name="runtimeType">序列的实际运行时类型</param>
+    /// <returns>如果序列可以参与参数键生成则返回 true</returns>
+    private static bool IsSupportedCanonicalSequence(object value, Type runtimeType)
+        => runtimeType.IsArray || value is IList;
+
+
+    /// <summary>
+    /// 按公开可读属性写入普通对象
     /// </summary>
     /// <param name="writer">目标 JSON 写入器</param>
     /// <param name="value">待写入的对象</param>
@@ -642,19 +521,6 @@ public static class JsonUtil
             });
         }
 
-        for (var currentType = runtimeType; currentType is not null; currentType = currentType.BaseType)
-        {
-            foreach (var field in currentType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
-            {
-                var declaringType = field.DeclaringType ?? currentType;
-                members.Add(new CanonicalMemberAccessor
-                {
-                    Name = "field|" + GetStableTypeName(declaringType) + "|" + field.Name,
-                    Field = field
-                });
-            }
-        }
-
         return members.OrderBy(member => member.Name, StringComparer.Ordinal).ToArray();
 
     }
@@ -703,16 +569,6 @@ public static class JsonUtil
         => typeof(IDictionary).IsAssignableFrom(type)
            || ImplementsGenericInterface(type, typeof(IDictionary<,>))
            || ImplementsGenericInterface(type, typeof(IReadOnlyDictionary<,>));
-
-
-    /// <summary>
-    /// 判断类型是否属于无序集合契约
-    /// </summary>
-    /// <param name="type">待检查的运行时类型</param>
-    /// <returns>如果类型实现集合接口则返回 true</returns>
-    private static bool IsSetType(Type type)
-        => ImplementsGenericInterface(type, typeof(ISet<>))
-           || ImplementsGenericInterface(type, typeof(IReadOnlySet<>));
 
 
     /// <summary>

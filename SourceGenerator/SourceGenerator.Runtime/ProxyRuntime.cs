@@ -18,29 +18,30 @@ public static class ProxyRuntime
     public static T Execute<T>(InvocationContext ctx, Func<T> inner)
     {
 
-        var behaviors = GetSynchronousBehaviors(ctx);
+        var behaviors = ctx.Behaviors;
+        ValidateSynchronousBehaviors(behaviors);
 
         try
         {
-            foreach (var behavior in behaviors)
+            for (var i = 0; i < behaviors.Count; i++)
             {
-                behavior.OnBefore(ctx);
+                ((IInvocationBehavior)behaviors[i]).OnBefore(ctx);
             }
 
             var result = inner();
 
-            foreach (var behavior in behaviors)
+            for (var i = 0; i < behaviors.Count; i++)
             {
-                behavior.OnAfter(ctx, result);
+                ((IInvocationBehavior)behaviors[i]).OnAfter(ctx, result);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            foreach (var behavior in behaviors)
+            for (var i = 0; i < behaviors.Count; i++)
             {
-                behavior.OnException(ctx, ex);
+                ((IInvocationBehavior)behaviors[i]).OnException(ctx, ex);
             }
 
             throw;
@@ -105,27 +106,19 @@ public static class ProxyRuntime
 
 
     /// <summary>
-    /// 获取当前调用中全部可用于同步代理路径的行为
+    /// 验证当前调用中的全部行为均可用于同步代理路径
     /// </summary>
-    /// <param name="ctx">调用上下文</param>
-    /// <returns>同步行为列表</returns>
-    private static IReadOnlyList<IInvocationBehavior> GetSynchronousBehaviors(InvocationContext ctx)
+    /// <param name="behaviors">待验证的行为列表</param>
+    private static void ValidateSynchronousBehaviors(IReadOnlyList<IInvocationAsyncBehavior> behaviors)
     {
-
-        var behaviors = ctx.Behaviors;
-        var synchronousBehaviors = new IInvocationBehavior[behaviors.Count];
 
         for (var i = 0; i < behaviors.Count; i++)
         {
-            if (behaviors[i] is not IInvocationBehavior synchronousBehavior)
+            if (behaviors[i] is not IInvocationBehavior)
             {
                 throw new InvalidOperationException($"行为 {behaviors[i].GetType().FullName} 不支持同步代理方法，请将目标方法返回类型改为 Task 或 ValueTask");
             }
-
-            synchronousBehaviors[i] = synchronousBehavior;
         }
-
-        return synchronousBehaviors;
 
     }
 

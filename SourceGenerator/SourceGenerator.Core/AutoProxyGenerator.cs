@@ -273,7 +273,71 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         }
 
 
+        /// <summary>
+        /// 保存单个代理行为及其配置的生成信息
+        /// </summary>
+        private readonly struct ProxyBehaviorSpec
+        {
+
+            /// <summary>
+            /// 行为类型名称
+            /// </summary>
+            public string BehaviorTypeName { get; }
+
+
+            /// <summary>
+            /// 行为配置类型名称
+            /// </summary>
+            public string? OptionsTypeName { get; }
+
+
+            /// <summary>
+            /// 行为配置初始化表达式
+            /// </summary>
+            public string? OptionsInitializer { get; }
+
+
+            /// <summary>
+            /// 是否为生成器确认无状态的内置行为
+            /// </summary>
+            public bool IsBuiltIn { get; }
+
+
+            /// <summary>
+            /// 创建代理行为生成信息
+            /// </summary>
+            /// <param name="behaviorTypeName">行为类型名称</param>
+            /// <param name="optionsTypeName">行为配置类型名称</param>
+            /// <param name="optionsInitializer">行为配置初始化表达式</param>
+            /// <param name="isBuiltIn">是否为生成器确认无状态的内置行为</param>
+            public ProxyBehaviorSpec(string behaviorTypeName, string? optionsTypeName, string? optionsInitializer, bool isBuiltIn)
+            {
+
+                BehaviorTypeName = behaviorTypeName;
+                OptionsTypeName = optionsTypeName;
+                OptionsInitializer = optionsInitializer;
+                IsBuiltIn = isBuiltIn;
+
+            }
+
+        }
+
+
         private const string ProxyBehaviorAttributeMetadataName = "SourceGenerator.Runtime.Attributes.ProxyBehaviorAttribute";
+
+        private const string LoggingBehaviorMetadataName = "SourceGenerator.Runtime.Pipeline.Behaviors.LoggingBehavior";
+
+        private const string RetryBehaviorMetadataName = "SourceGenerator.Runtime.Pipeline.Behaviors.RetryBehavior";
+
+        private const string ConcurrencyLimitBehaviorMetadataName = "SourceGenerator.Runtime.Pipeline.Behaviors.ConcurrencyLimitBehavior";
+
+        private const string CacheableBehaviorMetadataName = "SourceGenerator.Runtime.Pipeline.Behaviors.CacheableBehavior";
+
+        private const string RetryOptionsMetadataName = "SourceGenerator.Runtime.Options.RetryOptions";
+
+        private const string ConcurrencyLimitOptionsMetadataName = "SourceGenerator.Runtime.Options.ConcurrencyLimitOptions";
+
+        private const string CacheableOptionsMetadataName = "SourceGenerator.Runtime.Options.CacheableOptions";
 
 
         private static readonly SymbolDisplayFormat SourceTypeDisplayFormat = SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
@@ -321,6 +385,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// 代理类和代理方法作用域中可能遮蔽类型或根命名空间的类型名称
         /// </summary>
         private readonly HashSet<string> scopedTypeNames = new(StringComparer.Ordinal);
+
+
+        /// <summary>
+        /// 当前代理类中已生成的内置行为管道缓存数量
+        /// </summary>
+        private int cachedBehaviorPipelineCount;
 
 
         /// <summary>
@@ -528,14 +598,15 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             if (invokeBefore)
             {
-                sb.AppendLine("            try { foreach (var __f in __filters) __f.OnBefore(__ctx); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                sb.AppendLine("            try { __invokeBefore(__filters, __ctx); } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
             }
 
             sb.AppendLine("            List<object?>? __capturedItems = null;");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
-            sb.AppendLine("                foreach (var __f in __filters)");
+            sb.AppendLine("                for (var __behaviorIndex = 0; __behaviorIndex < __filters.Count; __behaviorIndex++)");
             sb.AppendLine("                {");
+            sb.AppendLine("                    var __f = __filters[__behaviorIndex];");
             sb.AppendLine("                    if (__f is IAsyncStreamResultCaptureBehavior __captureBehavior && __captureBehavior.ShouldCaptureAsyncStreamItems(__ctx))");
             sb.AppendLine("                    {");
             sb.AppendLine("                        __capturedItems = new List<object?>(AsyncStreamResultSnapshot.DefaultCaptureLimit);");
@@ -545,12 +616,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("            }");
             sb.AppendLine("            catch (Exception __ex)");
             sb.AppendLine("            {");
-            sb.AppendLine("                foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+            sb.AppendLine("                __invokeException(__filters, __ctx, __ex);");
             sb.AppendLine("                throw;");
             sb.AppendLine("            }");
 
             sb.AppendLine("            IAsyncEnumerator<" + itemType + "> __e;");
-            sb.AppendLine("            try { __e = " + sourceExpression + ".GetAsyncEnumerator(__enumerationCancellationToken); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+            sb.AppendLine("            try { __e = " + sourceExpression + ".GetAsyncEnumerator(__enumerationCancellationToken); } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
             sb.AppendLine("            var __faulted = false;");
             sb.AppendLine("            Exception? __primaryException = null;");
             sb.AppendLine("            try");
@@ -558,10 +629,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("                while (true)");
             sb.AppendLine("                {");
             sb.AppendLine("                    bool __moved;");
-            sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { __primaryException = __ex; __faulted = true; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+            sb.AppendLine("                    try { __moved = await __e.MoveNextAsync(); } catch (Exception __ex) { __primaryException = __ex; __faulted = true; __invokeException(__filters, __ctx, __ex); throw; }");
             sb.AppendLine("                    if (!__moved) { __completedNaturally = true; break; }");
             sb.AppendLine("                    " + itemType + " __item;");
-            sb.AppendLine("                    try { __item = __e.Current; } catch (Exception __ex) { __primaryException = __ex; __faulted = true; foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+            sb.AppendLine("                    try { __item = __e.Current; } catch (Exception __ex) { __primaryException = __ex; __faulted = true; __invokeException(__filters, __ctx, __ex); throw; }");
             sb.AppendLine("                    __enumeratedCount++;");
             sb.AppendLine("                    if (__capturedItems is not null && __capturedItems.Count < AsyncStreamResultSnapshot.DefaultCaptureLimit)");
             sb.AppendLine("                    {");
@@ -578,7 +649,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("                    if (__primaryException is null)");
             sb.AppendLine("                    {");
             sb.AppendLine("                        __faulted = true;");
-            sb.AppendLine("                        foreach (var __f in __filters) __f.OnException(__ctx, __disposeException);");
+            sb.AppendLine("                        __invokeException(__filters, __ctx, __disposeException);");
             sb.AppendLine("                        throw;");
             sb.AppendLine("                    }");
             sb.AppendLine("                    __ctx.Logger?.LogError(__disposeException, \"异步流枚举器释放失败，已保留原始枚举异常 {PrimaryExceptionType}\", __primaryException.GetType().FullName);");
@@ -588,7 +659,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("                    var __capturedItemCount = __capturedItems?.Count ?? 0;");
             sb.AppendLine("                    var __capturedItemSnapshot = __capturedItems is null ? (IReadOnlyList<object?>)Array.Empty<object?>() : __capturedItems;");
             sb.AppendLine("                    var __streamResult = new AsyncStreamResultSnapshot { EnumeratedCount = __enumeratedCount, CompletedNaturally = __completedNaturally, Truncated = __enumeratedCount > __capturedItemCount, CapturedItems = __capturedItemSnapshot };");
-            sb.AppendLine("                    try { foreach (var __f in __filters) __f.OnAfter(__ctx, __streamResult); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+            sb.AppendLine("                    try { __invokeAfter(__filters, __ctx, __streamResult); } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
             sb.AppendLine("                }");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
@@ -613,17 +684,49 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("        {");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
-            sb.AppendLine("                foreach (var __f in __filters) __f.OnBefore(__ctx);");
+            sb.AppendLine("                __invokeBefore(__filters, __ctx);");
             sb.AppendLine("                var __s = await " + callExpression + ";");
             sb.AppendLine("                return __streamWrapper(__s);");
             sb.AppendLine("            }");
             sb.AppendLine("            catch (Exception __ex)");
             sb.AppendLine("            {");
-            sb.AppendLine("                foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+            sb.AppendLine("                __invokeException(__filters, __ctx, __ex);");
             sb.AppendLine("                throw;");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine("        return " + wrapperName + "();");
+
+        }
+
+
+        /// <summary>
+        /// 生成同步行为兼容性验证并直接复用原行为列表
+        /// </summary>
+        /// <param name="sb">目标源码构建器</param>
+        private static void AppendSynchronousBehaviorValidation(StringBuilder sb)
+        {
+
+            sb.AppendLine("        var __filters = __behaviors;");
+            sb.AppendLine("        for (var __behaviorIndex = 0; __behaviorIndex < __filters.Count; __behaviorIndex++)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (__filters[__behaviorIndex] is not IInvocationBehavior)");
+            sb.AppendLine("                throw new InvalidOperationException($\"行为 {__filters[__behaviorIndex].GetType().FullName} 不支持当前代理方法\");");
+            sb.AppendLine("        }");
+            sb.AppendLine("        static void __invokeBefore(IReadOnlyList<IInvocationAsyncBehavior> __items, InvocationContext __context)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            for (var __behaviorIndex = 0; __behaviorIndex < __items.Count; __behaviorIndex++)");
+            sb.AppendLine("                ((IInvocationBehavior)__items[__behaviorIndex]).OnBefore(__context);");
+            sb.AppendLine("        }");
+            sb.AppendLine("        static void __invokeAfter(IReadOnlyList<IInvocationAsyncBehavior> __items, InvocationContext __context, object? __result)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            for (var __behaviorIndex = 0; __behaviorIndex < __items.Count; __behaviorIndex++)");
+            sb.AppendLine("                ((IInvocationBehavior)__items[__behaviorIndex]).OnAfter(__context, __result);");
+            sb.AppendLine("        }");
+            sb.AppendLine("        static void __invokeException(IReadOnlyList<IInvocationAsyncBehavior> __items, InvocationContext __context, Exception __exception)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            for (var __behaviorIndex = 0; __behaviorIndex < __items.Count; __behaviorIndex++)");
+            sb.AppendLine("                ((IInvocationBehavior)__items[__behaviorIndex]).OnException(__context, __exception);");
+            sb.AppendLine("        }");
 
         }
 
@@ -730,20 +833,19 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             
             var needsAsync = hasByRefAny && returnTypeInfo.IsAwaitable;
 
-            var behaviorSnippets = new List<string>();
-
-            var optionsSetters = new List<string>();
+            var behaviorSpecs = new List<ProxyBehaviorSpec>();
 
             var methodAttributes = method.GetAttributes();
 
             foreach (var a in methodAttributes)
             {
-                if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
+                if (TryGetBehaviorSpec(a, out var behaviorSpec))
                 {
-                    behaviorSnippets.Add($"new {behaviorFull}()");
-                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                    behaviorSpecs.Add(behaviorSpec);
                 }
             }
+
+            PrepareBehaviorPipeline(sb, behaviorSpecs, out var behaviorExpression, out var optionsSetters);
             
             var sigReturnType = method.ReturnsVoid
                 ? "void"
@@ -767,7 +869,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var hasByRef = hasByRefAny;
             
-            sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+            sb.AppendLine("        var __behaviors = " + behaviorExpression + ";");
             
             var __hasReturn = returnTypeInfo.HasReturnValue;
             var __allowRet = __hasReturn && IsAllowReturnSerialization(method, returnTypeInfo);
@@ -779,8 +881,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             if (hasByRef || isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable)
             {
-                sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
-                sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
+                AppendSynchronousBehaviorValidation(sb);
                 
                 if (isAsyncEnumerable)
                 {
@@ -799,19 +900,19 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
                     sb.AppendLine($"            await {callTarget}.{methodName}{typeParams}({argList});");
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                    sb.AppendLine("            __invokeAfter(__filters, __ctx, null);");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
@@ -829,12 +930,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
                     sb.AppendLine($"            var __res = await {callTarget}.{methodName}{typeParams}({argList});");
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
+                    sb.AppendLine("            __invokeAfter(__filters, __ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
@@ -842,7 +943,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
@@ -859,12 +960,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
                     sb.AppendLine($"            await {callTarget}.{methodName}{typeParams}({argList});");
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                    sb.AppendLine("            __invokeAfter(__filters, __ctx, null);");
                     sb.AppendLine("            return;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
@@ -873,7 +974,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
@@ -882,12 +983,12 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
                     sb.AppendLine($"            var __res = await {callTarget}.{methodName}{typeParams}({argList});");
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
+                    sb.AppendLine("            __invokeAfter(__filters, __ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
@@ -895,27 +996,27 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
                 else if (isByRefReturn)
                 {
                     var refLocalModifier = method.ReturnsByRefReadonly ? "ref readonly var" : "ref var";
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + refLocalModifier + " __ret = ref " + callTarget + "." + methodName + typeParams + "(" + argList + "); var __snap = __ret; foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + refLocalModifier + " __ret = ref " + callTarget + "." + methodName + typeParams + "(" + argList + "); var __snap = __ret; __invokeAfter(__filters, __ctx, __snap); return ref __ret; } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
                 }
                 else if (method.ReturnsVoid)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " __invokeAfter(__filters, __ctx, null); } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
                     sb.AppendLine("        return;");
                 }
                 else
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (Exception __ex) { foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); var __ret = " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " __invokeAfter(__filters, __ctx, __ret); return __ret; } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
                 }
             }
             else
@@ -1017,32 +1118,28 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var needsAsync2 = hasByRef2_head && returnTypeInfo.IsAwaitable;
 
-            var behaviorSnippets = new List<string>();
-
-            var optionsSetters = new List<string>();
+            var behaviorSpecs = new List<ProxyBehaviorSpec>();
 
             var methodAttributes = method.GetAttributes();
             IEnumerable<AttributeData> implementationAttributes = impl is null ? Array.Empty<AttributeData>() : impl.GetAttributes();
 
             foreach (var a in methodAttributes)
             {
-                if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
+                if (TryGetBehaviorSpec(a, out var behaviorSpec))
                 {
-                    behaviorSnippets.Add($"new {behaviorFull}()");
-
-                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                    behaviorSpecs.Add(behaviorSpec);
                 }
             }
 
             foreach (var a in implementationAttributes)
             {
-                if (TryGetBehaviorSpec(a, out var behaviorFull, out var optInit))
+                if (TryGetBehaviorSpec(a, out var behaviorSpec))
                 {
-                    behaviorSnippets.Add($"new {behaviorFull}()");
-
-                    if (!string.IsNullOrEmpty(optInit)) optionsSetters.Add(optInit!);
+                    behaviorSpecs.Add(behaviorSpec);
                 }
             }
+
+            PrepareBehaviorPipeline(sb, behaviorSpecs, out var behaviorExpression, out var optionsSetters);
 
             var sigReturnType = method.ReturnsVoid
                 ? "void"
@@ -1067,7 +1164,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var hasByRef2 = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
 
-            sb.AppendLine("        var __behaviors = new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSnippets) + " };");
+            sb.AppendLine("        var __behaviors = " + behaviorExpression + ";");
 
             var __hasReturn = returnTypeInfo.HasReturnValue;
 
@@ -1082,8 +1179,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             
             if (hasByRef2 || isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable)
             {
-                sb.AppendLine("        var __filters = new List<IInvocationBehavior>();");
-                sb.AppendLine("        foreach (var __b in __behaviors) { if (__b is IInvocationBehavior __f) __filters.Add(__f); }");
+                AppendSynchronousBehaviorValidation(sb);
                 
                 if (isAsyncEnumerable)
                 {
@@ -1100,15 +1196,15 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
                     sb.AppendLine($"            await {call};");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                    sb.AppendLine("            __invokeAfter(__filters, __ctx, null);");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
@@ -1123,16 +1219,16 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
                     sb.AppendLine($"            var __res = await {call};");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
+                    sb.AppendLine("            __invokeAfter(__filters, __ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
@@ -1147,16 +1243,16 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
                     sb.AppendLine($"            await {call};");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, null);");
+                    sb.AppendLine("            __invokeAfter(__filters, __ctx, null);");
                     sb.AppendLine("            return;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
@@ -1165,16 +1261,16 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnBefore(__ctx);");
+                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
                     sb.AppendLine($"            var __res = await {call};");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnAfter(__ctx, __res);");
+                    sb.AppendLine("            __invokeAfter(__filters, __ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    sb.AppendLine("            foreach (var __f in __filters) __f.OnException(__ctx, __ex);");
+                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
@@ -1182,18 +1278,18 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
                     var refLocalModifier = method.ReturnsByRefReadonly ? "ref readonly var" : "ref var";
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + refLocalModifier + " __ret = ref " + call + "; var __snap = __ret; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __snap); return ref __ret; } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + refLocalModifier + " __ret = ref " + call + "; var __snap = __ret; " + updateSnippet + " __invokeAfter(__filters, __ctx, __snap); return ref __ret; } catch (Exception __ex) { " + updateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
                 }
                 else if (method.ReturnsVoid)
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, null); } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + call + "; " + updateSnippet + " __invokeAfter(__filters, __ctx, null); } catch (Exception __ex) { " + updateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
                     sb.AppendLine("        return;");
                 }
                 else
                 {
                     var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    sb.AppendLine("        try { foreach (var __f in __filters) __f.OnBefore(__ctx); var __ret = " + call + "; " + updateSnippet + " foreach (var __f in __filters) __f.OnAfter(__ctx, __ret); return __ret; } catch (Exception __ex) { " + updateSnippet + " foreach (var __f in __filters) __f.OnException(__ctx, __ex); throw; }");
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); var __ret = " + call + "; " + updateSnippet + " __invokeAfter(__filters, __ctx, __ret); return __ret; } catch (Exception __ex) { " + updateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
                 }
             }
             else
@@ -1236,22 +1332,84 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
         /// <summary>
+        /// 为当前代理方法准备行为实例列表和配置写入代码
+        /// </summary>
+        /// <param name="sb">目标源码构建器</param>
+        /// <param name="behaviorSpecs">当前代理方法的行为生成信息</param>
+        /// <param name="behaviorExpression">代理方法使用的行为列表表达式</param>
+        /// <param name="optionsSetters">代理方法使用的配置写入代码</param>
+        private void PrepareBehaviorPipeline(StringBuilder sb, IReadOnlyList<ProxyBehaviorSpec> behaviorSpecs, out string behaviorExpression, out IReadOnlyList<string> optionsSetters)
+        {
+
+            if (behaviorSpecs.Count == 0)
+            {
+                behaviorExpression = "Array.Empty<IInvocationAsyncBehavior>()";
+                optionsSetters = Array.Empty<string>();
+                return;
+            }
+
+            if (behaviorSpecs.Any(static behaviorSpec => !behaviorSpec.IsBuiltIn))
+            {
+                behaviorExpression = "new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorSpecs.Select(static behaviorSpec => "new " + behaviorSpec.BehaviorTypeName + "()")) + " }";
+                optionsSetters = behaviorSpecs
+                    .Where(static behaviorSpec => behaviorSpec.OptionsTypeName is not null)
+                    .Select(static behaviorSpec => "__ctx.SetFeature(new " + behaviorSpec.OptionsTypeName + behaviorSpec.OptionsInitializer + ");")
+                    .ToArray();
+                return;
+            }
+
+            var cacheSuffix = (++cachedBehaviorPipelineCount).ToString("D3");
+            var behaviorFieldNames = new string[behaviorSpecs.Count];
+            var cachedOptionsSetters = new List<string>();
+
+            for (var i = 0; i < behaviorSpecs.Count; i++)
+            {
+                var behaviorSpec = behaviorSpecs[i];
+                var behaviorFieldName = "__cachedBehavior" + cacheSuffix + "_" + i;
+                behaviorFieldNames[i] = behaviorFieldName;
+                sb.AppendLine("    private static readonly " + behaviorSpec.BehaviorTypeName + " " + behaviorFieldName + " = new();");
+
+                if (behaviorSpec.OptionsTypeName is null)
+                    continue;
+
+                var optionsFieldName = "__cachedBehaviorOptions" + cacheSuffix + "_" + i;
+                sb.AppendLine("    private static readonly " + behaviorSpec.OptionsTypeName + " " + optionsFieldName + " = new " + behaviorSpec.OptionsTypeName + behaviorSpec.OptionsInitializer + ";");
+                cachedOptionsSetters.Add("__ctx.SetFeature(" + optionsFieldName + ");");
+            }
+
+            var behaviorsFieldName = "__cachedBehaviors" + cacheSuffix;
+            sb.AppendLine("    private static readonly IReadOnlyList<IInvocationAsyncBehavior> " + behaviorsFieldName + " = Array.AsReadOnly<IInvocationAsyncBehavior>(new IInvocationAsyncBehavior[] { " + string.Join(", ", behaviorFieldNames) + " });")
+              .AppendLine()
+              .AppendLine();
+
+            behaviorExpression = behaviorsFieldName;
+            optionsSetters = cachedOptionsSetters;
+
+        }
+
+
+        /// <summary>
         /// 从行为特性中提取行为类型和可选配置初始化代码
         /// </summary>
-        private bool TryGetBehaviorSpec(AttributeData a, out string behaviorFull, out string? optSetter)
+        /// <param name="attribute">待解析的代理行为特性</param>
+        /// <param name="behaviorSpec">解析得到的代理行为生成信息</param>
+        /// <returns>如果特性声明了有效代理行为则返回 true</returns>
+        private bool TryGetBehaviorSpec(AttributeData attribute, out ProxyBehaviorSpec behaviorSpec)
         {
-            behaviorFull = string.Empty;
-            optSetter = null;
 
-            if (!AutoProxyEligibility.TryGetProxyBehaviorTypes(a, out var behaviorTypeSymbol, out var optionsTypeSymbol) || behaviorTypeSymbol is null)
+            behaviorSpec = default;
+
+            if (!AutoProxyEligibility.TryGetProxyBehaviorTypes(attribute, out var behaviorTypeSymbol, out var optionsTypeSymbol) || behaviorTypeSymbol is null)
                 return false;
 
-            behaviorFull = FormatType(behaviorTypeSymbol, string.Empty);
+            var behaviorTypeName = FormatType(behaviorTypeSymbol, string.Empty);
+            string? optionsTypeName = null;
+            string? optionsInitializer = null;
 
             if (optionsTypeSymbol is not null)
             {
                 var assigns = new List<string>();
-                foreach (var kv in a.NamedArguments)
+                foreach (var kv in attribute.NamedArguments)
                 {
                     var propName = kv.Key;
                     var prop = AutoProxyEligibility.FindOptionsProperty(optionsTypeSymbol, propName);
@@ -1259,16 +1417,58 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     if (!AutoProxyEligibility.TryFormatAttributeArgument(kv.Value, out var lit)) continue;
                     assigns.Add(EscapeIdentifier(propName) + " = " + lit);
                 }
-                var optFull = FormatType(optionsTypeSymbol, string.Empty);
-                if (optFull.StartsWith("Options.", StringComparison.Ordinal))
+                optionsTypeName = FormatType(optionsTypeSymbol, string.Empty);
+                if (optionsTypeName.StartsWith("Options.", StringComparison.Ordinal))
                 {
-                    optFull = optFull.Substring("Options.".Length);
+                    optionsTypeName = optionsTypeName.Substring("Options.".Length);
                 }
-                var init = assigns.Count > 0 ? " { " + string.Join(", ", assigns) + " }" : "()";
-                optSetter = $"__ctx.SetFeature(new {optFull}{init});";
+                optionsInitializer = assigns.Count > 0 ? " { " + string.Join(", ", assigns) + " }" : "()";
             }
 
+            behaviorSpec = new ProxyBehaviorSpec(behaviorTypeName, optionsTypeName, optionsInitializer, IsBuiltInBehavior(behaviorTypeSymbol, optionsTypeSymbol));
+
             return true;
+        }
+
+
+        /// <summary>
+        /// 判断行为和配置类型是否属于生成器确认无状态且只读的内置组合
+        /// </summary>
+        /// <param name="behaviorType">待检查的行为类型</param>
+        /// <param name="optionsType">待检查的行为配置类型</param>
+        /// <returns>如果行为和配置可以安全跨调用复用则返回 true</returns>
+        private bool IsBuiltInBehavior(ITypeSymbol behaviorType, INamedTypeSymbol? optionsType)
+        {
+
+            if (IsCompilationType(behaviorType, LoggingBehaviorMetadataName))
+                return optionsType is null;
+
+            if (IsCompilationType(behaviorType, RetryBehaviorMetadataName))
+                return optionsType is not null && IsCompilationType(optionsType, RetryOptionsMetadataName);
+
+            if (IsCompilationType(behaviorType, ConcurrencyLimitBehaviorMetadataName))
+                return optionsType is not null && IsCompilationType(optionsType, ConcurrencyLimitOptionsMetadataName);
+
+            if (IsCompilationType(behaviorType, CacheableBehaviorMetadataName))
+                return optionsType is not null && IsCompilationType(optionsType, CacheableOptionsMetadataName);
+
+            return false;
+
+        }
+
+
+        /// <summary>
+        /// 使用当前编译中的类型符号精确判断指定元数据类型
+        /// </summary>
+        /// <param name="type">待检查的类型</param>
+        /// <param name="metadataName">目标元数据类型名称</param>
+        /// <returns>如果类型符号与当前编译中的目标类型一致则返回 true</returns>
+        private bool IsCompilationType(ITypeSymbol type, string metadataName)
+        {
+
+            var expectedType = compilation.GetTypeByMetadataName(metadataName);
+            return expectedType is not null && SymbolEqualityComparer.Default.Equals(type, expectedType);
+
         }
 
 

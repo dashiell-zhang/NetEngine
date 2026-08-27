@@ -149,9 +149,12 @@ public virtual Task<ProductDto> GetAsync(long id, CancellationToken cancellation
 
 - `TtlSeconds` 默认 `60`，必须大于 `0`
 - `void` 和无结果的 `Task` 不写入缓存
-- 未注册 `IDistributedCache` 时跳过缓存并记录日志
+- 缓存结果按照方法声明的返回类型序列化和反序列化，不自动保存实际运行时类型
+- 声明为父类、接口或 `object` 时，派生类型特有数据可能无法在缓存命中后恢复；确需多态缓存时，应使用 `System.Text.Json` 的 `JsonPolymorphic`、`JsonDerivedType` 或自定义 `JsonConverter` 明确配置类型协议
+- 普通缓存场景建议返回具体 DTO，生成器不尝试证明任意返回对象能否完整 JSON 往返
+- 使用 `[Cacheable]` 的宿主必须注册 `IDistributedCache`，未注册时调用会抛出 `InvalidOperationException`
+- 使用 `[Cacheable]` 的宿主必须注册 `IDistributedLock` 以提供缓存击穿保护，未注册时调用会抛出 `InvalidOperationException`
 - 参数无法生成稳定摘要时跳过缓存
-- 已注册 `IDistributedLock` 时会自动使用锁防止缓存击穿，未注册时仍可缓存但没有该保护
 
 ### ConcurrencyLimit
 

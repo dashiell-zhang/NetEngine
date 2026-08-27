@@ -12,35 +12,6 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 {
 
     /// <summary>
-    /// 缓存结果序列化配置 包含公开字段并保留循环引用元数据
-    /// </summary>
-    private static readonly JsonSerializerOptions CacheJsonOptions = new(JsonUtil.JsonOpts)
-    {
-        IncludeFields = true
-    };
-
-
-    /// <summary>
-    /// 保存缓存结果的实际运行时类型和对应 JSON 内容
-    /// </summary>
-    private sealed class CacheEntry
-    {
-
-        /// <summary>
-        /// 返回结果的程序集限定运行时类型名称
-        /// </summary>
-        public string? RuntimeType { get; init; }
-
-
-        /// <summary>
-        /// 按实际运行时类型序列化后的返回结果
-        /// </summary>
-        public JsonElement Value { get; init; }
-
-    }
-
-
-    /// <summary>
     /// 缓存回源保护锁的默认租约时长
     /// </summary>
     private static readonly TimeSpan CacheLockExpiry = TimeSpan.FromSeconds(60);
@@ -61,19 +32,22 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         if (cache.TtlSeconds <= 0)
             throw new ArgumentOutOfRangeException(nameof(Options.CacheableOptions.TtlSeconds), cache.TtlSeconds, "TtlSeconds 必须大于 0");
 
+        var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
+        if (cacheSvc is null)
+        {
+            throw new InvalidOperationException($"方法 {ctx.Method} 使用了缓存，但未注册 IDistributedCache 服务");
+        }
+
+        var lockSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedLock)) as IDistributedLock;
+        if (lockSvc is null)
+        {
+            throw new InvalidOperationException($"方法 {ctx.Method} 使用了缓存，但未注册 IDistributedLock 服务");
+        }
+
         if (!ctx.IsArgumentsKeyComplete || ctx.ArgumentsKey is null)
         {
             if (ctx.Logger?.IsEnabled(LogLevel.Warning) == true)
                 ctx.Logger.LogWarning("Cache bypassed because arguments key is incomplete method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
-
-            return await next();
-        }
-
-        var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
-        if (cacheSvc is null)
-        {
-            if (ctx.Logger?.IsEnabled(LogLevel.Warning) == true)
-                ctx.Logger.LogWarning("Cache bypassed because IDistributedCache is unavailable method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
 
             return await next();
         }
@@ -84,12 +58,6 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         ctx.CancellationToken.ThrowIfCancellationRequested();
         var get = await TryGetAsync<T>(cacheSvc, cacheKey, ctx.Logger, ctx.Method, ctx.TraceId, ctx.CancellationToken);
         if (get.hit) return get.value;
-
-        var lockSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedLock)) as IDistributedLock;
-        if (lockSvc is null)
-        {
-            return await ExecuteAndSetAsync(cacheSvc, next, cacheKey, cache, ctx.Logger, ctx.Method, ctx.TraceId, ctx.CancellationToken);
-        }
 
         var lockKey = ComposeLockKey(keyHash);
         IDistributedLockHandle lockHandle;
@@ -195,48 +163,12 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
             var json = await cacheSvc.GetStringAsync(cacheKey, cancellationToken);
             if (json is null) return (false, default!);
 
-            var entry = JsonSerializer.Deserialize<CacheEntry>(json, CacheJsonOptions)
-                ?? throw new JsonException("缓存内容缺少结果信封");
-
-            if (entry.RuntimeType is null)
-            {
-                if (entry.Value.ValueKind != JsonValueKind.Null)
-                    throw new JsonException("缓存内容缺少运行时类型");
-
-                if (default(T) is not null)
-                    throw new JsonException($"缓存空结果与声明类型 {typeof(T).FullName} 不兼容");
-
-                if (logger?.IsEnabled(LogLevel.Information) == true)
-                    logger.LogInformation("Cache hit method={Method} traceId={TraceId}", method, traceId);
-
-                return (true, default!);
-            }
-
-            var runtimeType = Type.GetType(entry.RuntimeType, throwOnError: false);
-            var declaredType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
-
-            if (runtimeType is null || !declaredType.IsAssignableFrom(runtimeType))
-                throw new JsonException($"缓存运行时类型 {entry.RuntimeType} 与声明类型 {typeof(T).FullName} 不兼容");
-
-            var result = entry.Value.Deserialize(runtimeType, CacheJsonOptions);
-
-            if (result is not T typedResult)
-            {
-                if (result is null && default(T) is null)
-                {
-                    if (logger?.IsEnabled(LogLevel.Information) == true)
-                        logger.LogInformation("Cache hit method={Method} traceId={TraceId}", method, traceId);
-
-                    return (true, default!);
-                }
-
-                throw new JsonException($"缓存结果无法转换为声明类型 {typeof(T).FullName}");
-            }
+            var result = JsonSerializer.Deserialize<T>(json, JsonUtil.JsonOpts);
 
             if (logger?.IsEnabled(LogLevel.Information) == true)
                 logger.LogInformation("Cache hit method={Method} traceId={TraceId}", method, traceId);
 
-            return (true, typedResult);
+            return (true, result!);
         }
         catch (OperationCanceledException)
         {
@@ -277,16 +209,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
 
         try
         {
-            var runtimeType = value?.GetType();
-            var serializationType = runtimeType ?? typeof(T);
-            var serializedValue = JsonSerializer.SerializeToElement(value, serializationType, CacheJsonOptions);
-
-            var entry = new CacheEntry
-            {
-                RuntimeType = runtimeType?.AssemblyQualifiedName,
-                Value = serializedValue
-            };
-            var json = JsonSerializer.Serialize(entry, CacheJsonOptions);
+            var json = JsonSerializer.Serialize<T>(value, JsonUtil.JsonOpts);
             await cacheSvc.SetStringAsync(cacheKey, json, new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache.TtlSeconds)

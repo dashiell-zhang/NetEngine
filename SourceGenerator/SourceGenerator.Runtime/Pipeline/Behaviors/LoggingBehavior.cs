@@ -22,6 +22,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     /// </summary>
     public async ValueTask<T> InvokeAsync<T>(InvocationContext ctx, Func<ValueTask<T>> next)
     {
+
         var logger = ctx.Logger;
         var logInfo = logger?.IsEnabled(LogLevel.Information) == true;
         var logError = logger?.IsEnabled(LogLevel.Error) == true;
@@ -31,73 +32,21 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             return await next();
         }
 
-        if (!logInfo)
-        {
-            try
-            {
-                return await next();
-            }
-            catch (Exception ex)
-            {
-                var exPayload = new Dictionary<string, object?>
-                {
-                    ["event"] = "exception",
-                    ["method"] = ctx.Method,
-                    ["exception"] = new Dictionary<string, object?>
-                    {
-                        ["source"] = ex.Source,
-                        ["message"] = ex.Message,
-                        ["stackTrace"] = ex.StackTrace,
-                        ["innerSource"] = ex.InnerException?.Source,
-                        ["innerMessage"] = ex.InnerException?.Message,
-                        ["innerStackTrace"] = ex.InnerException?.StackTrace,
-                    }
-                };
-                
-                if (ctx.Args is not null) exPayload["args"] = ctx.Args;
-                
-                logger?.LogError(JsonUtil.ToJson(exPayload));
-                
-                throw;
-            }
-        }
-
         var startTimestamp = Stopwatch.GetTimestamp();
-        var hasArgs = ctx.Args is not null;
 
-        var payload = new Dictionary<string, object?>
+        if (logInfo)
         {
-            ["event"] = "executing",
-            ["method"] = ctx.Method,
-        };
-        
-        payload["traceId"] = ctx.TraceId;
-        
-        if (hasArgs) payload["args"] = ctx.Args;
-        
-        logger?.LogInformation(JsonUtil.ToJson(payload));
+            LogExecuting(ctx);
+        }
 
         try
         {
             var result = await next();
 
-            var payload2 = new Dictionary<string, object?>
+            if (logInfo)
             {
-                ["event"] = "executed",
-                ["method"] = ctx.Method,
-                ["durationMs"] = (long)Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds,
-            };
-            
-            payload2["traceId"] = ctx.TraceId;
-            
-            if (ctx.HasReturnValue && ctx.AllowReturnSerialization)
-            {
-                payload2["result"] = result;
+                LogExecuted(ctx, result, GetElapsedMilliseconds(startTimestamp));
             }
-            
-            if (hasArgs) payload2["args"] = ctx.Args;
-            
-            logger?.LogInformation(JsonUtil.ToJson(payload2));
 
             return result;
         }
@@ -105,31 +54,12 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         {
             if (logError)
             {
-                var exPayload = new Dictionary<string, object?>
-                {
-                    ["event"] = "exception",
-                    ["method"] = ctx.Method,
-                    ["exception"] = new Dictionary<string, object?>
-                    {
-                        ["source"] = ex.Source,
-                        ["message"] = ex.Message,
-                        ["stackTrace"] = ex.StackTrace,
-                        ["innerSource"] = ex.InnerException?.Source,
-                        ["innerMessage"] = ex.InnerException?.Message,
-                        ["innerStackTrace"] = ex.InnerException?.StackTrace,
-                    }
-                };
-                
-                exPayload["traceId"] = ctx.TraceId;
-                
-                if (ctx.Args is not null) exPayload["args"] = ctx.Args;
-                
-                exPayload["durationMs"] = (long)Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds;
-                
-                logger?.LogError(JsonUtil.ToJson(exPayload));
+                LogException(ctx, ex, GetElapsedMilliseconds(startTimestamp));
             }
+
             throw;
         }
+
     }
 
 
@@ -149,6 +79,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     /// </summary>
     public void OnBefore(InvocationContext ctx)
     {
+
         var logger = ctx.Logger;
         var logInfo = logger?.IsEnabled(LogLevel.Information) == true;
         var logError = logger?.IsEnabled(LogLevel.Error) == true;
@@ -162,18 +93,9 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
 
         if (logInfo)
         {
-            var payload = new Dictionary<string, object?>
-            {
-                ["event"] = "executing",
-                ["method"] = ctx.Method,
-            };
-            
-            payload["traceId"] = ctx.TraceId;
-            
-            if (ctx.Args is not null) payload["args"] = ctx.Args;
-            
-            logger?.LogInformation(JsonUtil.ToJson(payload));
+            LogExecuting(ctx);
         }
+
     }
 
 
@@ -182,34 +104,16 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     /// </summary>
     public void OnAfter(InvocationContext ctx, object? result)
     {
+
         var logger = ctx.Logger;
 
         if (logger?.IsEnabled(LogLevel.Information) == true)
         {
             var st = ctx.GetFeature<LoggingState>();
-            var payload = new Dictionary<string, object?>
-            {
-                ["event"] = "executed",
-                ["method"] = ctx.Method,
-            };
-            
-            payload["traceId"] = ctx.TraceId;
-            
-            if (ctx.HasReturnValue && ctx.AllowReturnSerialization)
-            {
-                payload["result"] = result;
-            }
-            
-            if (ctx.Args is not null) payload["args"] = ctx.Args;
-            
-            if (st is not null)
-            {
-                var elapsedMs = (Stopwatch.GetTimestamp() - st.StartTicks) * 1000.0 / Stopwatch.Frequency;
-                payload["durationMs"] = (long)elapsedMs;
-            }
-            
-            logger?.LogInformation(JsonUtil.ToJson(payload));
+            long? durationMs = st is null ? null : GetElapsedMilliseconds(st.StartTicks);
+            LogExecuted(ctx, result, durationMs);
         }
+
     }
 
 
@@ -218,38 +122,124 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     /// </summary>
     public void OnException(InvocationContext ctx, Exception ex)
     {
+
         var logger = ctx.Logger;
 
         if (logger?.IsEnabled(LogLevel.Error) == true)
         {
             var st = ctx.GetFeature<LoggingState>();
-            var exPayload = new Dictionary<string, object?>
-            {
-                ["event"] = "exception",
-                ["method"] = ctx.Method,
-                ["exception"] = new Dictionary<string, object?>
-                {
-                    ["source"] = ex.Source,
-                    ["message"] = ex.Message,
-                    ["stackTrace"] = ex.StackTrace,
-                    ["innerSource"] = ex.InnerException?.Source,
-                    ["innerMessage"] = ex.InnerException?.Message,
-                    ["innerStackTrace"] = ex.InnerException?.StackTrace,
-                }
-            };
-            
-            exPayload["traceId"] = ctx.TraceId;
-            
-            if (ctx.Args is not null) exPayload["args"] = ctx.Args;
-            
-            if (st is not null)
-            {
-                var elapsedMs = (Stopwatch.GetTimestamp() - st.StartTicks) * 1000.0 / Stopwatch.Frequency;
-                exPayload["durationMs"] = (long)elapsedMs;
-            }
-            
-            logger?.LogError(JsonUtil.ToJson(exPayload));
+            long? durationMs = st is null ? null : GetElapsedMilliseconds(st.StartTicks);
+            LogException(ctx, ex, durationMs);
         }
+
+    }
+
+
+    /// <summary>
+    /// 记录方法开始执行日志
+    /// </summary>
+    /// <param name="ctx">当前调用上下文</param>
+    private static void LogExecuting(InvocationContext ctx)
+    {
+
+        var payload = CreatePayload(ctx, "executing");
+        ctx.Logger?.LogInformation(JsonUtil.ToJson(payload));
+
+    }
+
+
+    /// <summary>
+    /// 记录方法成功执行日志
+    /// </summary>
+    /// <param name="ctx">当前调用上下文</param>
+    /// <param name="result">方法返回结果</param>
+    /// <param name="durationMs">执行耗时毫秒数</param>
+    private static void LogExecuted(InvocationContext ctx, object? result, long? durationMs)
+    {
+
+        var payload = CreatePayload(ctx, "executed");
+
+        if (ctx.HasReturnValue && ctx.AllowReturnSerialization)
+        {
+            payload["result"] = result;
+        }
+
+        if (durationMs is not null)
+        {
+            payload["durationMs"] = durationMs.Value;
+        }
+
+        ctx.Logger?.LogInformation(JsonUtil.ToJson(payload));
+
+    }
+
+
+    /// <summary>
+    /// 记录方法执行异常日志
+    /// </summary>
+    /// <param name="ctx">当前调用上下文</param>
+    /// <param name="exception">方法执行异常</param>
+    /// <param name="durationMs">执行耗时毫秒数</param>
+    private static void LogException(InvocationContext ctx, Exception exception, long? durationMs)
+    {
+
+        var payload = CreatePayload(ctx, "exception");
+        payload["exception"] = new Dictionary<string, object?>
+        {
+            ["source"] = exception.Source,
+            ["message"] = exception.Message,
+            ["stackTrace"] = exception.StackTrace,
+            ["innerSource"] = exception.InnerException?.Source,
+            ["innerMessage"] = exception.InnerException?.Message,
+            ["innerStackTrace"] = exception.InnerException?.StackTrace,
+        };
+
+        if (durationMs is not null)
+        {
+            payload["durationMs"] = durationMs.Value;
+        }
+
+        ctx.Logger?.LogError(JsonUtil.ToJson(payload));
+
+    }
+
+
+    /// <summary>
+    /// 创建包含公共调用信息的日志载荷
+    /// </summary>
+    /// <param name="ctx">当前调用上下文</param>
+    /// <param name="eventName">日志事件名称</param>
+    /// <returns>包含公共字段的日志载荷</returns>
+    private static Dictionary<string, object?> CreatePayload(InvocationContext ctx, string eventName)
+    {
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["event"] = eventName,
+            ["method"] = ctx.Method,
+            ["traceId"] = ctx.TraceId,
+        };
+
+        if (ctx.Args is not null)
+        {
+            payload["args"] = ctx.Args;
+        }
+
+        return payload;
+
+    }
+
+
+    /// <summary>
+    /// 根据起始时间戳计算已执行的毫秒数
+    /// </summary>
+    /// <param name="startTimestamp">起始时间戳</param>
+    /// <returns>已执行的毫秒数</returns>
+    private static long GetElapsedMilliseconds(long startTimestamp)
+    {
+
+        return (long)Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds;
+
     }
 
 

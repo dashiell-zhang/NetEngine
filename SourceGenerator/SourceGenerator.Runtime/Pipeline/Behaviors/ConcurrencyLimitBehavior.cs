@@ -39,7 +39,6 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
             throw new InvalidOperationException($"方法 {ctx.Method} 的参数无法生成稳定的并发限制键");
         }
 
-        var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
         var key = "ConcurrencyLimit_" + InvocationKey.ComposeHash(ctx, opt.IsUseParameter);
 
         ctx.CancellationToken.ThrowIfCancellationRequested();
@@ -53,7 +52,9 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
                 handle = await lockSvc.TryLockAsync(key, expiry, semaphore, ctx.CancellationToken);
                 if (handle is null)
                 {
-                    ctx.Logger?.LogInformation($"ConcurrencyLimit blocked {methodForLog}");
+                    if (ctx.Logger?.IsEnabled(LogLevel.Information) == true)
+                        ctx.Logger.LogInformation("ConcurrencyLimit blocked method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
+
                     throw new InvalidOperationException("请勿频繁操作");
                 }
             }
@@ -62,9 +63,11 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
                 handle = await lockSvc.LockAsync(key, expiry, semaphore, ctx.CancellationToken);
             }
 
-            leaseRenewer = new DistributedLockLeaseRenewer(lockSvc, handle, expiry, key, methodForLog, ctx.Logger);
+            leaseRenewer = new DistributedLockLeaseRenewer(lockSvc, handle, expiry, key, ctx.Method, ctx.TraceId, ctx.Logger);
 
-            ctx.Logger?.LogInformation($"ConcurrencyLimit acquired {methodForLog} semaphore={semaphore} expirySeconds={expiry.TotalSeconds}");
+            if (ctx.Logger?.IsEnabled(LogLevel.Information) == true)
+                ctx.Logger.LogInformation("ConcurrencyLimit acquired method={Method} traceId={TraceId} semaphore={Semaphore} expirySeconds={ExpirySeconds}", ctx.Method, ctx.TraceId, semaphore, expiry.TotalSeconds);
+
             ctx.CancellationToken.ThrowIfCancellationRequested();
             return await next();
         }
@@ -80,11 +83,14 @@ public sealed class ConcurrencyLimitBehavior : IInvocationAsyncBehavior
                 try
                 {
                     await handle.DisposeAsync();
-                    ctx.Logger?.LogInformation($"ConcurrencyLimit released {methodForLog}");
+
+                    if (ctx.Logger?.IsEnabled(LogLevel.Information) == true)
+                        ctx.Logger.LogInformation("ConcurrencyLimit released method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
                 }
                 catch (Exception ex)
                 {
-                    ctx.Logger?.LogError(ex, "ConcurrencyLimit release error {Method}", methodForLog);
+                    if (ctx.Logger?.IsEnabled(LogLevel.Error) == true)
+                        ctx.Logger.LogError(ex, "ConcurrencyLimit release error method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
                 }
             }
         }

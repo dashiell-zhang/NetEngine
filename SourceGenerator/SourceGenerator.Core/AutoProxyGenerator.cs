@@ -636,7 +636,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("                    __enumeratedCount++;");
             sb.AppendLine("                    if (__capturedItems is not null && __capturedItems.Count < AsyncStreamResultSnapshot.DefaultCaptureLimit)");
             sb.AppendLine("                    {");
-            sb.AppendLine("                        try { __capturedItems.Add(JsonUtil.ToObject(JsonUtil.ToJson(__item))); } catch { __capturedItems.Add(Convert.ToString(__item)); }");
+            sb.AppendLine("                        __capturedItems.Add(JsonUtil.CreateSnapshotValue(__item));");
             sb.AppendLine("                    }");
             sb.AppendLine("                    yield return __item;");
             sb.AppendLine("                }");
@@ -806,254 +806,33 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <param name="currentNamespace">当前生成代码命名空间</param>
         private void AppendDerivedOverride(StringBuilder sb, INamedTypeSymbol targetType, IMethodSymbol method, string typeFullName, string callTarget, string currentNamespace)
         {
-            
+
             var returnTypeInfo = GetProxyReturnTypeInfo(method);
-            var isTask = returnTypeInfo.Kind == ProxyReturnTypeKind.Task;
-            var isGenericTask = returnTypeInfo.Kind is ProxyReturnTypeKind.TaskOfT or ProxyReturnTypeKind.TaskOfAsyncEnumerable;
-            var isValueTask = returnTypeInfo.Kind == ProxyReturnTypeKind.ValueTask;
-            var isGenericValueTask = returnTypeInfo.Kind is ProxyReturnTypeKind.ValueTaskOfT or ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
-            var isAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.AsyncEnumerable;
-            var isTaskOfAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.TaskOfAsyncEnumerable;
-            var isValueTaskOfAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
-
             var returnType = FormatType(method.ReturnType, currentNamespace);
-            
             var methodName = EscapeIdentifier(method.Name);
-            var rawMethodName = method.Name;
-            
             var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => EscapeIdentifier(tp.Name))) + ">" : string.Empty;
-            
             var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: true, currentNamespace)));
-            
             var argList = string.Join(", ", method.Parameters.Select(FormatArgument));
-
             var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
-            
             var hasByRefAny = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
-            
             var needsAsync = hasByRefAny && returnTypeInfo.IsAwaitable;
-
-            var behaviorSpecs = new List<ProxyBehaviorSpec>();
-
-            var methodAttributes = method.GetAttributes();
-
-            foreach (var a in methodAttributes)
-            {
-                if (TryGetBehaviorSpec(a, out var behaviorSpec))
-                {
-                    behaviorSpecs.Add(behaviorSpec);
-                }
-            }
-
+            var effectiveAttributes = method.GetAttributes();
+            var behaviorSpecs = GetBehaviorSpecs(effectiveAttributes);
             PrepareBehaviorPipeline(sb, behaviorSpecs, out var behaviorExpression, out var optionsSetters);
-            
+
             var sigReturnType = method.ReturnsVoid
                 ? "void"
                 : isByRefReturn
                     ? (method.ReturnsByRefReadonly ? "ref readonly " : "ref ") + returnType
                     : returnType;
-
             var accessibilityText = GetOverrideAccessibilityText(targetType, method);
             sb.Append("    ").Append(accessibilityText).Append(" override ").Append(needsAsync ? "async " : string.Empty).Append(sigReturnType).Append(' ').Append(methodName).Append(typeParams)
               .Append('(').Append(paramList).Append(')').AppendLine()
               .AppendLine("    {");
 
-            var requiresArgumentsSnapshot = methodAttributes.Any(AutoProxyEligibility.RequiresArgumentsSnapshot);
-            AppendArgumentsSnapshot(sb, method, currentNamespace, requiresArgumentsSnapshot);
+            var callExpression = callTarget + "." + methodName + typeParams + "(" + argList + ")";
+            AppendProxyMethodBody(sb, targetType, method, typeFullName, currentNamespace, returnTypeInfo, effectiveAttributes, behaviorExpression, optionsSetters, callExpression);
 
-            var requiresArgumentsKey = methodAttributes.Any(AutoProxyEligibility.RequiresArgumentsKey);
-            AppendArgumentsKeySnapshot(sb, method, requiresArgumentsKey);
-
-            sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + rawMethodName + "\";");
-            AppendMethodKey(sb, targetType, method, typeFullName);
-
-            var hasByRef = hasByRefAny;
-            
-            sb.AppendLine("        var __behaviors = " + behaviorExpression + ";");
-            
-            var __hasReturn = returnTypeInfo.HasReturnValue;
-            var __allowRet = __hasReturn && IsAllowReturnSerialization(method, returnTypeInfo);
-            var cancellationTokenExpression = GetCancellationTokenExpression(method);
-
-            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
-            
-            if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
-
-            if (hasByRef || isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable)
-            {
-                AppendSynchronousBehaviorValidation(sb);
-                
-                if (isAsyncEnumerable)
-                {
-                    // 对异步枚举结果进行包装 在迭代过程中收集每个元素的 JSON 并在完成后统一记录日志
-                    var tArg = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
-                    var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
-                    
-                    AppendAsyncStreamWrapper(sb, tArg, callExpr, sourceIsParameter: false, invokeBefore: true);
-                    sb.AppendLine($"        return __streamWrapper();");
-                    sb.AppendLine("    }").AppendLine().AppendLine();
-                    return; // 方法体已经在前面生成 此处直接返回结束代码生成
-                }
-                if (isTask)
-                {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    
-                    sb.AppendLine("        try");
-                    sb.AppendLine("        {");
-                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
-                    sb.AppendLine($"            await {callTarget}.{methodName}{typeParams}({argList});");
-                    
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    
-                    sb.AppendLine("            __invokeAfter(__filters, __ctx, null);");
-                    sb.AppendLine("        }");
-                    sb.AppendLine("        catch (Exception __ex)");
-                    sb.AppendLine("        {");
-                    
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    
-                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
-                    sb.AppendLine("            throw;");
-                    sb.AppendLine("        }");
-                }
-                else if (isTaskOfAsyncEnumerable)
-                {
-                    var tItem = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
-                    var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
-                    
-                    AppendAsyncStreamWrapper(sb, tItem, "__s", sourceIsParameter: true, invokeBefore: false);
-                    AppendAsyncStreamPreparationWrapper(sb, tItem, callExpr, returnsValueTask: false);
-                }
-                else if (isGenericTask)
-                {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    
-                    sb.AppendLine("        try");
-                    sb.AppendLine("        {");
-                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
-                    sb.AppendLine($"            var __res = await {callTarget}.{methodName}{typeParams}({argList});");
-                    
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    
-                    sb.AppendLine("            __invokeAfter(__filters, __ctx, __res);");
-                    sb.AppendLine("            return __res;");
-                    sb.AppendLine("        }");
-                    sb.AppendLine("        catch (Exception __ex)");
-                    sb.AppendLine("        {");
-                    
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    
-                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
-                    sb.AppendLine("            throw;");
-                    sb.AppendLine("        }");
-                }
-                else if (isValueTaskOfAsyncEnumerable)
-                {
-                    var tItem = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
-                    var callExpr = callTarget + "." + methodName + typeParams + "(" + argList + ")";
-                    AppendAsyncStreamWrapper(sb, tItem, "__s", sourceIsParameter: true, invokeBefore: false);
-                    AppendAsyncStreamPreparationWrapper(sb, tItem, callExpr, returnsValueTask: true);
-                }
-                else if (isValueTask)
-                {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    
-                    sb.AppendLine("        try");
-                    sb.AppendLine("        {");
-                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
-                    sb.AppendLine($"            await {callTarget}.{methodName}{typeParams}({argList});");
-                    
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    
-                    sb.AppendLine("            __invokeAfter(__filters, __ctx, null);");
-                    sb.AppendLine("            return;");
-                    sb.AppendLine("        }");
-                    sb.AppendLine("        catch (Exception __ex)");
-                    
-                    sb.AppendLine("        {");
-                    
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    
-                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
-                    sb.AppendLine("            throw;");
-                    sb.AppendLine("        }");
-                }
-                else if (isGenericValueTask)
-                {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    sb.AppendLine("        try");
-                    sb.AppendLine("        {");
-                    sb.AppendLine("            __invokeBefore(__filters, __ctx);");
-                    sb.AppendLine($"            var __res = await {callTarget}.{methodName}{typeParams}({argList});");
-                    
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    
-                    sb.AppendLine("            __invokeAfter(__filters, __ctx, __res);");
-                    sb.AppendLine("            return __res;");
-                    sb.AppendLine("        }");
-                    sb.AppendLine("        catch (Exception __ex)");
-                    sb.AppendLine("        {");
-                    
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
-                    
-                    sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
-                    sb.AppendLine("            throw;");
-                    sb.AppendLine("        }");
-                }
-                else if (isByRefReturn)
-                {
-                    var refLocalModifier = method.ReturnsByRefReadonly ? "ref readonly var" : "ref var";
-                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + refLocalModifier + " __ret = ref " + callTarget + "." + methodName + typeParams + "(" + argList + "); var __snap = __ret; __invokeAfter(__filters, __ctx, __snap); return ref __ret; } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
-                }
-                else if (method.ReturnsVoid)
-                {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    
-                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " __invokeAfter(__filters, __ctx, null); } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
-                    sb.AppendLine("        return;");
-                }
-                else
-                {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    
-                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); var __ret = " + callTarget + "." + methodName + typeParams + "(" + argList + "); " + updateSnippet + " __invokeAfter(__filters, __ctx, __ret); return __ret; } catch (Exception __ex) { __invokeException(__filters, __ctx, __ex); throw; }");
-                }
-            }
-            else
-            {
-                var runtime = "ProxyRuntime";
-                
-                if (isTask)
-                {
-                    sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-                }
-                else if (isGenericTask)
-                {
-                    var tArg = FormatType(returnTypeInfo.ResultType!);
-                    sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-                }
-                else if (isValueTask)
-                {
-                    sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-                }
-                else if (isGenericValueTask)
-                {
-                    var tArg = FormatType(returnTypeInfo.ResultType!);
-                    sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}) );");
-                }
-                else if (method.ReturnsVoid)
-                {
-                    sb.AppendLine($"        {runtime}.Execute<object?>(__ctx, () => {{ {callTarget}.{methodName}{typeParams}({argList}); return null; }});");
-                    
-                    sb.AppendLine("        return;");
-                }
-                else
-                {
-                    sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => {callTarget}.{methodName}{typeParams}({argList}));");
-                }
-            }
-
-            sb.AppendLine("    }").AppendLine().AppendLine();
         }
 
 
@@ -1088,8 +867,110 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// </summary>
         private void AppendExplicitInterfaceMethod(StringBuilder sb, INamedTypeSymbol cls, INamedTypeSymbol iface, IMethodSymbol method, IMethodSymbol? impl, string typeFullName, string currentNamespace)
         {
-            // 在编译期根据接口方法和实现方法上的特性构建行为管道配置
+
             var returnTypeInfo = GetProxyReturnTypeInfo(method);
+            var returnType = FormatType(method.ReturnType, currentNamespace);
+            var ifaceDisplay = FormatType(iface, currentNamespace);
+            var methodName = EscapeIdentifier(method.Name);
+            var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => EscapeIdentifier(tp.Name))) + ">" : string.Empty;
+            var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false, currentNamespace)));
+            var argList = string.Join(", ", method.Parameters.Select(FormatArgument));
+            var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
+            var hasByRefAny = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
+            var needsAsync = hasByRefAny && returnTypeInfo.IsAwaitable;
+            IEnumerable<AttributeData> implementationAttributes = impl is null ? Array.Empty<AttributeData>() : impl.GetAttributes();
+            var effectiveAttributes = method.GetAttributes().Concat(implementationAttributes).ToArray();
+            var behaviorSpecs = GetBehaviorSpecs(effectiveAttributes);
+            PrepareBehaviorPipeline(sb, behaviorSpecs, out var behaviorExpression, out var optionsSetters);
+            var sigReturnType = method.ReturnsVoid
+                ? "void"
+                : isByRefReturn
+                    ? (method.ReturnsByRefReadonly ? "ref readonly " : "ref ") + returnType
+                    : returnType;
+            sb.Append("    ").Append(needsAsync ? "async " : string.Empty).Append(sigReturnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
+              .Append('(').Append(paramList).Append(')').AppendLine()
+              .AppendLine("    {");
+
+            var callExpression = "base." + methodName + typeParams + "(" + argList + ")";
+            AppendProxyMethodBody(sb, cls, method, typeFullName, currentNamespace, returnTypeInfo, effectiveAttributes, behaviorExpression, optionsSetters, callExpression);
+
+        }
+
+
+        /// <summary>
+        /// 从当前方法的有效特性中收集代理行为生成信息
+        /// </summary>
+        /// <param name="attributes">当前方法实际生效的特性列表</param>
+        /// <returns>按声明顺序排列的代理行为生成信息</returns>
+        private IReadOnlyList<ProxyBehaviorSpec> GetBehaviorSpecs(IEnumerable<AttributeData> attributes)
+        {
+
+            var behaviorSpecs = new List<ProxyBehaviorSpec>();
+
+            foreach (var attribute in attributes)
+            {
+                if (TryGetBehaviorSpec(attribute, out var behaviorSpec))
+                    behaviorSpecs.Add(behaviorSpec);
+            }
+
+            return behaviorSpecs;
+
+        }
+
+
+        /// <summary>
+        /// 生成派生重写和显式接口实现共用的代理方法调用体
+        /// </summary>
+        /// <param name="sb">目标源码构建器</param>
+        /// <param name="targetType">当前代理目标类型</param>
+        /// <param name="method">待生成代理调用体的方法</param>
+        /// <param name="typeFullName">当前代理目标类型完整名称</param>
+        /// <param name="currentNamespace">当前生成代码命名空间</param>
+        /// <param name="returnTypeInfo">代理方法返回类型分析结果</param>
+        /// <param name="effectiveAttributes">当前方法实际生效的特性列表</param>
+        /// <param name="behaviorExpression">代理方法使用的行为列表表达式</param>
+        /// <param name="optionsSetters">代理方法使用的配置写入代码</param>
+        /// <param name="callExpression">原始方法调用表达式</param>
+        private void AppendProxyMethodBody(StringBuilder sb, INamedTypeSymbol targetType, IMethodSymbol method, string typeFullName, string currentNamespace, ProxyReturnTypeInfo returnTypeInfo, IReadOnlyList<AttributeData> effectiveAttributes, string behaviorExpression, IReadOnlyList<string> optionsSetters, string callExpression)
+        {
+
+            var requiresArgumentsSnapshot = effectiveAttributes.Any(AutoProxyEligibility.RequiresArgumentsSnapshot);
+            AppendArgumentsSnapshot(sb, method, currentNamespace, requiresArgumentsSnapshot);
+
+            var requiresArgumentsKey = effectiveAttributes.Any(AutoProxyEligibility.RequiresArgumentsKey);
+            AppendArgumentsKeySnapshot(sb, method, requiresArgumentsKey);
+
+            sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + method.Name + "\";");
+            AppendMethodKey(sb, targetType, method, typeFullName);
+            sb.AppendLine("        var __behaviors = " + behaviorExpression + ";");
+
+            var hasReturnValue = returnTypeInfo.HasReturnValue;
+            var allowReturnSerialization = hasReturnValue && IsAllowReturnSerialization(method, returnTypeInfo);
+            var cancellationTokenExpression = GetCancellationTokenExpression(method);
+
+            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = " + (hasReturnValue ? "true" : "false") + ", AllowReturnSerialization = " + (allowReturnSerialization ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
+
+            if (optionsSetters.Count > 0)
+                sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
+
+            AppendProxyInvocation(sb, method, currentNamespace, returnTypeInfo, callExpression, requiresArgumentsSnapshot);
+            sb.AppendLine("    }").AppendLine().AppendLine();
+
+        }
+
+
+        /// <summary>
+        /// 按返回类型和参数签名生成统一的目标方法调用与行为生命周期代码
+        /// </summary>
+        /// <param name="sb">目标源码构建器</param>
+        /// <param name="method">待生成代理调用的方法</param>
+        /// <param name="currentNamespace">当前生成代码命名空间</param>
+        /// <param name="returnTypeInfo">代理方法返回类型分析结果</param>
+        /// <param name="callExpression">原始方法调用表达式</param>
+        /// <param name="requiresArgumentsSnapshot">是否需要维护参数快照</param>
+        private void AppendProxyInvocation(StringBuilder sb, IMethodSymbol method, string currentNamespace, ProxyReturnTypeInfo returnTypeInfo, string callExpression, bool requiresArgumentsSnapshot)
+        {
+
             var isTask = returnTypeInfo.Kind == ProxyReturnTypeKind.Task;
             var isGenericTask = returnTypeInfo.Kind is ProxyReturnTypeKind.TaskOfT or ProxyReturnTypeKind.TaskOfAsyncEnumerable;
             var isValueTask = returnTypeInfo.Kind == ProxyReturnTypeKind.ValueTask;
@@ -1097,237 +978,167 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             var isAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.AsyncEnumerable;
             var isTaskOfAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.TaskOfAsyncEnumerable;
             var isValueTaskOfAsyncEnumerable = returnTypeInfo.Kind == ProxyReturnTypeKind.ValueTaskOfAsyncEnumerable;
-
-            var returnType = FormatType(method.ReturnType, currentNamespace);
-
-            var ifaceDisplay = FormatType(iface, currentNamespace);
-
-            var methodName = EscapeIdentifier(method.Name);
-            var rawMethodName = method.Name;
-
-            var typeParams = method.TypeParameters.Length > 0 ? "<" + string.Join(", ", method.TypeParameters.Select(tp => EscapeIdentifier(tp.Name))) + ">" : string.Empty;
-
-            var paramList = string.Join(", ", method.Parameters.Select(p => FormatParameter(p, includeDefault: false, currentNamespace)));
-
-            var argList = string.Join(", ", method.Parameters.Select(FormatArgument));
-
-
             var isByRefReturn = method.ReturnsByRef || method.ReturnsByRefReadonly;
+            var hasByRefSignature = isByRefReturn || method.Parameters.Any(parameter => parameter.RefKind != RefKind.None || parameter.Type.IsRefLikeType);
 
-            var hasByRef2_head = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
-
-            var needsAsync2 = hasByRef2_head && returnTypeInfo.IsAwaitable;
-
-            var behaviorSpecs = new List<ProxyBehaviorSpec>();
-
-            var methodAttributes = method.GetAttributes();
-            IEnumerable<AttributeData> implementationAttributes = impl is null ? Array.Empty<AttributeData>() : impl.GetAttributes();
-
-            foreach (var a in methodAttributes)
-            {
-                if (TryGetBehaviorSpec(a, out var behaviorSpec))
-                {
-                    behaviorSpecs.Add(behaviorSpec);
-                }
-            }
-
-            foreach (var a in implementationAttributes)
-            {
-                if (TryGetBehaviorSpec(a, out var behaviorSpec))
-                {
-                    behaviorSpecs.Add(behaviorSpec);
-                }
-            }
-
-            PrepareBehaviorPipeline(sb, behaviorSpecs, out var behaviorExpression, out var optionsSetters);
-
-            var sigReturnType = method.ReturnsVoid
-                ? "void"
-                : isByRefReturn
-                    ? (method.ReturnsByRefReadonly ? "ref readonly " : "ref ") + returnType
-                    : returnType;
-
-            sb.Append("    ").Append(needsAsync2 ? "async " : string.Empty).Append(sigReturnType).Append(' ').Append(ifaceDisplay).Append('.').Append(methodName).Append(typeParams)
-              .Append('(').Append(paramList).Append(')').AppendLine()
-              .AppendLine("    {");
-
-            var requiresArgumentsSnapshot = methodAttributes.Any(AutoProxyEligibility.RequiresArgumentsSnapshot)
-                || implementationAttributes.Any(AutoProxyEligibility.RequiresArgumentsSnapshot);
-            AppendArgumentsSnapshot(sb, method, currentNamespace, requiresArgumentsSnapshot);
-
-            var requiresArgumentsKey = methodAttributes.Any(AutoProxyEligibility.RequiresArgumentsKey)
-                || implementationAttributes.Any(AutoProxyEligibility.RequiresArgumentsKey);
-            AppendArgumentsKeySnapshot(sb, method, requiresArgumentsKey);
-
-            sb.AppendLine("        var __logMethod = \"" + typeFullName + "\" + \"." + rawMethodName + "\";");
-            AppendMethodKey(sb, cls, method, typeFullName);
-
-            var hasByRef2 = isByRefReturn || method.Parameters.Any(p => p.RefKind != RefKind.None || p.Type.IsRefLikeType);
-
-            sb.AppendLine("        var __behaviors = " + behaviorExpression + ";");
-
-            var __hasReturn = returnTypeInfo.HasReturnValue;
-
-            var __allowRet = __hasReturn && IsAllowReturnSerialization(method, returnTypeInfo);
-            var cancellationTokenExpression = GetCancellationTokenExpression(method);
-
-            sb.AppendLine("        var __ctx = new InvocationContext { Method = __logMethod, MethodKey = __methodKey, Args = __argsObj, ArgumentsKey = __argumentsKey, IsArgumentsKeyComplete = __isArgumentsKeyComplete, CancellationToken = " + cancellationTokenExpression + ", TraceId = Guid.CreateVersion7(), HasReturnValue = " + (__hasReturn ? "true" : "false") + ", AllowReturnSerialization = " + (__allowRet ? "true" : "false") + ", ServiceProvider = __sp, Logger = __logger, Behaviors = __behaviors };");
-            
-            if (optionsSetters.Count > 0) sb.AppendLine("        " + string.Join("\n        ", optionsSetters));
-
-            var call = "base." + methodName + typeParams + "(" + argList + ")";
-            
-            if (hasByRef2 || isAsyncEnumerable || isTaskOfAsyncEnumerable || isValueTaskOfAsyncEnumerable)
+            if (hasByRefSignature || returnTypeInfo.IsAsyncStream)
             {
                 AppendSynchronousBehaviorValidation(sb);
-                
+
                 if (isAsyncEnumerable)
                 {
-                    var tArg = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
-                    var callExpr2 = "base." + methodName + typeParams + "(" + argList + ")";
-                    AppendAsyncStreamWrapper(sb, tArg, callExpr2, sourceIsParameter: false, invokeBefore: true);
-                    sb.AppendLine($"        return __streamWrapper();");
-                    sb.AppendLine("    }").AppendLine().AppendLine();
+                    var itemType = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
+                    AppendAsyncStreamWrapper(sb, itemType, callExpression, sourceIsParameter: false, invokeBefore: true);
+                    sb.AppendLine("        return __streamWrapper();");
                     return;
                 }
-                
+
                 if (isTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: true);
+                    var exceptionUpdateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: false);
+
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            __invokeBefore(__filters, __ctx);");
-                    sb.AppendLine($"            await {call};");
+                    sb.AppendLine("            await " + callExpression + ";");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            __invokeAfter(__filters, __ctx, null);");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    if (!string.IsNullOrEmpty(exceptionUpdateSnippet)) sb.AppendLine("            " + exceptionUpdateSnippet);
                     sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
                 else if (isTaskOfAsyncEnumerable)
                 {
-                    var tItem = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
-                    AppendAsyncStreamWrapper(sb, tItem, "__s", sourceIsParameter: true, invokeBefore: false);
-                    AppendAsyncStreamPreparationWrapper(sb, tItem, call, returnsValueTask: false);
+                    var itemType = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
+                    AppendAsyncStreamWrapper(sb, itemType, "__s", sourceIsParameter: true, invokeBefore: false);
+                    AppendAsyncStreamPreparationWrapper(sb, itemType, callExpression, returnsValueTask: false);
                 }
                 else if (isGenericTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: true);
+                    var exceptionUpdateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: false);
+
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            __invokeBefore(__filters, __ctx);");
-                    sb.AppendLine($"            var __res = await {call};");
+                    sb.AppendLine("            var __res = await " + callExpression + ";");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            __invokeAfter(__filters, __ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    if (!string.IsNullOrEmpty(exceptionUpdateSnippet)) sb.AppendLine("            " + exceptionUpdateSnippet);
                     sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
                 else if (isValueTaskOfAsyncEnumerable)
                 {
-                    var tItem = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
-                    AppendAsyncStreamWrapper(sb, tItem, "__s", sourceIsParameter: true, invokeBefore: false);
-                    AppendAsyncStreamPreparationWrapper(sb, tItem, call, returnsValueTask: true);
+                    var itemType = FormatType(returnTypeInfo.StreamItemType!, currentNamespace);
+                    AppendAsyncStreamWrapper(sb, itemType, "__s", sourceIsParameter: true, invokeBefore: false);
+                    AppendAsyncStreamPreparationWrapper(sb, itemType, callExpression, returnsValueTask: true);
                 }
                 else if (isValueTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: true);
+                    var exceptionUpdateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: false);
+
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            __invokeBefore(__filters, __ctx);");
-                    sb.AppendLine($"            await {call};");
+                    sb.AppendLine("            await " + callExpression + ";");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            __invokeAfter(__filters, __ctx, null);");
                     sb.AppendLine("            return;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    if (!string.IsNullOrEmpty(exceptionUpdateSnippet)) sb.AppendLine("            " + exceptionUpdateSnippet);
                     sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
                 else if (isGenericValueTask)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: true);
+                    var exceptionUpdateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: false);
+
                     sb.AppendLine("        try");
                     sb.AppendLine("        {");
                     sb.AppendLine("            __invokeBefore(__filters, __ctx);");
-                    sb.AppendLine($"            var __res = await {call};");
+                    sb.AppendLine("            var __res = await " + callExpression + ";");
                     if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
                     sb.AppendLine("            __invokeAfter(__filters, __ctx, __res);");
                     sb.AppendLine("            return __res;");
                     sb.AppendLine("        }");
                     sb.AppendLine("        catch (Exception __ex)");
                     sb.AppendLine("        {");
-                    if (!string.IsNullOrEmpty(updateSnippet)) sb.AppendLine("            " + updateSnippet);
+                    if (!string.IsNullOrEmpty(exceptionUpdateSnippet)) sb.AppendLine("            " + exceptionUpdateSnippet);
                     sb.AppendLine("            __invokeException(__filters, __ctx, __ex);");
                     sb.AppendLine("            throw;");
                     sb.AppendLine("        }");
                 }
                 else if (isByRefReturn)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: true);
+                    var exceptionUpdateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: false);
                     var refLocalModifier = method.ReturnsByRefReadonly ? "ref readonly var" : "ref var";
-                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + refLocalModifier + " __ret = ref " + call + "; var __snap = __ret; " + updateSnippet + " __invokeAfter(__filters, __ctx, __snap); return ref __ret; } catch (Exception __ex) { " + updateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + refLocalModifier + " __ret = ref " + callExpression + "; var __snap = __ret; " + updateSnippet + " __invokeAfter(__filters, __ctx, __snap); return ref __ret; } catch (Exception __ex) { " + exceptionUpdateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
                 }
                 else if (method.ReturnsVoid)
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + call + "; " + updateSnippet + " __invokeAfter(__filters, __ctx, null); } catch (Exception __ex) { " + updateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: true);
+                    var exceptionUpdateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: false);
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); " + callExpression + "; " + updateSnippet + " __invokeAfter(__filters, __ctx, null); } catch (Exception __ex) { " + exceptionUpdateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
                     sb.AppendLine("        return;");
                 }
                 else
                 {
-                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot);
-                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); var __ret = " + call + "; " + updateSnippet + " __invokeAfter(__filters, __ctx, __ret); return __ret; } catch (Exception __ex) { " + updateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
+                    var updateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: true);
+                    var exceptionUpdateSnippet = BuildArgsUpdateSnippet(method, requiresArgumentsSnapshot, includeOutParameters: false);
+                    sb.AppendLine("        try { __invokeBefore(__filters, __ctx); var __ret = " + callExpression + "; " + updateSnippet + " __invokeAfter(__filters, __ctx, __ret); return __ret; } catch (Exception __ex) { " + exceptionUpdateSnippet + " __invokeException(__filters, __ctx, __ex); throw; }");
                 }
+
+                return;
+            }
+
+            var runtime = "ProxyRuntime";
+
+            if (isTask)
+            {
+                sb.AppendLine("        return " + runtime + ".ExecuteTask(__ctx, () => " + callExpression + ");");
+            }
+            else if (isGenericTask)
+            {
+                var resultType = FormatType(returnTypeInfo.ResultType!);
+                sb.AppendLine("        return " + runtime + ".ExecuteAsync<" + resultType + ">(__ctx, () => " + callExpression + ");");
+            }
+            else if (isValueTask)
+            {
+                sb.AppendLine("        return " + runtime + ".ExecuteTask(__ctx, () => " + callExpression + ");");
+            }
+            else if (isGenericValueTask)
+            {
+                var resultType = FormatType(returnTypeInfo.ResultType!);
+                sb.AppendLine("        return " + runtime + ".ExecuteAsync<" + resultType + ">(__ctx, () => " + callExpression + " );");
+            }
+            else if (method.ReturnsVoid)
+            {
+                sb.AppendLine("        " + runtime + ".Execute<object?>(__ctx, () => { " + callExpression + "; return null; });");
+                sb.AppendLine("        return;");
             }
             else
             {
-                var runtime = "ProxyRuntime";
-                
-                if (isTask)
-                {
-                    sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {call});");
-                }
-                else if (isGenericTask)
-                {
-                    var tArg = FormatType(returnTypeInfo.ResultType!);
-                    
-                    sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {call});");
-                }
-                else if (isValueTask)
-                {
-                    sb.AppendLine($"        return {runtime}.ExecuteTask(__ctx, () => {call});");
-                }
-                else if (isGenericValueTask)
-                {
-                    var tArg = FormatType(returnTypeInfo.ResultType!);
-                    
-                    sb.AppendLine($"        return {runtime}.ExecuteAsync<{tArg}>(__ctx, () => {call} );");
-                }
-                else if (method.ReturnsVoid)
-                {
-                    sb.AppendLine($"        {runtime}.Execute<object?>(__ctx, () => {{ {call}; return null; }});");
-                    sb.AppendLine("        return;");
-                }
-                else
-                {
-                    sb.AppendLine($"        return {runtime}.Execute<{returnType}>(__ctx, () => {call});");
-                }
+                var returnType = FormatType(method.ReturnType, currentNamespace);
+                sb.AppendLine("        return " + runtime + ".Execute<" + returnType + ">(__ctx, () => " + callExpression + ");");
             }
 
-            sb.AppendLine("    }").AppendLine().AppendLine();
         }
 
 
@@ -1843,8 +1654,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             var dictionaryType = compilation.GetTypeByMetadataName("System.Collections.Generic.Dictionary`2");
             return dictionaryType is not null && RequiresGlobalQualification(dictionaryType, currentNamespace)
-                ? "global::System.Collections.Generic.Dictionary<string, string?>"
-                : "Dictionary<string, string?>";
+                ? "global::System.Collections.Generic.Dictionary<string, object?>"
+                : "Dictionary<string, object?>";
 
         }
 
@@ -2412,7 +2223,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
                 else
                 {
-                    sb.Append("        __argsDict[\"").Append(parameter.Name).Append("\"] = JsonUtil.ToJson(")
+                    sb.Append("        __argsDict[\"").Append(parameter.Name).Append("\"] = JsonUtil.CreateSnapshotValue(")
                       .Append(EscapeIdentifier(parameter.Name)).Append(");").AppendLine();
                 }
             }
@@ -2427,8 +2238,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// </summary>
         /// <param name="method">当前代理方法</param>
         /// <param name="requiresArgumentsSnapshot">是否需要刷新参数快照</param>
+        /// <param name="includeOutParameters">是否刷新只有成功调用后才能安全读取的 out 参数</param>
         /// <returns>参数快照刷新代码 不需要刷新时返回空字符串</returns>
-        private static string BuildArgsUpdateSnippet(IMethodSymbol method, bool requiresArgumentsSnapshot)
+        private static string BuildArgsUpdateSnippet(IMethodSymbol method, bool requiresArgumentsSnapshot, bool includeOutParameters)
         {
 
             if (!requiresArgumentsSnapshot)
@@ -2438,9 +2250,9 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             foreach (var p in method.Parameters)
             {
-                if (p.RefKind != RefKind.None)
+                if (p.RefKind != RefKind.None && (includeOutParameters || p.RefKind != RefKind.Out))
                 {
-                    // 调用完成后刷新 ref out in 参数在参数字典中的值
+                    // 刷新当前分支中可以安全读取的引用参数值
                     if (TryGetSkipPlaceholder(p.Type, out var ph))
                     {
                         var escaped = ph.Replace("\\", "\\\\").Replace("\"", "\\\"");
@@ -2449,7 +2261,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     else
                     {
                         var parameterName = EscapeIdentifier(p.Name);
-                        updates.Add($"__argsDict[\"{p.Name}\"] = JsonUtil.ToJson({parameterName});");
+                        updates.Add($"__argsDict[\"{p.Name}\"] = JsonUtil.CreateSnapshotValue({parameterName});");
                     }
                 }
             }

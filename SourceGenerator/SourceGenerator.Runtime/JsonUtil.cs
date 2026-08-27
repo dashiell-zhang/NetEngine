@@ -90,6 +90,15 @@ public static class JsonUtil
 
 
     /// <summary>
+    /// 用于创建独立日志快照且不生成跨快照冲突的引用标识
+    /// </summary>
+    private static readonly JsonSerializerOptions SnapshotJsonOpts = new(JsonOpts)
+    {
+        ReferenceHandler = ReferenceHandler.IgnoreCycles
+    };
+
+
+    /// <summary>
     /// 将对象序列化为 JSON 字符串 在序列化和字符串转换失败时返回固定占位符
     /// </summary>
     /// <param name="value">待序列化的对象</param>
@@ -111,6 +120,36 @@ public static class JsonUtil
                 return "<serialization-failed>";
             }
         }
+    }
+
+
+    /// <summary>
+    /// 创建可安全嵌入外层 JSON 的独立值快照 序列化失败时回退为字符串
+    /// </summary>
+    /// <param name="value">待创建快照的值</param>
+    /// <returns>保留原始 JSON 类型的元素或回退字符串</returns>
+    public static object? CreateSnapshotValue(object? value)
+    {
+
+        if (value is null)
+            return null;
+
+        try
+        {
+            return JsonSerializer.SerializeToElement(value, value.GetType(), SnapshotJsonOpts);
+        }
+        catch
+        {
+            try
+            {
+                return value.ToString() ?? "<null>";
+            }
+            catch
+            {
+                return "<serialization-failed>";
+            }
+        }
+
     }
 
 
@@ -586,29 +625,6 @@ public static class JsonUtil
         return type.GetInterfaces().Any(interfaceType => interfaceType.IsGenericType
             && interfaceType.GetGenericTypeDefinition() == genericInterface);
 
-    }
-
-
-    /// <summary>
-    /// 将 JSON 字符串反序列化为通用对象 在失败时返回原始字符串
-    /// </summary>
-    /// <param name="json">JSON 字符串</param>
-    /// <returns>反序列化后的对象或原始字符串</returns>
-    public static object ToObject(string? json)
-    {
-        if (string.IsNullOrEmpty(json)) return json ?? string.Empty;
-
-        try
-        {
-            var obj = JsonSerializer.Deserialize<object>(json, JsonOpts);
-            if (obj != null) return obj;
-        }
-        catch
-        {
-
-        }
-
-        return json;
     }
 
 

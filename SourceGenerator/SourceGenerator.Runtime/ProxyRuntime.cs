@@ -72,9 +72,11 @@ public static class ProxyRuntime
     /// <returns>封装目标方法返回值的 Task</returns>
     public static Task<T> ExecuteAsync<T>(InvocationContext ctx, Func<Task<T>> inner)
     {
+
         return InvocationPipeline
-            .ExecuteAsync<T>(ctx, async () => await inner().ConfigureAwait(false), ctx.Behaviors)
+            .ExecuteAsync<T>(ctx, () => AdaptTask(inner), ctx.Behaviors)
             .AsTask();
+
     }
 
 
@@ -102,6 +104,33 @@ public static class ProxyRuntime
         await InvocationPipeline
             .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, ctx.Behaviors)
             .ConfigureAwait(false);
+    }
+
+
+    /// <summary>
+    /// 将 Task 调用适配为 ValueTask 并保留同步异常和取消状态
+    /// </summary>
+    /// <typeparam name="T">返回值类型</typeparam>
+    /// <param name="inner">实际执行目标方法的 Task 异步委托</param>
+    /// <returns>封装目标方法执行状态的 ValueTask</returns>
+    private static ValueTask<T> AdaptTask<T>(Func<Task<T>> inner)
+    {
+
+        try
+        {
+            return new ValueTask<T>(inner());
+        }
+        catch (OperationCanceledException ex)
+        {
+            var completionSource = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            completionSource.SetCanceled(ex.CancellationToken);
+            return new ValueTask<T>(completionSource.Task);
+        }
+        catch (Exception ex)
+        {
+            return ValueTask.FromException<T>(ex);
+        }
+
     }
 
 

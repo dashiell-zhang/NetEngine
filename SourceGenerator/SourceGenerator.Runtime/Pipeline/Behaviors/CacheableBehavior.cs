@@ -61,18 +61,20 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         if (cache.TtlSeconds <= 0)
             throw new ArgumentOutOfRangeException(nameof(Options.CacheableOptions.TtlSeconds), cache.TtlSeconds, "TtlSeconds 必须大于 0");
 
-        var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
-
         if (!ctx.IsArgumentsKeyComplete || ctx.ArgumentsKey is null)
         {
-            ctx.Logger?.LogWarning($"Cache bypassed because arguments key is incomplete {methodForLog}");
+            if (ctx.Logger?.IsEnabled(LogLevel.Warning) == true)
+                ctx.Logger.LogWarning("Cache bypassed because arguments key is incomplete method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
+
             return await next();
         }
 
         var cacheSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedCache)) as IDistributedCache;
         if (cacheSvc is null)
         {
-            ctx.Logger?.LogWarning($"Cache bypassed because IDistributedCache is unavailable {methodForLog}");
+            if (ctx.Logger?.IsEnabled(LogLevel.Warning) == true)
+                ctx.Logger.LogWarning("Cache bypassed because IDistributedCache is unavailable method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
+
             return await next();
         }
 
@@ -80,13 +82,13 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         var cacheKey = ComposeCacheKey(keyHash);
 
         ctx.CancellationToken.ThrowIfCancellationRequested();
-        var get = await TryGetAsync<T>(cacheSvc, cacheKey, ctx.Logger, methodForLog, ctx.CancellationToken);
+        var get = await TryGetAsync<T>(cacheSvc, cacheKey, ctx.Logger, ctx.Method, ctx.TraceId, ctx.CancellationToken);
         if (get.hit) return get.value;
 
         var lockSvc = ctx.ServiceProvider?.GetService(typeof(IDistributedLock)) as IDistributedLock;
         if (lockSvc is null)
         {
-            return await ExecuteAndSetAsync(cacheSvc, next, cacheKey, cache, ctx.Logger, methodForLog, ctx.CancellationToken);
+            return await ExecuteAndSetAsync(cacheSvc, next, cacheKey, cache, ctx.Logger, ctx.Method, ctx.TraceId, ctx.CancellationToken);
         }
 
         var lockKey = ComposeLockKey(keyHash);
@@ -104,21 +106,24 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         }
         catch (Exception ex)
         {
-            ctx.Logger?.LogWarning($"Cache stampede lock error {methodForLog}: {ex.Message}");
-            return await ExecuteAndSetAsync(cacheSvc, next, cacheKey, cache, ctx.Logger, methodForLog, ctx.CancellationToken);
+            if (ctx.Logger?.IsEnabled(LogLevel.Warning) == true)
+                ctx.Logger.LogWarning("Cache stampede lock error method={Method} traceId={TraceId}: {ErrorMessage}", ctx.Method, ctx.TraceId, ex.Message);
+
+            return await ExecuteAndSetAsync(cacheSvc, next, cacheKey, cache, ctx.Logger, ctx.Method, ctx.TraceId, ctx.CancellationToken);
         }
 
-        var leaseRenewer = new DistributedLockLeaseRenewer(lockSvc, lockHandle, CacheLockExpiry, lockKey, methodForLog, ctx.Logger);
+        var leaseRenewer = new DistributedLockLeaseRenewer(lockSvc, lockHandle, CacheLockExpiry, lockKey, ctx.Method, ctx.TraceId, ctx.Logger);
 
         try
         {
-            ctx.Logger?.LogInformation($"Cache stampede lock acquired {methodForLog}");
+            if (ctx.Logger?.IsEnabled(LogLevel.Information) == true)
+                ctx.Logger.LogInformation("Cache stampede lock acquired method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
 
             ctx.CancellationToken.ThrowIfCancellationRequested();
-            get = await TryGetAsync<T>(cacheSvc, cacheKey, ctx.Logger, methodForLog, ctx.CancellationToken);
+            get = await TryGetAsync<T>(cacheSvc, cacheKey, ctx.Logger, ctx.Method, ctx.TraceId, ctx.CancellationToken);
             if (get.hit) return get.value;
 
-            return await ExecuteAndSetAsync(cacheSvc, next, cacheKey, cache, ctx.Logger, methodForLog, ctx.CancellationToken);
+            return await ExecuteAndSetAsync(cacheSvc, next, cacheKey, cache, ctx.Logger, ctx.Method, ctx.TraceId, ctx.CancellationToken);
         }
         finally
         {
@@ -127,11 +132,14 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
             try
             {
                 await lockHandle.DisposeAsync();
-                ctx.Logger?.LogInformation($"Cache stampede lock released {methodForLog}");
+
+                if (ctx.Logger?.IsEnabled(LogLevel.Information) == true)
+                    ctx.Logger.LogInformation("Cache stampede lock released method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
             }
             catch (Exception ex)
             {
-                ctx.Logger?.LogError(ex, "Cache stampede lock release error {Method}", methodForLog);
+                if (ctx.Logger?.IsEnabled(LogLevel.Error) == true)
+                    ctx.Logger.LogError(ex, "Cache stampede lock release error method={Method} traceId={TraceId}", ctx.Method, ctx.TraceId);
             }
         }
 
@@ -161,15 +169,16 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     /// <param name="cacheKey">结果缓存键</param>
     /// <param name="cache">缓存行为配置</param>
     /// <param name="logger">调用日志记录器</param>
-    /// <param name="method">调用方法摘要</param>
+    /// <param name="method">调用方法名称</param>
+    /// <param name="traceId">调用跟踪标识</param>
     /// <param name="cancellationToken">调用取消令牌</param>
     /// <returns>业务方法返回结果</returns>
-    private static async ValueTask<T> ExecuteAndSetAsync<T>(IDistributedCache cacheSvc, Func<ValueTask<T>> next, string cacheKey, Options.CacheableOptions cache, ILogger? logger, string method, CancellationToken cancellationToken)
+    private static async ValueTask<T> ExecuteAndSetAsync<T>(IDistributedCache cacheSvc, Func<ValueTask<T>> next, string cacheKey, Options.CacheableOptions cache, ILogger? logger, string method, Guid traceId, CancellationToken cancellationToken)
     {
 
         cancellationToken.ThrowIfCancellationRequested();
         var result = await next();
-        await SetAsync(cacheSvc, cacheKey, cache, logger, method, result, cancellationToken);
+        await SetAsync(cacheSvc, cacheKey, cache, logger, method, traceId, result, cancellationToken);
         return result;
 
     }
@@ -178,7 +187,7 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     /// <summary>
     /// 尝试从分布式缓存中读取结果 返回是否命中及对应值
     /// </summary>
-    private static async Task<(bool hit, T value)> TryGetAsync<T>(IDistributedCache cacheSvc, string cacheKey, ILogger? logger, string method, CancellationToken cancellationToken)
+    private static async Task<(bool hit, T value)> TryGetAsync<T>(IDistributedCache cacheSvc, string cacheKey, ILogger? logger, string method, Guid traceId, CancellationToken cancellationToken)
     {
 
         try
@@ -197,7 +206,9 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
                 if (default(T) is not null)
                     throw new JsonException($"缓存空结果与声明类型 {typeof(T).FullName} 不兼容");
 
-                logger?.LogInformation($"Cache hit {method}");
+                if (logger?.IsEnabled(LogLevel.Information) == true)
+                    logger.LogInformation("Cache hit method={Method} traceId={TraceId}", method, traceId);
+
                 return (true, default!);
             }
 
@@ -213,14 +224,18 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
             {
                 if (result is null && default(T) is null)
                 {
-                    logger?.LogInformation($"Cache hit {method}");
+                    if (logger?.IsEnabled(LogLevel.Information) == true)
+                        logger.LogInformation("Cache hit method={Method} traceId={TraceId}", method, traceId);
+
                     return (true, default!);
                 }
 
                 throw new JsonException($"缓存结果无法转换为声明类型 {typeof(T).FullName}");
             }
 
-            logger?.LogInformation($"Cache hit {method}");
+            if (logger?.IsEnabled(LogLevel.Information) == true)
+                logger.LogInformation("Cache hit method={Method} traceId={TraceId}", method, traceId);
+
             return (true, typedResult);
         }
         catch (OperationCanceledException)
@@ -229,7 +244,8 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
         }
         catch (Exception ex)
         {
-            logger?.LogInformation($"Cache read error {method}: {ex.Message}");
+            if (logger?.IsEnabled(LogLevel.Information) == true)
+                logger.LogInformation("Cache read error method={Method} traceId={TraceId}: {ErrorMessage}", method, traceId, ex.Message);
             
             return (false, default!);
         }
@@ -244,15 +260,18 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
     /// <param name="cacheKey">结果缓存键</param>
     /// <param name="cache">缓存行为配置</param>
     /// <param name="logger">调用日志记录器</param>
-    /// <param name="method">调用方法摘要</param>
+    /// <param name="method">调用方法名称</param>
+    /// <param name="traceId">调用跟踪标识</param>
     /// <param name="value">业务方法返回结果</param>
     /// <param name="cancellationToken">调用取消令牌</param>
-    private static async Task SetAsync<T>(IDistributedCache cacheSvc, string cacheKey, Options.CacheableOptions cache, ILogger? logger, string method, T value, CancellationToken cancellationToken)
+    private static async Task SetAsync<T>(IDistributedCache cacheSvc, string cacheKey, Options.CacheableOptions cache, ILogger? logger, string method, Guid traceId, T value, CancellationToken cancellationToken)
     {
 
         if (cancellationToken.IsCancellationRequested)
         {
-            logger?.LogInformation($"Cache write skipped because request was canceled after method completed {method}");
+            if (logger?.IsEnabled(LogLevel.Information) == true)
+                logger.LogInformation("Cache write skipped because request was canceled after method completed method={Method} traceId={TraceId}", method, traceId);
+
             return;
         }
 
@@ -272,15 +291,19 @@ public sealed class CacheableBehavior : IInvocationAsyncBehavior
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cache.TtlSeconds)
             }, cancellationToken);
-            logger?.LogInformation($"Cache set {method} ttl={cache.TtlSeconds}");
+
+            if (logger?.IsEnabled(LogLevel.Information) == true)
+                logger.LogInformation("Cache set method={Method} traceId={TraceId} ttl={TtlSeconds}", method, traceId, cache.TtlSeconds);
         }
         catch (OperationCanceledException)
         {
-            logger?.LogInformation($"Cache write canceled after method completed {method}");
+            if (logger?.IsEnabled(LogLevel.Information) == true)
+                logger.LogInformation("Cache write canceled after method completed method={Method} traceId={TraceId}", method, traceId);
         }
         catch (Exception ex)
         {
-            logger?.LogInformation($"Cache write error {method}: {ex.Message}");
+            if (logger?.IsEnabled(LogLevel.Information) == true)
+                logger.LogInformation("Cache write error method={Method} traceId={TraceId}: {ErrorMessage}", method, traceId, ex.Message);
         }
     }
 }

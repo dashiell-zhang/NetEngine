@@ -23,7 +23,7 @@ public sealed class InvocationContext
 
 
     /// <summary>
-    /// 方法调用的参数快照 一般为可序列化对象
+    /// 方法调用的参数快照 生成代理按参数名保存独立结构化值
     /// </summary>
     public object? Args { get; init; }
 

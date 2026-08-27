@@ -31,7 +31,6 @@ public sealed class RetryBehavior : IInvocationAsyncBehavior
 
         if (maxRetries == 0) return await next();
 
-        var methodForLog = ctx.Method + " traceId=" + ctx.TraceId.ToString();
         var maxExecutions = (long)maxRetries + 1;
         long execution = 1;
 
@@ -49,13 +48,16 @@ public sealed class RetryBehavior : IInvocationAsyncBehavior
             {
                 if (execution >= maxExecutions)
                 {
-                    ctx.Logger?.LogError($"Retry exhausted executions={execution}/{maxExecutions} {methodForLog}: {ex.Message}");
+                    if (ctx.Logger?.IsEnabled(LogLevel.Error) == true)
+                        ctx.Logger.LogError("Retry exhausted executions={Execution}/{MaxExecutions} method={Method} traceId={TraceId}: {ErrorMessage}", execution, maxExecutions, ctx.Method, ctx.TraceId, ex.Message);
+
                     throw;
                 }
 
                 ctx.CancellationToken.ThrowIfCancellationRequested();
 
-                ctx.Logger?.LogWarning($"Retry scheduled retry={execution}/{maxRetries} nextExecution={execution + 1}/{maxExecutions} {methodForLog}: {ex.Message}");
+                if (ctx.Logger?.IsEnabled(LogLevel.Warning) == true)
+                    ctx.Logger.LogWarning("Retry scheduled retry={Retry}/{MaxRetries} nextExecution={NextExecution}/{MaxExecutions} method={Method} traceId={TraceId}: {ErrorMessage}", execution, maxRetries, execution + 1, maxExecutions, ctx.Method, ctx.TraceId, ex.Message);
 
                 if (delaySeconds > 0)
                 {

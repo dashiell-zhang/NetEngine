@@ -16,15 +16,24 @@ public static class InvocationPipeline
     /// <returns>执行管道后得到的返回值</returns>
     public static ValueTask<T> ExecuteAsync<T>(InvocationContext ctx, Func<ValueTask<T>> inner, IReadOnlyList<IInvocationAsyncBehavior> behaviors)
     {
+
+        if (behaviors.Count == 0)
+            return inner();
+
+        if (behaviors.Count == 1)
+            return behaviors[0].InvokeAsync(ctx, inner);
+
         Func<ValueTask<T>> next = inner;
-        for (int i = behaviors.Count - 1; i >= 0; i--)
+
+        for (var i = behaviors.Count - 1; i >= 0; i--)
         {
-            var b = behaviors[i];
+            var behavior = behaviors[i];
             var currentNext = next;
-            next = () => b.InvokeAsync(ctx, currentNext);
+            next = () => behavior.InvokeAsync(ctx, currentNext);
         }
+
         return next();
+
     }
 
 }
-

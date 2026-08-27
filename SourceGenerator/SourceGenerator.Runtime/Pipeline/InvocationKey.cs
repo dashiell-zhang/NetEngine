@@ -23,14 +23,7 @@ internal static class InvocationKey
             : context.MethodKey;
         var bytes = Encoding.UTF8.GetBytes(seed);
         var hash = SHA256.HashData(bytes);
-        var builder = new StringBuilder(hash.Length * 2);
-
-        foreach (var value in hash)
-        {
-            builder.Append(value.ToString("x2"));
-        }
-
-        return builder.ToString();
+        return Convert.ToHexStringLower(hash);
 
     }
 

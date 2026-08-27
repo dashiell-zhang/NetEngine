@@ -62,7 +62,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             }
         }
 
-        Stopwatch sw = Stopwatch.StartNew();
+        var startTimestamp = Stopwatch.GetTimestamp();
         var hasArgs = ctx.Args is not null;
 
         var payload = new Dictionary<string, object?>
@@ -80,13 +80,12 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         try
         {
             var result = await next();
-            sw.Stop();
 
             var payload2 = new Dictionary<string, object?>
             {
                 ["event"] = "executed",
                 ["method"] = ctx.Method,
-                ["durationMs"] = sw.ElapsedMilliseconds,
+                ["durationMs"] = (long)Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds,
             };
             
             payload2["traceId"] = ctx.TraceId;
@@ -104,8 +103,6 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
         }
         catch (Exception ex)
         {
-            sw.Stop();
-            
             if (logError)
             {
                 var exPayload = new Dictionary<string, object?>
@@ -127,7 +124,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
                 
                 if (ctx.Args is not null) exPayload["args"] = ctx.Args;
                 
-                exPayload["durationMs"] = sw.ElapsedMilliseconds;
+                exPayload["durationMs"] = (long)Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds;
                 
                 logger?.LogError(JsonUtil.ToJson(exPayload));
             }

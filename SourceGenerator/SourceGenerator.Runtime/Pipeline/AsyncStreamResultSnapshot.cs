@@ -31,7 +31,7 @@ public sealed class AsyncStreamResultSnapshot
 
 
     /// <summary>
-    /// 按枚举顺序保留的有限元素快照 未请求捕获时为空
+    /// 按枚举顺序保留的有限结构化元素快照 未请求捕获时为空
     /// </summary>
     public IReadOnlyList<object?> CapturedItems { get; init; } = Array.Empty<object?>();
 

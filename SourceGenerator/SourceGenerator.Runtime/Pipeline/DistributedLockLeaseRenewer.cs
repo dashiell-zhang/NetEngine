@@ -53,6 +53,12 @@ internal sealed class DistributedLockLeaseRenewer
 
 
     /// <summary>
+    /// 用于错误日志的调用跟踪标识
+    /// </summary>
+    private readonly Guid traceId;
+
+
+    /// <summary>
     /// 当前调用使用的日志记录器
     /// </summary>
     private readonly ILogger? logger;
@@ -89,9 +95,10 @@ internal sealed class DistributedLockLeaseRenewer
     /// <param name="lockHandle">当前持有的锁句柄</param>
     /// <param name="expiry">每次续期设置的租约时长</param>
     /// <param name="lockKey">用于错误日志的锁键</param>
-    /// <param name="method">用于错误日志的业务方法信息</param>
+    /// <param name="method">用于错误日志的业务方法名称</param>
+    /// <param name="traceId">用于错误日志的调用跟踪标识</param>
     /// <param name="logger">当前调用使用的日志记录器</param>
-    public DistributedLockLeaseRenewer(IDistributedLock distributedLock, IDistributedLockHandle lockHandle, TimeSpan expiry, string lockKey, string method, ILogger? logger)
+    public DistributedLockLeaseRenewer(IDistributedLock distributedLock, IDistributedLockHandle lockHandle, TimeSpan expiry, string lockKey, string method, Guid traceId, ILogger? logger)
     {
 
         if (expiry <= TimeSpan.Zero)
@@ -104,6 +111,7 @@ internal sealed class DistributedLockLeaseRenewer
         this.expiry = expiry;
         this.lockKey = lockKey;
         this.method = method;
+        this.traceId = traceId;
         this.logger = logger;
         renewalTask = RenewUntilStoppedAsync();
 
@@ -254,13 +262,16 @@ internal sealed class DistributedLockLeaseRenewer
     private void LogLeaseLost(Exception? exception = null)
     {
 
+        if (logger?.IsEnabled(LogLevel.Error) != true)
+            return;
+
         if (exception is null)
         {
-            logger?.LogError("Distributed lock lease lost method={Method} key={LockKey} expirySeconds={ExpirySeconds} Business execution will continue", method, lockKey, expiry.TotalSeconds);
+            logger.LogError("Distributed lock lease lost method={Method} traceId={TraceId} key={LockKey} expirySeconds={ExpirySeconds} Business execution will continue", method, traceId, lockKey, expiry.TotalSeconds);
             return;
         }
 
-        logger?.LogError(exception, "Distributed lock lease renewal error method={Method} key={LockKey} expirySeconds={ExpirySeconds} Business execution will continue", method, lockKey, expiry.TotalSeconds);
+        logger.LogError(exception, "Distributed lock lease renewal error method={Method} traceId={TraceId} key={LockKey} expirySeconds={ExpirySeconds} Business execution will continue", method, traceId, lockKey, expiry.TotalSeconds);
 
     }
 

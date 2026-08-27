@@ -1,5 +1,4 @@
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
@@ -342,7 +341,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
             var assemblyName = compilation.AssemblyName ?? "Assembly";
 
-            var safeAssemblyName = SanitizeIdentifier(assemblyName);
+            var safeAssemblyName = ServiceRegistrationAggregation.SanitizeIdentifier(assemblyName);
 
             // 命名空间统一为 NetEngine.Generated，通过不同的方法名区分不同程序集：
             // RegisterServices_{AssemblyName}
@@ -351,9 +350,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
             var methodName = "RegisterServices_" + safeAssemblyName;
 
             // 启动项目（控制台 / 桌面应用等）才会生成聚合的 BatchRegisterServices
-            var isStartupLike = compilation.Options.OutputKind is OutputKind.ConsoleApplication
-                                or OutputKind.WindowsApplication
-                                or OutputKind.WindowsRuntimeApplication;
+            var isStartupLike = ServiceRegistrationAggregation.IsStartupLike(compilation);
 
             // 对于既没有本地注册、又不是启动项目的情况，可以直接跳过。
             if (!isStartupLike && registrations.Length == 0)
@@ -403,46 +400,8 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                     methodNamesToInvoke.Add(methodName);
                 }
 
-                foreach (var reference in compilation.References)
-                {
-                    if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol asm)
-                        continue;
-
-                    // 跳过自身程序集
-                    if (string.Equals(asm.Name, assemblyName, StringComparison.Ordinal))
-                        continue;
-
-                    var extType = asm.GetTypeByMetadataName("NetEngine.Generated.ServiceCollectionExtensions");
-                    if (extType is null)
-                        continue;
-
-                    var referencedSafeName = SanitizeIdentifier(asm.Name);
-                    var refMethodName = "RegisterServices_" + referencedSafeName;
-
-                    var hasMethod = extType
-                        .GetMembers(refMethodName)
-                        .OfType<IMethodSymbol>()
-                        .Any(m =>
-                            m.IsStatic &&
-                            m.IsExtensionMethod &&
-                            m.Parameters.Length == 1 &&
-                            SymbolEqualityComparer.Default.Equals(m.Parameters[0].Type, servicesSymbol));
-
-                    if (hasMethod)
-                    {
-                        methodNamesToInvoke.Add(refMethodName);
-                    }
-                }
-
-                sb.AppendLine();
-                sb.AppendLine("    public static IServiceCollection BatchRegisterServices(this IServiceCollection services)");
-                sb.AppendLine("    {");
-                foreach (var name in methodNamesToInvoke)
-                {
-                    sb.Append("        services.").Append(name).AppendLine("();");
-                }
-                sb.AppendLine("        return services;");
-                sb.AppendLine("    }");
+                methodNamesToInvoke.AddRange(ServiceRegistrationAggregation.FindReferencedRegistrationMethods(compilation, servicesSymbol, "RegisterServices_"));
+                ServiceRegistrationAggregation.AppendBatchMethod(sb, "BatchRegisterServices", methodNamesToInvoke);
             }
 
             sb.AppendLine("}");
@@ -1130,32 +1089,6 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
         }
 
         return null;
-    }
-
-
-    /// <summary>
-    /// 将给定名称转换为合法的 C# 标识符，用于生成方法名后缀
-    /// </summary>
-    /// <param name="name">原始名称（通常为程序集名）</param>
-    /// <returns>可安全用于标识符的位置的名称</returns>
-    private static string SanitizeIdentifier(string name)
-    {
-        // 将程序集名称转换为合法的 C# 标识符，用于生成方法名后缀
-        var builder = new StringBuilder(name.Length);
-        if (name.Length == 0)
-            return "_";
-
-        if (!SyntaxFacts.IsIdentifierStartCharacter(name[0]))
-        {
-            builder.Append('_');
-        }
-
-        foreach (var ch in name)
-        {
-            builder.Append(SyntaxFacts.IsIdentifierPartCharacter(ch) ? ch : '_');
-        }
-
-        return builder.ToString();
     }
 
 }

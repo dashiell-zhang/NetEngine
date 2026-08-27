@@ -1,5 +1,4 @@
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
@@ -208,7 +207,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
             var assemblyName = compilation.AssemblyName ?? "Assembly";
 
-            var safeAssemblyName = SanitizeIdentifier(assemblyName);
+            var safeAssemblyName = ServiceRegistrationAggregation.SanitizeIdentifier(assemblyName);
 
             var ns = GeneratedNamespaceName;
 
@@ -218,9 +217,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
             var methodName = "RegisterBackgroundServices_" + safeAssemblyName;
 
             // 仅在“可作为启动入口”的项目中生成聚合的 BatchRegisterBackgroundServices
-            var isStartupLike = compilation.Options.OutputKind is OutputKind.ConsoleApplication
-                                or OutputKind.WindowsApplication
-                                or OutputKind.WindowsRuntimeApplication;
+            var isStartupLike = ServiceRegistrationAggregation.IsStartupLike(compilation);
 
             // 对于既没有本地后台服务、又不是启动项目的情况，可以直接跳过。
             if (!isStartupLike && registrations.Length == 0)
@@ -269,49 +266,8 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                     methodNamesToInvoke.Add(methodName);
                 }
 
-                // 遍历所有引用的程序集，尝试发现它们是否也生成了对应的 RegisterBackgroundServices_xxx 扩展方法
-                foreach (var reference in compilation.References)
-                {
-                    if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol asm)
-                        continue;
-
-                    // 跳过自身程序集
-                    if (string.Equals(asm.Name, assemblyName, StringComparison.Ordinal))
-                        continue;
-
-                    var extType = asm.GetTypeByMetadataName("NetEngine.Generated.ServiceCollectionExtensions");
-                    if (extType is null)
-                        continue;
-
-                    var referencedSafeName = SanitizeIdentifier(asm.Name);
-
-                    var refMethodName = "RegisterBackgroundServices_" + referencedSafeName;
-
-                    var hasMethod = extType
-                        .GetMembers(refMethodName)
-                        .OfType<IMethodSymbol>()
-                        .Any(m =>
-                            m.IsStatic &&
-                            m.IsExtensionMethod &&
-                            m.Parameters.Length == 1 &&
-                            SymbolEqualityComparer.Default.Equals(m.Parameters[0].Type, servicesSymbol));
-
-                    if (hasMethod)
-                    {
-                        // 把存在注册扩展方法的引用程序集记录下来，稍后统一调用
-                        methodNamesToInvoke.Add(refMethodName);
-                    }
-                }
-
-                sb.AppendLine();
-                sb.AppendLine("    public static IServiceCollection BatchRegisterBackgroundServices(this IServiceCollection services)");
-                sb.AppendLine("    {");
-                foreach (var name in methodNamesToInvoke)
-                {
-                    sb.Append("        services.").Append(name).AppendLine("();");
-                }
-                sb.AppendLine("        return services;");
-                sb.AppendLine("    }");
+                methodNamesToInvoke.AddRange(ServiceRegistrationAggregation.FindReferencedRegistrationMethods(compilation, servicesSymbol, "RegisterBackgroundServices_"));
+                ServiceRegistrationAggregation.AppendBatchMethod(sb, "BatchRegisterBackgroundServices", methodNamesToInvoke);
             }
             sb.AppendLine("}");
 
@@ -431,32 +387,6 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
         /// 当前显示信息对应的后台服务类型符号
         /// </summary>
         public INamedTypeSymbol TypeSymbol { get; }
-    }
-
-
-    /// <summary>
-    /// 将任意字符串转换为合法的 C# 标识符，用于生成方法名等
-    /// </summary>
-    /// <param name="name">原始名称</param>
-    /// <returns>可作为标识符使用的安全名称</returns>
-    private static string SanitizeIdentifier(string name)
-    {
-        // 将任意程序集名称转换为合法的 C# 标识符，用于方法名的一部分
-        if (string.IsNullOrEmpty(name))
-            return "_";
-
-        var builder = new StringBuilder(name.Length);
-        if (!SyntaxFacts.IsIdentifierStartCharacter(name[0]))
-        {
-            builder.Append('_');
-        }
-
-        foreach (var ch in name)
-        {
-            builder.Append(SyntaxFacts.IsIdentifierPartCharacter(ch) ? ch : '_');
-        }
-
-        return builder.ToString();
     }
 
 }

@@ -59,7 +59,7 @@ public static class ProxyRuntime
     /// <returns>封装目标方法返回值的 ValueTask</returns>
     public static ValueTask<T> ExecuteAsync<T>(InvocationContext ctx, Func<ValueTask<T>> inner)
     {
-        return InvocationPipeline.ExecuteAsync<T>(ctx, inner, ctx.Behaviors);
+        return InvocationPipeline.ExecuteAsync<T>(ctx, inner);
     }
 
 
@@ -74,7 +74,7 @@ public static class ProxyRuntime
     {
 
         return InvocationPipeline
-            .ExecuteAsync<T>(ctx, () => AdaptTask(inner), ctx.Behaviors)
+            .ExecuteAsync<T>(ctx, () => AdaptTask(inner))
             .AsTask();
 
     }
@@ -89,7 +89,7 @@ public static class ProxyRuntime
     public static Task ExecuteTask(InvocationContext ctx, Func<Task> inner)
     {
         return InvocationPipeline
-            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, ctx.Behaviors)
+            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; })
             .AsTask();
     }
 
@@ -102,7 +102,7 @@ public static class ProxyRuntime
     public static async ValueTask ExecuteTask(InvocationContext ctx, Func<ValueTask> inner)
     {
         await InvocationPipeline
-            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; }, ctx.Behaviors)
+            .ExecuteAsync<object?>(ctx, async () => { await inner().ConfigureAwait(false); return null; })
             .ConfigureAwait(false);
     }
 

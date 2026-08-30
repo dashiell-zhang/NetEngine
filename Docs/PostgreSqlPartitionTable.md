@@ -481,7 +481,7 @@ ORDER BY child.relname;
 | 位置 | 职责 |
 |---|---|
 | `Repository/Attributes/PartitionTableAttribute.cs` | 实体分区声明和分区周期单位 |
-| `SourceGenerator/SourceGenerator.Core/PartitionTableGenerator.cs` | 生成 EF Core 分区模型配置 |
+| `SourceGenerator/SourceGenerator.Core/EntityFrameworkCore/PartitionTableGenerator.cs` | 生成 EF Core 分区模型配置 |
 | `Repository/Partitioning` | 模型校验、边界计算、Migration SQL 生成与运行维护 |
 | `Repository/Partitioning/PartitionTimeLayout.cs` | 固定 UTC+8 偏移和对齐锚点 |
 | `Infrastructure/IdentifierGenerator/SnowflakeIdLayout.cs` | 雪花 ID 持久化布局和时间换算 |

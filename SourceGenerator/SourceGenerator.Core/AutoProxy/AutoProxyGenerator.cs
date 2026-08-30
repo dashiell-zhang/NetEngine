@@ -5,8 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SourceGenerator.Core.Shared;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.AutoProxy;
 
 /// <summary>
 /// 根据 AutoProxy 特性为目标类型生成派生代理类 支持拦截调用并注入行为管道
@@ -356,10 +357,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             "System.Net.Http",
             "System.Threading",
             "System.Threading.Tasks",
-            "SourceGenerator.Runtime",
             "SourceGenerator.Runtime.Options",
             "SourceGenerator.Runtime.Pipeline",
-            "SourceGenerator.Runtime.Pipeline.Behaviors"
+            "SourceGenerator.Runtime.Pipeline.Behaviors",
+            "SourceGenerator.Runtime.Serialization"
         };
 
 
@@ -410,10 +411,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     "System.Net.Http",
                     "System.Threading",
                     "System.Threading.Tasks",
-                    "SourceGenerator.Runtime",
                     "SourceGenerator.Runtime.Pipeline",
                     "SourceGenerator.Runtime.Pipeline.Behaviors",
-                    "SourceGenerator.Runtime.Options"
+                    "SourceGenerator.Runtime.Options",
+                    "SourceGenerator.Runtime.Serialization"
                 }
                 .Select(namespaceName => FindNamespace(compilation.GlobalNamespace, namespaceName))
                 .Where(static namespaceSymbol => namespaceSymbol is not null)
@@ -464,10 +465,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             sb.AppendLine("using System.Net.Http;");
             sb.AppendLine("using System.Threading;");
             sb.AppendLine("using System.Threading.Tasks;");
-            sb.AppendLine("using SourceGenerator.Runtime;");
             sb.AppendLine("using SourceGenerator.Runtime.Pipeline;");
             sb.AppendLine("using SourceGenerator.Runtime.Pipeline.Behaviors;");
             sb.AppendLine("using SourceGenerator.Runtime.Options;");
+            sb.AppendLine("using SourceGenerator.Runtime.Serialization;");
             sb.AppendLine();
             sb.Append("namespace ").Append(ns).AppendLine(";");
             sb.AppendLine();
@@ -1842,7 +1843,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                                .Replace("global::SourceGenerator.Runtime.Pipeline.Behaviors.", string.Empty)
                                .Replace("global::SourceGenerator.Runtime.Pipeline.", string.Empty)
                                .Replace("global::SourceGenerator.Runtime.Options.", string.Empty)
-                               .Replace("global::SourceGenerator.Runtime.", string.Empty);
+                               .Replace("global::SourceGenerator.Runtime.Serialization.", string.Empty);
 
             // 其余类型保留完整命名空间但去掉 global 前缀以维持生成代码可读性
             typeName = typeName.Replace("global::", string.Empty);
@@ -1879,7 +1880,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 "SourceGenerator.Runtime.Pipeline.Behaviors.",
                 "SourceGenerator.Runtime.Pipeline.",
                 "SourceGenerator.Runtime.Options.",
-                "SourceGenerator.Runtime."
+                "SourceGenerator.Runtime.Serialization."
             };
 
             foreach (var knownPrefix in knownPrefixes)

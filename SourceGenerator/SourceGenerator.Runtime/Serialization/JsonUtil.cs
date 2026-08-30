@@ -8,7 +8,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SourceGenerator.Runtime;
+namespace SourceGenerator.Runtime.Serialization;
 
 /// <summary>
 /// 为运行时提供统一的 JSON 序列化和反序列化工具

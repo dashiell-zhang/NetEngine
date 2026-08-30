@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace SourceGenerator.Runtime.Pipeline;
+namespace SourceGenerator.Runtime.Pipeline.Internal;
 
 /// <summary>
 /// 为代理行为生成不包含原始参数的稳定调用摘要

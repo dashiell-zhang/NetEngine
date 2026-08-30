@@ -1,6 +1,8 @@
 using DistributedLock;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using SourceGenerator.Runtime.Pipeline.Internal;
+using SourceGenerator.Runtime.Serialization;
 using System.Text.Json;
 
 namespace SourceGenerator.Runtime.Pipeline.Behaviors;

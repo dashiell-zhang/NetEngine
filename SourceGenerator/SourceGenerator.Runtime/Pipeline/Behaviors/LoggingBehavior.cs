@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SourceGenerator.Runtime.Serialization;
 using System.Diagnostics;
 
 namespace SourceGenerator.Runtime.Pipeline.Behaviors;

@@ -5,8 +5,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using SourceGenerator.Core.Shared;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.EntityFrameworkCore;
 
 /// <summary>
 /// 按 DbContext 为继承自 CD 的实体生成软删除过滤器配置

@@ -1,4 +1,4 @@
-namespace Deployment.Generator;
+namespace Deployment;
 
 /// <summary>
 /// 部署配置生成参数

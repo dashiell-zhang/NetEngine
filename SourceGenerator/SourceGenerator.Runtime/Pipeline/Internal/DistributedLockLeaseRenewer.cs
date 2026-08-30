@@ -2,7 +2,7 @@ using DistributedLock;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace SourceGenerator.Runtime.Pipeline;
+namespace SourceGenerator.Runtime.Pipeline.Internal;
 
 /// <summary>
 /// 在锁句柄存活期间定时续期分布式锁租约

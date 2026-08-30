@@ -1,7 +1,7 @@
 using Microsoft.CodeAnalysis;
 using System.Linq;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.Shared;
 
 /// <summary>
 /// 提供顶层生成代码引用类型时使用的可访问性检查

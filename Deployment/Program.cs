@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace Deployment.Generator;
+namespace Deployment;
 
 /// <summary>
 /// 部署配置生成程序
@@ -178,7 +178,7 @@ internal static class Program
             return generatorDirectory;
         }
 
-        throw new DirectoryNotFoundException("未找到包含 deploysettings.json 和 Templates 的 Deployment.Generator 目录");
+        throw new DirectoryNotFoundException("未找到包含 deploysettings.json 和 Templates 的 Deployment 目录");
 
     }
 
@@ -198,8 +198,7 @@ internal static class Program
             var candidates = new[]
             {
                 currentDirectory.FullName,
-                Path.Combine(currentDirectory.FullName, "Deployment.Generator"),
-                Path.Combine(currentDirectory.FullName, "Deployment", "Deployment.Generator")
+                Path.Combine(currentDirectory.FullName, "Deployment")
             };
 
             foreach (var candidate in candidates)

@@ -3,8 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using SourceGenerator.Core.Shared;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.EntityFrameworkCore;
 
 /// <summary>
 /// 保存单个 DbContext 与其直接声明实体的对应关系

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.Shared;
 
 /// <summary>
 /// 检测生成代码导入命名空间后可能产生的根类型名称冲突

@@ -4,8 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SourceGenerator.Core.Shared;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.EntityFrameworkCore;
 
 /// <summary>
 /// 为实体映射生成短类型名称并在发生歧义时创建稳定别名

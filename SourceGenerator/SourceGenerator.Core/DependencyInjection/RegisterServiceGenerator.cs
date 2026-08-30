@@ -4,8 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SourceGenerator.Core.AutoProxy;
+using SourceGenerator.Core.Shared;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.DependencyInjection;
 
 /// <summary>
 /// 根据 RegisterServiceAttribute 生成 DI 注册扩展方法

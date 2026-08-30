@@ -203,7 +203,7 @@ Agent 在本仓库中工作时，必须遵守以下原则
 
 ## 11. 部署生成器规范
 
-- 部署生成器位于 `Deployment/Deployment.Generator`
+- 部署生成器位于 `Deployment`
 - 修改配置、模板或生成逻辑前，先阅读 `Docs/Deployment.md`
 - 不要直接修改 `Generated` 中的文件
 - 生成器每次运行都会使用当前配置和模板完整替换 `Generated`

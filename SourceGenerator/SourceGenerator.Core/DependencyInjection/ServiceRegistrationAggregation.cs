@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.DependencyInjection;
 
 /// <summary>
 /// 提供服务注册生成器共用的跨程序集方法发现与聚合代码生成能力

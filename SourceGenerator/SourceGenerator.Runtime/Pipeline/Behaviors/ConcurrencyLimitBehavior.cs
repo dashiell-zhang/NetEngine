@@ -2,6 +2,7 @@ using DistributedLock;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SourceGenerator.Runtime.Options;
+using SourceGenerator.Runtime.Pipeline.Internal;
 
 namespace SourceGenerator.Runtime.Pipeline.Behaviors;
 

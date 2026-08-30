@@ -4,8 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SourceGenerator.Core.Shared;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.DependencyInjection;
 
 /// <summary>
 /// 扫描继承自 Microsoft.Extensions.Hosting.BackgroundService 的类型

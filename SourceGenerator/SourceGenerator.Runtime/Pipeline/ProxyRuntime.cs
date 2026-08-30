@@ -1,6 +1,4 @@
-using SourceGenerator.Runtime.Pipeline;
-
-namespace SourceGenerator.Runtime;
+namespace SourceGenerator.Runtime.Pipeline;
 
 /// <summary>
 /// 提供代理类在运行时执行行为管道的统一入口

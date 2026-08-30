@@ -12,7 +12,7 @@
     <Project Path="Application/Application.Service.SMS/Application.Service.SMS.csproj" />
   </Folder>
   <Folder Name="/Deployment/">
-    <Project Path="Deployment/Deployment.Generator/Deployment.Generator.csproj" />
+    <Project Path="Deployment/Deployment.csproj" />
   </Folder>
   <Folder Name="/Infrastructure/">
     <Project Path="Infrastructure/LLM/LLM.csproj" />

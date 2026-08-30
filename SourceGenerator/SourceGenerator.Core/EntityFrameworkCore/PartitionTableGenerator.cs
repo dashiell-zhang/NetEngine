@@ -7,7 +7,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.EntityFrameworkCore;
 
 /// <summary>
 /// 为标记 PartitionTable 特性的 DbSet 实体生成分区模型配置

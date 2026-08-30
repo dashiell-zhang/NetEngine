@@ -7,7 +7,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.EntityFrameworkCore;
 
 /// <summary>
 /// 基于 JsonColumn 特性生成 JSON 列的 ComplexProperty / ComplexCollection 配置，替代运行时反射

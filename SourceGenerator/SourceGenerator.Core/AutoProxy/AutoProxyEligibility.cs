@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SourceGenerator.Core;
+namespace SourceGenerator.Core.AutoProxy;
 
 /// <summary>
 /// 提供 AutoProxy 目标类型合法性判断

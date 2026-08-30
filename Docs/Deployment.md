@@ -1,6 +1,6 @@
 # 部署配置生成器
 
-`Deployment.Generator` 用于根据一份统一配置生成以下部署文件：
+`Deployment` 项目用于根据一份统一配置生成以下部署文件：
 
 - Nginx 主配置参考文件
 - Admin.App、Admin.WebAPI、Client.WebAPI 的 Nginx 配置
@@ -12,14 +12,14 @@
 
 ## 快速使用
 
-1. 修改 `Deployment/Deployment.Generator/deploysettings.json`
+1. 修改 `Deployment/deploysettings.json`
 2. 在解决方案根目录执行：
 
    ```bash
-   dotnet run --project Deployment/Deployment.Generator
+   dotnet run --project Deployment
    ```
 
-3. 在 `Deployment/Deployment.Generator/Generated` 中查看生成结果
+3. 在 `Deployment/Generated` 中查看生成结果
 
 生成器不接受启动参数，固定读取 `deploysettings.json` 和 `Templates`。生成过程会先在临时目录中完成，只有全部文件生成成功后才会完整替换现有 `Generated`，配置或模板错误不会留下不完整的生成结果
 
@@ -43,19 +43,18 @@
 
 ```text
 Deployment/
-└─ Deployment.Generator/
-   ├─ Generated/
-   │  ├─ nginx/
-   │  ├─ service/
-   │  └─ yunxiao/
-   ├─ Templates/
-   │  ├─ nginx/
-   │  ├─ service/
-   │  └─ yunxiao/
-   ├─ Deployment.Generator.csproj
-   ├─ DeploymentSettings.cs
-   ├─ Program.cs
-   └─ deploysettings.json
+├─ Generated/
+│  ├─ nginx/
+│  ├─ service/
+│  └─ yunxiao/
+├─ Templates/
+│  ├─ nginx/
+│  ├─ service/
+│  └─ yunxiao/
+├─ Deployment.csproj
+├─ DeploymentSettings.cs
+├─ Program.cs
+└─ deploysettings.json
 ```
 
 - `deploysettings.json`：需要维护的部署参数
@@ -69,7 +68,7 @@ Deployment/
 配置文件位于：
 
 ```text
-Deployment/Deployment.Generator/deploysettings.json
+Deployment/deploysettings.json
 ```
 
 仓库中提交的是 Demo 数据，使用前应先将其修改为当前项目的部署信息

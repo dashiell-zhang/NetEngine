@@ -3,7 +3,7 @@ namespace SourceGenerator.Runtime.Pipeline;
 /// <summary>
 /// 提供构建并执行异步调用行为管道的辅助方法
 /// </summary>
-public static class InvocationPipeline
+internal static class InvocationPipeline
 {
 
     /// <summary>

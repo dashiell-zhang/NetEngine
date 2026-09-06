@@ -12,6 +12,49 @@ internal static class GeneratedTypeNameCollisionDetector
 {
 
     /// <summary>
+    /// 递归收集类型引用涉及的非全局命名空间
+    /// </summary>
+    /// <param name="namespaceNames">命名空间名称集合</param>
+    /// <param name="namespaceSymbols">命名空间符号列表</param>
+    /// <param name="type">待收集的类型引用</param>
+    public static void CollectNamespaces(HashSet<string> namespaceNames, List<INamespaceSymbol> namespaceSymbols, ITypeSymbol type)
+    {
+
+        if (type is IArrayTypeSymbol arrayType)
+        {
+            CollectNamespaces(namespaceNames, namespaceSymbols, arrayType.ElementType);
+            return;
+        }
+
+        if (type is IPointerTypeSymbol pointerType)
+        {
+            CollectNamespaces(namespaceNames, namespaceSymbols, pointerType.PointedAtType);
+            return;
+        }
+
+        if (type.ContainingNamespace is { IsGlobalNamespace: false } namespaceSymbol)
+        {
+            namespaceNames.Add(namespaceSymbol.ToDisplayString());
+            namespaceSymbols.Add(namespaceSymbol);
+        }
+
+        if (type is not INamedTypeSymbol namedType)
+            return;
+
+        foreach (var typeArgument in namedType.TypeArguments)
+        {
+            CollectNamespaces(namespaceNames, namespaceSymbols, typeArgument);
+        }
+
+        if (namedType.ContainingType is not null)
+        {
+            CollectNamespaces(namespaceNames, namespaceSymbols, namedType.ContainingType);
+        }
+
+    }
+
+
+    /// <summary>
     /// 判断指定类型及其泛型组成类型是否会在导入命名空间之间产生歧义
     /// </summary>
     /// <param name="type">待引用的类型</param>

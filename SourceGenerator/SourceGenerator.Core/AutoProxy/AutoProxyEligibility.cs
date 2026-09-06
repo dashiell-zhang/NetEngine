@@ -31,35 +31,74 @@ internal static class AutoProxyEligibility
 
 
     /// <summary>
-    /// 判断目标类型是否可以生成 AutoProxy 代理
-    /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <returns>如果可以生成代理则返回 true</returns>
-    public static bool CanGenerateProxy(INamedTypeSymbol type)
-        => Validate(type).CanGenerate;
-
-
-    /// <summary>
-    /// 判断目标类型是否可以生成完整可编译的 AutoProxy 代理
+    /// 一次性分析目标类型的代理方法和全部生成约束
     /// </summary>
     /// <param name="type">待检查的目标类型</param>
     /// <param name="compilation">当前编译上下文</param>
-    /// <returns>如果类型和方法都可以生成代理则返回 true</returns>
-    public static bool CanGenerateCompleteProxy(INamedTypeSymbol type, Compilation compilation)
-        => CanGenerateProxy(type)
-           && !GetUnsupportedAsyncByRefMethods(type).Any()
-           && !GetUnsupportedPointerMethods(type).Any()
-           && !GetUnsupportedRefLikeReturnMethods(type).Any()
-           && !GetUnsupportedDefaultInterfaceMethods(type).Any()
-           && !GetUnsupportedProxyBehaviors(type, compilation).Any();
+    /// <returns>代理生成分析结果</returns>
+    public static AutoProxyAnalysisResult Analyze(INamedTypeSymbol type, Compilation compilation)
+    {
+
+        var validation = Validate(type);
+
+        if (!validation.CanGenerate)
+            return new AutoProxyAnalysisResult(validation);
+
+        var inheritedBehaviorMethods = GetEffectiveInheritedBehaviorMethods(type).ToArray();
+        var effectiveProxyMethods = GetEffectiveProxyMethods(type, inheritedBehaviorMethods).ToArray();
+        var explicitInterfaceMethods = new List<ExplicitInterfaceProxyMethod>();
+        var unsupportedAsyncByRefMethods = new List<IMethodSymbol>();
+        var unsupportedPointerMethods = new List<IMethodSymbol>();
+        var unsupportedRefLikeReturnMethods = new List<IMethodSymbol>();
+        var unsupportedDefaultInterfaceMethods = new List<IMethodSymbol>();
+
+        foreach (var constructor in type.Constructors)
+        {
+            if (constructor.DeclaredAccessibility == Accessibility.Public && HasPointerSignature(constructor))
+                unsupportedPointerMethods.Add(constructor);
+        }
+
+        foreach (var method in effectiveProxyMethods)
+        {
+            CollectUnsupportedSignatures(method, unsupportedAsyncByRefMethods, unsupportedPointerMethods, unsupportedRefLikeReturnMethods);
+        }
+
+        foreach (var iface in type.AllInterfaces)
+        {
+            foreach (var member in iface.GetMembers())
+            {
+                if (member is not IMethodSymbol method)
+                    continue;
+
+                if (IsDefaultInterfaceMethod(method)
+                    && method.GetAttributes().Any(IsProxyBehaviorAttribute)
+                    && !HasClassImplementation(type, method))
+                {
+                    unsupportedDefaultInterfaceMethods.Add(method);
+                }
+
+                if (!ShouldGenerateExplicitInterfaceMethod(type, method, out var implementationMethod))
+                    continue;
+
+                explicitInterfaceMethods.Add(new ExplicitInterfaceProxyMethod(iface, method, implementationMethod));
+                CollectUnsupportedSignatures(implementationMethod ?? method, unsupportedAsyncByRefMethods, unsupportedPointerMethods, unsupportedRefLikeReturnMethods);
+            }
+        }
+
+        var unsupportedProxyBehaviors = GetUnsupportedProxyBehaviors(type, compilation, inheritedBehaviorMethods, explicitInterfaceMethods).ToArray();
+
+        return new AutoProxyAnalysisResult(validation, effectiveProxyMethods, explicitInterfaceMethods, unsupportedAsyncByRefMethods, unsupportedPointerMethods, unsupportedRefLikeReturnMethods, unsupportedDefaultInterfaceMethods, unsupportedProxyBehaviors);
+
+    }
 
 
     /// <summary>
     /// 获取目标类型需要生成 override 的直接方法和有效继承代理方法
     /// </summary>
     /// <param name="type">待生成代理的目标类型</param>
+    /// <param name="inheritedBehaviorMethods">从基类继承的代理行为方法</param>
     /// <returns>需要生成 override 的方法列表</returns>
-    public static IEnumerable<IMethodSymbol> GetEffectiveProxyMethods(INamedTypeSymbol type)
+    private static IEnumerable<IMethodSymbol> GetEffectiveProxyMethods(INamedTypeSymbol type, IEnumerable<IMethodSymbol> inheritedBehaviorMethods)
     {
 
         foreach (var method in type.GetMembers().OfType<IMethodSymbol>())
@@ -69,7 +108,7 @@ internal static class AutoProxyEligibility
                 yield return method;
         }
 
-        foreach (var method in GetEffectiveInheritedBehaviorMethods(type))
+        foreach (var method in inheritedBehaviorMethods)
         {
             if (CanGenerateInheritedOverride(type, method, out _))
                 yield return method;
@@ -149,138 +188,23 @@ internal static class AutoProxyEligibility
 
 
     /// <summary>
-    /// 获取返回 Task 或 ValueTask 且带 ref out in 参数的不可代理方法
+    /// 将方法签名不支持项收集到对应诊断列表
     /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <returns>不可代理的方法列表</returns>
-    public static IEnumerable<IMethodSymbol> GetUnsupportedAsyncByRefMethods(INamedTypeSymbol type)
+    /// <param name="method">待检查的方法</param>
+    /// <param name="unsupportedAsyncByRefMethods">异步引用参数方法列表</param>
+    /// <param name="unsupportedPointerMethods">指针签名方法列表</param>
+    /// <param name="unsupportedRefLikeReturnMethods">引用结构返回值方法列表</param>
+    private static void CollectUnsupportedSignatures(IMethodSymbol method, List<IMethodSymbol> unsupportedAsyncByRefMethods, List<IMethodSymbol> unsupportedPointerMethods, List<IMethodSymbol> unsupportedRefLikeReturnMethods)
     {
 
-        foreach (var method in GetEffectiveProxyMethods(type))
-        {
-            if (IsUnsupportedAsyncByRefMethod(method))
-                yield return method;
-        }
+        if (IsUnsupportedAsyncByRefMethod(method))
+            unsupportedAsyncByRefMethods.Add(method);
 
-        foreach (var iface in type.AllInterfaces)
-        {
-            foreach (var member in iface.GetMembers())
-            {
-                if (member is not IMethodSymbol method)
-                    continue;
+        if (HasPointerSignature(method))
+            unsupportedPointerMethods.Add(method);
 
-                if (!ShouldGenerateExplicitInterfaceMethod(type, method, out var impl))
-                    continue;
-
-                var diagnosticMethod = impl ?? method;
-
-                if (IsUnsupportedAsyncByRefMethod(diagnosticMethod))
-                    yield return diagnosticMethod;
-            }
-        }
-
-    }
-
-
-    /// <summary>
-    /// 获取包含指针或函数指针签名的不可代理方法
-    /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <returns>不可代理的指针签名方法列表</returns>
-    public static IEnumerable<IMethodSymbol> GetUnsupportedPointerMethods(INamedTypeSymbol type)
-    {
-
-        foreach (var constructor in type.Constructors)
-        {
-            if (constructor.DeclaredAccessibility == Accessibility.Public && HasPointerSignature(constructor))
-                yield return constructor;
-        }
-
-        foreach (var method in GetEffectiveProxyMethods(type))
-        {
-            if (HasPointerSignature(method))
-                yield return method;
-        }
-
-        foreach (var iface in type.AllInterfaces)
-        {
-            foreach (var member in iface.GetMembers())
-            {
-                if (member is not IMethodSymbol method)
-                    continue;
-
-                if (!ShouldGenerateExplicitInterfaceMethod(type, method, out var implementationMethod))
-                    continue;
-
-                var diagnosticMethod = implementationMethod ?? method;
-
-                if (HasPointerSignature(diagnosticMethod))
-                    yield return diagnosticMethod;
-            }
-        }
-
-    }
-
-
-    /// <summary>
-    /// 获取返回引用结构且无法进入运行时泛型管道的方法
-    /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <returns>返回引用结构的不可代理方法列表</returns>
-    public static IEnumerable<IMethodSymbol> GetUnsupportedRefLikeReturnMethods(INamedTypeSymbol type)
-    {
-
-        foreach (var method in GetEffectiveProxyMethods(type))
-        {
-            if (HasUnsupportedRefLikeSignature(method))
-                yield return method;
-        }
-
-        foreach (var iface in type.AllInterfaces)
-        {
-            foreach (var member in iface.GetMembers())
-            {
-                if (member is not IMethodSymbol method)
-                    continue;
-
-                if (!ShouldGenerateExplicitInterfaceMethod(type, method, out var implementationMethod))
-                    continue;
-
-                var diagnosticMethod = implementationMethod ?? method;
-
-                if (HasUnsupportedRefLikeSignature(diagnosticMethod))
-                    yield return diagnosticMethod;
-            }
-        }
-
-    }
-
-
-    /// <summary>
-    /// 获取目标类型未显式实现且无法被代理安全转发的接口默认实现方法
-    /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <returns>无法代理的接口默认实现方法列表</returns>
-    public static IEnumerable<IMethodSymbol> GetUnsupportedDefaultInterfaceMethods(INamedTypeSymbol type)
-    {
-
-        foreach (var iface in type.AllInterfaces)
-        {
-            foreach (var member in iface.GetMembers())
-            {
-                if (member is not IMethodSymbol method)
-                    continue;
-
-                if (!IsDefaultInterfaceMethod(method))
-                    continue;
-
-                if (!method.GetAttributes().Any(IsProxyBehaviorAttribute))
-                    continue;
-
-                if (!HasClassImplementation(type, method))
-                    yield return method;
-            }
-        }
+        if (HasUnsupportedRefLikeSignature(method))
+            unsupportedRefLikeReturnMethods.Add(method);
 
     }
 
@@ -291,8 +215,13 @@ internal static class AutoProxyEligibility
     /// <param name="type">待检查的目标类型</param>
     /// <param name="compilation">当前编译上下文</param>
     /// <returns>不兼容的代理行为列表</returns>
-    public static IEnumerable<UnsupportedProxyBehaviorResult> GetUnsupportedProxyBehaviors(INamedTypeSymbol type, Compilation compilation)
+    private static IEnumerable<UnsupportedProxyBehaviorResult> GetUnsupportedProxyBehaviors(INamedTypeSymbol type, Compilation compilation, IReadOnlyList<IMethodSymbol> inheritedBehaviorMethods, IReadOnlyList<ExplicitInterfaceProxyMethod> explicitInterfaceMethods)
     {
+
+        var explicitInterfaceMethodsByMethod = explicitInterfaceMethods.ToDictionary(static item => item.Method, SymbolEqualityComparer.Default);
+        var explicitlyProxiedImplementationMethods = new HashSet<IMethodSymbol>(explicitInterfaceMethods
+            .Where(static item => item.ImplementationMethod is not null)
+            .Select(static item => item.ImplementationMethod!), SymbolEqualityComparer.Default);
 
         foreach (var method in type.GetMembers().OfType<IMethodSymbol>())
         {
@@ -301,7 +230,7 @@ internal static class AutoProxyEligibility
             if (behaviorAttributes.Length == 0)
                 continue;
 
-            var proxiedThroughExplicitInterface = IsProxiedThroughExplicitInterfaceMethod(type, method);
+            var proxiedThroughExplicitInterface = explicitlyProxiedImplementationMethods.Contains(method);
 
             if (!ShouldGenerateDerivedOverride(method) && !proxiedThroughExplicitInterface)
             {
@@ -327,7 +256,7 @@ internal static class AutoProxyEligibility
             }
         }
 
-        foreach (var method in GetEffectiveInheritedBehaviorMethods(type))
+        foreach (var method in inheritedBehaviorMethods)
         {
             var behaviorAttributes = method.GetAttributes().Where(IsProxyBehaviorAttribute).ToArray();
 
@@ -361,7 +290,7 @@ internal static class AutoProxyEligibility
                 if (behaviorAttributes.Length == 0)
                     continue;
 
-                if (!ShouldGenerateExplicitInterfaceMethod(type, method, out var implementationMethod))
+                if (!explicitInterfaceMethodsByMethod.TryGetValue(method, out var explicitInterfaceMethod))
                 {
                     if (IsDefaultInterfaceMethod(method) && !HasClassImplementation(type, method))
                         continue;
@@ -374,6 +303,7 @@ internal static class AutoProxyEligibility
                     continue;
                 }
 
+                var implementationMethod = explicitInterfaceMethod.ImplementationMethod;
                 var implementationAttributes = implementationMethod?.GetAttributes().Where(IsProxyBehaviorAttribute)
                     ?? Enumerable.Empty<AttributeData>();
                 var effectiveBehaviorAttributes = behaviorAttributes.Concat(implementationAttributes).ToArray();
@@ -1098,7 +1028,7 @@ internal static class AutoProxyEligibility
     /// <param name="method">待检查的接口方法</param>
     /// <param name="impl">接口方法在目标类型中的实现</param>
     /// <returns>如果需要生成显式接口代理实现则返回 true</returns>
-    public static bool ShouldGenerateExplicitInterfaceMethod(INamedTypeSymbol type, IMethodSymbol method, out IMethodSymbol? impl)
+    private static bool ShouldGenerateExplicitInterfaceMethod(INamedTypeSymbol type, IMethodSymbol method, out IMethodSymbol? impl)
     {
 
         impl = null;
@@ -1122,32 +1052,6 @@ internal static class AutoProxyEligibility
             return false;
 
         return true;
-
-    }
-
-
-    /// <summary>
-    /// 判断实现方法是否会通过显式接口实现进入代理路径
-    /// </summary>
-    /// <param name="type">待检查的目标类型</param>
-    /// <param name="method">待检查的实现方法</param>
-    /// <returns>如果方法会通过显式接口代理实现则返回 true</returns>
-    private static bool IsProxiedThroughExplicitInterfaceMethod(INamedTypeSymbol type, IMethodSymbol method)
-    {
-
-        foreach (var iface in type.AllInterfaces)
-        {
-            foreach (var interfaceMethod in iface.GetMembers().OfType<IMethodSymbol>())
-            {
-                if (!ShouldGenerateExplicitInterfaceMethod(type, interfaceMethod, out var impl))
-                    continue;
-
-                if (SymbolEqualityComparer.Default.Equals(impl, method))
-                    return true;
-            }
-        }
-
-        return false;
 
     }
 
@@ -2118,6 +2022,160 @@ internal static class AutoProxyEligibility
         => string.Equals(type.ContainingNamespace.ToDisplayString(), namespaceName, System.StringComparison.Ordinal)
            && string.Equals(type.Name, typeName, System.StringComparison.Ordinal)
            && (!arity.HasValue || type.Arity == arity.Value);
+
+}
+
+
+/// <summary>
+/// 保存目标类型一次性代理生成分析结果
+/// </summary>
+internal sealed class AutoProxyAnalysisResult
+{
+
+    /// <summary>
+    /// 目标类型合法性检查结果
+    /// </summary>
+    public AutoProxyValidationResult Validation { get; }
+
+
+    /// <summary>
+    /// 需要生成派生重写的有效方法
+    /// </summary>
+    public IReadOnlyList<IMethodSymbol> EffectiveProxyMethods { get; }
+
+
+    /// <summary>
+    /// 需要生成显式接口实现的方法
+    /// </summary>
+    public IReadOnlyList<ExplicitInterfaceProxyMethod> ExplicitInterfaceMethods { get; }
+
+
+    /// <summary>
+    /// 包含引用参数的异步方法
+    /// </summary>
+    public IReadOnlyList<IMethodSymbol> UnsupportedAsyncByRefMethods { get; }
+
+
+    /// <summary>
+    /// 包含指针签名的方法
+    /// </summary>
+    public IReadOnlyList<IMethodSymbol> UnsupportedPointerMethods { get; }
+
+
+    /// <summary>
+    /// 包含引用结构返回值的方法
+    /// </summary>
+    public IReadOnlyList<IMethodSymbol> UnsupportedRefLikeReturnMethods { get; }
+
+
+    /// <summary>
+    /// 无法安全代理的接口默认实现方法
+    /// </summary>
+    public IReadOnlyList<IMethodSymbol> UnsupportedDefaultInterfaceMethods { get; }
+
+
+    /// <summary>
+    /// 无法在实际代理路径执行的行为特性
+    /// </summary>
+    public IReadOnlyList<UnsupportedProxyBehaviorResult> UnsupportedProxyBehaviors { get; }
+
+
+    /// <summary>
+    /// 是否能够生成完整可编译的代理
+    /// </summary>
+    public bool CanGenerate => Validation.CanGenerate
+                               && UnsupportedAsyncByRefMethods.Count == 0
+                               && UnsupportedPointerMethods.Count == 0
+                               && UnsupportedRefLikeReturnMethods.Count == 0
+                               && UnsupportedDefaultInterfaceMethods.Count == 0
+                               && UnsupportedProxyBehaviors.Count == 0;
+
+
+    /// <summary>
+    /// 使用非法目标类型检查结果创建空分析结果
+    /// </summary>
+    /// <param name="validation">目标类型合法性检查结果</param>
+    public AutoProxyAnalysisResult(AutoProxyValidationResult validation)
+    {
+
+        Validation = validation;
+        EffectiveProxyMethods = System.Array.Empty<IMethodSymbol>();
+        ExplicitInterfaceMethods = System.Array.Empty<ExplicitInterfaceProxyMethod>();
+        UnsupportedAsyncByRefMethods = System.Array.Empty<IMethodSymbol>();
+        UnsupportedPointerMethods = System.Array.Empty<IMethodSymbol>();
+        UnsupportedRefLikeReturnMethods = System.Array.Empty<IMethodSymbol>();
+        UnsupportedDefaultInterfaceMethods = System.Array.Empty<IMethodSymbol>();
+        UnsupportedProxyBehaviors = System.Array.Empty<UnsupportedProxyBehaviorResult>();
+
+    }
+
+
+    /// <summary>
+    /// 使用目标类型及方法分析结果创建完整分析结果
+    /// </summary>
+    /// <param name="validation">目标类型合法性检查结果</param>
+    /// <param name="effectiveProxyMethods">需要生成派生重写的有效方法</param>
+    /// <param name="explicitInterfaceMethods">需要生成显式接口实现的方法</param>
+    /// <param name="unsupportedAsyncByRefMethods">包含引用参数的异步方法</param>
+    /// <param name="unsupportedPointerMethods">包含指针签名的方法</param>
+    /// <param name="unsupportedRefLikeReturnMethods">包含引用结构返回值的方法</param>
+    /// <param name="unsupportedDefaultInterfaceMethods">无法安全代理的接口默认实现方法</param>
+    /// <param name="unsupportedProxyBehaviors">无法在实际代理路径执行的行为特性</param>
+    public AutoProxyAnalysisResult(AutoProxyValidationResult validation, IReadOnlyList<IMethodSymbol> effectiveProxyMethods, IReadOnlyList<ExplicitInterfaceProxyMethod> explicitInterfaceMethods, IReadOnlyList<IMethodSymbol> unsupportedAsyncByRefMethods, IReadOnlyList<IMethodSymbol> unsupportedPointerMethods, IReadOnlyList<IMethodSymbol> unsupportedRefLikeReturnMethods, IReadOnlyList<IMethodSymbol> unsupportedDefaultInterfaceMethods, IReadOnlyList<UnsupportedProxyBehaviorResult> unsupportedProxyBehaviors)
+    {
+
+        Validation = validation;
+        EffectiveProxyMethods = effectiveProxyMethods;
+        ExplicitInterfaceMethods = explicitInterfaceMethods;
+        UnsupportedAsyncByRefMethods = unsupportedAsyncByRefMethods;
+        UnsupportedPointerMethods = unsupportedPointerMethods;
+        UnsupportedRefLikeReturnMethods = unsupportedRefLikeReturnMethods;
+        UnsupportedDefaultInterfaceMethods = unsupportedDefaultInterfaceMethods;
+        UnsupportedProxyBehaviors = unsupportedProxyBehaviors;
+
+    }
+
+}
+
+
+/// <summary>
+/// 保存需要生成代理的显式接口方法及其实现映射
+/// </summary>
+internal readonly struct ExplicitInterfaceProxyMethod
+{
+
+    /// <summary>
+    /// 声明接口方法的接口类型
+    /// </summary>
+    public INamedTypeSymbol InterfaceType { get; }
+
+
+    /// <summary>
+    /// 需要生成显式实现的接口方法
+    /// </summary>
+    public IMethodSymbol Method { get; }
+
+
+    /// <summary>
+    /// 目标类型中对应的实现方法
+    /// </summary>
+    public IMethodSymbol? ImplementationMethod { get; }
+
+
+    /// <summary>
+    /// 创建显式接口代理方法映射
+    /// </summary>
+    /// <param name="interfaceType">声明接口方法的接口类型</param>
+    /// <param name="method">需要生成显式实现的接口方法</param>
+    /// <param name="implementationMethod">目标类型中对应的实现方法</param>
+    public ExplicitInterfaceProxyMethod(INamedTypeSymbol interfaceType, IMethodSymbol method, IMethodSymbol? implementationMethod)
+    {
+
+        InterfaceType = interfaceType;
+        Method = method;
+        ImplementationMethod = implementationMethod;
+
+    }
 
 }
 

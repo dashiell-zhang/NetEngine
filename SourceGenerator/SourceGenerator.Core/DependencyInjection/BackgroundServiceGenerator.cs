@@ -97,44 +97,6 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
             var importedNamespaceSymbols = new List<INamespaceSymbol>();
             var registrationsInfo = new List<DisplayInfo>();
 
-            static void CollectNamespaces(HashSet<string> nsSet, List<INamespaceSymbol> namespaceSymbols, ITypeSymbol symbol)
-            {
-                // 处理数组类型的元素命名空间
-                if (symbol is IArrayTypeSymbol arrayType)
-                {
-                    CollectNamespaces(nsSet, namespaceSymbols, arrayType.ElementType);
-                    return;
-                }
-
-                // 处理指针类型的目标命名空间
-                if (symbol is IPointerTypeSymbol pointerType)
-                {
-                    CollectNamespaces(nsSet, namespaceSymbols, pointerType.PointedAtType);
-                    return;
-                }
-
-                // 当前符号所在命名空间
-                if (symbol.ContainingNamespace is { IsGlobalNamespace: false } ns)
-                {
-                    nsSet.Add(ns.ToDisplayString());
-                    namespaceSymbols.Add(ns);
-                }
-
-                // 泛型参数与嵌套类型的命名空间
-                if (symbol is INamedTypeSymbol named)
-                {
-                    foreach (var arg in named.TypeArguments)
-                    {
-                        CollectNamespaces(nsSet, namespaceSymbols, arg);
-                    }
-
-                    if (named.ContainingType is not null)
-                    {
-                        CollectNamespaces(nsSet, namespaceSymbols, named.ContainingType);
-                    }
-                }
-            }
-
             // 通过 MetadataName 拿到需要用到的框架类型符号
             var bgServiceSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.Hosting.BackgroundService");
 
@@ -184,7 +146,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                CollectNamespaces(usingNamespaces, importedNamespaceSymbols, typeSymbol);
+                GeneratedTypeNameCollisionDetector.CollectNamespaces(usingNamespaces, importedNamespaceSymbols, typeSymbol);
 
                 var implDisplay = GetDisplay(typeSymbol);
                 registrationsInfo.Add(implDisplay);
@@ -202,8 +164,7 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
                                   || impl.TypeSymbol.ContainingNamespace.IsGlobalNamespace
                                   || GeneratedTypeNameCollisionDetector.HasConflict(impl.TypeSymbol, importedNamespaceSymbols, fixedImportedNamespaces);
                 var display = hasConflict ? impl.Full : impl.Minimal;
-                var call = BuildBackgroundRegistrationCall(display);
-                registrations.Append("        ").AppendLine(call);
+                registrations.Append("        services.AddHostedService<").Append(display).AppendLine(">();");
             }
 
             var assemblyName = compilation.AssemblyName ?? "Assembly";
@@ -318,34 +279,17 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
 
 
     /// <summary>
-    /// 构造注册后台服务的 AddHostedService 调用代码片段
-    /// </summary>
-    /// <param name="implDisplay">实现类型的显示名</param>
-    /// <returns>形如 <c>services.AddHostedService&lt;Impl&gt;();</c> 的代码字符串</returns>
-    private static string BuildBackgroundRegistrationCall(string implDisplay)
-    {
-        // 使用 services.AddHostedService<Impl>() 语法注册后台服务
-        var sb = new StringBuilder("services.AddHostedService");
-        sb.Append("<").Append(implDisplay).Append(">();");
-        return sb.ToString();
-    }
-
-
-    /// <summary>
     /// 构建后台服务类型的短名称与完整名称信息
     /// </summary>
     /// <param name="typeSymbol">后台服务类型</param>
     /// <returns>类型名称显示信息</returns>
     private static DisplayInfo GetDisplay(INamedTypeSymbol typeSymbol)
     {
-        // 生成最小限定名和命名空间限定名（不加 global::），供冲突时回退
+        // 生成最小限定名和完整限定名供冲突时回退
         var minimal = typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var full = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var ns = typeSymbol.ContainingNamespace is { IsGlobalNamespace: false }
-            ? typeSymbol.ContainingNamespace.ToDisplayString()
-            : null;
 
-        return new DisplayInfo(minimal, full, ns, typeSymbol);
+        return new DisplayInfo(minimal, full, typeSymbol);
     }
 
 
@@ -359,13 +303,11 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
         /// </summary>
         /// <param name="minimal">最短类型显示名</param>
         /// <param name="full">完整类型显示名</param>
-        /// <param name="ns">类型所在命名空间</param>
         /// <param name="typeSymbol">后台服务类型符号</param>
-        public DisplayInfo(string minimal, string full, string? ns, INamedTypeSymbol typeSymbol)
+        public DisplayInfo(string minimal, string full, INamedTypeSymbol typeSymbol)
         {
             Minimal = minimal;
             Full = full;
-            Namespace = ns;
             TypeSymbol = typeSymbol;
         }
 
@@ -378,11 +320,6 @@ public sealed class BackgroundServiceGenerator : IIncrementalGenerator
         /// 包含命名空间的完整类型显示名
         /// </summary>
         public string Full { get; }
-
-        /// <summary>
-        /// 类型所在命名空间
-        /// </summary>
-        public string? Namespace { get; }
 
         /// <summary>
         /// 当前显示信息对应的后台服务类型符号

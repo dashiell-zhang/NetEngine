@@ -164,44 +164,6 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 }
             }
 
-            static void CollectNamespaces(HashSet<string> nsSet, List<INamespaceSymbol> namespaceSymbols, ITypeSymbol symbol)
-            {
-                // 数组类型递归到元素类型
-                if (symbol is IArrayTypeSymbol arrayType)
-                {
-                    CollectNamespaces(nsSet, namespaceSymbols, arrayType.ElementType);
-                    return;
-                }
-
-                // 指针类型递归到指向类型
-                if (symbol is IPointerTypeSymbol pointerType)
-                {
-                    CollectNamespaces(nsSet, namespaceSymbols, pointerType.PointedAtType);
-                    return;
-                }
-
-                // 当前符号所在命名空间
-                if (symbol.ContainingNamespace is { IsGlobalNamespace: false } ns)
-                {
-                    nsSet.Add(ns.ToDisplayString());
-                    namespaceSymbols.Add(ns);
-                }
-
-                // 泛型参数与嵌套类型的命名空间
-                if (symbol is INamedTypeSymbol named)
-                {
-                    foreach (var arg in named.TypeArguments)
-                    {
-                        CollectNamespaces(nsSet, namespaceSymbols, arg);
-                    }
-
-                    if (named.ContainingType is not null)
-                    {
-                        CollectNamespaces(nsSet, namespaceSymbols, named.ContainingType);
-                    }
-                }
-            }
-
             // 没有引用依赖注入扩展包时无需生成任何代码
             var servicesSymbol = compilation.GetTypeByMetadataName("Microsoft.Extensions.DependencyInjection.IServiceCollection");
 
@@ -285,8 +247,8 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
                 }
 
                 var hasAutoProxy = HasAutoProxy(typeSymbol, autoProxyAttributeSymbol);
-                var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.CanGenerateCompleteProxy(typeSymbol, compilation);
-                CollectNamespaces(usingNamespaces, importedNamespaceSymbols, typeSymbol);
+                var canUseAutoProxy = hasAutoProxy && AutoProxyEligibility.Analyze(typeSymbol, compilation).CanGenerate;
+                GeneratedTypeNameCollisionDetector.CollectNamespaces(usingNamespaces, importedNamespaceSymbols, typeSymbol);
 
                 // 如果服务类本身带有 [AutoProxy]，则注册时使用生成的 *Proxy 类型
                 var implInfo = canUseAutoProxy
@@ -295,7 +257,7 @@ public sealed class RegisterServiceGenerator : IIncrementalGenerator
 
                 if (selectedServiceType is not null)
                 {
-                    CollectNamespaces(usingNamespaces, importedNamespaceSymbols, selectedServiceType);
+                    GeneratedTypeNameCollisionDetector.CollectNamespaces(usingNamespaces, importedNamespaceSymbols, selectedServiceType);
                 }
 
                 DisplayInfo? serviceInfo = null;

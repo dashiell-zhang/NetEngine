@@ -40,7 +40,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
             if (typeSymbol.TypeKind == TypeKind.Class)
             {
-                var validation = AutoProxyEligibility.Validate(typeSymbol);
+                var analysis = AutoProxyEligibility.Analyze(typeSymbol, compilation);
+                var validation = analysis.Validation;
 
                 if (!validation.CanGenerate)
                 {
@@ -53,37 +54,32 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     return;
                 }
 
-                var hasInvalidMethod = false;
-                foreach (var method in AutoProxyEligibility.GetUnsupportedAsyncByRefMethods(typeSymbol))
+                foreach (var method in analysis.UnsupportedAsyncByRefMethods)
                 {
-                    hasInvalidMethod = true;
                     spc.ReportDiagnostic(Diagnostic.Create(
                         UnsupportedAsyncByRefMethodDescriptor,
                         method.Locations.FirstOrDefault() ?? typeSymbol.Locations.FirstOrDefault(),
                         method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
                 }
 
-                foreach (var method in AutoProxyEligibility.GetUnsupportedPointerMethods(typeSymbol))
+                foreach (var method in analysis.UnsupportedPointerMethods)
                 {
-                    hasInvalidMethod = true;
                     spc.ReportDiagnostic(Diagnostic.Create(
                         UnsupportedPointerMethodDescriptor,
                         method.Locations.FirstOrDefault() ?? typeSymbol.Locations.FirstOrDefault(),
                         method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
                 }
 
-                foreach (var method in AutoProxyEligibility.GetUnsupportedRefLikeReturnMethods(typeSymbol))
+                foreach (var method in analysis.UnsupportedRefLikeReturnMethods)
                 {
-                    hasInvalidMethod = true;
                     spc.ReportDiagnostic(Diagnostic.Create(
                         UnsupportedRefLikeReturnMethodDescriptor,
                         method.Locations.FirstOrDefault() ?? typeSymbol.Locations.FirstOrDefault(),
                         method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
                 }
 
-                foreach (var method in AutoProxyEligibility.GetUnsupportedDefaultInterfaceMethods(typeSymbol))
+                foreach (var method in analysis.UnsupportedDefaultInterfaceMethods)
                 {
-                    hasInvalidMethod = true;
                     spc.ReportDiagnostic(Diagnostic.Create(
                         UnsupportedDefaultInterfaceMethodDescriptor,
                         method.Locations.FirstOrDefault() ?? typeSymbol.Locations.FirstOrDefault(),
@@ -91,9 +87,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         method.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
                 }
 
-                foreach (var result in AutoProxyEligibility.GetUnsupportedProxyBehaviors(typeSymbol, compilation))
+                foreach (var result in analysis.UnsupportedProxyBehaviors)
                 {
-                    hasInvalidMethod = true;
                     var location = result.Attribute.ApplicationSyntaxReference?.GetSyntax(spc.CancellationToken).GetLocation()
                         ?? result.Method.Locations.FirstOrDefault()
                         ?? typeSymbol.Locations.FirstOrDefault();
@@ -107,13 +102,13 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                         result.Reason));
                 }
 
-                if (hasInvalidMethod)
+                if (!analysis.CanGenerate)
                 {
                     return;
                 }
 
                 var classHandler = new ClassProxyHandler(compilation);
-                classHandler.Execute(spc, typeSymbol);
+                classHandler.Execute(spc, typeSymbol, analysis);
             }
         });
     }
@@ -429,9 +424,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// </summary>
         /// <param name="context">源码生成输出上下文</param>
         /// <param name="type">目标类型</param>
-        public void Execute(SourceProductionContext context, INamedTypeSymbol type)
+        /// <param name="analysis">目标类型的代理生成分析结果</param>
+        public void Execute(SourceProductionContext context, INamedTypeSymbol type, AutoProxyAnalysisResult analysis)
         {
-            var src = GenerateDerivedProxy(type);
+            var src = GenerateDerivedProxy(type, analysis);
             var hint = GetSafeHintName(type) + ".g.cs";
             context.AddSource(hint, src);
         }
@@ -440,13 +436,16 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// <summary>
         /// 为指定类生成派生代理类的完整源码
         /// </summary>
-        private string GenerateDerivedProxy(INamedTypeSymbol cls)
+        /// <param name="cls">目标类型</param>
+        /// <param name="analysis">目标类型的代理生成分析结果</param>
+        /// <returns>生成的代理类源码</returns>
+        private string GenerateDerivedProxy(INamedTypeSymbol cls, AutoProxyAnalysisResult analysis)
         {
             var ns = cls.ContainingNamespace.IsGlobalNamespace
                 ? "NetEngine.Generated"
                 : cls.ContainingNamespace.ToDisplayString();
             generatedNamespace = FindNamespace(compilation.GlobalNamespace, ns);
-            CollectScopedTypeNames(cls);
+            CollectScopedTypeNames(cls, analysis);
 
             // 使用包含和不包含 global:: 前缀的完全限定类型名
             var classFull = FormatType(cls).Replace("global::", string.Empty);
@@ -475,7 +474,10 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
 
 
             // 代理类继承原始实现类型 只列出需要在代理中显式实现的接口
-            var minimalInterfaces = GetInterfacesNeedingExplicitImplementations(cls);
+            var minimalInterfaces = analysis.ExplicitInterfaceMethods
+                .Select(static item => item.InterfaceType)
+                .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
+                .ToArray();
             var ifaceList = minimalInterfaces.Length == 0 ? string.Empty : ", " + string.Join(", ", minimalInterfaces.Select(interfaceType => FormatType(interfaceType, ns)));
             var proxyAccessibility = AutoProxyEligibility.GetProxyAccessibilityText(cls);
             
@@ -552,26 +554,15 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             }
 
             // 为当前类型直接声明的方法和有效继承代理方法生成重写实现
-            foreach (var method in AutoProxyEligibility.GetEffectiveProxyMethods(cls))
+            foreach (var method in analysis.EffectiveProxyMethods)
             {
                 AppendDerivedOverride(sb, cls, method, classFull, callTarget: "base", ns);
             }
 
             // 为接口成员生成显式实现 使通过接口调用时也能被拦截
-            foreach (var iface in cls.AllInterfaces)
+            foreach (var explicitInterfaceMethod in analysis.ExplicitInterfaceMethods)
             {
-                foreach (var member in iface.GetMembers())
-                {
-                    switch (member)
-                    {
-                        case IMethodSymbol m:
-                            if (!AutoProxyEligibility.ShouldGenerateExplicitInterfaceMethod(cls, m, out var impl))
-                                break;
-                            AppendExplicitInterfaceMethod(sb, cls, iface, m, impl, classFull, ns);
-                            break;
-                        
-                    }
-                }
+                AppendExplicitInterfaceMethod(sb, cls, explicitInterfaceMethod.InterfaceType, explicitInterfaceMethod.Method, explicitInterfaceMethod.ImplementationMethod, classFull, ns);
             }
 
             sb.AppendLine("}");
@@ -1756,7 +1747,8 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
         /// 收集代理类型作用域内可能遮蔽类型名称的类型参数和嵌套类型
         /// </summary>
         /// <param name="type">当前代理目标类型</param>
-        private void CollectScopedTypeNames(INamedTypeSymbol type)
+        /// <param name="analysis">目标类型的代理生成分析结果</param>
+        private void CollectScopedTypeNames(INamedTypeSymbol type, AutoProxyAnalysisResult analysis)
         {
 
             scopedTypeNames.Clear();
@@ -1766,7 +1758,7 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 scopedTypeNames.Add(typeParameter.Name);
             }
 
-            foreach (var method in AutoProxyEligibility.GetEffectiveProxyMethods(type))
+            foreach (var method in analysis.EffectiveProxyMethods)
             {
                 foreach (var typeParameter in method.TypeParameters)
                 {
@@ -1774,17 +1766,11 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                 }
             }
 
-            foreach (var interfaceType in type.AllInterfaces)
+            foreach (var explicitInterfaceMethod in analysis.ExplicitInterfaceMethods)
             {
-                foreach (var method in interfaceType.GetMembers().OfType<IMethodSymbol>())
+                foreach (var typeParameter in explicitInterfaceMethod.Method.TypeParameters)
                 {
-                    if (!AutoProxyEligibility.ShouldGenerateExplicitInterfaceMethod(type, method, out _))
-                        continue;
-
-                    foreach (var typeParameter in method.TypeParameters)
-                    {
-                        scopedTypeNames.Add(typeParameter.Name);
-                    }
+                    scopedTypeNames.Add(typeParameter.Name);
                 }
             }
 
@@ -2521,28 +2507,6 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
             return list;
         }
 
-
-        /// <summary>
-        /// 获取需要在代理类中生成显式实现的接口列表
-        /// </summary>
-        private static INamedTypeSymbol[] GetInterfacesNeedingExplicitImplementations(INamedTypeSymbol cls)
-        {
-            var set = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-            foreach (var iface in cls.AllInterfaces)
-            {
-                foreach (var member in iface.GetMembers())
-                {
-                    switch (member)
-                    {
-                        case IMethodSymbol m:
-                            if (AutoProxyEligibility.ShouldGenerateExplicitInterfaceMethod(cls, m, out _))
-                                set.Add(iface);
-                            break;
-                    }
-                }
-            }
-            return set.ToArray();
-        }
     }
 
 }

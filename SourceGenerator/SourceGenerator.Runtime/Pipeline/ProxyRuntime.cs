@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace SourceGenerator.Runtime.Pipeline;
 
 /// <summary>
@@ -18,31 +20,82 @@ public static class ProxyRuntime
 
         var behaviors = ctx.Behaviors;
         ValidateSynchronousBehaviors(behaviors);
+        var enteredBehaviorCount = 0;
 
         try
         {
-            for (var i = 0; i < behaviors.Count; i++)
-            {
-                ((IInvocationBehavior)behaviors[i]).OnBefore(ctx);
-            }
+            InvokeSynchronousBefore(ctx, ref enteredBehaviorCount);
 
             var result = inner();
 
-            for (var i = 0; i < behaviors.Count; i++)
-            {
-                ((IInvocationBehavior)behaviors[i]).OnAfter(ctx, result);
-            }
+            InvokeSynchronousAfter(ctx, ref enteredBehaviorCount, result);
 
             return result;
         }
         catch (Exception ex)
         {
-            for (var i = 0; i < behaviors.Count; i++)
-            {
-                ((IInvocationBehavior)behaviors[i]).OnException(ctx, ex);
-            }
+            InvokeSynchronousException(ctx, ref enteredBehaviorCount, ex);
 
             throw;
+        }
+
+    }
+
+
+    /// <summary>
+    /// 按声明顺序进入同步行为并记录包括当前行为在内的已进入数量
+    /// </summary>
+    public static void InvokeSynchronousBefore(InvocationContext ctx, ref int enteredBehaviorCount)
+    {
+
+        while (enteredBehaviorCount < ctx.Behaviors.Count)
+        {
+            var behavior = (IInvocationBehavior)ctx.Behaviors[enteredBehaviorCount++];
+            behavior.OnBefore(ctx);
+        }
+
+    }
+
+
+    /// <summary>
+    /// 按进入顺序的逆序结束同步行为 仅在成功结束后移出当前行为
+    /// </summary>
+    public static void InvokeSynchronousAfter(InvocationContext ctx, ref int enteredBehaviorCount, object? result)
+    {
+
+        while (enteredBehaviorCount > 0)
+        {
+            ((IInvocationBehavior)ctx.Behaviors[enteredBehaviorCount - 1]).OnAfter(ctx, result);
+            enteredBehaviorCount--;
+        }
+
+    }
+
+
+    /// <summary>
+    /// 逆序通知尚未结束的同步行为 保留原始异常并继续处理其余回调
+    /// </summary>
+    public static void InvokeSynchronousException(InvocationContext ctx, ref int enteredBehaviorCount, Exception exception)
+    {
+
+        while (enteredBehaviorCount > 0)
+        {
+            var behavior = (IInvocationBehavior)ctx.Behaviors[--enteredBehaviorCount];
+            try
+            {
+                behavior.OnException(ctx, exception);
+            }
+            catch (Exception callbackException)
+            {
+                try
+                {
+                    ctx.Logger?.LogError(callbackException, "同步行为异常回调失败 已保留原始异常 method={Method} behavior={Behavior}", ctx.Method, behavior.GetType().FullName);
+                }
+                catch
+                {
+                    // 日志提供程序失败不能覆盖原始业务异常或中断其余回调
+                }
+            }
         }
 
     }

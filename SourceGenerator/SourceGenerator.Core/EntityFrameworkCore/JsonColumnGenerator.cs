@@ -95,19 +95,10 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             .Collect()
             .Select(static (groups, _) => DbContextEntityDiscovery.NormalizeGroups(groups));
 
-        // 从 [JsonColumn] 属性本身出发增量收集，避免遍历所有实体属性
-        var jsonColumnProperties = context.SyntaxProvider.ForAttributeWithMetadataName(
-                JsonColumnAttributeMetadataName,
-                static (node, _) => node is PropertyDeclarationSyntax or IndexerDeclarationSyntax,
-                static (ctx, _) => ctx.TargetSymbol as IPropertySymbol)
-            .Where(static p => p is not null)!;
-
-        var jsonColumnAnalyses = jsonColumnProperties
-            .Combine(dbContextGroups)
+        // 从实际 DbSet 实体解析有效属性 同时处理继承和泛型基类中的 JSON 声明
+        var jsonColumnAnalyses = dbContextGroups
             .Combine(symbols)
-            .Select(static (t, _) => AnalyzeJsonColumnProperty(t.Left.Left!, t.Left.Right, t.Right))
-            .Where(static r => r is not null)!
-            .Select(static (r, _) => r!);
+            .SelectMany(static (tuple, _) => AnalyzeJsonColumnEntities(tuple.Left, tuple.Right));
 
         context.RegisterSourceOutput(jsonColumnAnalyses.Collect().Combine(dbContextGroups).Combine(symbols).Combine(isDatabaseProject), static (spc, t) =>
         {
@@ -178,19 +169,49 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
 
 
     /// <summary>
-    /// 分析单个带 [JsonColumn] 的属性是否能生成映射
+    /// 分析实际实体上的有效 JSON 属性并排除被派生声明隐藏的基类属性
+    /// </summary>
+    private static ImmutableArray<JsonColumnAnalysis> AnalyzeJsonColumnEntities(ImmutableArray<DbContextEntityGroup> groups, GeneratorSymbols symbols)
+    {
+
+        var analyses = ImmutableArray.CreateBuilder<JsonColumnAnalysis>();
+        var entities = groups.SelectMany(static group => group.EntityTypes).Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+        foreach (var entityType in entities)
+        {
+            var memberNames = new HashSet<string>(StringComparer.Ordinal);
+            for (var current = entityType; current is not null; current = current.BaseType)
+            {
+                foreach (var member in current.GetMembers())
+                {
+                    if (!memberNames.Add(member.Name) || member is not IPropertySymbol property)
+                        continue;
+
+                    for (var declaration = property; declaration is not null; declaration = declaration.OverriddenProperty)
+                    {
+                        if (!declaration.GetAttributes().Any(static attribute => attribute.AttributeClass?.ToDisplayString() == JsonColumnAttributeMetadataName))
+                            continue;
+
+                        analyses.Add(AnalyzeJsonColumnProperty(property, entityType, symbols));
+                        break;
+                    }
+                }
+            }
+        }
+
+        return analyses.ToImmutable();
+
+    }
+
+
+    /// <summary>
+    /// 分析实际 DbSet 实体上的单个 JSON 属性是否能生成映射
     /// </summary>
     /// <param name="property">带 JsonColumn 特性的属性</param>
-    /// <param name="dbContextGroups">按 DbContext 隔离的实体分组</param>
+    /// <param name="entityType">实际声明 DbSet 的实体类型</param>
     /// <param name="symbols">生成器使用的框架类型符号</param>
-    /// <returns>属性分析结果，不属于 DbSet 实体时返回 null</returns>
-    private static JsonColumnAnalysis? AnalyzeJsonColumnProperty(IPropertySymbol property, ImmutableArray<DbContextEntityGroup> dbContextGroups, GeneratorSymbols symbols)
+    /// <returns>当前实体属性的映射或诊断结果</returns>
+    private static JsonColumnAnalysis AnalyzeJsonColumnProperty(IPropertySymbol property, INamedTypeSymbol entityType, GeneratorSymbols symbols)
     {
-        if (property.ContainingType is not INamedTypeSymbol entityType)
-            return null;
-
-        if (!DbContextEntityDiscovery.ContainsEntity(dbContextGroups, entityType))
-            return null;
 
         if (!IsTypeAccessibleFromGeneratedCode(entityType))
         {

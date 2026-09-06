@@ -287,9 +287,6 @@ internal static class AutoProxyEligibility
             {
                 var behaviorAttributes = method.GetAttributes().Where(IsProxyBehaviorAttribute).ToArray();
 
-                if (behaviorAttributes.Length == 0)
-                    continue;
-
                 if (!explicitInterfaceMethodsByMethod.TryGetValue(method, out var explicitInterfaceMethod))
                 {
                     if (IsDefaultInterfaceMethod(method) && !HasClassImplementation(type, method))

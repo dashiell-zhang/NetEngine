@@ -46,15 +46,15 @@ public static class JsonUtil
     {
 
         /// <summary>
-        /// 包含声明类型和属性名称的稳定名称
+        /// 包含成员种类 声明类型和成员名称的稳定名称
         /// </summary>
         public required string Name { get; init; }
 
 
         /// <summary>
-        /// 待读取的公开属性
+        /// 待读取的公开属性或字段
         /// </summary>
-        public required PropertyInfo Property { get; init; }
+        public required MemberInfo Member { get; init; }
 
 
         /// <summary>
@@ -63,7 +63,12 @@ public static class JsonUtil
         /// <param name="instance">目标对象</param>
         /// <returns>当前成员值</returns>
         public object? GetValue(object instance)
-            => Property.GetValue(instance);
+            => Member switch
+            {
+                PropertyInfo property => property.GetValue(instance),
+                FieldInfo field => field.GetValue(instance),
+                _ => throw new InvalidOperationException("参数键成员必须是属性或字段")
+            };
 
     }
 
@@ -503,7 +508,7 @@ public static class JsonUtil
 
 
     /// <summary>
-    /// 按公开可读属性写入普通对象
+    /// 按公开可读属性和实例字段写入普通对象
     /// </summary>
     /// <param name="writer">目标 JSON 写入器</param>
     /// <param name="value">待写入的对象</param>
@@ -556,7 +561,17 @@ public static class JsonUtil
             members.Add(new CanonicalMemberAccessor
             {
                 Name = "property|" + GetStableTypeName(declaringType) + "|" + property.Name,
-                Property = property
+                Member = property
+            });
+        }
+
+        foreach (var field in runtimeType.GetFields(BindingFlags.Instance | BindingFlags.Public))
+        {
+            var declaringType = field.DeclaringType ?? runtimeType;
+            members.Add(new CanonicalMemberAccessor
+            {
+                Name = "field|" + GetStableTypeName(declaringType) + "|" + field.Name,
+                Member = field
             });
         }
 

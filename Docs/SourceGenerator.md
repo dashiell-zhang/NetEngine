@@ -155,6 +155,7 @@ public virtual Task<ProductDto> GetAsync(long id, CancellationToken cancellation
 - 使用 `[Cacheable]` 的宿主必须注册 `IDistributedCache`，未注册时调用会抛出 `InvalidOperationException`
 - 使用 `[Cacheable]` 的宿主必须注册 `IDistributedLock` 以提供缓存击穿保护，未注册时调用会抛出 `InvalidOperationException`
 - 参数无法生成稳定摘要时跳过缓存
+- 普通对象参数的摘要包含公开可读属性和公开实例字段，字段是否标记 `JsonInclude` 不影响其参与参数键生成
 
 ### ConcurrencyLimit
 
@@ -216,9 +217,13 @@ public virtual Task<ProductDto> GetAsync(long id)
 
 生成代理会跨调用复用无状态的内置 Behavior 及其只读 Options，自定义 Behavior 和自定义 Options 仍按调用创建。Behavior 的单次调用状态应存放在 `InvocationContext.Features` 中，不要写入可跨调用复用的内置 Behavior 或 Options
 
+同步行为按声明顺序执行 `OnBefore`，按逆序执行 `OnAfter`。发生异常时，仅逆序通知已进入且尚未结束的行为；异常回调自身失败会记录日志，不覆盖原始异常，也不阻止其余行为收到通知
+
 自定义 Behavior 特性必须继承 `ProxyBehaviorAttribute<TBehavior>` 或 `ProxyBehaviorAttribute<TBehavior, TOptions>`，生成器直接通过泛型参数识别 Behavior 和 Options 类型。非泛型 `ProxyBehaviorAttribute` 仅作为统一标记基类，不用于动态指定 Behavior 类型
 
 异步流方法会在实际枚举期间执行同步 Behavior 生命周期，并在枚举完成或调用方提前释放时向 `OnAfter()` 传递 `AsyncStreamResultSnapshot`。快照始终包含枚举数量、是否自然完成和是否存在未保留元素；默认不复制流元素。确实需要读取元素快照的自定义同步 Behavior 应同时实现 `IAsyncStreamResultCaptureBehavior`，启用后最多按枚举顺序保留前 100 项。捕获元素会转换为与原对象解耦且保留原始 JSON 类型的结构化快照，循环引用位置写入 `null`，其他序列化失败场景回退为字符串。`LoggingBehavior` 仅在 Information 日志启用且允许记录返回值时请求捕获
+
+同一异步流的每次枚举都会创建独立的调用上下文、自定义 Behavior 和自定义 Options，重复或并行枚举不会共享单次枚举状态。对于 `Task<IAsyncEnumerable<T>>` 和 `ValueTask<IAsyncEnumerable<T>>`，准备阶段仍按原方法执行，准备异常直接传播；行为从实际枚举时开始，未枚举的流不会触发行为生命周期
 
 ## EF Core 软删除过滤器
 
@@ -255,6 +260,8 @@ modelBuilder.ApplyJsonColumns(this);
 ```
 
 当前根属性仅支持复杂类型或 `List<T>`，不支持把 `Dictionary<TKey, TValue>` 作为根属性，也不支持静态属性、索引器、无 getter 属性和循环嵌套。违反约束时会产生 `JsonColumn001` 至 `JsonColumn007` 编译诊断
+
+JSON 属性按实际 `DbSet<T>` 实体解析，支持继承属性和泛型基类属性。派生类重写属性时可继承基类的 `JsonColumn` 声明，使用 `new` 隐藏属性时按派生类的新属性声明处理
 
 ## EF Core PostgreSQL 分区表
 

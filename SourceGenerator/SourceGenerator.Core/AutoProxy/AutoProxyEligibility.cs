@@ -259,8 +259,9 @@ internal static class AutoProxyEligibility
         foreach (var method in inheritedBehaviorMethods)
         {
             var behaviorAttributes = method.GetAttributes().Where(IsProxyBehaviorAttribute).ToArray();
+            var proxiedThroughExplicitInterface = explicitlyProxiedImplementationMethods.Contains(method);
 
-            if (!CanGenerateInheritedOverride(type, method, out var reason))
+            if (!proxiedThroughExplicitInterface && !CanGenerateInheritedOverride(type, method, out var reason))
             {
                 foreach (var attribute in behaviorAttributes)
                 {
@@ -270,9 +271,13 @@ internal static class AutoProxyEligibility
                 continue;
             }
 
-            foreach (var result in GetOptionsTypeConflictResults(method, behaviorAttributes))
+            // 接口代理路径在合并接口与实现方法的特性后统一检查配置冲突
+            if (!proxiedThroughExplicitInterface)
             {
-                yield return result;
+                foreach (var result in GetOptionsTypeConflictResults(method, behaviorAttributes))
+                {
+                    yield return result;
+                }
             }
 
             foreach (var result in GetBehaviorCompatibilityResults(type, method, behaviorAttributes, compilation))

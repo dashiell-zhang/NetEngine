@@ -119,6 +119,8 @@ public class ProductService
 
 需要拦截的普通类方法应声明为 `public virtual`，并通过 DI 获取服务，不要在业务代码中直接 `new` 实现类
 
+非 virtual 方法如果通过接口代理调用，也可以执行行为，包含从基类继承的接口实现方法。这类方法直接通过实现类调用时不会经过接口代理
+
 目标类不能是 `static`、`sealed`、`abstract` 或 `record class`，并且至少包含一个 `public` 构造函数。不支持的目标或方法签名会产生 `AutoProxy001` 等编译错误，应按诊断调整声明，不要绕过代理手写重复逻辑
 
 ### Logging

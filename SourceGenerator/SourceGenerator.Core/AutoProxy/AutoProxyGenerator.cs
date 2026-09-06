@@ -1514,8 +1514,13 @@ public sealed class AutoProxyGenerator : IIncrementalGenerator
                     return "default";
             }
 
-            return parameter.Type.TypeKind == TypeKind.Enum
-                ? "(" + FormatType(parameter.Type) + ")" + literal
+            // 可空枚举的非空默认值使用底层枚举类型生成常量表达式
+            var defaultValueType = parameter.Type is INamedTypeSymbol namedType && namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+                ? namedType.TypeArguments[0]
+                : parameter.Type;
+
+            return defaultValueType.TypeKind == TypeKind.Enum
+                ? "(" + FormatType(defaultValueType) + ")" + literal
                 : literal;
 
         }

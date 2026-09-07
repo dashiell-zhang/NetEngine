@@ -59,7 +59,7 @@ public class OrderService(IDistributedLock distributedLock)
 }
 ```
 
-`expiry` 同时表示单次租约时长和最长等待时长。未传或传入 `default` 时使用 1 分钟
+`expiry` 同时表示单次租约时长和锁竞争的等待预算。未传或传入 `default` 时使用 1 分钟；Redis 连接建立和命令执行仍受客户端自身超时影响，该值不是整个调用的硬性截止时间。需要总时限时应传入带超时的取消令牌
 
 ## 尝试获取锁
 
@@ -108,7 +108,9 @@ var renewed = await distributedLock.RenewAsync(
 
 返回 `false` 表示句柄已释放、锁所有权已经丢失，或该句柄不属于当前锁实现。长任务通常需要后台循环续期，并在业务结束时停止续期循环
 
-`ConcurrencyLimit` 代理行为和 TaskService 队列执行器已经包含自动续期逻辑，使用这些能力时不需要再手写续期
+`ConcurrencyLimit`、`Cacheable` 代理行为和 TaskService 队列执行器已经包含自动续期逻辑，使用这些能力时不需要再手写续期。HTTP 层的 `QueueLimitFilter` 和 `CacheDataFilter` 不会自动续期，不能混用这两组能力的租约预期
+
+锁到期或续期失败不会自动终止已经开始的业务操作。代理行为会记录租约丢失，业务仍可能继续执行；关键写入还需要幂等、唯一约束或事务保证，不能把持有过锁视为始终独占执行的证明
 
 ## 参数和释放规则
 
@@ -117,6 +119,7 @@ var renewed = await distributedLock.RenewAsync(
 - `semaphore` 必须大于零
 - 等待和续期都支持 `CancellationToken`
 - 锁句柄实现了 `IDisposable` 和 `IAsyncDisposable`，异步代码优先使用 `await using`
+- Redis 句柄的 `Dispose()` 只发起异步释放，`DisposeAsync()` 才等待释放流程完成；需要等待解锁时使用后者
 - 不要缓存或复用已经释放的锁句柄
 - 释放失败会记录日志，但不应覆盖已经得到的业务结果
 

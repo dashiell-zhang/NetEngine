@@ -12,7 +12,7 @@
 
 ## 快速使用
 
-1. 修改 `Deployment/deploysettings.json`
+1. 修改 `Deployment/deploysettings.json`，并确认 `Deployment/Generated` 中没有需要保留的手工改动或额外文件
 2. 在解决方案根目录执行：
 
    ```bash
@@ -73,10 +73,14 @@ Deployment/deploysettings.json
 
 仓库中提交的是 Demo 数据，使用前应先将其修改为当前项目的部署信息
 
+下面各示例展示对应配置节，应合并到同一个 `deploysettings.json` 根对象中，不要用单节示例覆盖整个配置文件
+
 ### ProjectName
 
 ```json
-"ProjectName": "demo"
+{
+  "ProjectName": "demo"
+}
 ```
 
 项目名称用于生成文件名、systemd 服务名、日志标识和云效制品文件名
@@ -92,21 +96,23 @@ Deployment/deploysettings.json
 ### Host
 
 ```json
-"Host": {
-  "AdminApp": {
-    "Domain": "admin.example.com",
-    "CertificateFile": "ssl/admin.example.com.pem",
-    "CertificateKeyFile": "ssl/admin.example.com.key"
-  },
-  "AdminWebAPI": {
-    "Domain": "admin-webapi.example.com",
-    "CertificateFile": "ssl/admin-webapi.example.com.pem",
-    "CertificateKeyFile": "ssl/admin-webapi.example.com.key"
-  },
-  "ClientWebAPI": {
-    "Domain": "client-webapi.example.com",
-    "CertificateFile": "ssl/client-webapi.example.com.pem",
-    "CertificateKeyFile": "ssl/client-webapi.example.com.key"
+{
+  "Host": {
+    "AdminApp": {
+      "Domain": "admin.example.com",
+      "CertificateFile": "ssl/admin.example.com.pem",
+      "CertificateKeyFile": "ssl/admin.example.com.key"
+    },
+    "AdminWebAPI": {
+      "Domain": "admin-webapi.example.com",
+      "CertificateFile": "ssl/admin-webapi.example.com.pem",
+      "CertificateKeyFile": "ssl/admin-webapi.example.com.key"
+    },
+    "ClientWebAPI": {
+      "Domain": "client-webapi.example.com",
+      "CertificateFile": "ssl/client-webapi.example.com.pem",
+      "CertificateKeyFile": "ssl/client-webapi.example.com.key"
+    }
   }
 }
 ```
@@ -122,9 +128,11 @@ Deployment/deploysettings.json
 ### Port
 
 ```json
-"Port": {
-  "AdminWebAPI": 30011,
-  "ClientWebAPI": 30012
+{
+  "Port": {
+    "AdminWebAPI": 30011,
+    "ClientWebAPI": 30012
+  }
 }
 ```
 
@@ -138,7 +146,9 @@ Deployment/deploysettings.json
 ### DeployRoot
 
 ```json
-"DeployRoot": "/var/appdata/demo"
+{
+  "DeployRoot": "/var/appdata/demo"
+}
 ```
 
 服务器上的项目部署根目录。四个项目使用以下固定子目录：
@@ -160,14 +170,16 @@ Deployment/deploysettings.json
 ### YunXiao
 
 ```json
-"YunXiao": {
-  "Codeup": {
-    "Name": "DemoProject",
-    "Endpoint": "https://codeup.aliyun.com/example/demo-project.git",
-    "Branch": "main",
-    "ServiceConnection": "demo-service-connection"
-  },
-  "MachineGroup": "demo-machine-group"
+{
+  "YunXiao": {
+    "Codeup": {
+      "Name": "DemoProject",
+      "Endpoint": "https://codeup.aliyun.com/example/demo-project.git",
+      "Branch": "main",
+      "ServiceConnection": "demo-service-connection"
+    },
+    "MachineGroup": "demo-machine-group"
+  }
 }
 ```
 

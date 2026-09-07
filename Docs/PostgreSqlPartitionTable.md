@@ -96,11 +96,13 @@ public DbSet<VisitLog> VisitLog { get; set; }
 
 ### 3. 构建检查
 
-先构建 Repository 或整个解决方案，让源码生成器和 EF Core 模型校验尽早发现配置错误：
+先构建 Repository，检查源码生成器诊断和生成代码是否可以编译：
 
 ```powershell
-dotnet build NetEngine.slnx
+dotnet build Repository/Repository.csproj
 ```
+
+编译成功不会执行 `DatabaseContext.OnModelCreating`。主键、唯一索引等 EF Core 模型约束需要在后续 EF 工具或宿主实际构建模型时校验；变更影响生成器或多个宿主时，再扩大构建范围
 
 ### 4. 创建 Migration
 
@@ -155,6 +157,8 @@ Migration 只创建一个初始子分区，不会批量创建历史或未来分�
 分区维护由 Repository 内置后台服务自动执行，不依赖 `TaskSetting`，也不需要在 TaskService 中手工启用
 
 现有 `Client.WebAPI`、`Admin.WebAPI` 和 `TaskService` 都会聚合注册该后台服务。每个宿主会在启动完成前检查一次，随后每 10 分钟检查一次；多宿主和多实例通过分布式锁保证同一时间只有一个实例实际维护
+
+首次检查失败会记录错误并等待后续周期重试，不会仅因维护失败而阻止宿主启动。因此宿主启动成功或 `/healthz` 正常，不代表当前与未来分区已经创建成功
 
 `Repository.Tool` 只承载自身的数据库工具任务，不注册分区维护后台服务。创建或执行 Migration 时仍只生成一个初始子分区
 
@@ -303,8 +307,9 @@ UTC+8 只影响时间边界的计算和名称。最终 PostgreSQL 范围仍由�
 1. 停止使用旧分区策略的全部服务端宿主，避免旧后台服务继续预建分区
 2. 修改实体 Attribute
 3. 创建并审核 Migration
-4. 部署使用新模型的服务端宿主
-5. 确认新版本后台服务执行成功
+4. 执行审核后的 Migration，登记策略变更并更新迁移历史
+5. 部署使用新模型的服务端宿主
+6. 确认新版本后台服务执行成功
 
 不要让使用不同分区周期的新旧服务端宿主同时运行。分布式锁只能让它们串行执行，不能判断哪一个版本的策略更新
 
@@ -437,7 +442,7 @@ ORDER BY child.relname;
 - [ ] Attribute 明确配置了大于 `0` 的 `Interval` 和受支持的 `PartitionUnit`
 - [ ] 主键和全部唯一约束、唯一索引都包含 `Id`
 - [ ] 所有写宿主均已注册 `PostgresPatchInterceptor`
-- [ ] `dotnet build NetEngine.slnx` 已通过
+- [ ] Repository 及受影响宿主构建已通过，EF Core 模型约束已在工具或宿主中验证
 - [ ] Migration 中包含全部 `PartitionTable:*` Annotation
 - [ ] Migration SQL 中父表包含 `PARTITION BY RANGE ("Id")`
 - [ ] Migration SQL 中包含一个初始子分区

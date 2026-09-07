@@ -62,8 +62,7 @@ CORS 白名单读取自：
       "localhost",
       "localhost:6000",
       "https://admin.xxx.com",
-      "https://localhost:5173",
-      "*"
+      "https://localhost:5173"
     ]
   }
 }
@@ -84,6 +83,8 @@ CORS 白名单读取自：
 匹配时会忽略主机名大小写。`*.xxx.com` 只匹配带子域名的主机，不匹配根域名 `xxx.com`；如果两者都需要，应分别配置
 
 当前策略允许任意请求头、任意 HTTP 方法和凭据，并将预检结果缓存两小时。开发环境可以在 `appsettings.Development.json` 中单独配置 `localhost` 或指定端口
+
+上面的列表展示不同匹配写法，实际配置只保留需要的来源。加入 `*` 会允许所有可解析的来源，使其他白名单条目失去限制作用；仅需要白名单时不要加入该条目
 
 ## JWT 认证与权限校验
 
@@ -148,8 +149,10 @@ WebAPI 启动后，Debug 构建会在控制台输出 Swagger 地址
 当前检查项包括：
 
 - `CacheHealthCheck`：通过 `IDistributedCache` 验证缓存写入
-- `DatabaseHealthCheck`：通过 `DatabaseContext` 验证数据库连接
-- `ReadDatabaseHealthCheck`：通过 `ReadDatabaseContext` 验证数据库读取连接
+- `DatabaseHealthCheck`：通过 `DatabaseContext` 查询 `User` 表，验证主库连接和该表的可查询性
+- `ReadDatabaseHealthCheck`：通过 `ReadDatabaseContext` 查询 `User` 表，验证读取连接和该表的可查询性
+
+这些检查不验证全部表结构、主库写权限、复制延迟或分区是否齐全，不能代替对应业务接口的验证
 
 健康检查后台发布器启动后延迟 10 秒执行，之后每 60 秒运行一次。`TaskService` 是 Worker Service 宿主，不提供 `/healthz` HTTP 路由
 

@@ -37,7 +37,7 @@ builder.Services.AddLlmClientFactory();
 - `AddHttpClient()` 提供 `IHttpClientFactory`
 - `AddLlmClientFactory()` 注册单例 `ILlmClientFactory`
 
-宿主还需要已有的 `DatabaseContext` 和 `IdService` 注册。管理模型与应用配置时还会使用 `IDistributedLock`
+宿主还需要注册 `DatabaseContext`、`ReadDatabaseContext`、`IdService` 和 `IDistributedLock`。`BatchRegisterServices()` 会同时注册该类库中的配置管理与对话查询服务，其中 `LlmConversationManageService` 依赖读取上下文，模型与应用配置服务依赖分布式锁；缺少这些依赖会在启用 DI 构建验证或解析对应服务时失败。上下文注册方式见 [数据库读写分离](DatabaseReadWriteSeparation.md)
 
 `LlmInvokeService` 不读取当前 HTTP 用户上下文。调用方通过第一个参数显式传入 `long? actorUserId`：认证调用传真实用户 ID，匿名或系统调用传 `null`
 
@@ -73,7 +73,7 @@ builder.Services.AddLlmClientFactory();
 | `1` | OpenAI Responses API 协议 | `https://provider.example/v1/responses` | `Authorization: Bearer <ApiKey>` |
 | `2` | Anthropic Messages API 协议 | `https://provider.example/v1/messages` | `x-api-key`，并发送 `anthropic-version: 2023-06-01` |
 
-`Endpoint` 必须与所选协议匹配。HTTP 客户端调用超时时间统一为 120 秒
+`Endpoint` 必须与所选协议匹配。工厂将 `HttpClient.Timeout` 设置为 120 秒：非流式请求覆盖 HTTP 响应体接收，流式请求使用 `ResponseHeadersRead`，该超时只覆盖收到响应头之前的阶段，不限制后续整个流的读取时长。需要流式调用总时限时，由调用方通过带超时的 `CancellationTokenSource` 传入取消令牌，参见 [HttpCompletionOption 的超时范围](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpcompletionoption?view=net-10.0#remarks)
 
 创建模型时 `ApiKey` 必填；编辑模型时留空表示保留原值。模型被启用的 LLM 应用引用时不能直接禁用，存在任何未删除应用时也不能删除
 
@@ -81,7 +81,7 @@ builder.Services.AddLlmClientFactory();
 
 | 字段 | 说明 |
 |---|---|
-| `Code` | 业务调用使用的稳定标识，同一未删除应用中不可重复 |
+| `Code` | 业务调用使用的稳定标识，在所有未删除的应用之间保持唯一 |
 | `Name` | 管理后台显示名称 |
 | `LlmModelId` | 关联的模型配置 |
 | `SystemPromptTemplate` | 可选的 System 提示词模板 |
@@ -105,7 +105,7 @@ System 和 User 模板都支持以下占位符：
 
 - `{{name}}`：可选参数
 - `{{*question}}`：必填参数，`*` 写在参数名前
-- `|` 后内容是参数备注，用于管理页面展示，不会发送给模型
+- `|` 后内容是参数备注，用于管理页面展示；提供参数值时，整个占位符连同备注一起被替换
 - 参数名不能包含空白、`{`、`}` 或 `|`
 
 例如：
@@ -129,7 +129,7 @@ Dictionary<string, string> parameters = new(StringComparer.OrdinalIgnoreCase)
 };
 ```
 
-必填参数不存在、值为 `null` 或空白时会抛出 `CustomException`。可选参数未提供时，当前实现会保留原始 `{{key}}` 占位文本，并不会自动替换为空字符串；如果不希望占位符进入最终提示词，调用方应提供明确值
+必填参数不存在、值为 `null` 或空白时会抛出 `CustomException`。可选参数未提供时，当前实现会保留完整的原始占位文本，包括其中的备注，例如 `{{name | 称呼}}` 会原样进入最终提示词。调用方应提供参数值；不需要该可选内容时，可显式传入空字符串
 
 参数查找遵循传入 Dictionary 自身的比较器。使用默认 Dictionary 时区分大小写，因此推荐显式使用 `StringComparer.OrdinalIgnoreCase`
 
@@ -246,9 +246,11 @@ await foreach (var chunk in llmInvokeService
 - Assistant 返回文本
 - 调用方明确传入的 `actorUserId`；匿名或系统调用时为空
 
-非流式调用记录第一条 Choice 的文本。流式调用只有在完整消费到带 `FinishReason` 的结束分片后才保存；提前停止枚举或上游没有返回结束原因时不会保存
+非流式调用记录第一条 Choice 的文本。流式调用必须自然结束枚举，并且过程中至少收到一个带非空 `FinishReason` 的分片，才会保存；即使已经看到结束分片，调用方立即 `break` 也不会执行枚举循环之后的保存逻辑。提前停止枚举或上游没有返回结束原因时不会保存
 
 保存对话失败会记录错误日志，但不会让已经成功的模型响应失败；请求取消导致的保存取消仍会继续向上抛出
+
+保存使用当前 Scoped `DatabaseContext.SaveChangesAsync()`，会一并提交该上下文中其他待保存的实体，并参与已经开启的事务。因此不要把对话记录当作独立事务，也不要在同一上下文保留无关待保存修改时发起调用
 
 可以在管理端 `/operations/llmconversation` 查询对话记录。记录中保存的是完整渲染内容，设计提示词和传入参数时应考虑这些内容是否适合持久化
 
@@ -263,7 +265,7 @@ await foreach (var chunk in llmInvokeService
 - 关联模型未启用、已删除或配置缺失
 - Endpoint、ApiKey、ModelId 无效
 - 供应商返回非成功 HTTP 状态、无效 JSON 或异常流事件
-- 请求超过 120 秒或被调用方取消
+- HTTP 请求阶段超时，或调用方的取消令牌触发；流式响应体的总读取时限需要调用方单独设置
 
 当前实现没有内置重试。模型调用会产生外部费用，调用方增加重试前应明确超时、重复请求和供应商计费语义
 

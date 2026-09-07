@@ -32,7 +32,7 @@ public class ProductTask(ProductService productService) : TaskBase
 }
 ```
 
-任务类可以通过构造函数注入应用服务和基础设施抽象。业务逻辑仍应放在 Application 层，任务方法主要负责触发和编排
+任务类可以通过构造函数注入应用服务和所需的任务框架能力。业务逻辑与业务编排仍放在 Application 层，任务方法主要负责参数传递和触发应用用例
 
 TaskService 不读取当前 HTTP 用户上下文。任务代表某个用户继续执行时，应由 WebAPI 入队端从可信认证上下文取得 `actorUserId`，写入任务参数并继续传给 Application Service；真正的系统任务调用允许系统身份的方法时传入 `null`，不要使用 `0` 伪造用户身份
 
@@ -88,7 +88,7 @@ public Task SyncByTenantAsync(TenantTaskParameter parameter)
 }
 ```
 
-带参数任务不会仅凭特性创建一个可执行实例。系统会在 `TaskSetting` 中维护一条 `Parameter = "__args_default__"` 的模板记录，实际执行实例需要通过后台管理功能或 `POST /Operations/CreateScheduleTask` 新建
+带参数任务不会仅凭特性创建一个可执行实例。配置同步服务运行时会在 `TaskSetting` 中维护一条 `Parameter = "__args_default__"` 的模板记录，实际执行实例需要通过后台管理功能或 `POST /Operations/CreateScheduleTask` 新建。创建接口要求该任务名称已存在于配置表中，同步服务的启动条件见下文“非 Debug 模式”
 
 每条实例记录需要：
 
@@ -99,7 +99,7 @@ public Task SyncByTenantAsync(TenantTaskParameter parameter)
 
 实际运行时名称为 `<Name>:<TaskSetting.Id>`，因此同一个带参数方法可以有多份独立配置
 
-运行期间新建的带参实例会由配置同步服务动态加入，但当前动态加入逻辑不会复制特性中的 `SkipIfRunning`。如果该实例依赖防重入，需要在创建后重启 TaskService，使初始化流程重新载入完整特性配置
+配置同步与定时调度循环均已运行时，新建并启用的带参实例可动态加入执行。但当前动态加入逻辑不会复制特性中的 `SkipIfRunning`。如果该实例依赖防重入，需要在创建后重启 TaskService，使初始化流程重新载入完整特性配置
 
 ## 队列任务
 
@@ -125,17 +125,22 @@ public Task SendEmailAsync(SendEmailDto parameter)
 API 或 Application 层使用 `Application.Service.TaskCenter.QueueTaskService`：
 
 ```csharp
-await queueTaskService.CreateSingleAsync(
+bool created = await queueTaskService.CreateSingleAsync(
     "Message.SendEmail",
     sendEmailDto,
     planTime: null,
     callbackName: null,
     callbackParameter: null);
+
+if (!created)
+{
+    throw new CustomException("邮件任务入队失败");
+}
 ```
 
 `CreateSingleAsync` 使用独立 DbContext 立即保存任务，适合不需要和当前业务事务保持一致的场景
 
-Application 层的 `CreateSingleAsync` 以 `bool` 表示写入结果，调用方需要检查返回值；保存异常时返回 `false`
+Application 层的 `CreateSingleAsync` 以 `bool` 表示写入结果，调用方需要检查返回值；创建上下文、序列化或保存过程中发生异常时返回 `false`，此前的名称、回调和计划时间参数校验失败仍会抛出异常
 
 需要让业务数据和队列记录在同一事务提交时，使用 `Create`：
 
@@ -158,11 +163,16 @@ await transaction.CommitAsync();
 创建任务时可以指定另一个队列任务作为回调：
 
 ```csharp
-await queueTaskService.CreateSingleAsync(
+bool created = await queueTaskService.CreateSingleAsync(
     "Product.Rebuild",
     productId,
     callbackName: "Product.RebuildCompleted",
     callbackParameter: null);
+
+if (!created)
+{
+    throw new CustomException("重建任务入队失败");
+}
 ```
 
 当主任务成功且没有未完成子任务时，系统写入回调队列记录。如果未显式提供 `callbackParameter`，并且主任务有返回值，系统会把返回值序列化后作为回调参数
@@ -189,9 +199,11 @@ await queueTaskService.CreateSingleAsync(
 - 普通业务代码：`Application.Service.TaskCenter.QueueTaskService`
 - TaskService 任务内部及子任务：`TaskService.Core.QueueTask.QueueTaskService`
 
+两者失败契约不同：Application 版本的独立入队可能返回 `false`，TaskService.Core 版本失败时抛出“创建队列异常”。事务内的 `Create` 还要求入队服务与业务写入使用同一个 Scoped `DatabaseContext`，仅开启另一个上下文的事务不能保证原子提交
+
 ## 启用任务
 
-仅添加特性并不代表任务会立即运行。任务的最终启用状态来自 `TaskSetting.IsEnable`
+仅添加特性并不代表任务会立即运行。非 Debug 模式由 `TaskSetting.IsEnable` 控制，Debug 模式由控制台选择临时启用
 
 ### Debug 模式
 
@@ -201,14 +213,19 @@ Debug 模式不运行每分钟的数据库配置同步，因此控制台选择�
 
 ### 非 Debug 模式
 
-后台服务每 60 秒同步一次 `TaskSetting`：
+后台服务在初始化完成后开始同步 `TaskSetting`，每轮同步结束后等待 60 秒再进行下一轮：
 
 - 新发现的任务会写入配置表，默认不启用
 - 队列任务可从数据库覆盖 `Semaphore`
 - 定时任务可从数据库覆盖 `Cron`
 - `IsEnable` 决定任务是否执行
 
-可以通过管理后台的任务配置功能，或 Admin.WebAPI 的 `Operations` 接口查看和修改配置。修改后最多等待一个同步周期生效
+可以通过管理后台的任务配置功能，或 Admin.WebAPI 的 `Operations` 接口查看和修改配置。循环正常运行时，修改会在后续同步中生效；同步耗时或数据库异常会延后生效时间，60 秒不是严格上限
+
+当前实现有以下启动限制：
+
+- 配置同步服务在启动检查时，要求至少已发现一个队列任务或已载入一个具体定时任务。若只有带参方法声明、没有实例且没有其他任务，同步循环不会启动，模板记录也不会自动创建，此时需先修正后台服务的启动条件才能支持该配置
+- 定时调度服务在启动检查时，要求至少已载入一个具体定时任务。若此时没有实例，调度循环会退出；即使配置同步服务随后加入了带参实例，也需要重启 TaskService 才能启动调度
 
 ### PostgreSQL 分区自动维护
 
@@ -222,9 +239,10 @@ TaskService 通过 `BatchRegisterBackgroundServices()` 自动承载该服务，�
 - 创建未满 1 秒的记录暂不领取
 - `Semaphore` 同时限制当前实例和通过 Redis 锁协调的跨实例并发
 - 任务通过数据库 Worker 标识和 5 分钟租约领取，执行期间自动续期数据库租约和分布式锁
-- 单条队列任务最多执行 3 次
-- 第一次失败约 5 分钟后重试，第二次失败约 10 分钟后重试
-- 第三次仍失败则标记为 `Failed`
+- 单条队列任务自动执行最多 3 次，手动重试可重置计数
+- 异常后回到 `Pending` 的任务，按上次执行开始时间 `LastTime` 加 `5 × Count` 分钟判断重试资格：第一次开始后超过 5 分钟、第二次开始后超过 10 分钟；不是从失败时刻重新计时，长任务失败后可能在下一轮扫描就符合条件
+- 实际领取还受计划时间、并发名额和扫描时机影响；已过期的 `Running` 租约按恢复分支处理，不等待上述退避间隔
+- 第三次执行异常被执行器捕获并成功保存状态后，标记为 `Failed`
 - 可通过管理后台或 `POST /Operations/RetryQueueTask` 手动重试失败任务
 
 队列消费可能因租约恢复、进程终止或外部故障发生再次执行，任务实现应尽量保持幂等。不要只依赖“正常情况下执行一次”来保证数据正确性

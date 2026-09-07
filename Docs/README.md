@@ -10,7 +10,7 @@
 | [WebAPI 公共能力](WebAPI.md) | 调整 API 宿主、公共配置或中间件时 | 启动链路、配置、CORS、认证、Swagger 和健康检查 |
 | [部署配置生成器](Deployment.md) | 需要生成 Nginx、systemd 或云效流水线配置时 | 配置项、生成命令、产物和首次部署准备 |
 | [分布式锁](DistributedLock.md) | 需要防止重复执行或限制跨实例并发时 | Redis 锁、内存锁、等待与立即返回、租约续期 |
-| [源码生成器](SourceGenerator.md) | 新增服务、后台服务、代理行为或 EF Core 映射时 | 自动 DI、AutoProxy、软删除过滤器、JSON 列映射 |
+| [源码生成器](SourceGenerator.md) | 新增服务、后台服务、代理行为或 EF Core 映射时 | 自动 DI、AutoProxy、软删除过滤器、JSON 列映射和分区声明 |
 | [数据库读写分离](DatabaseReadWriteSeparation.md) | 迁移查询、配置读库或规划多个读副本时 | 读写上下文、连接配置、一致性边界和健康检查 |
 | [PostgreSQL 分区表](PostgreSqlPartitionTable.md) | 为新实体声明雪花 ID 分区或维护后续子分区时 | 实体注解、UTC+8 周期单位、Migration SQL 和 Repository 自动维护 |
 | [TaskService](TaskService.md) | 新增定时任务或队列任务时 | 任务声明、入队、启用、调度、回调、子任务和重试 |
@@ -32,15 +32,11 @@
 - 调用模型或扩展 LLM Provider：阅读 [LLM 调用](LLM.md)
 - 修改部署参数或模板：阅读 [部署配置生成器](Deployment.md)
 
-## 面向 Coding Agent 的扫描约定
+## 阅读与示例约定
 
-开始修改对应能力前，应先阅读相关文档，并继续检查文档链接的实际代码。文档用于说明稳定的使用约定，代码仍是最终行为依据
+- 文档中的仓库路径以解决方案根目录为基准，命令默认也从根目录执行，另有说明的除外
+- 代码块通常展示接入片段，可能省略 `using`、依赖注入和业务类型定义；示例中的 Service、DTO 和实体名不代表仓库一定存在同名实现
+- Debug / Release 是编译配置，Development / Production 是宿主运行环境，两者分别决定条件编译代码和运行时环境分支，不能相互替代
+- 迁移、部署与数据库 SQL 命令按对应步骤和目标环境执行，阅读或修改文档本身不要求执行这些命令
 
-- 新增功能时先根据 [架构与项目边界](Architecture.md) 确认代码放置位置和引用方向
-- 新增服务时优先使用 `[RegisterService]`，不要重复手写 DI 注册
-- 新增后台服务时先确认 `BatchRegisterBackgroundServices()` 是否已经覆盖
-- 新增跨进程并发控制时使用 Redis 锁，不要使用内存锁代替分布式锁
-- 新增任务时先区分定时任务和队列任务，并确认任务已经启用
-- 新增过滤器时先确认它属于表现层职责，并检查所需服务和中间件是否已经注册
-- 业务调用 LLM 时优先注入 `LlmInvokeService`，不要直接依赖具体 Provider 客户端
-- 修改部署产物时编辑 `Templates` 或 `deploysettings.json`，不要直接编辑 `Generated`
+Agent 的修改范围、代码风格、授权边界与验证要求统一维护在根目录 [AGENTS.md](../AGENTS.md)，本目录专注于能力用法。核对行为时，继续检查专题文档指向的实际代码

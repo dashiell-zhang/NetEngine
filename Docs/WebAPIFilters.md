@@ -99,6 +99,8 @@ CacheData_<MD5>
 
 当前防击穿锁不会自动续期。Action 执行超过 60 秒时，锁可能到期并允许其他请求再次回源
 
+缓存读取或锁获取异常时会记录日志并继续执行 Action，缓存写入失败也不会覆盖 Action 结果；请求取消会继续向上传播。`IDistributedCache` 的解析发生在异常捕获之前，未注册该依赖会直接失败
+
 当前写缓存逻辑不检查 HTTP 状态码，只判断结果是否为非空 `ObjectResult`。因此只应标记在稳定的查询接口上，不要用于可能通过 `BadRequestObjectResult` 等对象结果表达业务失败的接口，否则错误结果也可能被缓存，并在命中时以普通 `ObjectResult` 返回
 
 `null`、非 `ObjectResult`、文件结果和流式结果不会写入缓存
@@ -332,7 +334,7 @@ Form 请求不直接拼接原始 Body，而是：
 - `RSADecryptFilter` 修改的是已经绑定的 Action 参数；签名、缓存键和队列锁键读取的仍是原始 HTTP 请求内容
 - `CacheDataFilter` 命中后不会执行其内部的 Action 调用链，组合其他 Action 过滤器时需要实际验证执行顺序
 - `CacheDataFilter` 和 `ETagFilter` 都会处理响应，除非已经验证预期行为，否则不要直接叠加
-- 防重复提交优先使用 `QueueLimitFilter`，方法内部复杂锁范围使用 `IDistributedLock`
+- 请求层的重复操作限制可以使用 `QueueLimitFilter`，跨多个操作的锁范围使用 `IDistributedLock`；过滤器的固定租约和异常放行行为不能替代业务幂等保证
 - 过滤器只负责 Web 表现层行为，核心权限、幂等和业务校验仍应放在 Application 或 Repository 层
 
 ## 新增或修改过滤器检查清单

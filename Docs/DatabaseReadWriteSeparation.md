@@ -69,9 +69,11 @@ Host=read-db;Port=5432;Database=webcore;Username=webcore_read;Password=***;Maxim
 
 ### 多个只读数据库服务器
 
-当前三个宿主使用 `NpgsqlDataSourceBuilder.Build()`，所以当前版本只支持单个读取地址。仅把 `Host` 改为逗号分隔的多个服务器还不够；启用 Npgsql 多主机能力时，需要把三个宿主的读取数据源统一改为 `BuildMultiHost()`
+当前项目使用的 Npgsql 10.0.3 中，`NpgsqlDataSourceBuilder.Build()` 会在 `Host` 包含逗号时自动创建多主机数据源。因此三个宿主可以直接通过 `dbReadConnection` 配置多个读取地址，无需先把 `Build()` 改为 `BuildMultiHost()`。该行为可核对 [Npgsql 10.0.3 源码](https://github.com/npgsql/npgsql/blob/v10.0.3/src/Npgsql/NpgsqlSlimDataSourceBuilder.cs#L723-L738)
 
-完成代码调整后，多个物理只读副本可以使用以下形式：
+`BuildMultiHost()` 显式返回 `NpgsqlMultiHostDataSource`，适合需要调用 `WithTargetSession(...)` 等专用 API 的场景；仅使用连接字符串配置节点选择时不要求更换构建方法
+
+多个物理只读副本可以使用以下形式：
 
 ```text
 Host=read-db-1:5432,read-db-2:5432,read-db-3:5432;Database=webcore;Username=webcore_read;Password=***;Load Balance Hosts=true;Target Session Attributes=standby;Host Recheck Seconds=10;Maximum Pool Size=30
@@ -87,14 +89,14 @@ Host=primary-db:5432,read-db-1:5432,read-db-2:5432;Database=webcore;Username=web
 
 | 参数 | 作用 |
 |---|---|
-| `Load Balance Hosts=true` | 新建物理连接时在符合条件的主机之间轮换，而不是总从列表第一个主机开始 |
+| `Load Balance Hosts=true` | 每次打开连接时轮换尝试主机的起点，可复用对应主机连接池中的物理连接，不只在新建物理连接时生效 |
 | `Target Session Attributes=standby` | 只选择 PostgreSQL 物理备用节点，不回退主库 |
 | `Target Session Attributes=prefer-standby` | 优先选择物理备用节点，没有可用备用节点时允许选择主库 |
-| `Host Recheck Seconds=10` | 主机判定不可用后，经过指定秒数再重新检查 |
+| `Host Recheck Seconds=10` | 主机状态缓存的重新检查间隔，也影响主备角色和读写状态变化的识别 |
 
 项目会自动追加 `Options=-c default_transaction_read_only=on`，配置文件不需要重复填写。也不建议使用 `Target Session Attributes=read-only` 代替 `standby` 来识别物理副本，因为项目主动设置的默认只读事务会让可写主库连接也表现为默认只读
 
-多主机连接只负责选择建立物理连接的目标。已经发往某个节点的 SQL 如果执行失败，Npgsql 不会自动在另一节点重放该命令；需要重试时应由应用的重试策略重新执行整个安全的只读操作
+多主机连接在打开连接时选择目标节点，不会在同一已打开连接的每条 SQL 之间轮换节点。已经发往某个节点的 SQL 如果执行失败，Npgsql 不会自动在另一节点重放该命令；需要重试时应由应用的重试策略重新打开连接并执行整个安全的只读操作
 
 ## 应用代码中的用法
 
@@ -216,8 +218,10 @@ public class ExampleService(DatabaseContext writeDb, ReadDatabaseContext readDb)
 
 WebAPI 公共健康检查同时包含：
 
-- `DatabaseHealthCheck`：验证主库连接
-- `ReadDatabaseHealthCheck`：验证读取连接
+- `DatabaseHealthCheck`：通过主库上下文查询 `User` 表
+- `ReadDatabaseHealthCheck`：通过读取上下文查询 `User` 表
+
+检查成功说明对应连接能够查询该表，不代表写权限、所有表结构、复制延迟或分区维护均正常
 
 `Client.WebAPI` 和 `Admin.WebAPI` 通过 `/healthz` 暴露检查结果。`TaskService` 注册了读取上下文，但当前不是 HTTP 宿主，没有暴露 `/healthz`
 
@@ -241,7 +245,7 @@ WebAPI 公共健康检查同时包含：
 - 已明确监控 PostgreSQL 复制延迟、连接池使用量和读库错误率
 - 已确认读库不可用时是直接失败、业务重试还是允许回主库
 - 保存后立即刷新的管理用例仍能读取到主库最新状态
-- 多读库配置上线前，三个宿主均已切换到 `BuildMultiHost()` 并完成故障转移验证
+- 使用多读库时，相关宿主的地址列表和节点选择策略已配置一致，并完成故障转移验证
 
 ## 相关文档
 

@@ -11,7 +11,7 @@
 
 以下项目会被排除，避免生成器自引用或让独立工具携带不需要的运行时依赖：
 
-- `SourceGenerator` 目录下的项目
+- `SourceGenerator.Core` 与 `SourceGenerator.Runtime` 两个项目自身
 - `Infrastructure` 目录下的项目
 - `Deployment` 目录下的项目
 
@@ -60,6 +60,8 @@ public class UserService : IUserService
 ```
 
 指定的服务类型必须是实现类自身或其实现的接口
+
+`IDisposable` 和 `IAsyncDisposable` 不参与业务接口选择，同时直接声明父子接口时只保留更具体的接口。仅实现释放接口的服务仍按自身类型注册
 
 ### 生命周期和 Keyed Service
 
@@ -159,6 +161,8 @@ public virtual Task<ProductDto> GetAsync(long id, CancellationToken cancellation
 - 参数无法生成稳定摘要时跳过缓存
 - 普通对象参数的摘要包含公开可读属性和公开实例字段，字段是否标记 `JsonInclude` 不影响其参与参数键生成
 
+回源锁使用 60 秒租约并自动续期，获取锁后会再次读取缓存。缓存读取异常按未命中处理，获取回源锁失败（包括等待超时）时记录日志并执行业务方法，缓存写入失败则记录日志并保留业务结果，不会因此再次调用业务方法；调用取消仍向上传播。因此缓存防击穿不能代替业务幂等约束
+
 ### ConcurrencyLimit
 
 `[ConcurrencyLimit]` 基于 `IDistributedLock` 限制方法并发：
@@ -180,6 +184,8 @@ public virtual Task ProcessAsync(long orderId, CancellationToken cancellationTok
 | `Semaphore` | `1` | 同一锁键允许的并发数，小于等于 `0` 时按 `1` 处理 |
 
 运行期间会自动续期锁。使用该特性的宿主必须注册 `IDistributedLock`，否则调用时抛出 `InvalidOperationException`
+
+`IsBlock = false` 的等待有租约时长对应的上限，超时抛出 `TimeoutException`；`IsBlock = true` 的阻断抛出 `InvalidOperationException`，不会自动转换为 `QueueLimitFilter` 的 400 响应。自动续期最终失败只记录日志，不会强制中止正在执行的方法，严格并发安全仍需业务数据约束保证
 
 ### Retry
 

@@ -50,7 +50,7 @@ throw new CustomException("无效的用户信息");
 
 ## CacheDataFilter
 
-`CacheDataFilter` 用于缓存 Action 的 `ObjectResult.Value`：
+`CacheDataFilter` 用于缓存 Action 的 `ObjectResult.Value` 和 HTTP 状态码：
 
 ```csharp
 [HttpGet]
@@ -74,6 +74,8 @@ public Task<UserDto?> GetUser(long userId)
 
 当前实现读取以下请求数据：
 
+- Action 标识与 HTTP 方法
+- 请求的 PathBase、Path 和路由参数，路由参数按名称排序
 - Query 参数
 - 非文件 Form 参数
 - 非 Form 请求的原始 Body
@@ -85,23 +87,25 @@ public Task<UserDto?> GetUser(long userId)
 CacheData_<MD5>
 ```
 
-当前缓存键不包含 Controller、Action、路由，也不包含上传文件内容。不同接口只要参数和 Token 相同，就可能产生相同缓存键。因此新增使用前必须确认不会与其他缓存接口发生键碰撞；如果要把该过滤器作为通用缓存方案，应先扩展实现，将接口标识加入缓存键
+不同 Action、HTTP 方法、请求路径或路由参数使用独立缓存。缓存键仍不包含上传文件内容，不适用于结果依赖上传文件的接口
 
 原始 JSON Body 和 Query 顺序会影响摘要。同一语义但文本或参数顺序不同的请求，可能生成不同缓存键
 
 ### 执行行为
 
-1. 命中缓存时直接返回 `ObjectResult`，不再执行 Action
+1. 命中缓存时直接返回带原 HTTP 状态码的 `ObjectResult`，不再执行 Action
 2. 未命中时尝试获取 60 秒分布式锁
 3. 未获得锁的请求每 200 毫秒检查一次缓存
-4. 获得锁的请求执行 Action，并缓存非空的 `ObjectResult.Value`
+4. 获得锁的请求执行 Action，并缓存非空的 `ObjectResult.Value` 及其 HTTP 状态码
 5. Action 完成后释放锁
 
 当前防击穿锁不会自动续期。Action 执行超过 60 秒时，锁可能到期并允许其他请求再次回源
 
 缓存读取或锁获取异常时会记录日志并继续执行 Action，缓存写入失败也不会覆盖 Action 结果；请求取消会继续向上传播。`IDistributedCache` 的解析发生在异常捕获之前，未注册该依赖会直接失败
 
-当前写缓存逻辑不检查 HTTP 状态码，只判断结果是否为非空 `ObjectResult`。因此只应标记在稳定的查询接口上，不要用于可能通过 `BadRequestObjectResult` 等对象结果表达业务失败的接口，否则错误结果也可能被缓存，并在命中时以普通 `ObjectResult` 返回
+状态码优先使用 `ObjectResult.StatusCode`，未指定时使用 `ProblemDetails.Status`，再回退到当前 `HttpResponse.StatusCode`。例如 `BadRequestObjectResult` 命中缓存后仍返回 400，不会变成 200
+
+当前仍会缓存非成功状态的非空对象结果，失败结果也会保留到 TTL 到期，使用时应确认这符合接口语义。缓存仅保存返回值和状态码，不保存响应头或完整响应元数据
 
 `null`、非 `ObjectResult`、文件结果和流式结果不会写入缓存
 

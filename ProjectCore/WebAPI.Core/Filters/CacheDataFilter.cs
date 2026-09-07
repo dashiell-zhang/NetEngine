@@ -26,6 +26,7 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
     /// </summary>
     public bool IsUseToken { get; set; }
 
+
     /// <summary>
     /// 读取或写入请求缓存并在需要时使用分布式锁防止缓存击穿
     /// </summary>
@@ -34,6 +35,7 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
     /// <returns>筛选器执行任务</returns>
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+
         var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
         var cancellationToken = context.HttpContext.RequestAborted;
 
@@ -42,30 +44,25 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
 
         try
         {
-            var parameters = JsonHelper.ObjectToJson(context.HttpContext.GetParameters());
-
-            cacheKey = parameters;
-
-            if (IsUseToken)
+            var request = context.HttpContext.Request;
+            var keyData = new
             {
-                var token = context.HttpContext.Request.Headers.Where(t => t.Key == "Authorization").Select(t => t.Value).FirstOrDefault();
-                cacheKey = cacheKey + "_" + token;
-            }
+                Action = context.ActionDescriptor.DisplayName,
+                request.Method,
+                PathBase = request.PathBase.Value,
+                Path = request.Path.Value,
+                RouteValues = context.RouteData.Values.OrderBy(pair => pair.Key, StringComparer.Ordinal).ToDictionary(pair => pair.Key, pair => pair.Value),
+                Parameters = context.HttpContext.GetParameters(),
+                Authorization = IsUseToken ? request.Headers.Authorization.ToString() : null
+            };
 
-            cacheKey = "CacheData_" + CryptoHelper.MD5HashData(cacheKey);
+            cacheKey = "CacheData_" + CryptoHelper.MD5HashData(JsonHelper.ObjectToJson(keyData));
 
-            var cacheInfo = await distributedCache.GetAsync<object>(cacheKey, cancellationToken);
+            var cacheInfo = await distributedCache.GetAsync<CachedResponse>(cacheKey, cancellationToken);
 
             if (cacheInfo != null)
             {
-                if (((JsonElement)cacheInfo).ValueKind == JsonValueKind.String)
-                {
-                    context.Result = new ObjectResult(cacheInfo.ToString());
-                }
-                else
-                {
-                    context.Result = new ObjectResult(cacheInfo);
-                }
+                context.Result = cacheInfo.ToObjectResult();
 
                 return;
             }
@@ -86,18 +83,11 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
                     {
                         await Task.Delay(200, cancellationToken);
 
-                        cacheInfo = await distributedCache.GetAsync<object>(cacheKey, cancellationToken);
+                        cacheInfo = await distributedCache.GetAsync<CachedResponse>(cacheKey, cancellationToken);
 
                         if (cacheInfo != null)
                         {
-                            if (((JsonElement)cacheInfo).ValueKind == JsonValueKind.String)
-                            {
-                                context.Result = new ObjectResult(cacheInfo.ToString());
-                            }
-                            else
-                            {
-                                context.Result = new ObjectResult(cacheInfo);
-                            }
+                            context.Result = cacheInfo.ToObjectResult();
 
                             return;
                         }
@@ -123,7 +113,12 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
             {
                 if (actionExecutedContext.Result is ObjectResult objectResult && objectResult.Value != null)
                 {
-                    await distributedCache.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(TTL), cancellationToken: cancellationToken);
+                    var cachedResponse = new CachedResponse
+                    {
+                        StatusCode = objectResult.StatusCode ?? (objectResult.Value as ProblemDetails)?.Status ?? context.HttpContext.Response.StatusCode,
+                        Value = objectResult.Value
+                    };
+                    await distributedCache.SetAsync(cacheKey, cachedResponse, TimeSpan.FromSeconds(TTL), cancellationToken: cancellationToken);
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -153,4 +148,37 @@ public class CacheDataFilter : Attribute, IAsyncActionFilter
         }
 
     }
+
+
+    /// <summary>
+    /// 保存对象响应的返回值和 HTTP 状态码
+    /// </summary>
+    private sealed class CachedResponse
+    {
+
+        /// <summary>
+        /// 原始对象响应的 HTTP 状态码
+        /// </summary>
+        public int StatusCode { get; set; }
+
+
+        /// <summary>
+        /// 原始返回值 读取缓存后以 JSON 元素表示
+        /// </summary>
+        public object? Value { get; set; }
+
+
+        /// <summary>
+        /// 恢复缓存响应并保留字符串结果的原有处理方式
+        /// </summary>
+        public ObjectResult ToObjectResult()
+        {
+
+            var value = Value is JsonElement { ValueKind: JsonValueKind.String } element ? element.GetString() : Value;
+            return new ObjectResult(value) { StatusCode = StatusCode };
+
+        }
+
+    }
+
 }

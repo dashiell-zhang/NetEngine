@@ -1,10 +1,3 @@
-.queue-task-page__hero {
-    background:
-        radial-gradient(circle at top right, rgba(14, 165, 233, 0.16), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(34, 197, 94, 0.12), transparent 30%),
-        linear-gradient(135deg, #fbfdff 0%, #eef8ff 48%, #f3fcf7 100%);
-}
-
 .queue-task-page__semaphore-pill {
     display: inline-flex;
     align-items: center;

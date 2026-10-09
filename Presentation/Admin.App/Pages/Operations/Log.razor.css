@@ -1,47 +1,43 @@
-.log-page__hero {
-    background:
-        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 36%),
-        radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 32%),
-        linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f4fffd 100%);
-}
-
-.log-page__stat-card:nth-child(3) {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 243, 255, 0.96) 100%);
+.log-page ::deep .log-page__filter-card > .ant-card-body {
+    padding: 14px 16px;
 }
 
 .log-page__filter-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px 16px;
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
 }
 
 .log-page__field-label {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     color: #334155;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
 }
 
-.log-page__filter-form ::deep .ant-form-item {
-    margin-bottom: 12px;
+.log-page__filter-grid ::deep .log-page__filter-item {
+    flex: 0 1 180px;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
 }
 
-.log-page__filter-footer,
-.log-page__section-tools {
-    display: flex;
-    justify-content: flex-end;
+.log-page__filter-grid ::deep .log-page__filter-item--keyword {
+    flex-basis: 240px;
 }
 
-.log-page__section-tools {
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
+.log-page__filter-grid ::deep .log-page__filter-item--status {
+    flex-basis: 150px;
 }
 
-.log-page__filter-footer {
-    margin-top: 4px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+.log-page__filter-grid ::deep .log-page__filter-item--time {
+    flex-basis: 220px;
+}
+
+.log-page__filter-actions {
+    min-height: 38px;
 }
 
 .log-page__table-wrap {
@@ -76,8 +72,13 @@
 }
 
 @media (max-width: 1200px) {
-    .log-page__filter-grid,
     .log-drawer__meta-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .log-page__filter-grid ::deep .log-page__filter-item {
+        flex: 1 1 100%;
     }
 }

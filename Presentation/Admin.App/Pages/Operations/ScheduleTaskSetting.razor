@@ -3,37 +3,9 @@
 @attribute [ReuseTabsPageTitle("定时任务配置")]
 
 <div class="schedule-task-page admin-page">
-    <div class="schedule-task-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="schedule-task-page__eyebrow admin-page__eyebrow">Operations</div>
-            <h2 class="schedule-task-page__title admin-page__title">定时任务配置台</h2>
-            <div class="schedule-task-page__subtitle admin-page__subtitle">统一维护 ScheduleTask 分类任务的启停状态、Cron 表达式与参数 JSON，让日常运维配置、排查和更新都在一个视图内完成</div>
-
-            <div class="schedule-task-page__hero-tools admin-page__hero-tools">
-                <Button Class="schedule-task-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="ShowCreateScheduleTaskAsync"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增带参任务</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
-                <Button Class="schedule-task-page__hero-button schedule-task-page__hero-button--light admin-page-button admin-page-button--default" Icon="reload" @onclick="GetTaskSettingListAsync">刷新列表</Button>
-            </div>
-        </div>
-
-        <div class="schedule-task-page__stats admin-page__stats">
-            <div class="schedule-task-page__stat-card admin-page__stat-card">
-                <span class="schedule-task-page__stat-label admin-page__stat-label">任务总量</span>
-                <strong class="schedule-task-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="schedule-task-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条配置</span>
-            </div>
-
-            <div class="schedule-task-page__stat-card admin-page__stat-card">
-                <span class="schedule-task-page__stat-label admin-page__stat-label">当前页启用</span>
-                <strong class="schedule-task-page__stat-value admin-page__stat-value">@(pageList.List?.Count(t => t.IsEnable) ?? 0)</strong>
-                <span class="schedule-task-page__stat-foot admin-page__stat-foot">可直接观察当前页任务启停分布</span>
-            </div>
-
-            <div class="schedule-task-page__stat-card admin-page__stat-card">
-                <span class="schedule-task-page__stat-label admin-page__stat-label">分页状态</span>
-                <strong class="schedule-task-page__stat-value schedule-task-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">第 @(page) 页 / 每页 @pageSize 条</strong>
-                <span class="schedule-task-page__stat-foot admin-page__stat-foot">当前分类固定为 ScheduleTask</span>
-            </div>
-        </div>
+    <div class="admin-page__actions">
+        <Button Class="schedule-task-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="ShowCreateScheduleTaskAsync"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增带参任务</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
+        <Button Class="schedule-task-page__hero-button schedule-task-page__hero-button--light admin-page-button admin-page-button--default" Icon="reload" @onclick="GetTaskSettingListAsync">刷新列表</Button>
     </div>
 
     <Card Class="schedule-task-page__card schedule-task-page__card--compact admin-page__card admin-page__card--compact">

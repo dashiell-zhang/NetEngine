@@ -3,40 +3,12 @@
 @attribute [ReuseTabsPageTitle("栏目管理")]
 
 <div class="category-page admin-page">
-    <div class="category-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="category-page__eyebrow admin-page__eyebrow">Information Management</div>
-            <h2 class="category-page__title admin-page__title">栏目管理工作台</h2>
-            <div class="category-page__subtitle admin-page__subtitle">统一维护栏目名称、父级结构和排序规则，让内容结构调整、栏目新增和维护都在一个视图内完成</div>
-
-            @if (functionList.Contains("category-add"))
-            {
-                <div class="category-page__hero-tools admin-page__hero-tools">
-                    <Button Class="category-page__action-button category-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditCategoryAsync()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增栏目</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
-                </div>
-            }
+    @if (functionList.Contains("category-add"))
+    {
+        <div class="admin-page__actions">
+            <Button Class="category-page__action-button category-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditCategoryAsync()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增栏目</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
         </div>
-
-        <div class="category-page__stats admin-page__stats">
-            <div class="category-page__stat-card admin-page__stat-card">
-                <span class="category-page__stat-label admin-page__stat-label">栏目总量</span>
-                <strong class="category-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="category-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 个栏目</span>
-            </div>
-
-            <div class="category-page__stat-card admin-page__stat-card">
-                <span class="category-page__stat-label admin-page__stat-label">当前页顶级</span>
-                <strong class="category-page__stat-value admin-page__stat-value">@RootCategoryCount()</strong>
-                <span class="category-page__stat-foot admin-page__stat-foot">无父级栏目会作为顶层结构直接展示</span>
-            </div>
-
-            <div class="category-page__stat-card admin-page__stat-card">
-                <span class="category-page__stat-label admin-page__stat-label">默认排序</span>
-                <strong class="category-page__stat-value category-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@SortBaselineText()</strong>
-                <span class="category-page__stat-foot admin-page__stat-foot">新增栏目默认采用当前排序基线</span>
-            </div>
-        </div>
-    </div>
+    }
 
     <Card Class="category-page__card category-page__card--compact admin-page__card admin-page__card--compact">
         <div class="category-page__list-shell admin-page-list-shell">
@@ -361,15 +333,6 @@
 
 
     /// <summary>
-    /// 获取当前页顶级栏目数量
-    /// </summary>
-    int RootCategoryCount()
-    {
-        return pageList.List?.Count(item => item.ParentId == null) ?? 0;
-    }
-
-
-    /// <summary>
     /// 获取父级栏目显示文本
     /// </summary>
     string ParentCategoryText(CategoryDto category)
@@ -384,15 +347,6 @@
     string RemarkText(CategoryDto category)
     {
         return string.IsNullOrWhiteSpace(category.Remark) ? "暂无备注说明" : category.Remark;
-    }
-
-
-    /// <summary>
-    /// 获取默认排序描述
-    /// </summary>
-    string SortBaselineText()
-    {
-        return "99 起";
     }
 
 

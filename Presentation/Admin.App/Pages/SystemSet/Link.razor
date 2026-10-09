@@ -3,40 +3,12 @@
 @attribute [ReuseTabsPageTitle("友链管理")]
 
 <div class="system-link-page admin-page">
-    <div class="system-link-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="system-link-page__eyebrow admin-page__eyebrow">System Settings</div>
-            <h2 class="system-link-page__title admin-page__title">友链管理工作台</h2>
-            <div class="system-link-page__subtitle admin-page__subtitle">统一维护友链名称、地址与展示顺序，让新增、编辑和上下线管理都在同一个页面中完成</div>
-
-            @if (functionList.Contains("link-add"))
-            {
-                <div class="system-link-page__hero-tools admin-page__hero-tools">
-                    <Button Class="system-link-page__action-button system-link-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLink()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增友链</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
-                </div>
-            }
+    @if (functionList.Contains("link-add"))
+    {
+        <div class="admin-page__actions">
+            <Button Class="system-link-page__action-button system-link-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLink()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增友链</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
         </div>
-
-        <div class="system-link-page__stats admin-page__stats">
-            <div class="system-link-page__stat-card admin-page__stat-card">
-                <span class="system-link-page__stat-label admin-page__stat-label">友链总量</span>
-                <strong class="system-link-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="system-link-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条链接</span>
-            </div>
-
-            <div class="system-link-page__stat-card admin-page__stat-card">
-                <span class="system-link-page__stat-label admin-page__stat-label">操作能力</span>
-                <strong class="system-link-page__stat-value system-link-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@OperationCapabilityText()</strong>
-                <span class="system-link-page__stat-foot admin-page__stat-foot">支持新增、编辑和删除等维护动作</span>
-            </div>
-
-            <div class="system-link-page__stat-card admin-page__stat-card">
-                <span class="system-link-page__stat-label admin-page__stat-label">默认排序</span>
-                <strong class="system-link-page__stat-value system-link-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@DefaultSortText()</strong>
-                <span class="system-link-page__stat-foot admin-page__stat-foot">新增友链默认使用当前排序基线</span>
-            </div>
-        </div>
-    </div>
+    }
 
     <Card Class="system-link-page__card system-link-page__card--compact admin-page__card admin-page__card--compact">
         <div class="system-link-page__list-shell admin-page-list-shell">
@@ -282,39 +254,5 @@
         }
     }
 
-
-    /// <summary>
-    /// 获取当前操作能力描述
-    /// </summary>
-    string OperationCapabilityText()
-    {
-        var count = 0;
-
-        if (functionList.Contains("link-add"))
-        {
-            count++;
-        }
-
-        if (functionList.Contains("link-edit"))
-        {
-            count++;
-        }
-
-        if (functionList.Contains("link-delete"))
-        {
-            count++;
-        }
-
-        return count == 0 ? "只读查看" : $"{count} 项能力";
-    }
-
-
-    /// <summary>
-    /// 获取默认排序描述
-    /// </summary>
-    string DefaultSortText()
-    {
-        return "99 起";
-    }
 
 }

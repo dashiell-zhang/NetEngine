@@ -3,53 +3,25 @@
 @attribute [ReuseTabsPageTitle("日志")]
 
 <div class="log-page admin-page">
-    <div class="log-page__hero admin-page__hero admin-page__hero--without-actions">
-        <div>
-            <div class="log-page__eyebrow admin-page__eyebrow">Operations</div>
-            <h2 class="log-page__title admin-page__title">系统日志中心</h2>
-            <div class="log-page__subtitle admin-page__subtitle">集中查看系统运行轨迹、快速筛选异常线索，并通过详情面板完成问题定位</div>
-        </div>
-
-        <div class="log-page__stats admin-page__stats">
-            <div class="log-page__stat-card admin-page__stat-card">
-                <span class="log-page__stat-label admin-page__stat-label">日志总量</span>
-                <strong class="log-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="log-page__stat-foot admin-page__stat-foot">当前已加载 @CurrentPageCount() 条</span>
-            </div>
-
-            <div class="log-page__stat-card admin-page__stat-card">
-                <span class="log-page__stat-label admin-page__stat-label">筛选等级</span>
-                <strong class="log-page__stat-value admin-page__stat-value">@CurrentLevelText()</strong>
-                <span class="log-page__stat-foot admin-page__stat-foot">支持快速聚焦异常级别</span>
-            </div>
-
-            <div class="log-page__stat-card admin-page__stat-card">
-                <span class="log-page__stat-label admin-page__stat-label">时间范围</span>
-                <strong class="log-page__stat-value log-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@CurrentTimeRangeText()</strong>
-                <span class="log-page__stat-foot admin-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
-            </div>
-        </div>
-    </div>
-
     <Card Class="log-page__card log-page__card--compact log-page__filter-card admin-page__card admin-page__card--compact admin-page__card--filter-spacious">
-        <Form Class="log-page__filter-form admin-form" Model="@request" Layout="@FormLayout.Vertical" OnFinish="HandleSearchAsync">
+        <Form Class="log-page__filter-form admin-form admin-filter-form" Model="@request" Layout="@FormLayout.Vertical" OnFinish="HandleSearchAsync">
             <div class="log-page__filter-grid">
-                <FormItem>
+                <FormItem Class="log-page__filter-item">
                     <div class="log-page__field-label">设备名称</div>
                     <Input @bind-Value="@context.MachineName" Placeholder="请输入设备名称" AllowClear />
                 </FormItem>
 
-                <FormItem>
+                <FormItem Class="log-page__filter-item">
                     <div class="log-page__field-label">项目名称</div>
                     <Input @bind-Value="@context.Project" Placeholder="请输入项目名称" AllowClear />
                 </FormItem>
 
-                <FormItem>
+                <FormItem Class="log-page__filter-item log-page__filter-item--keyword">
                     <div class="log-page__field-label">内容关键字</div>
                     <Input @bind-Value="@context.Content" Placeholder="请输入内容关键字" AllowClear />
                 </FormItem>
 
-                <FormItem>
+                <FormItem Class="log-page__filter-item log-page__filter-item--status">
                     <div class="log-page__field-label">日志等级</div>
                     <Select TItem="string" TItemValue="string" @bind-Value="@context.Level" Placeholder="请选择日志等级" AllowClear>
                         <SelectOption Value="@("Trace")" Label="Trace"></SelectOption>
@@ -62,19 +34,16 @@
                     </Select>
                 </FormItem>
 
-                <FormItem>
+                <FormItem Class="log-page__filter-item log-page__filter-item--time">
                     <div class="log-page__field-label">开始时间</div>
                     <DatePicker @bind-Value="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择开始时间")" />
                 </FormItem>
 
-                <FormItem>
+                <FormItem Class="log-page__filter-item log-page__filter-item--time">
                     <div class="log-page__field-label">结束时间</div>
                     <DatePicker @bind-Value="@context.EndTime" Format="yyyy-MM-dd HH:mm:ss" ShowTime="@true" Placeholder="@("请选择结束时间")" />
                 </FormItem>
-            </div>
-
-            <div class="log-page__filter-footer">
-                <div class="log-page__section-tools log-page__section-tools--footer">
+                <div class="log-page__filter-actions admin-filter-form__actions">
                     <Button Class="log-page__action-button log-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit">搜索日志</Button>
                     <Button Class="log-page__action-button log-page__action-button--default admin-page-button admin-page-button--default" OnClick="HandleReset">重置条件</Button>
                 </div>
@@ -233,34 +202,6 @@
     bool isShowDetail = false;
     LogDto? detail;
     string? detailContent;
-
-    /// <summary>
-    /// 返回当前页已加载的日志数量
-    /// </summary>
-    int CurrentPageCount() => pageList.List?.Count ?? 0;
-
-
-    /// <summary>
-    /// 返回当前等级筛选文案
-    /// </summary>
-    string CurrentLevelText() => string.IsNullOrWhiteSpace(request.Level) ? "全部等级" : request.Level;
-
-
-    /// <summary>
-    /// 返回当前时间范围文案
-    /// </summary>
-    string CurrentTimeRangeText()
-    {
-        if (request.StartTime == null && request.EndTime == null)
-        {
-            return "全部时间";
-        }
-
-        var startText = request.StartTime?.ToString("MM-dd HH:mm") ?? "未设开始";
-        var endText = request.EndTime?.ToString("MM-dd HH:mm") ?? "未设结束";
-        return $"{startText} - {endText}";
-    }
-
 
     /// <summary>
     /// 返回详情中的时间文案

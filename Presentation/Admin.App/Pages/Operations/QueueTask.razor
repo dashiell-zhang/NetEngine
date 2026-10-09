@@ -3,35 +3,7 @@
 @attribute [ReuseTabsPageTitle("队列任务")]
 
 <div class="queue-task-log-page admin-page admin-log-page">
-    <div class="queue-task-log-page__hero admin-page__hero admin-page__hero--without-actions">
-        <div>
-            <div class="queue-task-log-page__eyebrow admin-page__eyebrow">Operations</div>
-            <h2 class="queue-task-log-page__title admin-page__title">队列任务中心</h2>
-            <div class="queue-task-log-page__subtitle admin-page__subtitle">按参数关键字、执行结果和创建时间检索队列任务，集中查看调度状态、执行轨迹与回调上下文，便于定位失败任务并快速触发重试</div>
-        </div>
-
-        <div class="queue-task-log-page__stats admin-page__stats">
-            <div class="queue-task-log-page__stat-card admin-page__stat-card">
-                <span class="queue-task-log-page__stat-label admin-page__stat-label">任务总量</span>
-                <strong class="queue-task-log-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="queue-task-log-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条记录</span>
-            </div>
-
-            <div class="queue-task-log-page__stat-card admin-page__stat-card">
-                <span class="queue-task-log-page__stat-label admin-page__stat-label">结果筛选</span>
-                <strong class="queue-task-log-page__stat-value queue-task-log-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@SuccessFilterText()</strong>
-                <span class="queue-task-log-page__stat-foot admin-page__stat-foot">@(string.IsNullOrWhiteSpace(request.ParameterKeyword) ? "未设置参数关键字过滤" : "参数关键字过滤中")</span>
-            </div>
-
-            <div class="queue-task-log-page__stat-card admin-page__stat-card">
-                <span class="queue-task-log-page__stat-label admin-page__stat-label">时间窗口</span>
-                <strong class="queue-task-log-page__stat-value queue-task-log-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@DateRangeText()</strong>
-                <span class="queue-task-log-page__stat-foot admin-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
-            </div>
-        </div>
-    </div>
-
-    <Card Class="queue-task-log-page__card queue-task-log-page__card--compact admin-page__card admin-page__card--compact admin-page__card--filter">
+    <div class="admin-page__toolbar">
         <Form Class="queue-task-log-page__filter-form admin-form admin-filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
             <FormItem Class="queue-task-log-page__filter-item queue-task-log-page__filter-item--keyword admin-filter-form__item--keyword">
                 <Input @bind-Value="@context.ParameterKeyword" Placeholder="参数 JSON / 关键字 模糊检索" AllowClear />
@@ -59,7 +31,7 @@
                 </div>
             </FormItem>
         </Form>
-    </Card>
+    </div>
 
     <Card Class="queue-task-log-page__card queue-task-log-page__card--compact admin-page__card admin-page__card--compact">
         <div class="queue-task-log-page__list-shell admin-page-list-shell">
@@ -332,33 +304,6 @@
         {
             Message.Error("请求失败，请稍后重试");
         }
-    }
-
-
-    /// <summary>
-    /// 返回结果筛选的展示文案
-    /// </summary>
-    string SuccessFilterText() => request.IsSuccess switch
-    {
-        true => "仅成功任务",
-        false => "仅未成功",
-        _ => "全部结果"
-    };
-
-
-    /// <summary>
-    /// 返回时间筛选区间展示文案
-    /// </summary>
-    string DateRangeText()
-    {
-        if (request.StartCreateTime == null && request.EndCreateTime == null)
-        {
-            return "全部时间";
-        }
-
-        var startText = request.StartCreateTime?.ToString("MM-dd HH:mm") ?? "不限开始";
-        var endText = request.EndCreateTime?.ToString("MM-dd HH:mm") ?? "不限结束";
-        return startText + " ~ " + endText;
     }
 
 

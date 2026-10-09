@@ -1,14 +1,3 @@
-.queue-task-log-page__hero {
-    background:
-        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 36%),
-        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.12), transparent 32%),
-        linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f3fdf8 100%);
-}
-
-.queue-task-log-page__filter-item--keyword {
-    min-width: 320px;
-}
-
 .queue-task-log-page__table-wrap ::deep .ant-table-thead > tr > th:nth-child(1),
 .queue-task-log-page__table-wrap ::deep .ant-table-tbody > tr > td:nth-child(1) {
     width: 220px;

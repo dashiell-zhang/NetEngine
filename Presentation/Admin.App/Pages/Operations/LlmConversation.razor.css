@@ -1,17 +1,5 @@
-.llm-conversation-page__hero {
-    background:
-        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 36%),
-        radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 32%),
-        linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f4fffd 100%);
-}
-
-.llm-conversation-page__filter-item--keyword {
-    flex-basis: 420px;
-    min-width: 320px;
-}
-
-.llm-conversation-page__filter-item--time {
-    flex-basis: 240px;
+.llm-conversation-page__table-wrap ::deep .ant-table table {
+    min-width: 960px;
 }
 
 .llm-conversation-page__table-wrap ::deep .ant-table-thead > tr > th:nth-child(1),

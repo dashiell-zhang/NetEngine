@@ -5,39 +5,11 @@
 @attribute [ReuseTabsPageTitle("LLM应用")]
 
 <div class="llm-app-page admin-page">
-    <div class="llm-app-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="llm-app-page__eyebrow admin-page__eyebrow">Operations</div>
-            <h2 class="llm-app-page__title admin-page__title">LLM 应用编排台</h2>
-            <div class="llm-app-page__subtitle admin-page__subtitle">集中维护应用入口、提示词模板和调试参数，让模型配置、应用配置与联调过程保持在同一视图内完成</div>
-
-            <div class="llm-app-page__hero-tools admin-page__hero-tools">
-                <Button Class="llm-app-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLlmApp()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增应用</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
-            </div>
+    <div class="admin-page__toolbar">
+        <div class="admin-page__actions">
+            <Button Class="llm-app-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLlmApp()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增应用</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
         </div>
 
-        <div class="llm-app-page__stats admin-page__stats">
-            <div class="llm-app-page__stat-card admin-page__stat-card">
-                <span class="llm-app-page__stat-label admin-page__stat-label">应用总量</span>
-                <strong class="llm-app-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="llm-app-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条记录</span>
-            </div>
-
-            <div class="llm-app-page__stat-card admin-page__stat-card">
-                <span class="llm-app-page__stat-label admin-page__stat-label">启用筛选</span>
-                <strong class="llm-app-page__stat-value llm-app-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@(request.IsEnable == null ? "全部应用" : request.IsEnable.Value ? "仅启用" : "仅停用")</strong>
-                <span class="llm-app-page__stat-foot admin-page__stat-foot">快速聚焦可发布或已停用配置</span>
-            </div>
-
-            <div class="llm-app-page__stat-card admin-page__stat-card">
-                <span class="llm-app-page__stat-label admin-page__stat-label">检索状态</span>
-                <strong class="llm-app-page__stat-value llm-app-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@(string.IsNullOrWhiteSpace(request.Keyword) ? "全部应用" : "关键词检索")</strong>
-                <span class="llm-app-page__stat-foot admin-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
-            </div>
-        </div>
-    </div>
-
-    <Card Class="llm-app-page__card llm-app-page__card--compact admin-page__card admin-page__card--compact admin-page__card--filter">
         <Form Class="llm-app-page__filter-form llm-app-page__filter-form--inline admin-form admin-filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
             <FormItem Class="llm-app-page__filter-item llm-app-page__filter-item--keyword admin-filter-form__item--keyword">
                 <Input @bind-Value="@context.Keyword" Placeholder="Code / 名称 / 备注 模糊检索" AllowClear />
@@ -57,7 +29,7 @@
                 </div>
             </FormItem>
         </Form>
-    </Card>
+    </div>
 
     <Card Class="llm-app-page__card llm-app-page__card--compact admin-page__card admin-page__card--compact">
         <div class="llm-app-page__list-shell admin-page-list-shell">

@@ -3,52 +3,10 @@
 @attribute [ReuseTabsPageTitle("信息维护")]
 
 <div class="site-setting-page admin-page">
-    <div class="site-setting-page__hero admin-page__hero admin-page__hero--without-actions">
-        <div class="site-setting-page__hero-main">
-            <div class="site-setting-page__eyebrow admin-page__eyebrow">System Settings</div>
-            <h2 class="site-setting-page__title admin-page__title">站点信息维护</h2>
-            <div class="site-setting-page__subtitle admin-page__subtitle">集中维护站点展示资料、联系信息与 SEO 内容，保证前台页脚、系统说明和搜索摘要使用同一套数据</div>
-
-            <div class="site-setting-page__hero-tags admin-page__hero-tools">
-                <Tag Color="@("blue")">站点信息 @GetSiteFieldCount() / 7</Tag>
-                <Tag Color="@("green")">SEO @GetSeoFieldCount() / 3</Tag>
-                <Tag Color="@("gold")">底部代码 @GetFootCodeStatus()</Tag>
-            </div>
-        </div>
-
-        <div class="site-setting-page__stats admin-page__stats">
-            <div class="site-setting-page__stat-card admin-page__stat-card">
-                <span class="site-setting-page__stat-label admin-page__stat-label">站点地址</span>
-                <strong class="site-setting-page__stat-value site-setting-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@GetWebUrlText()</strong>
-                <span class="site-setting-page__stat-foot admin-page__stat-foot">建议填写正式访问地址 便于统一展示</span>
-            </div>
-
-            <div class="site-setting-page__stat-card admin-page__stat-card">
-                <span class="site-setting-page__stat-label admin-page__stat-label">站点信息完成度</span>
-                <strong class="site-setting-page__stat-value admin-page__stat-value">@GetSiteFieldCount() / 7</strong>
-                <span class="site-setting-page__stat-foot admin-page__stat-foot">覆盖地址 联系方式 备案信息与底部代码</span>
-            </div>
-
-            <div class="site-setting-page__stat-card admin-page__stat-card">
-                <span class="site-setting-page__stat-label admin-page__stat-label">SEO 完成度</span>
-                <strong class="site-setting-page__stat-value admin-page__stat-value">@GetSeoFieldCount() / 3</strong>
-                <span class="site-setting-page__stat-foot admin-page__stat-foot">标题 关键字 描述建议同步完善</span>
-            </div>
-        </div>
-    </div>
-
     <Card Class="site-setting-page__panel admin-page__card admin-page__card--body-panel">
         <Tabs Class="site-setting-page__tabs" Type="@TabType.Line">
 
             <TabPane Key="1" Tab="站点信息">
-                <div class="site-setting-page__section-intro">
-                    <div>
-                        <div class="site-setting-page__section-title">站点基础资料</div>
-                        <div class="site-setting-page__section-text">优先维护站点地址、联系人和备案信息，保持多个页面的展示口径一致</div>
-                    </div>
-                    <div class="site-setting-page__section-meta">已填写 @GetSiteFieldCount() / 7</div>
-                </div>
-
                 <div class="site-setting-page__section-card">
                     <Form Class="site-setting-page__inner-form admin-form" Model="@editSite" Layout="@FormLayout.Vertical">
                         <div class="site-setting-page__field-grid site-setting-page__field-grid--wide admin-form__field-grid">
@@ -80,13 +38,9 @@
                 </div>
 
                 <div class="site-setting-page__section-card site-setting-page__section-card--wide">
-                    <div class="site-setting-page__card-head">
-                        <div class="site-setting-page__card-title">自定义底部代码</div>
-                        <div class="site-setting-page__card-text">适合放置统计脚本、站点验证代码或页脚扩展内容，保存后会参与页面底部输出</div>
-                    </div>
-
                     <Form Class="site-setting-page__inner-form" Model="@editSite" Layout="@FormLayout.Vertical">
                         <FormItem Label="代码内容">
+                            <div class="site-setting-page__field-help">适合放置统计脚本、站点验证代码或页脚扩展内容，保存后会参与页面底部输出</div>
                             <TextArea Class="site-setting-page__textarea site-setting-page__textarea--foot-code" ShowCount Placeholder="请输入自定义代码，将放置在页面底部" @bind-Value="@editSite.FootCode" MinRows="6" MaxRows="12" />
                         </FormItem>
                     </Form>
@@ -94,24 +48,12 @@
             </TabPane>
 
             <TabPane Key="2" Tab="SEO 参数" ForceRender="true">
-                <div class="site-setting-page__section-intro">
-                    <div>
-                        <div class="site-setting-page__section-title">搜索引擎展示内容</div>
-                        <div class="site-setting-page__section-text">SEO 字段会影响搜索摘要和分享预览，建议围绕品牌词和站点核心价值填写</div>
-                    </div>
-                    <div class="site-setting-page__section-meta">已填写 @GetSeoFieldCount() / 3</div>
-                </div>
-
                 <Row Gutter="24">
                     <AntDesign.Col Span="12">
                         <div class="site-setting-page__section-card">
-                            <div class="site-setting-page__card-head">
-                                <div class="site-setting-page__card-title">标题与关键字</div>
-                                <div class="site-setting-page__card-text">用于定义搜索结果的主标题和站点关键词，建议避免重复堆词</div>
-                            </div>
-
                             <Form Class="site-setting-page__inner-form admin-form" Model="@editSite" Layout="@FormLayout.Vertical">
                                 <FormItem Label="SEO 标题">
+                                    <div class="site-setting-page__field-help">用于定义搜索结果的主标题和站点关键词，建议避免重复堆词</div>
                                     <TextArea Class="site-setting-page__textarea site-setting-page__textarea--seo-short" ShowCount Placeholder="请输入 SEO 标题" @bind-Value="@editSite.SeoTitle" MinRows="4" MaxRows="6" />
                                 </FormItem>
 
@@ -124,13 +66,9 @@
 
                     <AntDesign.Col Span="12">
                         <div class="site-setting-page__section-card">
-                            <div class="site-setting-page__card-head">
-                                <div class="site-setting-page__card-title">描述与长度预览</div>
-                                <div class="site-setting-page__card-text">描述建议突出站点服务对象、核心能力和可信信息，让搜索结果更完整</div>
-                            </div>
-
                             <Form Class="site-setting-page__inner-form admin-form" Model="@editSite" Layout="@FormLayout.Vertical">
                                 <FormItem Label="SEO 描述">
+                                    <div class="site-setting-page__field-help">描述建议突出站点服务对象、核心能力和可信信息，让搜索结果更完整</div>
                                     <TextArea Class="site-setting-page__textarea site-setting-page__textarea--seo-description" ShowCount Placeholder="请输入 SEO 描述" @bind-Value="@editSite.SeoDescription" MinRows="8" MaxRows="10" />
                                 </FormItem>
                             </Form>
@@ -157,11 +95,6 @@
         </Tabs>
 
         <div class="site-setting-page__footer">
-            <div>
-                <div class="site-setting-page__footer-title">保存当前配置</div>
-                <div class="site-setting-page__footer-text">保存后将直接影响站点信息展示和 SEO 元信息输出，请确认内容已经校对</div>
-            </div>
-
             <Button Class="site-setting-page__save-button admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" Loading="@saveLoading" OnClick="SaveSiteAsync">保存更改</Button>
         </div>
     </Card>
@@ -243,44 +176,8 @@
 
 
     /// <summary>
-    /// 获取已填写字段数量
-    /// </summary>
-    int GetFilledFieldCount() => CountFilledFields(editSite.WebUrl, editSite.ManagerName, editSite.ManagerAddress, editSite.ManagerPhone, editSite.ManagerEmail, editSite.RecordNumber, editSite.SeoTitle, editSite.SeoKeywords, editSite.SeoDescription, editSite.FootCode);
-
-
-    /// <summary>
-    /// 获取站点信息字段数量
-    /// </summary>
-    int GetSiteFieldCount() => CountFilledFields(editSite.WebUrl, editSite.ManagerName, editSite.ManagerAddress, editSite.ManagerPhone, editSite.ManagerEmail, editSite.RecordNumber, editSite.FootCode);
-
-
-    /// <summary>
-    /// 获取 SEO 字段数量
-    /// </summary>
-    int GetSeoFieldCount() => CountFilledFields(editSite.SeoTitle, editSite.SeoKeywords, editSite.SeoDescription);
-
-
-    /// <summary>
-    /// 获取网站地址展示文本
-    /// </summary>
-    string GetWebUrlText() => string.IsNullOrWhiteSpace(editSite.WebUrl) ? "待填写网站地址" : editSite.WebUrl;
-
-
-    /// <summary>
-    /// 获取底部代码状态
-    /// </summary>
-    string GetFootCodeStatus() => string.IsNullOrWhiteSpace(editSite.FootCode) ? "未配置" : "已配置";
-
-
-    /// <summary>
     /// 统计文本长度
     /// </summary>
     int CountTextLength(string? text) => string.IsNullOrWhiteSpace(text) ? 0 : text.Trim().Length;
-
-
-    /// <summary>
-    /// 统计非空字段数量
-    /// </summary>
-    int CountFilledFields(params string?[] values) => values.Count(value => !string.IsNullOrWhiteSpace(value));
 
 }

@@ -23,11 +23,11 @@
 	  <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.10.0" />
 	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.12" />
 	  <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.12" />
-	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.22.0" />
-	  <PackageReference Include="Microsoft.IdentityModel.Protocols" Version="8.22.0" />
-	  <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.22.0" />
-	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+	  <PackageReference Include="Microsoft.IdentityModel.Protocols" Version="8.23.0" />
+	  <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
+	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
 	</ItemGroup>
 
 	<ItemGroup>

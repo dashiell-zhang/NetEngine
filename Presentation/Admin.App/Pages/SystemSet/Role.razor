@@ -3,40 +3,12 @@
 @attribute [ReuseTabsPageTitle("角色管理")]
 
 <div class="system-role-page admin-page">
-    <div class="system-role-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="system-role-page__eyebrow admin-page__eyebrow">System Settings</div>
-            <h2 class="system-role-page__title admin-page__title">角色管理工作台</h2>
-            <div class="system-role-page__subtitle admin-page__subtitle">集中维护角色编码、角色说明与权限范围，让角色创建、维护和授权配置都在一个页面内完成</div>
-
-            @if (functionList.Contains("role-add"))
-            {
-                <div class="system-role-page__hero-tools admin-page__hero-tools">
-                    <Button Class="system-role-page__action-button system-role-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditRole()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增角色</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
-                </div>
-            }
+    @if (functionList.Contains("role-add"))
+    {
+        <div class="admin-page__actions">
+            <Button Class="system-role-page__action-button system-role-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditRole()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增角色</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
         </div>
-
-        <div class="system-role-page__stats admin-page__stats">
-            <div class="system-role-page__stat-card admin-page__stat-card">
-                <span class="system-role-page__stat-label admin-page__stat-label">角色总量</span>
-                <strong class="system-role-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="system-role-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 个角色</span>
-            </div>
-
-            <div class="system-role-page__stat-card admin-page__stat-card">
-                <span class="system-role-page__stat-label admin-page__stat-label">操作能力</span>
-                <strong class="system-role-page__stat-value system-role-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@OperationCapabilityText()</strong>
-                <span class="system-role-page__stat-foot admin-page__stat-foot">支持编辑、删除和权限配置等操作</span>
-            </div>
-
-            <div class="system-role-page__stat-card admin-page__stat-card">
-                <span class="system-role-page__stat-label admin-page__stat-label">分页状态</span>
-                <strong class="system-role-page__stat-value system-role-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">第 @(page) 页</strong>
-                <span class="system-role-page__stat-foot admin-page__stat-foot">每页 @(pageSize) 条</span>
-            </div>
-        </div>
-    </div>
+    }
 
     <Card Class="system-role-page__card system-role-page__card--compact admin-page__card admin-page__card--compact">
         <div class="system-role-page__list-shell admin-page-list-shell">
@@ -395,37 +367,6 @@
         }
 
         StateHasChanged();
-    }
-
-
-    /// <summary>
-    /// 获取当前操作能力描述
-    /// </summary>
-    string OperationCapabilityText()
-    {
-        var count = 0;
-
-        if (functionList.Contains("role-add"))
-        {
-            count++;
-        }
-
-        if (functionList.Contains("role-edit"))
-        {
-            count++;
-        }
-
-        if (functionList.Contains("role-function"))
-        {
-            count++;
-        }
-
-        if (functionList.Contains("role-delete"))
-        {
-            count++;
-        }
-
-        return count == 0 ? "只读查看" : $"{count} 项能力";
     }
 
 

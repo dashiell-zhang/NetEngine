@@ -4,42 +4,14 @@
 @attribute [ReuseTabsPageTitle("用户管理")]
 
 <div class="system-user-page admin-page">
-    <div class="system-user-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="system-user-page__eyebrow admin-page__eyebrow">System Settings</div>
-            <h2 class="system-user-page__title admin-page__title">用户管理工作台</h2>
-            <div class="system-user-page__subtitle admin-page__subtitle">统一维护账号基础信息、角色归属与权限范围，让新增、检索和授权操作都收敛在同一个页面内完成</div>
-
-            @if (functionList.Contains("user-add"))
-            {
-                <div class="system-user-page__hero-tools admin-page__hero-tools">
-                    <Button Class="system-user-page__action-button system-user-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditUser()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增用户</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
-                </div>
-            }
-        </div>
-
-        <div class="system-user-page__stats admin-page__stats">
-            <div class="system-user-page__stat-card admin-page__stat-card">
-                <span class="system-user-page__stat-label admin-page__stat-label">用户总量</span>
-                <strong class="system-user-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="system-user-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 位用户</span>
+    <div class="admin-page__toolbar">
+        @if (functionList.Contains("user-add"))
+        {
+            <div class="admin-page__actions">
+                <Button Class="system-user-page__action-button system-user-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditUser()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增用户</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
             </div>
+        }
 
-            <div class="system-user-page__stat-card admin-page__stat-card">
-                <span class="system-user-page__stat-label admin-page__stat-label">角色覆盖</span>
-                <strong class="system-user-page__stat-value system-user-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@RoleSummaryText()</strong>
-                <span class="system-user-page__stat-foot admin-page__stat-foot">已加载 @roleList.Count 个可分配角色</span>
-            </div>
-
-            <div class="system-user-page__stat-card admin-page__stat-card">
-                <span class="system-user-page__stat-label admin-page__stat-label">检索状态</span>
-                <strong class="system-user-page__stat-value system-user-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@KeywordStatusText()</strong>
-                <span class="system-user-page__stat-foot admin-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
-            </div>
-        </div>
-    </div>
-
-    <Card Class="system-user-page__card system-user-page__card--compact admin-page__card admin-page__card--compact admin-page__card--filter">
         <Form Class="system-user-page__filter-form admin-form admin-filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
             <FormItem Class="system-user-page__filter-item system-user-page__filter-item--keyword admin-filter-form__item--keyword">
                 <Input @bind-Value="@context.Keyword" Placeholder="名称 / 用户名 / 电话 / 邮箱 模糊检索" AllowClear />
@@ -52,7 +24,7 @@
                 </div>
             </FormItem>
         </Form>
-    </Card>
+    </div>
 
     <Card Class="system-user-page__card system-user-page__card--compact admin-page__card admin-page__card--compact">
         <div class="system-user-page__list-shell admin-page-list-shell">
@@ -490,24 +462,6 @@
         }
 
         StateHasChanged();
-    }
-
-
-    /// <summary>
-    /// 获取当前关键字筛选描述
-    /// </summary>
-    string KeywordStatusText()
-    {
-        return string.IsNullOrWhiteSpace(request.Keyword) ? "全部用户" : "关键词检索中";
-    }
-
-
-    /// <summary>
-    /// 获取角色覆盖摘要
-    /// </summary>
-    string RoleSummaryText()
-    {
-        return roleList.Count == 0 ? "角色加载中" : $"{roleList.Count} 个角色";
     }
 
 

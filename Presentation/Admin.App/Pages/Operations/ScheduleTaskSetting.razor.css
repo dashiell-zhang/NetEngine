@@ -26,7 +26,7 @@
     margin-bottom: 20px;
     padding: 18px;
     border: 1px solid #e2edf9;
-    border-radius: 18px;
+    border-radius: 12px;
     background:
         radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 34%),
         linear-gradient(135deg, #fbfdff 0%, #f3f9ff 52%, #f7fcff 100%);

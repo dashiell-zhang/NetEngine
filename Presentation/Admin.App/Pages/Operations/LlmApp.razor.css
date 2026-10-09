@@ -1,10 +1,3 @@
-.llm-app-page__hero {
-    background:
-        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 36%),
-        radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 32%),
-        linear-gradient(135deg, #f8fcff 0%, #eef7ff 48%, #f4fffd 100%);
-}
-
 .llm-app-page__app-cell {
     display: flex;
     align-items: center;
@@ -80,7 +73,7 @@
     min-height: 78px;
     padding: 14px 16px;
     border: 1px solid #eaf1f8;
-    border-radius: 14px;
+    border-radius: 12px;
     background: linear-gradient(180deg, #fdfefe 0%, #f8fbff 100%);
 }
 
@@ -89,7 +82,7 @@
     margin-bottom: 14px;
     padding: 12px 14px;
     border: 1px solid #bae6fd;
-    border-radius: 14px;
+    border-radius: 12px;
     color: #1d4ed8;
     font-size: 13px;
     line-height: 1.7;
@@ -127,7 +120,7 @@
     justify-content: center;
     min-height: 32px;
     padding: 0 12px;
-    border-radius: 999px;
+    border-radius: 12px;
     font-size: 12px;
     font-weight: 700;
     line-height: 1;
@@ -146,7 +139,7 @@
     min-height: 260px;
     padding: 16px;
     border: 1px solid #dbeafe;
-    border-radius: 16px;
+    border-radius: 12px;
     background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
 }
 

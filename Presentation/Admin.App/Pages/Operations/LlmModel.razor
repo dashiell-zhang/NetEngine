@@ -4,39 +4,11 @@
 @attribute [ReuseTabsPageTitle("LLM模型管理")]
 
 <div class="llm-model-page admin-page">
-    <div class="llm-model-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="llm-model-page__eyebrow admin-page__eyebrow">Operations</div>
-            <h2 class="llm-model-page__title admin-page__title">LLM 模型管理台</h2>
-            <div class="llm-model-page__subtitle admin-page__subtitle">统一维护模型名称、端点地址、协议类型与密钥配置，让模型切换、停启用和后续应用接入都在同一处完成</div>
-
-            <div class="llm-model-page__hero-tools admin-page__hero-tools">
-                <Button Class="llm-model-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLlmModel()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增模型</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
-            </div>
+    <div class="admin-page__toolbar">
+        <div class="admin-page__actions">
+            <Button Class="llm-model-page__hero-button admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" @onclick="() => EditLlmModel()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">新增模型</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
         </div>
 
-        <div class="llm-model-page__stats admin-page__stats">
-            <div class="llm-model-page__stat-card admin-page__stat-card">
-                <span class="llm-model-page__stat-label admin-page__stat-label">模型总量</span>
-                <strong class="llm-model-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="llm-model-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条记录</span>
-            </div>
-
-            <div class="llm-model-page__stat-card admin-page__stat-card">
-                <span class="llm-model-page__stat-label admin-page__stat-label">启用筛选</span>
-                <strong class="llm-model-page__stat-value llm-model-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@(request.IsEnable == null ? "全部模型" : request.IsEnable.Value ? "仅启用" : "仅停用")</strong>
-                <span class="llm-model-page__stat-foot admin-page__stat-foot">快速聚焦正在对外提供服务的模型</span>
-            </div>
-
-            <div class="llm-model-page__stat-card admin-page__stat-card">
-                <span class="llm-model-page__stat-label admin-page__stat-label">检索状态</span>
-                <strong class="llm-model-page__stat-value llm-model-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@(string.IsNullOrWhiteSpace(request.Keyword) ? "全部模型" : "关键词检索")</strong>
-                <span class="llm-model-page__stat-foot admin-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
-            </div>
-        </div>
-    </div>
-
-    <Card Class="llm-model-page__card llm-model-page__card--compact admin-page__card admin-page__card--compact admin-page__card--filter">
         <Form Class="llm-model-page__filter-form admin-form admin-filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
             <FormItem Class="llm-model-page__filter-item llm-model-page__filter-item--keyword admin-filter-form__item--keyword">
                 <Input @bind-Value="@context.Keyword" Placeholder="名称 / 模型标识 / 备注 模糊检索" AllowClear />
@@ -56,7 +28,7 @@
                 </div>
             </FormItem>
         </Form>
-    </Card>
+    </div>
 
     <Card Class="llm-model-page__card llm-model-page__card--compact admin-page__card admin-page__card--compact">
         <div class="llm-model-page__list-shell admin-page-list-shell">

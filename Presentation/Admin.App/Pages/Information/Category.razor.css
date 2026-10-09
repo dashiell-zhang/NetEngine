@@ -1,18 +1,3 @@
-.category-page__hero {
-    background:
-        radial-gradient(circle at top right, rgba(37, 99, 235, 0.16), transparent 35%),
-        radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.14), transparent 30%),
-        linear-gradient(135deg, #f8fbff 0%, #eef7ff 48%, #f5fffc 100%);
-}
-
-.category-page__stat-card:nth-child(2) {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 253, 250, 0.96) 100%);
-}
-
-.category-page__stat-card:nth-child(3) {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 248, 255, 0.92) 100%);
-}
-
 .category-page__name-cell {
     flex-direction: row;
     align-items: center;

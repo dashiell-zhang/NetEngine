@@ -3,36 +3,8 @@
 @attribute [ReuseTabsPageTitle("队列任务配置")]
 
 <div class="queue-task-page admin-page">
-    <div class="queue-task-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="queue-task-page__eyebrow admin-page__eyebrow">Operations</div>
-            <h2 class="queue-task-page__title admin-page__title">队列任务配置台</h2>
-            <div class="queue-task-page__subtitle admin-page__subtitle">集中维护 QueueTask 分类任务的启停状态、并发额度与备注说明，让队列消费能力调整和日常运维管理都在一个视图内完成</div>
-
-            <div class="queue-task-page__hero-tools admin-page__hero-tools">
-                <Button Class="queue-task-page__hero-button queue-task-page__hero-button--light admin-page-button admin-page-button--default" Icon="reload" OnClick="GetTaskSettingListAsync">刷新列表</Button>
-            </div>
-        </div>
-
-        <div class="queue-task-page__stats admin-page__stats">
-            <div class="queue-task-page__stat-card admin-page__stat-card">
-                <span class="queue-task-page__stat-label admin-page__stat-label">任务总量</span>
-                <strong class="queue-task-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="queue-task-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条配置</span>
-            </div>
-
-            <div class="queue-task-page__stat-card admin-page__stat-card">
-                <span class="queue-task-page__stat-label admin-page__stat-label">当前页启用</span>
-                <strong class="queue-task-page__stat-value admin-page__stat-value">@(pageList.List?.Count(t => t.IsEnable) ?? 0)</strong>
-                <span class="queue-task-page__stat-foot admin-page__stat-foot">便于快速观察当前页投产中的任务数量</span>
-            </div>
-
-            <div class="queue-task-page__stat-card admin-page__stat-card">
-                <span class="queue-task-page__stat-label admin-page__stat-label">分页状态</span>
-                <strong class="queue-task-page__stat-value queue-task-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">第 @(page) 页 / 每页 @pageSize 条</strong>
-                <span class="queue-task-page__stat-foot admin-page__stat-foot">当前分类固定为 QueueTask</span>
-            </div>
-        </div>
+    <div class="admin-page__actions">
+        <Button Class="queue-task-page__hero-button queue-task-page__hero-button--light admin-page-button admin-page-button--default" Icon="reload" OnClick="GetTaskSettingListAsync">刷新列表</Button>
     </div>
 
     <Card Class="queue-task-page__card queue-task-page__card--compact admin-page__card admin-page__card--compact">

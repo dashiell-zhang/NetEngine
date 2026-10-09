@@ -4,40 +4,12 @@
 @attribute [ReuseTabsPageTitle("文章管理")]
 
 <div class="article-page admin-page">
-    <div class="article-page__hero admin-page__hero admin-page__hero--with-actions">
-        <div>
-            <div class="article-page__eyebrow admin-page__eyebrow">Information Management</div>
-            <h2 class="article-page__title admin-page__title">文章管理工作台</h2>
-            <div class="article-page__subtitle admin-page__subtitle">统一管理文章标题、栏目归属、推荐与显示状态，让内容发布、编辑和维护都在一个视图内快速完成</div>
-
-            @if (functionList.Contains("article-add"))
-            {
-                <div class="article-page__hero-tools admin-page__hero-tools">
-                    <Button Class="article-page__action-button article-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" OnClick="() => EditArticleAsync()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">添加文章</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
-                </div>
-            }
+    @if (functionList.Contains("article-add"))
+    {
+        <div class="admin-page__actions">
+            <Button Class="article-page__action-button article-page__action-button--primary admin-page-button admin-page-button--primary admin-page-button--with-plus" Type="@ButtonType.Primary" OnClick="() => EditArticleAsync()"><span class="admin-page-button__content"><span class="admin-page-button__icon" aria-hidden="true">+</span><span class="admin-page-button__text">添加文章</span><span class="admin-page-button__spacer" aria-hidden="true"></span></span></Button>
         </div>
-
-        <div class="article-page__stats admin-page__stats">
-            <div class="article-page__stat-card admin-page__stat-card">
-                <span class="article-page__stat-label admin-page__stat-label">文章总量</span>
-                <strong class="article-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="article-page__stat-foot admin-page__stat-foot">当前页加载 @(pageList.List?.Count ?? 0) 篇文章</span>
-            </div>
-
-            <div class="article-page__stat-card admin-page__stat-card">
-                <span class="article-page__stat-label admin-page__stat-label">当前页推荐</span>
-                <strong class="article-page__stat-value admin-page__stat-value">@RecommendArticleCount()</strong>
-                <span class="article-page__stat-foot admin-page__stat-foot">推荐内容可在首页或重点区位优先展示</span>
-            </div>
-
-            <div class="article-page__stat-card admin-page__stat-card">
-                <span class="article-page__stat-label admin-page__stat-label">当前页显示中</span>
-                <strong class="article-page__stat-value article-page__stat-value--small admin-page__stat-value">@DisplayArticleCount()</strong>
-                <span class="article-page__stat-foot admin-page__stat-foot">已显示文章会在前台内容列表中对外可见</span>
-            </div>
-        </div>
-    </div>
+    }
 
     <Card Class="article-page__card article-page__card--compact admin-page__card admin-page__card--compact">
         <div class="article-page__list-shell admin-page-list-shell">
@@ -128,8 +100,6 @@
         <div class="article-editor__workspace admin-content-editor__workspace">
             <div class="article-editor__main-column admin-content-editor__main">
                 <div class="article-editor__panel admin-content-editor__main-panel">
-                    <div class="article-editor__panel-title">基础资料</div>
-
                     <div class="article-editor__info-grid admin-form__field-grid">
                         <FormItem Label="所属栏目" Class="article-editor__field-item">
                             <TreeSelect TItem="TreeSelectDto" TItemValue="string" DataSource="selectCategoryList" @bind-Value="@context.CategoryId" Placeholder="请选择所属栏目" TreeDefaultExpandAll ChildrenExpression="node => node.DataItem.Children" DisabledExpression="node => node.DataItem.IsDisabled" TitleExpression="node => node.DataItem.Title" KeyExpression="node => node.DataItem.Key" IsLeafExpression="node => node.DataItem.Children == null"></TreeSelect>
@@ -148,8 +118,6 @@
 
             <div class="article-editor__side-column admin-content-editor__side">
                 <div class="article-editor__settings-card article-editor__panel">
-                    <div class="article-editor__panel-title">发布设置</div>
-
                     <div class="article-editor__toggle-stack">
                         <div class="article-editor__toggle-card">
                             <div class="article-editor__toggle-copy">
@@ -178,8 +146,6 @@
                 </div>
 
                 <div class="article-editor__panel article-editor__cover-panel">
-                    <div class="article-editor__panel-title">摘要与封面</div>
-
                     <FormItem Label="摘要" Class="article-editor__field-item article-editor__summary-item">
                         <div class="article-editor__summary-field">
                             <TextArea Class="article-editor__summary-input" BindOnInput="true" MaxLength=255 Placeholder="不填写则自动截取内容前255字符" @bind-Value="@context.Digest" MinRows="3" MaxRows="4" />
@@ -340,23 +306,6 @@
     }
     Func<PaginationTotalContext, string> showTotal = pageList => $"共 {pageList.Total} 条";
 
-
-    /// <summary>
-    /// 获取当前页推荐文章数量
-    /// </summary>
-    int RecommendArticleCount()
-    {
-        return pageList.List?.Count(item => item.IsRecommend) ?? 0;
-    }
-
-
-    /// <summary>
-    /// 获取当前页显示中的文章数量
-    /// </summary>
-    int DisplayArticleCount()
-    {
-        return pageList.List?.Count(item => item.IsDisplay) ?? 0;
-    }
 
     /// <summary>
     /// 获取栏目显示文本

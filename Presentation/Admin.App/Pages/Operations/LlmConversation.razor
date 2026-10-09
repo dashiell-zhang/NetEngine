@@ -5,38 +5,10 @@
 @attribute [ReuseTabsPageTitle("LLM会话日志")]
 
 <div class="llm-conversation-page admin-page admin-log-page">
-    <div class="llm-conversation-page__hero admin-page__hero admin-page__hero--without-actions">
-        <div>
-            <div class="llm-conversation-page__eyebrow admin-page__eyebrow">Operations</div>
-            <h2 class="llm-conversation-page__title admin-page__title">LLM 会话日志</h2>
-            <div class="llm-conversation-page__subtitle admin-page__subtitle">按应用、时间范围和上下文关键字检索会话记录，快速回看 System、User 与 Assistant 内容，定位提示词与响应问题</div>
-        </div>
-
-        <div class="llm-conversation-page__stats admin-page__stats">
-            <div class="llm-conversation-page__stat-card admin-page__stat-card">
-                <span class="llm-conversation-page__stat-label admin-page__stat-label">会话总量</span>
-                <strong class="llm-conversation-page__stat-value admin-page__stat-value">@pageList.Total</strong>
-                <span class="llm-conversation-page__stat-foot admin-page__stat-foot">当前页展示 @(pageList.List?.Count ?? 0) 条记录</span>
-            </div>
-
-            <div class="llm-conversation-page__stat-card admin-page__stat-card">
-                <span class="llm-conversation-page__stat-label admin-page__stat-label">时间筛选</span>
-                <strong class="llm-conversation-page__stat-value llm-conversation-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@DateRangeText()</strong>
-                <span class="llm-conversation-page__stat-foot admin-page__stat-foot">支持按起止时间回溯调用过程</span>
-            </div>
-
-            <div class="llm-conversation-page__stat-card admin-page__stat-card">
-                <span class="llm-conversation-page__stat-label admin-page__stat-label">检索状态</span>
-                <strong class="llm-conversation-page__stat-value llm-conversation-page__stat-value--small admin-page__stat-value admin-page__stat-value--small">@(string.IsNullOrWhiteSpace(request.Keyword) ? "全部会话" : "关键词检索")</strong>
-                <span class="llm-conversation-page__stat-foot admin-page__stat-foot">第 @request.Page 页 / 每页 @request.PageSize 条</span>
-            </div>
-        </div>
-    </div>
-
-    <Card Class="llm-conversation-page__card llm-conversation-page__card--compact admin-page__card admin-page__card--compact admin-page__card--filter">
+    <div class="admin-page__toolbar">
         <Form Class="llm-conversation-page__filter-form admin-form admin-filter-form" Model="@request" Layout="@FormLayout.Inline" OnFinish="HandleSearchAsync">
             <FormItem Class="llm-conversation-page__filter-item llm-conversation-page__filter-item--keyword admin-filter-form__item--keyword">
-                <Input @bind-Value="@context.Keyword" Placeholder="应用 Code / 名称 / System / User / Assistant 关键字" AllowClear />
+                <Input @bind-Value="@context.Keyword" Placeholder="应用 Code / 名称 / 会话内容" AllowClear />
             </FormItem>
 
             <FormItem Class="llm-conversation-page__filter-item llm-conversation-page__filter-item--time admin-filter-form__item--time">
@@ -54,7 +26,7 @@
                 </div>
             </FormItem>
         </Form>
-    </Card>
+    </div>
 
     <Card Class="llm-conversation-page__card llm-conversation-page__card--compact admin-page__card admin-page__card--compact">
         <div class="llm-conversation-page__list-shell admin-page-list-shell">
@@ -251,29 +223,6 @@
     string? detailUser;
     string? detailAssistant;
 
-
-    string DateRangeText()
-    {
-        if (request.StartTime == null && request.EndTime == null)
-        {
-            return "全部时间";
-        }
-
-        if (request.StartTime != null && request.EndTime != null)
-        {
-            return "起止时间";
-        }
-
-        if (request.StartTime != null)
-        {
-            return "仅开始时间";
-        }
-
-        return "仅结束时间";
-    }
-
-
-    static string AppText(LlmConversationDto row) => $"{row.LlmAppCode}（{row.LlmAppName}）";
 
     void ViewDetail(LlmConversationDto row)
     {

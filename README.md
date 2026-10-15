@@ -88,13 +88,13 @@ dotnet build NetEngine.slnx
 
 ### 创建数据库结构
 
-EF Core 命令行工具应与项目版本匹配。当前 `Repository.Tool` 使用 EF Core `10.0.11`，首次安装：
+项目使用 EF Core 10，命令行工具保持相同主版本即可。使用 `10.*` 安装该主版本下的最新稳定版，首次安装：
 
 ```powershell
-dotnet tool install --global dotnet-ef --version 10.0.11
+dotnet tool install --global dotnet-ef --version "10.*"
 ```
 
-已安装时先用 `dotnet ef --version` 检查，确需调整版本时执行 `dotnet tool update --global dotnet-ef --version 10.0.11`。后续升级以 [Repository.Tool.csproj](Repository.Tool/Repository.Tool.csproj) 中的版本为准，工具用法见 [EF Core CLI 文档](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
+已安装时先用 `dotnet ef --version` 检查，需要更新时执行 `dotnet tool update --global dotnet-ef --version "10.*"`。以后升级 EF Core 主版本时，同步调整这里的主版本，项目版本以 [Repository.Tool.csproj](Repository.Tool/Repository.Tool.csproj) 为准。工具用法见 [EF Core CLI 文档](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)，版本通配符见 [工具安装文档](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install#options)
 
 当前仓库未包含迁移文件。仅在没有现有迁移且目标为新数据库时，先生成初始迁移：
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
@@ -19,7 +19,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="10.0.12" />
+		<PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="10.0.13" />
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
 		<PackageReference Include="AlipaySDKNet.Standard" Version="4.9.1424" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

@@ -1,10 +1,9 @@
 using Common;
-using IdentifierGenerator;
 using Logger.DataBase.Models;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Logger.DataBase;
@@ -12,8 +11,14 @@ namespace Logger.DataBase;
 /// <summary>
 /// 数据库日志记录器
 /// </summary>
-public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IServiceProvider serviceProvider, DataBaseLogWriter logWriter, IExternalScopeProvider? scopeProvider) : ILogger
+public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, DataBaseLogWriter logWriter, IExternalScopeProvider? scopeProvider) : ILogger
 {
+
+    /// <summary>
+    /// 缓存记录器创建时的机器名，避免每条日志重复获取
+    /// </summary>
+    private readonly string machineName = Environment.MachineName;
+
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
@@ -27,13 +32,16 @@ public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IS
     }
 
 
+    /// <summary>
+    /// 捕获调用现场的日志内容并尝试立即入队
+    /// </summary>
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
 
         if (IsEnabled(logLevel))
         {
 
-            if (state != null && state.ToString() != null)
+            if (state != null)
             {
                 var logContent = state.ToString();
 
@@ -91,64 +99,85 @@ public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, IS
                         logContent = JsonHelper.ObjectToJson(logMsg);
                     }
 
-                    var idService = serviceProvider.GetRequiredService<IdService>();
-
                     Log log = new()
                     {
-                        Id = idService.GetId(),
                         CreateTime = DateTimeOffset.UtcNow,
                         Project = loggerSetting.Project,
-                        MachineName = Environment.MachineName,
+                        MachineName = machineName,
                         Category = categoryName,
-                        Level = logLevel.ToString(),
+                        Level = GetLevelName(logLevel),
                         Content = logContent
                     };
 
 
-                    string logStr = JsonHelper.ObjectToJson(log);
-                    logWriter.Enqueue(logStr);
+                    logWriter.Enqueue(log, logLevel);
                 }
             }
 
         }
+
     }
 
 
     /// <summary>
-    /// 收集当前所有 Scope 并序列化为 JSON
+    /// 使用固定文本表示标准日志级别，未定义值保留枚举字符串转换
+    /// </summary>
+    private static string GetLevelName(LogLevel logLevel)
+    {
+
+        return logLevel switch
+        {
+            LogLevel.Trace => nameof(LogLevel.Trace),
+            LogLevel.Debug => nameof(LogLevel.Debug),
+            LogLevel.Information => nameof(LogLevel.Information),
+            LogLevel.Warning => nameof(LogLevel.Warning),
+            LogLevel.Error => nameof(LogLevel.Error),
+            LogLevel.Critical => nameof(LogLevel.Critical),
+            LogLevel.None => nameof(LogLevel.None),
+            _ => logLevel.ToString()
+        };
+
+    }
+
+
+    /// <summary>
+    /// 收集当前所有 Scope 并序列化为 JSON，仅在存在有效 Scope 时创建文本缓冲
     /// </summary>
     private string? CaptureScopes()
     {
+
         if (scopeProvider is null)
         {
             return null;
         }
 
-        StringBuilder builder = new();
+        StrongBox<StringBuilder?> buffer = new();
 
-        scopeProvider.ForEachScope((scope, state) =>
+        scopeProvider.ForEachScope(static (scope, state) =>
         {
             if (scope is null)
             {
                 return;
             }
 
-            if (state.Length > 0)
+            var builder = state.Value ??= new StringBuilder();
+            if (builder.Length > 0)
             {
-                state.Append(' ');
+                builder.Append(' ');
             }
 
             try
             {
-                state.Append(JsonHelper.ObjectToJson(scope));
+                builder.Append(JsonHelper.ObjectToJson(scope));
             }
             catch
             {
-                state.Append(scope);
+                builder.Append(scope);
             }
-        }, builder);
+        }, buffer);
 
-        return builder.Length == 0 ? null : builder.ToString();
+        return buffer.Value is { Length: > 0 } text ? text.ToString() : null;
+
     }
 
 }

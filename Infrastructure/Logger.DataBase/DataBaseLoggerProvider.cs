@@ -8,7 +8,7 @@ namespace Logger.DataBase;
 /// <summary>
 /// 数据库日志 Provider
 /// </summary>
-public class DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, IServiceProvider serviceProvider, DataBaseLogWriter logWriter) : ILoggerProvider, ISupportExternalScope
+public class DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, DataBaseLogWriter logWriter) : ILoggerProvider, ISupportExternalScope
 {
 
     private readonly LoggerSetting loggerConfiguration = config.CurrentValue;
@@ -18,9 +18,14 @@ public class DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, IServ
     private IExternalScopeProvider? scopeProvider;
 
 
+    /// <summary>
+    /// 获取指定类别的日志记录器
+    /// </summary>
     public ILogger CreateLogger(string categoryName)
     {
-        return loggers.GetOrAdd(categoryName, key => new DataBaseLogger(key, loggerConfiguration, serviceProvider, logWriter, scopeProvider));
+
+        return loggers.GetOrAdd(categoryName, key => new DataBaseLogger(key, loggerConfiguration, logWriter, scopeProvider));
+
     }
 
 

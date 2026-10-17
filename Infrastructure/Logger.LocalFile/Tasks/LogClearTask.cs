@@ -4,52 +4,46 @@ using Microsoft.Extensions.Options;
 
 namespace Logger.LocalFile.Tasks;
 
-internal class LogClearTask(IOptionsMonitor<LoggerSetting> config) : BackgroundService
+/// <summary>
+/// 定期清理本组件过期小时文件，通过写入器协调文件访问
+/// </summary>
+internal class LogClearTask(IOptionsMonitor<LoggerSetting> config, LocalFileLogWriter logWriter) : BackgroundService
 {
 
     private readonly int saveDays = config.CurrentValue.SaveDays;
 
 
+    /// <summary>
+    /// 按保留天数执行清理并响应停机取消，失败时保留文件并报告
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (saveDays != -1)
+
+        if (saveDays == -1)
+        {
+            return;
+        }
+
+        try
         {
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
-
-                    if (Directory.Exists(basePath))
-                    {
-                        List<string> logPaths = [.. Directory.EnumerateFiles(basePath, "*.log")];
-
-                        var deleteTime = DateTime.UtcNow.AddDays(-1 * saveDays);
-
-                        if (logPaths.Count != 0)
-                        {
-                            foreach (var logPath in logPaths)
-                            {
-                                FileInfo fileInfo = new(logPath);
-
-                                if (fileInfo.CreationTimeUtc < deleteTime)
-                                {
-                                    File.Delete(logPath);
-                                }
-
-                            }
-                        }
-                    }
-
+                    await logWriter.ClearExpiredFilesAsync(saveDays, stoppingToken);
                 }
-                catch
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
                 {
+                    LogDiagnostics.ReportFailure("cleanup", exception);
                 }
 
-                await Task.Delay(1000 * 60 * 60 * 24, stoppingToken);
+                await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
             }
         }
-
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // 停机取消不作为清理失败
+        }
 
     }
 

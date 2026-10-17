@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Repository.Database;
 using System.Buffers;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
@@ -19,6 +20,7 @@ namespace Logger.DataBase;
 public sealed class DataBaseLogWriter : BackgroundService
 {
 
+    private static readonly byte[] newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
     private readonly IServiceProvider serviceProvider;
     private readonly Channel<BufferedLog> channel;
     private readonly Channel<BufferedLog> importantChannel;
@@ -27,6 +29,8 @@ public sealed class DataBaseLogWriter : BackgroundService
     private readonly int batchSize;
     private readonly TimeSpan flushInterval;
     private readonly CancellationTokenSource abort = new();
+    // 仅由后台消费者使用，跨批次复用常规大小的 UTF-8 缓冲
+    private ArrayBufferWriter<byte> utf8Buffer = new(4096);
     private long bufferedBytes;
     private long importantBufferedBytes;
     private int accepting = 1;
@@ -134,6 +138,7 @@ public sealed class DataBaseLogWriter : BackgroundService
         var token = cancellation.Token;
         var basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
         var buffer = new List<BufferedLog>(batchSize);
+        using var writer = new Utf8JsonWriter(utf8Buffer, new JsonWriterOptions { Encoder = JsonHelper.SerializeOpts.Encoder, Indented = JsonHelper.SerializeOpts.WriteIndented });
         using var timer = new PeriodicTimer(flushInterval);
         var tickTask = timer.WaitForNextTickAsync(token).AsTask();
         Task<bool>? readTask = null;
@@ -183,7 +188,7 @@ public sealed class DataBaseLogWriter : BackgroundService
 
                 try
                 {
-                    await FlushAsync(buffer, basePath, token);
+                    await FlushAsync(buffer, basePath, writer, token);
                     ReleaseBatch(buffer);
                     buffer.Clear();
                     retrySeconds = 1;
@@ -226,21 +231,19 @@ public sealed class DataBaseLogWriter : BackgroundService
 
 
     /// <summary>
-    /// 后台生成稳定 ID 并复用 UTF-8 缓冲逐条写入临时文件，完整写出后交给入库任务
+    /// 后台生成稳定 ID 并跨批次复用 UTF-8 缓冲，完整写出临时文件后交给入库任务
     /// </summary>
-    private async Task FlushAsync(List<BufferedLog> buffer, string basePath, CancellationToken cancellationToken)
+    private async Task FlushAsync(List<BufferedLog> buffer, string basePath, Utf8JsonWriter writer, CancellationToken cancellationToken)
     {
 
         var idService = serviceProvider.GetRequiredService<IdService>();
         Directory.CreateDirectory(basePath);
-        var finalPath = Path.Combine(basePath, $"batch-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}.log");
+        var finalPath = Path.Combine(basePath, $"batch-{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture)}-{Guid.NewGuid():N}.log");
         var tempPath = finalPath + ".tmp";
 
-        await using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 65536, FileOptions.Asynchronous))
+        try
         {
-            var utf8Buffer = new ArrayBufferWriter<byte>(4096);
-            var newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
-            using var writer = new Utf8JsonWriter(utf8Buffer, new JsonWriterOptions { Encoder = JsonHelper.SerializeOpts.Encoder, Indented = JsonHelper.SerializeOpts.WriteIndented });
+            await using var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, GetFileBufferSize(buffer), FileOptions.Asynchronous);
             foreach (var entry in buffer)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -261,8 +264,81 @@ public sealed class DataBaseLogWriter : BackgroundService
 
             await stream.FlushAsync(cancellationToken);
         }
+        finally
+        {
+            // 成功、失败或取消后都丢弃超大缓冲，避免偶发大日志长期占用内存
+            if (utf8Buffer.Capacity > 65536)
+            {
+                utf8Buffer = new ArrayBufferWriter<byte>(4096);
+            }
+            else
+            {
+                utf8Buffer.Clear();
+            }
+
+            writer.Reset(utf8Buffer);
+        }
 
         File.Move(tempPath, finalPath);
+
+    }
+
+
+    /// <summary>
+    /// 按批次的保守 JSON 数据量选择文件缓冲，大批次直接使用常规缓冲
+    /// </summary>
+    private static int GetFileBufferSize(List<BufferedLog> buffer)
+    {
+
+        long lengthEstimateBytes = 0;
+        foreach (var entry in buffer)
+        {
+            var log = entry.Log;
+            lengthEstimateBytes += 384L + log.Project.Length + log.MachineName.Length + log.Level.Length + log.Category.Length + log.Content.Length;
+            if (lengthEstimateBytes > 16384)
+            {
+                return 65536;
+            }
+        }
+
+        var remainingBytes = 16384;
+        foreach (var entry in buffer)
+        {
+            var log = entry.Log;
+            // 预留固定字段、继承字段、日期、数字及换行，字符串按保守转义开销估算
+            remainingBytes = SubtractJsonStringBytes(log.Project, remainingBytes - 384);
+            remainingBytes = SubtractJsonStringBytes(log.MachineName, remainingBytes);
+            remainingBytes = SubtractJsonStringBytes(log.Level, remainingBytes);
+            remainingBytes = SubtractJsonStringBytes(log.Category, remainingBytes);
+            remainingBytes = SubtractJsonStringBytes(log.Content, remainingBytes);
+            if (remainingBytes < 0)
+            {
+                return 65536;
+            }
+        }
+
+        return 16384;
+
+    }
+
+
+    /// <summary>
+    /// 扣除字符串的 UTF-8 和 JSON 转义开销，超过小缓冲预算后停止扫描
+    /// </summary>
+    private static int SubtractJsonStringBytes(string value, int remainingBytes)
+    {
+
+        foreach (var character in value)
+        {
+            if (remainingBytes < 0)
+            {
+                break;
+            }
+
+            remainingBytes -= character is >= ' ' and <= '~' and not '"' and not '\\' ? 1 : 6;
+        }
+
+        return remainingBytes;
 
     }
 

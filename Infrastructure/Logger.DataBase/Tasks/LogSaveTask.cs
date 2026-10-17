@@ -49,10 +49,15 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
 
                     if (Directory.Exists(basePath))
                     {
-                        // 惰性遍历文件，避免大量积压时一次性将所有路径载入内存
+                        // 惰性遍历并严格识别本组件批次，避免处理目录中的其他文件
                         foreach (var logPath in Directory.EnumerateFiles(basePath, "batch-*.log"))
                         {
                             stoppingToken.ThrowIfCancellationRequested();
+                            if (!LogFileName.IsBatchFile(logPath))
+                            {
+                                continue;
+                            }
+
                             await SaveFileAsync(logPath, stoppingToken);
                             processed = true;
                         }
@@ -287,7 +292,7 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
 
 
     /// <summary>
-    /// 恢复中断后残留且不再被写入的临时文件，已有目标文件时保留两份待去重数据
+    /// 仅恢复本组件中断后残留且不再写入的临时文件，目标重名时保留两份待去重数据
     /// </summary>
     private static void RecoverTmpFiles(string basePath, CancellationToken cancellationToken)
     {
@@ -295,6 +300,11 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
         foreach (var tmpPath in Directory.EnumerateFiles(basePath, "batch-*.log.tmp"))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (!LogFileName.IsTemporaryFile(tmpPath))
+            {
+                continue;
+            }
+
             try
             {
                 if (DateTime.UtcNow - File.GetLastWriteTimeUtc(tmpPath) < TmpRecoverAge)

@@ -19,6 +19,7 @@ public static class ILoggingBuilderExtensions
     {
 
         builder.Services.AddOptions<LoggerSetting>().Configure(action)
+            .Validate(options => options.SaveDays == -1 || options.SaveDays > 0, "日志保留天数必须为正数或 -1")
             .Validate(options => options.QueueCapacity > 0 && options.ImportantQueueCapacity > 0, "日志队列容量必须大于零")
             .Validate(options => options.MaxBufferedBytes > 0 && options.ImportantMaxBufferedBytes > 0, "日志缓冲字节上限必须大于零")
             .Validate(options => options.BatchSize > 0, "日志批量大小必须大于零")

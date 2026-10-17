@@ -13,6 +13,7 @@
 | [源码生成器](SourceGenerator.md) | 新增服务、后台服务、代理行为或 EF Core 映射时 | 自动 DI、AutoProxy、软删除过滤器、JSON 列映射和分区声明 |
 | [数据库读写分离](DatabaseReadWriteSeparation.md) | 迁移查询、配置读库或规划多个读副本时 | 读写上下文、连接配置、一致性边界和健康检查 |
 | [数据库日志](DatabaseLogger.md) | 调整日志吞吐、内存预算或排查日志积压时 | 非阻塞入队、重要日志预留缓冲、文件恢复、入库与监控指标 |
+| [本地文件日志](LocalFileLogger.md) | 调整文件日志吞吐或排查写入与清理故障时 | 非阻塞入队、追加失败回退、尾部恢复、清理范围与监控指标 |
 | [PostgreSQL 分区表](PostgreSqlPartitionTable.md) | 为新实体声明雪花 ID 分区或维护后续子分区时 | 实体注解、UTC+8 周期单位、Migration SQL 和 Repository 自动维护 |
 | [TaskService](TaskService.md) | 新增定时任务或队列任务时 | 任务声明、入队、启用、调度、回调、子任务和重试 |
 | [WebAPI 过滤器](WebAPIFilters.md) | 为 Controller 或 Action 增加通用 HTTP 行为时 | 异常、缓存、ETag、并发限制、RSA 解密和签名校验 |

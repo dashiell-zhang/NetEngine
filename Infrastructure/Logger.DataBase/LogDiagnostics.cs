@@ -11,9 +11,9 @@ internal static class LogDiagnostics
 
     private static readonly Meter meter = new("Logger.DataBase");
     private static readonly long[] dropped = new long[7];
-    private static readonly long[] failures = new long[5];
-    private static readonly long[] lastReports = new long[5];
-    private static readonly string[] operations = ["spool", "database", "recovery", "shutdown", "quarantine"];
+    private static readonly long[] failures = new long[6];
+    private static readonly long[] lastReports = new long[6];
+    private static readonly string[] operations = ["spool", "database", "recovery", "shutdown", "quarantine", "cleanup"];
     private static long bufferedCount;
     private static long bufferedBytes;
     private static long spoolFiles;
@@ -94,7 +94,7 @@ internal static class LogDiagnostics
 
 
     /// <summary>
-    /// 在后台刷新磁盘积压和需人工检查的异常文件数量
+    /// 按统一文件名规则刷新本组件的磁盘积压和异常文件数量
     /// </summary>
     internal static void RefreshSpool(string basePath)
     {
@@ -104,11 +104,11 @@ internal static class LogDiagnostics
         {
             foreach (var path in Directory.EnumerateFiles(basePath, "batch-*"))
             {
-                if (path.EndsWith(".rejected", StringComparison.Ordinal))
+                if (LogFileName.IsRejectedFile(path))
                 {
                     rejected++;
                 }
-                else if (path.EndsWith(".log", StringComparison.Ordinal) || path.EndsWith(".log.tmp", StringComparison.Ordinal))
+                else if (LogFileName.IsBatchFile(path) || LogFileName.IsTemporaryFile(path))
                 {
                     try
                     {

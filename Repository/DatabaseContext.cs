@@ -259,19 +259,27 @@ public class DatabaseContext : DbContext
     }
 
 
-    public override int SaveChanges()
+    /// <summary>
+    /// 更新业务时间后交给 EF 完成同步保存及通知
+    /// </summary>
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
-        PreprocessingChangeTracker();
 
-        return base.SaveChanges();
+        PreprocessingChangeTracker();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+
     }
 
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// 更新业务时间后交给 EF 完成异步保存及通知
+    /// </summary>
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
-        PreprocessingChangeTracker();
 
-        return base.SaveChangesAsync(cancellationToken);
+        PreprocessingChangeTracker();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
     }
 
 }

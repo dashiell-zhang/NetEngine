@@ -8,7 +8,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using NetEngine.Generated;
 using Npgsql;
 using Repository;
-using Repository.Interceptors;
+using Repository.Partitioning;
 using SMS.AliCloud;
 using StackExchange.Redis;
 using System.Reflection;
@@ -49,6 +49,8 @@ class Program
             {
 
                 var connectionString = hostContext.Configuration.GetConnectionString("dbConnection");
+                // 启动时读取一次写库分区目录，池化上下文和工厂共用只读快照
+                var partitionSnapshot = PartitionTableSnapshot.Load(connectionString!);
                 NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
 
                 NpgsqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
@@ -57,7 +59,7 @@ class Program
                 services.AddDbContextPool<DatabaseContext>((serviceProvider, options) =>
                 {
                     options.UseNpgsql(dataSourceBuilder.Build());
-                    options.AddInterceptors(new PostgresPatchInterceptor());
+                    options.UsePostgreSqlPartitioning(partitionSnapshot);
                 }, maxPoolSize);
 
                 services.AddPooledDbContextFactory<DatabaseContext>(options => { }, maxPoolSize);
@@ -79,6 +81,7 @@ class Program
                 services.AddDbContextPool<ReadDatabaseContext>((serviceProvider, options) =>
                 {
                     options.UseNpgsql(readDataSourceBuilder.Build());
+                    options.UsePostgreSqlPartitioning(partitionSnapshot);
                     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
                 }, readMaxPoolSize);
 

@@ -8,13 +8,19 @@ using Microsoft.Extensions.Caching.Hybrid;
 using NetEngine.Generated;
 using Npgsql;
 using Repository;
-using Repository.Interceptors;
+using Repository.Partitioning;
 using StackExchange.Redis;
 using WebAPI.Core.Extensions;
 
 namespace Admin.WebAPI;
+/// <summary>
+/// 配置管理端 API 宿主及数据库启动快照
+/// </summary>
 public class Program
 {
+    /// <summary>
+    /// 初始化基础设施并启动管理端 API
+    /// </summary>
     public static void Main(string[] args)
     {
         ThreadPool.GetMinThreads(out int minWorkerThreads, out int minCompletionPortThreads);
@@ -29,6 +35,8 @@ public class Program
         builder.Host.UseWindowsService();
 
         var connectionString = builder.Configuration.GetConnectionString("dbConnection");
+        // 启动时读取一次写库分区目录，池化上下文和工厂共用只读快照
+        var partitionSnapshot = PartitionTableSnapshot.Load(connectionString!);
         NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
 
         NpgsqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
@@ -38,7 +46,7 @@ public class Program
         builder.Services.AddDbContextPool<DatabaseContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(dataSourceBuilder.Build());
-            options.AddInterceptors(new PostgresPatchInterceptor());
+            options.UsePostgreSqlPartitioning(partitionSnapshot);
         }, maxPoolSize);
 
         builder.Services.AddPooledDbContextFactory<DatabaseContext>(options => { }, maxPoolSize);
@@ -60,6 +68,7 @@ public class Program
         builder.Services.AddDbContextPool<ReadDatabaseContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(readDataSourceBuilder.Build());
+            options.UsePostgreSqlPartitioning(partitionSnapshot);
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         }, readMaxPoolSize);
 

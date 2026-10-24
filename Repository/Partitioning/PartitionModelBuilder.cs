@@ -83,4 +83,29 @@ public static class PartitionModelBuilder
 
     }
 
+
+    /// <summary>
+    /// 在用户完成模型配置后校验继承策略，防止多表映射误用同表 xmin 回读
+    /// </summary>
+    internal static void ValidateInheritance(IReadOnlyEntityType entityType)
+    {
+
+        if (entityType.BaseType != null)
+        {
+            throw new InvalidOperationException($"分区声明必须配置在 EF 继承层级的根实体上，不能配置在派生实体 {entityType.Name} 上");
+        }
+
+        var strategy = entityType.GetMappingStrategy();
+        if (strategy != null && strategy != RelationalAnnotationNames.TphMappingStrategy)
+        {
+            throw new InvalidOperationException($"分区实体 {entityType.Name} 不支持 {strategy} 继承映射，仅支持基类和派生类共用一张表的 TPH 映射");
+        }
+
+        if (entityType.GetDerivedTypes().Any(x => x.GetTableName() != entityType.GetTableName() || x.GetSchema() != entityType.GetSchema()))
+        {
+            throw new InvalidOperationException($"分区实体 {entityType.Name} 的继承层级必须映射到同一张表，不支持派生类映射到其他表");
+        }
+
+    }
+
 }

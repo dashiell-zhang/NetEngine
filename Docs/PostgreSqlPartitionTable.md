@@ -11,23 +11,46 @@
 3. Migration 创建 SQL 生成时刻所在范围的一个初始子分区
 4. Repository 后台服务保证当前范围和三个后续范围可写
 
-当前支持：
+声明、迁移和自动维护当前支持：
 
 - PostgreSQL `RANGE` 分区
 - 单列雪花 `long Id` 分区键
+- 独立实体及同表 TPH 继承映射，分区声明放在 EF 根实体上
 - 小时、天、自然月和自然年周期
 - 固定 UTC+8 分区边界
 - 新表随 EF Migration 直接创建为分区表
 - `Interval` 和 `Unit` 向后续新分区生效
 - 多宿主和多实例通过可续期分布式锁协调维护
 
-当前不支持：
+声明、迁移和自动维护当前不支持：
 
 - 自动把已有普通表转换为分区表
 - `LIST`、`HASH`、表达式、多字段或多级分区
 - 自动拆分、合并、删除或归档已有子分区
 - 自动创建早于最老已有分区的历史范围
 - `DEFAULT` 分区
+- 分区实体的 TPT/TPC 多表继承，或仅在派生实体上声明分区
+
+## DBA 管理的分区表与启动识别
+
+xmin 保存适配与分区维护独立决定：三个服务端宿主在注册上下文池之前，使用写库连接执行一次只读目录查询，生成 `PartitionTableSnapshot`。实际 `pg_class.relkind = 'p'` 的表自动参与 xmin 适配，不要求实体具有 `[PartitionTable]`；只有显式分区声明才生成分区专用迁移元数据并进入自动维护。未声明实体仍遵循 EF 常规模型和迁移规则，自动识别不会将其排除出 Migration
+
+| 实际表结构 | 实体声明 | 保存行为 | 分区维护 |
+|---|---|---|---|
+| 普通表 | 无 | Npgsql 原生返回 xmin | 不维护 |
+| 分区表 | 无 | 插入后在同一事务批量回读 xmin | DBA 负责 |
+| 分区表 | 有 | 插入后在同一事务批量回读 xmin | 按声明自动维护 |
+
+启动快照按 schema 和表名匹配；未指定 schema 的映射根据写库启动连接的 `search_path` 和对象可见性解析，避免误匹配其他 schema 的同名分区表。快照与 EF 模型分离，不修改共享模型，也不把探测结果写入分区 Annotation
+
+- 每个宿主实例在启动时查询一次写库，池化上下文、池化工厂和读上下文共用该只读快照，读库不单独探测；保存和定时维护不会刷新它。读写连接应对应同一套逻辑表结构，快照不参与查询路由
+- 启动查询失败直接中止启动，不把未知结构当作普通表，也不回退到实体声明
+- DBA 调整父表类型、表名、schema 或连接的 `search_path` 后，需要重启全部受影响的宿主实例；正常增删子分区不改变父表身份，不需要刷新快照
+- 不支持运行期间通过 `SET search_path` 或更换数据库连接改变写入目标；新的写库配置应加载自己的快照，不能跨独立数据库共用
+- DBA 表仍须保留当前模板的实体列映射、xmin 并发映射及预先确定的主键。自动识别不转换表结构、不处理迁移漂移、不扩展所有 EF 高级映射
+- DBA 表缺少目标分区时，保存保留数据库原始错误，后台服务不会为其创建子分区
+
+前面的 `RANGE`、雪花 ID 和周期限制属于框架声明与维护规则；自动识别只判断实际分区父表，不推断 DBA 的分区策略或维护周期
 
 ## 选择分区周期
 
@@ -93,6 +116,8 @@ public DbSet<VisitLog> VisitLog { get; set; }
 ```
 
 不需要在 `OnModelCreating` 中手工调用 `PartitionModelBuilder.Configure`
+
+使用 TPH（基类和派生类共用一张表）时，在 EF 继承根实体上声明 `[PartitionTable]`，并把该根实体作为直接 `DbSet` 加入上下文。派生类型按 EF 正常方式纳入模型，不重复声明分区；即使只新增派生类型，也会按根表执行 xmin 回填和事务保护。继承 `CD` 但未把 `CD` 映射为实体，不属于这里的 EF 实体继承层级
 
 ### 3. 构建检查
 
@@ -200,11 +225,42 @@ EF Core 模型和 Migration 使用 `PartitionTable:Interval` 保存整数数量�
 
 ### RowVersion 并发控制
 
-普通 PostgreSQL 表可以把 `CD.RowVersion` 映射到系统列 `xmin`，但分区父表执行 `INSERT ... RETURNING xmin` 时无法取得实际子分区的系统列
+`CD.RowVersion` 使用 `[Timestamp] uint`，映射到 PostgreSQL 系统列 `xmin`。沿用普通表的查询、新增、更新、删除及同步/异步 `SaveChanges` 即可：分区新增会在同一事务内批量回读真实 xmin，更新和删除保留原生并发检查，无需业务代码手工回填版本
 
-现有写宿主通过 `PostgresPatchInterceptor` 把插入返回值替换为当前事务 ID，它与新行的 `xmin` 一致，因此分区实体仍沿用现有 `RowVersion` 乐观并发机制。`Client.WebAPI`、`Admin.WebAPI` 和 `TaskService` 均已注册该拦截器
+三个服务端宿主已为读写上下文、上下文池和池化工厂配置 `UsePostgreSqlPartitioning(snapshot)`。新增宿主或自行构建上下文选项时，先在启动阶段加载一次快照，再复用到该数据库的上下文配置：
 
-新增其他写宿主时也必须注册 `PostgresPatchInterceptor`，否则通过 EF 插入继承 `CD` 的分区实体会失败
+```csharp
+var snapshot = PartitionTableSnapshot.Load(writeConnectionString);
+
+services.AddDbContextPool<DatabaseContext>(options =>
+{
+    options.UseNpgsql(writeConnectionString);
+    options.UsePostgreSqlPartitioning(snapshot);
+});
+```
+
+`Repository.Tool` 使用无参数的 `UsePostgreSqlPartitioning()` 进行离线建模和迁移 SQL 生成，不查询数据库。无快照可以建模和查询，但通过 `SaveChanges` 写入会被拒绝；需要保存数据的独立工具也必须先加载快照
+
+#### 实体与保存约定
+
+- 分区新增主键必须在保存前确定；当前模板的雪花 Id 满足要求，不支持数据库生成或临时主键
+- 默认保存返回及成功通知中，RowVersion 已回填。`SaveChanges(false)` 只在 EF 中暂存生成值，调用 `AcceptAllChanges` 后才写入 CLR 属性。断开跟踪后更新或删除，仍须像普通表一样提供读取时持有的旧版本
+- 支持 TPH 同表继承及 Table Splitting 同表拆分。需要框架创建和维护分区时，仅在 TPH 根实体或共享主实体上声明分区；其他实体沿用同表关系及并发映射，无需重复声明
+- 分区适配不支持 TPT/TPC 多表继承和 Entity Splitting（`SplitToTable`）。显式分区声明及涉及其共享表的映射在模型构建阶段校验；DBA 自动发现的分区在保存时解析新增行的回读映射并校验相关限制，不保证所有不支持的映射都会在模型构建时被拒绝
+- `ExecuteUpdate`、`ExecuteDelete` 及原始 SQL 不经过此保存流程，不自动同步跟踪实体或添加 xmin 并发条件；需要自行提供版本条件并检查影响行数
+
+#### 事务与失败处理
+
+- 默认配置下，新增写入和 xmin 回读共用事务；已有显式事务或单库环境事务时，通过保存点保护本次保存。成功通知仅表示本次保存完成，不代表外层事务已提交；之后回滚外层事务，需要丢弃或重新加载上下文
+- `AutoTransactionBehavior.Never` 且没有可用外层事务时，新增分区行会在整批写入前被拒绝。请使用默认 `WhenNeeded`，或通过 `BeginTransaction`、`UseTransaction`、有效登记的环境事务提供保护。只有普通表操作或分区更新、删除时沿用原生行为
+- 关闭 `AutoSavepointsEnabled` 后，已有事务中的失败保存可能保留本次写入，需调用方整体回滚
+- 失败后的回滚成功时，保留原数据库或取消异常，取消沿用 EF 取消通知；保存和回滚同时失败时抛出保留两者的 `AggregateException`，应停止使用当前上下文及事务，不能据此假定执行策略会自动重试
+- 异步 `TransactionScope` 使用 `TransactionScopeAsyncFlowOption.Enabled`。连接配置 `Enlist=false` 且未显式登记时不属于该环境事务；允许自动事务时，分区新增会独立提交
+- 使用执行策略重试外层事务时，把整个事务放入 `CreateExecutionStrategy`，每次尝试创建新的事务范围和上下文。`SavedChanges` 回调自身抛错不会撤销已经提交的保存
+- 保存点可能改变同一事务内的 xmin，旧跟踪实体因此可能发生真实并发冲突；xmin 不是每次 UPDATE 都递增的应用版本号
+- 多连接可能涉及两阶段提交，当前不承诺分布式事务的透明可靠性；物理网络中断、提交结果不确定及崩溃恢复不在已验证范围内
+
+升级 EF Core、Npgsql 或 PostgreSQL 后，应重新验证分区识别、xmin 回填、真实并发冲突和失败回滚
 
 ## 分区边界与命名
 
@@ -260,7 +316,7 @@ UTC+8 只影响时间边界的计算和名称。最终 PostgreSQL 范围仍由�
 
 后台服务在宿主启动完成前执行一次，随后每 10 分钟执行。每次维护时会：
 
-1. 从 `DatabaseContext.Model` 发现全部分区实体
+1. 从 `DatabaseContext.Model` 发现全部显式声明的分区实体，不读取 xmin 启动快照
 2. 获取分布式锁，并在执行期间定期续期
 3. 续期失败时取消本轮数据库操作并报告明确错误
 4. 查询 PostgreSQL 系统目录验证父表、策略、分区键和直接子分区
@@ -437,11 +493,14 @@ ORDER BY child.relname;
 
 ## 上线检查清单
 
+以下清单适用于通过显式声明创建并自动维护的新分区表；DBA 管理的表按前文启动识别约定接入
+
 - [ ] 目标是新表，不是数据库中已经存在的普通表
 - [ ] 实体已加入 `DatabaseContext` 的直接 `DbSet<TEntity>`
 - [ ] Attribute 明确配置了大于 `0` 的 `Interval` 和受支持的 `PartitionUnit`
 - [ ] 主键和全部唯一约束、唯一索引都包含 `Id`
-- [ ] 所有写宿主均已注册 `PostgresPatchInterceptor`
+- [ ] 写宿主已加载目标数据库的启动快照，并通过 `UsePostgreSqlPartitioning(snapshot)` 注册到上下文及工厂
+- [ ] 已针对目标数据库验证 xmin 回填、真实并发冲突和失败回滚
 - [ ] Repository 及受影响宿主构建已通过，EF Core 模型约束已在工具或宿主中验证
 - [ ] Migration 中包含全部 `PartitionTable:*` Annotation
 - [ ] Migration SQL 中父表包含 `PARTITION BY RANGE ("Id")`
@@ -488,6 +547,9 @@ ORDER BY child.relname;
 | `Repository/Attributes/PartitionTableAttribute.cs` | 实体分区声明和分区周期单位 |
 | `SourceGenerator/SourceGenerator.Core/EntityFrameworkCore/PartitionTableGenerator.cs` | 生成 EF Core 分区模型配置 |
 | `Repository/Partitioning` | 模型校验、边界计算、Migration SQL 生成与运行维护 |
+| `Repository/Partitioning/PartitionXminDatabase.cs` | 保存通知前批量回读新增分区行的 xmin |
+| `Repository/Partitioning/PartitionTableSnapshot.cs` | 启动时只读发现实际分区父表，供 xmin 适配使用 |
+| `Repository/Partitioning/PartitionModelCustomizer.cs` | 模型配置完成后校验分区继承策略 |
 | `Repository/Partitioning/PartitionTimeLayout.cs` | 固定 UTC+8 偏移和对齐锚点 |
 | `Infrastructure/IdentifierGenerator/SnowflakeIdLayout.cs` | 雪花 ID 持久化布局和时间换算 |
 | `Repository/Partitioning/PartitionMaintenanceBackgroundService.cs` | 自动维护后台服务入口 |

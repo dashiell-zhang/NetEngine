@@ -19,15 +19,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
 	  <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.11.0" />
-	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.13" />
-	  <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.13" />
+	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.14" />
+	  <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.14" />
 	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
 	  <PackageReference Include="Microsoft.IdentityModel.Protocols" Version="8.23.0" />
 	  <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
 	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
 	</ItemGroup>
 
 	<ItemGroup>

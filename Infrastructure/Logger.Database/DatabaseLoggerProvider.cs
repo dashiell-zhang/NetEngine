@@ -1,19 +1,19 @@
-using Logger.DataBase.Models;
+using Logger.Database.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 
-namespace Logger.DataBase;
+namespace Logger.Database;
 
 /// <summary>
 /// 数据库日志 Provider
 /// </summary>
-public class DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, DataBaseLogWriter logWriter) : ILoggerProvider, ISupportExternalScope
+public class DatabaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, DatabaseLogWriter logWriter) : ILoggerProvider, ISupportExternalScope
 {
 
     private readonly LoggerSetting loggerConfiguration = config.CurrentValue;
 
-    private readonly ConcurrentDictionary<string, DataBaseLogger> loggers = new();
+    private readonly ConcurrentDictionary<string, DatabaseLogger> loggers = new();
 
     private IExternalScopeProvider? scopeProvider;
 
@@ -24,7 +24,7 @@ public class DataBaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, DataB
     public ILogger CreateLogger(string categoryName)
     {
 
-        return loggers.GetOrAdd(categoryName, key => new DataBaseLogger(key, loggerConfiguration, logWriter, scopeProvider));
+        return loggers.GetOrAdd(categoryName, key => new DatabaseLogger(key, loggerConfiguration, logWriter, scopeProvider));
 
     }
 

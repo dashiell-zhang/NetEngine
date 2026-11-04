@@ -27,7 +27,7 @@
     <Project Path="Infrastructure/FileStorage.TencentCloud/FileStorage.TencentCloud.csproj" />
     <Project Path="Infrastructure/FileStorage/FileStorage.csproj" />
     <Project Path="Infrastructure/IdentifierGenerator/IdentifierGenerator.csproj" />
-    <Project Path="Infrastructure/Logger.DataBase/Logger.DataBase.csproj" />
+    <Project Path="Infrastructure/Logger.Database/Logger.Database.csproj" />
     <Project Path="Infrastructure/Logger.LocalFile/Logger.LocalFile.csproj" />
     <Project Path="Infrastructure/SMS.AliCloud/SMS.AliCloud.csproj" />
     <Project Path="Infrastructure/SMS.TencentCloud/SMS.TencentCloud.csproj" />

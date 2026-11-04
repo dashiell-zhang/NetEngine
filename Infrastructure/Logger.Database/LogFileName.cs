@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Logger.DataBase;
+namespace Logger.Database;
 
 /// <summary>
 /// 统一识别本组件生成的批次、临时及异常保留文件名

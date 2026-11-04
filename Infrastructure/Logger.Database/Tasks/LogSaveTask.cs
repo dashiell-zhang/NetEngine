@@ -9,7 +9,7 @@ using System.IO.Pipelines;
 using System.Text;
 using System.Text.Json;
 
-namespace Logger.DataBase.Tasks;
+namespace Logger.Database.Tasks;
 
 /// <summary>
 /// 连续消费已落盘的日志文件，提交成功后删除并保留损坏文件

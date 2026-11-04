@@ -1,6 +1,6 @@
 # 数据库日志
 
-`Infrastructure/Logger.DataBase` 通过 `AddDataBaseLogger` 接入三个宿主，采用“调用现场快照 → 有界内存缓冲 → 本地文件 → 数据库”的写入链路
+`Infrastructure/Logger.Database` 通过 `AddDatabaseLogger` 接入三个宿主，采用“调用现场快照 → 有界内存缓冲 → 本地文件 → 数据库”的写入链路
 
 ## 业务线程与缓冲
 
@@ -19,7 +19,7 @@
 沿用现有 Options 注册入口，无需新增宿主配置节：
 
 ```csharp
-builder.Logging.AddDataBaseLogger(options =>
+builder.Logging.AddDatabaseLogger(options =>
 {
     options.QueueCapacity = 8192;
     options.MaxBufferedBytes = 48 * 1024 * 1024;
@@ -69,7 +69,7 @@ builder.Logging.AddDataBaseLogger(options =>
 
 ## 指标与故障报告
 
-类库通过 `System.Diagnostics.Metrics` 暴露名为 `Logger.DataBase` 的 Meter，无需额外监控依赖。接入现有指标采集器后可读取：
+类库通过 `System.Diagnostics.Metrics` 暴露名为 `Logger.Database` 的 Meter，无需额外监控依赖。接入现有指标采集器后可读取：
 
 | 指标 | 含义 |
 |---|---|

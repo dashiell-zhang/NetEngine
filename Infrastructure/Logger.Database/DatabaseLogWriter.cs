@@ -1,6 +1,6 @@
 using Common;
 using IdentifierGenerator;
-using Logger.DataBase.Models;
+using Logger.Database.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,12 +12,12 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 
-namespace Logger.DataBase;
+namespace Logger.Database;
 
 /// <summary>
 /// 非阻塞接收日志并在后台批量落盘，满载时优先使用重要日志预留缓冲
 /// </summary>
-public sealed class DataBaseLogWriter : BackgroundService
+public sealed class DatabaseLogWriter : BackgroundService
 {
 
     private static readonly byte[] newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
@@ -39,7 +39,7 @@ public sealed class DataBaseLogWriter : BackgroundService
     /// <summary>
     /// 创建共用队列和重要日志预留队列并固定本次运行的缓冲配置
     /// </summary>
-    public DataBaseLogWriter(IOptions<LoggerSetting> options, IServiceProvider serviceProvider)
+    public DatabaseLogWriter(IOptions<LoggerSetting> options, IServiceProvider serviceProvider)
     {
 
         var settings = options.Value;

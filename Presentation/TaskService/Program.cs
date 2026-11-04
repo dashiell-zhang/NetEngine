@@ -5,7 +5,7 @@ using EventBus.Database;
 using EventBus.Redis;
 using FileStorage.AliCloud;
 using IdentifierGenerator;
-using Logger.DataBase;
+using Logger.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using NetEngine.Generated;
@@ -44,7 +44,7 @@ class Program
             .ConfigureLogging((hostContext, builder) =>
             {
                 //注册数据库日志服务
-                builder.AddDataBaseLogger(options => { });
+                builder.AddDatabaseLogger(options => { });
 
                 //注册本地文件日志服务
                 //builder.AddLocalFileLogger(options => { });

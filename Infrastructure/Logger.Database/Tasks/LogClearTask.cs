@@ -1,11 +1,11 @@
-using Logger.DataBase.Models;
+using Logger.Database.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Repository;
 
-namespace Logger.DataBase.Tasks;
+namespace Logger.Database.Tasks;
 
 /// <summary>
 /// 定期清理数据库中的过期日志，失败时报告并保留下一轮重试

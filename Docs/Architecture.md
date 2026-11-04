@@ -55,7 +55,7 @@ Infrastructure 按能力拆分为抽象、公共实现或厂商实现，当前�
 - `EventBus`、`EventBus.Redis`、`EventBus.Database`，公共广播运行能力及可替换存储；数据库后端的组件实体与映射集中在基础层，复用已有主库上下文工厂，不反向依赖业务 Repository
 - `FileStorage`、`FileStorage.AliCloud`、`FileStorage.TencentCloud`
 - `SMS`、`SMS.AliCloud`、`SMS.TencentCloud`
-- `Logger.DataBase`、`Logger.LocalFile`
+- `Logger.Database`、`Logger.LocalFile`
 - `IdentifierGenerator`
 - `LLM`
 - `Common`

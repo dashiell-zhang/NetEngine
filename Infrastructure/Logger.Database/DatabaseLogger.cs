@@ -1,17 +1,17 @@
 using Common;
-using Logger.DataBase.Models;
+using Logger.Database.Models;
 using Microsoft.Extensions.Logging;
 using Repository.Database;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Logger.DataBase;
+namespace Logger.Database;
 
 /// <summary>
 /// 数据库日志记录器
 /// </summary>
-public class DataBaseLogger(string categoryName, LoggerSetting loggerSetting, DataBaseLogWriter logWriter, IExternalScopeProvider? scopeProvider) : ILogger
+public class DatabaseLogger(string categoryName, LoggerSetting loggerSetting, DatabaseLogWriter logWriter, IExternalScopeProvider? scopeProvider) : ILogger
 {
 
     /// <summary>

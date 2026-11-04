@@ -1,10 +1,10 @@
-using Logger.DataBase.Models;
-using Logger.DataBase.Tasks;
+using Logger.Database.Models;
+using Logger.Database.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Logger.DataBase;
+namespace Logger.Database;
 
 /// <summary>
 /// 注册数据库日志及其后台持久化服务
@@ -15,7 +15,7 @@ public static class ILoggingBuilderExtensions
     /// <summary>
     /// 注册数据库日志并在启动时校验缓冲配置
     /// </summary>
-    public static void AddDataBaseLogger(this ILoggingBuilder builder, Action<LoggerSetting> action)
+    public static void AddDatabaseLogger(this ILoggingBuilder builder, Action<LoggerSetting> action)
     {
 
         builder.Services.AddOptions<LoggerSetting>().Configure(action)
@@ -26,9 +26,9 @@ public static class ILoggingBuilderExtensions
             .Validate(options => options.FlushInterval.TotalMilliseconds >= 1 && options.FlushInterval.TotalMilliseconds <= uint.MaxValue - 1, "日志落盘间隔必须介于 1 毫秒与 4294967294 毫秒之间")
             .ValidateOnStart();
 
-        builder.Services.AddSingleton<DataBaseLogWriter>();
-        builder.Services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<DataBaseLogWriter>());
-        builder.Services.AddSingleton<ILoggerProvider, DataBaseLoggerProvider>();
+        builder.Services.AddSingleton<DatabaseLogWriter>();
+        builder.Services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<DatabaseLogWriter>());
+        builder.Services.AddSingleton<ILoggerProvider, DatabaseLoggerProvider>();
         builder.Services.AddHostedService<LogClearTask>();
         builder.Services.AddHostedService<LogSaveTask>();
 

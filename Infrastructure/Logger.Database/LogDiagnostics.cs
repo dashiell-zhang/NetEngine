@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.Metrics;
 
-namespace Logger.DataBase;
+namespace Logger.Database;
 
 /// <summary>
 /// 提供独立于日志管线的运行指标，业务线程只更新原子计数
@@ -9,7 +9,7 @@ namespace Logger.DataBase;
 internal static class LogDiagnostics
 {
 
-    private static readonly Meter meter = new("Logger.DataBase");
+    private static readonly Meter meter = new("Logger.Database");
     private static readonly long[] dropped = new long[7];
     private static readonly long[] failures = new long[6];
     private static readonly long[] lastReports = new long[6];
@@ -83,7 +83,7 @@ internal static class LogDiagnostics
 
         try
         {
-            Console.Error.WriteLine($"[Logger.DataBase] {operation}: {exception.GetType().Name}; 请检查日志目录、数据库和监控指标");
+            Console.Error.WriteLine($"[Logger.Database] {operation}: {exception.GetType().Name}; 请检查日志目录、数据库和监控指标");
         }
         catch (IOException)
         {

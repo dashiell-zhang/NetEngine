@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace Logger.DataBase.Models;
+namespace Logger.Database.Models;
 /// <summary>
 /// 配置数据库日志的保留时间和有界内存缓冲
 /// </summary>

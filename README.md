@@ -16,6 +16,7 @@
 - Redis 分布式锁与内存锁
 - 文件存储、短信、数据库日志与本地文件日志
 - 队列任务与定时任务调度
+- 跨进程事件广播，用于多实例缓存失效、配置重载与本地状态刷新
 - OpenAI Chat Completions、Responses 与 Anthropic Messages 协议的 LLM 调用能力
 - 编译期服务注册、方法代理与 EF Core 辅助代码生成
 - Nginx、systemd 与云效流水线部署配置生成
@@ -160,6 +161,7 @@ dotnet run --project Presentation/TaskService/TaskService.csproj --launch-profil
 | [数据库读写分离](Docs/DatabaseReadWriteSeparation.md) | 读写上下文用法、读库连接配置、一致性和多读库方案 |
 | [PostgreSQL 分区表](Docs/PostgreSqlPartitionTable.md) | 实体注解、UTC+8 周期单位、Migration 建表与子分区维护 |
 | [TaskService](Docs/TaskService.md) | 定时任务、队列任务、调度、回调、子任务与重试 |
+| [EventBus 跨进程广播](Docs/EventBus.md) | 适用场景、多实例缓存刷新示例、事件发布与监听、Redis 与数据库后端配置 |
 | [分布式锁](Docs/DistributedLock.md) | Redis 锁、内存锁、并发信号量与租约续期 |
 | [LLM 调用](Docs/LLM.md) | 模型配置、提示词模板、普通调用与流式调用 |
 | [部署配置生成器](Docs/Deployment.md) | Nginx、systemd 与云效流水线配置生成 |

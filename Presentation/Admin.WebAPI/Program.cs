@@ -5,7 +5,7 @@ using EventBus.Database;
 using EventBus.Redis;
 using IdentifierGenerator;
 using LLM;
-using Logger.DataBase;
+using Logger.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using NetEngine.Generated;
@@ -179,7 +179,7 @@ public class Program
         #region 注册日志服务
 
         //注册数据库日志服务
-        builder.Logging.AddDataBaseLogger(options => { });
+        builder.Logging.AddDatabaseLogger(options => { });
 
         //注册本地文件日志服务
         //builder.Logging.AddLocalFileLogger(options => { });

@@ -82,7 +82,7 @@ public class ProductCacheService
 
 ### 4. 发布事件
 
-在业务应用服务中注入 `IEventPublisher eventPublisher`，保存成功后发布：
+不要求业务保存与事件发布保持事务一致性时，直接使用 EventBus 即可，无需搭配 QueueTask。在业务应用服务中注入 `IEventPublisher eventPublisher`，保存成功后发布：
 
 ```csharp
 using Application.Model.Events;
@@ -97,6 +97,28 @@ await eventPublisher.PublishAsync(new ProductChangedEvent(productId), cancellati
 
 `PublishAsync` 成功仅表示事件已保存到后端，不代表监听已完成。发布不加入业务事务，失败时业务数据可能已经提交；异常或取消也不代表事件一定未写入
 
+### 5. 配合 QueueTask 事务入队
+
+需要业务数据与广播任务一起提交时，注入 `Application.Service.TaskCenter.QueueTaskService`，用事务入队替代直接发布：
+
+```csharp
+using Microsoft.EntityFrameworkCore;
+
+await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+// 修改商品数据，同时加入待发送的广播任务
+queueTaskService.Create("Product.PublishChanged", new ProductChangedEvent(productId));
+
+await db.SaveChangesAsync(cancellationToken);
+await transaction.CommitAsync(cancellationToken);
+```
+
+入队服务与业务必须共用同一个 Scoped `DatabaseContext`，使用 `Create`，不能使用独立保存的 `CreateSingleAsync`
+
+声明并启用名为 `Product.PublishChanged` 的队列任务，由任务调用应用服务，等待 `eventPublisher.PublishAsync(message)` 完成，发布异常继续向外抛出。任务声明与启用方式见 [QueueTask](TaskService.md#队列任务)
+
+事务回滚时，业务数据和任务记录一起回滚；提交后由 TaskService 发布广播。队列最多自动执行 3 次，耗尽后需手动重试；重复发布要求监听幂等。队列成功仅表示发布完成，不等待各实例消费成功
+
 ## 事件与监听约定
 
 - **事件类型**：使用非泛型具体类或 `record class`，以具体类型发布。事件以 JSON 传输，通过完整类型名匹配；互通宿主应引用一致契约，不支持按父类或接口订阅
@@ -110,12 +132,13 @@ await eventPublisher.PublishAsync(new ProductChangedEvent(productId), cancellati
 | 情况 | 行为 |
 |---|---|
 | 正常广播 | 各进程独立处理；同一进程按后端记录顺序处理事件，每条事件的监听方法依次执行 |
-| 监听失败 | 继续尝试当前事件的其他方法，仅重试失败方法；当前事件成功或到期后才处理后续事件 |
+| 监听失败 | 继续尝试其他方法，仅对失败方法按 `RetryInterval`（默认 1 秒）重试，不限制次数；异常须向外抛出 |
+| 等待重试 | 当前事件成功或到期后才处理后续事件，其他实例不受影响 |
 | 短暂断线 | 同一存活进程从原位置补收，超过历史保留时间的事件可能丢失 |
-| 启动或重启 | 跳过启动前的事件，本地状态应从当前数据初始化 |
+| 启动或重启 | 跳过启动前的事件，不恢复未完成重试；本地状态应从当前数据初始化 |
 | 事件到期或宿主关闭 | 请求取消监听，处理代码需配合取消 |
 
-`Retention` 从事件保存到后端时计算，同时限制历史保留和失败重试。广播异步传播，不保证各实例立即一致
+`Retention` 默认 1 小时，从事件保存到后端时计算；到期后跳过未完成的监听，不再重试。广播异步传播，不保证各实例立即一致
 
 宿主启动时需连接后端，后端不可用会等待恢复。监听在所有托管服务的 `StartAsync` 完成后开始，本地状态应在此之前完成初始化，且不要在 `StartAsync` 中等待监听结果
 

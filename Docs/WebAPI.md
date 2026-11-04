@@ -37,6 +37,7 @@ app.MapHealthChecks("/healthz");
 | `ConnectionStrings:dbConnection` | 主数据库连接字符串 |
 | `ConnectionStrings:dbReadConnection` | 只读数据库连接字符串；为空时回退到主库；宿主构建读取连接时会自动追加 `Options=-c default_transaction_read_only=on` |
 | `ConnectionStrings:redisConnection` | 分布式缓存、Redis 锁和 Redis 客户端连接字符串 |
+| `EventBus` | 进程广播后端、项目环境范围和历史保留时间，详见 [进程广播事件](EventBus.md) |
 | `Cors:AllowedOriginList` | 允许跨域访问的来源列表 |
 | `JWT` | Token 签发和验证配置 |
 | `RSA` | `RSADecryptFilter` 使用的字段解密密钥 |

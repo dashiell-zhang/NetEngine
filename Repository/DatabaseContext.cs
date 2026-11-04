@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using EventBus.Database;
 using Repository.Database;
 using Repository.Database.Generated;
 using System.Reflection;
@@ -91,11 +92,14 @@ public class DatabaseContext : DbContext
 
 
     /// <summary>
-    /// 配置数据库实体映射、过滤器和分区元数据
+    /// 配置业务实体、广播组件、过滤器和分区元数据
     /// </summary>
     /// <param name="modelBuilder">EF Core 模型构建器</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
+        modelBuilder.ConfigureEventBus();
+
         modelBuilder.ApplySoftDeleteFilters(this);
 
         modelBuilder.ApplyJsonColumns(this);
@@ -141,6 +145,7 @@ public class DatabaseContext : DbContext
 #endif
 
         modelBuilder.ApplyPartitionTables(this);
+
     }
 
 

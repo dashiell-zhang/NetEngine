@@ -1,5 +1,8 @@
 using Common;
 using DistributedLock.Redis;
+using EventBus;
+using EventBus.Database;
+using EventBus.Redis;
 using FileStorage.AliCloud;
 using IdentifierGenerator;
 using Logger.DataBase;
@@ -29,6 +32,7 @@ class Program
     /// <param name="args">命令行参数</param>
     static void Main(string[] args)
     {
+
         ThreadPool.GetMinThreads(out int minWorkerThreads, out int minCompletionPortThreads);
         ThreadPool.SetMinThreads(minWorkerThreads * 8, minCompletionPortThreads);
 
@@ -176,6 +180,21 @@ class Program
 
                 //注册 Redis 驱动
                 services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(hostContext.Configuration.GetConnectionString("redisConnection")!));
+
+
+                // 注册各进程独立消费的广播事件，默认后端为 Redis Streams
+                var eventBusSection = hostContext.Configuration.GetRequiredSection("EventBus");
+                switch (eventBusSection.GetValue<EventBusProvider>("Provider"))
+                {
+                    case EventBusProvider.Redis:
+                        services.AddRedisEventBus(options => eventBusSection.Bind(options));
+                        break;
+                    case EventBusProvider.Database:
+                        services.AddDatabaseEventBus<DatabaseContext>(options => eventBusSection.Bind(options));
+                        break;
+                    default:
+                        throw new InvalidOperationException("不支持的 EventBus.Provider");
+                }
 
 
                 #region 注册HttpClient

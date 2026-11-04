@@ -29,6 +29,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
+		<ProjectReference Include="..\Infrastructure\EventBus.Database\EventBus.Database.csproj" />
 	</ItemGroup>
 
 </Project>

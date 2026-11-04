@@ -16,6 +16,7 @@
 | [本地文件日志](LocalFileLogger.md) | 调整文件日志吞吐或排查写入与清理故障时 | 非阻塞入队、追加失败回退、尾部恢复、清理范围与监控指标 |
 | [PostgreSQL 分区表](PostgreSqlPartitionTable.md) | 为新实体声明雪花 ID 分区或维护后续子分区时 | 实体注解、UTC+8 周期单位、Migration SQL 和 Repository 自动维护 |
 | [TaskService](TaskService.md) | 新增定时任务或队列任务时 | 任务声明、入队、启用、调度、回调、子任务和重试 |
+| [进程广播事件](EventBus.md) | 需要所有存活实例处理通知并支持短暂断线补收时 | 特性监听、Redis Streams、EF 后端与一小时历史 |
 | [WebAPI 过滤器](WebAPIFilters.md) | 为 Controller 或 Action 增加通用 HTTP 行为时 | 异常、缓存、ETag、并发限制、RSA 解密和签名校验 |
 | [LLM 调用](LLM.md) | 使用模型生成文本或扩展 LLM 协议时 | 模型与应用配置、提示词模板、普通和流式调用 |
 
@@ -30,6 +31,7 @@
 - 迁移数据库查询或配置只读副本：阅读 [数据库读写分离](DatabaseReadWriteSeparation.md)
 - 为新表启用雪花 ID 分区：阅读 [PostgreSQL 分区表](PostgreSqlPartitionTable.md)
 - 新增任务宿主能力：阅读 [TaskService](TaskService.md)
+- 新增跨进程广播监听或切换事件后端：阅读 [进程广播事件](EventBus.md)
 - 新增或调整 Controller 过滤器：阅读 [WebAPI 过滤器](WebAPIFilters.md)
 - 调用模型或扩展 LLM Provider：阅读 [LLM 调用](LLM.md)
 - 修改部署参数或模板：阅读 [部署配置生成器](Deployment.md)

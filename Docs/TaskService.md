@@ -7,6 +7,8 @@ TaskService 是独立的 Worker Service 宿主，用于执行周期性定时任�
 - 任务配置与队列记录：`Repository/Database/TaskSetting.cs`、`Repository/Database/QueueTask.cs`
 - 管理接口：`Presentation/Admin.WebAPI/Controllers/OperationsController.cs`
 
+TaskService 同时接入独立的 [进程广播事件](EventBus.md)，让各实例分别处理本地状态变化通知并支持短暂断线补收。该能力通过 EventSubscribe 方法监听，与下面竞争领取的 QueueTask 独立，不受 Debug 控制台的任务启用选择限制
+
 ## 开发前准备
 
 TaskService 至少需要正确配置 PostgreSQL 和 Redis：

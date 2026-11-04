@@ -15,6 +15,9 @@
     <Project Path="Deployment/Deployment.csproj" />
   </Folder>
   <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/EventBus/EventBus.csproj" />
+    <Project Path="Infrastructure/EventBus.Redis/EventBus.Redis.csproj" />
+    <Project Path="Infrastructure/EventBus.Database/EventBus.Database.csproj" />
     <Project Path="Infrastructure/LLM/LLM.csproj" />
     <Project Path="Infrastructure/Common/Common.csproj" />
     <Project Path="Infrastructure/DistributedLock.InMemory/DistributedLock.InMemory.csproj" />

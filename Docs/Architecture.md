@@ -52,6 +52,7 @@ Controller 直接通过 `ControllerBase.User` 和 WebAPI.Core 的 Claims 扩展�
 Infrastructure 按能力拆分为抽象、公共实现或厂商实现，当前主要包括：
 
 - `DistributedLock`、`DistributedLock.Redis`、`DistributedLock.InMemory`
+- `EventBus`、`EventBus.Redis`、`EventBus.Database`，公共广播运行能力及可替换存储；数据库后端的组件实体与映射集中在基础层，复用已有主库上下文工厂，不反向依赖业务 Repository
 - `FileStorage`、`FileStorage.AliCloud`、`FileStorage.TencentCloud`
 - `SMS`、`SMS.AliCloud`、`SMS.TencentCloud`
 - `Logger.DataBase`、`Logger.LocalFile`
@@ -112,6 +113,7 @@ ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业�
 | 新增请求或返回模型 | `Application.Model` |
 | 新增业务逻辑或业务编排 | `Application.Service` 或对应的宿主特化应用项目 |
 | 新增实体、查询或持久化逻辑 | `Repository` |
+| 跨进程广播事件 | 公共能力、Redis 和数据库后端在 `Infrastructure`，业务事件与监听在 Application；Repository 通过一行映射接入组件实体，宿主选择已有主库上下文工厂 |
 | 接入缓存、云平台或第三方服务 | `Infrastructure` |
 | 新增 Controller 或宿主启动配置 | `Presentation` |
 | 多个 WebAPI 宿主共用的 HTTP 能力 | `ProjectCore/WebAPI.Core` |

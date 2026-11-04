@@ -17,22 +17,23 @@ internal sealed class EventListenerRegistry
 
 
     /// <summary>
-    /// 校验监听签名并记录服务解析位置
+    /// 校验监听签名并为目标注册建立独立解析入口
     /// </summary>
     internal EventListenerRegistry(IEnumerable<ServiceDescriptor> services)
     {
 
         Dictionary<string, List<EventListener>> listeners = [];
         Dictionary<string, Type> eventTypes = [];
-        HashSet<(Type, MethodInfo)> registered = [];
+        Dictionary<object, HashSet<MethodInfo>> registered = new(ReferenceEqualityComparer.Instance);
         var registrations = services.ToArray();
 
-        for (int registrationIndex = 0; registrationIndex < registrations.Length; registrationIndex++)
+        foreach (var service in registrations)
         {
-            var service = registrations[registrationIndex];
             var implementation = service.IsKeyedService ? service.KeyedImplementationType : service.ImplementationType;
-            implementation ??= service.IsKeyedService ? service.KeyedImplementationInstance?.GetType() : service.ImplementationInstance?.GetType();
+            var instance = service.IsKeyedService ? service.KeyedImplementationInstance : service.ImplementationInstance;
+            implementation ??= instance?.GetType();
             implementation ??= service.ServiceType;
+            Func<IServiceProvider, object>? resolveService = null;
 
             foreach (var method in implementation.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
             {
@@ -41,9 +42,9 @@ internal sealed class EventListenerRegistry
                     continue;
                 }
 
-                if (service.IsKeyedService || implementation.IsInterface || implementation.ContainsGenericParameters || !method.IsPublic || method.IsStatic || method.IsGenericMethod || (method.ReturnType != typeof(Task) && method.ReturnType != typeof(ValueTask)))
+                if (implementation.IsInterface || implementation.ContainsGenericParameters || !method.IsPublic || method.IsStatic || method.IsGenericMethod || (method.ReturnType != typeof(Task) && method.ReturnType != typeof(ValueTask)))
                 {
-                    throw new InvalidOperationException($"事件监听方法必须是非 Keyed 服务的公开实例方法，返回 Task 或 ValueTask：{implementation}.{method.Name}");
+                    throw new InvalidOperationException($"事件监听方法必须是封闭服务的公开实例方法，返回 Task 或 ValueTask：{implementation}.{method.Name}");
                 }
 
                 var parameters = method.GetParameters();
@@ -60,7 +61,14 @@ internal sealed class EventListenerRegistry
                 }
 
                 eventTypes[name] = eventType;
-                if (!registered.Add((implementation, method)))
+                var identity = instance ?? (object)service;
+                if (!registered.TryGetValue(identity, out var registeredMethods))
+                {
+                    registeredMethods = [];
+                    registered.Add(identity, registeredMethods);
+                }
+
+                if (!registeredMethods.Add(method))
                 {
                     continue;
                 }
@@ -72,8 +80,8 @@ internal sealed class EventListenerRegistry
                 }
 
                 var invocationMethod = GetInvocationMethod(implementation, service.ServiceType, method);
-                int index = registrations.Take(registrationIndex).Count(t => MatchesService(t, service.ServiceType));
-                methods.Add(new EventListener(service.ServiceType, index, invocationMethod, eventType, parameters.Length == 2));
+                resolveService ??= CreateServiceResolver(registrations, service, instance);
+                methods.Add(new EventListener(resolveService, invocationMethod, eventType, parameters.Length == 2));
             }
         }
 
@@ -83,42 +91,36 @@ internal sealed class EventListenerRegistry
 
 
     /// <summary>
-    /// 按 DI 集合解析规则判断注册是否占据目标服务的位置
+    /// 通过唯一的服务标识或外部实例解析监听，保留原生 DI 行为
     /// </summary>
-    private static bool MatchesService(ServiceDescriptor registration, Type serviceType)
+    private static Func<IServiceProvider, object> CreateServiceResolver(ServiceDescriptor[] registrations, ServiceDescriptor registration, object? instance)
     {
 
-        if (registration.IsKeyedService)
+        if (registration.IsKeyedService && Equals(registration.ServiceKey, KeyedService.AnyKey))
         {
-            return false;
+            throw new InvalidOperationException($"事件监听服务必须使用具体的 Key，不能使用 AnyKey：{registration.ServiceType}");
         }
 
-        if (registration.ServiceType == serviceType)
+        if (instance != null)
         {
-            return true;
+            // 外部传入的实例继续由调用方负责释放
+            return _ => instance;
         }
 
-        if (!serviceType.IsConstructedGenericType || registration.ServiceType != serviceType.GetGenericTypeDefinition() || registration.ImplementationType == null)
+        if (registrations.Count(service => service.ServiceType == registration.ServiceType && service.IsKeyedService == registration.IsKeyedService && Equals(service.ServiceKey, registration.ServiceKey)) != 1)
         {
-            return false;
+            throw new InvalidOperationException($"事件监听服务标识存在多个注册，请按具体类型或不同 Key 注册：{registration.ServiceType}");
         }
 
-        try
-        {
-            _ = registration.ImplementationType.MakeGenericType(serviceType.GenericTypeArguments);
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            // DI 集合解析会跳过不满足目标类型参数约束的开放泛型实现
-            return false;
-        }
+        return provider => registration.IsKeyedService
+            ? provider.GetRequiredKeyedService(registration.ServiceType, registration.ServiceKey)
+            : provider.GetRequiredService(registration.ServiceType);
 
     }
 
 
     /// <summary>
-    /// 为接口注册保留实际接口派发，避免绕过显式接口代理
+    /// 选择能接收原事件类型的接口方法，保留逆变注册和显式接口代理的派发
     /// </summary>
     private static MethodInfo GetInvocationMethod(Type implementation, Type serviceType, MethodInfo method)
     {
@@ -128,7 +130,15 @@ internal sealed class EventListenerRegistry
             return method;
         }
 
-        foreach (var contract in new[] { serviceType }.Concat(serviceType.GetInterfaces()))
+        var eventType = method.GetParameters()[0].ParameterType;
+        var contracts = new[] { serviceType }.Concat(serviceType.GetInterfaces()).ToArray();
+        // 逆变注册的接口参数可能更窄，补充同一泛型接口的实际实现契约
+        var implementedContracts = implementation.GetInterfaces().Where(candidate => candidate.IsConstructedGenericType
+            && contracts.Any(contract => contract.IsConstructedGenericType
+                && contract.GetGenericTypeDefinition() == candidate.GetGenericTypeDefinition()
+                && contract.IsAssignableFrom(candidate)));
+
+        foreach (var contract in contracts.Concat(implementedContracts).Distinct())
         {
             // 代理的接口映射可能指向显式实现，继续向基类查找原监听方法的对应契约
             for (var type = implementation; type != null; type = type.BaseType)
@@ -141,9 +151,10 @@ internal sealed class EventListenerRegistry
                 var mapping = type.GetInterfaceMap(contract);
                 for (int index = 0; index < mapping.TargetMethods.Length; index++)
                 {
-                    if (mapping.TargetMethods[index].GetBaseDefinition() == method.GetBaseDefinition())
+                    var interfaceMethod = mapping.InterfaceMethods[index];
+                    if (mapping.TargetMethods[index].GetBaseDefinition() == method.GetBaseDefinition() && interfaceMethod.GetParameters()[0].ParameterType.IsAssignableFrom(eventType))
                     {
-                        return mapping.InterfaceMethods[index];
+                        return interfaceMethod;
                     }
                 }
             }
@@ -158,7 +169,7 @@ internal sealed class EventListenerRegistry
 /// <summary>
 /// 保存监听方法的依赖注入解析和调用信息
 /// </summary>
-internal sealed record EventListener(Type ServiceType, int ServiceIndex, MethodInfo Method, Type EventType, bool HasCancellationToken)
+internal sealed record EventListener(Func<IServiceProvider, object> ResolveService, MethodInfo Method, Type EventType, bool HasCancellationToken)
 {
 
     /// <summary>
@@ -168,7 +179,7 @@ internal sealed record EventListener(Type ServiceType, int ServiceIndex, MethodI
     {
 
         await using var scope = services.CreateAsyncScope();
-        var instance = scope.ServiceProvider.GetServices(ServiceType).ElementAt(ServiceIndex);
+        var instance = ResolveService(scope.ServiceProvider);
         var message = JsonSerializer.Deserialize(payload, EventType, EventSerialization.Options)
             ?? throw new JsonException($"事件参数不能为空：{EventType.FullName}");
         var result = Method.Invoke(instance, HasCancellationToken ? [message, cancellationToken] : [message]);

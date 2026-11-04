@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Globalization;
@@ -7,7 +8,7 @@ namespace EventBus.Redis;
 /// <summary>
 /// 以 Redis Streams 保存并广播事件
 /// </summary>
-public sealed class RedisEventTransport(IConnectionMultiplexer connection, IOptions<EventBusOptions> options) : IEventTransport
+public sealed class RedisEventTransport(IConnectionMultiplexer connection, IOptions<EventBusOptions> options, ILogger<RedisEventTransport> logger) : IEventTransport
 {
 
     /// <summary>
@@ -46,20 +47,41 @@ public sealed class RedisEventTransport(IConnectionMultiplexer connection, IOpti
 
 
     /// <summary>
-    /// 从当前进程的原位置继续读取事件
+    /// 从当前进程的原位置继续读取事件，保留无效记录的位置以便推进游标
     /// </summary>
     public async Task<IReadOnlyList<EventRecord>> ReadAsync(string position, int count, CancellationToken cancellationToken = default)
     {
 
         cancellationToken.ThrowIfCancellationRequested();
         var entries = await connection.GetDatabase().StreamReadAsync(streamKey, position, count).WaitAsync(cancellationToken);
-        return entries.Select(entry =>
+        return entries.Select(ReadRecord).ToArray();
+
+    }
+
+
+    /// <summary>
+    /// 逐条解析事件，格式错误时记录告警并返回仅用于推进位置的空消息
+    /// </summary>
+    private EventRecord ReadRecord(StreamEntry entry)
+    {
+
+        var id = entry.Id.ToString();
+        try
         {
-            var id = entry.Id.ToString();
             var fields = entry.Values.ToDictionary(t => t.Name.ToString(), t => t.Value.ToString());
             var publishedAt = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(id.AsSpan(0, id.IndexOf('-')), CultureInfo.InvariantCulture));
+            if (string.IsNullOrWhiteSpace(fields["event-name"]))
+            {
+                throw new FormatException("广播事件名称不能为空");
+            }
+
             return new EventRecord(id, publishedAt, new EventEnvelope(Guid.Parse(fields["event-id"]), fields["event-name"], fields["payload"]));
-        }).ToArray();
+        }
+        catch (Exception ex) when (ex is FormatException or OverflowException or ArgumentException or KeyNotFoundException)
+        {
+            logger.LogWarning(ex, "跳过格式无效的广播记录 StreamKey={StreamKey} Position={Position}", streamKey.ToString(), id);
+            return new EventRecord(id, default, null);
+        }
 
     }
 

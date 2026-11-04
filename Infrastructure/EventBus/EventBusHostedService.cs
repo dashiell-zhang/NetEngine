@@ -7,7 +7,7 @@ namespace EventBus;
 /// <summary>
 /// 在宿主启动前建立起点并运行进程独立的广播读取和清理
 /// </summary>
-internal sealed class EventBusHostedService(IEventTransport transport, EventListenerRegistry registry, IServiceProvider services, IOptions<EventBusOptions> options, TimeProvider timeProvider, ILogger<EventBusHostedService> logger) : IHostedLifecycleService, IDisposable
+internal sealed class EventBusHostedService(IEventTransport transport, EventListenerRegistry registry, IServiceProvider services, IOptions<EventBusOptions> options, TimeProvider timeProvider, ILogger<EventBusHostedService> logger, IHostApplicationLifetime applicationLifetime) : IHostedLifecycleService, IDisposable
 {
 
     /// <summary>
@@ -72,13 +72,14 @@ internal sealed class EventBusHostedService(IEventTransport transport, EventList
 
 
     /// <summary>
-    /// 所有托管服务启动完成后开始消费此前起点之后的事件
+    /// 所有托管服务启动完成后分别调度读取和清理，避免同步监听阻塞启动
     /// </summary>
     public Task StartedAsync(CancellationToken cancellationToken)
     {
 
         cancellationToken.ThrowIfCancellationRequested();
-        execution = Task.WhenAll(RunAsync(stopping.Token), CleanupAsync(stopping.Token));
+        var stoppingToken = stopping.Token;
+        execution = Task.WhenAll(Task.Run(() => ObserveAsync(RunAsync, "读取", stoppingToken), stoppingToken), Task.Run(() => ObserveAsync(CleanupAsync, "清理", stoppingToken), stoppingToken));
         return Task.CompletedTask;
 
     }
@@ -144,6 +145,30 @@ internal sealed class EventBusHostedService(IEventTransport transport, EventList
 
 
     /// <summary>
+    /// 使用调度前保存的停止令牌监督后台循环，及时报告意外退出并停止宿主
+    /// </summary>
+    private async Task ObserveAsync(Func<CancellationToken, Task> run, string operation, CancellationToken cancellationToken)
+    {
+
+        try
+        {
+            await run(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "事件广播后台循环意外退出，将停止宿主 Scope={Scope} Operation={Operation}", settings.Scope, operation);
+            applicationLifetime.StopApplication();
+            await stopping.CancelAsync();
+            throw;
+        }
+
+    }
+
+
+    /// <summary>
     /// 从原位置持续读取，连接恢复时继续补收
     /// </summary>
     private async Task RunAsync(CancellationToken cancellationToken)
@@ -189,47 +214,88 @@ internal sealed class EventBusHostedService(IEventTransport transport, EventList
 
 
     /// <summary>
-    /// 重试当前事件的失败监听函数，保留本事件中已经成功的方法进度
+    /// 跳过无效记录，在事件保留时间内调用和重试监听函数并保留成功进度
     /// </summary>
     private async Task DispatchAsync(EventRecord record, CancellationToken cancellationToken)
     {
 
-        if (!registry.Listeners.TryGetValue(record.Message.EventName, out var listeners))
+        if (record.Message == null || !registry.Listeners.TryGetValue(record.Message.EventName, out var listeners))
         {
             return;
         }
 
+        using var eventStopping = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var eventToken = eventStopping.Token;
+        using var expirationStopping = CancellationTokenSource.CreateLinkedTokenSource(eventToken);
+        var expiration = CancelExpiredEventAsync(record.PublishedAt, eventStopping, expirationStopping.Token);
         var pending = listeners.ToList();
-        while (pending.Count != 0)
+        try
         {
-            if (record.PublishedAt < timeProvider.GetUtcNow() - settings.Retention)
+            while (pending.Count != 0)
             {
-                logger.LogWarning("广播事件超过保留时间，跳过尚未完成的监听 Scope={Scope} EventId={EventId} EventName={EventName}", settings.Scope, record.Message.EventId, record.Message.EventName);
-                return;
-            }
+                foreach (var listener in pending.ToArray())
+                {
+                    eventToken.ThrowIfCancellationRequested();
+                    try
+                    {
+                        await listener.InvokeAsync(services, record.Message.Payload, eventToken);
+                        pending.Remove(listener);
+                    }
+                    catch (OperationCanceledException) when (eventToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "事件监听失败，将重试 Scope={Scope} EventId={EventId} Handler={Handler}", settings.Scope, record.Message.EventId, listener.Method);
+                    }
+                }
 
-            foreach (var listener in pending.ToArray())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                try
+                if (pending.Count != 0)
                 {
-                    await listener.InvokeAsync(services, record.Message.Payload, cancellationToken);
-                    pending.Remove(listener);
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "事件监听失败，将重试 Scope={Scope} EventId={EventId} Handler={Handler}", settings.Scope, record.Message.EventId, listener.Method);
+                    await Task.Delay(settings.RetryInterval, timeProvider, eventToken);
                 }
             }
+        }
+        catch (OperationCanceledException) when (eventToken.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning("广播事件超过保留时间，跳过尚未完成的监听 Scope={Scope} EventId={EventId} EventName={EventName}", settings.Scope, record.Message.EventId, record.Message.EventName);
+        }
+        finally
+        {
+            // 正常结束只停止到期监控，不触发监听的取消回调
+            await expirationStopping.CancelAsync();
+            await expiration;
+        }
 
-            if (pending.Count != 0)
+    }
+
+
+    /// <summary>
+    /// 独立监控剩余保留时间，到期才取消监听，分段等待以支持超长保留时间
+    /// </summary>
+    private async Task CancelExpiredEventAsync(DateTimeOffset publishedAt, CancellationTokenSource eventStopping, CancellationToken cancellationToken)
+    {
+
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(settings.RetryInterval, timeProvider, cancellationToken);
+                var age = timeProvider.GetUtcNow() - publishedAt;
+                var remaining = settings.Retention - (age > TimeSpan.Zero ? age : TimeSpan.Zero);
+                if (remaining <= TimeSpan.Zero)
+                {
+                    await eventStopping.CancelAsync();
+                    return;
+                }
+
+                // 向上取整避免不足一毫秒时空转，限制单次等待以避免系统定时器溢出
+                var delay = TimeSpan.FromMilliseconds(Math.Clamp(Math.Ceiling(remaining.TotalMilliseconds), 1, uint.MaxValue - 1));
+                await Task.Delay(delay, timeProvider, cancellationToken);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
         }
 
     }
@@ -245,7 +311,7 @@ internal sealed class EventBusHostedService(IEventTransport transport, EventList
         {
             try
             {
-                await transport.TrimAsync(timeProvider.GetUtcNow() - settings.Retention, cancellationToken);
+                await transport.TrimAsync(GetRetentionCutoff(), cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -258,6 +324,20 @@ internal sealed class EventBusHostedService(IEventTransport transport, EventList
 
             await Task.Delay(settings.CleanupInterval, timeProvider, cancellationToken);
         }
+
+    }
+
+
+    /// <summary>
+    /// 计算统一的历史截止时间，超出日期范围时使用最早 UTC 时间
+    /// </summary>
+    private DateTimeOffset GetRetentionCutoff()
+    {
+
+        var now = timeProvider.GetUtcNow().ToUniversalTime();
+        return settings.Retention >= now - DateTimeOffset.MinValue
+            ? DateTimeOffset.MinValue
+            : now - settings.Retention;
 
     }
 

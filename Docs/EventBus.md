@@ -2,7 +2,7 @@
 
 进程广播用于让每个订阅实例分别处理事件，例如清理自己的 HybridCache、重新加载配置或刷新本地规则。它与由 Worker 竞争领取的 QueueTask 独立，多个实例可以同时处理同一条广播
 
-公共能力位于 Infrastructure/EventBus，Redis Streams 后端位于 Infrastructure/EventBus.Redis，数据库后端、组件实体和映射位于 Infrastructure/EventBus.Database。数据库后端内部使用 EF Core，并复用已有主库上下文工厂；基础层不反向引用业务 Repository，应用服务只需引用公共 EventBus 能力
+应用服务引用 Infrastructure/EventBus。宿主根据所选后端引用 Infrastructure/EventBus.Redis 或 Infrastructure/EventBus.Database；数据库后端使用 EF Core，复用已有主库上下文工厂
 
 ## 行为约定
 
@@ -93,9 +93,21 @@ public class CacheEventService(HybridCache cache)
 - 公开的非泛型实例方法，接收一个事件参数及可选的第二个 CancellationToken 参数
 - 返回 Task 或 ValueTask，不支持 void、async void、Task<T> 或 ValueTask<T>
 - 所在服务已在后端注册前加入 DI，普通服务优先使用 RegisterService 和 BatchRegisterServices
-- 不支持 Keyed Service、开放泛型服务和无法从服务契约识别实现类型的工厂注册监听
+- 支持普通服务和使用具体 Key 的 Keyed Service，不支持 AnyKey、开放泛型服务和无法从服务契约识别实现类型的工厂注册监听
 
-监听服务可注入 Scoped 依赖；每次方法调用使用独立异步作用域，完成后释放。通过接口注册服务时，属于该接口或其继承接口的监听方法会通过接口调用，保留代理行为。方法不必为了监听声明 virtual；使用 AutoProxy 时继续遵守 [代理规则](SourceGenerator.md)
+监听服务可注入 Scoped 依赖；每次方法调用使用独立异步作用域，完成后释放。通过实例注册的监听服务由调用方负责释放。方法不必为了监听声明 virtual；使用 AutoProxy 时遵守 [代理规则](SourceGenerator.md)
+
+订阅以监听方法声明的事件参数类型为准，不自动接收派生类事件
+
+类型或工厂注册的监听服务，其服务类型与 Key 的组合必须唯一。同一接口有多个监听实现时，按各自具体类型注册，或使用不同 Key：
+
+~~~csharp
+services.AddKeyedScoped<IChangeListener, FirstChangeListener>("first");
+services.AddKeyedScoped<IChangeListener, SecondChangeListener>("second");
+services.AddRedisEventBus();
+~~~
+
+使用自动注册时，可通过 RegisterService 的服务类型参数选择具体类，或使用 Key 属性区分同一接口的多个实现，详见 [服务注册规则](SourceGenerator.md#服务类型选择规则)
 
 三个宿主引用并注册同一处理服务后，每个进程都会调用自己的方法。不要从监听函数无条件再次发布相同事件，避免广播循环
 
@@ -166,25 +178,31 @@ builder.Services.AddRedisEventBus(options =>
 | CleanupInterval | 00:01:00 | 历史清理间隔 |
 | BatchSize | 100 | 每批读取条数，范围为 1 到 1000 |
 
+Retention 必须大于零。PollInterval、RetryInterval 和 CleanupInterval 的有效范围为 1 到 4294967294 毫秒（约 49.7 天），配置不符合要求时启动失败
+
 ## 启动、重连与关闭
 
-框架在 IHostedLifecycleService.StartingAsync 中建立起点，等所有托管服务的 StartAsync 完成后开始消费。建立起点之后、初始化期间发布的事件会在初始化完成后处理。建立起点失败时会记录错误并重试，宿主等待后端恢复后继续启动
+宿主启动时建立消费起点，跳过此前事件。建立起点之后、初始化期间发布的事件会在所有托管服务的 StartAsync 完成后处理。后端不可用时，宿主等待连接恢复后继续启动
 
-需要初始化本地业务状态时，应在托管服务的 StartAsync 阶段完成并等待初始化结束；不要将初始化放入脱离启动阶段的后台任务，也不要在 StartAsync 中等待事件监听函数执行完成。所有 StartedAsync 回调之间不承诺业务初始化顺序，因此不要在该阶段再初始化监听依赖的状态
+监听依赖的本地状态应在托管服务的 StartAsync 中完成初始化，不要在该阶段等待事件监听执行完成
 
-读取失败不会清空游标，连接恢复后继续读取。正常关闭时取消监听令牌并等待后台任务；直接释放宿主或启动失败后释放宿主时也会请求取消后台循环。监听函数应配合取消，不自行启动脱离框架的后台任务
+同一进程短暂断线后会从原消费位置继续读取。关闭宿主时会请求取消监听并等待其退出；监听函数应配合取消，不自行启动脱离框架的后台任务
+
+读取或历史清理失败会自动重试；广播运行服务意外终止时会记录严重错误并停止宿主
 
 如果两次成功读取的间隔超过 Retention，会记录可能存在历史缺口的警告；不提供超长离线完整恢复
 
 ## 监听异常和消费顺序
 
-同一实例按后端记录顺序处理事件，每条事件的相关方法依次调用。即使前一个方法失败，本轮仍尝试该事件的其他方法
+同一实例按后端记录顺序处理事件，每条事件的相关方法依次调用。即使前一个方法失败，仍会尝试该事件的其他监听方法
 
-当前事件中已经成功的方法会在内存中保留进度，只重试失败的方法。所有相关方法成功后推进游标，再处理下一事件；因此失败事件会阻塞当前实例后续事件，不影响其他进程
+处理当前事件时，只重试失败的监听方法，已成功的方法不重复调用。当前事件处理完成后再处理下一条，因此失败事件会阻塞当前实例的后续事件，不影响其他进程
 
 失败方法每隔 RetryInterval 重试，直到成功、进程退出或事件超过 Retention。超过保留范围时记录警告并跳过尚未完成的方法，继续后续事件。未知事件类型没有本地监听方法时跳过，不根据远端类型名称加载任意类型
 
-重复执行仍可能发生，例如处理已产生副作用但随后抛出异常，因此不能把进程内进度当成严格只执行一次保证
+长时间运行的监听应接收并向下传递 CancellationToken，事件到期或宿主停止时会请求取消。框架会等待监听退出后再处理后续事件，无法强制终止不配合取消的监听
+
+事件可能重复到达，监听也可能在产生业务副作用后因异常重试，因此监听业务必须保持幂等
 
 ## Redis Streams 后端
 
@@ -192,11 +210,13 @@ builder.Services.AddRedisEventBus(options =>
 
 需要 Redis 6.2 或更高版本。事件流按 Retention 清理历史记录，Redis 连接由宿主管理
 
+流中格式无效的记录会记录告警并跳过。事件参数反序列化或监听业务失败时，按前文的监听重试规则处理
+
 服务端持久化、容灾和时间配置由 Redis 部署负责。客户端取消等待或连接中断可能发生在实际写入已经完成之后，此时发布结果不确定，调用方不能假定失败就绝对没有保存
 
 ## 数据库后端
 
-数据库后端、事件实体和映射集中在 Infrastructure/EventBus.Database，复用宿主已有的 IDbContextFactory<TContext>，不会创建独立上下文或另一套数据库配置。Repository 只需引用该类库，并在已有 OnModelCreating 中调用一次 ConfigureEventBus
+数据库后端复用宿主已有的 IDbContextFactory<TContext>，无需另配数据库连接。Repository 引用 Infrastructure/EventBus.Database，并在 OnModelCreating 中调用一次 ConfigureEventBus
 
 内置 DatabaseContext 已接入映射。其他上下文接入时，在原有模型配置中增加：
 
@@ -226,11 +246,9 @@ builder.Services.AddDatabaseEventBus<DatabaseContext>(options =>
 });
 ~~~
 
-上下文工厂原有的 Provider、拦截器、模型定制、上下文池及 PostgreSQL 分区支持会继续生效。复用分区支持不表示事件表自动分区；事件表是否声明分区需要另行按结构和需求判断
+数据库提供程序、拦截器和连接配置沿用主库上下文工厂的设置
 
 内置三个宿主选择 Database 时使用 DatabaseContext 的主库工厂，不使用 ReadDatabaseContext 读取事件。启动位置和补收查询需要及时看到已提交事件，不能使用允许复制延迟的只读副本
-
-数据库提供程序沿用主库上下文工厂的配置，无需为广播组件单独配置连接
 
 需要的表：
 
@@ -241,7 +259,9 @@ builder.Services.AddDatabaseEventBus<DatabaseContext>(options =>
 
 清理会物理删除过期事件，保留范围状态和最新位置
 
-事件和范围位置在同一事务中提交，按提交顺序读取。发布遇到并发冲突时会自动重试，重试失败后向调用方抛出异常
+事件按提交顺序读取。发布支持主库配置的 EnableRetryOnFailure，并自动重试并发冲突；最终失败时向调用方抛出异常
+
+连接故障后的重试可能重复保存事件，监听应保持幂等
 
 启用 Database 前，需要通过已有 Repository.Tool 迁移链路创建这两张表。宿主启动不会自动建表；缺少表时会记录错误并等待结构准备完成
 
@@ -250,6 +270,8 @@ builder.Services.AddDatabaseEventBus<DatabaseContext>(options =>
 实现 IEventTransport，并调用 AddEventBus<TTransport> 接入公共运行逻辑。后端负责独立保存事件、建立已提交起点、按可靠位置读取以及物理清理历史
 
 EventEnvelope 表达事件标识、名称和 JSON 参数，EventRecord 补充后端位置与保存时间。位置使用不透明字符串，由对应后端解释，业务无需理解 Stream ID 或数据库序号
+
+自定义后端需要跳过无效记录时，先记录告警，再返回保留原 Position 且 Message 为 null 的 EventRecord。该记录仅用于推进消费位置，PublishedAt 可使用 default
 
 ## 参考资料
 

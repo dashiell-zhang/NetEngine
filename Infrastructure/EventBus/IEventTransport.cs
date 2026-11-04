@@ -19,7 +19,7 @@ public interface IEventTransport
 
 
     /// <summary>
-    /// 按后端提交顺序读取指定位置之后的事件
+    /// 按后端提交顺序读取指定位置之后的事件，无效记录使用空消息保留位置
     /// </summary>
     Task<IReadOnlyList<EventRecord>> ReadAsync(string position, int count, CancellationToken cancellationToken = default);
 
@@ -40,9 +40,9 @@ public interface IEventTransport
 public sealed record EventEnvelope(Guid EventId, string EventName, string Payload);
 
 /// <summary>
-/// 已保存事件及其后端读取位置
+/// 已保存事件及其后端读取位置，空消息表示只推进位置而不派发的无效记录
 /// </summary>
 /// <param name="Position">由后端解释的读取位置</param>
-/// <param name="PublishedAt">后端记录事件的时间</param>
-/// <param name="Message">事件内容</param>
-public sealed record EventRecord(string Position, DateTimeOffset PublishedAt, EventEnvelope Message);
+/// <param name="PublishedAt">后端记录事件的时间，空消息时不使用</param>
+/// <param name="Message">事件内容，为 null 表示后端已记录异常且消费方应跳过该记录</param>
+public sealed record EventRecord(string Position, DateTimeOffset PublishedAt, EventEnvelope? Message);

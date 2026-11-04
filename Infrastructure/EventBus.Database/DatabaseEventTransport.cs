@@ -30,9 +30,22 @@ public sealed class DatabaseEventTransport<TContext>(IDbContextFactory<TContext>
 
 
     /// <summary>
-    /// 在独立事务内先更新范围状态再写入事件，冲突时重新读取
+    /// 通过上下文的执行策略重试完整的独立发布事务
     /// </summary>
     public async Task AppendAsync(EventEnvelope message, CancellationToken cancellationToken = default)
+    {
+
+        await using var db = await factory.CreateDbContextAsync(cancellationToken);
+        var strategy = db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(token => AppendCoreAsync(message, token), cancellationToken);
+
+    }
+
+
+    /// <summary>
+    /// 每次重试使用新上下文更新范围状态并写入事件，保持提交顺序
+    /// </summary>
+    private async Task AppendCoreAsync(EventEnvelope message, CancellationToken cancellationToken)
     {
 
         await EnsureStreamAsync(cancellationToken);

@@ -3,6 +3,8 @@ Description=demo-task-service
 
 [Service]
 WorkingDirectory=/var/appdata/demo/taskservice
+EnvironmentFile=-/var/appdata/demo/config/shared.env
+EnvironmentFile=-/var/appdata/demo/config/task-service.env
 ExecStart=/var/appdata/demo/taskservice/TaskService
 Restart=always
 RestartSec=60

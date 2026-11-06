@@ -2,8 +2,7 @@ using Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Repository;
-using Repository.Database;
+using Logger.Database.Persistence;
 using System.Buffers;
 using System.IO.Pipelines;
 using System.Text;
@@ -14,7 +13,7 @@ namespace Logger.Database.Tasks;
 /// <summary>
 /// 连续消费已落盘的日志文件，提交成功后删除并保留损坏文件
 /// </summary>
-internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
+internal class LogSaveTask(IDbContextFactory<LogDatabaseContext> contextFactory, LogSpoolDirectory spool) : BackgroundService
 {
 
     private static readonly TimeSpan TmpRecoverAge = TimeSpan.FromMinutes(5);
@@ -26,7 +25,7 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
 
-        var basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+        var basePath = spool.DirectoryPath;
         var nextMaintenance = DateTime.MinValue;
         try
         {
@@ -96,8 +95,7 @@ internal class LogSaveTask(IServiceProvider serviceProvider) : BackgroundService
         var (logs, corrupted) = await ReadFileAsync(logPath, cancellationToken);
         if (logs.Count > 0)
         {
-            await using var scope = serviceProvider.CreateAsyncScope();
-            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+            await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
             var ids = logs.Select(log => log.Id).ToList();
             var existingIds = await db.Log.IgnoreQueryFilters().Where(log => ids.Contains(log.Id)).Select(log => log.Id).ToHashSetAsync(cancellationToken);
             var newLogs = logs.Where(log => existingIds.Add(log.Id)).ToList();

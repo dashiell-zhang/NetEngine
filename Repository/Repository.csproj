@@ -28,8 +28,8 @@
 
 
 	<ItemGroup>
-		<ProjectReference Include="..\Infrastructure\IdentifierGenerator\IdentifierGenerator.csproj" />
-		<ProjectReference Include="..\Infrastructure\EventBus.Database\EventBus.Database.csproj" />
+		<ProjectReference Include="..\Infrastructure\Repository.Core\Repository.Core.csproj" />
+		<ProjectReference Include="..\Infrastructure\QueueTask.Database\QueueTask.Database.csproj" />
 	</ItemGroup>
 
 </Project>

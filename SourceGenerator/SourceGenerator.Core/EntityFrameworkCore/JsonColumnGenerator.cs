@@ -18,12 +18,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// <summary>
     /// JsonColumn 特性的完整元数据名称
     /// </summary>
-    private const string JsonColumnAttributeMetadataName = "Repository.Attributes.JsonColumnAttribute";
-
-    /// <summary>
-    /// 仅在包含该 DbContext 的项目中输出生成文件 避免在无关项目里产生空的 g.cs
-    /// </summary>
-    private const string DatabaseContextTypeMetadataName = "Repository.DatabaseContext";
+    private const string JsonColumnAttributeMetadataName = "Repository.Core.Attributes.JsonColumnAttribute";
 
     /// <summary>
     /// DbContext 的完整元数据名称
@@ -60,15 +55,6 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
     /// </summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var isDatabaseProject = context.CompilationProvider.Select(static (compilation, _) =>
-        {
-
-            var databaseContextType = compilation.GetTypeByMetadataName(DatabaseContextTypeMetadataName);
-            return databaseContextType is not null
-                   && SymbolEqualityComparer.Default.Equals(databaseContextType.ContainingAssembly, compilation.Assembly);
-
-        });
-
         var symbols = context.CompilationProvider.Select(static (compilation, _) =>
         {
             return new GeneratorSymbols(
@@ -100,15 +86,12 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
             .Combine(symbols)
             .SelectMany(static (tuple, _) => AnalyzeJsonColumnEntities(tuple.Left, tuple.Right));
 
-        context.RegisterSourceOutput(jsonColumnAnalyses.Collect().Combine(dbContextGroups).Combine(symbols).Combine(isDatabaseProject), static (spc, t) =>
+        context.RegisterSourceOutput(jsonColumnAnalyses.Collect().Combine(dbContextGroups).Combine(symbols), static (spc, t) =>
         {
 
-            if (!t.Right)
-                return;
-
-            var analyses = t.Left.Left.Left;
-            var dbContextEntityGroups = t.Left.Left.Right;
-            var symbols = t.Left.Right;
+            var analyses = t.Left.Left;
+            var dbContextEntityGroups = t.Left.Right;
+            var symbols = t.Right;
 
             if (symbols.ModelBuilder is null || dbContextEntityGroups.IsDefaultOrEmpty)
                 return;
@@ -697,7 +680,7 @@ public sealed class JsonColumnGenerator : IIncrementalGenerator
         typeNameResolver.AppendUsingDirectives(sb);
 
         sb.AppendLine();
-        sb.AppendLine("namespace Repository.Database.Generated;");
+        sb.AppendLine("namespace " + groups[0].DbContextType.ContainingAssembly.Name + ".Database.Generated;");
         sb.AppendLine();
         sb.AppendLine("/// <summary>");
         sb.AppendLine("/// 提供按 DbContext 隔离的 JSON 列模型配置");

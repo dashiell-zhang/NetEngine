@@ -1,7 +1,6 @@
 using DistributedLock.Redis.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -12,7 +11,7 @@ namespace DistributedLock.Redis;
 /// <summary>
 /// 基于 Redis 的分布式锁实现
 /// </summary>
-public class RedisLock : IDistributedLock
+public class RedisLock : IDistributedLock, IAsyncDisposable, IDisposable
 {
 
     /// <summary>
@@ -32,16 +31,20 @@ public class RedisLock : IDistributedLock
     /// </summary>
     private readonly ILogger<RedisLock> logger;
 
+    private int disposed;
+
 
     /// <summary>
     /// 创建 Redis 分布式锁实例
     /// </summary>
-    /// <param name="config">Redis 配置监视器</param>
+    /// <param name="config">当前实例固定的 Redis 配置</param>
     /// <param name="logger">Redis 锁日志记录器</param>
-    public RedisLock(IOptionsMonitor<RedisSetting> config, ILogger<RedisLock>? logger = null)
+    public RedisLock(RedisSetting config, ILogger<RedisLock>? logger = null)
     {
 
-        redisSetting = config.CurrentValue;
+        ArgumentException.ThrowIfNullOrWhiteSpace(config.Configuration);
+        ArgumentException.ThrowIfNullOrWhiteSpace(config.InstanceName);
+        redisSetting = new RedisSetting { Configuration = config.Configuration, InstanceName = config.InstanceName };
         this.logger = logger ?? NullLogger<RedisLock>.Instance;
 
         connectionMultiplexer = new(async () => await ConnectionMultiplexer.ConnectAsync(redisSetting.Configuration));
@@ -326,9 +329,43 @@ public class RedisLock : IDistributedLock
 
 
     /// <summary>
+    /// 释放已创建的 Redis 连接
+    /// </summary>
+    public void Dispose()
+    {
+
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+    }
+
+
+    /// <summary>
+    /// 异步释放当前实例拥有的连接
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+
+        if (Interlocked.Exchange(ref disposed, 1) == 0 && connectionMultiplexer.IsValueCreated)
+        {
+            ConnectionMultiplexer connection;
+            try
+            {
+                connection = await connectionMultiplexer.Value.ConfigureAwait(false);
+            }
+            catch
+            {
+                // 连接建立失败时不存在需要释放的实例
+                return;
+            }
+            await connection.DisposeAsync().ConfigureAwait(false);
+        }
+
+    }
+
+
+    /// <summary>
     /// 创建当前锁持有者的唯一所有权令牌
     /// </summary>
-    /// <returns>唯一所有权令牌</returns>
     private static string CreateLockValue()
     {
 

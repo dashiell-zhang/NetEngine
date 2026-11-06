@@ -1,17 +1,17 @@
 # 数据库读写分离
 
-本文说明 NetEngine 当前的数据库读写分离实现、上下文选择方式、只读连接配置和运行边界。具体运行行为以三个宿主的 `Program.cs` 与 `Repository` 中的上下文实现为准
+本文说明 NetEngine 当前的数据库读写分离实现、上下文选择方式、只读连接配置和运行边界。具体运行行为以三个宿主的 `Program.cs`、各模块上下文和 `Repository.Core` 注册入口为准；多模块接入见 [业务模块](DatabaseModules.md)
 
 ## 当前实现
 
-项目使用两个 EF Core 上下文访问同一套实体模型：
+业务 Repository 使用两个 EF Core 上下文访问本业务的同一套实体模型。日志组件另有独立写读上下文，数据库事件组件只使用自己的写上下文：
 
 | 上下文 | 职责 | 默认行为 |
 |---|---|---|
 | `DatabaseContext` | 主库读写、事务、写入前置查询和强一致查询 | 正常实体跟踪，可执行保存和其他写操作 |
 | `ReadDatabaseContext` | 展示、检索、历史记录和允许最终一致的纯查询 | 全局使用 `QueryTrackingBehavior.NoTracking` |
 
-`ReadDatabaseContext` 是 `DatabaseContext` 的空派生上下文，复用实体集合、映射、软删除过滤器和 JSON 列映射。独立类型的作用是让依赖注入能够为读取连接建立单独的数据源、连接池和 EF Core 选项，并在应用服务中明确表达查询意图
+`ReadDatabaseContext` 是 `DatabaseContext` 的空派生上下文，复用实体集合、映射、软删除过滤器和 JSON 列映射。独立类型的作用是让依赖注入能够为读取上下文配置自己的连接字符串和 EF Core 选项，并在应用服务中明确表达查询意图
 
 以下宿主均已注册两个上下文：
 
@@ -24,7 +24,7 @@
 1. 读取 `ConnectionStrings:dbReadConnection`
 2. 配置为空时回退到 `ConnectionStrings:dbConnection`
 3. 保留连接字符串中原有的 `Options`，并自动追加 `-c default_transaction_read_only=on`
-4. 建立独立的 Npgsql 数据源和 EF Core 上下文池
+4. 使用处理后的连接字符串注册 EF Core 上下文池，数据源和连接池由 Npgsql 提供程序管理
 5. 为读取上下文启用全局不跟踪查询
 
 因此本地开发可以暂时不配置独立读库，已经迁移的查询仍能运行；生产环境应明确配置读副本或只读账号
@@ -55,7 +55,7 @@
 }
 ```
 
-此时两个上下文连接同一主库，但使用彼此独立的数据源和连接池。读取连接仍会自动启用默认只读事务，这种模式适合开发和迁移过渡，不等于已经把查询流量分配到独立服务器
+此时两个上下文连接同一主库，读取连接会自动追加默认只读事务配置，这种模式适合开发和迁移过渡，不等于已经把查询流量分配到独立服务器
 
 ### 单个只读数据库服务器
 
@@ -69,9 +69,9 @@ Host=read-db;Port=5432;Database=webcore;Username=webcore_read;Password=***;Maxim
 
 ### 多个只读数据库服务器
 
-当前项目使用的 Npgsql 10.0.3 中，`NpgsqlDataSourceBuilder.Build()` 会在 `Host` 包含逗号时自动创建多主机数据源。因此三个宿主可以直接通过 `dbReadConnection` 配置多个读取地址，无需先把 `Build()` 改为 `BuildMultiHost()`。该行为可核对 [Npgsql 10.0.3 源码](https://github.com/npgsql/npgsql/blob/v10.0.3/src/Npgsql/NpgsqlSlimDataSourceBuilder.cs#L723-L738)
+三个宿主通过 `UseNpgsql(connectionString)` 配置读取连接，Npgsql 提供程序负责创建数据源。可以直接在 `dbReadConnection` 的 `Host` 中用逗号分隔多个读取地址，配合以下参数选择节点
 
-`BuildMultiHost()` 显式返回 `NpgsqlMultiHostDataSource`，适合需要调用 `WithTargetSession(...)` 等专用 API 的场景；仅使用连接字符串配置节点选择时不要求更换构建方法
+仅通过连接字符串配置多主机和节点选择时，无需在宿主中手动创建数据源
 
 多个物理只读副本可以使用以下形式：
 
@@ -106,16 +106,16 @@ Host=primary-db:5432,read-db-1:5432,read-db-2:5432;Database=webcore;Username=web
 
 ```csharp
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LogManageService(ReadDatabaseContext readDb)
+public class ArticleQueryService(ReadDatabaseContext readDb)
 {
 
     /// <summary>
-    /// 获取日志列表
+    /// 获取文章列表
     /// </summary>
-    public Task<List<LogDto>> GetLogListAsync()
+    public Task<List<ArticleDto>> GetArticleListAsync()
     {
 
-        return readDb.Log.OrderByDescending(c => c.Id).Select(c => new LogDto
+        return readDb.Article.OrderByDescending(c => c.Id).Select(c => new ArticleDto
         {
             Id = c.Id,
             Content = c.Content,
@@ -173,7 +173,8 @@ public class ExampleService(DatabaseContext writeDb, ReadDatabaseContext readDb)
 
 | 场景 | 推荐上下文 | 原因 |
 |---|---|---|
-| 公共展示、普通列表、历史日志、低频字典 | `ReadDatabaseContext` | 短时间旧数据通常只影响展示 |
+| 公共展示、普通列表、低频字典 | `ReadDatabaseContext` | 短时间旧数据通常只影响展示 |
+| 数据库日志列表 | 组件 `LogQueryService` 内部的 `ReadLogDatabaseContext` | 对应日志写库，允许最终一致 |
 | 创建、更新、删除及其前置查询 | `DatabaseContext` | 需要实体跟踪和主库最新状态 |
 | 唯一性、存在性、并发和状态流转判断 | `DatabaseContext` | 副本延迟可能导致重复写入或错误决策 |
 | 登录、权限、密码、Token、支付和订单 | `DatabaseContext` | 属于安全或资金边界 |
@@ -216,24 +217,21 @@ public class ExampleService(DatabaseContext writeDb, ReadDatabaseContext readDb)
 
 ## 健康检查
 
-WebAPI 公共健康检查同时包含：
+WebAPI.Core 只提供健康检查管线。宿主显式注册 `DatabaseHealthCheck<DatabaseContext>` 与 `DatabaseHealthCheck<ReadDatabaseContext>`，分别命名 Business.Write 和 Business.Read。日志及数据库事件使用各自具体上下文检查
 
-- `DatabaseHealthCheck`：通过主库上下文查询 `User` 表
-- `ReadDatabaseHealthCheck`：通过读取上下文查询 `User` 表
-
-检查成功说明对应连接能够查询该表，不代表写权限、所有表结构、复制延迟或分区维护均正常
+检查只说明对应连接可访问，不依赖 User 表，也不代表写权限、表结构、复制延迟或分区维护均正常
 
 `Client.WebAPI` 和 `Admin.WebAPI` 通过 `/healthz` 暴露检查结果。`TaskService` 注册了读取上下文，但当前不是 HTTP 宿主，没有暴露 `/healthz`
 
 使用多主机数据源后，读取健康检查只能证明当前可以从候选主机中获得一个可用连接，不代表每一个只读节点都健康。生产环境还应由数据库或监控平台分别检查节点状态、复制延迟和连接数
 
-## 当前迁移状态
+## 当前查询入口
 
-目前已经迁移到 `ReadDatabaseContext` 的低风险纯查询服务包括：
+以下入口使用对应模型的读取连接：
 
-- `BaseService`
-- `LogManageService`
-- `LlmConversationManageService`
+- `BaseService` 使用业务 `ReadDatabaseContext`
+- 日志通过组件的 `LogQueryService` 使用 `ReadLogDatabaseContext`，独立于业务读库
+- `LlmConversationManageService` 使用业务 `ReadDatabaseContext`
 
 ## 上线检查清单
 

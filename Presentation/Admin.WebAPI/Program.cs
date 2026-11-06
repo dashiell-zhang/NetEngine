@@ -1,3 +1,9 @@
+using global::QueueTask.Database;
+using Repository.Core;
+using Logger.Database.Persistence;
+using EventBus.Database.Persistence;
+using WebAPI.Core.Libraries.HealthCheck;
+using Repository.Core.Extensions;
 using Common;
 using DistributedLock.Redis;
 using EventBus;
@@ -11,7 +17,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using NetEngine.Generated;
 using Npgsql;
 using Repository;
-using Repository.Partitioning;
+using Repository.Core.Partitioning;
 using StackExchange.Redis;
 using WebAPI.Core.Extensions;
 
@@ -41,53 +47,35 @@ public class Program
         var connectionString = builder.Configuration.GetConnectionString("dbConnection");
         // 启动时读取一次写库分区目录，池化上下文和工厂共用只读快照
         var partitionSnapshot = PartitionTableSnapshot.Load(connectionString!);
-        NpgsqlDataSourceBuilder dataSourceBuilder = new(connectionString);
-
-        NpgsqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
-        int maxPoolSize = connectionStringBuilder.MaxPoolSize;
-
-
-        builder.Services.AddDbContextPool<DatabaseContext>((serviceProvider, options) =>
-        {
-            options.UseNpgsql(dataSourceBuilder.Build());
-            options.UsePostgreSqlPartitioning(partitionSnapshot);
-        }, maxPoolSize);
-
-        builder.Services.AddPooledDbContextFactory<DatabaseContext>(options => { }, maxPoolSize);
-
+        builder.Services.AddPostgreSqlContext<DatabaseContext>(connectionString!, snapshot: partitionSnapshot, migrationHistoryTable: DatabaseContext.MigrationHistoryTable);
+        builder.Services.AddQueueTaskDatabase<DatabaseContext>();
         var readConnectionString = builder.Configuration.GetConnectionString("dbReadConnection");
-
-        if (string.IsNullOrWhiteSpace(readConnectionString))
-        {
-            readConnectionString = connectionString;
-        }
-
-        NpgsqlConnectionStringBuilder readConnectionStringBuilder = new(readConnectionString);
-        const string readOnlyOption = "-c default_transaction_read_only=on";
-        readConnectionStringBuilder.Options = string.IsNullOrWhiteSpace(readConnectionStringBuilder.Options) ? readOnlyOption : $"{readConnectionStringBuilder.Options} {readOnlyOption}";
-
-        NpgsqlDataSourceBuilder readDataSourceBuilder = new(readConnectionStringBuilder.ConnectionString);
-        int readMaxPoolSize = readConnectionStringBuilder.MaxPoolSize;
-
-        builder.Services.AddDbContextPool<ReadDatabaseContext>((serviceProvider, options) =>
-        {
-            options.UseNpgsql(readDataSourceBuilder.Build());
-            options.UsePostgreSqlPartitioning(partitionSnapshot);
-            options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-        }, readMaxPoolSize);
-
-        builder.Services.AddPooledDbContextFactory<ReadDatabaseContext>(options => { }, readMaxPoolSize);
+        builder.Services.AddPostgreSqlContext<ReadDatabaseContext>(string.IsNullOrWhiteSpace(readConnectionString) ? connectionString! : readConnectionString, readOnly: true, snapshot: partitionSnapshot, migrationHistoryTable: DatabaseContext.MigrationHistoryTable);
 
 
         builder.AddCommonServices();
+        builder.Services.AddHealthChecks()
+            .AddCheck<DatabaseHealthCheck<DatabaseContext>>("Business.Write")
+            .AddCheck<DatabaseHealthCheck<ReadDatabaseContext>>("Business.Read")
+            .AddCheck<DatabaseHealthCheck<LogDatabaseContext>>("Log.Write")
+            .AddCheck<CacheHealthCheck>("Business.Cache");
 
         builder.Services.BatchRegisterServices();
         builder.Services.BatchRegisterBackgroundServices();
+        builder.Services.AddPartitionMaintenance<DatabaseContext>(builder.Configuration["DatabaseIdentity:Business"] ?? "NetEngine.Business");
 
         builder.Services.AddLlmClientFactory();
 
         //注册Id生成器
-        builder.Services.AddIdentifierGenerator();
+        builder.Services.AddRedisLock("NetEngine.Log", options =>
+        {
+            options.Configuration = builder.Configuration.GetConnectionString("logRedisConnection") ?? builder.Configuration.GetConnectionString("idRedisConnection") ?? builder.Configuration.GetConnectionString("redisConnection")!;
+            options.InstanceName = "NetEngine.Log.Maintenance";
+        });
+        builder.Services.AddIdentifierGenerator(options =>
+        {
+            options.RedisConfiguration = builder.Configuration.GetConnectionString("idRedisConnection") ?? builder.Configuration.GetConnectionString("redisConnection")!;
+        });
 
 
         //注册分布式锁 Redis模式
@@ -101,7 +89,7 @@ public class Program
         //注册缓存服务 Redis模式
         builder.Services.AddStackExchangeRedisCache(options =>
         {
-            options.Configuration = builder.Configuration.GetConnectionString("redisConnection");
+            options.Configuration = builder.Configuration.GetConnectionString("redisConnection") ?? throw new InvalidOperationException("缺少业务 Redis 配置");
             options.InstanceName = "cache";
         });
 
@@ -119,19 +107,18 @@ public class Program
         }).AddSerializerFactory<HybridCacheJsonSerializerFactory>(); ;
 
 
-        //注册 Redis 驱动
-        builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redisConnection")!));
-
 
         // 注册各进程独立消费的广播事件，默认后端为 Redis Streams
         var eventBusSection = builder.Configuration.GetRequiredSection("EventBus");
         switch (eventBusSection.GetValue<EventBusProvider>("Provider"))
         {
             case EventBusProvider.Redis:
-                builder.Services.AddRedisEventBus(options => eventBusSection.Bind(options));
+                builder.Services.AddHealthChecks().AddCheck<RedisEventHealthCheck>("EventBus");
+                builder.Services.AddRedisEventBus(builder.Configuration.GetConnectionString("eventBusRedisConnection") ?? builder.Configuration.GetConnectionString("redisConnection")!, options => eventBusSection.Bind(options));
                 break;
             case EventBusProvider.Database:
-                builder.Services.AddDatabaseEventBus<DatabaseContext>(options => eventBusSection.Bind(options));
+                builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck<EventBusDatabaseContext>>("EventBus");
+                builder.Services.AddDatabaseEventBus(builder.Configuration.GetConnectionString("eventBusConnection") ?? connectionString!, options => eventBusSection.Bind(options));
                 break;
             default:
                 throw new InvalidOperationException("不支持的 EventBus.Provider");
@@ -179,7 +166,11 @@ public class Program
         #region 注册日志服务
 
         //注册数据库日志服务
-        builder.Logging.AddDatabaseLogger(options => { });
+        var logConnection = builder.Configuration.GetConnectionString("logConnection") ?? connectionString!;
+        builder.Services.AddDatabaseLogQuery(logConnection, builder.Configuration.GetConnectionString("logReadConnection"));
+        builder.Services.AddScoped<Application.Service.Basic.LogManageService>();
+        builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck<ReadLogDatabaseContext>>("Log.Read");
+        builder.Logging.AddDatabaseLogger(logConnection, builder.Configuration["DatabaseIdentity:Log"] ?? "NetEngine.Log", options => builder.Configuration.GetSection("DatabaseLogger").Bind(options), partitionLockKey: "NetEngine.Log");
 
         //注册本地文件日志服务
         //builder.Logging.AddLocalFileLogger(options => { });

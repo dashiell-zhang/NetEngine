@@ -1,124 +1,49 @@
-using Common;
-using IdentifierGenerator;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Repository;
-using Repository.Database;
-using Repository.Database.Enums;
-using SourceGenerator.Runtime.Attributes;
+using global::QueueTask.Database;
 
 namespace TaskService.Core.QueueTask;
 
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class QueueTaskService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService)
+/// <summary>
+/// 为当前 Worker 的执行作用域提供入队和同库子任务关联
+/// </summary>
+public class QueueTaskService(IQueueTaskProducer producer)
 {
 
     /// <summary>
-    /// 当前TaskId
+    /// 当前执行任务标识，仅用于所选任务模块
     /// </summary>
     public long? CurrentTaskId { get; set; }
 
 
     /// <summary>
-    /// 创建队列
+    /// 在选定模块的业务事务中创建任务
     /// </summary>
-    /// <param name="name"></param>
-    /// <param name="parameter"></param>
-    /// <param name="planTime"></param>
-    /// <param name="callbackName"></param>
-    /// <param name="callbackParameter"></param>
-    /// <param name="isChild"></param>
-    /// <remarks>需要外部开启事务</remarks>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    public bool Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
+    public long Create(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
     {
-        if (db.Database.CurrentTransaction != null)
-        {
-            Repository.Database.QueueTask queueTask = new()
-            {
-                Id = idService.GetId(),
-                Status = QueueTaskStatus.Pending,
-                Name = name,
-                Parameter = parameter != null ? JsonHelper.ObjectToJson(parameter) : null,
-                PlanTime = planTime,
-                CallbackName = callbackName,
-                CallbackParameter = callbackName != null ? callbackParameter != null ? JsonHelper.ObjectToJson(callbackParameter) : null : null,
-            };
 
-            if (isChild)
-            {
-                if (CurrentTaskId != null)
-                {
-                    queueTask.ParentTaskId = CurrentTaskId;
-                }
-                else
-                {
-                    throw new Exception("CurrentTaskId 无有效信息，无法创建子队列");
-                }
-            }
+        return producer.Create(name, parameter, planTime, callbackName, callbackParameter, GetParentId(isChild));
 
-            db.QueueTask.Add(queueTask);
-            return true;
-        }
-        else
-        {
-            throw new Exception("请开启一个显式的事务");
-        }
     }
-
 
 
     /// <summary>
-    /// 单独创建队列
+    /// 在选定模块中独立保存任务，失败向外抛出
     /// </summary>
-    /// <param name="name"></param>
-    /// <param name="parameter"></param>
-    /// <param name="planTime"></param>
-    /// <param name="callbackName"></param>
-    /// <param name="callbackParameter"></param>
-    /// <param name="isChild"></param>
-    /// <returns></returns>
-    public async Task<bool> CreateSingleAsync(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
+    public Task<long> CreateSingleAsync(string name, object? parameter, DateTimeOffset? planTime = null, string? callbackName = null, object? callbackParameter = null, bool isChild = false)
     {
-        try
-        {
-            await using var db = await dbFactory.CreateDbContextAsync();
 
-            Repository.Database.QueueTask queueTask = new()
-            {
-                Id = idService.GetId(),
-                Status = QueueTaskStatus.Pending,
-                Name = name,
-                Parameter = parameter != null ? JsonHelper.ObjectToJson(parameter) : null,
-                PlanTime = planTime,
-                CallbackName = callbackName,
-                CallbackParameter = callbackName != null ? callbackParameter != null ? JsonHelper.ObjectToJson(callbackParameter) : null : null
-            };
+        return producer.CreateSingleAsync(name, parameter, planTime, callbackName, callbackParameter, GetParentId(isChild));
 
-            if (isChild)
-            {
-                if (CurrentTaskId != null)
-                {
-                    queueTask.ParentTaskId = CurrentTaskId;
-                }
-                else
-                {
-                    throw new Exception("CurrentTaskId 无有效信息，无法创建子队列");
-                }
-            }
-
-            db.QueueTask.Add(queueTask);
-
-            await db.SaveChangesAsync();
-
-            return true;
-        }
-        catch
-        {
-            throw new Exception("创建队列异常");
-        }
     }
 
+
+    /// <summary>
+    /// 仅在明确创建子任务且当前存在执行身份时关联父任务
+    /// </summary>
+    private long? GetParentId(bool isChild)
+    {
+
+        return isChild ? CurrentTaskId ?? throw new InvalidOperationException("当前没有执行中的父任务") : null;
+
+    }
 
 }

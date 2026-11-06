@@ -34,9 +34,11 @@ app.MapHealthChecks("/healthz");
 
 | 配置节 | 用途 |
 |---|---|
-| `ConnectionStrings:dbConnection` | 主数据库连接字符串 |
-| `ConnectionStrings:dbReadConnection` | 只读数据库连接字符串；为空时回退到主库；宿主构建读取连接时会自动追加 `Options=-c default_transaction_read_only=on` |
-| `ConnectionStrings:redisConnection` | 分布式缓存、Redis 锁和 Redis 客户端连接字符串 |
+| `ConnectionStrings:dbConnection` | 当前业务主数据库连接字符串 |
+| `ConnectionStrings:dbReadConnection` | 当前业务只读连接字符串；为空时回退到业务主库；宿主构建读取连接时会自动追加 `Options=-c default_transaction_read_only=on` |
+| `ConnectionStrings:redisConnection` | 宿主默认分布式缓存和 Redis 锁连接字符串 |
+| 组件连接及 `DatabaseIdentity` | 日志写读库、事件目标、共享 ID Redis 和维护锁配置，完整键名及默认目标见 [业务模块接入](DatabaseModules.md#redis-与共享资源) |
+| `DatabaseLogger` | 数据库日志的 Project、保留天数与缓冲设置，见 [数据库日志](DatabaseLogger.md) |
 | `EventBus` | 进程广播后端、项目环境范围和历史保留时间，详见 [进程广播事件](EventBus.md) |
 | `Cors:AllowedOriginList` | 允许跨域访问的来源列表 |
 | `JWT` | Token 签发和验证配置 |
@@ -150,8 +152,8 @@ WebAPI 启动后，Debug 构建会在控制台输出 Swagger 地址
 当前检查项包括：
 
 - `CacheHealthCheck`：通过 `IDistributedCache` 验证缓存写入
-- `DatabaseHealthCheck`：通过 `DatabaseContext` 查询 `User` 表，验证主库连接和该表的可查询性
-- `ReadDatabaseHealthCheck`：通过 `ReadDatabaseContext` 查询 `User` 表，验证读取连接和该表的可查询性
+- 宿主显式注册 `DatabaseHealthCheck<TContext>`，分别命名为 `Business.Write`、`Business.Read`、`Log.Write`，管理端另含 `Log.Read`，事件后端均以 `EventBus` 命名：Database 模式检查其数据库连接，Redis 模式通过 `RedisEventHealthCheck` 检查实际事件 Redis 连接
+- 数据库检查只验证目标连接可访问性，不依赖 User 等业务表；WebAPI.Core 只注册检查管线和发布器，不默认加载业务上下文
 
 这些检查不验证全部表结构、主库写权限、复制延迟或分区是否齐全，不能代替对应业务接口的验证
 
@@ -160,7 +162,7 @@ WebAPI 启动后，Debug 构建会在控制台输出 Swagger 地址
 ## 新增或调整 WebAPI 宿主检查清单
 
 - 调用 `SetKestrelConfig()`、`AddCommonServices()` 与 `UseCommonMiddleware()`
-- 注册数据库、缓存和 `IPermissionService` 等公共能力需要的依赖
+- 按宿主实际用途注册数据库、缓存、资源健康检查和 `IPermissionService`；只使用 HTTP 公共能力不要求业务数据库
 - 调用 `BatchRegisterServices()` 与 `BatchRegisterBackgroundServices()` 保持生成式注册链路
 - 映射 Controller 和 `/healthz`
 - 同时检查 `appsettings.json` 与 `appsettings.Development.json`

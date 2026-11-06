@@ -107,7 +107,8 @@ internal sealed class GeneratedEntityTypeNameResolver
             if (rootNameCounts[GetRootTypeKey(entityType)] > 1
                 || ReservedTypeNames.Contains(rootType.Name, StringComparer.Ordinal)
                 || entityType.IsGenericType
-                || entityType.ContainingNamespace.IsGlobalNamespace)
+                || entityType.ContainingNamespace.IsGlobalNamespace
+                || entityType.ContainingAssembly.GlobalNamespace.GetMembers(rootType.Name).OfType<INamespaceSymbol>().Any())
             {
                 aliasedTypes.Add(entityType);
             }

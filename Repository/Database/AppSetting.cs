@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Repository.Bases;
+using Repository.Core.Bases;
 
 namespace Repository.Database;
 

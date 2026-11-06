@@ -66,6 +66,11 @@
 | WebAPI 过滤器 | [WebAPIFilters.md](Docs/WebAPIFilters.md) |
 | 服务注册、代理或 EF Core 生成能力 | [SourceGenerator.md](Docs/SourceGenerator.md) |
 | 数据库上下文、读写分离或读库配置 | [DatabaseReadWriteSeparation.md](Docs/DatabaseReadWriteSeparation.md) |
+| 多业务库、组件存储归属或本地模块调用 | [DatabaseModules.md](Docs/DatabaseModules.md) |
+| 数据库工具、设计时工厂或迁移入口 | [RepositoryTool.md](Docs/RepositoryTool.md) |
+| 数据库日志写入、查询或清理 | [DatabaseLogger.md](Docs/DatabaseLogger.md) |
+| 事件广播或后端接入 | [EventBus.md](Docs/EventBus.md) |
+| ID 生成、节点分配或租约 | [IdentifierGenerator.md](Docs/IdentifierGenerator.md) |
 | PostgreSQL 分区表、分区声明或维护 | [PostgreSqlPartitionTable.md](Docs/PostgreSqlPartitionTable.md) |
 | 定时任务或队列任务 | [TaskService.md](Docs/TaskService.md) |
 | 分布式锁或并发信号量 | [DistributedLock.md](Docs/DistributedLock.md) |
@@ -79,7 +84,9 @@
 | `Application/Application.Service` | 通用业务逻辑与业务编排 |
 | `Application/Application.Service.LLM` | LLM 应用服务 |
 | `Application/Application.Service.SMS` | 短信应用服务 |
-| `Repository` | EF Core 实体、上下文、映射、拦截器与持久化逻辑 |
+| `Repository` | 当前业务模型、上下文与本地任务映射 |
+| `Infrastructure/Repository.Core` | 共用 EF/PostgreSQL 机制、基础实体与分区支持 |
+| `Infrastructure/QueueTask.Database` | 绑定各业务上下文的队列与任务配置存储 |
 | `Repository.Tool` | EF Core 迁移与数据库工具宿主 |
 | `Infrastructure` | 缓存、锁、日志、短信、文件存储、LLM、ID 生成等基础设施 |
 | `ProjectCore` | `WebAPI.Core` 与 `TaskService.Core` 公共宿主能力 |
@@ -95,7 +102,7 @@
 - `Presentation` 负责宿主组装、请求接入、鉴权、参数适配、页面交互与结果返回，业务逻辑通过 Application 调用
 - 禁止在 Controller、Razor 页面、API 或任务宿主中编写核心业务判断和数据库访问逻辑
 - 宿主可以注册数据库上下文和基础设施服务，依赖注入组装不等于业务数据访问
-- `ProjectCore` 承载多个宿主共用的启动和运行能力，不承载具体业务逻辑
+- `ProjectCore` 承载多个宿主共用的启动和运行能力，不承载具体业务逻辑，不直接依赖业务 Repository 或通过具体 Application.Service 间接绑定业务库；模块组合由 Presentation 完成
 - `Admin.App` 为 Blazor WebAssembly 项目，复用 `Application.Model` 契约；保持现有组件风格与结构，不主动大规模重写界面
 - `Admin.WebAPI` 承担管理端 API 与静态资源相关宿主职责
 
@@ -108,7 +115,7 @@
 
 ### 4.3 Repository 与 Infrastructure
 
-- 实体、数据库上下文、EF Core 映射、拦截器与持久化能力放在 `Repository`，不要在无关层编写数据库方言代码
+- 业务模型、上下文和业务持久化放在模块 `Repository`；日志和事件组件拥有自己的内部存储，队列组件拥有可映射到业务库的公共模型；共用数据库机制放在 `Infrastructure/Repository.Core`，不要在无关层编写数据库方言代码
 - 第三方平台与外部服务接入放在 `Infrastructure`，优先沿用同类能力已有的抽象与厂商实现组织方式
 - 不把具体厂商参数、协议或基础设施实现细节泄漏到应用层 DTO、Controller 或页面
 
@@ -116,6 +123,7 @@
 
 - 自动引用规则位于 `Directory.Build.props`，生成文件输出路径位于 `Directory.Build.targets`
 - 普通业务项目隐式引用 `SourceGenerator.Core` 与 `SourceGenerator.Runtime`；`Infrastructure`、`Deployment` 和生成器自身不参与这套隐式引用
+- `Logger.Database`、`EventBus.Database` 为生成自身 EF 映射显式引用 `SourceGenerator.Core` Analyzer；这不改变 Infrastructure 的默认排除规则
 - 服务注册优先使用特性与 `BatchRegisterServices()`，后台服务注册优先使用 `BatchRegisterBackgroundServices()`，不重复手写已覆盖的注册或项目引用
 - 基础设施和框架组件继续使用已有扩展注册方式，不为统一形式强行套用业务服务生成规则
 - 代理拦截由 `SourceGenerator.Runtime` 支持；普通类中需要拦截的方法通常保留 `public virtual`，通过 DI 获取服务，接口代理的具体规则见专题文档
@@ -145,7 +153,7 @@
 
 ### 5.2 数据库与 EF Core
 
-- 默认提供程序为 PostgreSQL，读写上下文和相关拦截器位于 `Repository`
+- 默认提供程序为 PostgreSQL，各业务与独立组件拥有自己的上下文，共用机制位于 `Repository.Core`；读上下文复用对应写模型
 - 结构调整需同步检查实体、上下文、映射、拦截器、生成能力及调用点，读写分离调整需核对读库配置和查询路径
 - 默认只修改代码；未经用户明确要求，不生成、不执行 EF Migration，不以验证为由更新数据库结构
 - 用户要求生成 Migration 不等于授权执行 Migration，迁移工具入口优先检查 `Repository.Tool`

@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Repository;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -253,10 +252,7 @@ public static class WebApplicationBuilderExtension
 
 
         #region 注册健康检测服务
-        builder.Services.AddHealthChecks()
-            .AddCheck<CacheHealthCheck>("CacheHealthCheck")
-            .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck")
-            .AddCheck<ReadDatabaseHealthCheck>("ReadDatabaseHealthCheck");
+        builder.Services.AddHealthChecks();
 
 
         builder.Services.Configure<HealthCheckPublisherOptions>(options =>

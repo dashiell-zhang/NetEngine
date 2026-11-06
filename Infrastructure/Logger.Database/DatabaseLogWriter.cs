@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Repository.Database;
+using Logger.Database.Persistence;
 using System.Buffers;
 using System.Globalization;
 using System.Text;
@@ -17,11 +17,12 @@ namespace Logger.Database;
 /// <summary>
 /// 非阻塞接收日志并在后台批量落盘，满载时优先使用重要日志预留缓冲
 /// </summary>
-public sealed class DatabaseLogWriter : BackgroundService
+internal sealed class DatabaseLogWriter : BackgroundService
 {
 
     private static readonly byte[] newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
     private readonly IServiceProvider serviceProvider;
+    private readonly string spoolDirectory;
     private readonly Channel<BufferedLog> channel;
     private readonly Channel<BufferedLog> importantChannel;
     private readonly long maxBufferedBytes;
@@ -39,11 +40,12 @@ public sealed class DatabaseLogWriter : BackgroundService
     /// <summary>
     /// 创建共用队列和重要日志预留队列并固定本次运行的缓冲配置
     /// </summary>
-    public DatabaseLogWriter(IOptions<LoggerSetting> options, IServiceProvider serviceProvider)
+    public DatabaseLogWriter(IOptions<LoggerSetting> options, IServiceProvider serviceProvider, LogSpoolDirectory spool)
     {
 
         var settings = options.Value;
         this.serviceProvider = serviceProvider;
+        spoolDirectory = spool.DirectoryPath;
         channel = CreateChannel(settings.QueueCapacity);
         importantChannel = CreateChannel(settings.ImportantQueueCapacity);
         maxBufferedBytes = settings.MaxBufferedBytes;
@@ -136,7 +138,7 @@ public sealed class DatabaseLogWriter : BackgroundService
 
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, abort.Token);
         var token = cancellation.Token;
-        var basePath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+        var basePath = spoolDirectory;
         var buffer = new List<BufferedLog>(batchSize);
         using var writer = new Utf8JsonWriter(utf8Buffer, new JsonWriterOptions { Encoder = JsonHelper.SerializeOpts.Encoder, Indented = JsonHelper.SerializeOpts.WriteIndented });
         using var timer = new PeriodicTimer(flushInterval);

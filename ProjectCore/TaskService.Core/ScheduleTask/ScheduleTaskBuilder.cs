@@ -1,17 +1,28 @@
-using Repository.Database;
+using global::QueueTask.Database.Models;
+using Common;
 using System.Reflection;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
 namespace TaskService.Core.ScheduleTask;
+/// <summary>
+/// 维护选定任务模块的定时任务定义和可动态增加的运行实例
+/// </summary>
 public class ScheduleTaskBuilder
 {
 
-    public static readonly Dictionary<string, ScheduleTaskInfo> scheduleMethodList = [];
+    /// <summary>
+    /// 当前模块的运行实例，支持配置同步与调度并发访问
+    /// </summary>
+    public static readonly ConcurrentDictionary<string, ScheduleTaskInfo> scheduleMethodList = [];
 
 
     public static readonly Dictionary<string, ScheduleTaskInfo> argsScheduleMethodList = [];
 
 
+    /// <summary>
+    /// 从明确选定的类型建立定时定义和已有带参实例
+    /// </summary>
     public static void Builder(Type cls, List<TaskSetting> taskSettings)
     {
         var taskList = cls.GetMethods().Where(t => t.GetCustomAttributes(typeof(ScheduleTaskAttribute), false).Length > 0).ToList();
@@ -31,14 +42,16 @@ public class ScheduleTaskBuilder
 
             bool skipIfRunning = (bool?)method.CustomAttributes.Where(t => t.AttributeType == typeof(ScheduleTaskAttribute)).FirstOrDefault()!.NamedArguments.Where(t => t.MemberName == "SkipIfRunning").Select(t => t.TypedValue.Value).FirstOrDefault() ?? false;
 
+            CronHelper.Validate(cron);
             var parameterType = method.GetParameters().FirstOrDefault()?.ParameterType;
 
             if (parameterType == null)
             {
-                scheduleMethodList.Add(name, new ScheduleTaskInfo
+                AddInstance(name, new ScheduleTaskInfo
                 {
                     Name = name,
                     Cron = cron,
+                    DefaultCron = cron,
                     Method = method,
                     SkipIfRunning = skipIfRunning
                 });
@@ -50,6 +63,7 @@ public class ScheduleTaskBuilder
                 {
                     Name = name,
                     Cron = cron,
+                    DefaultCron = cron,
                     Method = method,
                     SkipIfRunning = skipIfRunning
                 });
@@ -60,10 +74,11 @@ public class ScheduleTaskBuilder
                 {
                     string taskName = name + ":" + item.Id;
 
-                    scheduleMethodList.Add(taskName, new ScheduleTaskInfo
+                    AddInstance(taskName, new ScheduleTaskInfo
                     {
                         Name = taskName,
-                        Cron = item.Cron ?? cron,
+                        Cron = string.IsNullOrWhiteSpace(item.Cron) ? cron : item.Cron,
+                        DefaultCron = cron,
                         Method = method,
                         Parameter = item.Parameter,
                         SkipIfRunning = skipIfRunning
@@ -73,6 +88,20 @@ public class ScheduleTaskBuilder
             }
 
         }
+    }
+
+
+    /// <summary>
+    /// 初始化时拒绝重复名称，避免静默覆盖已发现的任务
+    /// </summary>
+    private static void AddInstance(string name, ScheduleTaskInfo info)
+    {
+
+        if (!scheduleMethodList.TryAdd(name, info))
+        {
+            throw new InvalidOperationException($"重复的定时任务名称 {name}");
+        }
+
     }
 
 }

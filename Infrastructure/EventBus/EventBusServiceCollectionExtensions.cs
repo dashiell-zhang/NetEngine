@@ -13,7 +13,7 @@ public static class EventBusServiceCollectionExtensions
     /// <summary>
     /// 在业务服务注册完成后配置唯一的广播后端
     /// </summary>
-    public static IServiceCollection AddEventBus<TTransport>(this IServiceCollection services, Action<EventBusOptions>? configure = null) where TTransport : class, IEventTransport
+    public static IServiceCollection AddEventBus<TTransport>(this IServiceCollection services, Action<EventBusOptions>? configure = null, Func<IServiceProvider, TTransport>? transportFactory = null) where TTransport : class, IEventTransport
     {
 
         if (services.Any(t => t.ServiceType == typeof(IEventTransport)))
@@ -34,7 +34,14 @@ public static class EventBusServiceCollectionExtensions
 
         services.AddSingleton(new EventListenerRegistry(services));
         services.TryAddSingleton(TimeProvider.System);
-        services.AddSingleton<IEventTransport, TTransport>();
+        if (transportFactory is null)
+        {
+            services.AddSingleton<IEventTransport, TTransport>();
+        }
+        else
+        {
+            services.AddSingleton<IEventTransport>(provider => transportFactory(provider));
+        }
         services.AddSingleton<IEventPublisher, EventPublisher>();
         services.AddSingleton<IHostedService, EventBusHostedService>();
         return services;

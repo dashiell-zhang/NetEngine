@@ -37,7 +37,21 @@ services.AddRedisLock(options =>
 services.AddInMemoryLock();
 ```
 
-同一个宿主只注册一种 `IDistributedLock` 实现
+一个宿主注册一套默认业务锁和一套默认分布式缓存。缓存使用标准注册入口：
+
+```csharp
+services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("redisConnection")!;
+    options.InstanceName = "cache";
+});
+```
+
+应用服务直接注入 `IDistributedLock` 和 `IDistributedCache`，自动代理与 HTTP 过滤器使用同一套默认服务。不同业务通过具体 key 区分，例如 `Order:Submit:123`、`User:Profile:456`；需要协调同一资源的操作应使用相同 key。接入第二个业务数据库不需要再次注册业务缓存或锁
+
+不同宿主可通过 Redis 地址、库编号和前缀隔离业务缓存及锁；需要共享缓存或竞争同一把锁的宿主使用一致配置。默认锁重复注册会报错，默认缓存由宿主集中配置一次
+
+共享日志分区维护使用专用命名锁，通过 `AddRedisLock(serviceKey, options => ...)` 注册确定的协调目标，避免业务 Redis 隔离后共享资源失去协调。业务服务无需声明或选择这些标识。完整配置关系见 [业务模块](DatabaseModules.md)
 
 ## 等待获取锁
 

@@ -17,6 +17,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace Application.Service;
+/// <summary>
+/// 提供支付请求与支付状态处理能力
+/// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
 public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock)
 {

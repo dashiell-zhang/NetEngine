@@ -1,20 +1,24 @@
-using IdentifierGenerator;
-using Microsoft.EntityFrameworkCore;
+using global::QueueTask.Database;
+using global::QueueTask.Database.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Repository;
-using Repository.Database;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
 
 namespace TaskService.Core;
 
-public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IdService idService) : BackgroundService
+/// <summary>
+/// 同步所选模块的任务定义和运行配置，Debug 仍由宿主交互启用
+/// </summary>
+internal class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IQueueTaskStore store) : BackgroundService
 {
     private const string ArgsDefaultParameter = "__args_default__";
     private readonly ILogger logger = logger;
 
+    /// <summary>
+    /// 初始化完成后按固定周期同步，包括只有带参定义的模块
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
 
@@ -31,7 +35,7 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
             return;
         }
 
-        if ((QueueTaskBuilder.queueMethodList.Count != 0 || ScheduleTaskBuilder.scheduleMethodList.Count != 0) && isDebug == false)
+        if ((QueueTaskBuilder.queueMethodList.Count != 0 || ScheduleTaskBuilder.scheduleMethodList.Count != 0 || ScheduleTaskBuilder.argsScheduleMethodList.Count != 0) && isDebug == false)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -49,12 +53,13 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
         }
     }
 
+    /// <summary>
+    /// 读取配置更新运行实例，并在并发保护下补充缺少的定义
+    /// </summary>
     private async Task SyncTaskSetting()
     {
-        using var scope = serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-        var taskSettings = await db.TaskSetting.ToListAsync();
+        var taskSettings = await store.GetSettingsAsync();
+        List<TaskSetting> missingSettings = [];
 
         var queueTaskSettings = taskSettings.Where(t => t.Category == "QueueTask" && QueueTaskBuilder.queueMethodList.ContainsKey(t.Name)).ToList();
 
@@ -66,20 +71,16 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
             var task = queueTaskSettings.FirstOrDefault(t => t.Name == item.Key);
             if (task != null)
             {
-                if (task.Semaphore != null && task.Semaphore != item.Value.Semaphore)
-                {
-                    item.Value.Semaphore = task.Semaphore.Value;
-                }
+                item.Value.Semaphore = task.Semaphore ?? item.Value.DefaultSemaphore;
                 item.Value.IsEnable = task.IsEnable;
             }
             else
             {
-                db.TaskSetting.Add(new TaskSetting
+                missingSettings.Add(new TaskSetting
                 {
-                    Id = idService.GetId(),
                     Category = "QueueTask",
                     Name = item.Key,
-                    Semaphore = item.Value.Semaphore
+                    Semaphore = item.Value.DefaultSemaphore
                 });
             }
         }
@@ -93,20 +94,16 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
                 var task = scheduleTaskSettings.FirstOrDefault(t => t.Name == item.Key);
                 if (task != null)
                 {
-                    if (task.Cron != null && task.Cron != item.Value.Cron)
-                    {
-                        item.Value.Cron = task.Cron;
-                    }
+                    item.Value.Cron = string.IsNullOrWhiteSpace(task.Cron) ? item.Value.DefaultCron : task.Cron;
                     item.Value.IsEnable = task.IsEnable;
                 }
                 else
                 {
-                    db.TaskSetting.Add(new TaskSetting
+                    missingSettings.Add(new TaskSetting
                     {
-                        Id = idService.GetId(),
                         Category = "ScheduleTask",
                         Name = item.Key,
-                        Cron = item.Value.Cron
+                        Cron = item.Value.DefaultCron
                     });
                 }
             }
@@ -118,10 +115,7 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
                 {
                     item.Value.Parameter = task.Parameter;
 
-                    if (task.Cron != null && task.Cron != item.Value.Cron)
-                    {
-                        item.Value.Cron = task.Cron;
-                    }
+                    item.Value.Cron = string.IsNullOrWhiteSpace(task.Cron) ? item.Value.DefaultCron : task.Cron;
                     item.Value.IsEnable = task.IsEnable;
                 }
                 else
@@ -135,18 +129,17 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
         //添加带参任务默认值到任务配置表中
         foreach (var item in ScheduleTaskBuilder.argsScheduleMethodList)
         {
-            var isHave = await db.TaskSetting
+            var isHave = taskSettings
                 .Where(t => t.Category == "ScheduleTask" && t.Name == item.Key && t.Parameter == ArgsDefaultParameter)
-                .AnyAsync();
+                .Any();
 
             if (!isHave)
             {
-                db.TaskSetting.Add(new TaskSetting
+                missingSettings.Add(new TaskSetting
                 {
-                    Id = idService.GetId(),
                     Category = "ScheduleTask",
                     Name = item.Key,
-                    Cron = item.Value.Cron,
+                    Cron = item.Value.DefaultCron,
                     Parameter = ArgsDefaultParameter
                 });
             }
@@ -167,13 +160,15 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
 
                 if (!ScheduleTaskBuilder.scheduleMethodList.ContainsKey(taskName))
                 {
-                    ScheduleTaskBuilder.scheduleMethodList.Add(taskName, new ScheduleTaskInfo
+                    ScheduleTaskBuilder.scheduleMethodList.TryAdd(taskName, new ScheduleTaskInfo
                     {
                         Name = taskName,
-                        Cron = item.Cron ?? scheduleTaskInfo.Cron,
+                        Cron = string.IsNullOrWhiteSpace(item.Cron) ? scheduleTaskInfo.DefaultCron : item.Cron,
+                        DefaultCron = scheduleTaskInfo.DefaultCron,
                         Method = scheduleTaskInfo.Method,
                         Parameter = item.Parameter,
                         IsEnable = item.IsEnable,
+                        SkipIfRunning = scheduleTaskInfo.SkipIfRunning,
                     });
                 }
 
@@ -181,6 +176,6 @@ public class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, 
             }
         }
 
-        await db.SaveChangesAsync();
+        await store.EnsureSettingsAsync(missingSettings);
     }
 }

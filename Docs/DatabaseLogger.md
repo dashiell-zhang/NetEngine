@@ -16,10 +16,18 @@
 
 ## 配置
 
-沿用现有 Options 注册入口，无需新增宿主配置节：
+写入与查询分别注册。写入前按 [ID 生成器](IdentifierGenerator.md) 注册宿主共享 ID 服务，并通过 [数据库工具](RepositoryTool.md) 准备日志模型与表。日志分区维护使用明确的共享锁；写入注册会加载目标分区快照，数据库不可访问时启动失败：
 
 ```csharp
-builder.Logging.AddDatabaseLogger(options =>
+using DistributedLock.Redis;
+using Logger.Database;
+
+builder.Services.AddRedisLock("NetEngine.Log", options =>
+{
+    options.Configuration = sharedLogRedisConnection;
+    options.InstanceName = "NetEngine.Log.Maintenance";
+});
+builder.Logging.AddDatabaseLogger(logWriteConnection, "Logs.Production", options =>
 {
     options.QueueCapacity = 8192;
     options.MaxBufferedBytes = 48 * 1024 * 1024;
@@ -27,18 +35,20 @@ builder.Logging.AddDatabaseLogger(options =>
     options.ImportantMaxBufferedBytes = 16 * 1024 * 1024;
     options.BatchSize = 1000;
     options.FlushInterval = TimeSpan.FromSeconds(1);
-});
+}, partitionLockKey: "NetEngine.Log");
 ```
 
-上面列出默认值，三个宿主原有的空配置委托仍可直接使用。容量、字节预算、批量大小必须为正数，间隔必须介于 1 毫秒与 4294967294 毫秒之间；启动时校验。配置在服务创建时固定，修改后需要重启
+三个模板宿主在注册回调中通过 `builder.Configuration.GetSection("DatabaseLogger").Bind(options)` 绑定配置；组件自身不自动读取配置节。上面直接赋值的示例列出缓冲默认值。省略 `partitionLockKey` 时解析默认 `IDistributedLock`；共享日志库应显式选择共同维护锁，完整关系见 [业务模块接入](DatabaseModules.md#redis-与共享资源)
 
-`Project` 保持默认入口程序集名，`SaveDays` 默认 14，只允许正数或 -1，错误值会阻止宿主启动；设为 -1 时不执行数据库日志清理。极大保留天数以最早日期为删除边界，避免日期计算溢出。清理失败通过 cleanup 指标及限频诊断报告，正常停机取消不算失败。容量应结合日志大小、峰值持续时间和进程内存预算调整
+容量、字节预算、批量大小必须为正数，间隔必须介于 1 毫秒与 4294967294 毫秒之间；启动时校验。配置在服务创建时固定，修改后需要重启
+
+`Project` 保持默认入口程序集名，`SaveDays` 默认 14，只允许正数或 -1，错误值会阻止宿主启动；设为 -1 时不执行数据库日志清理。清理仅针对本 Project 中未软删除的过期记录，遵循模型的软删除过滤器；同 Project 副本须使用相同保留策略，不通过删除分区绕过 Project 范围。极大保留天数以最早日期为删除边界，避免日期计算溢出。清理失败通过 cleanup 指标及限频诊断报告，正常停机取消不算失败。容量应结合日志大小、峰值持续时间和进程内存预算调整
 
 ## 本地落盘与恢复
 
-后台达到 `BatchSize` 或 `FlushInterval` 时写出批次，目录为进程工作目录下的 `Logs`。先写 `batch-*.log.tmp`，关闭文件后重命名为 `batch-*.log`，入库任务只消费后者
+后台达到 `BatchSize` 或 `FlushInterval` 时写出批次，目录为进程工作目录下的 `Logs/Database/<目标哈希>`。目标由稳定数据库标识、Project、主机、端口、库名、账号和搜索路径相关配置确定；密码不参与目录标识，密码轮换不改变积压位置。先写 `batch-*.log.tmp`，关闭文件后重命名为 `batch-*.log`，入库任务只消费后者
 
-入库扫描、临时文件恢复和积压统计统一按完整文件名识别，只扫描 `Logs` 顶层：
+入库扫描、临时文件恢复和积压统计统一按完整文件名识别，只扫描本目标哈希目录的顶层：
 
 - 正常批次：`batch-yyyyMMddHHmmssfff-<32 位无连字符 GUID>.log`，时间戳按固定文化的 UTC 公历生成并校验有效日期
 - 恢复批次：`batch-recovered-<32 位无连字符 GUID>.log`
@@ -67,6 +77,20 @@ builder.Logging.AddDatabaseLogger(options =>
 - 对于含损坏行的文件，先保存其中有效记录，再将整个原文件改名为 `.log.rejected`，保留原文供人工核对；异常文件不自动清理
 - 数据库提交成功但文件删除失败时，下轮通过去重再次处理
 
+## 独立查询
+
+```csharp
+services.AddDatabaseLogQuery(logWriteConnection, logReadConnection);
+```
+
+查询使用组件的 LogQueryService 和 ReadLogDatabaseContext。未配置日志读连接时只回退对应日志写库，不回退业务读库。只注册查询不会加载写入分区快照，也不要求 ID、文件消费者、清理或维护任务。管理端 LogManageService 由 Admin.WebAPI 显式注册，负责前端 DTO 转换
+
+调用方注入 `Logger.Database.Query.LogQueryService`，通过 `QueryAsync(LogQueryRequest, CancellationToken)` 获取总数和分页列表。`Skip` 不小于 0，`Take` 为 1～100；可按 Project、机器名、内容、级别和时间过滤。不传 Project 时可查询整个日志库，Project 查询使用包含匹配；它是检索条件，访问权限由调用方控制
+
+一个宿主只允许一个日志写入目标。更换目标后不会自动消费旧目录的积压；应在切换前排空，或恢复原目标配置处理旧积压。主机别名和搜索路径改变也可能产生新目录，切换时检查未处理文件
+
+日志记录遵循宿主的 Logging 级别与过滤配置。日志自己的 EF 诊断及日志分区维护诊断不回写同一数据库日志链路，业务数据库诊断仍按宿主配置记录。写入连接不加入业务环境事务，日志不作为业务提交成功的证明
+
 ## 指标与故障报告
 
 类库通过 `System.Diagnostics.Metrics` 暴露名为 `Logger.Database` 的 Meter，无需额外监控依赖。接入现有指标采集器后可读取：
@@ -89,12 +113,13 @@ builder.Logging.AddDatabaseLogger(options =>
 
 这是以业务响应为先的尽力持久化日志。正常运行、短时高峰、数据库暂时不可用及正常停机时尽量保留日志，但不保证绝不丢失：
 
+- ID 服务租约失效会阻止新日志首次落盘；记录在有界缓冲内等待，容量或停机期限耗尽可能丢弃。已有 ID 的积压文件仍可恢复
 - 内存缓冲全部耗尽、单条日志超过预算或队列已关闭时会舍弃日志
 - 强制结束进程会丢失尚未落盘的内存日志
 - 文件关闭与重命名不等于抗断电持久化，本实现没有逐批强制物理刷盘
 - 磁盘持续不可写时有限缓冲最终会耗尽；不会为了日志无限占用内存或阻塞业务等待存储
 
-每个进程应使用独立工作目录和日志目录，不支持多个进程同时消费同一个目录。日志入库与业务共用主库资源，后台处理不能消除数据库、磁盘或 CPU 资源竞争；需要绝对可靠的审计事件应使用单独的业务持久化机制
+每个进程应使用独立工作目录和日志目录，不支持多个进程同时消费同一个目录。日志使用独立上下文，连接池由 Npgsql 提供程序管理；与业务共用物理库时仍会竞争数据库资源，后台处理不能消除数据库、磁盘或 CPU 资源竞争；需要绝对可靠的审计事件应使用单独的业务持久化机制
 
 ## 相关文档
 

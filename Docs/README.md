@@ -6,15 +6,19 @@
 
 | 文档 | 适合在什么时候阅读 | 主要内容 |
 |---|---|---|
+| [框架架构设计图](ArchitectureDiagrams.md) | 希望整体理解框架与数据流时 | 分层、请求、存储、任务、缓存锁、日志事件与部署图 |
 | [架构与项目边界](Architecture.md) | 新增功能、调整分层或拆分项目时 | 分层职责、依赖方向、宿主引用与项目拆分原则 |
 | [WebAPI 公共能力](WebAPI.md) | 调整 API 宿主、公共配置或中间件时 | 启动链路、配置、CORS、认证、Swagger 和健康检查 |
 | [部署配置生成器](Deployment.md) | 需要生成 Nginx、systemd 或云效流水线配置时 | 配置项、生成命令、产物和首次部署准备 |
 | [分布式锁](DistributedLock.md) | 需要防止重复执行或限制跨实例并发时 | Redis 锁、内存锁、等待与立即返回、租约续期 |
 | [源码生成器](SourceGenerator.md) | 新增服务、后台服务、代理行为或 EF Core 映射时 | 自动 DI、AutoProxy、软删除过滤器、JSON 列映射和分区声明 |
+| [业务模块与数据库接入](DatabaseModules.md) | 组合多个业务库或拆分服务时 | 模型归属、上下文固定绑定、本地契约及共享资源 |
+| [数据库工具](RepositoryTool.md) | 生成迁移或索引差异时 | 默认配置、Visual Studio 迁移、离线建模与历史表 |
+| [ID 生成器](IdentifierGenerator.md) | 接入日志、事件、队列及多实例发号时 | 共享 Redis、节点占用、租约有效性与故障处理 |
 | [数据库读写分离](DatabaseReadWriteSeparation.md) | 迁移查询、配置读库或规划多个读副本时 | 读写上下文、连接配置、一致性边界和健康检查 |
 | [数据库日志](DatabaseLogger.md) | 调整日志吞吐、内存预算或排查日志积压时 | 非阻塞入队、重要日志预留缓冲、文件恢复、入库与监控指标 |
 | [本地文件日志](LocalFileLogger.md) | 调整文件日志吞吐或排查写入与清理故障时 | 非阻塞入队、追加失败回退、尾部恢复、清理范围与监控指标 |
-| [PostgreSQL 分区表](PostgreSqlPartitionTable.md) | 为新实体声明雪花 ID 分区或维护后续子分区时 | 实体注解、UTC+8 周期单位、Migration SQL 和 Repository 自动维护 |
+| [PostgreSQL 分区表](PostgreSqlPartitionTable.md) | 为新实体声明雪花 ID 分区或维护后续子分区时 | 实体注解、UTC+8 周期单位、Migration SQL 和 Repository.Core 显式维护 |
 | [TaskService](TaskService.md) | 新增定时任务或队列任务时 | 任务声明、入队、启用、调度、回调、子任务和重试 |
 | [进程广播事件](EventBus.md) | 需要所有存活实例处理通知并支持短暂断线补收时 | 特性监听、Redis Streams、EF 后端与一小时历史 |
 | [WebAPI 过滤器](WebAPIFilters.md) | 为 Controller 或 Action 增加通用 HTTP 行为时 | 异常、缓存、ETag、并发限制、RSA 解密和签名校验 |

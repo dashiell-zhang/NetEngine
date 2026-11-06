@@ -80,8 +80,8 @@
 
                     <FormItem Class="schedule-task-drawer__field-item admin-form__field-item">
                         <div class="schedule-task-drawer__field-label admin-form__field-label">参数 JSON</div>
-                        <TextArea Placeholder="带参任务参数 JSON" @bind-Value="@editTaskSetting.Parameter" MinRows="6" MaxRows="12" />
-                        <div class="schedule-task-drawer__field-help admin-form__field-help">建议传入合法 JSON 对象，方便任务执行时直接反序列化使用</div>
+                        <TextArea Placeholder="带参任务参数 JSON" @bind-Value="@editTaskSetting.Parameter" Disabled="@(!canEditParameter)" MinRows="6" MaxRows="12" />
+                        <div class="schedule-task-drawer__field-help admin-form__field-help">@(canEditParameter ? "填写任务需要的 JSON 参数" : "任务定义的参数不可编辑，需要参数时请新增带参任务实例")</div>
                     </FormItem>
 
                     <FormItem Class="schedule-task-drawer__field-item admin-form__field-item">
@@ -219,6 +219,8 @@
     long taskSettingId;
     string? taskName;
     string? taskCategory;
+    // 只有实际带参运行实例允许编辑参数
+    bool canEditParameter;
     EditTaskSettingDto editTaskSetting = new();
 
     List<string> scheduleTaskNameList = [];
@@ -230,6 +232,7 @@
 
         taskName = taskSetting.Name;
         taskCategory = taskSetting.Category;
+        canEditParameter = taskSetting.Parameter is not null && taskSetting.Parameter != "__args_default__";
 
         editTaskSetting = new EditTaskSettingDto
         {

@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DebugType>embedded</DebugType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,5 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.14" />
     <ProjectReference Include="../EventBus/EventBus.csproj" />
+    <ProjectReference Include="../Repository.Core/Repository.Core.csproj" />
+    <ProjectReference Include="../../SourceGenerator/SourceGenerator.Core/SourceGenerator.Core.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
 using Logger.Database.Models;
+using Logger.Database.Persistence;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 
@@ -8,7 +10,7 @@ namespace Logger.Database;
 /// <summary>
 /// 数据库日志 Provider
 /// </summary>
-public class DatabaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, DatabaseLogWriter logWriter) : ILoggerProvider, ISupportExternalScope
+internal class DatabaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, DatabaseLogWriter logWriter) : ILoggerProvider, ISupportExternalScope
 {
 
     private readonly LoggerSetting loggerConfiguration = config.CurrentValue;
@@ -19,11 +21,16 @@ public class DatabaseLoggerProvider(IOptionsMonitor<LoggerSetting> config, Datab
 
 
     /// <summary>
-    /// 获取指定类别的日志记录器
+    /// 排除本组件分区维护诊断，其余类别继续遵循宿主的日志级别及过滤配置
     /// </summary>
     public ILogger CreateLogger(string categoryName)
     {
 
+        if (categoryName.StartsWith("Repository.Core.Partitioning.", StringComparison.Ordinal)
+            && categoryName.EndsWith("." + typeof(LogDatabaseContext).FullName, StringComparison.Ordinal))
+        {
+            return NullLogger.Instance;
+        }
         return loggers.GetOrAdd(categoryName, key => new DatabaseLogger(key, loggerConfiguration, logWriter, scopeProvider));
 
     }

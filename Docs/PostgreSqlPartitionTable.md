@@ -9,7 +9,7 @@
 1. 源码生成器把实体声明转换为 EF Core 模型 Annotation
 2. EF Migration 创建 `PARTITION BY RANGE ("Id")` 父表
 3. Migration 创建 SQL 生成时刻所在范围的一个初始子分区
-4. Repository 后台服务保证当前范围和三个后续范围可写
+4. 显式注册的 Repository.Core 后台服务维护当前范围和三个后续范围
 
 声明、迁移和自动维护当前支持：
 
@@ -43,7 +43,7 @@ xmin 保存适配与分区维护独立决定：三个服务端宿主在注册上
 
 启动快照按 schema 和表名匹配；未指定 schema 的映射根据写库启动连接的 `search_path` 和对象可见性解析，避免误匹配其他 schema 的同名分区表。快照与 EF 模型分离，不修改共享模型，也不把探测结果写入分区 Annotation
 
-- 每个宿主实例在启动时查询一次写库，池化上下文、池化工厂和读上下文共用该只读快照，读库不单独探测；保存和定时维护不会刷新它。读写连接应对应同一套逻辑表结构，快照不参与查询路由
+- 每个启用分区写入的具体上下文在宿主启动时加载对应写库快照，其池化实例和工厂共用该只读快照。模板业务读上下文复用本业务写库快照；日志仅查询入口不加载快照，事件普通表不启用分区扩展。读库不单独探测，保存和定时维护不会刷新快照。读写连接应对应同一套逻辑表结构，快照不参与查询路由
 - 启动查询失败直接中止启动，不把未知结构当作普通表，也不回退到实体声明
 - DBA 调整父表类型、表名、schema 或连接的 `search_path` 后，需要重启全部受影响的宿主实例；正常增删子分区不改变父表身份，不需要刷新快照
 - 不支持运行期间通过 `SET search_path` 或更换数据库连接改变写入目标；新的写库配置应加载自己的快照，不能跨独立数据库共用
@@ -69,7 +69,7 @@ xmin 保存适配与分区维护独立决定：三个服务端宿主在注册上
 
 - 周期越小，单个分区越小，但数据库对象和后续维护次数越多
 - 周期越大，分区数量越少，但单个分区数据量和索引体积更大
-- Repository 后台服务启动后立即检查一次，随后每 10 分钟检查，因此首版允许的最小单位是小时
+- Repository.Core 分区维护后台服务启动后立即检查一次，随后每 10 分钟检查，当前允许的最小单位是小时
 
 建议先根据预估写入量选择 `1 Day` 或 `7 Day`，上线后可以调整，新周期只影响尚未创建的后续分区
 
@@ -80,8 +80,8 @@ xmin 保存适配与分区维护独立决定：三个服务端宿主在注册上
 实体通常继承 `CD`，直接使用现有雪花 `Id`：
 
 ```csharp
-using Repository.Attributes;
-using Repository.Bases;
+using Repository.Core.Attributes;
+using Repository.Core.Bases;
 
 namespace Repository.Database;
 
@@ -131,10 +131,10 @@ dotnet build Repository/Repository.csproj
 
 ### 4. 创建 Migration
 
-`Repository.Tool` 已启用 `UsePostgreSqlPartitioning()`，应继续使用该项目创建 Migration：
+`Repository.Tool` 的业务和日志设计时工厂启用 `UsePostgreSqlPartitioning()`，离线建模不加载运行时快照。核对 Repository.Tool/appsettings.json，并使用明确的写上下文创建 Migration，详见 [数据库工具](RepositoryTool.md)：
 
 ```powershell
-dotnet ef migrations add AddVisitLog --project Repository.Tool --startup-project Repository.Tool --context DatabaseContext
+dotnet ef migrations add AddVisitLog --project Repository.Tool --startup-project Repository.Tool --context Repository.DatabaseContext --configuration Debug
 ```
 
 不要改用未注册分区 Migration 扩展的启动项目
@@ -144,7 +144,7 @@ dotnet ef migrations add AddVisitLog --project Repository.Tool --startup-project
 生成的 `CreateTable` 操作应包含 `PartitionTable:*` Annotation。建议在执行前生成 SQL：
 
 ```powershell
-dotnet ef migrations script --project Repository.Tool --startup-project Repository.Tool --context DatabaseContext --output partition-migration.sql
+dotnet ef migrations script --project Repository.Tool --startup-project Repository.Tool --context Repository.DatabaseContext --output partition-migration.sql --configuration Debug
 ```
 
 父表 SQL 应包含：
@@ -172,22 +172,22 @@ FOR VALUES FROM (303077051596800000) TO (308694063513600000);
 确认 SQL 后执行：
 
 ```powershell
-dotnet ef database update --project Repository.Tool --startup-project Repository.Tool --context DatabaseContext
+dotnet ef database update --project Repository.Tool --startup-project Repository.Tool --context Repository.DatabaseContext --configuration Debug
 ```
 
 Migration 只创建一个初始子分区，不会批量创建历史或未来分区
 
 ### 7. 确认自动维护
 
-分区维护由 Repository 内置后台服务自动执行，不依赖 `TaskSetting`，也不需要在 TaskService 中手工启用
+分区维护由 Repository.Core 的显式后台服务执行，不依赖 `TaskSetting`，也不需要在 TaskService 中手工启用
 
-现有 `Client.WebAPI`、`Admin.WebAPI` 和 `TaskService` 都会聚合注册该后台服务。每个宿主会在启动完成前检查一次，随后每 10 分钟检查一次；多宿主和多实例通过分布式锁保证同一时间只有一个实例实际维护
+现有 `Client.WebAPI`、`Admin.WebAPI` 和 `TaskService` 都按业务与日志上下文分别显式注册该后台服务。每个宿主会在启动完成前检查一次，随后每 10 分钟检查一次；多宿主和多实例通过分布式锁保证同一时间只有一个实例实际维护
 
 首次检查失败会记录错误并等待后续周期重试，不会仅因维护失败而阻止宿主启动。因此宿主启动成功或 `/healthz` 正常，不代表当前与未来分区已经创建成功
 
 `Repository.Tool` 只承载自身的数据库工具任务，不注册分区维护后台服务。创建或执行 Migration 时仍只生成一个初始子分区
 
-新增服务端宿主若要参与自动维护，必须同时调用 `BatchRegisterServices()` 和 `BatchRegisterBackgroundServices()`，并注册可写 `DatabaseContext` 与 `IDistributedLock`
+新增宿主需先注册所选写上下文和确定的锁，再调用 `AddPartitionMaintenance<TContext>(databaseIdentity, lockServiceKey)`。维护仅处理该模型声明的分区表；锁范围包含稳定目标标识、实际数据库、schema 和表名。同一张共享日志表的维护者必须使用相同 Redis 目标、库编号和前缀，不能复用已经隔离的各业务锁。仅引用类库不会启动维护
 
 生产环境启用流量前，应通过日志和数据库子分区范围确认自动维护至少成功执行过一次，尤其是执行提前生成的 Migration SQL 文件时
 
@@ -227,16 +227,15 @@ EF Core 模型和 Migration 使用 `PartitionTable:Interval` 保存整数数量�
 
 `CD.RowVersion` 使用 `[Timestamp] uint`，映射到 PostgreSQL 系统列 `xmin`。沿用普通表的查询、新增、更新、删除及同步/异步 `SaveChanges` 即可：分区新增会在同一事务内批量回读真实 xmin，更新和删除保留原生并发检查，无需业务代码手工回填版本
 
-三个服务端宿主已为读写上下文、上下文池和池化工厂配置 `UsePostgreSqlPartitioning(snapshot)`。新增宿主或自行构建上下文选项时，先在启动阶段加载一次快照，再复用到该数据库的上下文配置：
+三个服务端宿主已为业务写读上下文及日志写上下文配置分区快照和保存扩展；日志仅查询入口不需要快照。新增宿主时，为每个写入目标加载对应快照，再注册该具体上下文及其池化工厂：
 
 ```csharp
-var snapshot = PartitionTableSnapshot.Load(writeConnectionString);
+using Repository.Core.Extensions;
+using Repository.Core.Partitioning;
 
-services.AddDbContextPool<DatabaseContext>(options =>
-{
-    options.UseNpgsql(writeConnectionString);
-    options.UsePostgreSqlPartitioning(snapshot);
-});
+var snapshot = PartitionTableSnapshot.Load(writeConnectionString);
+services.AddPostgreSqlContext<DatabaseContext>(writeConnectionString,
+    snapshot: snapshot, migrationHistoryTable: DatabaseContext.MigrationHistoryTable);
 ```
 
 `Repository.Tool` 使用无参数的 `UsePostgreSqlPartitioning()` 进行离线建模和迁移 SQL 生成，不查询数据库。无快照可以建模和查询，但通过 `SaveChanges` 写入会被拒绝；需要保存数据的独立工具也必须先加载快照
@@ -308,11 +307,11 @@ UTC+8 只影响时间边界的计算和名称。最终 PostgreSQL 范围仍由�
 - `dotnet ef database update`：以命令生成并执行 SQL 时的时刻为准
 - `dotnet ef migrations script`：以生成 SQL 文件时的时刻为准
 
-如果 SQL 文件在生成后跨越了一个或多个分区周期才执行，脚本中的初始分区可能已经过期。此时必须在开放写入前确认 Repository 后台服务已经补齐当前和后续三个范围
+如果 SQL 文件在生成后跨越了一个或多个分区周期才执行，脚本中的初始分区可能已经过期。此时必须在开放写入前确认对应写上下文的 Repository.Core 分区维护服务已经补齐当前和后续三个范围
 
 系统不创建 `DEFAULT` 分区。缺少匹配范围时，PostgreSQL 会明确拒绝写入，避免数据长期堆积在一个无法有效裁剪的兜底分区中
 
-## Repository 自动维护行为
+## 公共分区维护行为
 
 后台服务在宿主启动完成前执行一次，随后每 10 分钟执行。每次维护时会：
 
@@ -506,7 +505,7 @@ ORDER BY child.relname;
 - [ ] Migration SQL 中父表包含 `PARTITION BY RANGE ("Id")`
 - [ ] Migration SQL 中包含一个初始子分区
 - [ ] 目标数据库中的父表和子分区边界已查询确认
-- [ ] Repository 分区维护后台服务已成功执行
+- [ ] 对应写上下文的 Repository.Core 分区维护后台服务已成功执行
 - [ ] 时间范围查询已根据需要加入 `Id` 裁剪条件
 - [ ] 已确认历史数据、归档和删除不依赖自动分区维护
 
@@ -544,12 +543,12 @@ ORDER BY child.relname;
 
 | 位置 | 职责 |
 |---|---|
-| `Repository/Attributes/PartitionTableAttribute.cs` | 实体分区声明和分区周期单位 |
+| `Infrastructure/Repository.Core/Attributes/PartitionTableAttribute.cs` | 实体分区声明和分区周期单位 |
 | `SourceGenerator/SourceGenerator.Core/EntityFrameworkCore/PartitionTableGenerator.cs` | 生成 EF Core 分区模型配置 |
-| `Repository/Partitioning` | 模型校验、边界计算、Migration SQL 生成与运行维护 |
-| `Repository/Partitioning/PartitionXminDatabase.cs` | 保存通知前批量回读新增分区行的 xmin |
-| `Repository/Partitioning/PartitionTableSnapshot.cs` | 启动时只读发现实际分区父表，供 xmin 适配使用 |
-| `Repository/Partitioning/PartitionModelCustomizer.cs` | 模型配置完成后校验分区继承策略 |
-| `Repository/Partitioning/PartitionTimeLayout.cs` | 固定 UTC+8 偏移和对齐锚点 |
+| `Infrastructure/Repository.Core/Partitioning` | 模型校验、边界计算、Migration SQL 生成与运行维护 |
+| `Infrastructure/Repository.Core/Partitioning/PartitionXminDatabase.cs` | 保存通知前批量回读新增分区行的 xmin |
+| `Infrastructure/Repository.Core/Partitioning/PartitionTableSnapshot.cs` | 启动时只读发现实际分区父表，供 xmin 适配使用 |
+| `Infrastructure/Repository.Core/Partitioning/PartitionModelCustomizer.cs` | 模型配置完成后校验分区继承策略 |
+| `Infrastructure/Repository.Core/Partitioning/PartitionTimeLayout.cs` | 固定 UTC+8 偏移和对齐锚点 |
 | `Infrastructure/IdentifierGenerator/SnowflakeIdLayout.cs` | 雪花 ID 持久化布局和时间换算 |
-| `Repository/Partitioning/PartitionMaintenanceBackgroundService.cs` | 自动维护后台服务入口 |
+| `Infrastructure/Repository.Core/Partitioning/PartitionMaintenanceBackgroundService.cs` | 自动维护后台服务入口 |

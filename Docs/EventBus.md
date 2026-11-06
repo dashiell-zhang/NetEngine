@@ -22,7 +22,7 @@ EventBus 将事件广播给所有注册了对应监听的运行实例，包括�
 }
 ```
 
-互通实例必须使用相同的 `Provider`、`Scope` 和存储目标。Redis 后端要求 Redis 6.2+，复用 `ConnectionStrings:redisConnection`，需连接同一 Redis 数据库。开发配置使用 `NetEngine:Development`，不同环境应使用不同 Scope
+互通实例必须使用相同的 `Provider`、`Scope` 和存储目标。Redis 后端要求 Redis 6.2+，使用 `ConnectionStrings:eventBusRedisConnection`，未配置时宿主选择 `redisConnection`；需要互通的服务必须连接同一 Redis 数据库，不能随业务锁的库编号分别隔离。开发配置使用 `NetEngine:Development`，不同环境应使用不同 Scope
 
 ### 2. 定义事件
 
@@ -99,7 +99,7 @@ await eventPublisher.PublishAsync(new ProductChangedEvent(productId), cancellati
 
 ### 5. 配合 QueueTask 事务入队
 
-需要业务数据与广播任务一起提交时，注入 `Application.Service.TaskCenter.QueueTaskService`，用事务入队替代直接发布：
+需要业务数据与广播任务一起提交时，注入 `QueueTaskProducer<DatabaseContext>`，用事务入队替代直接发布：
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -146,11 +146,11 @@ await transaction.CommitAsync(cancellationToken);
 
 ### 切换数据库后端
 
-内置宿主将 `EventBus.Provider` 改为 `Database` 后重启即可切换，互通实例需一起切换。使用前通过 [Repository.Tool 迁移入口](../README.md#快速开始)准备 `EventBusStream` 和 `EventBusMessage` 两张表，宿主不会自动建表
+内置宿主将 `EventBus.Provider` 改为 `Database` 后重启即可切换，互通实例需一起切换。使用前通过 [Repository.Tool 迁移入口](RepositoryTool.md#ef-core-迁移) 准备 `EventBusStream` 和 `EventBusMessage` 两张表，宿主不会自动建表
 
-内置 `DatabaseContext` 已调用 `modelBuilder.ConfigureEventBus()`。使用其他上下文时，引用 `Infrastructure/EventBus.Database` 并补充该映射。注册时使用主库 `IDbContextFactory<TContext>`，不能使用允许复制延迟的读库
+事件组件拥有独立的 `EventBusDatabaseContext`，业务上下文不接入事件表。宿主传入 `eventBusConnection`，未配置时明确选择当前业务主库；不使用读副本。两张表继承公共 CD，Id 为雪花主键，Scope 及 Scope+Position 的唯一约束包含软删除行。状态行通过 xmin 并发控制，软删除后仍被内部协议复用；消息读取过滤软删除，过期清理包含软删除消息且不删除状态。游标始终使用 Position，公共发布时间取 CreateTime
 
-数据库后端的广播、重启和重试规则与 Redis 相同；切换后也不会取消宿主其他能力对 Redis 的依赖
+数据库事件连接不加入外层环境事务。数据库后端依赖宿主唯一的 [ID 服务](IdentifierGenerator.md)，其专用 Redis 配置必须准备完整；Redis 后端不注册事件数据库或 ID。数据库后端的广播、重启和重试规则与 Redis 相同；切换后也不会取消宿主其他能力对 Redis 的依赖
 
 ### 配置项
 
@@ -176,17 +176,18 @@ await transaction.CommitAsync(cancellationToken);
 using EventBus.Redis;
 
 builder.Services.BatchRegisterServices();
-// 此前需注册 IConnectionMultiplexer 和监听服务的依赖
-builder.Services.AddRedisEventBus(options => options.Scope = "NetEngine:Production");
+// 组件管理该明确目标的连接，监听服务的其他依赖由宿主提供
+builder.Services.AddRedisEventBus(eventRedisConnection, options => options.Scope = "NetEngine:Production");
 ```
 
-数据库后端先准备模型与表、注册主库上下文工厂，再将上面的 `AddRedisEventBus` 替换为：
+数据库后端先准备模型与表及共享 ID 服务，再将上面的 `AddRedisEventBus` 替换为：
 
 ```csharp
 using EventBus.Database;
-using Repository;
 
-builder.Services.AddDatabaseEventBus<DatabaseContext>(options => options.Scope = "NetEngine:Production");
+builder.Services.AddDatabaseEventBus(eventWriteConnection, options => options.Scope = "NetEngine:Production");
 ```
+
+WebAPI 宿主可显式添加 `RedisEventHealthCheck` 或 `DatabaseHealthCheck<EventBusDatabaseContext>`，检查所选事件目标的连接，不发布消息或改变消费位置。TaskService 保持非 HTTP 宿主
 
 手动接入时由扩展方法选择后端；`Provider` 配置用于内置宿主的后端选择。扩展其他后端时，实现 [IEventTransport](../Infrastructure/EventBus/IEventTransport.cs) 并调用 `AddEventBus<TTransport>`

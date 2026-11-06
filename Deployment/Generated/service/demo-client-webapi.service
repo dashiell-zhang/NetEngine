@@ -3,6 +3,8 @@ Description=demo-client-webapi
 
 [Service]
 WorkingDirectory=/var/appdata/demo/clientwebapi
+EnvironmentFile=-/var/appdata/demo/config/shared.env
+EnvironmentFile=-/var/appdata/demo/config/client-webapi.env
 ExecStart=/var/appdata/demo/clientwebapi/Client.WebAPI --urls="http://127.0.0.1:30012"
 Restart=always
 RestartSec=60

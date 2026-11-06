@@ -15,6 +15,8 @@
 - `Infrastructure` 目录下的项目
 - `Deployment` 目录下的项目
 
+排除的是隐式引用。`Logger.Database` 和 `EventBus.Database` 为生成自身模型映射，显式引用 `SourceGenerator.Core` Analyzer；组件仍通过自己的扩展方法接入，不要求业务宿主替它们扫描或绑定业务 Repository
+
 Debug 构建会把生成源码输出到：
 
 ```text
@@ -96,9 +98,11 @@ public class DataSyncBackgroundService : BackgroundService
 builder.Services.BatchRegisterBackgroundServices();
 ```
 
-该方法会注册当前项目及引用程序集中的可访问后台服务。后台服务不能是开放泛型，并且至少需要一个 `public` 实例构造函数；不满足条件时生成器会给出编译诊断
+该方法聚合各程序集生成的后台服务注册入口。自动发现面向公开的非抽象后台服务；后台服务不能是开放泛型，并且至少需要一个 `public` 实例构造函数，不满足受支持形态时生成器会给出编译诊断
 
 不要再对同一个后台服务重复调用 `AddHostedService`
+
+任务 Worker、日志、事件及分区维护由各自的 `AddTaskWorker<TContext>`、`AddDatabaseLogger`、`AddRedisEventBus` / `AddDatabaseEventBus`、`AddPartitionMaintenance<TContext>` 显式注册。`BatchRegisterBackgroundServices()` 不能替代这些入口，也不应再次手工注册其内部后台服务
 
 ## AutoProxy 方法代理
 
@@ -233,9 +237,15 @@ public virtual Task<ProductDto> GetAsync(long id)
 
 同一异步流的每次枚举都会创建独立的调用上下文、自定义 Behavior 和自定义 Options，重复或并行枚举不会共享单次枚举状态。对于 `Task<IAsyncEnumerable<T>>` 和 `ValueTask<IAsyncEnumerable<T>>`，准备阶段仍按原方法执行，准备异常直接传播；行为从实际枚举时开始，未枚举的流不会触发行为生命周期
 
+## 代理缓存与锁依赖
+
+Cacheable 和 ConcurrencyLimit 代理统一解析宿主默认的 `IDistributedCache`、`IDistributedLock`，与业务服务直接注入及 HTTP 过滤器使用相同依赖。宿主集中注册一次，不需要程序集或类级的模块依赖声明
+
+代理生成的缓存和锁 key 使用完整方法标识及相应参数摘要区分调用。手写缓存和锁操作时，由业务代码明确 key，例如 `Order:Submit:123`。多个业务数据库可以共用宿主的默认缓存与锁，数据库上下文选择不会改变这些依赖
+
 ## EF Core 软删除过滤器
 
-生成器会查找 DbContext 直接声明的 `DbSet<T>`。实体继承 `Repository.Bases.CD` 时，会为该实体生成：
+生成器会查找 DbContext 直接声明的 `DbSet<T>`。实体继承 `Repository.Core.Bases.CD` 时，会为该实体生成：
 
 ```csharp
 modelBuilder.Entity<TEntity>().HasQueryFilter(entity => entity.DeleteTime == null);
@@ -246,6 +256,8 @@ modelBuilder.Entity<TEntity>().HasQueryFilter(entity => entity.DeleteTime == nul
 ```csharp
 modelBuilder.ApplySoftDeleteFilters(this);
 ```
+
+生成命名空间为当前程序集名加 `.Database.Generated`。各具体写上下文调用自己的生成映射，读上下文复用对应写模型。实体和公共基类可以来自引用程序集，发现范围仍由本上下文直接声明的 DbSet 决定
 
 新增软删除实体时，继承 `CD` 并把实体加入对应 DbContext 的 `DbSet<T>` 即可，不要再重复写全局过滤器。确实需要查询已删除数据时使用 EF Core 的 `IgnoreQueryFilters()`
 
@@ -279,7 +291,7 @@ JSON 属性按实际 `DbSet<T>` 实体解析，支持继承属性和泛型基类
 modelBuilder.ApplyPartitionTables(this);
 ```
 
-生成配置把分区策略、实际列名、周期数量和周期单位写入 EF Core Annotation，随后由 Repository 中的模型校验、Migration SQL 生成器和运行维护服务共同使用
+生成配置把分区策略、实际列名、周期数量和周期单位写入 EF Core Annotation，随后由 Repository.Core 中的模型校验、Migration SQL 生成器和运行维护服务共同使用
 
 实体通过两个必填参数声明周期，例如 `[PartitionTable(1, PartitionUnit.Month)]`。周期单位支持 `Hour`、`Day`、`Month`、`Year`
 

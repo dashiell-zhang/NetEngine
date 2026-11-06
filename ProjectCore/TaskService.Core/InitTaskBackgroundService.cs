@@ -1,38 +1,29 @@
-using Microsoft.EntityFrameworkCore;
+using global::QueueTask.Database;
+using global::QueueTask.Database.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Repository;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
 
 namespace TaskService.Core;
-public class InitTaskBackgroundService(IServiceProvider serviceProvider) : BackgroundService
+/// <summary>
+/// 从所选模块加载任务配置并且只发现明确注册的任务类型
+/// </summary>
+internal class InitTaskBackgroundService(IQueueTaskStore store, TaskWorkerSelection selection) : BackgroundService
 {
     private const string ArgsDefaultParameter = "__args_default__";
 
+    /// <summary>
+    /// 建立本任务进程的队列及定时任务注册表
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-        // 查找所有继承自 TaskBase 的具体类
-        var taskClasses = assemblies
-            .SelectMany(assembly => assembly.GetTypes())
-            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(TaskBase)))
-            .ToList();
-
-        using (var scope = serviceProvider.CreateScope())
+        var settings = await store.GetSettingsAsync(stoppingToken);
+        var argScheduleTaskList = settings.Where(item => item.Category == "ScheduleTask" && item.Parameter != null && item.Parameter != ArgsDefaultParameter).ToList();
+        foreach (var taskType in selection.TaskTypes)
         {
-            var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-            var argScheduleTaskList = await db.TaskSetting
-                .Where(t => t.Category == "ScheduleTask" && t.Parameter != null && t.Parameter != ArgsDefaultParameter)
-                .ToListAsync(stoppingToken);
-
-            foreach (Type cls in taskClasses)
-            {
-                ScheduleTaskBuilder.Builder(cls, argScheduleTaskList);
-                QueueTaskBuilder.Builder(cls);
-            }
+            ScheduleTaskBuilder.Builder(taskType, argScheduleTaskList);
+            QueueTaskBuilder.Builder(taskType);
         }
 
         await Task.CompletedTask;

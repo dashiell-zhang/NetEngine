@@ -42,6 +42,7 @@ public class QueueTaskBuilder
             {
                 Name = name,
                 Semaphore = semaphore,
+                DefaultSemaphore = semaphore,
                 Method = method,
             });
         }

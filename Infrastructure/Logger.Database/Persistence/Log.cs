@@ -1,0 +1,48 @@
+using Repository.Core.Attributes;
+using Repository.Core.Bases;
+
+namespace Logger.Database.Persistence;
+
+/// <summary>
+/// 日志表
+/// </summary>
+[PartitionTable(1, PartitionUnit.Month)]
+public class Log : CD
+{
+
+
+    /// <summary>
+    /// 项目
+    /// </summary>
+    public string Project { get; set; }
+
+
+
+    /// <summary>
+    /// 机器名称
+    /// </summary>
+    public string MachineName { get; set; }
+
+
+
+    /// <summary>
+    /// 日志等级
+    /// </summary>
+    public string Level { get; set; }
+
+
+
+    /// <summary>
+    /// 类别
+    /// </summary>
+    public string Category { get; set; }
+
+
+
+    /// <summary>
+    /// 内容
+    /// </summary>
+    public string Content { get; set; }
+
+
+}

@@ -1,44 +1,30 @@
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
-using Common;
-using IdentifierGenerator;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using global::QueueTask.Database;
 using Repository;
-using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
-using System.Text.Json;
 
 namespace Application.Service.TaskCenter;
 
 /// <summary>
-/// 提供任务配置查询和维护能力
+/// 适配本业务任务配置与管理端契约，操作人由接口层传入
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class TaskSettingService(DatabaseContext db, IdService idService)
+public class TaskSettingService(QueueTaskManagement<DatabaseContext> management)
 {
-    private const string ArgsDefaultParameter = "__args_default__";
-
 
     /// <summary>
-    /// 获取任务配置列表
+    /// 查询本业务任务配置并转换分页结果
     /// </summary>
     public async Task<PageListDto<TaskSettingDto>> GetTaskSettingListAsync(PageRequestDto request, string? category)
     {
-        PageListDto<TaskSettingDto> result = new();
 
-        var query = db.TaskSetting.AsNoTracking().AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(category))
+        var result = await management.QuerySettingsAsync(request.Skip(), request.PageSize, category);
+        return new PageListDto<TaskSettingDto>
         {
-            query = query.Where(t => t.Category == category);
-        }
-
-        result.Total = await query.CountAsync();
-
-        if (result.Total != 0)
-        {
-            result.List = await query.OrderByDescending(t => t.Id).Select(t => new TaskSettingDto
+            Total = result.Total,
+            List = result.Items.Select(t => new TaskSettingDto
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -50,98 +36,43 @@ public class TaskSettingService(DatabaseContext db, IdService idService)
                 Remark = t.Remark,
                 CreateTime = t.CreateTime,
                 UpdateTime = t.UpdateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
-        }
+            }).ToList()
+        };
 
-        return result;
     }
 
 
     /// <summary>
-    /// 更新任务配置信息
+    /// 更新本业务任务配置并记录明确传入的操作人
     /// </summary>
-    /// <param name="actorUserId">行为发起人用户ID</param>
-    /// <param name="taskSettingId">任务配置ID</param>
-    /// <param name="updateTaskSetting">任务配置修改内容</param>
-    /// <returns>是否更新成功</returns>
     public async Task<bool> UpdateTaskSettingAsync(long actorUserId, long taskSettingId, EditTaskSettingDto updateTaskSetting)
     {
-        var taskSetting = await db.TaskSetting.Where(t => t.Id == taskSettingId).FirstOrDefaultAsync();
 
-        if (taskSetting == null)
-        {
-            throw new CustomException("无效的 taskSettingId");
-        }
-
-        taskSetting.Parameter = updateTaskSetting.Parameter;
-        taskSetting.Semaphore = updateTaskSetting.Semaphore;
-        taskSetting.Cron = updateTaskSetting.Cron;
-        taskSetting.IsEnable = updateTaskSetting.IsEnable;
-        taskSetting.Remark = updateTaskSetting.Remark;
-        taskSetting.UpdateUserId = actorUserId;
-
-        await db.SaveChangesAsync();
-
+        await management.UpdateSettingAsync(taskSettingId, actorUserId, updateTaskSetting.Parameter, updateTaskSetting.Semaphore, updateTaskSetting.Cron, updateTaskSetting.IsEnable, updateTaskSetting.Remark);
         return true;
+
     }
 
 
     /// <summary>
-    /// 获取支持参数的定时任务名称列表（去重）
+    /// 获取本业务已声明的带参定时任务名称
     /// </summary>
     public Task<List<string>> GetArgsScheduleTaskNameListAsync()
     {
-        return db.TaskSetting.AsNoTracking()
-            .Where(t => t.Category == "ScheduleTask" && t.Parameter == ArgsDefaultParameter)
-            .Select(t => t.Name)
-            .Distinct()
-            .OrderBy(t => t)
-            .ToListAsync();
+
+        return management.GetArgsScheduleNamesAsync();
+
     }
 
 
     /// <summary>
-    /// 新增带参定时任务（用于动态添加可带参的 ScheduleTask 实例）
+    /// 为本业务已声明模板创建带参运行实例
     /// </summary>
-    /// <param name="actorUserId">行为发起人用户ID</param>
-    /// <param name="createTaskSetting">定时任务创建内容</param>
-    /// <returns>任务配置ID</returns>
-    public async Task<long> CreateScheduleTaskAsync(long actorUserId, CreateScheduleTaskDto createTaskSetting)
+    public Task<long> CreateScheduleTaskAsync(long actorUserId, CreateScheduleTaskDto createTaskSetting)
     {
-        try
-        {
-            JsonDocument.Parse(createTaskSetting.Parameter);
-        }
-        catch
-        {
-            throw new CustomException("任务参数必须是合法 JSON");
-        }
 
-        var isHave = await db.TaskSetting.AsNoTracking()
-            .Where(t => t.Category == "ScheduleTask" && t.Name == createTaskSetting.Name)
-            .AnyAsync();
+        return management.CreateScheduleAsync(actorUserId, createTaskSetting.Name, createTaskSetting.Parameter, createTaskSetting.Cron, createTaskSetting.IsEnable, createTaskSetting.Remark);
 
-        if (!isHave)
-        {
-            throw new CustomException("任务名称不存在，请先确认 TaskService 已同步任务配置");
-        }
-
-        TaskSetting taskSetting = new()
-        {
-            Id = idService.GetId(),
-            Category = "ScheduleTask",
-            Name = createTaskSetting.Name,
-            Parameter = createTaskSetting.Parameter,
-            Cron = createTaskSetting.Cron,
-            IsEnable = createTaskSetting.IsEnable,
-            Remark = createTaskSetting.Remark,
-            CreateUserId = actorUserId
-        };
-
-        db.TaskSetting.Add(taskSetting);
-
-        await db.SaveChangesAsync();
-
-        return taskSetting.Id;
     }
+
 }

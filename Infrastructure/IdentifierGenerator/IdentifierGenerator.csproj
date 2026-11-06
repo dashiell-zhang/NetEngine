@@ -19,12 +19,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.14" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\Common\Common.csproj" />
-	  <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+		<PackageReference Include="StackExchange.Redis" Version="3.4.31" />
 	</ItemGroup>
 
 </Project>

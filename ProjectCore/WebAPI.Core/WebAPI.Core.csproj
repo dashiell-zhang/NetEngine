@@ -32,7 +32,8 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Application\Application.Model\Application.Model.csproj" />
-	  <ProjectReference Include="..\..\Repository\Repository.csproj" />
+	  <ProjectReference Include="..\..\Infrastructure\Common\Common.csproj" />
+	  <ProjectReference Include="..\..\Infrastructure\DistributedLock\DistributedLock.csproj" />
 	</ItemGroup>
 
 </Project>

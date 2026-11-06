@@ -27,11 +27,17 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Repository\Repository.csproj" />
+    <ProjectReference Include="..\Infrastructure\Logger.Database\Logger.Database.csproj" />
+    <ProjectReference Include="..\Infrastructure\EventBus.Database\EventBus.Database.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

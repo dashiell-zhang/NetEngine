@@ -1,5 +1,5 @@
 using Repository.Attributes;
-using Repository.Bases;
+using Repository.Core.Bases;
 
 namespace Repository.Database;
 

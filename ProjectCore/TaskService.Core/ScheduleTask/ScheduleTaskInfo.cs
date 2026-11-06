@@ -27,6 +27,12 @@ public class ScheduleTaskInfo
 
 
     /// <summary>
+    /// 声明时的 Cron，清空数据库覆盖配置时恢复使用
+    /// </summary>
+    internal string DefaultCron { get; init; } = "";
+
+
+    /// <summary>
     /// 方法
     /// </summary>
     public MethodInfo Method { get; set; }

@@ -1,7 +1,8 @@
+using IdentifierGenerator;
 using global::EventBus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using EventBus.Database.Models;
+using EventBus.Database.Persistence;
 using System.Globalization;
 
 namespace EventBus.Database;
@@ -9,7 +10,7 @@ namespace EventBus.Database;
 /// <summary>
 /// 通过 EF Core 保存广播事件并协调每个范围的提交顺序
 /// </summary>
-public sealed class DatabaseEventTransport<TContext>(IDbContextFactory<TContext> factory, IOptions<EventBusOptions> options, TimeProvider timeProvider) : IEventTransport where TContext : DbContext
+public sealed class DatabaseEventTransport(IDbContextFactory<EventBusDatabaseContext> factory, IOptions<EventBusOptions> options, TimeProvider timeProvider, IdService idService) : IEventTransport
 {
 
     /// <summary>
@@ -56,21 +57,21 @@ public sealed class DatabaseEventTransport<TContext>(IDbContextFactory<TContext>
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                var stream = await db.Set<EventBusStream>().AsTracking().SingleAsync(t => t.Scope == scope, cancellationToken);
+                var stream = await db.Set<EventBusStream>().IgnoreQueryFilters().AsTracking().SingleAsync(t => t.Scope == scope, cancellationToken);
                 stream.Position = checked(stream.Position + 1);
-                stream.Version = Guid.NewGuid();
 
                 // 先持有状态行的写锁，事务提交前不允许后续位置越过当前事件
                 await db.SaveChangesAsync(cancellationToken);
 
                 db.Set<EventBusMessage>().Add(new EventBusMessage
                 {
+                    Id = idService.GetId(),
                     Scope = scope,
                     Position = stream.Position,
                     EventId = message.EventId,
                     EventName = message.EventName,
                     Payload = message.Payload,
-                    PublishedAt = timeProvider.GetUtcNow()
+                    CreateTime = timeProvider.GetUtcNow()
                 });
 
                 await db.SaveChangesAsync(cancellationToken);
@@ -101,7 +102,7 @@ public sealed class DatabaseEventTransport<TContext>(IDbContextFactory<TContext>
             .Take(count)
             .ToListAsync(cancellationToken);
 
-        return messages.Select(t => new EventRecord(t.Position.ToString(CultureInfo.InvariantCulture), t.PublishedAt, new EventEnvelope(t.EventId, t.EventName, t.Payload))).ToArray();
+        return messages.Select(t => new EventRecord(t.Position.ToString(CultureInfo.InvariantCulture), t.CreateTime, new EventEnvelope(t.EventId, t.EventName, t.Payload))).ToArray();
 
     }
 
@@ -113,7 +114,7 @@ public sealed class DatabaseEventTransport<TContext>(IDbContextFactory<TContext>
     {
 
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
-        await db.Set<EventBusMessage>().Where(t => t.Scope == scope && t.PublishedAt < before).ExecuteDeleteAsync(cancellationToken);
+        await db.Set<EventBusMessage>().IgnoreQueryFilters().Where(t => t.Scope == scope && t.CreateTime < before).ExecuteDeleteAsync(cancellationToken);
 
     }
 
@@ -125,13 +126,13 @@ public sealed class DatabaseEventTransport<TContext>(IDbContextFactory<TContext>
     {
 
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
-        var stream = await db.Set<EventBusStream>().AsNoTracking().SingleOrDefaultAsync(t => t.Scope == scope, cancellationToken);
+        var stream = await db.Set<EventBusStream>().IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(t => t.Scope == scope, cancellationToken);
         if (stream != null)
         {
             return stream.Position;
         }
 
-        db.Set<EventBusStream>().Add(new EventBusStream { Scope = scope });
+        db.Set<EventBusStream>().Add(new EventBusStream { Id = idService.GetId(), Scope = scope, CreateTime = timeProvider.GetUtcNow() });
         try
         {
             await db.SaveChangesAsync(cancellationToken);
@@ -141,7 +142,7 @@ public sealed class DatabaseEventTransport<TContext>(IDbContextFactory<TContext>
         {
             // 只在确认其他实例已经建立状态时接受首次插入冲突
             await using var verify = await factory.CreateDbContextAsync(cancellationToken);
-            var existing = await verify.Set<EventBusStream>().AsNoTracking().SingleOrDefaultAsync(t => t.Scope == scope, cancellationToken);
+            var existing = await verify.Set<EventBusStream>().IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(t => t.Scope == scope, cancellationToken);
             if (existing == null)
             {
                 throw;

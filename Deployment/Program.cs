@@ -55,6 +55,7 @@ internal static class Program
             ("Templates/service/Client.WebAPI.service.template", $"service/{projectName}-client-webapi.service"),
             ("Templates/service/TaskService.service.template", $"service/{projectName}-task-service.service"),
             ("Templates/service/install-services.txt.template", $"service/{projectName}-install-services.txt"),
+            ("Templates/service/runtime.env.example.template", $"service/{projectName}-runtime.env.example"),
             ("Templates/yunxiao/Admin.App.yaml.template", $"yunxiao/{projectName}-admin-app.yaml"),
             ("Templates/yunxiao/Admin.WebAPI.yaml.template", $"yunxiao/{projectName}-admin-webapi.yaml"),
             ("Templates/yunxiao/Client.WebAPI.yaml.template", $"yunxiao/{projectName}-client-webapi.yaml"),

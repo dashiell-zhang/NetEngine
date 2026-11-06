@@ -19,7 +19,7 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
     /// <summary>
     /// 逻辑删除基类 CD 的完整元数据名称
     /// </summary>
-    private const string CdMetadataName = "Repository.Bases.CD";
+    private const string CdMetadataName = "Repository.Core.Bases.CD";
 
 
     /// <summary>
@@ -81,38 +81,18 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
             .Collect()
             .Select(static (groups, _) => DbContextEntityDiscovery.NormalizeGroups(groups));
 
-        // 过滤出：继承自 CD 且为具体类的类型符号
-        var softDeleteTypes = classSymbols.Combine(cdSymbol)
-            .Select(static (tuple, _) =>
-            {
-                var (type, cd) = tuple;
-                if (type is null || cd is null)
-                    return null;
-                if (!type.Locations.Any(l => l.IsInSource))
-                    return null;
-                if (type.TypeKind != TypeKind.Class || type.IsAbstract)
-                    return null;
-                if (SymbolEqualityComparer.Default.Equals(type, cd))
-                    return null;
-                return InheritsFromCd(type, cd) ? type : null;
-            })
-            .Where(static t => t is not null)!
-            .Select(static (t, _) => t!);
-
-        // 收集软删实体 + CD 类型符号 + DbContext 实体分组
-        var collected = softDeleteTypes.Collect().Combine(cdSymbol).Combine(dbContextGroups).Combine(modelBuilderSymbol);
+        // 从上下文实体符号发现引用程序集中的软删除实体
+        var collected = cdSymbol.Combine(dbContextGroups).Combine(modelBuilderSymbol);
 
         context.RegisterSourceOutput(collected, static (spc, tuple) =>
         {
-            var entities = tuple.Left.Left.Left;
-            var cd = tuple.Left.Left.Right;
+            var cd = tuple.Left.Left;
             var dbContextEntityGroups = tuple.Left.Right;
             var modelBuilder = tuple.Right;
 
             if (cd is null || modelBuilder is null || dbContextEntityGroups.IsDefaultOrEmpty)
                 return;
 
-            var softDeleteEntitySet = new HashSet<INamedTypeSymbol>(entities, SymbolEqualityComparer.Default);
             var reportedInaccessibleEntities = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
             var generatedGroups = ImmutableArray.CreateBuilder<DbContextEntityGroup>(dbContextEntityGroups.Length);
 
@@ -130,7 +110,7 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
 
                 foreach (var entity in group.EntityTypes)
                 {
-                    if (!softDeleteEntitySet.Contains(entity))
+                    if (!InheritsFromCd(entity, cd) || SymbolEqualityComparer.Default.Equals(entity, cd))
                     {
                         continue;
                     }
@@ -201,7 +181,7 @@ public sealed class SoftDeleteFilterGenerator : IIncrementalGenerator
         typeNameResolver.AppendUsingDirectives(sb);
 
         sb.AppendLine();
-        sb.AppendLine("namespace Repository.Database.Generated;");
+        sb.AppendLine("namespace " + groups[0].DbContextType.ContainingAssembly.Name + ".Database.Generated;");
         sb.AppendLine();
 
         sb.AppendLine("/// <summary>")

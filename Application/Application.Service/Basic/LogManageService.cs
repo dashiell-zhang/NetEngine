@@ -1,17 +1,13 @@
 using Application.Model.Basic.Log;
 using Application.Model.Shared;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Repository;
-using SourceGenerator.Runtime.Attributes;
+using Logger.Database.Query;
 
 namespace Application.Service.Basic;
 
 /// <summary>
-/// 提供日志查询管理能力
+/// 将管理端日志请求转换为组件查询并保持应用契约
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LogManageService(ReadDatabaseContext readDb)
+public class LogManageService(LogQueryService logQuery)
 {
 
     /// <summary>
@@ -19,58 +15,33 @@ public class LogManageService(ReadDatabaseContext readDb)
     /// </summary>
     public async Task<PageListDto<LogDto>> GetLogListAsync(LogPageRequestDto request)
     {
-        PageListDto<LogDto> result = new();
 
-        var query = readDb.Log.AsQueryable();
-
-        // 添加检索条件
-        if (!string.IsNullOrWhiteSpace(request.Project))
+        var result = await logQuery.QueryAsync(new LogQueryRequest
         {
-            query = query.Where(t => t.Project.Contains(request.Project));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.MachineName))
+            Project = request.Project,
+            MachineName = request.MachineName,
+            Content = request.Content,
+            Level = request.Level,
+            StartTime = request.StartTime,
+            EndTime = request.EndTime,
+            Skip = request.Skip(),
+            Take = request.PageSize
+        });
+        return new PageListDto<LogDto>
         {
-            query = query.Where(t => t.MachineName.Contains(request.MachineName));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Content))
-        {
-            var keyword = request.Content.Trim();
-            query = query.Where(t => t.Content != null && t.Content.Contains(keyword));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Level))
-        {
-            query = query.Where(t => t.Level == request.Level);
-        }
-
-        if (request.StartTime.HasValue)
-        {
-            query = query.Where(t => t.CreateTime >= request.StartTime.Value);
-        }
-
-        if (request.EndTime.HasValue)
-        {
-            query = query.Where(t => t.CreateTime <= request.EndTime.Value);
-        }
-
-        result.Total = await query.CountAsync();
-
-        if (result.Total != 0)
-        {
-            result.List = await query.OrderByDescending(t => t.Id).Select(t => new LogDto
+            Total = result.Total,
+            List = result.List.Select(item => new LogDto
             {
-                Id = t.Id,
-                Project = t.Project,
-                MachineName = t.MachineName,
-                Level = t.Level,
-                Category = t.Category,
-                Content = t.Content,
-                CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
-        }
+                Id = item.Id,
+                Project = item.Project,
+                MachineName = item.MachineName,
+                Level = item.Level,
+                Category = item.Category,
+                Content = item.Content,
+                CreateTime = item.CreateTime
+            }).ToList()
+        };
 
-        return result;
     }
+
 }

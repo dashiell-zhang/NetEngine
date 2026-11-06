@@ -6,6 +6,7 @@
 - Admin.App、Admin.WebAPI、Client.WebAPI 的 Nginx 配置
 - Admin.WebAPI、Client.WebAPI、TaskService 的 systemd 服务配置
 - systemd 服务启用与启动命令
+- 数据库、业务 Redis 和共享组件连接的环境变量示例
 - Admin.App、Admin.WebAPI、Client.WebAPI、TaskService 的云效流水线 YAML
 
 生成器只负责生成文件，不会连接服务器、复制文件、安装服务或执行部署命令
@@ -62,6 +63,20 @@ Deployment/
 - `Generated`：最终生成结果
 
 不要直接修改 `Generated` 中的文件。生成器每次运行都会使用当前配置和模板完整替换该目录，其中自行添加的额外文件也会被删除
+
+## 业务与共享组件连接
+
+systemd 服务按顺序读取 `<DeployRoot>/config/shared.env` 和各宿主的 `client-webapi.env`、`admin-webapi.env`、`task-service.env`。文件可选，后者覆盖前者；没有文件时仍使用应用现有配置。真实连接放在服务器配置中，不加入 deploysettings.json 或提交到仓库
+
+生成的 `service/<project>-runtime.env.example` 列出可用环境变量，包含占位值，不会被服务自动加载。按实际环境填写后再建立对应 env 文件，并将权限限定为服务账号可读
+
+- `redisConnection` 及业务数据库按模块隔离，同模块各宿主与 Worker 副本保持一致
+- `idRedisConnection` 用于所有共享 ID 实例的节点协调，不跟随业务 Redis 库编号隔离
+- 共享日志库使用一致的 `logConnection`、`logRedisConnection` 和 `DatabaseIdentity:Log`；各宿主使用稳定 Project，同 Project 保留期一致
+- Redis 广播需要互通时使用相同 `eventBusRedisConnection`、库编号、Scope 和保留期；数据库广播使用共同的 `eventBusConnection`
+- `dbReadConnection` 对应本业务写库，`logReadConnection` 对应日志写库，不能将日志查询默认路由到业务读库
+
+各上下文的数据源和连接池由 Npgsql 提供程序按连接配置管理，不能简单按上下文数量推算连接池数量。示例中的连接上限需要结合实际连接池、副本数量和数据库容量调整。配置生成不创建数据库结构、不执行迁移，也不安装这些 env 文件。部署前分别通过 [数据库工具](RepositoryTool.md) 准备所需业务、日志和事件模型
 
 ## 配置说明
 
@@ -206,6 +221,7 @@ Generated/
 │  ├─ demo-admin-webapi.service
 │  ├─ demo-client-webapi.service
 │  ├─ demo-task-service.service
+│  ├─ demo-runtime.env.example
 │  └─ demo-install-services.txt
 └─ yunxiao/
    ├─ demo-admin-app.yaml

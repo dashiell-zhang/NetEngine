@@ -1,96 +1,61 @@
-using Common;
-using DistributedLock;
 using IdentifierGenerator.Models;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
 
 namespace IdentifierGenerator;
 
 /// <summary>
 /// 生成使用固定雪花布局的全局唯一 ID
 /// </summary>
-public class IdService
+public class IdService : IDisposable, IAsyncDisposable
 {
 
     /// <summary>
-    /// 创建雪花 ID 生成服务并分配数据中心和机器编号
+    /// 创建由宿主明确分配且保证不重复的固定节点
     /// </summary>
-    /// <param name="config">ID 生成配置</param>
-    /// <param name="distributedLock">节点编号分配锁</param>
-    /// <param name="distributedCache">节点编号占用缓存</param>
-    public IdService(IOptionsMonitor<IdSetting> config, IDistributedLock distributedLock, IDistributedCache distributedCache)
+    public IdService(int dataCenterId, int machineId)
     {
-        if (config.CurrentValue.DataCenterId == null || config.CurrentValue.MachineId == null)
+
+        if (dataCenterId is < 0 or > 31 || machineId is < 0 or > 31)
         {
-            using var handle = distributedLock.LockAsync("IdentifierGenerator").GetAwaiter().GetResult();
-            {
-                const int maxCombinations = 1024; // 32 * 32
-                var start = RandomNumberGenerator.GetInt32(0, maxCombinations);
-
-                string key = "";
-                bool allocated = false;
-
-                for (int offset = 0; offset < maxCombinations; offset++)
-                {
-                    int combinedNumber = (start + offset) % maxCombinations; // 0..1023
-                    config.CurrentValue.DataCenterId = (combinedNumber >> 5) & 31; // dataCenterId 取组合数右移5位后的低5位
-                    config.CurrentValue.MachineId = combinedNumber & 31; // machineId 取组合数的低5位
-                    key = "IdentifierGenerator-" + config.CurrentValue.DataCenterId + ":" + config.CurrentValue.MachineId;
-
-                    if (!distributedCache.IsContainKey(key))
-                    {
-                        allocated = true;
-                        break;
-                    }
-                }
-
-                if (!allocated)
-                {
-                    throw new Exception("Id生成器注册DataCenterId和MachineId失败：可用组合已耗尽");
-                }
-
-                distributedCache.Set(key, "", TimeSpan.FromDays(2));
-            }
+            throw new ArgumentOutOfRangeException(nameof(dataCenterId), "雪花节点编号必须在 0 到 31 之间");
         }
+        this.dataCenterId = dataCenterId;
+        this.machineId = machineId;
+        sequenceMask = (1L << SnowflakeIdLayout.SequenceBits) - 1;
+        machineIdShift = SnowflakeIdLayout.SequenceBits;
+        dataCenterIdShift = SnowflakeIdLayout.SequenceBits + SnowflakeIdLayout.MachineIdBits;
 
-        if (config.CurrentValue.DataCenterId != null && config.CurrentValue.MachineId != null)
-        {
-            dataCenterId = config.CurrentValue.DataCenterId.Value;
-            machineId = config.CurrentValue.MachineId.Value;
-
-            // 使用位运算直接计算掩码和最大值，更高效且清晰
-            maxMachineId = -1L ^ (-1L << SnowflakeIdLayout.MachineIdBits);
-            maxDataCenterId = -1L ^ (-1L << SnowflakeIdLayout.DataCenterIdBits);
-            sequenceMask = -1L ^ (-1L << SnowflakeIdLayout.SequenceBits);
-
-            // 计算移位数
-            machineIdShift = SnowflakeIdLayout.SequenceBits;
-            dataCenterIdShift = SnowflakeIdLayout.SequenceBits + SnowflakeIdLayout.MachineIdBits;
-
-            if (dataCenterId < 0 || dataCenterId > maxDataCenterId)
-            {
-                throw new Exception("数据中心ID异常");
-            }
-            if (machineId < 0 || machineId > maxMachineId)
-            {
-                throw new Exception("机器码ID异常");
-            }
-        }
-        else
-        {
-            throw new Exception("数据中心ID或机器码ID异常");
-        }
     }
 
 
+    /// <summary>
+    /// 使用已确认且正在自动续期的共享节点
+    /// </summary>
+    private IdService(RedisNodeLease lease) : this(lease.Node >> 5, lease.Node & 31)
+    {
+
+        this.lease = lease;
+
+    }
+
+
+    /// <summary>
+    /// 原子取得共享节点后创建可发号服务
+    /// </summary>
+    internal static IdService CreateAutomatic(IdSetting settings)
+    {
+
+        return new IdService(RedisNodeLease.AcquireAsync(settings).GetAwaiter().GetResult());
+
+    }
+
+
+    private readonly RedisNodeLease? lease;
+    private int disposed;
     private readonly long machineId;
     private readonly long dataCenterId;
     private long sequence = 0L; //计数从零开始
     private long lastTimestamp = -1L; //最后时间戳
 
-    private readonly long maxMachineId;
-    private readonly long maxDataCenterId;
     private readonly long sequenceMask;
 
     private readonly long machineIdShift;
@@ -107,6 +72,8 @@ public class IdService
     {
         lock (syncRoot)
         {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref disposed) != 0, this);
+            lease?.EnsureValid();
             long timestamp = GetCurrentTimestamp();
 
             // 当发生时钟回拨时，抛出异常
@@ -131,6 +98,8 @@ public class IdService
                 // 时间戳改变，序列号重置
                 sequence = 0L;
             }
+
+            lease?.EnsureValid();
 
             // 更新最后的时间戳
             lastTimestamp = timestamp;
@@ -193,4 +162,30 @@ public class IdService
     {
         return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     }
+
+
+    /// <summary>
+    /// 停止发号并释放自动节点续期资源
+    /// </summary>
+    public void Dispose()
+    {
+
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+    }
+
+
+    /// <summary>
+    /// 异步停止自动节点续期，保留远端节点占用至到期
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+
+        if (Interlocked.Exchange(ref disposed, 1) == 0 && lease is not null)
+        {
+            await lease.DisposeAsync().ConfigureAwait(false);
+        }
+
+    }
+
 }

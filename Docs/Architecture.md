@@ -2,14 +2,16 @@
 
 本文说明 NetEngine 的分层职责、依赖方向、宿主引用关系与项目拆分原则。新增功能或调整项目引用前，应先根据这里的边界确认代码应该放在哪一层
 
+框架整体关系与运行流程可先阅读 [框架架构设计图](ArchitectureDiagrams.md)
+
 ## 总体结构
 
 | 层级 | 目录 | 主要职责 |
 |---|---|---|
 | 表现与宿主层 | `Presentation` | 请求接入、页面展示、宿主组装、中间件和依赖注入入口 |
 | 应用层 | `Application` | 业务逻辑、业务编排、应用服务和跨层数据契约 |
-| 数据访问层 | `Repository` | EF Core 实体、上下文、映射、拦截器和持久化逻辑 |
-| 基础设施层 | `Infrastructure` | 缓存、锁、文件、短信、日志、LLM 等外部能力接入 |
+| 业务数据访问层 | `Repository` | 本模块业务实体、上下文、映射及本地任务持久化 |
+| 基础设施层 | `Infrastructure` | 共用数据库机制，以及缓存、锁、日志、事件、队列存储、文件、短信、LLM 等组件 |
 | 公共宿主层 | `ProjectCore` | WebAPI 与 TaskService 的公共启动和运行能力 |
 | 编译期工具 | `SourceGenerator` | 服务注册、代理、EF Core 辅助代码等源码生成能力 |
 
@@ -18,12 +20,15 @@
 ```text
 Presentation ──> Application ──> Repository
        │               └───────> Infrastructure
-       └───────> ProjectCore ──> Application.Model / Repository
+       └───────> ProjectCore ──> 共享契约 / 基础设施组件
 
 Admin.App ──> Application.Model
+
+业务 Repository / Logger.Database / EventBus.Database / QueueTask.Database
+       └───────> Infrastructure/Repository.Core
 ```
 
-表现层负责接入与组装，业务判断应进入应用层；数据库访问进入 Repository；第三方平台和外部组件实现进入 Infrastructure
+表现层负责接入与组装，业务判断应进入应用层；业务数据访问进入所属模块的 Repository，独立组件的存储由组件管理，共用 EF/PostgreSQL 机制进入 Repository.Core。基础设施组件不反向依赖业务 Repository 或 ProjectCore
 
 ## Application
 
@@ -43,7 +48,7 @@ Controller 直接通过 `ControllerBase.User` 和 WebAPI.Core 的 Claims 扩展�
 
 ## Repository
 
-- `Repository` 负责实体、`DatabaseContext`、`ReadDatabaseContext`、EF Core 映射、拦截器和持久化相关代码
+- 业务 `Repository` 负责本模块实体、写读上下文和业务持久化，公共机制位于 `Infrastructure/Repository.Core`，独立组件拥有自己的内部模型
 - `Repository.Tool` 是迁移和数据库工具宿主
 - 数据库结构调整应同步检查实体、上下文、映射、拦截器及调用点
 
@@ -52,10 +57,12 @@ Controller 直接通过 `ControllerBase.User` 和 WebAPI.Core 的 Claims 扩展�
 Infrastructure 按能力拆分为抽象、公共实现或厂商实现，当前主要包括：
 
 - `DistributedLock`、`DistributedLock.Redis`、`DistributedLock.InMemory`
-- `EventBus`、`EventBus.Redis`、`EventBus.Database`，公共广播运行能力及可替换存储；数据库后端的组件实体与映射集中在基础层，复用已有主库上下文工厂，不反向依赖业务 Repository
+- `EventBus`、`EventBus.Redis`、`EventBus.Database`，公共广播运行能力及可替换存储；数据库后端拥有独立的 EventBusDatabaseContext，按宿主传入的连接访问主库，不依赖业务 Repository
 - `FileStorage`、`FileStorage.AliCloud`、`FileStorage.TencentCloud`
 - `SMS`、`SMS.AliCloud`、`SMS.TencentCloud`
-- `Logger.Database`、`Logger.LocalFile`
+- `Logger.Database`、`Logger.LocalFile`；数据库日志拥有独立写读上下文和查询入口
+- `Repository.Core`：公共实体约定、PostgreSQL 分区、上下文注册和连接检查
+- `QueueTask.Database`：可复用队列、TaskSetting、入队、管理及存储操作，表随各模块业务库部署
 - `IdentifierGenerator`
 - `LLM`
 - `Common`
@@ -69,7 +76,7 @@ Infrastructure 按能力拆分为抽象、公共实现或厂商实现，当前�
 | `WebAPI.Core` | 认证、授权、Swagger、过滤器、健康检查、用户上下文和公共中间件 |
 | `TaskService.Core` | 队列任务、定时任务、任务初始化与同步 |
 
-ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业务逻辑
+ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业务逻辑，不依赖具体业务 Repository 或具体 Application.Service。WebAPI.Core 不默认注册业务数据库检查；TaskService.Core 通过队列组件操作宿主选定的业务库，初始化仅扫描显式选择的任务类型
 
 ## Presentation 与宿主引用
 
@@ -112,12 +119,16 @@ ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业�
 |---|---|
 | 新增请求或返回模型 | `Application.Model` |
 | 新增业务逻辑或业务编排 | `Application.Service` 或对应的宿主特化应用项目 |
-| 新增实体、查询或持久化逻辑 | `Repository` |
-| 跨进程广播事件 | 公共能力、Redis 和数据库后端在 `Infrastructure`，业务事件与监听在 Application；Repository 通过一行映射接入组件实体，宿主选择已有主库上下文工厂 |
+| 新增业务实体、查询或持久化逻辑 | 所属模块的 `Repository` |
+| 日志、事件等组件的实体与存储 | 对应 `Infrastructure` 组件；共用数据库机制放入 `Repository.Core` |
+| 跨进程广播事件 | 公共能力、Redis 和数据库后端在 `Infrastructure`，业务事件与监听在 Application；事件组件拥有独立上下文，宿主明确选择事件连接 |
 | 接入缓存、云平台或第三方服务 | `Infrastructure` |
 | 新增 Controller 或宿主启动配置 | `Presentation` |
 | 多个 WebAPI 宿主共用的 HTTP 能力 | `ProjectCore/WebAPI.Core` |
-| 定时任务或队列任务公共能力 | `ProjectCore/TaskService.Core` |
+| 定时任务或队列任务执行、调度能力 | `ProjectCore/TaskService.Core` |
+| 队列入队、任务配置与管理存储 | `Infrastructure/QueueTask.Database`，绑定所属业务上下文 |
 | 编译期自动生成能力 | `SourceGenerator` |
+
+同进程多业务库、跨模块本地调用及 Redis 绑定方式见 [业务模块与数据库接入](DatabaseModules.md)
 
 修改前还应搜索同层现有实现，优先沿用当前模式，避免在表现层直接编写业务逻辑或数据库访问代码

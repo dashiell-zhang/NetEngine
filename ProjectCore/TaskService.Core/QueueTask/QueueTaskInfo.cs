@@ -21,6 +21,12 @@ public class QueueTaskInfo
 
 
     /// <summary>
+    /// 声明时的并发值，清空数据库覆盖配置时恢复使用
+    /// </summary>
+    internal int DefaultSemaphore { get; init; } = 1;
+
+
+    /// <summary>
     /// 方法
     /// </summary>
     public MethodInfo Method { get; set; }

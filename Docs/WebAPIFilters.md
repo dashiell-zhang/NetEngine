@@ -17,6 +17,8 @@
 
 WebAPI 宿主通过 `builder.AddCommonServices()` 注册 MVC 公共服务，通过 `app.UseCommonMiddleware()` 开启请求体重复读取、认证授权和生产环境异常处理中间件。新增宿主使用这些过滤器时，应保持这两个公共入口
 
+缓存和并发过滤器解析宿主默认的 `IDistributedCache`、`IDistributedLock`，与应用服务和自动代理使用同一套服务。宿主集中配置默认缓存和锁，组合多个业务模块时通过具体 key 区分业务操作，参见 [分布式锁](DistributedLock.md#注册)
+
 ## ExceptionFilter
 
 `ExceptionFilter` 已在 `AddCommonServices()` 中全局注册：

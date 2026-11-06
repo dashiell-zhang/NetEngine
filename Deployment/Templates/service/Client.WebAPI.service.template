@@ -3,6 +3,8 @@ Description={{ProjectNameLower}}-client-webapi
 
 [Service]
 WorkingDirectory={{DeployRoot}}/clientwebapi
+EnvironmentFile=-{{DeployRoot}}/config/shared.env
+EnvironmentFile=-{{DeployRoot}}/config/client-webapi.env
 ExecStart={{DeployRoot}}/clientwebapi/Client.WebAPI --urls="http://127.0.0.1:{{Port.ClientWebAPI}}"
 Restart=always
 RestartSec=60

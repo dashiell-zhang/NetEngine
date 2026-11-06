@@ -13,13 +13,13 @@ public class EditTaskSettingDto
 
 
     /// <summary>
-    /// 并发值
+    /// 并发值，为 null 时恢复任务声明默认值
     /// </summary>
     public int? Semaphore { get; set; }
 
 
     /// <summary>
-    /// Cron 表达式
+    /// Cron 表达式，为空或空白时恢复任务声明默认值
     /// </summary>
     public string? Cron { get; set; }
 

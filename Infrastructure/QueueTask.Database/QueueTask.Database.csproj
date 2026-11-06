@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Repository.Core/Repository.Core.csproj" />
+    <ProjectReference Include="../IdentifierGenerator/IdentifierGenerator.csproj" />
+    <ProjectReference Include="../Common/Common.csproj" />
+  </ItemGroup>
+</Project>

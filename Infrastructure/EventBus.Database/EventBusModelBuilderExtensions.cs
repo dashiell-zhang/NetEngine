@@ -1,12 +1,12 @@
-using EventBus.Database.Models;
+using EventBus.Database.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventBus.Database;
 
 /// <summary>
-/// 将广播组件的内部实体接入已有上下文模型
+/// 配置广播组件专用上下文的实体模型
 /// </summary>
-public static class EventBusModelBuilderExtensions
+internal static class EventBusModelBuilderExtensions
 {
 
     /// <summary>
@@ -17,18 +17,19 @@ public static class EventBusModelBuilderExtensions
 
         var stream = modelBuilder.Entity<EventBusStream>();
         stream.ToTable("EventBusStream");
-        stream.HasKey(t => t.Scope);
+        stream.HasKey(t => t.Id);
+        stream.HasIndex(t => t.Scope).IsUnique();
         stream.Property(t => t.Scope).HasMaxLength(200);
         stream.Property(t => t.Position).ValueGeneratedNever();
-        stream.Property(t => t.Version).IsConcurrencyToken().ValueGeneratedNever();
 
         var message = modelBuilder.Entity<EventBusMessage>();
         message.ToTable("EventBusMessage");
-        message.HasKey(t => new { t.Scope, t.Position });
+        message.HasKey(t => t.Id);
+        message.HasIndex(t => new { t.Scope, t.Position }).IsUnique();
         message.Property(t => t.Scope).HasMaxLength(200);
         message.Property(t => t.Position).ValueGeneratedNever();
         message.Property(t => t.EventName).HasMaxLength(1024);
-        message.HasIndex(t => new { t.Scope, t.PublishedAt });
+        message.HasIndex(t => new { t.Scope, t.CreateTime });
         return modelBuilder;
 
     }

@@ -283,7 +283,7 @@ public static class DatabaseContextExtension
                 if ((typename != "System.Decimal" && oldValue != newValue) || (typename == "System.Decimal" && decimal.Parse(oldValue!) != decimal.Parse(newValue!)))
                 {
 
-                    retValue += DatabaseContext.GetEntityComment(original!.GetType().ToString(), pi.Name, baseTypeNames) + ":";
+                    retValue += Repository.Core.Extensions.ModelDocumentation.GetComment(original!.GetType(), pi.Name) + ":";
 
 
                     if (pi.Name != "Id" && pi.Name.EndsWith("Id"))

@@ -3,6 +3,8 @@ Description={{ProjectNameLower}}-task-service
 
 [Service]
 WorkingDirectory={{DeployRoot}}/taskservice
+EnvironmentFile=-{{DeployRoot}}/config/shared.env
+EnvironmentFile=-{{DeployRoot}}/config/task-service.env
 ExecStart={{DeployRoot}}/taskservice/TaskService
 Restart=always
 RestartSec=60

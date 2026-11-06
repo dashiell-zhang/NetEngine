@@ -1,17 +1,24 @@
+using global::QueueTask.Database;
+using global::QueueTask.Database.Models;
 using Microsoft.EntityFrameworkCore;
-using EventBus.Database;
 using Repository.Database;
 using Repository.Database.Generated;
-using System.Reflection;
-using System.Xml;
+using Repository.Core.Bases;
+using Repository.Core.Extensions;
 
 namespace Repository;
 
 /// <summary>
 /// 数据库写入上下文
 /// </summary>
-public class DatabaseContext : DbContext
+public class DatabaseContext : RepositoryDbContext
 {
+
+    /// <summary>
+    /// 本业务模型在 public 中使用的迁移历史表
+    /// </summary>
+    public const string MigrationHistoryTable = "__EFMigrationsHistory_Business";
+
 
     /// <summary>
     /// 创建数据库写入上下文
@@ -54,15 +61,13 @@ public class DatabaseContext : DbContext
 
     public DbSet<LlmModel> LlmModel { get; set; }
 
-    public DbSet<Log> Log { get; set; }
-
     public DbSet<Order> Order { get; set; }
 
     public DbSet<OrderDetail> OrderDetail { get; set; }
 
     public DbSet<Product> Product { get; set; }
 
-    public DbSet<QueueTask> QueueTask { get; set; }
+    public DbSet<global::QueueTask.Database.Models.QueueTask> QueueTask { get; set; }
 
     public DbSet<RegionArea> RegionArea { get; set; }
 
@@ -92,198 +97,21 @@ public class DatabaseContext : DbContext
 
 
     /// <summary>
-    /// 配置业务实体、广播组件、过滤器和分区元数据
+    /// 配置业务实体、过滤器和分区元数据
     /// </summary>
     /// <param name="modelBuilder">EF Core 模型构建器</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
-        modelBuilder.ConfigureEventBus();
-
+        modelBuilder.ConfigureQueueTasks();
         modelBuilder.ApplySoftDeleteFilters(this);
 
         modelBuilder.ApplyJsonColumns(this);
 
 
-#if DEBUG
-
-        var dbSetTypeList = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p =>
-         p.PropertyType.IsGenericType &&
-         p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
-     .Select(p => p.PropertyType.GetGenericArguments()[0])
-     .ToList();
-
-        var entityTypesInDbSet = modelBuilder.Model.GetEntityTypes().Where(e => dbSetTypeList.Contains(e.ClrType)).ToList();
-
-        foreach (var entity in entityTypesInDbSet)
-        {
-
-            // 关闭表外键的级联删除功能
-            entity.GetForeignKeys().ToList().ForEach(t => t.DeleteBehavior = DeleteBehavior.Restrict);
-
-            modelBuilder.Entity(entity.Name, builder =>
-            {
-                // 设置表的备注
-                builder.ToTable(t => t.HasComment(GetEntityComment(entity.Name)));
-
-                List<string> baseTypeNames = [];
-                var baseType = entity.ClrType.BaseType;
-                while (baseType != null)
-                {
-                    baseTypeNames.Add(baseType.FullName!);
-                    baseType = baseType.BaseType;
-                }
-
-                foreach (var property in entity.GetProperties())
-                {
-                    // 设置字段的备注
-                    property.SetComment(GetEntityComment(entity.Name, property.Name, baseTypeNames));
-                }
-
-            });
-        }
-#endif
+        modelBuilder.ApplyModelDocumentation(this);
 
         modelBuilder.ApplyPartitionTables(this);
-
-    }
-
-
-    public static string GetEntityComment(string typeName, string? fieldName = null, List<string>? baseTypeNames = null)
-    {
-        var path = Path.Combine(AppContext.BaseDirectory, "Repository.xml");
-        XmlDocument xml = new();
-        xml.Load(path);
-        XmlNodeList memebers = xml.SelectNodes("/doc/members/member")!;
-
-        Dictionary<string, string> fieldList = [];
-
-
-        if (fieldName == null)
-        {
-            var matchKey = "T:" + typeName;
-
-            foreach (object m in memebers)
-            {
-                if (m is XmlNode node)
-                {
-                    var name = node.Attributes!["name"]!.Value;
-
-                    if (name == matchKey)
-                    {
-                        foreach (var item in node.ChildNodes)
-                        {
-                            if (item is XmlNode childNode && childNode.Name == "summary")
-                            {
-                                var summary = childNode.InnerText.Trim();
-                                fieldList.Add(name, summary);
-                            }
-                        }
-                    }
-                }
-            }
-
-            return fieldList.FirstOrDefault(t => t.Key.Equals(matchKey, StringComparison.OrdinalIgnoreCase)).Value ?? typeName.ToString().Split(".").ToList().LastOrDefault()!;
-        }
-        else
-        {
-
-            foreach (object m in memebers)
-            {
-                if (m is XmlNode node)
-                {
-                    string name = node.Attributes!["name"]!.Value;
-
-                    var matchKey = "P:" + typeName + ".";
-                    if (name.StartsWith(matchKey))
-                    {
-                        name = name.Replace(matchKey, "");
-
-                        fieldList.Remove(name);
-
-                        foreach (var item in node.ChildNodes)
-                        {
-                            if (item is XmlNode childNode && childNode.Name == "summary")
-                            {
-                                var summary = childNode.InnerText.Trim();
-                                fieldList.Add(name, summary);
-                            }
-                        }
-                    }
-
-                    if (baseTypeNames != null)
-                    {
-                        foreach (var baseTypeName in baseTypeNames)
-                        {
-                            if (baseTypeName != null)
-                            {
-                                matchKey = "P:" + baseTypeName + ".";
-                                if (name.StartsWith(matchKey))
-                                {
-                                    name = name.Replace(matchKey, "");
-
-                                    foreach (var item in node.ChildNodes)
-                                    {
-                                        if (item is XmlNode childNode && childNode.Name == "summary")
-                                        {
-                                            var summary = childNode.InnerText.Trim();
-                                            fieldList.Add(name, summary);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return fieldList.FirstOrDefault(t => t.Key.Equals(fieldName, StringComparison.OrdinalIgnoreCase)).Value ?? fieldName;
-        }
-    }
-
-
-    /// <summary>
-    /// 在保存前更新实体的更新时间
-    /// </summary>
-    internal void PreprocessingChangeTracker()
-    {
-
-        var list = this.ChangeTracker.Entries().Where(t => t.State == EntityState.Modified).ToList();
-
-        foreach (var item in list)
-        {
-            var updateTime = item.Properties.Where(t => t.Metadata.Name == "UpdateTime").FirstOrDefault();
-
-            if (updateTime != null && updateTime.IsModified == false)
-            {
-                updateTime.CurrentValue = DateTimeOffset.UtcNow;
-            }
-
-        }
-
-    }
-
-
-    /// <summary>
-    /// 更新业务时间后交给 EF 完成同步保存及通知
-    /// </summary>
-    public override int SaveChanges(bool acceptAllChangesOnSuccess)
-    {
-
-        PreprocessingChangeTracker();
-        return base.SaveChanges(acceptAllChangesOnSuccess);
-
-    }
-
-
-    /// <summary>
-    /// 更新业务时间后交给 EF 完成异步保存及通知
-    /// </summary>
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
-    {
-
-        PreprocessingChangeTracker();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
 
     }
 

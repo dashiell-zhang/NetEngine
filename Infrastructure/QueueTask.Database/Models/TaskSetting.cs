@@ -1,0 +1,70 @@
+using Repository.Core.Bases;
+
+namespace QueueTask.Database.Models;
+
+/// <summary>
+/// 任务配置
+/// </summary>
+public class TaskSetting : CUD
+{
+
+    /// <summary>
+    /// 创建人标识，由所属业务模块解释
+    /// </summary>
+    public long? CreateUserId { get; set; }
+
+
+    /// <summary>
+    /// 修改人标识，由所属业务模块解释
+    /// </summary>
+    public long? UpdateUserId { get; set; }
+
+
+    /// <summary>
+    /// 删除人标识，由所属业务模块解释
+    /// </summary>
+    public long? DeleteUserId { get; set; }
+
+
+    /// <summary>
+    /// 任务名称
+    /// </summary>
+    public string Name { get; set; } = "";
+
+
+    /// <summary>
+    /// 任务种类["QueueTask","ScheduleTask"]
+    /// </summary>
+    public string Category { get; set; } = "";
+
+
+    /// <summary>
+    /// 参数
+    /// </summary>
+    public string? Parameter { get; set; }
+
+
+    /// <summary>
+    /// 并发值
+    /// </summary>
+    public int? Semaphore { get; set; }
+
+
+    /// <summary>
+    /// Cron 表达式
+    /// </summary>
+    public string? Cron { get; set; }
+
+
+    /// <summary>
+    /// 是否启用
+    /// </summary>
+    public bool IsEnable { get; set; }
+
+
+    /// <summary>
+    /// 备注
+    /// </summary>
+    public string? Remark { get; set; }
+
+}

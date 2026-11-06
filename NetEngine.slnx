@@ -15,6 +15,8 @@
     <Project Path="Deployment/Deployment.csproj" />
   </Folder>
   <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/Repository.Core/Repository.Core.csproj" />
+    <Project Path="Infrastructure/QueueTask.Database/QueueTask.Database.csproj" />
     <Project Path="Infrastructure/EventBus/EventBus.csproj" />
     <Project Path="Infrastructure/EventBus.Redis/EventBus.Redis.csproj" />
     <Project Path="Infrastructure/EventBus.Database/EventBus.Database.csproj" />

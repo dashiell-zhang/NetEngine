@@ -3,17 +3,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Repository;
+using Logger.Database.Persistence;
 
 namespace Logger.Database.Tasks;
 
 /// <summary>
 /// 定期清理数据库中的过期日志，失败时报告并保留下一轮重试
 /// </summary>
-internal class LogClearTask(IOptionsMonitor<LoggerSetting> config, IServiceProvider serviceProvider) : BackgroundService
+internal class LogClearTask(IOptionsMonitor<LoggerSetting> config, IDbContextFactory<LogDatabaseContext> contextFactory) : BackgroundService
 {
 
     private readonly int saveDays = config.CurrentValue.SaveDays;
+
+    private readonly string project = config.CurrentValue.Project;
 
 
     /// <summary>
@@ -33,12 +35,11 @@ internal class LogClearTask(IOptionsMonitor<LoggerSetting> config, IServiceProvi
             {
                 try
                 {
-                    await using var scope = serviceProvider.CreateAsyncScope();
-                    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                    await using var db = await contextFactory.CreateDbContextAsync(stoppingToken);
                     var now = DateTimeOffset.UtcNow;
                     var deleteTime = saveDays > (now - DateTimeOffset.MinValue).TotalDays ? DateTimeOffset.MinValue : now.AddDays(-saveDays);
 
-                    await db.Log.Where(t => t.CreateTime <= deleteTime).ExecuteDeleteAsync(stoppingToken);
+                    await db.Log.Where(t => t.Project == project && t.CreateTime <= deleteTime).ExecuteDeleteAsync(stoppingToken);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {

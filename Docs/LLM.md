@@ -37,7 +37,9 @@ builder.Services.AddLlmClientFactory();
 - `AddHttpClient()` 提供 `IHttpClientFactory`
 - `AddLlmClientFactory()` 注册单例 `ILlmClientFactory`
 
-宿主还需要注册 `DatabaseContext`、`ReadDatabaseContext`、`IdService` 和 `IDistributedLock`。`BatchRegisterServices()` 会同时注册该类库中的配置管理与对话查询服务，其中 `LlmConversationManageService` 依赖读取上下文，模型与应用配置服务依赖分布式锁；缺少这些依赖会在启用 DI 构建验证或解析对应服务时失败。上下文注册方式见 [数据库读写分离](DatabaseReadWriteSeparation.md)
+宿主还需要注册业务 `DatabaseContext`、`ReadDatabaseContext`、共享 `IdService`，以及默认的 `IDistributedLock`。模型与应用配置服务直接注入宿主默认锁，注册示例见 [分布式锁](DistributedLock.md#注册)
+
+`BatchRegisterServices()` 会同时注册该类库中的配置管理与对话查询服务，其中 `LlmConversationManageService` 依赖业务读取上下文；缺少这些依赖会在启用 DI 构建验证或解析对应服务时失败。上下文注册方式见 [数据库读写分离](DatabaseReadWriteSeparation.md)。该应用类库属于当前业务模块，加载第二个业务模块不会自动切换其数据库；各模块共用宿主默认锁并通过具体 key 区分业务操作
 
 `LlmInvokeService` 不读取当前 HTTP 用户上下文。调用方通过第一个参数显式传入 `long? actorUserId`：认证调用传真实用户 ID，匿名或系统调用传 `null`
 

@@ -1,0 +1,42 @@
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Repository.Core.Bases;
+
+/// <summary>
+/// 创建、删除
+/// </summary>
+[Index(nameof(CreateTime)), Index(nameof(DeleteTime))]
+public class CD
+{
+
+    /// <summary>
+    /// 主键标识ID
+    /// </summary>
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    public long Id { get; set; }
+
+
+    /// <summary>
+    /// 创建时间
+    /// </summary>
+    public DateTimeOffset CreateTime { get; set; } = DateTime.UtcNow;
+
+
+
+    /// <summary>
+    /// 删除时间，不为 null 时表示已软删除
+    /// </summary>
+    public DateTimeOffset? DeleteTime { get; set; }
+
+
+
+    /// <summary>
+    /// 行版本标记
+    /// </summary>
+    [Timestamp]
+    public uint RowVersion { get; set; }
+
+
+}

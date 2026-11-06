@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskService.Core;
 
-public static class InitTaskBackgroundServiceExtensions
+internal static class InitTaskBackgroundServiceExtensions
 {
 
     public static async Task WaitForInitializationAsync(this InitTaskBackgroundService initTaskBackgroundService, CancellationToken cancellationToken)

@@ -3,6 +3,8 @@ Description={{ProjectNameLower}}-admin-webapi
 
 [Service]
 WorkingDirectory={{DeployRoot}}/adminwebapi
+EnvironmentFile=-{{DeployRoot}}/config/shared.env
+EnvironmentFile=-{{DeployRoot}}/config/admin-webapi.env
 ExecStart={{DeployRoot}}/adminwebapi/Admin.WebAPI --urls="http://127.0.0.1:{{Port.AdminWebAPI}}"
 Restart=always
 RestartSec=60

@@ -1,14 +1,10 @@
 using WebAPI.Core.Extensions;
 using Application.Model.Authorize;
-using Application.Service;
-using IdentifierGenerator;
+using Application.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using Repository;
-using Repository.Database;
 using System.Xml;
 using WebAPI.Core.Filters;
 
@@ -20,7 +16,7 @@ namespace Client.WebAPI.Controllers;
 /// </summary>
 [Route("[controller]/[action]")]
 [ApiController]
-public class AuthorizeController(AuthorizeService authorizeService) : ControllerBase
+public class AuthorizeController(IAuthorizeService authorizeService, IAuthorizeMaintenanceService maintenanceService) : ControllerBase
 {
 
 
@@ -123,8 +119,9 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
     /// 更新路由信息表
     /// </summary>
     [HttpGet]
-    public async void UpdateRoute(IActionDescriptorCollectionProvider actionDescriptorCollectionProvider, DatabaseContext db, IdService idService)
+    public async Task UpdateRoute(IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
     {
+
         var actionList = actionDescriptorCollectionProvider.ActionDescriptors.Items.Cast<ControllerActionDescriptor>().Select(x => new
         {
             Name = x.DisplayName![..(x.DisplayName!.IndexOf('(') - 1)],
@@ -179,40 +176,13 @@ public class AuthorizeController(AuthorizeService authorizeService) : Controller
         actionList = [.. actionList.Where(t => t.IsAuthorize == true).Distinct()];
 
 
-        var functionRoutes = await db.FunctionRoute.Where(t => t.Module == projectName).ToListAsync();
-
-        var delList = functionRoutes.Where(t => actionList.Select(t => t.Route).ToList().Contains(t.Route) == false).ToList();
-
-        foreach (var item in delList)
+        var routes = actionList.Select(item => new AuthorizeRouteDto
         {
-            item.DeleteTime = DateTimeOffset.UtcNow;
-        }
+            Route = item.Route!,
+            Remark = remarksDict.GetValueOrDefault(item.Name)
+        }).ToList();
 
-        foreach (var item in actionList)
-        {
-            var info = functionRoutes.Where(t => t.Route == item.Route).FirstOrDefault();
-
-            string? remark = remarksDict.Where(a => a.Key == item.Name).Select(a => a.Value).FirstOrDefault();
-
-            if (info != null)
-            {
-                info.Remark = remark;
-            }
-            else
-            {
-                FunctionRoute functionRoute = new()
-                {
-                    Id = idService.GetId(),
-                    Module = projectName,
-                    Route = item.Route!,
-                    Remark = remark
-                };
-
-                db.FunctionRoute.Add(functionRoute);
-            }
-        }
-
-        await db.SaveChangesAsync();
+        await maintenanceService.UpdateRoutesAsync(projectName, routes);
 
     }
 

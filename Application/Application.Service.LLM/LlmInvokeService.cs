@@ -1,3 +1,5 @@
+using Application.Interface.LLM;
+using Application.Model.LLM.Invocation;
 using Common;
 using IdentifierGenerator;
 using LLM;
@@ -17,8 +19,8 @@ namespace Application.Service.LLM;
 /// <summary>
 /// LLM 调用服务
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmInvokeService(DatabaseContext db, IdService idService, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, ILogger<LlmInvokeService> logger)
+[RegisterService(typeof(ILlmInvokeService), Lifetime = ServiceLifetime.Scoped)]
+public partial class LlmInvokeService(DatabaseContext db, IdService idService, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, ILogger<LlmInvokeService> logger) : ILlmInvokeService
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();
@@ -32,7 +34,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     /// <param name="parameters">提示词参数</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>完整对话响应</returns>
-    public async Task<ChatResponse> ChatAsync(long? actorUserId, string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
+    public async Task<LlmChatResponseDto> ChatAsync(long? actorUserId, string code, Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
     {
 
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable && t.DeleteTime == null).FirstOrDefaultAsync(cancellationToken);
@@ -76,7 +78,11 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
         var assistantContent = response.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
         await TrySaveConversationAsync(actorUserId, app.Id, systemPrompt, userPrompt, assistantContent, cancellationToken);
 
-        return response;
+        return new LlmChatResponseDto(response.Model,
+            response.Choices.Select(choice => new LlmChatChoiceDto(choice.Index,
+                new LlmChatMessageDto((LlmChatRole)choice.Message.Role, choice.Message.Content), choice.FinishReason)).ToArray(),
+            MapUsage(response.Usage), response.Id);
+
     }
 
 
@@ -104,7 +110,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     /// <param name="parameters">提示词参数</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>流式对话响应</returns>
-    public async IAsyncEnumerable<ChatStreamChunk> ChatStreamAsync(long? actorUserId, string code, Dictionary<string, string> parameters, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<LlmChatStreamChunkDto> ChatStreamAsync(long? actorUserId, string code, Dictionary<string, string> parameters, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
         var app = await db.LlmApp.AsNoTracking().Where(t => t.Code == code && t.IsEnable && t.DeleteTime == null).FirstOrDefaultAsync(cancellationToken);
@@ -158,13 +164,28 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
                 isCompleted = true;
             }
 
-            yield return chunk;
+            yield return new LlmChatStreamChunkDto(chunk.Model,
+                chunk.Choices.Select(choice => new LlmChatStreamChoiceDto(choice.Index,
+                    new LlmChatStreamDeltaDto((LlmChatRole?)choice.Delta.Role, choice.Delta.Content), choice.FinishReason)).ToArray(),
+                MapUsage(chunk.Usage), chunk.Id);
         }
 
         if (isCompleted)
         {
             await TrySaveConversationAsync(actorUserId, app.Id, systemPrompt, userPrompt, assistantBuilder.ToString(), cancellationToken);
         }
+
+    }
+
+
+    /// <summary>
+    /// 将基础设施用量转换为应用层结果契约
+    /// </summary>
+    private static LlmTokenUsageDto? MapUsage(Usage? usage)
+    {
+
+        return usage is null ? null : new LlmTokenUsageDto(usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens);
+
     }
 
 

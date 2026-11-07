@@ -1,7 +1,7 @@
 using WebAPI.Core.Extensions;
 using Application.Model.Shared;
 using Application.Model.Site.Article;
-using Application.Service.Site;
+using Application.Interface.Site;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Filters;
@@ -15,7 +15,7 @@ namespace Admin.WebAPI.Controllers;
 [Route("[controller]/[action]")]
 [Authorize]
 [ApiController]
-public class ArticleController(ArticleService articleService) : ControllerBase
+public class ArticleController(IArticleService articleService) : ControllerBase
 {
 
 

@@ -29,6 +29,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\Application\Application.Service\Application.Service.csproj" />
+		<ProjectReference Include="..\..\Application\Application.Interface\Application.Interface.csproj" />
 		<ProjectReference Include="..\..\Application\Application.Service.LLM\Application.Service.LLM.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\FileStorage.AliCloud\FileStorage.AliCloud.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\FileStorage.TencentCloud\FileStorage.TencentCloud.csproj" />

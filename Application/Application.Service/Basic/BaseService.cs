@@ -1,3 +1,4 @@
+using Application.Interface.Basic;
 using Application.Model.Basic.Base;
 using Common;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +12,8 @@ namespace Application.Service.Basic;
 /// <summary>
 /// 提供公共基础数据查询与验证码生成能力
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class BaseService(ReadDatabaseContext readDb, IDistributedCache distributedCache)
+[RegisterService(typeof(IBaseService), Lifetime = ServiceLifetime.Scoped)]
+public class BaseService(ReadDatabaseContext readDb, IDistributedCache distributedCache) : IBaseService
 {
 
     /// <summary>

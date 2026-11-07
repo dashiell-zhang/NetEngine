@@ -1,6 +1,6 @@
 using WebAPI.Core.Extensions;
 using Application.Model.User.User;
-using Application.Service.User;
+using Application.Interface.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Filters;
@@ -14,7 +14,7 @@ namespace Client.WebAPI.Controllers;
 [Route("[controller]/[action]")]
 [Authorize]
 [ApiController]
-public class UserController(UserService userService) : ControllerBase
+public class UserController(IUserService userService) : ControllerBase
 {
 
 

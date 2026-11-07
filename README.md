@@ -204,7 +204,7 @@ dotnet run --project Presentation/TaskService/TaskService.csproj --launch-profil
 | `Deployment` | 部署配置生成器、模板、输入配置与生成产物 |
 | `Docs` | 公共能力和工具的详细使用文档 |
 
-整体依赖方向为 `Presentation -> Application -> Repository / Infrastructure`，公共宿主能力位于 `ProjectCore`。详细职责、宿主引用关系和拆分原则见 [架构与项目边界](Docs/Architecture.md)
+WebAPI 与任务宿主通过 `Application.Interface` 调用应用服务，契约模型位于 `Application.Model`，实现类负责访问 `Repository / Infrastructure`；宿主引用实现项目完成服务注册，公共宿主能力位于 `ProjectCore`。详细职责、宿主引用关系和拆分原则见 [架构与项目边界](Docs/Architecture.md)
 
 Agent 的修改流程、代码风格和验证规则见 [AGENTS.md](AGENTS.md)
 

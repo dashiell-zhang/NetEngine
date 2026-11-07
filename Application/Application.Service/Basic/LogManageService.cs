@@ -1,3 +1,4 @@
+using Application.Interface.Basic;
 using Application.Model.Basic.Log;
 using Application.Model.Shared;
 using Logger.Database.Query;
@@ -7,7 +8,7 @@ namespace Application.Service.Basic;
 /// <summary>
 /// 将管理端日志请求转换为组件查询并保持应用契约
 /// </summary>
-public class LogManageService(LogQueryService logQuery)
+public class LogManageService(LogQueryService logQuery) : ILogManageService
 {
 
     /// <summary>

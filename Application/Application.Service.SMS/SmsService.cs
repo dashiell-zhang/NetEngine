@@ -1,3 +1,4 @@
+using Application.Interface;
 using Application.Model.Message;
 using Microsoft.Extensions.DependencyInjection;
 using SMS;
@@ -8,8 +9,8 @@ namespace Application.Service.SMS;
 /// <summary>
 /// 短信发送服务
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class SmsService(ISMS sms)
+[RegisterService(typeof(ISmsService), Lifetime = ServiceLifetime.Scoped)]
+public class SmsService(ISMS sms) : ISmsService
 {
 
     /// <summary>

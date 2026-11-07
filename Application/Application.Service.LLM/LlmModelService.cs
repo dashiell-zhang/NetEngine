@@ -1,3 +1,4 @@
+using Application.Interface.LLM;
 using Application.Model.LLM.LlmModel;
 using Application.Model.Shared;
 using Common;
@@ -15,8 +16,8 @@ namespace Application.Service.LLM;
 /// <summary>
 /// LLM 模型配置服务
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LlmModelService(DatabaseContext db, IdService idService, IDistributedLock distributedLock)
+[RegisterService(typeof(ILlmModelService), Lifetime = ServiceLifetime.Scoped)]
+public class LlmModelService(DatabaseContext db, IdService idService, IDistributedLock distributedLock) : ILlmModelService
 {
 
     /// <summary>

@@ -1,6 +1,7 @@
+using Application.Interface.Site;
 using Application.Model.Shared;
 using Application.Model.Site.Article;
-using Application.Service.Basic;
+using Application.Interface.Basic;
 using Common;
 using IdentifierGenerator;
 using Microsoft.EntityFrameworkCore;
@@ -14,8 +15,8 @@ namespace Application.Service.Site;
 /// <summary>
 /// 提供栏目和文章业务管理能力
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class ArticleService(DatabaseContext db, IdService idService, FileService fileService)
+[RegisterService(typeof(IArticleService), Lifetime = ServiceLifetime.Scoped)]
+public class ArticleService(DatabaseContext db, IdService idService, IFileService fileService) : IArticleService
 {
 
     /// <summary>

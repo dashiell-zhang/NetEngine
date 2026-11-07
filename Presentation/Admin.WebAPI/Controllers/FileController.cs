@@ -1,12 +1,10 @@
 using WebAPI.Core.Extensions;
 using Application.Model.Basic.File;
-using Application.Service.Basic;
+using Application.Interface.Basic;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.EntityFrameworkCore;
-using Repository;
 using SkiaSharp;
 using WebAPI.Core.Filters;
 
@@ -19,8 +17,9 @@ namespace Admin.WebAPI.Controllers;
 [Authorize]
 [Route("[controller]/[action]")]
 [ApiController]
-public class FileController(FileService fileService, DatabaseContext db, IWebHostEnvironment webHostEnvironment) : ControllerBase
+public class FileController(IFileService fileService, IWebHostEnvironment webHostEnvironment) : ControllerBase
 {
+
     private readonly string savePath = webHostEnvironment.WebRootPath;
 
 
@@ -90,7 +89,8 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
     [HttpGet]
     public async Task<FileResult?> GetFile(long fileid)
     {
-        var file = await db.StoredFile.Where(t => t.Id == fileid).FirstOrDefaultAsync();
+
+        var file = await fileService.GetFileAsync(fileid);
 
         if (file != null)
         {
@@ -108,6 +108,7 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
         {
             throw new CustomException("通过指定的文件ID未找到任何文件");
         }
+
     }
 
 
@@ -125,7 +126,7 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
     public async Task<FileResult?> GetImage(long fileId, int width, int height)
     {
 
-        var file = await db.StoredFile.Where(t => t.Id == fileId).FirstOrDefaultAsync();
+        var file = await fileService.GetFileAsync(fileId);
 
         if (file != null)
         {
@@ -177,6 +178,7 @@ public class FileController(FileService fileService, DatabaseContext db, IWebHos
         {
             throw new CustomException("通过指定的文件ID未找到任何文件");
         }
+
     }
 
 

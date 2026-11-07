@@ -100,13 +100,15 @@ Host=primary-db:5432,read-db-1:5432,read-db-2:5432;Database=webcore;Username=web
 
 ## 应用代码中的用法
 
+数据库上下文由应用实现注入，Controller 和任务类通过 `Application.Interface` 中的接口调用用例。以下代码展示应用实现内部的上下文选择，公开接口的参数与结果使用 DTO，不传递上下文或 EF 实体
+
 ### 纯查询服务
 
 整个服务只包含允许最终一致的查询时，直接注入 `ReadDatabaseContext`：
 
 ```csharp
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class ArticleQueryService(ReadDatabaseContext readDb)
+[RegisterService(typeof(IArticleQueryService), Lifetime = ServiceLifetime.Scoped)]
+public class ArticleQueryService(ReadDatabaseContext readDb) : IArticleQueryService
 {
 
     /// <summary>
@@ -127,7 +129,7 @@ public class ArticleQueryService(ReadDatabaseContext readDb)
 }
 ```
 
-读取上下文已全局启用 `NoTracking`，一般不需要为每条查询重复调用 `AsNoTracking()`
+示例接口 `IArticleQueryService` 声明 `Task<List<ArticleDto>> GetArticleListAsync()`。读取上下文已全局启用 `NoTracking`，一般不需要为每条查询重复调用 `AsNoTracking()`
 
 ### 混合读写服务
 

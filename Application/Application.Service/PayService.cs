@@ -1,3 +1,4 @@
+using Application.Interface;
 using Aop.Api;
 using Aop.Api.Domain;
 using Aop.Api.Request;
@@ -20,8 +21,8 @@ namespace Application.Service;
 /// <summary>
 /// 提供支付请求与支付状态处理能力
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock)
+[RegisterService(typeof(IPayService), Lifetime = ServiceLifetime.Scoped)]
+public class PayService(ILogger<PayService> logger, IHttpClientFactory httpClientFactory, DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distributedLock) : IPayService
 {
 
     private readonly HttpClient httpClient = httpClientFactory.CreateClient();

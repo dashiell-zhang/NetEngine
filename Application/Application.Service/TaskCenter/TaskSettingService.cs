@@ -1,3 +1,4 @@
+using Application.Interface.TaskCenter;
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,8 +11,8 @@ namespace Application.Service.TaskCenter;
 /// <summary>
 /// 适配本业务任务配置与管理端契约，操作人由接口层传入
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class TaskSettingService(QueueTaskManagement<DatabaseContext> management)
+[RegisterService(typeof(ITaskSettingService), Lifetime = ServiceLifetime.Scoped)]
+public class TaskSettingService(QueueTaskManagement<DatabaseContext> management) : ITaskSettingService
 {
 
     /// <summary>

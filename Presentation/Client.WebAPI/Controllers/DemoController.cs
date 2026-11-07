@@ -1,6 +1,6 @@
 using WebAPI.Core.Extensions;
 using Application.Model.Site.Article;
-using Application.Service.LLM;
+using Application.Interface.LLM;
 using Client.WebAPI.Services;
 using IdentifierGenerator;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +24,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
     /// <param name="idService">ID生成服务</param>
     /// <returns>LLM 回复内容</returns>
     [HttpGet]
-    public async Task<string> TestLLM([FromServices] LlmInvokeService llmInvokeService, [FromServices]IdService idService)
+    public async Task<string> TestLLM([FromServices] ILlmInvokeService llmInvokeService, [FromServices]IdService idService)
     {
         string code = "jiafa";
 
@@ -53,7 +53,7 @@ public sealed class DemoController(IDemoService _svc, Demo2Service _svc2) : Cont
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>聚合后的 LLM 回复内容</returns>
     [HttpGet]
-    public async Task<string> TestLLMStream([FromServices] LlmInvokeService llmInvokeService, CancellationToken cancellationToken = default)
+    public async Task<string> TestLLMStream([FromServices] ILlmInvokeService llmInvokeService, CancellationToken cancellationToken = default)
     {
         string code = "sumqw";
 

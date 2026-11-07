@@ -1,3 +1,4 @@
+using Application.Interface.User;
 using Application.Model.Shared;
 using Application.Model.User.Role;
 using Common;
@@ -15,8 +16,8 @@ namespace Application.Service.User;
 /// <summary>
 /// 提供角色和角色功能权限管理能力
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class RoleService(DatabaseContext db, IdService idService, IDistributedLock distLock)
+[RegisterService(typeof(IRoleService), Lifetime = ServiceLifetime.Scoped)]
+public class RoleService(DatabaseContext db, IdService idService, IDistributedLock distLock) : IRoleService
 {
 
     /// 获取角色列表

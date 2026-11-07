@@ -1,3 +1,4 @@
+using Application.Interface.Site;
 using Application.Model.Site.Site;
 using Common;
 using IdentifierGenerator;
@@ -7,8 +8,11 @@ using Repository;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.Site;
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class SiteService(DatabaseContext db, IdService idService)
+/// <summary>
+/// 提供站点信息查询与编辑能力
+/// </summary>
+[RegisterService(typeof(ISiteService), Lifetime = ServiceLifetime.Scoped)]
+public class SiteService(DatabaseContext db, IdService idService) : ISiteService
 {
 
     /// <summary>

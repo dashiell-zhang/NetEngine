@@ -28,6 +28,31 @@ app.MapHealthChecks("/healthz");
 
 中间件顺序已经集中在 `UseCommonMiddleware()` 中维护，宿主应调用这个入口，不要在不同 WebAPI 项目中复制一套顺序不同的公共中间件
 
+## 应用服务调用
+
+Controller、权限适配服务和请求处理器通过 `Application.Interface` 调用应用服务，参数和返回模型放在 `Application.Model`。Controller 保留路由、鉴权、参数适配与结果包装，应用实现负责业务判断、编排及事务
+
+```csharp
+using Application.Interface.User;
+using Application.Model.User.User;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using WebAPI.Core.Extensions;
+
+[ApiController]
+[Route("[controller]/[action]")]
+[Authorize]
+public class UserController(IUserService userService) : ControllerBase
+{
+    [HttpGet]
+    public Task<UserDto?> GetUser() => userService.GetUserAsync(User.GetUserId());
+}
+```
+
+构造函数注入和 `[FromServices]` 参数均使用应用接口。宿主继续引用实现类库并调用 `BatchRegisterServices()` 完成接口注册；HTTP 公共能力、健康检查和源码生成器演示服务按各自的宿主职责组织。完整依赖边界见 [架构与项目边界](Architecture.md#application)
+
+文件读取通过 `IFileService.GetFileAsync` 获取文件元数据，Controller 根据宿主根目录生成文件响应或缩略图。权限路由维护由 Controller 采集路由和说明，再调用 `IAuthorizeMaintenanceService.UpdateRoutesAsync` 同步；权限初始化入口校验开发环境、读取初始化文件后调用 `InitializeAsync`，管理员、角色和权限写入由应用服务在事务内完成
+
 ## 配置文件
 
 公共配置位于各宿主的 `appsettings.json` 与 `appsettings.Development.json`
@@ -164,6 +189,7 @@ WebAPI 启动后，Debug 构建会在控制台输出 Swagger 地址
 - 调用 `SetKestrelConfig()`、`AddCommonServices()` 与 `UseCommonMiddleware()`
 - 按宿主实际用途注册数据库、缓存、资源健康检查和 `IPermissionService`；只使用 HTTP 公共能力不要求业务数据库
 - 调用 `BatchRegisterServices()` 与 `BatchRegisterBackgroundServices()` 保持生成式注册链路
+- 应用服务接口放入 `Application.Interface`，同步实现、接口注册和全部消费方注入
 - 映射 Controller 和 `/healthz`
 - 同时检查 `appsettings.json` 与 `appsettings.Development.json`
 - 为需要权限的 Controller 或 Action 添加 `[Authorize]`

@@ -1,18 +1,22 @@
-using Microsoft.EntityFrameworkCore;
-using Repository;
-using Repository.Database;
 using TaskService.Core;
 using TaskService.Core.QueueTask;
 using TaskService.Core.ScheduleTask;
 
 namespace TaskService.Tasks;
 
-public class DemoTask(ILogger<DemoTask> logger, DatabaseContext db, QueueTaskService queueTaskService) : TaskBase
+/// <summary>
+/// 演示任务调度、入队与回调
+/// </summary>
+public class DemoTask(ILogger<DemoTask> logger, QueueTaskService queueTaskService) : TaskBase
 {
 
+    /// <summary>
+    /// 定时创建演示队列任务
+    /// </summary>
     [ScheduleTask(Name = "ShowTime", Cron = "0/1 * * * * ?")]
     public async Task ShowTime()
     {
+
         try
         {
 
@@ -34,13 +38,12 @@ public class DemoTask(ILogger<DemoTask> logger, DatabaseContext db, QueueTaskSer
             await queueTaskService.CreateSingleAsync("ShowName", "张晓栋" + DateTime.Now.ToString("ssfff"), null, "ShowNameSuccess", null);
             await queueTaskService.CreateSingleAsync("ShowName", "张晓栋" + DateTime.Now.ToString("ssfff"), null, "ShowNameSuccess", null);
 
-            var firstUser = await db.User.FirstOrDefaultAsync();
-
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "DemoTask.WriteHello");
         }
+
     }
 
 

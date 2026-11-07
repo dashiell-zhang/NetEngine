@@ -79,7 +79,7 @@
 
 | 目录或项目 | 职责 |
 |---|---|
-| `Application/Application.Interface` | 跨宿主、跨公共层共享的应用抽象，不要求所有应用服务定义接口 |
+| `Application/Application.Interface` | WebAPI 与任务宿主使用的应用服务契约及跨模块共享的应用抽象 |
 | `Application/Application.Model` | DTO、请求模型、返回模型与配置模型 |
 | `Application/Application.Service` | 通用业务逻辑与业务编排 |
 | `Application/Application.Service.LLM` | LLM 应用服务 |
@@ -100,6 +100,7 @@
 ### 4.1 Presentation 与 ProjectCore
 
 - `Presentation` 负责宿主组装、请求接入、鉴权、参数适配、页面交互与结果返回，业务逻辑通过 Application 调用
+- WebAPI 与任务宿主使用的应用服务必须在 `Application.Interface` 定义契约，Controller、权限适配服务、请求处理器及任务类通过接口注入；宿主启动入口可以引用实现项目完成注册
 - 禁止在 Controller、Razor 页面、API 或任务宿主中编写核心业务判断和数据库访问逻辑
 - 宿主可以注册数据库上下文和基础设施服务，依赖注入组装不等于业务数据访问
 - `ProjectCore` 承载多个宿主共用的启动和运行能力，不承载具体业务逻辑，不直接依赖业务 Repository 或通过具体 Application.Service 间接绑定业务库；模块组合由 Presentation 完成
@@ -109,6 +110,8 @@
 ### 4.2 Application
 
 - 通用业务放入 `Application.Service`，领域特化业务放入对应应用类库，优先扩展现有 Service、DTO 与必要接口
+- 应用接口按业务能力定义调用方需要的操作，参数与结果使用 `Application.Model` 或通用 .NET 类型，不暴露 EF 实体、上下文、HTTP 类型或基础设施客户端类型；内部辅助方法不机械纳入接口
+- 实现类通过现有生成器显式注册到应用接口，同步修改全部消费方；仅特定宿主需要的服务保留宿主显式接口注册，避免扩大依赖范围
 - 应用服务不读取 HTTP 请求上下文，不混入宿主启动或页面细节；身份等参数由表现层明确传入
 - 若通用应用类库使部分宿主被迫注册不用的基础设施，优先参考 `Application.Service.LLM` 和 `Application.Service.SMS` 拆分宿主特化应用类库
 - 不使用可空依赖、空实现或让所有宿主补齐无关注册来掩盖上述引用边界问题，也不单纯为目录整齐拆分项目
@@ -174,7 +177,7 @@
 ### 5.5 LLM
 
 - 基础设施位于 `Infrastructure/LLM`，应用能力位于 `Application/Application.Service.LLM`
-- 业务代码优先通过 `LlmInvokeService` 调用，不直接依赖具体 Provider 客户端
+- 业务代码优先通过 `ILlmInvokeService` 调用，由 `LlmInvokeService` 实现，不直接依赖具体 Provider 客户端
 - 宿主只在实际使用 LLM 时引用对应应用类库，配置和 Provider 扩展方式见专题文档
 
 ### 5.6 部署生成器

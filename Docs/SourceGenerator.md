@@ -27,11 +27,11 @@ Debug 构建会把生成源码输出到：
 
 ## 自动注册服务
 
-在实现类上标记 `[RegisterService]`：
+WebAPI 或任务使用的应用服务在实现类上通过 `[RegisterService]` 指定应用接口：
 
 ```csharp
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class UserService
+[RegisterService(typeof(IUserService), Lifetime = ServiceLifetime.Scoped)]
+public class UserService : IUserService
 {
 }
 ```
@@ -42,7 +42,7 @@ public class UserService
 builder.Services.BatchRegisterServices();
 ```
 
-该方法会聚合当前启动项目及其引用程序集生成的服务注册代码
+该方法会聚合当前启动项目及其引用程序集生成的服务注册代码。上例生成 `AddScoped<IUserService, UserService>()`，调用方注入 `IUserService`；接口位于 `Application.Interface`，实现位于应用服务项目
 
 ### 服务类型选择规则
 
@@ -62,6 +62,8 @@ public class UserService : IUserService
 ```
 
 指定的服务类型必须是实现类自身或其实现的接口
+
+WebAPI 与任务宿主使用的应用服务在 `Application.Interface` 声明契约，实现类按上例显式指定接口注册。Controller、权限适配器、请求处理器、任务类及其他依赖该服务的构造函数使用相同接口，不额外注册具体类来维持旧的注入方式。接口注册不会自动为实现类的所有方法启用代理；需要行为拦截时，继续按下面的 AutoProxy 规则声明实现及方法特性
 
 `IDisposable` 和 `IAsyncDisposable` 不参与业务接口选择，同时直接声明父子接口时只保留更具体的接口。仅实现释放接口的服务仍按自身类型注册
 
@@ -106,12 +108,12 @@ builder.Services.BatchRegisterBackgroundServices();
 
 ## AutoProxy 方法代理
 
-`[AutoProxy]` 会为服务生成派生代理，并由 `[RegisterService]` 生成的 DI 代码注册代理实现：
+`[AutoProxy]` 会为服务生成派生代理，并由 `[RegisterService]` 生成的 DI 代码注册代理实现。下面以应用接口注册为例，`IProductService` 声明相同的 `GetAsync` 方法：
 
 ```csharp
 [AutoProxy]
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class ProductService
+[RegisterService(typeof(IProductService), Lifetime = ServiceLifetime.Scoped)]
+public class ProductService : IProductService
 {
     [Logging]
     [Retry(MaxRetries = 2, DelaySeconds = 1)]

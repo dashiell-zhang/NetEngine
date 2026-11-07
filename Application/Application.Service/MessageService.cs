@@ -1,3 +1,4 @@
+using Application.Interface;
 using Application.Model.Message;
 using Common;
 using FileStorage;
@@ -16,8 +17,8 @@ namespace Application.Service
     /// <summary>
     /// 消息服务
     /// </summary>
-    [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-    public class MessageService(IHostEnvironment hostEnvironment, ILogger<MessageService> logger, DatabaseContext db, IFileStorage? fileStorage = null)
+    [RegisterService(typeof(IMessageService), Lifetime = ServiceLifetime.Scoped)]
+    public class MessageService(IHostEnvironment hostEnvironment, ILogger<MessageService> logger, DatabaseContext db, IFileStorage? fileStorage = null) : IMessageService
     {
 
         private readonly string rootPath = hostEnvironment.ContentRootPath;

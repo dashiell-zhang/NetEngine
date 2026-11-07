@@ -1,3 +1,4 @@
+using Application.Interface.Basic;
 using Application.Model.Basic.File;
 using Common;
 using FileStorage;
@@ -14,9 +15,34 @@ namespace Application.Service.Basic;
 /// <summary>
 /// 提供统一文件上传、访问、绑定和删除能力
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class FileService(IdService idService, DatabaseContext db, IConfiguration configuration, IHttpClientFactory httpClientFactory, IFileStorage? fileStorage = null)
+[RegisterService(typeof(IFileService), Lifetime = ServiceLifetime.Scoped)]
+public class FileService(IdService idService, DatabaseContext db, IConfiguration configuration, IHttpClientFactory httpClientFactory, IFileStorage? fileStorage = null) : IFileService
 {
+
+    /// <summary>
+    /// 查询文件元数据供宿主生成文件或图片响应
+    /// </summary>
+    public async Task<FileInfoDto?> GetFileAsync(long fileId)
+    {
+
+        var file = await db.StoredFile.Where(t => t.Id == fileId).Select(t => new FileInfoDto
+        {
+            Id = t.Id,
+            Name = t.Name,
+            Length = t.Length,
+            Sign = t.Sign,
+            Path = t.Path
+        }).FirstOrDefaultAsync();
+
+        if (file != null)
+        {
+            file.LengthText = IOHelper.FileLengthToString(file.Length);
+        }
+
+        return file;
+
+    }
+
 
     /// <summary>
     /// 文件上传

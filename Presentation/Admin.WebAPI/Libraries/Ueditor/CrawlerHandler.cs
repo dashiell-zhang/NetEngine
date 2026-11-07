@@ -1,5 +1,5 @@
 using Application.Model.Basic.File;
-using Application.Service.Basic;
+using Application.Interface.Basic;
 using Common;
 using System.Net;
 using System.Net.Sockets;
@@ -9,7 +9,7 @@ namespace Admin.WebAPI.Libraries.Ueditor;
 /// <summary>
 /// 处理 UEditor 远程图片抓取
 /// </summary>
-public class CrawlerHandler(long actorUserId, string rootPath, HttpContext httpContext, FileService fileService, CrawlerConfig crawlerConfig, long uploadKey, string fileServerUrl)
+public class CrawlerHandler(long actorUserId, string rootPath, HttpContext httpContext, IFileService fileService, CrawlerConfig crawlerConfig, long uploadKey, string fileServerUrl)
 {
 
     /// <summary>

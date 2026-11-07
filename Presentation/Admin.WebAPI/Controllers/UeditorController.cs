@@ -1,6 +1,6 @@
 using Admin.WebAPI.Libraries.Ueditor;
 using WebAPI.Core.Extensions;
-using Application.Service.Basic;
+using Application.Interface.Basic;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +13,7 @@ namespace Admin.WebAPI.Controllers;
 [Authorize]
 [Route("[controller]/[action]")]
 [ApiController]
-public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfiguration configuration, FileService fileService) : ControllerBase
+public class UeditorController(IWebHostEnvironment webHostEnvironment, IConfiguration configuration, IFileService fileService) : ControllerBase
 {
 
     /// <summary>

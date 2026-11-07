@@ -1,3 +1,4 @@
+using Application.Interface.LLM;
 using Application.Model.LLM.LlmConversation;
 using Application.Model.Shared;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,8 @@ namespace Application.Service.LLM;
 /// <summary>
 /// LLM 对话记录管理服务
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LlmConversationManageService(ReadDatabaseContext readDb)
+[RegisterService(typeof(ILlmConversationManageService), Lifetime = ServiceLifetime.Scoped)]
+public class LlmConversationManageService(ReadDatabaseContext readDb) : ILlmConversationManageService
 {
 
     /// <summary>

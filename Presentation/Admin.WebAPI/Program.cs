@@ -168,7 +168,7 @@ public class Program
         //注册数据库日志服务
         var logConnection = builder.Configuration.GetConnectionString("logConnection") ?? connectionString!;
         builder.Services.AddDatabaseLogQuery(logConnection, builder.Configuration.GetConnectionString("logReadConnection"));
-        builder.Services.AddScoped<Application.Service.Basic.LogManageService>();
+        builder.Services.AddScoped<Application.Interface.Basic.ILogManageService, Application.Service.Basic.LogManageService>();
         builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck<ReadLogDatabaseContext>>("Log.Read");
         builder.Logging.AddDatabaseLogger(logConnection, builder.Configuration["DatabaseIdentity:Log"] ?? "NetEngine.Log", options => builder.Configuration.GetSection("DatabaseLogger").Bind(options), partitionLockKey: "NetEngine.Log");
 

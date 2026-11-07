@@ -1,12 +1,10 @@
 using WebAPI.Core.Extensions;
 using Application.Model.Basic.File;
-using Application.Service.Basic;
+using Application.Interface.Basic;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.EntityFrameworkCore;
-using Repository;
 using SkiaSharp;
 
 namespace Client.WebAPI.Controllers;
@@ -17,7 +15,7 @@ namespace Client.WebAPI.Controllers;
 [Authorize]
 [Route("[controller]/[action]")]
 [ApiController]
-public class FileController(FileService fileService, IWebHostEnvironment webHostEnvironment) : ControllerBase
+public class FileController(IFileService fileService, IWebHostEnvironment webHostEnvironment) : ControllerBase
 {
 
     private readonly string savePath = webHostEnvironment.ContentRootPath;
@@ -94,17 +92,16 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
     /// <summary>
     /// 通过文件ID获取文件
     /// </summary>
-    /// <param name="webHostEnvironment"></param>
-    /// <param name="db"></param>
     /// <param name="fileid">文件ID</param>
     /// <returns></returns>
     [AllowAnonymous]
     [HttpGet]
-    public async Task<FileResult?> GetFile([FromServices] IWebHostEnvironment webHostEnvironment, [FromServices] DatabaseContext db, long fileid)
+    public async Task<FileResult?> GetFile(long fileid)
     {
+
         string rootPath = webHostEnvironment.ContentRootPath;
 
-        var file = await db.StoredFile.Where(t => t.Id == fileid).FirstOrDefaultAsync();
+        var file = await fileService.GetFileAsync(fileid);
 
         if (file != null)
         {
@@ -122,6 +119,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
         {
             throw new CustomException("通过指定的文件ID未找到任何文件");
         }
+
     }
 
 
@@ -129,8 +127,6 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
     /// <summary>
     /// 通过图片文件ID获取图片
     /// </summary>
-    /// <param name="webHostEnvironment"></param>
-    /// <param name="db"></param>
     /// <param name="fileId">图片ID</param>
     /// <param name="width">宽度</param>
     /// <param name="height">高度</param>
@@ -138,12 +134,12 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
     /// <remarks>不指定宽高参数,返回原图</remarks>
     [AllowAnonymous]
     [HttpGet]
-    public async Task<FileResult?> GetImage([FromServices] IWebHostEnvironment webHostEnvironment, [FromServices] DatabaseContext db, long fileId, int width, int height)
+    public async Task<FileResult?> GetImage(long fileId, int width, int height)
     {
 
         string rootPath = webHostEnvironment.ContentRootPath;
 
-        var file = await db.StoredFile.Where(t => t.Id == fileId).FirstOrDefaultAsync();
+        var file = await fileService.GetFileAsync(fileId);
 
         if (file != null)
         {
@@ -195,6 +191,7 @@ public class FileController(FileService fileService, IWebHostEnvironment webHost
         {
             throw new CustomException("通过指定的文件ID未找到任何文件");
         }
+
     }
 
 

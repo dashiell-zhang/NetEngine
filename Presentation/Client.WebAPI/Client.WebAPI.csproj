@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Application\Application.Service\Application.Service.csproj" />
+    <ProjectReference Include="..\..\Application\Application.Interface\Application.Interface.csproj" />
     <ProjectReference Include="..\..\Application\Application.Service.LLM\Application.Service.LLM.csproj" />
     <ProjectReference Include="..\..\Infrastructure\DistributedLock.Redis\DistributedLock.Redis.csproj" />
     <ProjectReference Include="..\..\Infrastructure\EventBus.Redis\EventBus.Redis.csproj" />

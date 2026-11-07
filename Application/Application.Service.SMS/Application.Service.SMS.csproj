@@ -18,6 +18,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Application.Interface\Application.Interface.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\SMS\SMS.csproj" />
 		<ProjectReference Include="..\Application.Model\Application.Model.csproj" />
 	</ItemGroup>

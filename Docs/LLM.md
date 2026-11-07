@@ -5,13 +5,13 @@
 - `Infrastructure/LLM`：统一请求响应模型、协议客户端和动态客户端工厂
 - `Application/Application.Service.LLM`：模型配置、应用配置、提示词渲染、调用编排和对话记录
 
-业务代码应优先注入 `Application.Service.LLM.LlmInvokeService`，按 LLM 应用的 `Code` 发起调用。除非正在扩展新的协议或 Provider，不要在业务代码中直接创建 `ILlmClient`
+业务代码应优先注入 `Application.Interface.LLM.ILlmInvokeService`，按 LLM 应用的 `Code` 发起调用。除非正在扩展新的协议或 Provider，不要在业务代码中直接创建 `ILlmClient`
 
 ## 调用链
 
 ```text
 业务服务
-  ↓ LlmInvokeService + LlmApp.Code
+  ↓ ILlmInvokeService + LlmApp.Code
 LlmApp：提示词模板、额外参数、关联模型
   ↓ LlmModelId
 LlmModel：Endpoint、ApiKey、ModelId、ProtocolType
@@ -25,7 +25,7 @@ Chat / Responses / Anthropic 客户端
 
 ## 宿主接入
 
-需要调用 LLM 的宿主应引用 `Application.Service.LLM`，并完成以下注册：
+需要调用 LLM 的宿主应引用 `Application.Interface`、`Application.Model` 和 `Application.Service.LLM`，分别用于应用接口、请求响应模型及实现注册，并完成以下注册：
 
 ```csharp
 builder.Services.BatchRegisterServices();
@@ -33,7 +33,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddLlmClientFactory();
 ```
 
-- `BatchRegisterServices()` 注册 `LlmInvokeService`、`LlmModelConfigResolver` 等 Scoped 服务
+- `BatchRegisterServices()` 将 `ILlmInvokeService` 注册到 `LlmInvokeService`，并注册配置管理接口及 `ILlmModelConfigResolver` 等 Scoped 服务
 - `AddHttpClient()` 提供 `IHttpClientFactory`
 - `AddLlmClientFactory()` 注册单例 `ILlmClientFactory`
 
@@ -41,7 +41,7 @@ builder.Services.AddLlmClientFactory();
 
 `BatchRegisterServices()` 会同时注册该类库中的配置管理与对话查询服务，其中 `LlmConversationManageService` 依赖业务读取上下文；缺少这些依赖会在启用 DI 构建验证或解析对应服务时失败。上下文注册方式见 [数据库读写分离](DatabaseReadWriteSeparation.md)。该应用类库属于当前业务模块，加载第二个业务模块不会自动切换其数据库；各模块共用宿主默认锁并通过具体 key 区分业务操作
 
-`LlmInvokeService` 不读取当前 HTTP 用户上下文。调用方通过第一个参数显式传入 `long? actorUserId`：认证调用传真实用户 ID，匿名或系统调用传 `null`
+`ILlmInvokeService` 不读取当前 HTTP 用户上下文。调用方通过第一个参数显式传入 `long? actorUserId`：认证调用传真实用户 ID，匿名或系统调用传 `null`
 
 当前 `Admin.WebAPI` 和 `Client.WebAPI` 已完成上述引用和注册。`TaskService` 没有引用 `Application.Service.LLM`，因此不会自动注册 LLM 应用服务；如果任务需要调用 LLM，应先评估宿主边界，再显式增加项目引用和基础服务注册
 
@@ -52,7 +52,7 @@ builder.Services.AddLlmClientFactory();
 1. 在 `/operations/llmmodel` 创建模型配置
 2. 在 `/operations/llmapp` 创建 LLM 应用配置并测试
 3. 保存并启用模型与应用
-4. 在业务代码中使用应用 `Code` 调用 `LlmInvokeService`
+4. 在业务代码中使用应用 `Code` 调用 `ILlmInvokeService`
 
 管理页面中的“测试调用”使用当前尚未保存的提示词和 ExtraBody，但仍会读取已保存的模型配置。该测试不会写入 `LlmApp` 或 `LlmConversation`，正式业务调用仍以已保存并启用的应用配置为准
 
@@ -89,11 +89,11 @@ builder.Services.AddLlmClientFactory();
 | `SystemPromptTemplate` | 可选的 System 提示词模板 |
 | `PromptTemplate` | 必填的 User 提示词模板 |
 | `ExtraBodyJson` | 可选的协议请求体根字段扩展 |
-| `IsEnable` | 是否允许通过 `LlmInvokeService` 调用 |
+| `IsEnable` | 是否允许通过 `ILlmInvokeService` 调用 |
 
 业务代码依赖的是 `Code`，而不是数据库主键或模型名称。切换模型、端点或提示词时只需更新后台配置，不需要修改调用代码
 
-启用的 LLM 应用只能关联启用的模型。`LlmInvokeService` 调用时也会同时检查应用和模型是否启用、是否已被软删除
+启用的 LLM 应用只能关联启用的模型。`ILlmInvokeService` 调用时也会同时检查应用和模型是否启用、是否已被软删除
 
 ## 提示词模板
 
@@ -139,15 +139,17 @@ Dictionary<string, string> parameters = new(StringComparer.OrdinalIgnoreCase)
 
 ## 推荐调用方式
 
-LLM 相关业务编排建议继续放在 `Application.Service.LLM` 中，由具体业务服务注入 `LlmInvokeService`
+LLM 相关业务编排建议继续放在 `Application.Service.LLM` 中，由具体业务服务注入 `ILlmInvokeService`
 
 ### 只获取首条文本
 
 大多数文本生成场景使用 `ChatContentAsync`：
 
 ```csharp
+using Application.Interface.LLM;
+
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class ArticleSummaryService(LlmInvokeService llmInvokeService)
+public class ArticleSummaryService(ILlmInvokeService llmInvokeService)
 {
     public Task<string?> SummarizeAsync(long? actorUserId, string content, CancellationToken cancellationToken)
     {
@@ -180,6 +182,8 @@ var finishReason = response.Choices.FirstOrDefault()?.FinishReason;
 var totalTokens = response.Usage?.TotalTokens;
 var responseId = response.Id;
 ```
+
+应用接口返回 `Application.Model.LLM.Invocation.LlmChatResponseDto`，流式调用返回 `LlmChatStreamChunkDto`，由应用实现转换基础设施响应。两个契约保留候选结果、消息角色、结束原因、用量和响应标识，调用方不需要引用 `Infrastructure/LLM` 的响应类型
 
 统一响应模型包括：
 
@@ -240,7 +244,7 @@ await foreach (var chunk in llmInvokeService
 
 ## 对话记录
 
-成功调用后，`LlmInvokeService` 会尝试将以下内容写入 `LlmConversation`：
+成功调用后，`ILlmInvokeService` 会尝试将以下内容写入 `LlmConversation`：
 
 - LLM 应用 ID
 - 渲染后的 System 提示词
@@ -271,9 +275,9 @@ await foreach (var chunk in llmInvokeService
 
 当前实现没有内置重试。模型调用会产生外部费用，调用方增加重试前应明确超时、重复请求和供应商计费语义
 
-`LlmInvokeService` 每次调用只构造一条可选 System 消息和一条 User 消息，不接收历史消息，也不提供工具调用、图片或音频输入。如果业务需要多轮会话或多模态输入，应扩展应用层调用模型和基础设施协议模型，不要在 Controller 中绕过应用层临时拼接供应商请求
+`ILlmInvokeService` 每次调用只构造一条可选 System 消息和一条 User 消息，不接收历史消息，也不提供工具调用、图片或音频输入。如果业务需要多轮会话或多模态输入，应扩展应用层调用模型和基础设施协议模型，不要在 Controller 中绕过应用层临时拼接供应商请求
 
-`LlmInvokeService` 是 Scoped 服务并使用当前 Scoped `DatabaseContext`。不要直接注入 Singleton；后台服务需要通过 `IServiceScopeFactory` 创建作用域后再获取
+`ILlmInvokeService` 是 Scoped 服务并使用当前 Scoped `DatabaseContext`。不要直接注入 Singleton；后台服务需要通过 `IServiceScopeFactory` 创建作用域后再获取
 
 ## Infrastructure/LLM 的职责
 
@@ -296,7 +300,7 @@ await foreach (var chunk in llmInvokeService
 
 ## 使用检查清单
 
-- 调用方是否优先使用 `LlmInvokeService`
+- 调用方是否优先使用 `ILlmInvokeService`
 - 是否显式传入可信的 `actorUserId`，匿名或系统调用是否传入 `null`
 - LLM 相关业务服务是否放在 `Application.Service.LLM`
 - 宿主是否引用该项目并注册 `BatchRegisterServices()`、`AddHttpClient()`、`AddLlmClientFactory()`

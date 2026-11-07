@@ -34,17 +34,25 @@ Admin.App ──> Application.Model
 
 | 项目 | 职责 |
 |---|---|
-| `Application.Interface` | 预留需要被多个应用层或宿主共同依赖的应用抽象 |
+| `Application.Interface` | WebAPI 与任务宿主使用的应用服务契约，以及跨模块共享的应用抽象 |
 | `Application.Model` | DTO、请求模型、返回模型和配置模型，也是管理前端复用的契约层 |
 | `Application.Service` | 用户、站点、授权、支付、消息、任务中心等通用应用服务 |
 | `Application.Service.LLM` | LLM 应用配置、对话管理和模型调用服务 |
 | `Application.Service.SMS` | 短信发送相关应用服务 |
 
-`Application.Interface` 不是要求所有应用服务都定义接口的传统接口层。应用服务可以直接以具体类注入，只有跨宿主或公共层确实需要共同引用的抽象才放入这里
+WebAPI 与任务宿主使用的应用服务在 `Application.Interface` 中定义接口，Controller、权限适配服务、请求处理器及任务类通过接口调用业务用例，不直接注入具体应用服务。接口按业务能力组织，公开调用方需要的操作，不照搬实现类内部的辅助方法，也不要求每条 HTTP 路由对应一个独立接口
+
+接口的参数与返回值使用 `Application.Model` 中的 DTO 或通用 .NET 类型，不暴露 EF 实体、数据库上下文、HTTP 上下文及基础设施客户端类型。具体实现位于 `Application.Service` 或对应特化类库；应用层内部辅助类按实际依赖边界决定是否需要接口
+
+```text
+Controller / 请求适配器 / 任务类 → Application.Interface + Application.Model
+Application.Service / 特化实现 → Application.Interface + Repository / Infrastructure
+WebAPI / TaskService 宿主启动入口 → 选择实现类库并完成依赖注入注册
+```
 
 Controller 直接通过 `ControllerBase.User` 和 WebAPI.Core 的 Claims 扩展解析身份，当前认证用户通过 `actorUserId` 或 `targetUserId` 明确传入 Application Service。应用服务不读取 HTTP 请求上下文
 
-`Application.Service` 和 `Application.Service.LLM` 直接引用 `Application.Model`，不通过 `Application.Interface` 间接获得 DTO 项目引用
+`Application.Service`、`Application.Service.LLM` 和 `Application.Service.SMS` 显式引用 `Application.Interface` 和 `Application.Model`。两个 WebAPI 及 TaskService 同时引用契约与所需的实现项目：业务调用依赖接口，实现项目用于宿主组装及生成服务注册
 
 ## Repository
 
@@ -82,10 +90,10 @@ ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业�
 
 | 宿主 | 类型 | 主要应用层引用 |
 |---|---|---|
-| `Client.WebAPI` | 对外 Web API | `Application.Service`、`Application.Service.LLM` |
-| `Admin.WebAPI` | 管理端 Web API | `Application.Service`、`Application.Service.LLM` |
+| `Client.WebAPI` | 对外 Web API | `Application.Interface`、`Application.Service`、`Application.Service.LLM` |
+| `Admin.WebAPI` | 管理端 Web API | `Application.Interface`、`Application.Service`、`Application.Service.LLM` |
 | `Admin.App` | Blazor WebAssembly | `Application.Model` |
-| `TaskService` | Worker Service | `Application.Service`、`Application.Service.SMS` |
+| `TaskService` | Worker Service | `Application.Interface`、`Application.Service`、`Application.Service.SMS` |
 
 `TaskService` 不引用 `Application.Service.LLM`。宿主只引用实际需要的应用类库，可以避免源码生成注册时把无关服务及其基础设施依赖带入当前宿主
 
@@ -97,6 +105,8 @@ ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业�
 - `BatchRegisterBackgroundServices()` 注册当前启动项目及其引用程序集内符合条件的后台服务
 
 服务是否进入宿主的注册范围，取决于宿主是否引用了对应类库。因此，项目引用也是服务边界的一部分
+
+应用服务实现通过 `[RegisterService(typeof(IUserService), Lifetime = ServiceLifetime.Scoped)]` 等特性明确注册到接口，消费方也使用接口注入。仅管理宿主需要的日志查询适配由 `Admin.WebAPI` 在接入日志查询组件后显式注册 `ILogManageService` 与 `LogManageService`，不进入其他宿主的自动注册范围
 
 完整注册规则、AutoProxy 和 EF Core 生成能力见 [源码生成器](SourceGenerator.md)
 
@@ -118,6 +128,7 @@ ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业�
 | 需求 | 优先位置 |
 |---|---|
 | 新增请求或返回模型 | `Application.Model` |
+| 新增 WebAPI 与任务宿主使用的应用服务接口 | `Application.Interface`，按业务能力划分命名空间 |
 | 新增业务逻辑或业务编排 | `Application.Service` 或对应的宿主特化应用项目 |
 | 新增业务实体、查询或持久化逻辑 | 所属模块的 `Repository` |
 | 日志、事件等组件的实体与存储 | 对应 `Infrastructure` 组件；共用数据库机制放入 `Repository.Core` |

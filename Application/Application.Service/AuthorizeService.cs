@@ -1,3 +1,4 @@
+using Application.Interface;
 using global::QueueTask.Database;
 using Application.Model.AppSetting;
 using Application.Model.Authorize;
@@ -25,8 +26,8 @@ namespace Application.Service;
 /// <summary>
 /// 提供登录、Token、密码和功能授权能力
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class AuthorizeService(DatabaseContext db, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, QueueTaskProducer<DatabaseContext> queueTaskService)
+[RegisterService(typeof(IAuthorizeService), Lifetime = ServiceLifetime.Scoped)]
+public class AuthorizeService(DatabaseContext db, IDistributedCache distributedCache, IdService idService, IConfiguration configuration, IHttpClientFactory httpClientFactory, IDistributedLock distLock, QueueTaskProducer<DatabaseContext> queueTaskService) : IAuthorizeService
 {
 
 

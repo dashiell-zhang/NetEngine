@@ -1,3 +1,4 @@
+using Application.Interface.User;
 using Application.Model.Shared;
 using Application.Model.User.User;
 using Common;
@@ -18,8 +19,8 @@ namespace Application.Service.User;
 /// <summary>
 /// 提供用户资料、角色和功能权限管理能力
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class UserService(DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distLock, IdService idService)
+[RegisterService(typeof(IUserService), Lifetime = ServiceLifetime.Scoped)]
+public class UserService(DatabaseContext db, IDistributedCache distributedCache, IDistributedLock distLock, IdService idService) : IUserService
 {
 
 

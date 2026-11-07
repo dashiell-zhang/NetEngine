@@ -1,4 +1,4 @@
-using Application.Service;
+using Application.Interface;
 using Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -12,7 +12,7 @@ namespace Client.WebAPI.Services;
 /// 提供客户端请求的功能权限校验能力
 /// </summary>
 [RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class PermissionService(AuthorizeService authorizeService) : IPermissionService
+public class PermissionService(IAuthorizeService authorizeService) : IPermissionService
 {
 
     /// <summary>

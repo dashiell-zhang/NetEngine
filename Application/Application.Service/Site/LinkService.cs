@@ -1,3 +1,4 @@
+using Application.Interface.Site;
 using Application.Model.Shared;
 using Application.Model.Site.Link;
 using Common;
@@ -12,8 +13,8 @@ namespace Application.Service.Site;
 /// <summary>
 /// 提供友情链接查询和维护能力
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class LinkService(DatabaseContext db, IdService idService)
+[RegisterService(typeof(ILinkService), Lifetime = ServiceLifetime.Scoped)]
+public class LinkService(DatabaseContext db, IdService idService) : ILinkService
 {
 
 

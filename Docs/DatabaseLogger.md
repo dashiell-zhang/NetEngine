@@ -83,9 +83,15 @@ builder.Logging.AddDatabaseLogger(logWriteConnection, "Logs.Production", options
 services.AddDatabaseLogQuery(logWriteConnection, logReadConnection);
 ```
 
-查询使用组件的 LogQueryService 和 ReadLogDatabaseContext。未配置日志读连接时只回退对应日志写库，不回退业务读库。只注册查询不会加载写入分区快照，也不要求 ID、文件消费者、清理或维护任务。管理端 LogManageService 由 Admin.WebAPI 显式注册，负责前端 DTO 转换
+查询使用组件的 LogQueryService 和 ReadLogDatabaseContext。未配置日志读连接时只回退对应日志写库，不回退业务读库。只注册查询不会加载写入分区快照，也不要求 ID、文件消费者、清理或维护任务。管理端通过 ILogManageService 查询，由 Admin.WebAPI 显式注册 LogManageService 实现，负责前端 DTO 转换
 
-调用方注入 `Logger.Database.Query.LogQueryService`，通过 `QueryAsync(LogQueryRequest, CancellationToken)` 获取总数和分页列表。`Skip` 不小于 0，`Take` 为 1～100；可按 Project、机器名、内容、级别和时间过滤。不传 Project 时可查询整个日志库，Project 查询使用包含匹配；它是检索条件，访问权限由调用方控制
+管理端宿主在接入组件查询后注册应用适配：
+
+```csharp
+services.AddScoped<Application.Interface.Basic.ILogManageService, Application.Service.Basic.LogManageService>();
+```
+
+Controller 注入 `Application.Interface.Basic.ILogManageService`，调用 `GetLogListAsync(LogPageRequestDto)` 获取应用层分页结果。应用实现 `LogManageService` 注入 `Logger.Database.Query.LogQueryService`，通过 `QueryAsync(LogQueryRequest, CancellationToken)` 完成组件查询。`Skip` 不小于 0，`Take` 为 1～100；可按 Project、机器名、内容、级别和时间过滤。不传 Project 时可查询整个日志库，Project 查询使用包含匹配；它是检索条件，访问权限由调用方控制
 
 一个宿主只允许一个日志写入目标。更换目标后不会自动消费旧目录的积压；应在切换前排空，或恢复原目标配置处理旧积压。主机别名和搜索路径改变也可能产生新目录，切换时检查未处理文件
 

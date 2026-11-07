@@ -31,12 +31,12 @@ Presentation/TaskService/appsettings.Development.json
 新增具体任务时，在 `Presentation/TaskService/Tasks` 中创建 `public` 类并继承 `TaskBase`。宿主通过 `AddTaskWorker<DatabaseContext>(taskTypes)` 显式选择任务类型并注册为 Scoped 服务，初始化只扫描所选类型，并发控制使用宿主默认 `IDistributedLock`。当前模板选择入口程序集中的公开、非抽象 TaskBase 子类；将任务移到独立类库时，需要调整宿主传入的类型集合，加载类库本身不会扩大消费者范围。一个 Worker 进程只允许选择一个任务库，重复选择会报错：
 
 ```csharp
-public class ProductTask(ProductService productService) : TaskBase
+public class ProductTask(IProductService productService) : TaskBase
 {
 }
 ```
 
-任务类可以通过构造函数注入应用服务和所需的任务框架能力。业务逻辑与业务编排仍放在 Application 层，任务方法主要负责参数传递和触发应用用例
+任务类通过 `Application.Interface` 中的应用接口注入业务服务，同时可以注入所需的任务框架能力。`MessageTask` 通过 `IMessageService` 发送邮件、通过 `ISmsService` 发送短信；实现类由生成器注册到相应接口。业务逻辑与业务编排仍放在 Application 层，任务方法主要负责参数传递和触发应用用例
 
 TaskService 不读取当前 HTTP 用户上下文。任务代表某个用户继续执行时，应由 WebAPI 入队端从可信认证上下文取得 `actorUserId`，写入任务参数并继续传给 Application Service；真正的系统任务调用允许系统身份的方法时传入 `null`，不要使用 `0` 伪造用户身份
 

@@ -1,3 +1,4 @@
+using Application.Interface.LLM;
 using Application.Model.LLM.LlmApp;
 using Application.Model.Shared;
 using Common;
@@ -17,8 +18,8 @@ namespace Application.Service.LLM;
 /// <summary>
 /// LLM 应用配置服务
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmAppService(DatabaseContext db, IdService idService, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, IDistributedLock distributedLock)
+[RegisterService(typeof(ILlmAppService), Lifetime = ServiceLifetime.Scoped)]
+public partial class LlmAppService(DatabaseContext db, IdService idService, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, IDistributedLock distributedLock) : ILlmAppService
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();

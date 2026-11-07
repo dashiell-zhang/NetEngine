@@ -4,9 +4,9 @@ using Application.Model.LLM.LlmConversation;
 using Application.Model.LLM.LlmApp;
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
-using Application.Service.Basic;
-using Application.Service.LLM;
-using Application.Service.TaskCenter;
+using Application.Interface.Basic;
+using Application.Interface.LLM;
+using Application.Interface.TaskCenter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Core.Filters;
@@ -20,7 +20,7 @@ namespace Admin.WebAPI.Controllers;
 [Route("[controller]/[action]")]
 [Authorize]
 [ApiController]
-public class OperationsController(LogManageService logManageService, TaskSettingService taskSettingService, QueueTaskManageService queueTaskManageService, LlmAppService llmAppService, LlmConversationManageService llmConversationManageService) : ControllerBase
+public class OperationsController(ILogManageService logManageService, ITaskSettingService taskSettingService, IQueueTaskManageService queueTaskManageService, ILlmAppService llmAppService, ILlmConversationManageService llmConversationManageService) : ControllerBase
 {
 
     /// <summary>

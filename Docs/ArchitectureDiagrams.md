@@ -24,7 +24,7 @@ flowchart TB
     subgraph Application["Application：业务逻辑与契约"]
         AppServices["Application.Service<br/>按需接入 Service.LLM / Service.SMS"]
         Models["Application.Model<br/>请求、响应与共享模型"]
-        Contracts["Application.Interface<br/>需要共享的应用抽象"]
+        Contracts["Application.Interface<br/>WebAPI 与任务宿主的应用契约"]
     end
 
     Repo["Repository<br/>当前业务模型、上下文与任务表映射"]
@@ -34,16 +34,19 @@ flowchart TB
 
     AdminUI --> Models
     APIs --> WebCore
-    APIs --> AppServices
+    APIs -->|应用调用| Contracts
+    APIs -->|注册与组装| AppServices
     WorkerHost --> TaskCore
-    WorkerHost --> AppServices
+    WorkerHost -->|应用调用| Contracts
+    WorkerHost -->|注册与组装| AppServices
     APIs -->|注册与组装| Repo
     APIs -->|注册与组装| Infra
     WorkerHost -->|注册与组装| Repo
     WorkerHost -->|注册与组装| Infra
     AppServices -->|业务持久化| Repo
     AppServices --> Models
-    AppServices -.->|按需实现或使用| Contracts
+    AppServices -->|实现或使用| Contracts
+    Contracts --> Models
     AppServices --> Infra
     WebCore --> Models
     TaskCore --> Queue
@@ -66,7 +69,8 @@ ProjectCore 不引用具体业务 Repository 或具体 Application.Service。任
 flowchart LR
     UI["Admin.App / 其他客户端"] -->|HTTP| Pipeline["WebAPI 中间件、认证与过滤器"]
     Pipeline --> Controller["Controller"]
-    Controller -->|DTO 与可信身份参数| Service["应用服务"]
+    Controller -->|DTO 与可信身份参数| Contract["Application.Interface<br/>应用服务契约"]
+    Contract -->|宿主注册的实现| Service["应用服务"]
     Service -->|写入及强一致查询| Write["DatabaseContext"]
     Service -->|允许最终一致的查询| Read["ReadDatabaseContext"]
     Write --> Primary[("业务主库")]
@@ -132,7 +136,8 @@ flowchart LR
     Settings[("同一存储中的 TaskSetting 表")] -->|同步启用、Cron、并发等配置| Core["TaskService.Core"]
     QueueTable -->|按任务名称候选查询与领取| Core
     Core -->|创建执行作用域并调用| Task["宿主显式选择的任务方法"]
-    Task -->|触发用例| Business["应用服务"]
+    Task -->|通过应用接口触发用例| Contract["Application.Interface"]
+    Contract -->|宿主注册的实现| Business["应用服务实现"]
     Core -->|续租、完成、失败与回调入队| QueueTable
 ```
 
@@ -220,7 +225,9 @@ flowchart LR
     Buffer --> Spool["后台落盘<br/>进程独立缓冲目录"]
     Spool --> Writer["后台批量入库<br/>LogDatabaseContext"]
     Writer --> LogDb[("日志写库 / Log 表")]
-    Admin["管理端 LogManageService"] --> Query["组件 LogQueryService<br/>ReadLogDatabaseContext"]
+    Admin["OperationsController"] --> Contract["ILogManageService<br/>应用查询契约"]
+    Contract -->|管理宿主显式注册| Service["LogManageService<br/>请求与结果 DTO 转换"]
+    Service --> Query["组件 LogQueryService<br/>ReadLogDatabaseContext"]
     Query --> ReadDb[("日志读取目标<br/>可回退日志写库")]
     Clear["LogClearTask"] -->|按 Project 与保留时间清理| LogDb
 ```
@@ -284,16 +291,21 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    Input["业务类型、特性、DbSet 声明"] --> Generator["SourceGenerator.Core<br/>编译期 Analyzer"]
+    Input["应用接口、实现类与注册特性<br/>后台服务、DbSet 声明"] --> Generator["SourceGenerator.Core<br/>编译期 Analyzer"]
     Generator --> Registration["服务与后台服务注册代码"]
     Generator --> Proxy["方法代理代码"]
     Generator --> Mapping["EF 软删除、JSON、分区映射"]
     Registration --> Host["宿主 BatchRegisterServices<br/>BatchRegisterBackgroundServices"]
+    Host -->|安装生成的注册| Container["DI 容器<br/>应用接口 → 实现类型"]
+    Explicit["宿主显式注册<br/>ILogManageService → LogManageService"] --> Container
+    Consumer["Controller / 请求适配器 / 任务类"] -->|按应用接口解析| Container
     Proxy --> Runtime["SourceGenerator.Runtime<br/>日志、缓存、重试、并发行为"]
     Mapping --> Context["对应 DbContext 的模型构建"]
 ```
 
 普通业务项目通过 `Directory.Build.props` 隐式接入生成器及运行时。Infrastructure、Deployment 和生成器自身不参与这套默认引用；Logger.Database 和 EventBus.Database 为生成自身 EF 映射显式引用 Analyzer
+
+应用实现通过 `[RegisterService(typeof(IUserService), Lifetime = ServiceLifetime.Scoped)]` 指定契约，生成接口到实现类型的注册。Controller 和任务类通过接口获取服务；仅管理宿主使用的 `ILogManageService` 在接入日志查询组件后显式注册
 
 日志、事件、Worker 及分区维护等组件通过各自扩展入口显式注册。源码生成的后台注册不能代替这些入口，也不应把组件内部服务重复启动。详细规则见 [源码生成器](SourceGenerator.md)
 
@@ -326,6 +338,9 @@ Deployment 只生成部署文件，不自动连接服务器或安装服务。健
 | 关注点 | 代码入口 |
 |---|---|
 | 宿主组装 | [Admin.WebAPI](../Presentation/Admin.WebAPI/Program.cs)、[Client.WebAPI](../Presentation/Client.WebAPI/Program.cs)、[TaskService](../Presentation/TaskService/Program.cs) |
+| 应用接口与数据契约 | [Application.Interface](../Application/Application.Interface)、[Application.Model](../Application/Application.Model) |
+| 权限路由维护与初始化 | [IAuthorizeMaintenanceService](../Application/Application.Interface/IAuthorizeMaintenanceService.cs)、[AuthorizeMaintenanceService](../Application/Application.Service/AuthorizeMaintenanceService.cs) |
+| 任务调用应用接口 | [MessageTask](../Presentation/TaskService/Tasks/MessageTask.cs)、[IMessageService](../Application/Application.Interface/IMessageService.cs)、[ISmsService](../Application/Application.Interface/ISmsService.cs) |
 | 业务模型与上下文 | [DatabaseContext](../Repository/DatabaseContext.cs) |
 | 公共数据库注册 | [PostgreSqlServiceCollectionExtensions](../Infrastructure/Repository.Core/Extensions/PostgreSqlServiceCollectionExtensions.cs) |
 | 任务表映射及入队 | [QueueTaskModelBuilderExtensions](../Infrastructure/QueueTask.Database/QueueTaskModelBuilderExtensions.cs)、[QueueTaskProducer](../Infrastructure/QueueTask.Database/QueueTaskProducer.cs) |

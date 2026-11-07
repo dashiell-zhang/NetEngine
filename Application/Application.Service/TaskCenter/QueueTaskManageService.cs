@@ -1,3 +1,4 @@
+using Application.Interface.TaskCenter;
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,8 +11,8 @@ namespace Application.Service.TaskCenter;
 /// <summary>
 /// 将本业务队列管理结果转换为管理端契约
 /// </summary>
-[RegisterService(Lifetime = ServiceLifetime.Scoped)]
-public class QueueTaskManageService(QueueTaskManagement<DatabaseContext> management)
+[RegisterService(typeof(IQueueTaskManageService), Lifetime = ServiceLifetime.Scoped)]
+public class QueueTaskManageService(QueueTaskManagement<DatabaseContext> management) : IQueueTaskManageService
 {
 
     /// <summary>

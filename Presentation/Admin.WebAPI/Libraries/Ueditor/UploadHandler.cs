@@ -1,5 +1,5 @@
 using Application.Model.Basic.File;
-using Application.Service.Basic;
+using Application.Interface.Basic;
 using Common;
 
 namespace Admin.WebAPI.Libraries.Ueditor;
@@ -7,7 +7,7 @@ namespace Admin.WebAPI.Libraries.Ueditor;
 /// <summary>
 /// 处理 UEditor 普通文件和 Base64 文件上传
 /// </summary>
-public class UploadHandler(long actorUserId, UploadConfig uploadConfig, string rootPath, HttpContext httpContext, FileService fileService, long uploadKey, string sign, string fileServerUrl)
+public class UploadHandler(long actorUserId, UploadConfig uploadConfig, string rootPath, HttpContext httpContext, IFileService fileService, long uploadKey, string sign, string fileServerUrl)
 {
 
     /// <summary>

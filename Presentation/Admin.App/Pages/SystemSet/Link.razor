@@ -187,8 +187,13 @@
         StateHasChanged();
     }
 
+
+    /// <summary>
+    /// 保存友情链接并更新列表
+    /// </summary>
     async Task SaveLinkAsync()
     {
+
         saveLoading = true;
         try
         {
@@ -228,8 +233,8 @@
         finally
         {
             saveLoading = false;
-            StateHasChanged();
         }
+
     }
 
 

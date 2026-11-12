@@ -427,8 +427,13 @@
         StateHasChanged();
     }
 
+
+    /// <summary>
+    /// 保存应用配置并更新列表
+    /// </summary>
     async Task SaveLlmAppAsync()
     {
+
         if (string.IsNullOrWhiteSpace(editLlmApp.Code))
         {
             Message.Error("Code 不可以空");
@@ -478,12 +483,17 @@
         finally
         {
             saveLoading = false;
-            StateHasChanged();
         }
+
     }
 
+
+    /// <summary>
+    /// 使用当前参数测试应用调用并显示结果
+    /// </summary>
     async Task TestCallAsync()
     {
+
         if (editLlmApp.LlmModelId == 0)
         {
             Message.Error("请先选择模型");
@@ -547,8 +557,8 @@
         finally
         {
             testLoading = false;
-            StateHasChanged();
         }
+
     }
 
     record PlaceholderInfo(string Key, bool IsRequired, string? Comment)
@@ -600,6 +610,7 @@
             throw new Exception("ExtraBodyJson 不是合法的 JSON 对象");
         }
     }
+
 
     async Task DeleteLlmAppAsync(long id)
     {

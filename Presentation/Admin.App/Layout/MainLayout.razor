@@ -1019,17 +1019,26 @@
     /// </summary>
     private async Task ToggleReuseTabMoreMenu()
     {
+
         if (reuseTabMoreVisible)
         {
             reuseTabMoreVisible = false;
             return;
         }
 
-        var indexes = await JS.InvokeAsync<int[]>("netEngineMainLayout.getOverflowTabIndexes");
+        try
+        {
+            var indexes = await JS.InvokeAsync<int[]>("netEngineMainLayout.getOverflowTabIndexes");
 
-        overflowTabIndexes = indexes.ToHashSet();
+            overflowTabIndexes = indexes.ToHashSet();
 
-        reuseTabMoreVisible = overflowTabIndexes.Count > 0;
+            reuseTabMoreVisible = overflowTabIndexes.Count > 0;
+        }
+        catch (JSException)
+        {
+            Message.Error("无法读取标签页信息，请刷新页面后重试");
+        }
+
     }
 
 

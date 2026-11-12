@@ -17,7 +17,7 @@ stages:
         runsOn:
           group: public/cn-hangzhou
           labels: linux,amd64
-          container: mcr.microsoft.com/dotnet/sdk:10.0
+          container: mcr.microsoft.com/dotnet/sdk:11.0
           instanceType: DEFAULT
         timeoutMinutes: 5
         steps:

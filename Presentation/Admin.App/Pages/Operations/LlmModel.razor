@@ -260,8 +260,13 @@
         isShowEdit = true;
     }
 
+
+    /// <summary>
+    /// 保存模型配置并更新列表
+    /// </summary>
     async Task SaveLlmModelAsync()
     {
+
         if (string.IsNullOrWhiteSpace(editLlmModel.Name))
         {
             Message.Error("名称不可以空");
@@ -311,9 +316,10 @@
         finally
         {
             saveLoading = false;
-            StateHasChanged();
         }
+
     }
+
 
     async Task DeleteLlmModelAsync(long id)
     {

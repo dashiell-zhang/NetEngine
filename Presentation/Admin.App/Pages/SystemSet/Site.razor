@@ -150,6 +150,7 @@
     /// </summary>
     async Task SaveSiteAsync()
     {
+
         saveLoading = true;
         try
         {
@@ -170,8 +171,8 @@
         finally
         {
             saveLoading = false;
-            StateHasChanged();
         }
+
     }
 
 

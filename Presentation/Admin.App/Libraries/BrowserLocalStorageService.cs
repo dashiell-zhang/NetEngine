@@ -55,7 +55,15 @@ public class BrowserLocalStorageService : IBrowserLocalStorageService
 
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return _jsInProcessRuntime.Invoke<string?>("localStorage.getItem", key);
+        try
+        {
+            return _jsInProcessRuntime.Invoke<string?>("localStorage.getItem", key);
+        }
+        catch (JSException exception)
+        {
+            throw new InvalidOperationException("无法读取浏览器本地存储，请检查浏览器存储权限", exception);
+        }
+
     }
 
 
@@ -67,7 +75,15 @@ public class BrowserLocalStorageService : IBrowserLocalStorageService
 
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        _jsInProcessRuntime.InvokeVoid("localStorage.setItem", key, value);
+        try
+        {
+            _jsInProcessRuntime.InvokeVoid("localStorage.setItem", key, value);
+        }
+        catch (JSException exception)
+        {
+            throw new InvalidOperationException("无法写入浏览器本地存储，请检查存储空间和浏览器存储权限", exception);
+        }
+
     }
 
 
@@ -79,6 +95,14 @@ public class BrowserLocalStorageService : IBrowserLocalStorageService
 
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        _jsInProcessRuntime.InvokeVoid("localStorage.removeItem", key);
+        try
+        {
+            _jsInProcessRuntime.InvokeVoid("localStorage.removeItem", key);
+        }
+        catch (JSException exception)
+        {
+            throw new InvalidOperationException("无法移除浏览器本地存储项，请检查浏览器存储权限", exception);
+        }
+
     }
 }

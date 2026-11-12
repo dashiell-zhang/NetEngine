@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.EntityFrameworkCore.Query;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations;
 
@@ -26,7 +27,8 @@ public sealed class NpgsqlPartitionMigrationsSqlGenerator : NpgsqlMigrationsSqlG
     /// </summary>
     /// <param name="dependencies">Migration SQL 生成器依赖</param>
     /// <param name="npgsqlSingletonOptions">Npgsql 单例选项</param>
-    public NpgsqlPartitionMigrationsSqlGenerator(MigrationsSqlGeneratorDependencies dependencies, INpgsqlSingletonOptions npgsqlSingletonOptions) : base(dependencies, npgsqlSingletonOptions)
+    /// <param name="querySqlGeneratorFactory">查询 SQL 生成器工厂</param>
+    public NpgsqlPartitionMigrationsSqlGenerator(MigrationsSqlGeneratorDependencies dependencies, INpgsqlSingletonOptions npgsqlSingletonOptions, IQuerySqlGeneratorFactory querySqlGeneratorFactory) : base(dependencies, npgsqlSingletonOptions, querySqlGeneratorFactory)
     {
 
     }

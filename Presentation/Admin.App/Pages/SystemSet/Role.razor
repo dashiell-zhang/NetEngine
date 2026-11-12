@@ -252,8 +252,12 @@
     }
 
 
+    /// <summary>
+    /// 保存角色信息并更新列表
+    /// </summary>
     async Task SaveRoleAsync()
     {
+
         saveLoading = true;
         try
         {
@@ -293,8 +297,8 @@
         finally
         {
             saveLoading = false;
-            StateHasChanged();
         }
+
     }
 
 

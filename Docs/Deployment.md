@@ -28,7 +28,7 @@
 
 ### 生成器运行环境
 
-- .NET 10 SDK
+- .NET 11 SDK
 - 在 Windows、macOS 或 Linux 上均可运行
 
 ### 目标服务器环境
@@ -290,7 +290,7 @@ taskservice/TaskService
 流水线使用以下 SDK 镜像：
 
 ```text
-mcr.microsoft.com/dotnet/sdk:10.0
+mcr.microsoft.com/dotnet/sdk:11.0
 ```
 
 Admin.App 流水线会在构建工作区中完成以下操作：

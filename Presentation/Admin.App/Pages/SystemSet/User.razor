@@ -308,8 +308,12 @@
     EditUserDto editUser = new();
     long userId;
 
+    /// <summary>
+    /// 保存用户信息并更新列表
+    /// </summary>
     async Task SaveUserAsync()
     {
+
         if (editUser.RoleIds.Length == 0)
         {
             Message.Error("至少选择一个角色");
@@ -359,8 +363,8 @@
         finally
         {
             saveLoading = false;
-            StateHasChanged();
         }
+
     }
 
 
@@ -387,7 +391,6 @@
 
         StateHasChanged();
     }
-
 
 
     async Task DeleteUserAsync(long userId)

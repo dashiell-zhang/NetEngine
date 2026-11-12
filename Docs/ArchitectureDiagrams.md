@@ -315,7 +315,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    SDK["global.json<br/>稳定版 .NET 10.0 SDK"] --> Build["构建解决方案"]
+    SDK["global.json<br/>稳定版 .NET 11.0 SDK"] --> Build["构建解决方案"]
     Config["Repository.Tool/appsettings.json"] --> Tool["Repository.Tool<br/>Configuration / Factories / Scripts"]
     Tool -->|EF 设计时工厂| Migrations["按 Context 生成迁移"]
     Migrations -->|审查后显式 Update-Database| Database[("选定的业务 / 日志 / 事件存储")]

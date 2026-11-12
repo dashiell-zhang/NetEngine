@@ -75,7 +75,7 @@ builder.Services.AddLlmClientFactory();
 | `1` | OpenAI Responses API 协议 | `https://provider.example/v1/responses` | `Authorization: Bearer <ApiKey>` |
 | `2` | Anthropic Messages API 协议 | `https://provider.example/v1/messages` | `x-api-key`，并发送 `anthropic-version: 2023-06-01` |
 
-`Endpoint` 必须与所选协议匹配。工厂将 `HttpClient.Timeout` 设置为 120 秒：非流式请求覆盖 HTTP 响应体接收，流式请求使用 `ResponseHeadersRead`，该超时只覆盖收到响应头之前的阶段，不限制后续整个流的读取时长。需要流式调用总时限时，由调用方通过带超时的 `CancellationTokenSource` 传入取消令牌，参见 [HttpCompletionOption 的超时范围](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpcompletionoption?view=net-10.0#remarks)
+`Endpoint` 必须与所选协议匹配。工厂将 `HttpClient.Timeout` 设置为 120 秒：非流式请求覆盖 HTTP 响应体接收，流式请求使用 `ResponseHeadersRead`，该超时只覆盖收到响应头之前的阶段，不限制后续整个流的读取时长。需要流式调用总时限时，由调用方通过带超时的 `CancellationTokenSource` 传入取消令牌，参见 [HttpCompletionOption 的超时范围](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpcompletionoption?view=net-11.0#remarks)
 
 创建模型时 `ApiKey` 必填；编辑模型时留空表示保留原值。模型被启用的 LLM 应用引用时不能直接禁用，存在任何未删除应用时也不能删除
 

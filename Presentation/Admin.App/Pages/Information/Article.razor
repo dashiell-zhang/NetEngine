@@ -185,6 +185,7 @@
     /// <param name="e">文件选择事件参数</param>
     async Task UploadImgageAsync(InputFileChangeEventArgs e)
     {
+
         foreach (var file in e.GetMultipleFiles())
         {
             try
@@ -211,7 +212,8 @@
                 Message.Error(file.Name + " 上传失败 " + ex.Message);
             }
 
-            StateHasChanged();
+            // 每张图片上传完成后立即更新预览列表
+            await InvokeAsync(StateHasChanged);
         }
 
     }
@@ -242,7 +244,6 @@
 
         await Task.WhenAll(getArticleListTask, getCategorySelectListTask);
     }
-
 
 
     async Task GetCategorySelectListAsync()
@@ -352,7 +353,15 @@
         {
             if (item.Url.StartsWith("blob"))
             {
-                JS.InvokeAsync<string>("RevokeObjectUrl", item.Url);
+                try
+                {
+                    await JS.InvokeVoidAsync("RevokeObjectUrl", item.Url);
+                }
+                catch (JSException)
+                {
+                    Message.Error("释放文章图片预览失败，请刷新页面后重试");
+                    return;
+                }
             }
         }
 
@@ -405,7 +414,15 @@
             return;
         }
 
-        await JS.InvokeVoidAsync("InitUeditor", "Content", 370, null, uploadKey.ToString());
+        try
+        {
+            await JS.InvokeVoidAsync("InitUeditor", "Content", 370, null, uploadKey.ToString());
+        }
+        catch (JSException)
+        {
+            isShowEditArticle = false;
+            Message.Error("文章编辑器初始化失败，请刷新页面后重试");
+        }
 
     }
 
@@ -415,9 +432,18 @@
     /// </summary>
     async Task SaveArticleAsync()
     {
-        editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
-        var contentFileIdList = await JS.InvokeAsync<List<string>>("GetUeditorFileIds", "Content");
-        editArticle.ContentFileIdList = contentFileIdList.Select(t => long.TryParse(t, out var fileId) ? fileId : default).Where(t => t > 0).Distinct().ToList();
+
+        try
+        {
+            editArticle.Content = await JS.InvokeAsync<string>("GetUeditorContent", "Content");
+            var contentFileIdList = await JS.InvokeAsync<List<string>>("GetUeditorFileIds", "Content");
+            editArticle.ContentFileIdList = contentFileIdList.Select(t => long.TryParse(t, out var fileId) ? fileId : default).Where(t => t > 0).Distinct().ToList();
+        }
+        catch (JSException)
+        {
+            Message.Error("读取文章内容失败，请稍后重试");
+            return;
+        }
 
         if (_editArticleForm!.Validate())
         {
@@ -462,9 +488,9 @@
             finally
             {
                 saveLoading = false;
-                StateHasChanged();
             }
         }
+
     }
 
 
@@ -477,6 +503,10 @@
         try
         {
             await JS.InvokeVoidAsync("DestroyUeditor", "Content");
+        }
+        catch (JSException)
+        {
+            Message.Error("释放文章编辑器失败，请刷新页面后重试");
         }
         finally
         {

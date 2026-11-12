@@ -1,6 +1,6 @@
 # NetEngine
 
-基于 .NET 10 的分层解决方案，包含 Web API、Blazor WebAssembly 管理端、任务调度、EF Core、源码生成器以及常用基础设施能力
+基于 .NET 11 的分层解决方案，包含 Web API、Blazor WebAssembly 管理端、任务调度、EF Core、源码生成器以及常用基础设施能力
 
 设计目标：
 
@@ -27,7 +27,8 @@
 
 ### 环境要求
 
-- 稳定版 .NET 10.0 SDK，最低 10.0.403；根目录 [global.json](global.json) 允许使用更高的 10.0 SDK 功能带和补丁版本，不选择 .NET 11 或预览版
+- 稳定版 .NET 11.0 SDK，最低 11.0.100；根目录 [global.json](global.json) 允许使用更高的 11.0 SDK 功能带和补丁版本，不选择其他主版本或预览版
+- 管理端使用 AntDesign 1.6.3-dotnet11.rc3；数据库使用 Npgsql 11 RC3 与匹配的 EF Core 11 RC3，具体版本见下方数据库工具说明
 - PostgreSQL
 - Redis；使用 Garnet 等兼容实现时，应验证本项目使用的缓存、Lua 脚本和分布式锁行为
 - Docker 可选，用于启动本地 PostgreSQL 与 Redis
@@ -89,13 +90,13 @@ dotnet build NetEngine.slnx
 
 ### 创建数据库结构
 
-使用 Visual Studio 程序包管理控制台时，Repository.Tool 已引用 EF 工具包，无需单独安装 dotnet-ef，可直接按下方控制台步骤操作。使用 dotnet 命令行时，工具与项目保持 EF Core 10 主版本；首次安装：
+项目使用 Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0-rc.3，并按驱动要求统一使用 EF Core 11.0.0-rc.3.26522.148。使用 Visual Studio 程序包管理控制台时，Repository.Tool 已引用 EF 工具包，无需单独安装 dotnet-ef，可直接按下方控制台步骤操作。使用 dotnet 命令行时，首次安装：
 
 ```powershell
-dotnet tool install --global dotnet-ef --version "10.*"
+dotnet tool install --global dotnet-ef --version "11.0.0-rc.3.26522.148"
 ```
 
-已安装时先用 `dotnet ef --version` 检查，需要更新时执行 `dotnet tool update --global dotnet-ef --version "10.*"`。以后升级 EF Core 主版本时，同步调整这里的主版本，项目版本以 [Repository.Tool.csproj](Repository.Tool/Repository.Tool.csproj) 为准。工具用法见 [EF Core CLI 文档](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)，版本通配符见 [工具安装文档](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install#options)
+已安装时先用 `dotnet ef --version` 检查，需要更新时执行 `dotnet tool update --global dotnet-ef --version "11.0.0-rc.3.26522.148"`。工具版本与项目保持一致，项目版本以 [Repository.Tool.csproj](Repository.Tool/Repository.Tool.csproj) 为准。工具用法见 [EF Core CLI 文档](https://learn.microsoft.com/en-us/ef/core/cli/dotnet) 和 [工具安装文档](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install#options)
 
 工具读取项目内的 [appsettings.json](Repository.Tool/appsettings.json)，业务、日志和数据库事件分别管理迁移与历史表。当前模板未包含迁移文件或模型快照，首次初始化空数据库时，需要先生成对应的初始迁移
 

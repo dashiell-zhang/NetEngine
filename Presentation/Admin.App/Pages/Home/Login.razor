@@ -82,8 +82,12 @@
 
     private GetTokenDto loginData = new();
 
+    /// <summary>
+    /// 验证登录信息并保存身份令牌
+    /// </summary>
     private async Task LoginActionAsync()
     {
+
         submitLoading = true;
         try
         {
@@ -107,8 +111,8 @@
         finally
         {
             submitLoading = false;
-            StateHasChanged();
         }
+
     }
 
 }

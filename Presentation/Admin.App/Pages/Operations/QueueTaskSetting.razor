@@ -128,8 +128,12 @@
     PageListDto<TaskSettingDto> pageList = new();
 
 
+    /// <summary>
+    /// 加载当前任务分类的配置列表
+    /// </summary>
     async Task GetTaskSettingListAsync()
     {
+
         tableLoading = true;
 
         var retData = await Http.GetFromJsonAsync<PageListDto<TaskSettingDto>>("Operations/GetTaskSettingList?page=" + page + "&pageSize=" + pageSize + "&category=" + PageCategory, JsonHelper.DeserializeOpts);
@@ -140,8 +144,9 @@
         }
 
         tableLoading = false;
-        StateHasChanged();
+
     }
+
 
     async Task PageChange(PaginationEventArgs args)
     {
@@ -191,8 +196,13 @@
         StateHasChanged();
     }
 
+
+    /// <summary>
+    /// 保存任务配置并更新列表
+    /// </summary>
     async Task SaveTaskSettingAsync()
     {
+
         saveLoading = true;
         try
         {
@@ -216,7 +226,7 @@
         finally
         {
             saveLoading = false;
-            StateHasChanged();
         }
+
     }
 }

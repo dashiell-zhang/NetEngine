@@ -254,8 +254,13 @@
         StateHasChanged();
     }
 
+
+    /// <summary>
+    /// 保存栏目信息并更新列表
+    /// </summary>
     async Task SaveCategoryAsync()
     {
+
         saveLoading = true;
         try
         {
@@ -305,8 +310,8 @@
         finally
         {
             saveLoading = false;
-            StateHasChanged();
         }
+
     }
 
 

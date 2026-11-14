@@ -6,7 +6,7 @@ public interface IFileStorage
     /// 上传文件
     /// </summary>
     /// <param name="localPath">本地文件路径</param>
-    /// <param name="remotePath">远程文件路径</param>
+    /// <param name="remotePath">远程目录，与本地文件名组合为对象路径</param>
     /// <param name="isPublicRead">是否支持公开访问</param>
     /// <param name="fileName">自定义下载文件名</param>
     /// <returns></returns>

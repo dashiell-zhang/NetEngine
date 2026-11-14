@@ -28,7 +28,7 @@
 	  <PackageReference Include="Microsoft.IdentityModel.Protocols" Version="8.23.0" />
 	  <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
 	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore" Version="11.0.0" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="11.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

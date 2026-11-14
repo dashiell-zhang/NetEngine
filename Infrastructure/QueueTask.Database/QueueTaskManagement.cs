@@ -33,11 +33,14 @@ public sealed class QueueTaskManagement<TContext>(IDbContextFactory<TContext> fa
         }
         if (start is not null)
         {
-            query = query.Where(task => task.CreateTime >= start);
+            // PostgreSQL 时间戳参数统一使用 UTC，保留输入偏移表示的同一时刻
+            var startTime = start.Value.ToUniversalTime();
+            query = query.Where(task => task.CreateTime >= startTime);
         }
         if (end is not null)
         {
-            query = query.Where(task => task.CreateTime <= end);
+            var endTime = end.Value.ToUniversalTime();
+            query = query.Where(task => task.CreateTime <= endTime);
         }
         if (!string.IsNullOrWhiteSpace(parameterKeyword))
         {

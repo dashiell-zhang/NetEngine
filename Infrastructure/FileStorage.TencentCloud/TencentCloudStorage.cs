@@ -71,16 +71,21 @@ public class TencentCloudStorage : IFileStorage
     }
 
 
+    /// <summary>
+    /// 上传文件到远程目录，对象名使用本地文件名，下载展示名由 fileName 指定
+    /// </summary>
     public async Task<bool> FileUploadAsync(string localPath, string remotePath, bool isPublicRead, string? fileName = null)
     {
 
-        remotePath = remotePath.Replace("\\", "/");
+        var objectName = Path.GetFileName(localPath);
+
+        objectName = Path.Combine(remotePath, objectName).Replace("\\", "/");
 
         TransferConfig transferConfig = new();
 
         TransferManager transferManager = new(cosXml, transferConfig);
 
-        PutObjectRequest request = new(storageSetting.BucketName, remotePath, localPath);
+        PutObjectRequest request = new(storageSetting.BucketName, objectName, localPath);
 
         if (fileName != null)
         {

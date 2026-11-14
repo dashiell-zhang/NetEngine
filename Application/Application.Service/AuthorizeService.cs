@@ -84,7 +84,7 @@ public class AuthorizeService(DatabaseContext db, IDistributedCache distributedC
     {
         var (openId, sessionKey) = await GetWeiXinMiniAppOpenIdAndSessionKeyAsync(login.AppId, login.Code);
 
-        var userIdQuery = db.UserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == login.AppId && t.OpenId == login.AppId).Select(t => t.User.Id);
+        var userIdQuery = db.UserBindExternal.Where(t => t.AppName == "WeiXinMiniApp" && t.AppId == login.AppId && t.OpenId == openId).Select(t => t.User.Id);
 
         var userId = await userIdQuery.FirstOrDefaultAsync();
 

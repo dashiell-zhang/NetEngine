@@ -49,12 +49,15 @@ public class LogQueryService(IDbContextFactory<ReadLogDatabaseContext> contextFa
 
         if (request.StartTime.HasValue)
         {
-            query = query.Where(t => t.CreateTime >= request.StartTime.Value);
+            // PostgreSQL 时间戳参数统一使用 UTC，保留输入偏移表示的同一时刻
+            var startTime = request.StartTime.Value.ToUniversalTime();
+            query = query.Where(t => t.CreateTime >= startTime);
         }
 
         if (request.EndTime.HasValue)
         {
-            query = query.Where(t => t.CreateTime <= request.EndTime.Value);
+            var endTime = request.EndTime.Value.ToUniversalTime();
+            query = query.Where(t => t.CreateTime <= endTime);
         }
 
         result.Total = await query.CountAsync(cancellationToken);

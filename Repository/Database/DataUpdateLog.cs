@@ -34,16 +34,4 @@ public class DataUpdateLog : CD
     public long? ActionUserId { get; set; }
     public virtual User? ActionUser { get; set; }
 
-
-    /// <summary>
-    /// Ip地址
-    /// </summary>
-    public string? IpAddress { get; set; }
-
-
-    /// <summary>
-    ///  设备标记
-    /// </summary>
-    public string? DeviceMark { get; set; }
-
 }

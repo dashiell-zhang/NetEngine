@@ -95,20 +95,24 @@ public static class DatabaseContextExtension
     /// 保存数据并记录更新日志（异步）
     /// </summary>
     /// <param name="db"></param>
-    /// <param name="actionUserId"></param>
-    /// <param name="ipAddress"></param>
-    /// <param name="deviceMark"></param>
+    /// <param name="actionUserId">操作人ID，未传入时使用实体的更新人ID</param>
     /// <returns></returns>
-    public static Task<int> SaveChangesWithUpdateLogAsync(this DatabaseContext db, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
+    public static Task<int> SaveChangesWithUpdateLogAsync(this DatabaseContext db, long? actionUserId = null)
     {
-        CreateUpdateLog(db, actionUserId, ipAddress, deviceMark);
+
+        CreateUpdateLog(db, actionUserId);
 
         return db.SaveChangesAsync();
+
     }
 
 
-    private static void CreateUpdateLog(this DatabaseContext db, long? actionUserId = null, string? ipAddress = null, string? deviceMark = null)
+    /// <summary>
+    /// 根据跟踪实体的修改内容创建数据更新日志
+    /// </summary>
+    private static void CreateUpdateLog(this DatabaseContext db, long? actionUserId = null)
     {
+
         var idService = db.Database.GetService<IdService>();
 
         db.PreprocessingChangeTracker();
@@ -202,37 +206,12 @@ public static class DatabaseContextExtension
 
             if (result != "")
             {
-                if (ipAddress == null || deviceMark == null)
-                {
-                    var assembly = Assembly.GetEntryAssembly();
-                    var httpContextType = assembly!.GetTypes().Where(t => t.FullName!.Contains("Libraries.Http.HttpContext")).FirstOrDefault();
-
-                    if (httpContextType != null)
-                    {
-                        ipAddress ??= httpContextType.GetMethod("GetIpAddress", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!.ToString()!;
-
-                        if (deviceMark == null)
-                        {
-                            deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, ["DeviceMark"])!.ToString()!;
-
-                            if (deviceMark == "")
-                            {
-                                deviceMark = httpContextType.GetMethod("GetHeader", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, ["User-Agent"])!.ToString()!;
-                            }
-                        }
-                    }
-                }
-
-
-
                 DataUpdateLog osLog = new()
                 {
                     Id = idService.GetId(),
                     Table = tableName,
                     Content = result,
                     TableId = entityId,
-                    IpAddress = ipAddress == "" ? null : ipAddress,
-                    DeviceMark = deviceMark == "" ? null : deviceMark,
                     ActionUserId = actionUserId
                 };
 
@@ -240,6 +219,7 @@ public static class DatabaseContextExtension
             }
 
         }
+
     }
 
 

@@ -7,22 +7,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>1591;8618</NoWarn>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<NoWarn>1591;8618</NoWarn>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="11.0.0" />
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
-		<PackageReference Include="AlipaySDKNet.Standard" Version="4.9.1424" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -7,16 +7,6 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>8618</NoWarn>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<NoWarn>8618</NoWarn>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
 
 	<ItemGroup>
 		<PackageReference Include="AlibabaCloud.SDK.Dysmsapi20170525" Version="4.4.0" />

@@ -144,7 +144,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
     {
 
         var payload = CreatePayload(ctx, "executing");
-        ctx.Logger?.LogInformation(JsonUtil.ToJson(payload));
+        ctx.Logger?.LogInformation("{Invocation}", JsonUtil.ToJson(payload));
 
     }
 
@@ -170,7 +170,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             payload["durationMs"] = durationMs.Value;
         }
 
-        ctx.Logger?.LogInformation(JsonUtil.ToJson(payload));
+        ctx.Logger?.LogInformation("{Invocation}", JsonUtil.ToJson(payload));
 
     }
 
@@ -200,7 +200,7 @@ public sealed class LoggingBehavior : IInvocationAsyncBehavior, IInvocationBehav
             payload["durationMs"] = durationMs.Value;
         }
 
-        ctx.Logger?.LogError(JsonUtil.ToJson(payload));
+        ctx.Logger?.LogError("{Invocation}", JsonUtil.ToJson(payload));
 
     }
 

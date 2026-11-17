@@ -22,7 +22,7 @@ flowchart TB
     end
 
     subgraph Application["Application：业务逻辑与契约"]
-        AppServices["Application.Service<br/>按需接入 Service.LLM / Service.SMS"]
+        AppServices["Application.Service<br/>按需接入 Service.LLM / Service.Payment / Service.SMS"]
         Models["Application.Model<br/>请求、响应与共享模型"]
         Contracts["Application.Interface<br/>WebAPI 与任务宿主的应用契约"]
     end
@@ -55,7 +55,7 @@ flowchart TB
     Queue --> DbCore
 ```
 
-`Application.Service` 和 `Application.Service.LLM` 使用当前业务 Repository；`Application.Service.SMS` 主要依赖短信抽象及应用模型。图中合并显示应用项目，不表示每个项目都依赖所有能力
+`Application.Service`、`Application.Service.LLM` 和 `Application.Service.Payment` 使用当前业务 Repository；`Application.Service.SMS` 主要依赖短信抽象及应用模型。图中合并显示应用项目，不表示每个项目都依赖所有能力
 
 ProjectCore 不引用具体业务 Repository 或具体 Application.Service。任务执行器调用宿主选定的任务类型，任务方法再调用应用服务。Infrastructure 不反向引用具体业务 Repository 或 ProjectCore
 

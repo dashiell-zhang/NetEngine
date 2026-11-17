@@ -10,14 +10,6 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <ContainerBuildContext>..\..</ContainerBuildContext>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>1591;8618;CA2254</NoWarn>
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <NoWarn>1591;8618;CA2254</NoWarn>
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
   </ItemGroup>
@@ -25,6 +17,7 @@
     <ProjectReference Include="..\..\Application\Application.Service\Application.Service.csproj" />
     <ProjectReference Include="..\..\Application\Application.Interface\Application.Interface.csproj" />
     <ProjectReference Include="..\..\Application\Application.Service.LLM\Application.Service.LLM.csproj" />
+    <ProjectReference Include="..\..\Application\Application.Service.Payment\Application.Service.Payment.csproj" />
     <ProjectReference Include="..\..\Infrastructure\DistributedLock.Redis\DistributedLock.Redis.csproj" />
     <ProjectReference Include="..\..\Infrastructure\EventBus.Redis\EventBus.Redis.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\EventBus.Database\EventBus.Database.csproj" />

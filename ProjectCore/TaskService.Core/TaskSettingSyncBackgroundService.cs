@@ -45,7 +45,7 @@ internal class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"ExecuteAsync：{ex.Message}");
+                    logger.LogError(ex, "任务配置同步失败");
                 }
 
                 await Task.Delay(60000, stoppingToken);

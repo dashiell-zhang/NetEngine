@@ -11,16 +11,6 @@
 		<StaticWebAssetSpaFallbackEnabled>true</StaticWebAssetSpaFallbackEnabled>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>4014;8618</NoWarn>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<NoWarn>4014;8618</NoWarn>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<PackageReference Include="AntDesign" Version="1.6.3-dotnet11.rc3" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0" />

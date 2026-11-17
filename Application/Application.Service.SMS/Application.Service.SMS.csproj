@@ -7,16 +7,6 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>1591;8618</NoWarn>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<NoWarn>1591;8618</NoWarn>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<ProjectReference Include="..\Application.Interface\Application.Interface.csproj" />
 		<ProjectReference Include="..\..\Infrastructure\SMS\SMS.csproj" />

@@ -102,7 +102,7 @@ internal class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, I
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError($"ExecuteAsync：{ex.Message}");
+                        logger.LogError(ex, "定时任务调度失败");
                     }
                 }
             }
@@ -147,7 +147,7 @@ internal class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, I
                 }
                 else
                 {
-                    logger.LogError(scheduleTaskInfo.Method + "方法要求有参数，但任务记录缺少参数");
+                    logger.LogError("{Method}方法要求有参数，但任务记录缺少参数", scheduleTaskInfo.Method);
                 }
             }
             else
@@ -173,7 +173,7 @@ internal class ScheduleTaskBackgroundService(IServiceProvider serviceProvider, I
                 InnerStackTrace = ex?.InnerException?.StackTrace,
             };
 
-            logger.LogError($"ScheduleTaskRunAction-{scheduleTaskInfo.Name};{JsonHelper.ObjectToJson(errorLog)}");
+            logger.LogError("ScheduleTaskRunAction-{TaskName};{Error}", scheduleTaskInfo.Name, JsonHelper.ObjectToJson(errorLog));
         }
         finally
         {

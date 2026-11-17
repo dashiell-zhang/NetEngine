@@ -7,6 +7,9 @@ namespace WebAPI.Core.Libraries;
 public class GlobalError
 {
 
+    /// <summary>
+    /// 记录未处理异常的请求信息并返回统一错误响应
+    /// </summary>
     public static Task ErrorEvent(HttpContext httpContext)
     {
         var feature = httpContext.Features.Get<IExceptionHandlerFeature>();
@@ -48,7 +51,7 @@ public class GlobalError
 
         var logger = httpContext.RequestServices.GetRequiredService<ILogger<GlobalError>>();
 
-        logger.LogError("全局异常：" + JsonHelper.ObjectToJson(content));
+        logger.LogError("全局异常：{Content}", JsonHelper.ObjectToJson(content));
 
         httpContext.Response.StatusCode = 400;
 

@@ -61,7 +61,7 @@ namespace Application.Service
 
                         if (!downloadState)
                         {
-                            logger.LogError(fileId + "文件下载失败");
+                            logger.LogError("{FileId}文件下载失败", fileId);
                             throw new Exception(fileId + "文件下载失败");
                         }
 

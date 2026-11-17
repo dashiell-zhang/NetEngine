@@ -33,9 +33,9 @@ public interface IPayService
 
 
     /// <summary>
-    /// 微信支付异步通知接口
+    /// 验证微信原始通知并确认订单支付，返回是否处理成功
     /// </summary>
-    Task<WeiXinPayNotifyRetDto?> WeiXinPayNotifyAsync(string mchId, WeiXinPayNotifyDto weiXinPayNotify, Dictionary<string, string> headers, string requestBody);
+    Task<bool> WeiXinPayNotifyAsync(string mchId, Dictionary<string, string> headers, string requestBody);
 
 
     /// <summary>
@@ -57,8 +57,8 @@ public interface IPayService
 
 
     /// <summary>
-    /// 支付宝异步通知接口
+    /// 验证支付宝表单通知并确认订单支付，返回是否处理成功
     /// </summary>
-    Task<string?> AliPayNotifyAsync(Dictionary<string, string> parameters);
+    Task<bool> AliPayNotifyAsync(Dictionary<string, string> parameters);
 
 }

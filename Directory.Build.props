@@ -1,5 +1,10 @@
 <Project>
   <PropertyGroup>
+    <!-- 统一编译警告规则，各项目通过追加 NoWarn 保留特殊屏蔽项 -->
+    <NoWarn>$(NoWarn);1591;8618</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup>
     <NetEngineProjectFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildProjectFullPath)))).ToUpperInvariant())</NetEngineProjectFullPath>
     <NetEngineSourceGeneratorCoreFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Core\SourceGenerator.Core.csproj))).ToUpperInvariant())</NetEngineSourceGeneratorCoreFullPath>
     <NetEngineSourceGeneratorRuntimeFullPath>$([System.String]::Copy($([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)SourceGenerator\SourceGenerator.Runtime\SourceGenerator.Runtime.csproj))).ToUpperInvariant())</NetEngineSourceGeneratorRuntimeFullPath>

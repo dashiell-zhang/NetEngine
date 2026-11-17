@@ -85,7 +85,7 @@ public class HttpInterceptor : DelegatingHandler
             if ((int)response.StatusCode == 400)
             {
                 var ret = await response.Content.ReadAsStringAsync(cancellationToken);
-                Notice.Open(new NotificationConfig()
+                _ = Notice.Open(new NotificationConfig()
                 {
                     Message = "异常",
                     Description = JsonHelper.GetValueByKey(ret, "errMsg"),

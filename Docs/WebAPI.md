@@ -53,6 +53,27 @@ public class UserController(IUserService userService) : ControllerBase
 
 文件读取通过 `IFileService.GetFileAsync` 获取文件元数据，Controller 根据宿主根目录生成文件响应或缩略图。权限路由维护由 Controller 采集路由和说明，再调用 `IAuthorizeMaintenanceService.UpdateRoutesAsync` 同步；权限初始化入口校验开发环境、读取初始化文件后调用 `InitializeAsync`，管理员、角色和权限写入由应用服务在事务内完成
 
+## 支付接入
+
+Client.WebAPI 引用 `Application.Service.Payment`，通过 `IPayService` 提供微信 JSAPI、App、H5、Native，以及支付宝小程序、PC、H5 支付。仅使用支付的宿主需要引用此项目，服务由 `BatchRegisterServices()` 注册
+
+支付配置存放在业务库的 `AppSetting` 中，同一套配置的记录使用相同 `Module`、`GroupId`：
+
+| Module | 必需的配置键 |
+|---|---|
+| `WeiXinPay` | `AppId`、`MchId`、`MchApiCertId`、`MchApiCertKey`、`MchApiV3Key` |
+| `AliPayMiniApp`、`AliPayWeb` | `AppId`、`AppPrivateKey`、`AliPayPublicKey` |
+
+下单按支付模块选择唯一配置组；微信通知按商户号、支付宝通知按应用 ID 选择唯一配置组，组内必需键不得缺失或重复。订单须处于“待支付”状态、尚未支付，金额为大于零且最多两位小数的人民币金额；支付宝小程序支付还需有对应应用的用户绑定信息
+
+微信接入使用平台证书模式，自动下载并缓存平台证书，通过通知头中的序列号选择证书验签。服务器时间须保持同步，以校验签名时间戳。同一商户的平台证书下载间隔至少为 60 秒，下载失败也计入限制；已有匹配证书的正常验签不受该间隔影响
+
+协议细节可参考[微信支付通知](https://pay.wechatpay.cn/doc/v3/merchant/4012791902)及[支付宝异步通知](https://developer.alibaba.com/docs/doc.htm?articleId=106448&docType=1&treeId=193)
+
+支付平台通知地址为 `/Pay/WeiXinPayNotify/{mchid}` 和 `/Pay/AliPayNotify`。应用层完成验签、金额和订单状态校验并保存后，微信返回 HTTP 204，支付宝返回纯文本 `success`。相同渠道、流水号及金额的成功通知可重复确认；失败通知分别返回 HTTP 500 或纯文本 `failure`
+
+当前支付入口不提供退款业务接口
+
 ## 配置文件
 
 公共配置位于各宿主的 `appsettings.json` 与 `appsettings.Development.json`

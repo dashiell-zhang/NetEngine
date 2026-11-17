@@ -10,7 +10,7 @@ namespace Client.WebAPI.Controllers;
 /// </summary>
 [Route("[controller]/[action]")]
 [ApiController]
-public class PayController(IPayService payService, IHttpContextAccessor httpContextAccessor) : ControllerBase
+public class PayController(IPayService payService) : ControllerBase
 {
 
 
@@ -23,9 +23,11 @@ public class PayController(IPayService payService, IHttpContextAccessor httpCont
     [HttpGet]
     public Task<CreateWeiXinPayJSAPIRetDto?> CreateWeiXinPayJSAPI(string orderNo, string openId)
     {
-        var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
+
+        var notifyUrl = HttpContext.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
         return payService.CreateWeiXinPayJSAPIAsync(orderNo, openId, notifyUrl);
+
     }
 
 
@@ -39,9 +41,10 @@ public class PayController(IPayService payService, IHttpContextAccessor httpCont
     public Task<CreateWeiXinPayAppRetDto?> CreateWeiXinPayApp(string orderNo)
     {
 
-        var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
+        var notifyUrl = HttpContext.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
         return payService.CreateWeiXinPayAppAsync(orderNo, notifyUrl);
+
     }
 
 
@@ -54,11 +57,13 @@ public class PayController(IPayService payService, IHttpContextAccessor httpCont
     [HttpGet]
     public Task<string?> CreateWeiXinPayH5(string orderNo)
     {
-        var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
-        var clientIP = httpContextAccessor.HttpContext!.GetRemoteIP();
+        var notifyUrl = HttpContext.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
+
+        var clientIP = HttpContext.GetRemoteIP();
 
         return payService.CreateWeiXinPayH5Async(orderNo, notifyUrl, clientIP);
+
     }
 
 
@@ -71,31 +76,36 @@ public class PayController(IPayService payService, IHttpContextAccessor httpCont
     [HttpGet]
     public Task<string?> CreateWeiXinPayPC(string orderNo)
     {
-        var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
+
+        var notifyUrl = HttpContext.GetBaseUrl() + "/Pay/WeiXinPayNotify/";
 
         return payService.CreateWeiXinPayPCAsync(orderNo, notifyUrl);
+
     }
 
 
 
     /// <summary>
-    /// 微信支付异步通知接口
+    /// 接收微信支付原始通知，处理成功后返回无正文的确认响应
     /// </summary>
     [HttpPost("{mchid}")]
-    public async Task<WeiXinPayNotifyRetDto?> WeiXinPayNotify(string mchId, WeiXinPayNotifyDto weiXinPayNotify)
+    public async Task<IActionResult> WeiXinPayNotify(string mchId)
     {
-        string requestBody = HttpContext.GetRequestBody();
+
+        using var reader = new StreamReader(Request.Body, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
+        string requestBody = await reader.ReadToEndAsync();
 
         var headers = HttpContext.Request.Headers.ToDictionary(t => t.Key, t => t.Value.ToString());
 
-        var ret = await payService.WeiXinPayNotifyAsync(mchId, weiXinPayNotify, headers, requestBody);
+        bool accepted = await payService.WeiXinPayNotifyAsync(mchId, headers, requestBody);
 
-        if (ret == null || ret.code != "SUCCESS")
+        if (!accepted)
         {
-            HttpContext.Response.StatusCode = 501;
+            return StatusCode(StatusCodes.Status500InternalServerError, new { code = "FAIL", message = "处理失败" });
         }
 
-        return ret;
+        return NoContent();
+
     }
 
 
@@ -108,9 +118,11 @@ public class PayController(IPayService payService, IHttpContextAccessor httpCont
     [HttpGet]
     public Task<string?> CreateAliPayMiniApp(string orderNo)
     {
-        var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/api/Pay/AliPayNotify";
+
+        var notifyUrl = HttpContext.GetBaseUrl() + "/Pay/AliPayNotify";
 
         return payService.CreateAliPayMiniAppAsync(orderNo, notifyUrl);
+
     }
 
 
@@ -125,10 +137,10 @@ public class PayController(IPayService payService, IHttpContextAccessor httpCont
     public Task<string?> CreateAliPayPC(string orderNo)
     {
 
-        //var returnUrl = httpContextAccessor.HttpContext!.GetBaseUrl();
-        var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/AliPayNotify";
+        var notifyUrl = HttpContext.GetBaseUrl() + "/Pay/AliPayNotify";
 
         return payService.CreateAliPayPCAsync(orderNo, notifyUrl, null);
+
     }
 
 
@@ -141,27 +153,32 @@ public class PayController(IPayService payService, IHttpContextAccessor httpCont
     [HttpGet]
     public Task<string?> CreateAliPayH5(string orderNo)
     {
+
         var returnUrl = "";
 
-        var notifyUrl = httpContextAccessor.HttpContext!.GetBaseUrl() + "/Pay/AliPayNotify";
+        var notifyUrl = HttpContext.GetBaseUrl() + "/Pay/AliPayNotify";
 
         var quitUrl = "";
 
         return payService.CreateAliPayH5Async(orderNo, notifyUrl, returnUrl, quitUrl);
+
     }
 
 
 
     /// <summary>
-    /// 支付宝异步通知接口
+    /// 接收支付宝表单通知并以纯文本确认处理结果
     /// </summary>
     /// <returns></returns>
     [HttpPost]
-    public Task<string?> AliPayNotify()
+    public async Task<ContentResult> AliPayNotify()
     {
-        var parameters = HttpContext.Request.Form.ToDictionary(t => t.Key, t => t.Value.ToString());
 
-        return payService.AliPayNotifyAsync(parameters);
+        var form = await Request.ReadFormAsync();
+        var parameters = form.ToDictionary(t => t.Key, t => t.Value.ToString());
+        bool accepted = await payService.AliPayNotifyAsync(parameters);
+        return Content(accepted ? "success" : "failure", "text/plain");
+
     }
 
 }

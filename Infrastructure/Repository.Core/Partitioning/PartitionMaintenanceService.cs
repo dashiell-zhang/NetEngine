@@ -211,20 +211,13 @@ public sealed class PartitionMaintenanceService<TContext>(TContext db, IDistribu
     /// 记录锁生命周期错误并防止日志提供程序异常影响维护状态
     /// </summary>
     /// <param name="exception">需要记录的异常</param>
-    /// <param name="message">日志消息</param>
+    /// <param name="message">作为固定日志模板参数写入的错误说明</param>
     private void LogErrorSafely(Exception? exception, string message)
     {
 
         try
         {
-            if (exception is null)
-            {
-                logger.LogError(message);
-            }
-            else
-            {
-                logger.LogError(exception, message);
-            }
+            logger.LogError(exception, "{Message}", message);
         }
         catch
         {

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <DebugType>embedded</DebugType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AlipaySDKNet.Standard" Version="4.9.1424" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <ProjectReference Include="../Application.Interface/Application.Interface.csproj" />
+    <ProjectReference Include="../Application.Model/Application.Model.csproj" />
+    <ProjectReference Include="../../Repository/Repository.csproj" />
+    <ProjectReference Include="../../Infrastructure/DistributedLock/DistributedLock.csproj" />
+  </ItemGroup>
+
+</Project>

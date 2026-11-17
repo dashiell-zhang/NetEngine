@@ -83,6 +83,7 @@
 | `Application/Application.Model` | DTO、请求模型、返回模型与配置模型 |
 | `Application/Application.Service` | 通用业务逻辑与业务编排 |
 | `Application/Application.Service.LLM` | LLM 应用服务 |
+| `Application/Application.Service.Payment` | 支付业务编排及模块内部的支付宝、微信接入 |
 | `Application/Application.Service.SMS` | 短信应用服务 |
 | `Repository` | 当前业务模型、上下文与本地任务映射 |
 | `Infrastructure/Repository.Core` | 共用 EF/PostgreSQL 机制、基础实体与分区支持 |
@@ -113,13 +114,14 @@
 - 应用接口按业务能力定义调用方需要的操作，参数与结果使用 `Application.Model` 或通用 .NET 类型，不暴露 EF 实体、上下文、HTTP 类型或基础设施客户端类型；内部辅助方法不机械纳入接口
 - 实现类通过现有生成器显式注册到应用接口，同步修改全部消费方；仅特定宿主需要的服务保留宿主显式接口注册，避免扩大依赖范围
 - 应用服务不读取 HTTP 请求上下文，不混入宿主启动或页面细节；身份等参数由表现层明确传入
-- 若通用应用类库使部分宿主被迫注册不用的基础设施，优先参考 `Application.Service.LLM` 和 `Application.Service.SMS` 拆分宿主特化应用类库
+- 若通用应用类库使部分宿主被迫注册不用的基础设施，优先参考 `Application.Service.LLM`、`Application.Service.Payment` 和 `Application.Service.SMS` 拆分宿主特化应用类库
 - 不使用可空依赖、空实现或让所有宿主补齐无关注册来掩盖上述引用边界问题，也不单纯为目录整齐拆分项目
 
 ### 4.3 Repository 与 Infrastructure
 
 - 业务模型、上下文和业务持久化放在模块 `Repository`；日志和事件组件拥有自己的内部存储，队列组件拥有可映射到业务库的公共模型；共用数据库机制放在 `Infrastructure/Repository.Core`，不要在无关层编写数据库方言代码
 - 第三方平台与外部服务接入放在 `Infrastructure`，优先沿用同类能力已有的抽象与厂商实现组织方式
+- 支付模块专用的支付宝、微信接入封装在 `Application.Service.Payment/Clients` 内，客户端保持内部可见，不访问业务 Repository；订单规则及配置查询由 PayService 负责，不单独拆分支付基础设施项目
 - 不把具体厂商参数、协议或基础设施实现细节泄漏到应用层 DTO、Controller 或页面
 
 ### 4.4 源码生成器与依赖注入

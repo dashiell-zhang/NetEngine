@@ -4,7 +4,6 @@
     <DebugType>embedded</DebugType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="StackExchange.Redis" Version="3.4.35" />

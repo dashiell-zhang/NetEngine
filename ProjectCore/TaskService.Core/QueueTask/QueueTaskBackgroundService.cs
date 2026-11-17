@@ -267,7 +267,7 @@ internal class QueueTaskBackgroundService(IServiceProvider serviceProvider, ILog
                 InnerStackTrace = ex?.InnerException?.StackTrace,
             };
 
-            logger.LogError($"QueueTaskRunAction-{queueTaskInfo.Name};{JsonHelper.ObjectToJson(errorLog)}");
+            logger.LogError("QueueTaskRunAction-{TaskName};{Error}", queueTaskInfo.Name, JsonHelper.ObjectToJson(errorLog));
         }
         finally
         {

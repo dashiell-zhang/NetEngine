@@ -36,8 +36,9 @@ Admin.App ──> Application.Model
 |---|---|
 | `Application.Interface` | WebAPI 与任务宿主使用的应用服务契约，以及跨模块共享的应用抽象 |
 | `Application.Model` | DTO、请求模型、返回模型和配置模型，也是管理前端复用的契约层 |
-| `Application.Service` | 用户、站点、授权、支付、消息、任务中心等通用应用服务 |
+| `Application.Service` | 用户、站点、授权、消息、任务中心等通用应用服务 |
 | `Application.Service.LLM` | LLM 应用配置、对话管理和模型调用服务 |
+| `Application.Service.Payment` | 订单支付编排及模块内部的支付宝、微信接入 |
 | `Application.Service.SMS` | 短信发送相关应用服务 |
 
 WebAPI 与任务宿主使用的应用服务在 `Application.Interface` 中定义接口，Controller、权限适配服务、请求处理器及任务类通过接口调用业务用例，不直接注入具体应用服务。接口按业务能力组织，公开调用方需要的操作，不照搬实现类内部的辅助方法，也不要求每条 HTTP 路由对应一个独立接口
@@ -52,7 +53,9 @@ WebAPI / TaskService 宿主启动入口 → 选择实现类库并完成依赖注
 
 Controller 直接通过 `ControllerBase.User` 和 WebAPI.Core 的 Claims 扩展解析身份，当前认证用户通过 `actorUserId` 或 `targetUserId` 明确传入 Application Service。应用服务不读取 HTTP 请求上下文
 
-`Application.Service`、`Application.Service.LLM` 和 `Application.Service.SMS` 显式引用 `Application.Interface` 和 `Application.Model`。两个 WebAPI 及 TaskService 同时引用契约与所需的实现项目：业务调用依赖接口，实现项目用于宿主组装及生成服务注册
+`Application.Service` 及各特化应用项目显式引用 `Application.Interface` 和 `Application.Model`。两个 WebAPI 及 TaskService 同时引用契约与所需的实现项目：业务调用依赖接口，实现项目用于宿主组装及生成服务注册
+
+支付通过 `IPayService` 调用，仅使用支付的宿主引用 `Application.Service.Payment`。模块内 PayService 负责订单校验、支付配置查询和状态更新，内部的 AliPayClient、WeiXinPayClient 负责厂商协议、签名及证书处理。支付接入作为模块内部实现维护，不单独拆分基础设施项目，客户端不访问业务 Repository
 
 ## Repository
 
@@ -90,12 +93,12 @@ ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业�
 
 | 宿主 | 类型 | 主要应用层引用 |
 |---|---|---|
-| `Client.WebAPI` | 对外 Web API | `Application.Interface`、`Application.Service`、`Application.Service.LLM` |
+| `Client.WebAPI` | 对外 Web API | `Application.Interface`、`Application.Service`、`Application.Service.LLM`、`Application.Service.Payment` |
 | `Admin.WebAPI` | 管理端 Web API | `Application.Interface`、`Application.Service`、`Application.Service.LLM` |
 | `Admin.App` | Blazor WebAssembly | `Application.Model` |
 | `TaskService` | Worker Service | `Application.Interface`、`Application.Service`、`Application.Service.SMS` |
 
-`TaskService` 不引用 `Application.Service.LLM`。宿主只引用实际需要的应用类库，可以避免源码生成注册时把无关服务及其基础设施依赖带入当前宿主
+`TaskService` 不引用 `Application.Service.LLM`；`Admin.WebAPI` 和 `TaskService` 不引用 `Application.Service.Payment`。宿主只引用实际需要的应用类库，可以避免源码生成注册时把无关服务及其基础设施依赖带入当前宿主
 
 ## 服务注册与项目引用
 
@@ -119,7 +122,7 @@ ProjectCore 负责多个宿主共同需要的运行能力，不承载具体业�
 - 留在通用应用项目会迫使其他宿主注册无关依赖
 - 能形成职责清楚且稳定的应用域
 
-`Application.Service.LLM` 与 `Application.Service.SMS` 是当前参考实现
+`Application.Service.LLM`、`Application.Service.Payment` 与 `Application.Service.SMS` 是当前参考实现
 
 不要仅为了目录整齐就拆出新项目。如果服务被多数宿主共同使用，并且没有明显的特化依赖，应继续放在 `Application.Service`
 

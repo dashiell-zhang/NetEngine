@@ -267,24 +267,23 @@ public class RedisLock : IDistributedLock, IAsyncDisposable, IDisposable
         }
         catch (Exception ex)
         {
-            LogErrorSafely(ex, "Cleanup canceled Redis distributed lock acquisition failed for key {LockKey}", lockKey);
+            LogCanceledTakeErrorSafely(ex, lockKey);
         }
 
     }
 
 
     /// <summary>
-    /// 记录 Redis 锁错误且防止日志提供程序异常逃逸到锁生命周期
+    /// 记录取消后清理 Redis 锁的异常且防止日志提供程序异常逃逸到锁生命周期
     /// </summary>
     /// <param name="exception">需要记录的异常</param>
-    /// <param name="message">结构化日志消息模板</param>
-    /// <param name="args">结构化日志参数</param>
-    private void LogErrorSafely(Exception exception, string message, params object?[] args)
+    /// <param name="lockKey">需要清理的 Redis 锁键</param>
+    private void LogCanceledTakeErrorSafely(Exception exception, string lockKey)
     {
 
         try
         {
-            logger.LogError(exception, message, args);
+            logger.LogError(exception, "Cleanup canceled Redis distributed lock acquisition failed for key {LockKey}", lockKey);
         }
         catch
         {

@@ -17,4 +17,16 @@ public class LlmModelSelectDto
     /// </summary>
     public string Name { get; set; }
 
+
+    /// <summary>
+    /// 请求使用的模型标识
+    /// </summary>
+    public string ModelId { get; set; } = string.Empty;
+
+
+    /// <summary>
+    /// 关联模型的协议类型
+    /// </summary>
+    public int ProtocolType { get; set; }
+
 }

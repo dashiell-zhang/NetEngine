@@ -40,19 +40,13 @@
                             </div>
                         </ActionColumn>
 
-                        <ActionColumn Title="System">
-                            <div class="llm-conversation-page__preview-cell" title="@context.SystemContent">
-                                @StringHelper.SubstringText(context.SystemContent, 60)
-                            </div>
-                        </ActionColumn>
-
-                        <ActionColumn Title="User">
+                        <ActionColumn Title="请求内容">
                             <div class="llm-conversation-page__preview-cell" title="@context.UserContent">
                                 @StringHelper.SubstringText(context.UserContent, 60)
                             </div>
                         </ActionColumn>
 
-                        <ActionColumn Title="Assistant">
+                        <ActionColumn Title="返回内容">
                             <div class="llm-conversation-page__preview-cell" title="@context.AssistantContent">
                                 @StringHelper.SubstringText(context.AssistantContent, 60)
                             </div>
@@ -122,23 +116,26 @@
             </div>
 
             <div class="llm-conversation-drawer__content-grid admin-detail-drawer__content-grid">
-                <div class="llm-conversation-drawer__content-box admin-detail-drawer__content-box">
-                    <div class="llm-conversation-drawer__content-toolbar admin-detail-drawer__content-toolbar">
-                        <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
-                        <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
-                        <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
-                        <span class="llm-conversation-drawer__content-caption admin-detail-drawer__content-caption">System</span>
+                @if (!string.IsNullOrWhiteSpace(detailSystem))
+                {
+                    <div class="llm-conversation-drawer__content-box admin-detail-drawer__content-box">
+                        <div class="llm-conversation-drawer__content-toolbar admin-detail-drawer__content-toolbar">
+                            <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
+                            <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
+                            <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
+                            <span class="llm-conversation-drawer__content-caption admin-detail-drawer__content-caption">System</span>
+                        </div>
+
+                        <TextArea Value="@detailSystem" ReadOnly />
                     </div>
+                }
 
-                    <TextArea Value="@detailSystem" ReadOnly />
-                </div>
-
-                <div class="llm-conversation-drawer__content-box admin-detail-drawer__content-box">
+                <div class="llm-conversation-drawer__content-box admin-detail-drawer__content-box @(string.IsNullOrWhiteSpace(detailSystem) ? "admin-detail-drawer__content-box--full" : null)">
                     <div class="llm-conversation-drawer__content-toolbar admin-detail-drawer__content-toolbar">
                         <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
                         <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
                         <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
-                        <span class="llm-conversation-drawer__content-caption admin-detail-drawer__content-caption">User</span>
+                        <span class="llm-conversation-drawer__content-caption admin-detail-drawer__content-caption">请求内容</span>
                     </div>
 
                     <TextArea Value="@detailUser" ReadOnly />
@@ -149,7 +146,7 @@
                         <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
                         <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
                         <span class="llm-conversation-drawer__content-dot admin-detail-drawer__content-dot"></span>
-                        <span class="llm-conversation-drawer__content-caption admin-detail-drawer__content-caption">Assistant</span>
+                        <span class="llm-conversation-drawer__content-caption admin-detail-drawer__content-caption">返回内容</span>
                     </div>
 
                     <TextArea Value="@detailAssistant" ReadOnly />

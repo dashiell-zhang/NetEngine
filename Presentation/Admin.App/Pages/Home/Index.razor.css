@@ -152,9 +152,3 @@
         text-align: center;
         font-size: 14px;
     }
-
-    @media (max-width: 1200px) {
-        .dashboard-page__content-grid {
-            grid-template-columns: 1fr;
-        }
-    }

@@ -498,6 +498,8 @@
     .main-layout-content {
         --main-tab-nav-padding: 12px;
         min-width: 0;
+        height: calc(100dvh - 4px);
+        overflow: auto;
         padding: 8px 16px 0 8px;
     }
 
@@ -617,8 +619,13 @@
 
     .MainTab {
         display: block;
-        min-width: 0;
+        min-width: var(--admin-content-min-width);
         padding-top: 50px;
+    }
+
+    /* 为日志页同一行的六个筛选项和操作按钮保留宽度 */
+    .MainTab:has(.ant-tabs-tabpane-active .log-page) {
+        min-width: 1560px;
     }
 
     .MainTab > .ant-tabs-nav {
@@ -813,31 +820,6 @@
         background: linear-gradient(90deg, rgba(79, 146, 255, 0.14), rgba(79, 146, 255, 0.04)) !important;
         color: #1e63c7 !important;
         transform: translateX(1px);
-    }
-
-    @@media (max-width: 900px) {
-        .main-layout-content {
-            --main-tab-nav-padding: 8px;
-            padding-right: 10px;
-        }
-
-        .MainTab {
-            padding-top: 48px;
-        }
-
-        .MainTab > .ant-tabs-nav {
-            right: 128px;
-            padding-inline: 8px;
-        }
-
-        .MainTab > .ant-tabs-nav::after {
-            right: 54px;
-            width: 44px;
-        }
-
-        .MainTab :is(.ant-tabs-tab) {
-            padding-inline: 12px;
-        }
     }
 </style>
 

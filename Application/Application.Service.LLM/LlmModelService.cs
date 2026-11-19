@@ -175,6 +175,11 @@ public class LlmModelService(DatabaseContext db, IdService idService, IDistribut
             }
         }
 
+        if (llmModel.ProtocolType != updateLlmModel.ProtocolType && (llmModel.ProtocolType == (int)LlmProtocolType.SystemOne || updateLlmModel.ProtocolType == (int)LlmProtocolType.SystemOne) && await db.LlmApp.AnyAsync(app => app.LlmModelId == id))
+        {
+            throw new CustomException("该模型仍被应用引用，请先调整关联应用再切换决策协议");
+        }
+
         llmModel.Name = name;
         llmModel.ModelId = modelId;
         llmModel.Endpoint = endpoint;
@@ -240,7 +245,9 @@ public class LlmModelService(DatabaseContext db, IdService idService, IDistribut
             .Select(t => new LlmModelSelectDto
             {
                 Id = t.Id,
-                Name = t.Name
+                Name = t.Name,
+                ModelId = t.ModelId,
+                ProtocolType = t.ProtocolType
             })
             .ToListAsync();
     }

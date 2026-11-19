@@ -21,7 +21,7 @@ public class TestLlmAppRequestDto
 
 
     /// <summary>
-    /// User 提示词模板（可包含 {{Key}} 占位符）
+    /// User 提示词或完整决策 JSON 请求模板（可包含 {{Key}} 占位符）
     /// </summary>
     public string PromptTemplate { get; set; }
 

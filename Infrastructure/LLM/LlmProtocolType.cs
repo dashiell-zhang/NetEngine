@@ -21,6 +21,12 @@ public enum LlmProtocolType
     /// <summary>
     /// Anthropic Messages API 协议
     /// </summary>
-    Anthropic = 2
+    Anthropic = 2,
+
+
+    /// <summary>
+    /// System One 结构化决策协议
+    /// </summary>
+    SystemOne = 3
 
 }

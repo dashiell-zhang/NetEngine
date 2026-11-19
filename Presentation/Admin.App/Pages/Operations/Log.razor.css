@@ -5,7 +5,7 @@
 .log-page__filter-grid {
     display: flex;
     align-items: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px;
     width: 100%;
 }
@@ -34,10 +34,6 @@
 
 .log-page__filter-grid ::deep .log-page__filter-item--time {
     flex-basis: 220px;
-}
-
-.log-page__filter-actions {
-    min-height: 38px;
 }
 
 .log-page__table-wrap {
@@ -69,16 +65,4 @@
 .log-drawer__meta-pill--level {
     border: none;
     box-shadow: none;
-}
-
-@media (max-width: 1200px) {
-    .log-drawer__meta-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 600px) {
-    .log-page__filter-grid ::deep .log-page__filter-item {
-        flex: 1 1 100%;
-    }
 }

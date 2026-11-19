@@ -22,7 +22,7 @@
 | [TaskService](TaskService.md) | 新增定时任务或队列任务时 | 任务声明、入队、启用、调度、回调、子任务和重试 |
 | [进程广播事件](EventBus.md) | 需要所有存活实例处理通知并支持短暂断线补收时 | 特性监听、Redis Streams、EF 后端与一小时历史 |
 | [WebAPI 过滤器](WebAPIFilters.md) | 为 Controller 或 Action 增加通用 HTTP 行为时 | 异常、缓存、ETag、并发限制、RSA 解密和签名校验 |
-| [LLM 调用](LLM.md) | 使用模型生成文本或扩展 LLM 协议时 | 模型与应用配置、提示词模板、普通和流式调用 |
+| [LLM 调用](LLM.md) | 生成文本、接入 Jev 或扩展 LLM 协议时 | 模型与应用配置、聊天和流式调用、System One 决策模板与 C# 示例 |
 
 ## 建议阅读顺序
 

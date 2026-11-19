@@ -1,3 +1,7 @@
+:root {
+    --admin-content-min-width: 1280px;
+}
+
 .admin-page {
     display: flex;
     flex-direction: column;
@@ -8,14 +12,14 @@
 .admin-page__actions {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px;
 }
 
 .admin-page__toolbar {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px 24px;
 }
 
@@ -31,13 +35,6 @@
 .admin-page__toolbar > .ant-form-spin-wrapper:only-child {
     width: 100%;
     margin-left: 0;
-}
-
-@media (max-width: 768px) {
-    .admin-page__toolbar > .ant-form-spin-wrapper {
-        flex: 1 1 100%;
-        margin-left: 0;
-    }
 }
 
 .admin-page__hero {
@@ -173,9 +170,13 @@
     display: none;
 }
 
+.ant-table-tbody > tr.ant-table-row {
+    height: 40px;
+}
+
 .admin-page__table-wrap .ant-table-tbody > tr > td {
     height: auto;
-    padding: 9px 16px;
+    padding: 3px 16px;
     color: #1e293b;
     font-size: 13px;
     vertical-align: middle;
@@ -330,6 +331,38 @@
     font-size: 12px;
 }
 
+.admin-page-list-pagination .ant-pagination-options,
+.admin-page-list-pagination .ant-pagination-item-after-jump-prev,
+.admin-page-list-pagination .ant-pagination-item-before-jump-next {
+    display: inline-block;
+}
+
+.admin-page-list-pagination .ant-pagination-item,
+.admin-page-list-pagination .ant-pagination-prev,
+.admin-page-list-pagination .ant-pagination-next,
+.admin-page-list-pagination .ant-pagination-jump-prev,
+.admin-page-list-pagination .ant-pagination-jump-next,
+.admin-page-list-pagination .ant-pagination-options-size-changer .ant-select-selector,
+.admin-page-list-pagination .ant-pagination-options-quick-jumper,
+.admin-page-list-pagination .ant-pagination-options-quick-jumper input {
+    height: var(--admin-control-height);
+}
+
+.admin-page-list-pagination .ant-pagination-item,
+.admin-page-list-pagination .ant-pagination-options-size-changer .ant-select-selection-item {
+    line-height: calc(var(--admin-control-height) - 2px);
+}
+
+.admin-page-list-pagination .ant-pagination-options-size-changer .ant-select-selection-search-input {
+    height: calc(var(--admin-control-height) - 2px);
+}
+
+.admin-page-list-pagination .ant-pagination-options-quick-jumper,
+.admin-page-list-pagination .ant-pagination-jump-prev,
+.admin-page-list-pagination .ant-pagination-jump-next {
+    line-height: var(--admin-control-height);
+}
+
 .admin-page-list-pagination .ant-pagination-item,
 .admin-page-list-pagination .ant-pagination-prev .ant-pagination-item-link,
 .admin-page-list-pagination .ant-pagination-next .ant-pagination-item-link,
@@ -348,12 +381,4 @@
 .admin-page-list-pagination .ant-pagination-item-active a {
     color: #1d4ed8;
     font-weight: 700;
-}
-
-@media (max-width: 1280px) {
-    .admin-page__hero {
-        grid-template-columns: 1fr;
-        min-height: auto;
-        padding: 18px;
-    }
 }

@@ -1,3 +1,33 @@
+.ant-drawer-right.ant-drawer-open {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.ant-drawer-right.ant-drawer-open > .ant-drawer-content-wrapper {
+    position: relative;
+    height: 100%;
+    margin-left: auto;
+}
+
+.ant-modal-wrap > .ant-modal {
+    max-width: none;
+    margin: 0 auto;
+}
+
+.admin-content-editor-modal.ant-modal-max > .ant-modal-content {
+    min-width: 1520px;
+}
+
+.admin-drawer__enable-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: var(--admin-control-height);
+    color: #334155;
+    font-size: 13px;
+    cursor: pointer;
+}
+
 .admin-drawer {
     --admin-form-radius: 8px;
     display: flex;

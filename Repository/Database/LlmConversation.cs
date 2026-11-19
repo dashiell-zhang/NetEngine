@@ -22,13 +22,13 @@ public class LlmConversation : CD_User
 
 
     /// <summary>
-    /// 用户消息
+    /// 用户消息或决策请求 JSON 原文
     /// </summary>
     public string UserContent { get; set; }
 
 
     /// <summary>
-    /// 助手消息
+    /// 助手消息或决策响应 JSON 原文
     /// </summary>
     public string AssistantContent { get; set; }
 

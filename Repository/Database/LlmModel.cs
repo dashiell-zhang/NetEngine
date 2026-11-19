@@ -17,7 +17,7 @@ public class LlmModel : CUD_User
 
 
     /// <summary>
-    /// 模型标识（如 "deepseek-chat"），传递给 ChatRequest.Model
+    /// 模型标识，传递给所选协议的 model 字段
     /// </summary>
     public string ModelId { get; set; }
 
@@ -35,7 +35,7 @@ public class LlmModel : CUD_User
 
 
     /// <summary>
-    /// 协议类型（0=Chat, 1=Responses, 2=Anthropic）
+    /// 协议类型（0=Chat, 1=Responses, 2=Anthropic, 3=SystemOne）
     /// </summary>
     public int ProtocolType { get; set; }
 

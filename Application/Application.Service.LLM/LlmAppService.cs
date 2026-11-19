@@ -5,11 +5,13 @@ using Common;
 using DistributedLock;
 using IdentifierGenerator;
 using LLM;
+using LLM.SystemOne;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using Repository.Database;
 using SourceGenerator.Runtime.Attributes;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
@@ -62,9 +64,11 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, ILlm
                     Name = t.Name,
                     LlmModelId = t.LlmModelId,
                     LlmModelName = t.LlmModel != null ? t.LlmModel.Name : string.Empty,
+                    ModelId = t.LlmModel != null ? t.LlmModel.ModelId : string.Empty,
                     SystemPromptTemplate = t.SystemPromptTemplate,
                     PromptTemplate = t.PromptTemplate,
                     ExtraBodyJson = t.ExtraBodyJson,
+                    ProtocolType = t.LlmModel != null ? t.LlmModel.ProtocolType : -1,
                     IsEnable = t.IsEnable,
                     Remark = t.Remark,
                     CreateTime = t.CreateTime,
@@ -112,7 +116,8 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, ILlm
             throw new CustomException("Code 已存在");
         }
 
-        await ValidateLlmModelStateAsync(createLlmApp.LlmModelId, createLlmApp.IsEnable);
+        var protocolType = await ValidateLlmModelStateAsync(createLlmApp.LlmModelId, createLlmApp.IsEnable);
+        promptTemplate = LlmDecisionSupport.PrepareTemplateForSave(protocolType, createLlmApp.SystemPromptTemplate, promptTemplate, createLlmApp.ExtraBodyJson);
 
         LlmApp llmApp = new()
         {
@@ -176,7 +181,8 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, ILlm
             throw new CustomException("Code 已存在");
         }
 
-        await ValidateLlmModelStateAsync(updateLlmApp.LlmModelId, updateLlmApp.IsEnable);
+        var protocolType = await ValidateLlmModelStateAsync(updateLlmApp.LlmModelId, updateLlmApp.IsEnable);
+        promptTemplate = LlmDecisionSupport.PrepareTemplateForSave(protocolType, updateLlmApp.SystemPromptTemplate, promptTemplate, updateLlmApp.ExtraBodyJson);
 
         llmApp.Code = code;
         llmApp.Name = name;
@@ -229,11 +235,40 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, ILlm
         var config = await configResolver.GetConfigAsync(request.LlmModelId, cancellationToken)
             ?? throw new CustomException("无效的 LlmModelId 或模型已禁用");
 
-        var client = llmClientFactory.CreateClient(config);
+        if (string.IsNullOrWhiteSpace(request.PromptTemplate))
+        {
+            throw new CustomException("待调用的内容模板不能为空");
+        }
 
         var parameters = request.Parameters == null
             ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, string>(request.Parameters, StringComparer.OrdinalIgnoreCase);
+
+        if (config.ProtocolType == (int)LlmProtocolType.SystemOne)
+        {
+            var decisionRequest = LlmDecisionSupport.CreateRequest(request.PromptTemplate, request.SystemPromptTemplate, request.ExtraBody == null ? null : JsonSerializer.Serialize(request.ExtraBody), parameters);
+            DecisionResponse decision;
+            try
+            {
+                decision = await llmClientFactory.CreateDecisionClient(config).DecideAsync(decisionRequest, cancellationToken);
+            }
+            catch (HttpRequestException exception) when (exception.StatusCode.HasValue)
+            {
+                throw new CustomException(exception.Message, exception);
+            }
+            return new TestLlmAppResultDto
+            {
+                Model = decision.Model,
+                ResponseId = decision.RequestId,
+                Content = decision.RawContent,
+                Usage = decision.Usage == null ? null : new TestLlmAppUsageDto
+                {
+                    PromptTokens = decision.Usage.InputTokens,
+                    CompletionTokens = decision.Usage.OutputTokens,
+                    TotalTokens = decision.Usage.InputTokens + decision.Usage.OutputTokens
+                }
+            };
+        }
 
         var requiredKeys = ExtractRequiredKeys(request.SystemPromptTemplate)
             .Concat(ExtractRequiredKeys(request.PromptTemplate))
@@ -255,6 +290,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, ILlm
         var systemPrompt = RenderTemplate(request.SystemPromptTemplate, parameters);
         var prompt = RenderTemplate(request.PromptTemplate, parameters) ?? string.Empty;
 
+        var client = llmClientFactory.CreateClient(config);
         List<ChatMessage> messages = [];
 
         if (!string.IsNullOrWhiteSpace(systemPrompt))
@@ -357,25 +393,27 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, ILlm
 
 
     /// <summary>
-    /// 校验 LLM 应用关联模型的状态
+    /// 校验 LLM 应用关联模型的状态并返回协议类型
     /// </summary>
-    private async Task ValidateLlmModelStateAsync(long llmModelId, bool appIsEnable)
+    private async Task<int> ValidateLlmModelStateAsync(long llmModelId, bool appIsEnable)
     {
 
-        var modelIsEnable = await db.LlmModel
+        var model = await db.LlmModel
             .Where(t => t.Id == llmModelId && t.DeleteTime == null)
-            .Select(t => (bool?)t.IsEnable)
+            .Select(t => new { t.IsEnable, t.ProtocolType })
             .FirstOrDefaultAsync();
 
-        if (!modelIsEnable.HasValue)
+        if (model == null)
         {
             throw new CustomException("无效的 LlmModelId");
         }
 
-        if (appIsEnable && !modelIsEnable.Value)
+        if (appIsEnable && !model.IsEnable)
         {
             throw new CustomException("启用的 LLM 应用不可以关联已禁用模型");
         }
+
+        return model.ProtocolType;
 
     }
 

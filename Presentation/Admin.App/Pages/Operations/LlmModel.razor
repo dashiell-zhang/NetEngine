@@ -36,18 +36,9 @@
                 <Table TItem="LlmModelDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
                     <ColumnDefinitions>
-                        <ActionColumn Title="模型">
-                            <div class="llm-model-page__name-cell admin-page__name-cell">
-                                <div class="llm-model-page__name-title admin-page__name-title">@context.Name</div>
-                                <div class="llm-model-page__name-sub">@(string.IsNullOrWhiteSpace(context.Remark) ? "暂无备注说明" : context.Remark)</div>
-                            </div>
-                        </ActionColumn>
+                        <PropertyColumn Property="c => c.Name" Title="模型"></PropertyColumn>
 
                         <PropertyColumn Property="c => c.ModelId" Title="模型标识"></PropertyColumn>
-
-                        <ActionColumn Title="端点地址">
-                            <div class="llm-model-page__endpoint">@context.Endpoint</div>
-                        </ActionColumn>
 
                         <ActionColumn Title="协议类型">
                             <Tag Class="llm-model-page__tag" Color="@(context.ProtocolType == 0 ? "blue" : "default")">@ProtocolTypeText(context.ProtocolType)</Tag>
@@ -97,17 +88,6 @@
                 <div class="llm-model-drawer__content">
                     <div class="llm-model-drawer__main">
                         <div class="llm-model-drawer__section admin-drawer__section">
-                            <div class="llm-model-drawer__section-head admin-drawer__section-head">
-                                <div>
-                                    <div class="llm-model-drawer__section-title admin-drawer__section-title">基础配置</div>
-                                </div>
-
-                                <div class="llm-model-drawer__switch-box admin-drawer__switch-box">
-                                    <span class="llm-model-drawer__switch-label admin-drawer__switch-label">是否启用</span>
-                                    <Switch @bind-Value="@editLlmModel.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
-                                </div>
-                            </div>
-
                             <Row Gutter="24">
                                 <AntDesign.Col Span="12">
                                     <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
@@ -124,23 +104,36 @@
                                 </AntDesign.Col>
                             </Row>
 
-                            <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
-                                <div class="llm-model-drawer__field-label admin-form__field-label admin-required-label">端点地址</div>
-                                <Input Placeholder="如: https://api.deepseek.com/chat/completions、https://api.openai.com/v1/responses 或 https://api.anthropic.com/v1/messages" @bind-Value="@context.Endpoint" />
-                            </FormItem>
-
                             <Row Gutter="24">
-                                <AntDesign.Col Span="10">
+                                <AntDesign.Col Span="12">
                                     <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
                                         <div class="llm-model-drawer__field-label admin-form__field-label">协议类型</div>
                                         <Select TItem="int" TItemValue="int" @bind-Value="@context.ProtocolType">
-                                            <SelectOption Value="0" Label="Chat"></SelectOption>
-                                            <SelectOption Value="1" Label="Responses"></SelectOption>
-                                            <SelectOption Value="2" Label="Anthropic"></SelectOption>
+                                            @foreach (var protocol in Protocols)
+                                            {
+                                                <SelectOption Value="@protocol.Key" Label="@protocol.Value.Name" />
+                                            }
                                         </Select>
                                     </FormItem>
                                 </AntDesign.Col>
+                                <AntDesign.Col Span="12" Style="align-self: flex-end">
+                                    <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
+                                        <label class="admin-drawer__enable-control">
+                                            启用模型
+                                            <Switch @bind-Value="@context.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
+                                        </label>
+                                    </FormItem>
+                                </AntDesign.Col>
                             </Row>
+
+                            <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
+                                <div class="llm-model-drawer__field-label admin-form__field-label admin-required-label">端点地址</div>
+                                <Input Placeholder="请输入完整端点地址" @bind-Value="@context.Endpoint" />
+                                @if (Protocols.TryGetValue(context.ProtocolType, out var selectedProtocol))
+                                {
+                                    <div class="llm-model-drawer__endpoint-example admin-form__field-help">示例：@selectedProtocol.EndpointExample</div>
+                                }
+                            </FormItem>
 
                             <FormItem Class="llm-model-drawer__field-item admin-form__field-item">
                                 <div class="llm-model-drawer__field-label admin-form__field-label">接口密钥</div>
@@ -228,13 +221,18 @@
     long? editId;
     EditLlmModelDto editLlmModel = new();
 
-    static string ProtocolTypeText(int protocolType) => protocolType switch
+    // 模型协议的显示名称和端点示例
+    static readonly Dictionary<int, (string Name, string EndpointExample)> Protocols = new()
     {
-        0 => "Chat",
-        1 => "Responses",
-        2 => "Anthropic",
-        _ => "未知"
+        [0] = ("Chat", "https://api.openai.com/v1/chat/completions"),
+        [1] = ("Responses", "https://api.openai.com/v1/responses"),
+        [2] = ("Anthropic", "https://api.anthropic.com/v1/messages"),
+        [3] = ("System One", "https://api.typesafe.ai/v1/systemone")
     };
+
+
+    // 获取模型列表中的协议名称
+    static string ProtocolTypeText(int protocolType) => Protocols.TryGetValue(protocolType, out var protocol) ? protocol.Name : "未知";
 
     void EditLlmModel(LlmModelDto? row = null)
     {

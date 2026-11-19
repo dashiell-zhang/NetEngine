@@ -88,18 +88,14 @@
 }
 
 .admin-authority-table-shell .ant-table-tbody > tr > td {
-    padding: 18px;
-    vertical-align: top;
+    padding: 3px 18px;
+    vertical-align: middle;
     background: rgba(255, 255, 255, 0.72);
     border-bottom: 1px solid #e6eef8;
 }
 
 .admin-authority-table-shell .ant-table-tbody > tr:hover > td {
     background: rgba(248, 251, 255, 0.96);
-}
-
-.admin-authority-table-shell .ant-table-tbody > tr > td:first-child {
-    vertical-align: middle;
 }
 
 .admin-authority__menu-cell {
@@ -119,7 +115,7 @@
 .admin-authority__action-pill {
     display: inline-flex;
     align-items: center;
-    min-height: 40px;
+    min-height: 32px;
     padding: 0 12px;
     border: 1px solid #e2e8f0;
     border-radius: 999px;

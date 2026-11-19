@@ -37,13 +37,19 @@ public class LlmAppDto
 
 
     /// <summary>
+    /// 关联模型的请求标识
+    /// </summary>
+    public string ModelId { get; set; } = string.Empty;
+
+
+    /// <summary>
     /// System 提示词模板（可包含 {{Key}} 占位符）
     /// </summary>
     public string? SystemPromptTemplate { get; set; }
 
 
     /// <summary>
-    /// User 提示词模板（可包含 {{Key}} 占位符）
+    /// User 提示词或完整决策 JSON 请求模板（可包含 {{Key}} 占位符）
     /// </summary>
     public string PromptTemplate { get; set; }
 
@@ -76,5 +82,11 @@ public class LlmAppDto
     /// 更新时间
     /// </summary>
     public DateTimeOffset? UpdateTime { get; set; }
+
+
+    /// <summary>
+    /// 关联模型的协议类型
+    /// </summary>
+    public int ProtocolType { get; set; }
 
 }

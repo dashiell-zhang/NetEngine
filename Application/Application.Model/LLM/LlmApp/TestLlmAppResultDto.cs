@@ -19,7 +19,7 @@ public class TestLlmAppResultDto
 
 
     /// <summary>
-    /// 返回文本（取第一个 choice）
+    /// 调试返回文本，聊天取首个回答，决策取响应 JSON 原文
     /// </summary>
     public string? Content { get; set; }
 

@@ -13,4 +13,10 @@ public interface ILlmClientFactory
     /// <returns>对应的 LLM 客户端</returns>
     ILlmClient CreateClient(LlmModelConfig config);
 
+
+    /// <summary>
+    /// 根据模型运行时配置创建结构化决策客户端
+    /// </summary>
+    ILlmDecisionClient CreateDecisionClient(LlmModelConfig config);
+
 }

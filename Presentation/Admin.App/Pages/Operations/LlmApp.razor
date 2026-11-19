@@ -1,4 +1,7 @@
 @page "/operations/llmapp"
+@implements IDisposable
+@using Application.Model.LLM.Decision
+@using System.Text.Json.Nodes
 @using Application.Model.LLM.LlmApp
 @using Application.Model.LLM.LlmModel
 @using System.Net.Http.Json
@@ -37,12 +40,8 @@
                 <Table TItem="LlmAppDto" DataSource="@pageList.List" Total="@pageList.Total" Loading="tableLoading" RemoteDataSource>
 
                     <ColumnDefinitions>
-                        <ActionColumn Title="应用">
-                            <div class="llm-app-page__app-cell">
-                                <div class="llm-app-page__app-code">@context.Code</div>
-                                <div class="llm-app-page__app-name">@context.Name</div>
-                            </div>
-                        </ActionColumn>
+                        <PropertyColumn Property="c => c.Code" Title="Code"></PropertyColumn>
+                        <PropertyColumn Property="c => c.Name" Title="名称"></PropertyColumn>
                         <PropertyColumn Property="c => c.LlmModelName" Title="模型"></PropertyColumn>
                         <ActionColumn Title="状态">
                             <Tag Class="llm-app-page__status-tag admin-page__status-tag" Color="@EnableStatusColor(context.IsEnable)">@EnableStatusText(context.IsEnable)</Tag>
@@ -79,24 +78,13 @@
 </div>
 
 
-<Drawer Closable="true" Width="1480" Visible="isShowEdit" Title='(editId == null ? "新增 LLM 应用" : "编辑 LLM 应用")' OnClose="() => isShowEdit = false">
+<Drawer Closable="true" Width="min(1480px, 100%)" BodyStyle="display: flex; flex-direction: column; min-height: 0; padding: 0; overflow-x: auto; overflow-y: hidden;" Visible="isShowEdit" Title='(editId == null ? "新增 LLM 应用" : "编辑 LLM 应用")' OnClose="CloseEditor">
     <Template>
         <div class="llm-app-drawer admin-drawer">
             <Form Class="llm-app-drawer__form admin-drawer__form admin-form" Model="@editLlmApp" Layout="@FormLayout.Vertical" OnFinish="SaveLlmAppAsync">
-                <div class="llm-app-drawer__content">
+                <div class="llm-app-drawer__content @(IsDecision ? "llm-app-drawer__content--decision" : null)">
                     <div class="llm-app-drawer__main">
                         <div class="llm-app-drawer__section admin-drawer__section">
-                            <div class="llm-app-drawer__section-head admin-drawer__section-head">
-                                <div>
-                                    <div class="llm-app-drawer__section-title admin-drawer__section-title">基本配置</div>
-                                </div>
-
-                                <div class="llm-app-drawer__switch-box admin-drawer__switch-box">
-                                    <span class="llm-app-drawer__switch-label admin-drawer__switch-label">是否启用</span>
-                                    <Switch @bind-Value="@editLlmApp.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
-                                </div>
-                            </div>
-
                             <Row Gutter="24">
                                 <AntDesign.Col Span="12">
                                     <FormItem Class="llm-app-drawer__field-item admin-form__field-item">
@@ -114,41 +102,68 @@
                             </Row>
 
                             <Row Gutter="24">
-                                <AntDesign.Col Span="24">
+                                <AntDesign.Col Span="12">
                                     <FormItem Class="llm-app-drawer__field-item admin-form__field-item">
                                         <div class="llm-app-drawer__field-label admin-form__field-label admin-required-label">模型</div>
                                         <Select TItem="LlmModelSelectDto" TItemValue="long"
                                                 DataSource="@modelSelectList"
-                                                @bind-Value="@context.LlmModelId"
+                                                Value="@context.LlmModelId"
+                                                ValueChanged="OnModelChanged"
                                                 ValueName="@nameof(LlmModelSelectDto.Id)"
                                                 LabelName="@nameof(LlmModelSelectDto.Name)"
                                                 Placeholder="请选择模型" />
                                     </FormItem>
                                 </AntDesign.Col>
+                                <AntDesign.Col Span="12" Style="align-self: flex-end">
+                                    <FormItem Class="llm-app-drawer__field-item admin-form__field-item">
+                                        <label class="admin-drawer__enable-control">
+                                            启用应用
+                                            <Switch @bind-Value="@context.IsEnable" CheckedChildren="是" UnCheckedChildren="否" />
+                                        </label>
+                                    </FormItem>
+                                </AntDesign.Col>
                             </Row>
 
-                            <FormItem Class="llm-app-drawer__textarea-item admin-form__field-item">
-                                <div class="llm-app-drawer__field-label admin-form__field-label">ExtraBodyJson</div>
-                                <TextArea @bind-Value="@context.ExtraBodyJson"
-                                          Placeholder='JSON对象，直接透传到请求body根字段，如 {"enable_thinking":true}'
-                                          MinRows="4"
-                                          MaxRows="10" />
-                            </FormItem>
+                            @if (!IsDecision)
+                            {
+                                <FormItem Class="llm-app-drawer__textarea-item admin-form__field-item">
+                                    <div class="llm-app-drawer__field-label admin-form__field-label">ExtraBodyJson</div>
+                                    <TextArea @bind-Value="@context.ExtraBodyJson" @bind-Value:after="ResetTest"
+                                              Placeholder='JSON对象，直接透传到请求body根字段，如 {"enable_thinking":true}'
+                                              MinRows="4"
+                                              MaxRows="10" />
+                                </FormItem>
+                            }
 
                             <FormItem Class="llm-app-drawer__textarea-item admin-form__field-item">
                                 <div class="llm-app-drawer__field-label admin-form__field-label">备注</div>
                                 <TextArea @bind-Value="@context.Remark" MinRows="2" MaxRows="6" />
                             </FormItem>
 
-                            <FormItem Class="llm-app-drawer__textarea-item admin-form__field-item">
-                                <div class="llm-app-drawer__field-label admin-form__field-label">SystemPromptTemplate</div>
-                                <TextArea @bind-Value="@context.SystemPromptTemplate" MinRows="6" MaxRows="16" />
-                            </FormItem>
-
-                            <FormItem Class="llm-app-drawer__textarea-item admin-form__field-item">
-                                <div class="llm-app-drawer__field-label admin-form__field-label admin-required-label">PromptTemplate</div>
-                                <TextArea @bind-Value="@context.PromptTemplate" MinRows="6" MaxRows="16" />
-                            </FormItem>
+                            @if (IsDecision)
+                            {
+                                <div class="llm-app-drawer__decision-field">
+                                    <label for="decision-template" class="llm-app-drawer__field-label admin-form__field-label admin-required-label">决策请求模板（JSON）</label>
+                                    <div class="admin-form__field-help">空模板会填入完整示例，已有模板只追加问题。文本值支持 {{*key|说明}}。</div>
+                                    <div class="llm-app-drawer__question-actions" role="group" aria-label="添加决策问题">
+                                        <Button Class="admin-page-button admin-page-button--default" Icon="plus" OnClick='() => AddDecisionExample("noul")'>判断题</Button>
+                                        <Button Class="admin-page-button admin-page-button--default" Icon="plus" OnClick='() => AddDecisionExample("choice")'>选择题</Button>
+                                        <Button Class="admin-page-button admin-page-button--default" Icon="plus" OnClick='() => AddDecisionExample("score")'>评分题</Button>
+                                    </div>
+                                    <textarea id="decision-template" class="ant-input" @bind="context.PromptTemplate" @bind:event="oninput" @bind:after="ResetTest"></textarea>
+                                </div>
+                            }
+                            else
+                            {
+                                <FormItem Class="llm-app-drawer__textarea-item admin-form__field-item">
+                                    <div class="llm-app-drawer__field-label admin-form__field-label">SystemPromptTemplate</div>
+                                    <TextArea @bind-Value="@context.SystemPromptTemplate" @bind-Value:after="ResetTest" MinRows="6" MaxRows="16" />
+                                </FormItem>
+                                <FormItem Class="llm-app-drawer__textarea-item admin-form__field-item">
+                                    <div class="llm-app-drawer__field-label admin-form__field-label admin-required-label">PromptTemplate</div>
+                                    <TextArea @bind-Value="@context.PromptTemplate" @bind-Value:after="ResetTest" MinRows="6" MaxRows="16" />
+                                </FormItem>
+                            }
                         </div>
                     </div>
 
@@ -157,40 +172,30 @@
                             <div class="llm-app-drawer__section-head admin-drawer__section-head">
                                 <div>
                                     <div class="llm-app-drawer__section-title admin-drawer__section-title">调用测试</div>
-                                    <div class="llm-app-drawer__section-desc admin-drawer__section-desc">识别模板中的占位符并现场填写测试参数，直接验证返回内容是否符合预期</div>
+                                    <div class="llm-app-drawer__section-desc admin-drawer__section-desc">使用当前模板和参数测试，测试不会保存应用或正式调用记录</div>
                                 </div>
                             </div>
 
                             @if (PlaceholderInfos.Count != 0)
                             {
-                                <div class="llm-app-drawer__placeholder-summary">
-                                    检测到占位符：@string.Join("、", PlaceholderInfos.Select(t => t.Display))
-                                </div>
-
-                                <Row Gutter="24" class="llm-app-drawer__param-grid">
-                                    @foreach (var p in PlaceholderInfos)
-                                    {
-                                        var paramItem = GetOrCreateTestParamItem(p.Key);
-                                        <AntDesign.Col Span="12">
-                                            <div class="llm-app-drawer__param-card">
-                                                <FormItem>
-                                                    <div class="llm-app-drawer__field-label admin-form__field-label">
-                                                        @p.Key
-                                                        @if (!string.IsNullOrWhiteSpace(p.Comment))
-                                                        {
-                                                            <span class="llm-app-drawer__field-comment">@p.Comment</span>
-                                                        }
-                                                        @if (p.IsRequired)
-                                                        {
-                                                            <span class="llm-app-drawer__required">*</span>
-                                                        }
-                                                    </div>
-                                                    <Input @bind-Value="@paramItem.Value" Placeholder="@(string.IsNullOrWhiteSpace(p.Comment) ? $"请输入 {p.Key}" : $"请输入 {p.Comment}")" />
-                                                </FormItem>
-                                            </div>
-                                        </AntDesign.Col>
-                                    }
-                                </Row>
+                                @foreach (var p in PlaceholderInfos)
+                                {
+                                    var paramItem = GetOrCreateTestParamItem(p.Key);
+                                    <div class="llm-app-drawer__param-field admin-form__field-item" @key="p.Key">
+                                        <label class="admin-form__field-label" for="@($"llm-test-param-{p.Key}")">
+                                            @p.Key
+                                            @if (!string.IsNullOrWhiteSpace(p.Comment))
+                                            {
+                                                <span class="llm-app-drawer__field-comment">@p.Comment</span>
+                                            }
+                                            @if (p.IsRequired)
+                                            {
+                                                <span class="llm-app-drawer__required">*</span>
+                                            }
+                                        </label>
+                                        <Input Id="@($"llm-test-param-{p.Key}")" @bind-Value="@paramItem.Value" @bind-Value:after="ResetTest" />
+                                    </div>
+                                }
                             }
                             else
                             {
@@ -199,8 +204,16 @@
                                 </div>
                             }
 
+                            @if (IsDecision)
+                            {
+                                <details class="llm-app-drawer__preview">
+                                    <summary>实际请求预览</summary>
+                                    <TextArea Value="@DecisionPreview" ReadOnly MinRows="6" MaxRows="18" />
+                                </details>
+                            }
+
                             <div class="llm-app-drawer__test-bar">
-                                <Button Class="llm-app-page__action-button llm-app-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" Loading="@testLoading" @onclick="TestCallAsync">调用测试</Button>
+                                <Button Class="llm-app-page__action-button llm-app-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" Loading="@(activeTest != null)" @onclick="TestCallAsync">调用测试</Button>
 
                                 <div class="llm-app-drawer__test-meta">
                                     @if (!string.IsNullOrWhiteSpace(testResult?.Model))
@@ -210,6 +223,10 @@
                                     @if (testResult?.Usage?.TotalTokens != null)
                                     {
                                         <span class="llm-app-drawer__meta-pill llm-app-drawer__meta-pill--soft">Tokens: @testResult.Usage.TotalTokens</span>
+                                    }
+                                    else if (testResult?.Usage?.PromptTokens is int inputTokens)
+                                    {
+                                        <span class="llm-app-drawer__meta-pill llm-app-drawer__meta-pill--soft">输入 @inputTokens Token</span>
                                     }
                                 </div>
                             </div>
@@ -222,7 +239,7 @@
                                     <span class="llm-app-drawer__result-caption">返回结果</span>
                                 </div>
 
-                                <TextArea Value="@testResult?.Content" ReadOnly MinRows="6" MaxRows="18" />
+                                <pre class="llm-app-drawer__result-content" tabindex="0" aria-label="返回结果">@testResult?.Content</pre>
                             </div>
                         </div>
                     </div>
@@ -230,7 +247,7 @@
 
                 <div class="llm-app-drawer__footer admin-drawer__footer">
                     <Button Class="llm-app-page__action-button llm-app-page__action-button--primary admin-page-button admin-page-button--primary" Type="@ButtonType.Primary" HtmlType="submit" Loading="@saveLoading">保存</Button>
-                    <Button Class="llm-app-page__action-button llm-app-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="() => isShowEdit = false">取消</Button>
+                    <Button Class="llm-app-page__action-button llm-app-page__action-button--default admin-page-button admin-page-button--default" Type="@ButtonType.Default" @onclick="CloseEditor">取消</Button>
                 </div>
             </Form>
         </div>
@@ -328,14 +345,152 @@
 
     bool isShowEdit = false;
     bool saveLoading = false;
-    bool testLoading = false;
+    CancellationTokenSource? activeTest;
     long? editId;
     EditLlmAppDto editLlmApp = new();
     TestLlmAppResultDto? testResult;
     List<TestParamItem> testParamItems = [];
 
-    static readonly System.Text.RegularExpressions.Regex PlaceholderRegex = new(@"\{\{\s*(?<required>\*)?\s*(?<key>[^{}|\s]+)\s*(?:\|\s*(?<comment>[^{}]*?))?\s*\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
 
+    /// <summary>
+    /// 当前选中的模型是否使用决策协议
+    /// </summary>
+    bool IsDecision => modelSelectList.FirstOrDefault(model => model.Id == editLlmApp.LlmModelId)?.ProtocolType == 3;
+
+
+    /// <summary>
+    /// 当前选中模型的请求标识
+    /// </summary>
+    string SelectedModelId => modelSelectList.FirstOrDefault(model => model.Id == editLlmApp.LlmModelId)?.ModelId ?? string.Empty;
+
+
+    string? otherPrompt;
+    string? chatSystemPrompt;
+    string? chatExtraBody;
+
+
+    /// <summary>
+    /// 取消当前草稿的测试并清空结果
+    /// </summary>
+    void ResetTest()
+    {
+
+        var previous = activeTest;
+        activeTest = null;
+        testResult = null;
+        previous?.Cancel();
+
+    }
+
+
+    /// <summary>
+    /// 关闭编辑框并结束草稿测试
+    /// </summary>
+    void CloseEditor()
+    {
+
+        isShowEdit = false;
+        ResetTest();
+
+    }
+
+
+    /// <summary>
+    /// 离开页面时取消仍在进行的测试
+    /// </summary>
+    public void Dispose() => ResetTest();
+
+
+    /// <summary>
+    /// 切换协议时暂存正在编辑的模板
+    /// </summary>
+    void OnModelChanged(long modelId)
+    {
+
+        if (editLlmApp.LlmModelId == modelId)
+        {
+            return;
+        }
+
+        ResetTest();
+        var wasDecision = IsDecision;
+        editLlmApp.LlmModelId = modelId;
+        if (wasDecision != IsDecision)
+        {
+            (editLlmApp.PromptTemplate, otherPrompt) = (otherPrompt ?? string.Empty, editLlmApp.PromptTemplate);
+            (editLlmApp.SystemPromptTemplate, chatSystemPrompt) = (chatSystemPrompt, editLlmApp.SystemPromptTemplate);
+            (editLlmApp.ExtraBodyJson, chatExtraBody) = (chatExtraBody, editLlmApp.ExtraBodyJson);
+        }
+
+    }
+
+
+    /// <summary>
+    /// 在空模板中创建示例请求，或为现有请求追加唯一标识的问题
+    /// </summary>
+    void AddDecisionExample(string type)
+    {
+
+        var (key, sample) = type switch
+        {
+            "noul" => ("urgent", """{"type":"noul","instructions":"这张工单是否需要立即处理？","criteria":{"true":"核心功能不可用，需要立即介入","false":"一般咨询或仍有可用的替代方案"}}"""),
+            "choice" => ("department", """{"type":"choice","instructions":"应该由哪个团队处理？","criteria":{"billing":"账单、支付或退款","technical":"故障或技术问题","other":"其他问题"}}"""),
+            "score" => ("severity", """{"type":"score","instructions":"评价问题对使用者的影响程度","criteria":["不影响使用","部分功能受影响","核心功能不可用"]}"""),
+            _ => throw new ArgumentOutOfRangeException(nameof(type))
+        };
+        try
+        {
+            var root = string.IsNullOrWhiteSpace(editLlmApp.PromptTemplate)
+                ? new JsonObject
+                {
+                    ["state"] = new JsonObject { ["content"] = "客户已付款，但订单一直显示未支付。" },
+                    ["questions"] = new JsonObject()
+                }
+                : LlmDecisionTemplate.Parse(editLlmApp.PromptTemplate, out _);
+            var questions = root["questions"] as JsonObject ?? throw new InvalidOperationException("questions 必须是问题对象");
+            var id = key;
+            for (var suffix = 2; questions.ContainsKey(id); suffix++)
+            {
+                id = $"{key}_{suffix}";
+            }
+            questions.Add(id, JsonNode.Parse(sample));
+            editLlmApp.PromptTemplate = root.ToJsonString(LlmDecisionTemplate.DisplayOptions);
+            ResetTest();
+        }
+        catch (InvalidOperationException exception)
+        {
+            Message.Error(exception.Message);
+        }
+
+    }
+
+
+    /// <summary>
+    /// 按当前参数预览实际发送的请求正文
+    /// </summary>
+    string DecisionPreview
+    {
+        get
+        {
+            try
+            {
+                var parameters = PlaceholderInfos.ToDictionary(p => p.Key, p => GetOrCreateTestParamItem(p.Key).Value, StringComparer.OrdinalIgnoreCase);
+                var root = LlmDecisionTemplate.Parse(editLlmApp.PromptTemplate, out _);
+                LlmDecisionTemplate.Render(root, parameters);
+                root.Insert(0, "model", SelectedModelId);
+                return root.ToJsonString(LlmDecisionTemplate.DisplayOptions);
+            }
+            catch (InvalidOperationException exception)
+            {
+                return exception.Message;
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// 提取当前调用模式适用的模板参数
+    /// </summary>
     List<PlaceholderInfo> PlaceholderInfos
     {
         get
@@ -350,7 +505,7 @@
                     return;
                 }
 
-                foreach (System.Text.RegularExpressions.Match m in PlaceholderRegex.Matches(template))
+                foreach (System.Text.RegularExpressions.Match m in LlmDecisionTemplate.PlaceholderPattern().Matches(template))
                 {
                     var key = m.Groups["key"].Value?.Trim();
                     var isRequired = m.Groups["required"].Success;
@@ -377,8 +532,26 @@
                 }
             }
 
-            Collect(editLlmApp.SystemPromptTemplate);
-            Collect(editLlmApp.PromptTemplate);
+            if (IsDecision)
+            {
+                try
+                {
+                    var root = LlmDecisionTemplate.Parse(editLlmApp.PromptTemplate, out _);
+                    foreach (var value in LlmDecisionTemplate.TextValues(root))
+                    {
+                        Collect(value.GetValue<string>());
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    // 用户输入不完整时由请求预览显示错误
+                }
+            }
+            else
+            {
+                Collect(editLlmApp.SystemPromptTemplate);
+                Collect(editLlmApp.PromptTemplate);
+            }
 
             return list;
         }
@@ -395,8 +568,12 @@
         return item;
     }
 
+    /// <summary>
+    /// 打开应用配置并加载模型协议，保留已停用模型的编辑信息
+    /// </summary>
     async Task EditLlmApp(LlmAppDto? row = null)
     {
+
         if (row == null)
         {
             editId = null;
@@ -418,13 +595,34 @@
             };
         }
 
-        testResult = null;
+        ResetTest();
+        if (row?.ProtocolType == 3)
+        {
+            try
+            {
+                var root = LlmDecisionTemplate.Parse(row.PromptTemplate, out var removedModel);
+                if (removedModel)
+                {
+                    editLlmApp.PromptTemplate = root.ToJsonString(LlmDecisionTemplate.DisplayOptions);
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // 保留格式错误的原文供编辑器修正
+            }
+        }
         testParamItems = [];
+        otherPrompt = chatSystemPrompt = chatExtraBody = null;
 
         await GetModelSelectListAsync();
+        if (row != null && modelSelectList.All(model => model.Id != row.LlmModelId))
+        {
+            modelSelectList.Add(new LlmModelSelectDto { Id = row.LlmModelId, Name = row.LlmModelName + "（已停用）", ProtocolType = row.ProtocolType, ModelId = row.ModelId });
+        }
         await Task.Delay(150);
         isShowEdit = true;
         StateHasChanged();
+
     }
 
 
@@ -468,7 +666,7 @@
             if (httpResponse.IsSuccessStatusCode)
             {
                 Message.Success("保存成功");
-                isShowEdit = false;
+                CloseEditor();
                 await GetLlmAppListAsync();
             }
             else if ((int)httpResponse.StatusCode != 400)
@@ -500,8 +698,7 @@
             return;
         }
 
-        testLoading = true;
-        testResult = null;
+        ResetTest();
 
         var missing = PlaceholderInfos
             .Where(t => t.IsRequired)
@@ -512,7 +709,6 @@
         if (missing.Count != 0)
         {
             Message.Error("必传参数未填写: " + string.Join("、", missing));
-            testLoading = false;
             return;
         }
 
@@ -524,7 +720,6 @@
         catch (Exception ex)
         {
             Message.Error(ex.Message);
-            testLoading = false;
             return;
         }
 
@@ -537,26 +732,42 @@
             Parameters = PlaceholderInfos.ToDictionary(k => k.Key, k => GetOrCreateTestParamItem(k.Key).Value, StringComparer.OrdinalIgnoreCase)
         };
 
+        using var test = new CancellationTokenSource();
+        activeTest = test;
         try
         {
-            using var httpResponse = await Http.PostAsJsonAsync("Operations/TestLlmApp", req, JsonHelper.SerializeOpts);
+            using var httpResponse = await Http.PostAsJsonAsync("Operations/TestLlmApp", req, JsonHelper.SerializeOpts, test.Token);
 
             if (httpResponse.IsSuccessStatusCode)
             {
-                testResult = await httpResponse.Content.ReadFromJsonAsync<TestLlmAppResultDto>(JsonHelper.DeserializeOpts);
+                var result = await httpResponse.Content.ReadFromJsonAsync<TestLlmAppResultDto>(JsonHelper.DeserializeOpts, test.Token);
+                if (activeTest == test)
+                {
+                    testResult = result;
+                }
             }
-            else if ((int)httpResponse.StatusCode != 400)
+            else if (activeTest == test && (int)httpResponse.StatusCode != 400)
             {
                 Message.Error("调用失败");
             }
         }
+        catch (OperationCanceledException) when (test.IsCancellationRequested)
+        {
+            // 草稿已切换或关闭
+        }
         catch (HttpRequestException)
         {
-            Message.Error("请求失败，请稍后重试");
+            if (activeTest == test)
+            {
+                Message.Error("请求失败，请稍后重试");
+            }
         }
         finally
         {
-            testLoading = false;
+            if (activeTest == test)
+            {
+                activeTest = null;
+            }
         }
 
     }

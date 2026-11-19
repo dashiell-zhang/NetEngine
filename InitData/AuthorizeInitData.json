@@ -927,40 +927,70 @@
       "FunctionSign": null
     },
     {
-      "Module": "admin_webapi",
-      "Route": "/Operations/GetLlmAppList",
+      "Module": "Admin.WebAPI",
+      "Route": "LlmModel/GetLlmModelList",
+      "Remark": "获取 LLM 模型配置列表",
+      "FunctionSign": "llmapp"
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "LlmModel/GetLlmModelSelect",
+      "Remark": "获取 LLM 模型下拉列表",
+      "FunctionSign": "llmapp"
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "LlmModel/CreateLlmModel",
+      "Remark": "创建 LLM 模型配置",
+      "FunctionSign": "llmapp"
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "LlmModel/UpdateLlmModel",
+      "Remark": "更新 LLM 模型配置",
+      "FunctionSign": "llmapp"
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "LlmModel/DeleteLlmModel",
+      "Remark": "删除 LLM 模型配置",
+      "FunctionSign": "llmapp"
+    },
+    {
+      "Module": "Admin.WebAPI",
+      "Route": "Operations/GetLlmAppList",
       "Remark": "获取 LLM 应用配置列表",
-      "FunctionSign": null
+      "FunctionSign": "llmapp"
     },
     {
-      "Module": "admin_webapi",
-      "Route": "/Operations/CreateLlmApp",
+      "Module": "Admin.WebAPI",
+      "Route": "Operations/CreateLlmApp",
       "Remark": "创建 LLM 应用配置",
-      "FunctionSign": null
+      "FunctionSign": "llmapp"
     },
     {
-      "Module": "admin_webapi",
-      "Route": "/Operations/UpdateLlmApp",
+      "Module": "Admin.WebAPI",
+      "Route": "Operations/UpdateLlmApp",
       "Remark": "更新 LLM 应用配置",
-      "FunctionSign": null
+      "FunctionSign": "llmapp"
     },
     {
-      "Module": "admin_webapi",
-      "Route": "/Operations/DeleteLlmApp",
+      "Module": "Admin.WebAPI",
+      "Route": "Operations/DeleteLlmApp",
       "Remark": "删除 LLM 应用配置",
-      "FunctionSign": null
+      "FunctionSign": "llmapp"
     },
     {
-      "Module": "admin_webapi",
-      "Route": "/Operations/TestLlmApp",
+      "Module": "Admin.WebAPI",
+      "Route": "Operations/TestLlmApp",
       "Remark": "测试 LLM 应用配置",
-      "FunctionSign": null
+      "FunctionSign": "llmapp"
     },
     {
-      "Module": "admin_webapi",
-      "Route": "/Operations/GetLlmConversationList",
-      "Remark": "获取 LLM 对话记录列表",
-      "FunctionSign": null
+      "Module": "Admin.WebAPI",
+      "Route": "Operations/GetLlmConversationList",
+      "Remark": "获取 LLM 会话日志",
+      "FunctionSign": "llmapp"
     },
     {
       "Module": "admin_webapi",

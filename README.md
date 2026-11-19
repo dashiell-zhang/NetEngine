@@ -17,7 +17,7 @@
 - 文件存储、短信、数据库日志与本地文件日志
 - 队列任务与定时任务调度
 - 跨进程事件广播，用于多实例缓存失效、配置重载与本地状态刷新
-- OpenAI Chat Completions、Responses 与 Anthropic Messages 协议的 LLM 调用能力
+- OpenAI Chat Completions、Responses、Anthropic Messages 对话调用及 Jev（System One）结构化决策，见 [LLM 调用](Docs/LLM.md)
 - 编译期服务注册、方法代理与 EF Core 辅助代码生成
 - Nginx、systemd 与云效流水线部署配置生成
 

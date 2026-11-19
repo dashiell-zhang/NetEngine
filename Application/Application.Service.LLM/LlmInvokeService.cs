@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using System.Transactions;
 
 namespace Application.Service.LLM;
 
@@ -20,7 +21,7 @@ namespace Application.Service.LLM;
 /// LLM 调用服务
 /// </summary>
 [RegisterService(typeof(ILlmInvokeService), Lifetime = ServiceLifetime.Scoped)]
-public partial class LlmInvokeService(DatabaseContext db, IdService idService, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, ILogger<LlmInvokeService> logger) : ILlmInvokeService
+public partial class LlmInvokeService(DatabaseContext db, IDbContextFactory<DatabaseContext> dbFactory, IdService idService, ILlmClientFactory llmClientFactory, ILlmModelConfigResolver configResolver, ILogger<LlmInvokeService> logger) : ILlmInvokeService
 {
 
     private static readonly Regex PlaceholderRegex = KeyRegex();
@@ -312,7 +313,7 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
 
 
     /// <summary>
-    /// 尝试保存成功的对话记录
+    /// 使用独立上下文和事务保存成功的会话记录
     /// </summary>
     /// <param name="actorUserId">可空行为发起人用户ID</param>
     /// <param name="llmAppId">LLM 应用ID</param>
@@ -324,10 +325,11 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
     private async Task TrySaveConversationAsync(long? actorUserId, long llmAppId, string systemPrompt, string userPrompt, string assistantContent, CancellationToken cancellationToken)
     {
 
-        LlmConversation? conversation = null;
         try
         {
-            conversation = new LlmConversation
+            using var suppressed = new TransactionScope(TransactionScopeOption.Suppress, TransactionScopeAsyncFlowOption.Enabled);
+            await using var logDb = await dbFactory.CreateDbContextAsync(cancellationToken);
+            logDb.LlmConversation.Add(new LlmConversation
             {
                 Id = idService.GetId(),
                 LlmAppId = llmAppId,
@@ -335,27 +337,16 @@ public partial class LlmInvokeService(DatabaseContext db, IdService idService, I
                 UserContent = userPrompt ?? string.Empty,
                 AssistantContent = assistantContent ?? string.Empty,
                 CreateUserId = actorUserId
-            };
+            });
 
-            db.LlmConversation.Add(conversation);
-            await db.SaveChangesAsync(cancellationToken);
+            await logDb.SaveChangesAsync(cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            if (conversation != null)
-            {
-                db.Entry(conversation).State = EntityState.Detached;
-            }
-
             throw;
         }
         catch (Exception ex)
         {
-            if (conversation != null)
-            {
-                db.Entry(conversation).State = EntityState.Detached;
-            }
-
             logger.LogError(ex, "保存 LLM 对话记录失败 LlmAppId={LlmAppId}", llmAppId);
         }
 

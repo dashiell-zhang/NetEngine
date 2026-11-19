@@ -54,13 +54,13 @@ public class LlmConversationDto
 
 
     /// <summary>
-    /// 用户消息内容（文本）
+    /// 用户消息或决策请求 JSON 原文
     /// </summary>
     public string UserContent { get; set; }
 
 
     /// <summary>
-    /// 助手消息内容（文本）
+    /// 助手消息或决策响应 JSON 原文
     /// </summary>
     public string AssistantContent { get; set; }
 }

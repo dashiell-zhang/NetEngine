@@ -1,9 +1,13 @@
+.ant-btn,
+.admin-page-button {
+    height: var(--admin-control-height) !important;
+}
+
 .admin-page-button {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 0 !important;
-    height: 38px !important;
     padding: 0 14px !important;
     border-radius: 8px !important;
     font-size: 12px !important;

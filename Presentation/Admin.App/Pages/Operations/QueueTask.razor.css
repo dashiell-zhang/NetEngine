@@ -85,10 +85,3 @@
 .queue-task-log-drawer__content-box {
     min-height: clamp(280px, 34vh, 460px);
 }
-
-@media (max-width: 1200px) {
-    .queue-task-log-drawer__content-grid,
-    .queue-task-log-drawer__meta-grid {
-        grid-template-columns: 1fr;
-    }
-}

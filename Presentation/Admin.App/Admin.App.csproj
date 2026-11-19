@@ -26,6 +26,23 @@
 	  <ProjectReference Include="..\..\Infrastructure\DistributedLock.InMemory\DistributedLock.InMemory.csproj" />
 	</ItemGroup>
 
+	<!-- 跳过构建单独发布时，SDK 需要重新从源 HTML 生成发布版启动脚本地址和 import map -->
+	<Target Name="CollectHtmlInputsForNoBuildPublish"
+			BeforeTargets="GenerateHtmlAssetPlaceholdersPublishStaticWebAssets"
+			Condition="'$(NoBuild)' == 'true' and '$(OverrideHtmlAssetPlaceholders)' == 'true' and '@(_HtmlStaticWebAssets)' == ''">
+		<ItemGroup>
+			<_PublishHtmlContent Include="@(Content)" Condition="'%(Extension)' == '.html'" />
+		</ItemGroup>
+		<DefineStaticWebAssets CandidateAssets="@(_PublishHtmlContent)"
+				RelativePathPattern="wwwroot/**"
+				SourceType="Discovered" SourceId="$(PackageId)"
+				ContentRoot="$(MSBuildProjectDirectory)\wwwroot\" BasePath="$(StaticWebAssetBasePath)"
+				FingerprintCandidates="$(StaticWebAssetsFingerprintContent)"
+				FingerprintPatterns="@(StaticWebAssetFingerprintPattern)">
+			<Output TaskParameter="Assets" ItemName="_HtmlStaticWebAssets" />
+		</DefineStaticWebAssets>
+	</Target>
+
 	<Target Name="CleanObjRelease" BeforeTargets="BeforeClean">
 		<Message Text="CleanObjRelease" Importance="high" />
 		<RemoveDir Directories="$(BaseIntermediateOutputPath)\Release\" />

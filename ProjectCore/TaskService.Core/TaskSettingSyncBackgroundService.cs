@@ -11,22 +11,17 @@ namespace TaskService.Core;
 /// <summary>
 /// 同步所选模块的任务定义和运行配置，Debug 仍由宿主交互启用
 /// </summary>
-internal class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IQueueTaskStore store) : BackgroundService
+internal class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider, ILogger<TaskSettingSyncBackgroundService> logger, IQueueTaskStore store, TaskSettingChangeListener changeListener) : BackgroundService
 {
+
     private const string ArgsDefaultParameter = "__args_default__";
     private readonly ILogger logger = logger;
 
     /// <summary>
-    /// 初始化完成后按固定周期同步，包括只有带参定义的模块
+    /// 初始化后同步配置，并在收到变更通知或等待超时后再次同步
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-
-        bool isDebug = false;
-
-#if DEBUG
-        isDebug = true;
-#endif
 
         var initTaskBackgroundService = serviceProvider.GetServices<IHostedService>().OfType<InitTaskBackgroundService>().First();
 
@@ -35,30 +30,39 @@ internal class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider
             return;
         }
 
-        if ((QueueTaskBuilder.queueMethodList.Count != 0 || ScheduleTaskBuilder.scheduleMethodList.Count != 0 || ScheduleTaskBuilder.argsScheduleMethodList.Count != 0) && isDebug == false)
+        if (QueueTaskBuilder.queueMethodList.Count == 0 && ScheduleTaskBuilder.scheduleMethodList.IsEmpty && ScheduleTaskBuilder.argsScheduleMethodList.Count == 0)
         {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await SyncTaskSetting();
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "任务配置同步失败");
-                }
-
-                await Task.Delay(60000, stoppingToken);
-            }
+            return;
         }
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await SyncTaskSetting(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "任务配置同步失败");
+            }
+
+            await changeListener.WaitForChangeAsync(TimeSpan.FromSeconds(60), stoppingToken);
+        }
+
     }
+
 
     /// <summary>
     /// 读取配置更新运行实例，并在并发保护下补充缺少的定义
     /// </summary>
-    private async Task SyncTaskSetting()
+    private async Task SyncTaskSetting(CancellationToken cancellationToken)
     {
-        var taskSettings = await store.GetSettingsAsync();
+
+        var taskSettings = await store.GetSettingsAsync(cancellationToken);
         List<TaskSetting> missingSettings = [];
 
         var queueTaskSettings = taskSettings.Where(t => t.Category == "QueueTask" && QueueTaskBuilder.queueMethodList.ContainsKey(t.Name)).ToList();
@@ -176,6 +180,8 @@ internal class TaskSettingSyncBackgroundService(IServiceProvider serviceProvider
             }
         }
 
-        await store.EnsureSettingsAsync(missingSettings);
+        await store.EnsureSettingsAsync(missingSettings, cancellationToken);
+
     }
+
 }

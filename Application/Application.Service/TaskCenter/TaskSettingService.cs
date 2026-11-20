@@ -1,7 +1,10 @@
 using Application.Interface.TaskCenter;
+using Application.Model.Events;
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
+using EventBus;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using global::QueueTask.Database;
 using Repository;
 using SourceGenerator.Runtime.Attributes;
@@ -12,7 +15,7 @@ namespace Application.Service.TaskCenter;
 /// 适配本业务任务配置与管理端契约，操作人由接口层传入
 /// </summary>
 [RegisterService(typeof(ITaskSettingService), Lifetime = ServiceLifetime.Scoped)]
-public class TaskSettingService(QueueTaskManagement<DatabaseContext> management) : ITaskSettingService
+public class TaskSettingService(QueueTaskManagement<DatabaseContext> management, IEventPublisher eventPublisher, ILogger<TaskSettingService> logger) : ITaskSettingService
 {
 
     /// <summary>
@@ -50,6 +53,7 @@ public class TaskSettingService(QueueTaskManagement<DatabaseContext> management)
     {
 
         await management.UpdateSettingAsync(taskSettingId, actorUserId, updateTaskSetting.Parameter, updateTaskSetting.Semaphore, updateTaskSetting.Cron, updateTaskSetting.IsEnable, updateTaskSetting.Remark);
+        await NotifySettingChangedAsync(taskSettingId);
         return true;
 
     }
@@ -69,10 +73,30 @@ public class TaskSettingService(QueueTaskManagement<DatabaseContext> management)
     /// <summary>
     /// 为本业务已声明模板创建带参运行实例
     /// </summary>
-    public Task<long> CreateScheduleTaskAsync(long actorUserId, CreateScheduleTaskDto createTaskSetting)
+    public async Task<long> CreateScheduleTaskAsync(long actorUserId, CreateScheduleTaskDto createTaskSetting)
     {
 
-        return management.CreateScheduleAsync(actorUserId, createTaskSetting.Name, createTaskSetting.Parameter, createTaskSetting.Cron, createTaskSetting.IsEnable, createTaskSetting.Remark);
+        var taskSettingId = await management.CreateScheduleAsync(actorUserId, createTaskSetting.Name, createTaskSetting.Parameter, createTaskSetting.Cron, createTaskSetting.IsEnable, createTaskSetting.Remark);
+        await NotifySettingChangedAsync(taskSettingId);
+        return taskSettingId;
+
+    }
+
+
+    /// <summary>
+    /// 保存后通知各任务宿主刷新，发布失败时由周期同步补收配置
+    /// </summary>
+    private async Task NotifySettingChangedAsync(long taskSettingId)
+    {
+
+        try
+        {
+            await eventPublisher.PublishAsync(new TaskSettingChangedEvent());
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "任务配置 {TaskSettingId} 已保存，变更通知发布失败，将由周期同步刷新", taskSettingId);
+        }
 
     }
 

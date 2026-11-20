@@ -7,7 +7,7 @@ TaskService 是独立的 Worker Service 宿主，用于执行周期性定时任�
 - 任务配置与队列记录：`Infrastructure/QueueTask.Database/Models`，映射到所属模块的业务库
 - 管理接口：`Presentation/Admin.WebAPI/Controllers/OperationsController.cs`
 
-TaskService 同时接入独立的 [进程广播事件](EventBus.md)，让各实例分别处理本地状态变化通知并支持短暂断线补收。该能力通过 EventSubscribe 方法监听，与下面竞争领取的 QueueTask 独立，不受 Debug 控制台的任务启用选择限制
+TaskService 通过 EventBus 接收跨进程通知。非 Debug 构建内置任务配置变更监听。自行添加的 `[EventSubscribe]` 监听在 Debug 构建中也可运行，无需在控制台启用。参见 [EventBus 接入说明](EventBus.md)
 
 ## 开发前准备
 
@@ -202,18 +202,22 @@ await queueTaskService.CreateSingleAsync(
 
 Debug 启动后，控制台会列出发现的队列任务和定时任务。输入序号并回车即可在当前进程中启用，再次输入可继续启用其他任务
 
-Debug 模式不运行每分钟的数据库配置同步，因此控制台选择是本次调试进程的主要启用方式
+Debug 模式下，管理端的配置变更通知和周期同步均不会改变本次调试进程的启用状态
 
 ### 非 Debug 模式
 
-后台服务在初始化完成后开始同步 `TaskSetting`，每轮同步结束后等待 60 秒再进行下一轮：
+后台服务在初始化完成后同步一次 `TaskSetting`，将数据库配置应用到当前实例：
 
 - 新发现的任务会写入配置表，默认不启用
 - 队列任务可从数据库覆盖 `Semaphore`
 - 定时任务可从数据库覆盖 `Cron`
 - `IsEnable` 决定任务是否执行
 
-可以通过管理后台的任务配置功能，或 Admin.WebAPI 的 `Operations` 接口查看和修改配置。循环正常运行时，修改会在后续同步中生效；同步耗时或数据库异常会延后生效时间，60 秒不是严格上限
+通过管理后台或 Admin.WebAPI 的 `Operations` 接口修改配置、新建带参定时任务实例后，Admin.WebAPI 发布 `TaskSettingChangedEvent`。接口返回成功表示配置已保存。收到通知的 TaskService 实例会重新读取各自绑定的任务库，并应用本实例的任务配置。连续通知可以合并，同步期间收到的通知会触发下一轮同步
+
+自定义任务宿主应先调用 `AddTaskWorker<TContext>(taskTypes)`，再调用 `AddRedisEventBus` 或 `AddDatabaseEventBus`，以便 EventBus 发现配置变更监听。宿主与 Admin.WebAPI 需要使用相同的事件后端、存储目标和 `Scope` 才能互通。参见 [EventBus 配置](EventBus.md#1-确认配置)
+
+每轮结束后，即使没有收到通知，后台服务也会在等待 60 秒后重新读库。直接改库或广播发布失败时，配置仍会通过周期同步生效
 
 `Semaphore` 保存为 `null` 时恢复任务特性声明的并发值；Cron 保存为 `null`、空串或空白时统一使用任务特性声明的默认表达式，包括带参实例。非空 Cron 在保存前按调度使用的同一语法校验，无效配置不会写入数据库
 

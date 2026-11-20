@@ -2,6 +2,8 @@
 
 EventBus 将事件广播给所有注册了对应监听的运行实例，包括发布方自身，适合缓存失效、配置重载和内存规则更新。支持 Redis 和数据库两种后端，业务侧写法相同
 
+模板内置了任务配置刷新的用例。Admin.WebAPI 保存配置后发布 `TaskSettingChangedEvent`，各非 Debug 任务宿主收到通知后重新读取自己的任务库。参见 [任务配置同步](TaskService.md#非-debug-模式)
+
 只需一个 Worker 执行的工作使用 [QueueTask](TaskService.md)；当前请求需要处理结果时直接调用应用服务。EventBus 不提供业务与消息的原子提交，也不保证进程重启后补收旧事件
 
 ## 快速接入
@@ -124,7 +126,7 @@ await transaction.CommitAsync(cancellationToken);
 - **事件类型**：使用非泛型具体类或 `record class`，以具体类型发布。事件以 JSON 传输，通过完整类型名匹配；互通宿主应引用一致契约，不支持按父类或接口订阅
 - **监听签名**：公开、非泛型实例方法，接收一个事件参数及可选的第二个 `CancellationToken` 参数，返回 `Task` 或 `ValueTask`。无需为监听添加 `virtual`；使用代理时遵循 [AutoProxy 规则](SourceGenerator.md#autoproxy-方法代理)
 - **服务注册**：监听服务必须在 `AddRedisEventBus` 或 `AddDatabaseEventBus` 之前加入 DI。同一服务类型有多个实现时，按具体类或不同的具体 Key 注册，参见 [服务注册规则](SourceGenerator.md#服务类型选择规则)
-- **依赖与状态**：每次调用创建独立异步作用域，可注入 Scoped 依赖。跨请求的内存状态应放在共享服务中，不能只修改监听对象自身的字段
+- **依赖与状态**：每次调用创建独立异步作用域。Scoped 监听可以注入 Scoped 依赖。需要跨调用保留的内存状态可以放在 Singleton 监听中，也可以由监听委托给其他 Singleton 服务
 - **处理逻辑**：保持短小、幂等，传递取消令牌，不启动脱离监听生命周期的后台任务，也不要无条件再次发布相同事件
 
 ## 运行行为

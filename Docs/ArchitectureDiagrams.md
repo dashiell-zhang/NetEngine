@@ -50,6 +50,8 @@ flowchart TB
     AppServices --> Infra
     WebCore --> Models
     TaskCore --> Queue
+    TaskCore -->|任务配置事件契约| Models
+    TaskCore -->|订阅配置变更| Infra
     Repo --> Queue
     Repo --> DbCore
     Queue --> DbCore
@@ -133,7 +135,10 @@ flowchart TB
 flowchart LR
     App["应用服务"] --> Producer["QueueTaskProducer&lt;TContext&gt;"]
     Producer -->|Create：交给业务保存<br/>CreateSingleAsync：独立保存| QueueTable[("TContext 对应的 QueueTask 表")]
-    Settings[("同一存储中的 TaskSetting 表")] -->|同步启用、Cron、并发等配置| Core["TaskService.Core"]
+    Admin["管理端任务配置服务"] -->|保存配置| Settings[("同一存储中的 TaskSetting 表")]
+    Admin -->|保存后发布变更通知| Bus["EventBus"]
+    Bus -.->|唤醒非 Debug 实例同步| Core["TaskService.Core"]
+    Settings -->|同步启用、Cron、并发等配置| Core
     QueueTable -->|按任务名称候选查询与领取| Core
     Core -->|创建执行作用域并调用| Task["宿主显式选择的任务方法"]
     Task -->|通过应用接口触发用例| Contract["Application.Interface"]

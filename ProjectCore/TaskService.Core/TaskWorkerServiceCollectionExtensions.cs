@@ -41,7 +41,10 @@ public static class TaskWorkerServiceCollectionExtensions
         }
 
         services.AddHostedService<InitTaskBackgroundService>();
+#if !DEBUG
+        services.AddSingleton<TaskSettingChangeListener>();
         services.AddHostedService<TaskSettingSyncBackgroundService>();
+#endif
         services.AddHostedService<QueueTaskBackgroundService>();
         services.AddHostedService<ScheduleTaskBackgroundService>();
         return services;

@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using Repository.Database;
-using Repository.Database.Enums;
 using SourceGenerator.Runtime.Attributes;
 
 namespace Application.Service.User;
@@ -34,6 +33,13 @@ public class RoleService(DatabaseContext db, IdService idService, IDistributedLo
 
         if (result.Total != 0)
         {
+            var skip = request.Skip();
+            if (skip >= result.Total)
+            {
+                result.List = [];
+                return result;
+            }
+
             result.List = await query.OrderByDescending(t => t.Id).Select(t => new RoleDto
             {
                 Id = t.Id,
@@ -41,7 +47,7 @@ public class RoleService(DatabaseContext db, IdService idService, IDistributedLo
                 Name = t.Name,
                 Remark = t.Remark,
                 CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            }).Skip(skip).Take(request.PageSize).ToListAsync();
         }
 
         return result;
@@ -175,30 +181,7 @@ public class RoleService(DatabaseContext db, IdService idService, IDistributedLo
     /// </summary>
     /// <param name="roleId">角色ID</param>
     /// <returns></returns>
-    public async Task<List<RoleFunctionDto>> GetRoleFunctionAsync(long roleId)
-    {
-        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == FunctionType.Module).Select(t => new RoleFunctionDto
-        {
-            Id = t.Id,
-            Name = t.Name.Replace(t.Parent!.Name + "-", ""),
-            Sign = t.Sign,
-            IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == FunctionType.Function).Select(f => new RoleFunctionDto
-            {
-                Id = f.Id,
-                Name = f.Name.Replace(f.Parent!.Name + "-", ""),
-                Sign = f.Sign,
-                IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
-            }).ToList()
-        }).ToListAsync();
-
-        foreach (var function in functionList)
-        {
-            function.ChildList = await GetRoleFunctionChildListAsync(roleId, function.Id);
-        }
-
-        return functionList;
-    }
+    public Task<List<RoleFunctionDto>> GetRoleFunctionAsync(long roleId) => LoadRoleFunctionTreeAsync(roleId, null);
 
 
     /// <summary>
@@ -262,30 +245,23 @@ public class RoleService(DatabaseContext db, IdService idService, IDistributedLo
     /// <param name="roleId">角色ID</param>
     /// <param name="parentId">功能父级ID</param>
     /// <returns></returns>
-    public async Task<List<RoleFunctionDto>> GetRoleFunctionChildListAsync(long roleId, long parentId)
+    public Task<List<RoleFunctionDto>> GetRoleFunctionChildListAsync(long roleId, long parentId) => LoadRoleFunctionTreeAsync(roleId, parentId);
+
+
+    /// <summary>
+    /// 批量读取角色的模块树及勾选状态
+    /// </summary>
+    private Task<List<RoleFunctionDto>> LoadRoleFunctionTreeAsync(long roleId, long? parentId)
     {
 
-        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == FunctionType.Module).Select(t => new RoleFunctionDto
-        {
-            Id = t.Id,
-            Name = t.Name.Replace(t.Parent!.Name + "-", ""),
-            Sign = t.Sign,
-            IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && r.RoleId == roleId).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == FunctionType.Function).Select(f => new RoleFunctionDto
+        var grants = db.FunctionAuthorize.Where(t => t.RoleId == roleId).Select(t => t.FunctionId);
+        return FunctionTree.LoadAsync(db, parentId, grants,
+            (id, name, sign, isCheck) => new RoleFunctionDto { Id = id, Name = name, Sign = sign, IsCheck = isCheck },
+            (node, children, functions) =>
             {
-                Id = f.Id,
-                Name = f.Name.Replace(f.Parent!.Name + "-", ""),
-                Sign = f.Sign,
-                IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == f.Id && r.RoleId == roleId).FirstOrDefault() != null,
-            }).ToList()
-        }).ToListAsync();
-
-        foreach (var function in functionList)
-        {
-            function.ChildList = await GetRoleFunctionChildListAsync(roleId, function.Id);
-        }
-
-        return functionList;
+                node.ChildList = children;
+                node.FunctionList = functions;
+            });
 
     }
 

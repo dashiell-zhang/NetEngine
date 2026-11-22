@@ -55,6 +55,13 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, ILlm
 
         if (result.Total != 0)
         {
+            var skip = request.Skip();
+            if (skip >= result.Total)
+            {
+                result.List = [];
+                return result;
+            }
+
             result.List = await query
                 .OrderByDescending(t => t.Id)
                 .Select(t => new LlmAppDto
@@ -74,7 +81,7 @@ public partial class LlmAppService(DatabaseContext db, IdService idService, ILlm
                     CreateTime = t.CreateTime,
                     UpdateTime = t.UpdateTime
                 })
-                .Skip(request.Skip())
+                .Skip(skip)
                 .Take(request.PageSize)
                 .ToListAsync();
         }

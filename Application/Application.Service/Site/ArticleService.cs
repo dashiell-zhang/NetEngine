@@ -35,6 +35,13 @@ public class ArticleService(DatabaseContext db, IdService idService, IFileServic
 
         if (result.Total != 0)
         {
+            var skip = request.Skip();
+            if (skip >= result.Total)
+            {
+                result.List = [];
+                return result;
+            }
+
             result.List = await query.OrderByDescending(t => t.Id).Select(t => new CategoryDto
             {
                 Id = t.Id,
@@ -44,7 +51,7 @@ public class ArticleService(DatabaseContext db, IdService idService, IFileServic
                 ParentId = t.ParentId,
                 ParentName = t.Parent!.Name,
                 CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            }).Skip(skip).Take(request.PageSize).ToListAsync();
         }
 
         return result;
@@ -55,34 +62,28 @@ public class ArticleService(DatabaseContext db, IdService idService, IFileServic
     /// 获取栏目选择列表
     /// </summary>
     /// <returns></returns>
-    public Task<List<CategorySelectDto>> GetCategorySelectListAsync()
-    {
-        return GetCategorySelectListAsync(null);
-    }
-
-
-    /// <summary>
-    /// 获取指定父级下的栏目选择列表
-    /// </summary>
-    /// <param name="parentId">父级栏目ID</param>
-    /// <returns></returns>
-    private async Task<List<CategorySelectDto>> GetCategorySelectListAsync(long? parentId)
+    public async Task<List<CategorySelectDto>> GetCategorySelectListAsync()
     {
 
-        var list = await db.Category.Where(t => t.ParentId == parentId).OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new CategorySelectDto
-        {
-            Id = t.Id,
-            Name = t.Name
-        }).ToListAsync();
+        var rows = await db.Category.OrderBy(t => t.Sort).ThenBy(t => t.Id)
+            .Select(t => new { t.Id, t.Name, t.ParentId }).ToListAsync();
+        var children = rows.ToLookup(t => t.ParentId);
+        return BuildChildren(null);
 
-        foreach (var item in list)
+        List<CategorySelectDto> BuildChildren(long? parentId)
         {
-            item.ChildList = await GetCategorySelectListAsync(item.Id);
+
+            return children[parentId].Select(t => new CategorySelectDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                ChildList = BuildChildren(t.Id)
+            }).ToList();
+
         }
 
-        return list;
-
     }
+
 
 
     /// <summary>
@@ -242,6 +243,13 @@ public class ArticleService(DatabaseContext db, IdService idService, IFileServic
 
         if (result.Total != 0)
         {
+            var skip = request.Skip();
+            if (skip >= result.Total)
+            {
+                result.List = [];
+                return result;
+            }
+
             result.List = await query.OrderByDescending(t => t.Id).Select(t => new ArticleDto
             {
                 Id = t.Id,
@@ -255,11 +263,12 @@ public class ArticleService(DatabaseContext db, IdService idService, IFileServic
                 Sort = t.Sort,
                 ClickCount = t.ClickCount,
                 CreateTime = t.CreateTime,
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            }).Skip(skip).Take(request.PageSize).ToListAsync();
 
+            var covers = await fileService.GetFileListsAsync("Article", "cover", result.List.Select(t => t.Id).ToArray());
             foreach (var article in result.List)
             {
-                article.CoverImageList = await fileService.GetFileListAsync("Article", "cover", article.Id, true);
+                article.CoverImageList = covers.GetValueOrDefault(article.Id) ?? [];
             }
         }
 

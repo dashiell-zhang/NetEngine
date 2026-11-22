@@ -48,6 +48,13 @@ public class LlmModelService(DatabaseContext db, IdService idService, IDistribut
 
         if (result.Total != 0)
         {
+            var skip = request.Skip();
+            if (skip >= result.Total)
+            {
+                result.List = [];
+                return result;
+            }
+
             result.List = await query
                 .OrderByDescending(t => t.Id)
                 .Select(t => new LlmModelDto
@@ -62,7 +69,7 @@ public class LlmModelService(DatabaseContext db, IdService idService, IDistribut
                     CreateTime = t.CreateTime,
                     UpdateTime = t.UpdateTime
                 })
-                .Skip(request.Skip())
+                .Skip(skip)
                 .Take(request.PageSize)
                 .ToListAsync();
         }

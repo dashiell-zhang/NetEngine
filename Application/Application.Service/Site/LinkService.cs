@@ -33,6 +33,13 @@ public class LinkService(DatabaseContext db, IdService idService) : ILinkService
 
         if (result.Total != 0)
         {
+            var skip = request.Skip();
+            if (skip >= result.Total)
+            {
+                result.List = [];
+                return result;
+            }
+
             result.List = await query.OrderByDescending(t => t.Id).Select(t => new LinkDto
             {
                 Id = t.Id,
@@ -40,7 +47,7 @@ public class LinkService(DatabaseContext db, IdService idService) : ILinkService
                 Url = t.Url,
                 Sort = t.Sort,
                 CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            }).Skip(skip).Take(request.PageSize).ToListAsync();
         }
 
         return result;

@@ -10,8 +10,8 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Repository;
 using Repository.Database;
-using Repository.Database.Enums;
 using SourceGenerator.Runtime.Attributes;
+using System.Globalization;
 using System.Text;
 
 namespace Application.Service.User;
@@ -100,7 +100,8 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     {
         PageListDto<UserDto> result = new();
 
-        var query = db.User.AsSplitQuery();
+        var skip = request.Skip();
+        var query = db.User.AsQueryable();
 
         var keyword = request.Keyword?.Trim();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -113,20 +114,46 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
         }
 
         result.Total = await query.CountAsync();
-
-        if (result.Total != 0)
+        if (result.Total == 0)
         {
-            result.List = await query.OrderByDescending(t => t.Id).Select(t => new UserDto
+            return result;
+        }
+
+        if (skip >= result.Total)
+        {
+            result.List = [];
+            return result;
+        }
+
+        var users = await query.OrderByDescending(t => t.Id)
+            .Skip(skip).Take(request.PageSize)
+            .Select(t => new UserDto
             {
                 Id = t.Id,
                 Name = t.Name,
                 UserName = t.UserName,
                 Phone = t.Phone,
                 Email = t.Email,
-                Roles = string.Join("、", db.UserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Code).ToList()),
-                RoleIds = db.UserRole.Where(r => r.UserId == t.Id).Select(r => r.Role.Id.ToString()).ToArray(),
                 CreateTime = t.CreateTime
-            }).Skip(request.Skip()).Take(request.PageSize).ToListAsync();
+            })
+            .ToListAsync();
+        result.List = users;
+        if (users.Count == 0)
+        {
+            return result;
+        }
+
+        var userIds = users.Select(t => t.Id).ToArray();
+        var assignments = await db.UserRole.Where(t => userIds.Contains(t.UserId))
+            .OrderBy(t => t.Id)
+            .Select(t => new { t.UserId, RoleId = t.Role.Id, t.Role.Code })
+            .ToListAsync();
+        var rolesByUser = assignments.ToLookup(t => t.UserId);
+        foreach (var user in users)
+        {
+            var roles = rolesByUser[user.Id];
+            user.Roles = string.Join("、", roles.Select(t => t.Code));
+            user.RoleIds = roles.Select(t => t.RoleId.ToString(CultureInfo.InvariantCulture)).ToArray();
         }
 
         return result;
@@ -299,29 +326,10 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <returns></returns>
     public async Task<List<UserFunctionDto>> GetUserFunctionAsync(long userId)
     {
+
         var roleIds = await db.UserRole.Where(t => t.UserId == userId).Select(t => t.RoleId).ToListAsync();
+        return await LoadUserFunctionTreeAsync(userId, null, roleIds);
 
-        var functionList = await db.Function.Where(t => t.ParentId == null && t.Type == FunctionType.Module).Select(t => new UserFunctionDto
-        {
-            Id = t.Id,
-            Name = t.Name.Replace(t.Parent!.Name + "-", ""),
-            Sign = t.Sign,
-            IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == FunctionType.Function).Select(f => new UserFunctionDto
-            {
-                Id = f.Id,
-                Name = f.Name.Replace(f.Parent!.Name + "-", ""),
-                Sign = f.Sign,
-                IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == f.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-            }).ToList()
-        }).ToListAsync();
-
-        foreach (var function in functionList)
-        {
-            function.ChildList = await GetUserFunctionChildListAsync(userId, function.Id, roleIds);
-        }
-
-        return functionList;
     }
 
 
@@ -445,30 +453,25 @@ public class UserService(DatabaseContext db, IDistributedCache distributedCache,
     /// <param name="parentId">功能父级ID</param>
     /// <param name="roleIds">用户角色ID集合</param>
     /// <returns></returns>
-    public async Task<List<UserFunctionDto>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds)
+    public Task<List<UserFunctionDto>> GetUserFunctionChildListAsync(long userId, long parentId, List<long> roleIds) => LoadUserFunctionTreeAsync(userId, parentId, roleIds);
+
+
+    /// <summary>
+    /// 批量读取用户的模块树及直接和继承授权
+    /// </summary>
+    private Task<List<UserFunctionDto>> LoadUserFunctionTreeAsync(long userId, long? parentId, List<long> roleIds)
     {
 
-        var functionList = await db.Function.Where(t => t.ParentId == parentId && t.Type == FunctionType.Module).Select(t => new UserFunctionDto
-        {
-            Id = t.Id,
-            Name = t.Name.Replace(t.Parent!.Name + "-", ""),
-            Sign = t.Sign,
-            IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == t.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-            FunctionList = db.Function.Where(f => f.ParentId == t.Id && f.Type == FunctionType.Function).Select(f => new UserFunctionDto
+        var grants = db.FunctionAuthorize.Where(t => roleIds.Contains(t.RoleId!.Value) || t.UserId == userId)
+            .Select(t => t.FunctionId);
+        return FunctionTree.LoadAsync(db, parentId, grants,
+            (id, name, sign, isCheck) => new UserFunctionDto { Id = id, Name = name, Sign = sign, IsCheck = isCheck },
+            (node, children, functions) =>
             {
-                Id = f.Id,
-                Name = f.Name.Replace(f.Parent!.Name + "-", ""),
-                Sign = f.Sign,
-                IsCheck = db.FunctionAuthorize.Where(r => r.FunctionId == f.Id && (roleIds.Contains(r.RoleId!.Value) || r.UserId == userId)).FirstOrDefault() != null,
-            }).ToList()
-        }).ToListAsync();
+                node.ChildList = children;
+                node.FunctionList = functions;
+            });
 
-        foreach (var function in functionList)
-        {
-            function.ChildList = await GetUserFunctionChildListAsync(userId, function.Id, roleIds);
-        }
-
-        return functionList;
     }
 
 }

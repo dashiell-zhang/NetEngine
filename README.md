@@ -28,7 +28,8 @@
 ### 环境要求
 
 - 稳定版 .NET 11.0 SDK，最低 11.0.100；根目录 [global.json](global.json) 允许使用更高的 11.0 SDK 功能带和补丁版本，不选择其他主版本或预览版
-- 管理端使用 AntDesign 1.6.3-dotnet11.rc3；数据库使用 Npgsql 11 RC3 与匹配的 EF Core 11 RC3，具体版本见下方数据库工具说明
+- 管理端使用 AntDesign 1.6.3-dotnet11.rc3
+- 数据访问使用 Npgsql 的 EF Core 提供程序和 EF Core，版本均为 11.0.0
 - PostgreSQL
 - Redis；使用 Garnet 等兼容实现时，应验证本项目使用的缓存、Lua 脚本和分布式锁行为
 - Docker 可选，用于启动本地 PostgreSQL 与 Redis
@@ -90,13 +91,13 @@ dotnet build NetEngine.slnx
 
 ### 创建数据库结构
 
-项目使用 Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0-rc.3，并按驱动要求统一使用 EF Core 11.0.0-rc.3.26522.148。使用 Visual Studio 程序包管理控制台时，Repository.Tool 已引用 EF 工具包，无需单独安装 dotnet-ef，可直接按下方控制台步骤操作。使用 dotnet 命令行时，首次安装：
+项目使用 `Npgsql.EntityFrameworkCore.PostgreSQL` 11.0.0 和 EF Core 11.0.0。`Repository.Tool` 已引用 EF Core 11.0.0 工具包，可直接按下方步骤使用 Visual Studio 程序包管理控制台。通过 .NET CLI 首次使用迁移工具时，执行以下命令安装 `dotnet-ef`。
 
 ```powershell
-dotnet tool install --global dotnet-ef --version "11.0.0-rc.3.26522.148"
+dotnet tool install --global dotnet-ef --version "11.0.0"
 ```
 
-已安装时先用 `dotnet ef --version` 检查，需要更新时执行 `dotnet tool update --global dotnet-ef --version "11.0.0-rc.3.26522.148"`。工具版本与项目保持一致，项目版本以 [Repository.Tool.csproj](Repository.Tool/Repository.Tool.csproj) 为准。工具用法见 [EF Core CLI 文档](https://learn.microsoft.com/en-us/ef/core/cli/dotnet) 和 [工具安装文档](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install#options)
+已安装时先用 `dotnet ef --version` 检查，需要更新时执行 `dotnet tool update --global dotnet-ef --version "11.0.0"`。工具版本与项目保持一致，项目版本以 [Repository.Tool.csproj](Repository.Tool/Repository.Tool.csproj) 为准。工具用法见 [EF Core CLI 文档](https://learn.microsoft.com/en-us/ef/core/cli/dotnet) 和 [工具安装文档](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install#options)
 
 工具读取项目内的 [appsettings.json](Repository.Tool/appsettings.json)，业务、日志和数据库事件分别管理迁移与历史表。当前模板未包含迁移文件或模型快照，首次初始化空数据库时，需要先生成对应的初始迁移
 

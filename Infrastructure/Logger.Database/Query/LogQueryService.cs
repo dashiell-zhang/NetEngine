@@ -64,6 +64,12 @@ public class LogQueryService(IDbContextFactory<ReadLogDatabaseContext> contextFa
 
         if (result.Total != 0)
         {
+            if (request.Skip >= result.Total)
+            {
+                result.List = [];
+                return result;
+            }
+
             result.List = await query.OrderByDescending(t => t.Id).Select(t => new LogQueryItem
             {
                 Id = t.Id,

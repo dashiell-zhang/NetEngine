@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AlipaySDKNet.Standard" Version="4.9.1424" />
+    <PackageReference Include="AlipaySDKNet.Standard" Version="4.9.1476" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <ProjectReference Include="../Application.Interface/Application.Interface.csproj" />
     <ProjectReference Include="../Application.Model/Application.Model.csproj" />

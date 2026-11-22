@@ -54,6 +54,13 @@ public class LlmConversationManageService(ReadDatabaseContext readDb) : ILlmConv
 
         if (result.Total != 0)
         {
+            var skip = request.Skip();
+            if (skip >= result.Total)
+            {
+                result.List = [];
+                return result;
+            }
+
             result.List = await query
                 .OrderByDescending(t => t.Id)
                 .Select(t => new LlmConversationDto
@@ -69,7 +76,7 @@ public class LlmConversationManageService(ReadDatabaseContext readDb) : ILlmConv
                     UserContent = t.UserContent,
                     AssistantContent = t.AssistantContent
                 })
-                .Skip(request.Skip())
+                .Skip(skip)
                 .Take(request.PageSize)
                 .ToListAsync();
         }

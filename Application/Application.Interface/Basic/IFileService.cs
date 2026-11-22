@@ -61,4 +61,10 @@ public interface IFileService
     /// </summary>
     Task<List<FileInfoDto>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl);
 
+
+    /// <summary>
+    /// 批量查询业务记录关联的文件列表，包含访问地址
+    /// </summary>
+    Task<Dictionary<long, List<FileInfoDto>>> GetFileListsAsync(string business, string? sign, IReadOnlyCollection<long> keys);
+
 }

@@ -47,6 +47,11 @@ public sealed class QueueTaskManagement<TContext>(IDbContextFactory<TContext> fa
             query = query.Where(task => task.Parameter != null && task.Parameter.Contains(parameterKeyword));
         }
         var total = await query.CountAsync(cancellationToken);
+        if (skip >= total)
+        {
+            return (total, []);
+        }
+
         var items = await query.OrderByDescending(task => task.Id).Skip(skip).Take(take).ToListAsync(cancellationToken);
         return (total, items);
 
@@ -99,6 +104,11 @@ public sealed class QueueTaskManagement<TContext>(IDbContextFactory<TContext> fa
             query = query.Where(setting => setting.Category == category);
         }
         var total = await query.CountAsync(cancellationToken);
+        if (skip >= total)
+        {
+            return (total, []);
+        }
+
         var items = await query.OrderByDescending(setting => setting.Id).Skip(skip).Take(take).ToListAsync(cancellationToken);
         return (total, items);
 

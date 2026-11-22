@@ -269,38 +269,32 @@ public class FileService(IdService idService, DatabaseContext db, IConfiguration
     /// <returns></returns>
     public async Task<string?> GetFileUrlAsync(long fileId, bool isInline = false)
     {
+
         var file = await db.StoredFile.Where(t => t.Id == fileId).Select(t => new { t.Path, t.IsPublicRead }).FirstOrDefaultAsync();
-
-        if (file != null)
-        {
-            string fileUrl = "";
-
-            if (file.IsPublicRead || fileStorage == null)
-            {
-                string fileServerUrl = configuration["FileServerUrl"]?.ToString() ?? "";
-                fileUrl = fileServerUrl + file.Path;
-            }
-            else
-            {
-                var tempUrl = fileStorage.GetFileUrl(file.Path, TimeSpan.FromMinutes(10), isInline);
-
-                if (tempUrl != null)
-                {
-                    fileUrl = tempUrl;
-                }
-                else
-                {
-                    throw new CustomException("文件临时授权地址获取失败");
-                }
-            }
-
-            return fileUrl;
-
-        }
-        else
+        if (file == null)
         {
             throw new CustomException("通过指定的文件ID未找到任何文件");
         }
+
+        return BuildFileUrl(file.Path, file.IsPublicRead, isInline);
+
+    }
+
+
+    /// <summary>
+    /// 使用现有文件元数据生成公开或私有访问地址
+    /// </summary>
+    private string BuildFileUrl(string path, bool isPublicRead, bool isInline)
+    {
+
+        if (isPublicRead || fileStorage == null)
+        {
+            return (configuration["FileServerUrl"] ?? "") + path;
+        }
+
+        return fileStorage.GetFileUrl(path, TimeSpan.FromMinutes(10), isInline)
+            ?? throw new CustomException("文件临时授权地址获取失败");
+
     }
 
 
@@ -341,33 +335,82 @@ public class FileService(IdService idService, DatabaseContext db, IConfiguration
     public async Task<List<FileInfoDto>> GetFileListAsync(string business, string? sign, long key, bool isGetUrl)
     {
 
-        var query = db.StoredFile.Where(t => t.Table == business && t.TableId == key);
+        var rows = await ReadFileListAsync(business, sign, db.StoredFile.Where(t => t.TableId == key));
+        return rows.Select(t => BuildFileInfo(t, isGetUrl)).ToList();
 
+    }
+
+
+    /// <summary>
+    /// 一次查询多个业务记录的文件并保持每组文件顺序
+    /// </summary>
+    public async Task<Dictionary<long, List<FileInfoDto>>> GetFileListsAsync(string business, string? sign, IReadOnlyCollection<long> keys)
+    {
+
+        if (keys.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = await ReadFileListAsync(business, sign,
+            db.StoredFile.Where(t => t.TableId.HasValue && keys.Contains(t.TableId.Value)));
+        var byKey = rows.ToLookup(t => t.Key);
+        var result = new Dictionary<long, List<FileInfoDto>>();
+        foreach (var key in keys)
+        {
+            if (byKey.Contains(key) && !result.ContainsKey(key))
+            {
+                result[key] = byKey[key].Select(t => BuildFileInfo(t, true)).ToList();
+            }
+        }
+
+        return result;
+
+    }
+
+
+    /// <summary>
+    /// 投影文件信息和生成访问地址所需字段
+    /// </summary>
+    private static Task<List<FileListRow>> ReadFileListAsync(string business, string? sign, IQueryable<StoredFile> query)
+    {
+
+        query = query.Where(t => t.Table == business);
         if (sign != null)
         {
             query = query.Where(t => t.Sign == sign);
         }
 
-        var fileList = await query.OrderBy(t => t.Sort).ThenBy(t => t.Id).Select(t => new FileInfoDto
-        {
-            Id = t.Id,
-            Name = t.Name,
-            Length = t.Length,
-            Sign = t.Sign,
-            Path = t.Path,
-        }).ToListAsync();
+        return query.OrderBy(t => t.Sort).ThenBy(t => t.Id)
+            .Select(t => new FileListRow(t.TableId, t.Id, t.Name, t.Length, t.Sign, t.Path, t.IsPublicRead))
+            .ToListAsync();
 
-        foreach (var file in fileList)
-        {
-            file.LengthText = IOHelper.FileLengthToString(file.Length);
-
-            if (isGetUrl)
-            {
-                file.Url = await GetFileUrlAsync(file.Id);
-            }
-        }
-
-        return fileList;
     }
+
+
+    /// <summary>
+    /// 将文件投影转换为接口返回值
+    /// </summary>
+    private FileInfoDto BuildFileInfo(FileListRow row, bool isGetUrl)
+    {
+
+        return new FileInfoDto
+        {
+            Id = row.Id,
+            Name = row.Name,
+            Length = row.Length,
+            LengthText = IOHelper.FileLengthToString(row.Length),
+            Sign = row.Sign,
+            Path = row.Path,
+            Url = isGetUrl ? BuildFileUrl(row.Path, row.IsPublicRead, false) : null
+        };
+
+    }
+
+
+    /// <summary>
+    /// 文件列表和访问地址使用的只读字段
+    /// </summary>
+    private sealed record FileListRow(long? Key, long Id, string Name, long Length, string Sign, string Path, bool IsPublicRead);
 
 }

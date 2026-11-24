@@ -21,8 +21,14 @@ public static class ServiceCollectionExtensions
     {
 
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
-        services.AddKeyedSingleton<IConnectionMultiplexer>(ConnectionKey, (_, _) => ConnectionMultiplexer.Connect(connectionString));
-        services.AddSingleton(provider => new RedisEventHealthCheck(provider.GetRequiredKeyedService<IConnectionMultiplexer>(ConnectionKey)));
+        var configuration = ConfigurationOptions.Parse(connectionString);
+        if (configuration.EndPoints.Count == 0)
+        {
+            throw new ArgumentException("EventBus 的 Redis 连接串缺少服务器地址", nameof(connectionString));
+        }
+
+        services.AddKeyedSingleton<IConnectionMultiplexer>(ConnectionKey, (_, _) => ConnectionMultiplexer.Connect(configuration));
+        services.AddSingleton(provider => new RedisEventHealthCheck(() => provider.GetRequiredKeyedService<IConnectionMultiplexer>(ConnectionKey)));
         return services.AddEventBus<RedisEventTransport>(configure, provider => new RedisEventTransport(
             provider.GetRequiredKeyedService<IConnectionMultiplexer>(ConnectionKey),
             provider.GetRequiredService<IOptions<EventBusOptions>>(),

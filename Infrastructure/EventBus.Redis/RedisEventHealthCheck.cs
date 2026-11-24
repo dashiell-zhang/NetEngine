@@ -6,7 +6,7 @@ namespace EventBus.Redis;
 /// <summary>
 /// 检查广播实际绑定的 Redis 连接，不发布消息或改变消费位置
 /// </summary>
-public sealed class RedisEventHealthCheck(IConnectionMultiplexer connection) : IHealthCheck
+public sealed class RedisEventHealthCheck(Func<IConnectionMultiplexer> getConnection) : IHealthCheck
 {
 
     /// <summary>
@@ -15,7 +15,8 @@ public sealed class RedisEventHealthCheck(IConnectionMultiplexer connection) : I
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
 
-        await connection.GetDatabase().PingAsync().WaitAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        await getConnection().GetDatabase().PingAsync().WaitAsync(cancellationToken);
         return HealthCheckResult.Healthy();
 
     }

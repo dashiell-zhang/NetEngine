@@ -17,7 +17,7 @@ public enum EventBusProvider
 }
 
 /// <summary>
-/// 配置广播范围与读取和重试周期
+/// 配置广播范围、历史保留时间及读取与清理周期
 /// </summary>
 public sealed class EventBusOptions
 {
@@ -35,7 +35,7 @@ public sealed class EventBusOptions
 
 
     /// <summary>
-    /// 断线补收所需的历史保留时间
+    /// 事件历史保留时间，派发前据此判断事件是否已到期
     /// </summary>
     public TimeSpan Retention { get; set; } = TimeSpan.FromHours(1);
 
@@ -44,12 +44,6 @@ public sealed class EventBusOptions
     /// 没有新事件或后端断线时的读取间隔
     /// </summary>
     public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(1);
-
-
-    /// <summary>
-    /// 监听方法失败后的重试间隔
-    /// </summary>
-    public TimeSpan RetryInterval { get; set; } = TimeSpan.FromSeconds(1);
 
 
     /// <summary>

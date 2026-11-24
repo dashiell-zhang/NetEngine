@@ -27,7 +27,6 @@ public static class EventBusServiceCollectionExtensions
             .Validate(options => Enum.IsDefined(options.Provider), "EventBus.Provider 无效")
             .Validate(options => options.Retention > TimeSpan.Zero, "EventBus.Retention 必须大于零")
             .Validate(options => IsValidDelay(options.PollInterval), "EventBus.PollInterval 必须至少为 1 毫秒且不超过 4294967294 毫秒")
-            .Validate(options => IsValidDelay(options.RetryInterval), "EventBus.RetryInterval 必须至少为 1 毫秒且不超过 4294967294 毫秒")
             .Validate(options => IsValidDelay(options.CleanupInterval), "EventBus.CleanupInterval 必须至少为 1 毫秒且不超过 4294967294 毫秒")
             .Validate(options => options.BatchSize is > 0 and <= 1000, "EventBus.BatchSize 必须介于 1 和 1000")
             .ValidateOnStart();

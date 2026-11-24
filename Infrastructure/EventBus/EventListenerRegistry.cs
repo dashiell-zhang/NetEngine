@@ -173,7 +173,7 @@ internal sealed record EventListener(Func<IServiceProvider, object> ResolveServi
 {
 
     /// <summary>
-    /// 在独立异步作用域中解析服务并等待监听函数完成
+    /// 在独立异步作用域中执行监听，仅在调用期间传递宿主停机通知
     /// </summary>
     internal async Task InvokeAsync(IServiceProvider services, string payload, CancellationToken cancellationToken)
     {
@@ -182,7 +182,8 @@ internal sealed record EventListener(Func<IServiceProvider, object> ResolveServi
         var instance = ResolveService(scope.ServiceProvider);
         var message = JsonSerializer.Deserialize(payload, EventType, EventSerialization.Options)
             ?? throw new JsonException($"事件参数不能为空：{EventType.FullName}");
-        var result = Method.Invoke(instance, HasCancellationToken ? [message, cancellationToken] : [message]);
+        using var invocationStopping = HasCancellationToken ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken) : null;
+        var result = Method.Invoke(instance, invocationStopping is null ? [message] : [message, invocationStopping.Token]);
         if (result is Task task)
         {
             await task.ConfigureAwait(false);

@@ -26,6 +26,8 @@ EventBus 将事件广播给所有注册了对应监听的运行实例，包括�
 
 互通实例必须使用相同的 `Provider`、`Scope` 和存储目标。Redis 后端要求 Redis 6.2+，使用 `ConnectionStrings:eventBusRedisConnection`，未配置时宿主选择 `redisConnection`；需要互通的服务必须连接同一 Redis 数据库，不能随业务锁的库编号分别隔离。开发配置使用 `NetEngine:Development`，不同环境应使用不同 Scope
 
+Redis 连接串必须包含至少一个服务器地址。缺少地址或使用无法识别的选项名时，宿主会在注册 EventBus 时直接报错。
+
 ### 2. 定义事件
 
 在 `Application/Application.Model/Events` 中定义共享事件，只携带定位变化所需的数据：
@@ -126,23 +128,25 @@ await transaction.CommitAsync(cancellationToken);
 - **事件类型**：使用非泛型具体类或 `record class`，以具体类型发布。事件以 JSON 传输，通过完整类型名匹配；互通宿主应引用一致契约，不支持按父类或接口订阅
 - **监听签名**：公开、非泛型实例方法，接收一个事件参数及可选的第二个 `CancellationToken` 参数，返回 `Task` 或 `ValueTask`。无需为监听添加 `virtual`；使用代理时遵循 [AutoProxy 规则](SourceGenerator.md#autoproxy-方法代理)
 - **服务注册**：监听服务必须在 `AddRedisEventBus` 或 `AddDatabaseEventBus` 之前加入 DI。同一服务类型有多个实现时，按具体类或不同的具体 Key 注册，参见 [服务注册规则](SourceGenerator.md#服务类型选择规则)
-- **依赖与状态**：每次调用创建独立异步作用域。Scoped 监听可以注入 Scoped 依赖。需要跨调用保留的内存状态可以放在 Singleton 监听中，也可以由监听委托给其他 Singleton 服务
+- **依赖与状态**：每次调用创建独立异步作用域。Scoped 监听可以注入 Scoped 依赖。Singleton 监听及其共享状态需要支持并发访问
 - **处理逻辑**：保持短小、幂等，传递取消令牌，不启动脱离监听生命周期的后台任务，也不要无条件再次发布相同事件
+- **按需重试与限流**：按 [AutoProxy 方法代理](SourceGenerator.md#autoproxy-方法代理) 注册服务后，可在 `public virtual` 监听方法上同时标注 `[EventSubscribe]` 和 `[Retry(MaxRetries = 3, DelaySeconds = 2)]`，遇到非取消异常后每隔 2 秒重试，最多重试 3 次。业务需要限制并发时可使用 [ConcurrencyLimit](SourceGenerator.md#concurrencylimit)
 
 ## 运行行为
 
 | 情况 | 行为 |
 |---|---|
-| 正常广播 | 各进程独立处理；同一进程按后端记录顺序处理事件，每条事件的监听方法依次执行 |
-| 监听失败 | 继续尝试其他方法，仅对失败方法按 `RetryInterval`（默认 1 秒）重试，不限制次数；异常须向外抛出 |
-| 等待重试 | 当前事件成功或到期后才处理后续事件，其他实例不受影响 |
+| 正常广播 | 各实例按后端位置读取事件。不同事件、同一事件的多个监听均独立并发执行，EventBus 不设实例级并发上限，监听的开始和完成顺序均无保证 |
+| 监听失败 | EventBus 记录该次调用的异常，其他调用可继续执行 |
 | 短暂断线 | 同一存活进程从原位置补收，超过历史保留时间的事件可能丢失 |
-| 启动或重启 | 跳过启动前的事件，不恢复未完成重试；本地状态应从当前数据初始化 |
-| 事件到期或宿主关闭 | 请求取消监听，处理代码需配合取消 |
+| 启动或重启 | 跳过启动前的事件；本地状态应从当前数据初始化 |
+| 宿主关闭 | 停止读取，通过监听的 `CancellationToken` 通知仍在执行的调用，并在停机期限内等待退出。已结束的调用不再接收停机通知 |
 
-`Retention` 默认 1 小时，从事件保存到后端时计算；到期后跳过未完成的监听，不再重试。广播异步传播，不保证各实例立即一致
+`Retention` 默认 1 小时，从事件保存到后端时计算。派发前已到期的事件会被跳过；在保留期内派发的监听可以跨过到期时间继续执行。业务需要执行超时时，由监听自行设置，并将宿主停机的取消信号传给下游
 
-宿主启动时需连接后端，后端不可用会等待恢复。监听在所有托管服务的 `StartAsync` 完成后开始，本地状态应在此之前完成初始化，且不要在 `StartAsync` 中等待监听结果
+没有注册监听的宿主跳过消费游标初始化和轮询，后台仍定期清理过期事件。发布时等待后端确认，连接或写入失败会向调用方抛出异常。WebAPI 可通过已注册的健康检查查看事件后端的连接状态
+
+注册了监听的宿主在启动阶段连接后端并建立消费起点，后端不可用时等待恢复。监听在所有托管服务的 `StartAsync` 完成后开始，本地状态应在此之前完成初始化，且不要在 `StartAsync` 中等待监听结果
 
 ## 后端与配置
 
@@ -152,7 +156,7 @@ await transaction.CommitAsync(cancellationToken);
 
 事件组件拥有独立的 `EventBusDatabaseContext`，业务上下文不接入事件表。宿主传入 `eventBusConnection`，未配置时明确选择当前业务主库；不使用读副本。两张表继承公共 CD，Id 为雪花主键，Scope 及 Scope+Position 的唯一约束包含软删除行。状态行通过 xmin 并发控制，软删除后仍被内部协议复用；消息读取过滤软删除，过期清理包含软删除消息且不删除状态。游标始终使用 Position，公共发布时间取 CreateTime
 
-数据库事件连接不加入外层环境事务。数据库后端依赖宿主唯一的 [ID 服务](IdentifierGenerator.md)，其专用 Redis 配置必须准备完整；Redis 后端不注册事件数据库或 ID。数据库后端的广播、重启和重试规则与 Redis 相同；切换后也不会取消宿主其他能力对 Redis 的依赖
+数据库事件连接不加入外层环境事务。数据库后端依赖宿主唯一的 [ID 服务](IdentifierGenerator.md)，其专用 Redis 配置必须准备完整；Redis 后端不注册事件数据库或 ID。数据库后端的广播、重启和监听失败处理规则与 Redis 相同；切换后也不会取消宿主其他能力对 Redis 的依赖
 
 ### 配置项
 
@@ -162,13 +166,12 @@ await transaction.CommitAsync(cancellationToken);
 |---|---|---|
 | `Provider` | `Redis` | 内置宿主选择 `Redis` 或 `Database` |
 | `Scope` | `NetEngine` | 广播范围，非空且不超过 200 个字符 |
-| `Retention` | `01:00:00` | 历史保留与重试期限，必须大于零 |
+| `Retention` | `01:00:00` | 事件历史保留时间及派发有效期，必须大于零 |
 | `PollInterval` | `00:00:01` | 未读满一批或读取失败后的等待时间 |
-| `RetryInterval` | `00:00:01` | 失败监听的重试间隔 |
 | `CleanupInterval` | `00:01:00` | 过期事件的清理间隔 |
 | `BatchSize` | `100` | 每批读取条数，范围 1～1000 |
 
-三个间隔范围为 1～4294967294 毫秒。同一 Scope 的实例应保持相同 `Retention`，避免共享历史被提前清理
+`PollInterval` 和 `CleanupInterval` 的范围为 1～4294967294 毫秒。同一 Scope 的实例应保持相同 `Retention`，避免共享历史被提前清理
 
 ### 新宿主接入
 

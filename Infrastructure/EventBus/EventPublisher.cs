@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
 namespace EventBus;
@@ -5,7 +6,7 @@ namespace EventBus;
 /// <summary>
 /// 使用统一序列化约定发布强类型事件
 /// </summary>
-internal sealed class EventPublisher(IEventTransport transport) : IEventPublisher
+internal sealed class EventPublisher(IServiceProvider services) : IEventPublisher
 {
 
     /// <summary>
@@ -22,6 +23,7 @@ internal sealed class EventPublisher(IEventTransport transport) : IEventPublishe
             throw new ArgumentException("请使用事件的具体类型发布，不支持隐式多态事件", nameof(message));
         }
 
+        var transport = services.GetRequiredService<IEventTransport>();
         return transport.AppendAsync(new EventEnvelope(Guid.NewGuid(), name, JsonSerializer.Serialize(message, EventSerialization.Options)), cancellationToken);
 
     }

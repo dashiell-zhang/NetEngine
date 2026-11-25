@@ -9,7 +9,6 @@
 
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Application\Application.Model\Application.Model.csproj" />
 	  <ProjectReference Include="..\..\Infrastructure\EventBus\EventBus.csproj" />
 	  <ProjectReference Include="..\..\Infrastructure\QueueTask.Database\QueueTask.Database.csproj" />
 	</ItemGroup>

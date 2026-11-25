@@ -1,4 +1,3 @@
-using Application.Model.Events;
 using EventBus;
 
 namespace TaskService.Core;
@@ -15,8 +14,8 @@ internal sealed class TaskSettingChangeListener : IDisposable
     /// <summary>
     /// 保留一次待处理通知，包括同步过程中收到的变更
     /// </summary>
-    [EventSubscribe]
-    public Task OnSettingChangedAsync(TaskSettingChangedEvent message)
+    [EventSubscribe("TaskSetting.Changed")]
+    public Task OnSettingChangedAsync()
     {
 
         lock (pendingChange)

@@ -50,7 +50,6 @@ flowchart TB
     AppServices --> Infra
     WebCore --> Models
     TaskCore --> Queue
-    TaskCore -->|任务配置事件契约| Models
     TaskCore -->|订阅配置变更| Infra
     Repo --> Queue
     Repo --> DbCore
@@ -253,7 +252,7 @@ flowchart LR
     Backend -->|Database| Database[("EventBus.Database<br/>Stream / Message 表")]
     Redis --> Instances["同目标、同 Scope<br/>且已注册监听的运行实例"]
     Database --> Instances
-    Instances -->|并发派发| Listeners["与事件类型匹配的 EventSubscribe 监听方法"]
+    Instances -->|并发派发| Listeners["订阅同一事件名的 EventSubscribe 监听方法"]
 ```
 
 EventBus 用于向所有相应运行实例广播通知；QueueTask 用于竞争领取后执行持久化工作。事件发布成功表示写入后端，不表示监听已经完成，也不与业务事务原子提交

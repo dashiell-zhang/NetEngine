@@ -4,34 +4,29 @@ using System.Text.Json;
 namespace EventBus;
 
 /// <summary>
-/// 使用统一序列化约定发布强类型事件
+/// 按名称发布可携带 JSON 参数的事件
 /// </summary>
 internal sealed class EventPublisher(IServiceProvider services) : IEventPublisher
 {
 
     /// <summary>
-    /// 序列化明确的事件契约并保存到后端
+    /// 校验事件名称并将序列化的参数保存到后端
     /// </summary>
-    public Task PublishAsync<TEvent>(TEvent message, CancellationToken cancellationToken = default) where TEvent : class
+    public Task PublishAsync(string name, object? parameter, CancellationToken cancellationToken = default)
     {
 
-        ArgumentNullException.ThrowIfNull(message);
+        EventSerialization.ValidateName(name);
         cancellationToken.ThrowIfCancellationRequested();
-        var name = EventSerialization.GetName(typeof(TEvent));
-        if (message.GetType() != typeof(TEvent))
-        {
-            throw new ArgumentException("请使用事件的具体类型发布，不支持隐式多态事件", nameof(message));
-        }
-
+        var payload = parameter is null ? null : JsonSerializer.Serialize(parameter, EventSerialization.Options);
         var transport = services.GetRequiredService<IEventTransport>();
-        return transport.AppendAsync(new EventEnvelope(Guid.NewGuid(), name, JsonSerializer.Serialize(message, EventSerialization.Options)), cancellationToken);
+        return transport.AppendAsync(new EventEnvelope(Guid.NewGuid(), name, payload), cancellationToken);
 
     }
 
 }
 
 /// <summary>
-/// 统一事件类型名称与 JSON 序列化约定
+/// 统一事件名称校验与参数的 JSON 序列化约定
 /// </summary>
 internal static class EventSerialization
 {
@@ -43,17 +38,18 @@ internal static class EventSerialization
 
 
     /// <summary>
-    /// 校验具体事件类型并取得稳定名称
+    /// 校验发布方和订阅方使用的事件名称
     /// </summary>
-    internal static string GetName(Type type)
+    internal static string ValidateName(string name)
     {
 
-        if (!type.IsClass || type.IsAbstract || type.IsGenericType || type == typeof(object) || type.FullName == null)
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        if (name.Length > 1024)
         {
-            throw new ArgumentException($"事件必须是具有完整名称的非泛型具体类：{type}");
+            throw new ArgumentException("事件名称不能超过 1024 个字符", nameof(name));
         }
 
-        return type.FullName;
+        return name;
 
     }
 

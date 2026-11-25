@@ -7,8 +7,14 @@ public interface IEventPublisher
 {
 
     /// <summary>
-    /// 将事件保存到后端，失败时向调用方抛出异常
+    /// 按名称发布无参数事件并等待后端确认
     /// </summary>
-    Task PublishAsync<TEvent>(TEvent message, CancellationToken cancellationToken = default) where TEvent : class;
+    Task PublishAsync(string name, CancellationToken cancellationToken = default) => PublishAsync(name, null, cancellationToken);
+
+
+    /// <summary>
+    /// 按名称发布事件并等待后端确认，参数按 JSON 传输
+    /// </summary>
+    Task PublishAsync(string name, object? parameter, CancellationToken cancellationToken = default);
 
 }

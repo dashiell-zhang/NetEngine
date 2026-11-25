@@ -35,9 +35,9 @@ public interface IEventTransport
 /// 在不同存储后端之间共用的事件内容
 /// </summary>
 /// <param name="EventId">事件标识</param>
-/// <param name="EventName">共享事件类型的完整名称</param>
-/// <param name="Payload">事件参数的 JSON 内容</param>
-public sealed record EventEnvelope(Guid EventId, string EventName, string Payload);
+/// <param name="EventName">发布方和监听方约定的事件名称</param>
+/// <param name="Payload">事件参数的 JSON 文本，无参数时为 null</param>
+public sealed record EventEnvelope(Guid EventId, string EventName, string? Payload);
 
 /// <summary>
 /// 已保存事件及其后端读取位置，空消息表示只推进位置而不派发的无效记录

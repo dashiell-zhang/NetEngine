@@ -11,7 +11,7 @@ internal sealed class EventListenerRegistry
 {
 
     /// <summary>
-    /// 按事件类型名称分组的监听方法
+    /// 按订阅的事件名称分组的监听方法
     /// </summary>
     internal IReadOnlyDictionary<string, List<EventListener>> Listeners { get; }
 
@@ -23,7 +23,6 @@ internal sealed class EventListenerRegistry
     {
 
         Dictionary<string, List<EventListener>> listeners = [];
-        Dictionary<string, Type> eventTypes = [];
         Dictionary<object, HashSet<MethodInfo>> registered = new(ReferenceEqualityComparer.Instance);
         var registrations = services.ToArray();
 
@@ -37,7 +36,8 @@ internal sealed class EventListenerRegistry
 
             foreach (var method in implementation.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
             {
-                if (method.GetCustomAttribute<EventSubscribeAttribute>(true) == null)
+                var subscription = method.GetCustomAttribute<EventSubscribeAttribute>(true);
+                if (subscription == null)
                 {
                     continue;
                 }
@@ -48,19 +48,14 @@ internal sealed class EventListenerRegistry
                 }
 
                 var parameters = method.GetParameters();
-                if (parameters.Length is < 1 or > 2 || parameters[0].ParameterType == typeof(CancellationToken) || parameters[0].IsOut || parameters[0].ParameterType.IsByRef || (parameters.Length == 2 && parameters[1].ParameterType != typeof(CancellationToken)))
+                bool hasCancellationToken = parameters.LastOrDefault()?.ParameterType == typeof(CancellationToken);
+                int payloadCount = parameters.Length - (hasCancellationToken ? 1 : 0);
+                var parameterType = payloadCount == 0 ? null : parameters[0].ParameterType;
+                if (payloadCount > 1 || parameterType == typeof(CancellationToken) || parameterType is { IsByRef: true } or { IsByRefLike: true } or { IsPointer: true } or { IsFunctionPointer: true })
                 {
-                    throw new InvalidOperationException($"事件监听方法需要一个事件参数及可选的 CancellationToken：{implementation}.{method.Name}");
+                    throw new InvalidOperationException($"事件监听方法最多接收一个可序列化的业务参数及末尾可选的 CancellationToken：{implementation}.{method.Name}");
                 }
 
-                var eventType = parameters[0].ParameterType;
-                var name = EventSerialization.GetName(eventType);
-                if (eventTypes.TryGetValue(name, out var previousType) && previousType != eventType)
-                {
-                    throw new InvalidOperationException($"广播事件名称冲突：{name}");
-                }
-
-                eventTypes[name] = eventType;
                 var identity = instance ?? (object)service;
                 if (!registered.TryGetValue(identity, out var registeredMethods))
                 {
@@ -73,15 +68,15 @@ internal sealed class EventListenerRegistry
                     continue;
                 }
 
-                if (!listeners.TryGetValue(name, out var methods))
+                if (!listeners.TryGetValue(subscription.Name, out var methods))
                 {
                     methods = [];
-                    listeners.Add(name, methods);
+                    listeners.Add(subscription.Name, methods);
                 }
 
-                var invocationMethod = GetInvocationMethod(implementation, service.ServiceType, method);
+                var invocationMethod = GetInvocationMethod(implementation, service.ServiceType, method, parameterType);
                 resolveService ??= CreateServiceResolver(registrations, service, instance);
-                methods.Add(new EventListener(resolveService, invocationMethod, eventType, parameters.Length == 2));
+                methods.Add(new EventListener(resolveService, invocationMethod, parameterType, hasCancellationToken));
             }
         }
 
@@ -120,9 +115,9 @@ internal sealed class EventListenerRegistry
 
 
     /// <summary>
-    /// 选择能接收原事件类型的接口方法，保留逆变注册和显式接口代理的派发
+    /// 选择能接收业务参数的接口方法，保留逆变注册和显式接口代理的派发
     /// </summary>
-    private static MethodInfo GetInvocationMethod(Type implementation, Type serviceType, MethodInfo method)
+    private static MethodInfo GetInvocationMethod(Type implementation, Type serviceType, MethodInfo method, Type? parameterType)
     {
 
         if (!serviceType.IsInterface)
@@ -130,7 +125,6 @@ internal sealed class EventListenerRegistry
             return method;
         }
 
-        var eventType = method.GetParameters()[0].ParameterType;
         var contracts = new[] { serviceType }.Concat(serviceType.GetInterfaces()).ToArray();
         // 逆变注册的接口参数可能更窄，补充同一泛型接口的实际实现契约
         var implementedContracts = implementation.GetInterfaces().Where(candidate => candidate.IsConstructedGenericType
@@ -152,7 +146,7 @@ internal sealed class EventListenerRegistry
                 for (int index = 0; index < mapping.TargetMethods.Length; index++)
                 {
                     var interfaceMethod = mapping.InterfaceMethods[index];
-                    if (mapping.TargetMethods[index].GetBaseDefinition() == method.GetBaseDefinition() && interfaceMethod.GetParameters()[0].ParameterType.IsAssignableFrom(eventType))
+                    if (mapping.TargetMethods[index].GetBaseDefinition() == method.GetBaseDefinition() && (parameterType == null || interfaceMethod.GetParameters()[0].ParameterType.IsAssignableFrom(parameterType)))
                     {
                         return interfaceMethod;
                     }
@@ -169,21 +163,32 @@ internal sealed class EventListenerRegistry
 /// <summary>
 /// 保存监听方法的依赖注入解析和调用信息
 /// </summary>
-internal sealed record EventListener(Func<IServiceProvider, object> ResolveService, MethodInfo Method, Type EventType, bool HasCancellationToken)
+internal sealed record EventListener(Func<IServiceProvider, object> ResolveService, MethodInfo Method, Type? ParameterType, bool HasCancellationToken)
 {
 
     /// <summary>
     /// 在独立异步作用域中执行监听，仅在调用期间传递宿主停机通知
     /// </summary>
-    internal async Task InvokeAsync(IServiceProvider services, string payload, CancellationToken cancellationToken)
+    internal async Task InvokeAsync(IServiceProvider services, string? payload, CancellationToken cancellationToken)
     {
 
         await using var scope = services.CreateAsyncScope();
         var instance = ResolveService(scope.ServiceProvider);
-        var message = JsonSerializer.Deserialize(payload, EventType, EventSerialization.Options)
-            ?? throw new JsonException($"事件参数不能为空：{EventType.FullName}");
+        var arguments = new object?[Method.GetParameters().Length];
+        if (ParameterType != null)
+        {
+            if (payload is null)
+            {
+                throw new InvalidOperationException($"监听方法要求有参数，但事件记录缺少参数：{Method}");
+            }
+            arguments[0] = JsonSerializer.Deserialize(payload, ParameterType, EventSerialization.Options);
+        }
         using var invocationStopping = HasCancellationToken ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken) : null;
-        var result = Method.Invoke(instance, invocationStopping is null ? [message] : [message, invocationStopping.Token]);
+        if (invocationStopping != null)
+        {
+            arguments[^1] = invocationStopping.Token;
+        }
+        var result = Method.Invoke(instance, arguments);
         if (result is Task task)
         {
             await task.ConfigureAwait(false);

@@ -2,7 +2,7 @@
 
 EventBus 将事件广播给所有注册了对应监听的运行实例，包括发布方自身，适合缓存失效、配置重载和内存规则更新。支持 Redis 和数据库两种后端，业务侧写法相同
 
-模板内置了任务配置刷新的用例。Admin.WebAPI 保存配置后发布 `TaskSettingChangedEvent`，各非 Debug 任务宿主收到通知后重新读取自己的任务库。参见 [任务配置同步](TaskService.md#非-debug-模式)
+模板内置了任务配置刷新的用例。Admin.WebAPI 保存配置后发布无参数事件 `TaskSetting.Changed`，各非 Debug 任务宿主收到通知后重新读取自己的任务库。参见 [任务配置同步](TaskService.md#非-debug-模式)
 
 只需一个 Worker 执行的工作使用 [QueueTask](TaskService.md)；当前请求需要处理结果时直接调用应用服务。EventBus 不提供业务与消息的原子提交，也不保证进程重启后补收旧事件
 
@@ -28,25 +28,11 @@ EventBus 将事件广播给所有注册了对应监听的运行实例，包括�
 
 Redis 连接串必须包含至少一个服务器地址。缺少地址或使用无法识别的选项名时，宿主会在注册 EventBus 时直接报错。
 
-### 2. 定义事件
+### 2. 声明监听
 
-在 `Application/Application.Model/Events` 中定义共享事件，只携带定位变化所需的数据：
-
-```csharp
-namespace Application.Model.Events;
-
-/// <summary>
-/// 商品信息已变更
-/// </summary>
-public sealed record ProductChangedEvent(long ProductId);
-```
-
-### 3. 声明监听
-
-在 `Application.Service` 中添加监听服务，内置宿主会通过 `BatchRegisterServices()` 自动注册：
+约定事件名为 `Product.Changed`，参数为 `long` 类型的商品 ID。在 `Application.Service` 中添加监听服务，内置宿主会通过 `BatchRegisterServices()` 自动注册：
 
 ```csharp
-using Application.Model.Events;
 using EventBus;
 using Microsoft.Extensions.DependencyInjection;
 using SourceGenerator.Runtime.Attributes;
@@ -70,11 +56,11 @@ public class ProductCacheService
     /// <summary>
     /// 清理商品缓存，让后续查询重新加载数据
     /// </summary>
-    [EventSubscribe]
-    public Task OnProductChangedAsync(ProductChangedEvent message)
+    [EventSubscribe("Product.Changed")]
+    public Task OnProductChangedAsync(long productId)
     {
 
-        ProductNames.TryRemove(message.ProductId, out _);
+        ProductNames.TryRemove(productId, out _);
         return Task.CompletedTask;
 
     }
@@ -84,24 +70,23 @@ public class ProductCacheService
 
 业务读写缓存时注入同一个 `ProductCacheService`，通过 `ProductNames` 访问字典。服务注册为 Singleton，每个进程各持有一份字典；收到广播后删除对应商品，后续读取时重新加载
 
-### 4. 发布事件
+### 3. 发布事件
 
 不要求业务保存与事件发布保持事务一致性时，直接使用 EventBus 即可，无需搭配 QueueTask。在业务应用服务中注入 `IEventPublisher eventPublisher`，保存成功后发布：
 
 ```csharp
-using Application.Model.Events;
 using EventBus;
 
 // 完成原有业务校验和实体修改后保存
 await db.SaveChangesAsync(cancellationToken);
-await eventPublisher.PublishAsync(new ProductChangedEvent(productId), cancellationToken);
+await eventPublisher.PublishAsync("Product.Changed", productId, cancellationToken);
 ```
 
 `db` 为业务写入上下文，`productId` 为已修改商品的 ID。有外层显式事务时，在 `CommitAsync` 成功后发布
 
 `PublishAsync` 成功仅表示事件已保存到后端，不代表监听已完成。发布不加入业务事务，失败时业务数据可能已经提交；异常或取消也不代表事件一定未写入
 
-### 5. 配合 QueueTask 事务入队
+### 4. 配合 QueueTask 事务入队
 
 需要业务数据与广播任务一起提交时，注入 `QueueTaskProducer<DatabaseContext>`，用事务入队替代直接发布：
 
@@ -111,7 +96,7 @@ using Microsoft.EntityFrameworkCore;
 await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
 // 修改商品数据，同时加入待发送的广播任务
-queueTaskService.Create("Product.PublishChanged", new ProductChangedEvent(productId));
+queueTaskService.Create("Product.PublishChanged", productId);
 
 await db.SaveChangesAsync(cancellationToken);
 await transaction.CommitAsync(cancellationToken);
@@ -119,18 +104,19 @@ await transaction.CommitAsync(cancellationToken);
 
 入队服务与业务必须共用同一个 Scoped `DatabaseContext`，使用 `Create`，不能使用独立保存的 `CreateSingleAsync`
 
-声明并启用名为 `Product.PublishChanged` 的队列任务，由任务调用应用服务，等待 `eventPublisher.PublishAsync(message)` 完成，发布异常继续向外抛出。任务声明与启用方式见 [QueueTask](TaskService.md#队列任务)
+声明并启用名为 `Product.PublishChanged` 的队列任务，由任务调用应用服务，等待 `eventPublisher.PublishAsync("Product.Changed", productId)` 完成，发布异常继续向外抛出。任务声明与启用方式见 [QueueTask](TaskService.md#队列任务)
 
 事务回滚时，业务数据和任务记录一起回滚；提交后由 TaskService 发布广播。队列最多自动执行 3 次，耗尽后需手动重试；重复发布要求监听幂等。队列成功仅表示发布完成，不等待各实例消费成功
 
 ## 事件与监听约定
 
-- **事件类型**：使用非泛型具体类或 `record class`，以具体类型发布。事件以 JSON 传输，通过完整类型名匹配；互通宿主应引用一致契约，不支持按父类或接口订阅
-- **监听签名**：公开、非泛型实例方法，接收一个事件参数及可选的第二个 `CancellationToken` 参数，返回 `Task` 或 `ValueTask`。无需为监听添加 `virtual`；使用代理时遵循 [AutoProxy 规则](SourceGenerator.md#autoproxy-方法代理)
+- **事件名与参数**　按事件名精确匹配，区分大小写。名称不能为空白，最多 1024 个字符。发布方可以直接传 `long`、`Guid`、字符串或可用 JSON 序列化的 DTO。接收参数的监听按声明的类型反序列化，多个方法可以订阅同一个名字
+- **监听签名**：公开、非泛型实例方法，可接收零个或一个业务参数，并可在末尾声明宿主停机用的 `CancellationToken`，返回 `Task` 或 `ValueTask`。无需为监听添加 `virtual`；使用代理时遵循 [AutoProxy 规则](SourceGenerator.md#autoproxy-方法代理)
+- **无参数通知**　调用 `PublishAsync("TaskSetting.Changed")` 即可发布。省略业务参数或传入 C# 的 `null` 都表示无参数。此时无参监听正常执行，声明了业务参数的监听会记录缺参错误并跳过本次调用。显式传入表示 JSON `null` 的 `JsonElement` 算作有参数，监听按声明的类型反序列化
 - **服务注册**：监听服务必须在 `AddRedisEventBus` 或 `AddDatabaseEventBus` 之前加入 DI。同一服务类型有多个实现时，按具体类或不同的具体 Key 注册，参见 [服务注册规则](SourceGenerator.md#服务类型选择规则)
 - **依赖与状态**：每次调用创建独立异步作用域。Scoped 监听可以注入 Scoped 依赖。Singleton 监听及其共享状态需要支持并发访问
 - **处理逻辑**：保持短小、幂等，传递取消令牌，不启动脱离监听生命周期的后台任务，也不要无条件再次发布相同事件
-- **按需重试与限流**：按 [AutoProxy 方法代理](SourceGenerator.md#autoproxy-方法代理) 注册服务后，可在 `public virtual` 监听方法上同时标注 `[EventSubscribe]` 和 `[Retry(MaxRetries = 3, DelaySeconds = 2)]`，遇到非取消异常后每隔 2 秒重试，最多重试 3 次。业务需要限制并发时可使用 [ConcurrencyLimit](SourceGenerator.md#concurrencylimit)
+- **按需重试与限流**：按 [AutoProxy 方法代理](SourceGenerator.md#autoproxy-方法代理) 注册服务后，可在 `public virtual` 监听方法上同时标注 `[EventSubscribe("Product.Changed")]` 和 `[Retry(MaxRetries = 3, DelaySeconds = 2)]`，遇到非取消异常后每隔 2 秒重试，最多重试 3 次。业务需要限制并发时可使用 [ConcurrencyLimit](SourceGenerator.md#concurrencylimit)
 
 ## 运行行为
 

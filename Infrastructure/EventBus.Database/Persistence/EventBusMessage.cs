@@ -27,15 +27,15 @@ public sealed class EventBusMessage : CD
 
 
     /// <summary>
-    /// 共享事件类型的完整名称
+    /// 发布方和监听方约定的事件名称
     /// </summary>
     public string EventName { get; set; } = "";
 
 
     /// <summary>
-    /// 使用统一约定序列化的事件参数
+    /// 事件参数的 JSON 文本，无参数时为数据库 NULL
     /// </summary>
-    public string Payload { get; set; } = "";
+    public string? Payload { get; set; }
 
 
 

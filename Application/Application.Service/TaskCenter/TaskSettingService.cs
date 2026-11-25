@@ -1,5 +1,4 @@
 using Application.Interface.TaskCenter;
-using Application.Model.Events;
 using Application.Model.Shared;
 using Application.Model.TaskCenter;
 using EventBus;
@@ -91,7 +90,7 @@ public class TaskSettingService(QueueTaskManagement<DatabaseContext> management,
 
         try
         {
-            await eventPublisher.PublishAsync(new TaskSettingChangedEvent());
+            await eventPublisher.PublishAsync("TaskSetting.Changed");
         }
         catch (Exception ex)
         {

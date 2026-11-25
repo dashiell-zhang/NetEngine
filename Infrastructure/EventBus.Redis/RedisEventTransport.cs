@@ -37,11 +37,12 @@ public sealed class RedisEventTransport(IConnectionMultiplexer connection, IOpti
     {
 
         cancellationToken.ThrowIfCancellationRequested();
-        await connection.GetDatabase().StreamAddAsync(streamKey, [
-            new NameValueEntry("event-id", message.EventId.ToString("N")),
-            new NameValueEntry("event-name", message.EventName),
-            new NameValueEntry("payload", message.Payload)
-        ]).WaitAsync(cancellationToken);
+        var eventId = new NameValueEntry("event-id", message.EventId.ToString("N"));
+        var eventName = new NameValueEntry("event-name", message.EventName);
+        NameValueEntry[] fields = message.Payload is null
+            ? [eventId, eventName]
+            : [eventId, eventName, new NameValueEntry("payload", message.Payload)];
+        await connection.GetDatabase().StreamAddAsync(streamKey, fields).WaitAsync(cancellationToken);
 
     }
 
@@ -75,7 +76,7 @@ public sealed class RedisEventTransport(IConnectionMultiplexer connection, IOpti
                 throw new FormatException("广播事件名称不能为空");
             }
 
-            return new EventRecord(id, publishedAt, new EventEnvelope(Guid.Parse(fields["event-id"]), fields["event-name"], fields["payload"]));
+            return new EventRecord(id, publishedAt, new EventEnvelope(Guid.Parse(fields["event-id"]), fields["event-name"], fields.GetValueOrDefault("payload")));
         }
         catch (Exception ex) when (ex is FormatException or OverflowException or ArgumentException or KeyNotFoundException)
         {

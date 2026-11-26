@@ -323,7 +323,7 @@ flowchart LR
     Config["Repository.Tool/appsettings.json"] --> Tool["Repository.Tool<br/>Configuration / Factories / Scripts"]
     Tool -->|EF 设计时工厂| Migrations["按 Context 生成迁移"]
     Migrations -->|审查后显式 Update-Database| Database[("选定的业务 / 日志 / 事件存储")]
-    Tool -->|json-index：只读目录| IndexDiff["索引差异 SQL<br/>不自动执行"]
+    Tool -->|菜单选择上下文| IndexDiff["索引差异 SQL<br/>不自动执行"]
     DeployInput["Deployment 配置与模板"] --> Deploy["Deployment 生成器"]
     Deploy --> Files["Nginx / systemd / env 示例 / 流水线文件"]
     Files -->|由部署流程应用| Hosts["WebAPI / Admin.App / TaskService"]

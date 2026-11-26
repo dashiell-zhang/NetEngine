@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Repository.Core.Partitioning;
-using Repository.Tool.Factories;
 
 namespace Repository.Tool.Configuration;
 
@@ -10,23 +9,6 @@ namespace Repository.Tool.Configuration;
 /// </summary>
 internal static class ToolDatabaseOptions
 {
-
-    /// <summary>
-    /// 创建明确指定的业务、日志或事件上下文
-    /// </summary>
-    public static DbContext Create(string target)
-    {
-
-        return target.ToLowerInvariant() switch
-        {
-            "business" => new BusinessContextFactory().CreateDbContext([]),
-            "log" => new LogContextFactory().CreateDbContext([]),
-            "eventbus" => new EventBusContextFactory().CreateDbContext([]),
-            _ => throw new ArgumentException("目标必须为 Business、Log 或 EventBus")
-        };
-
-    }
-
 
     /// <summary>
     /// 配置固定迁移程序集和目标历史表，离线建模不连接数据库

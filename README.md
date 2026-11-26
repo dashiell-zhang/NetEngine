@@ -65,11 +65,13 @@ Host=127.0.0.1;Database=webcore;Username=postgres;Password=123456
 | 管理端 API 的数据库与 Redis | `Presentation/Admin.WebAPI/appsettings*.json` |
 | 客户端 API 的数据库与 Redis | `Presentation/Client.WebAPI/appsettings*.json` |
 | 任务宿主的数据库与 Redis | `Presentation/TaskService/appsettings*.json` |
-| 迁移工具的数据库连接 | [Repository.Tool/appsettings.json](Repository.Tool/appsettings.json) |
+| 数据库工具的连接配置 | [Repository.Tool/appsettings.json](Repository.Tool/appsettings.json) |
 
 三个宿主使用 `ConnectionStrings:dbConnection`、`dbReadConnection` 和 `redisConnection`。本地 `dbReadConnection` 可留空并回退到主库，Redis 默认连接本机。`Development` 环境会加载 `appsettings.Development.json`，核对配置时同时检查基础文件与开发环境文件
 
-日志、事件和 ID 协调可分别配置独立连接，默认目标和共享资源配置见 [业务模块与数据库接入](Docs/DatabaseModules.md)。迁移工具固定从 Repository.Tool/appsettings.json 读取 Business、Log、EventBus 目标，不读取 WebAPI 配置或环境变量覆盖；修改宿主配置后还需确认工具指向对应数据库。读库的完整配置见 [数据库读写分离](Docs/DatabaseReadWriteSeparation.md)
+日志、事件和 ID 协调可分别配置独立连接。默认目标、共享资源和读库配置见 [业务模块与数据库接入](Docs/DatabaseModules.md) 和 [数据库读写分离](Docs/DatabaseReadWriteSeparation.md)
+
+数据库工具仅从 `Repository.Tool/appsettings.json` 读取所选上下文的连接。调整宿主连接配置后，请核对工具连接所指向的数据库
 
 ### HTTPS 开发证书
 
@@ -125,6 +127,8 @@ dotnet ef database update --project Repository.Tool --startup-project Repository
 命令行更新日志和事件时，分别指定对应 Context。完整的 Visual Studio 初始迁移、后续模型变更命令及历史表说明见 [数据库工具](Docs/RepositoryTool.md#visual-studio-程序包管理控制台)。仅更新业务模型不会创建组件表
 
 已经存在迁移文件时，使用已有迁移更新数据库，不要重复生成初始迁移。数据库已有业务表但没有对应迁移历史时，需要先确认迁移基线，不能直接按空库流程执行。包含分区表的迁移按 [PostgreSQL 分区表](Docs/PostgreSqlPartitionTable.md) 核对生成 SQL
+
+需要查看 JSON 索引差异时，在 Visual Studio 中用 `Ctrl+F5` 启动 `Repository.Tool`，按菜单序号选择上下文。 [JSON 索引差异用法](Docs/RepositoryTool.md#json-索引差异)
 
 ### 初始化并启动管理后台
 

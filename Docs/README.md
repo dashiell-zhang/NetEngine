@@ -13,7 +13,7 @@
 | [分布式锁](DistributedLock.md) | 需要防止重复执行或限制跨实例并发时 | Redis 锁、内存锁、等待与立即返回、租约续期 |
 | [源码生成器](SourceGenerator.md) | 新增服务、后台服务、代理行为或 EF Core 映射时 | 自动 DI、AutoProxy、软删除过滤器、JSON 列映射和分区声明 |
 | [业务模块与数据库接入](DatabaseModules.md) | 组合多个业务库或拆分服务时 | 模型归属、上下文固定绑定、本地契约及共享资源 |
-| [数据库工具](RepositoryTool.md) | 生成迁移或索引差异时 | 默认配置、Visual Studio 迁移、离线建模与历史表 |
+| [数据库工具](RepositoryTool.md) | 生成迁移或索引差异时 | 连接配置、EF Core 迁移、交互式 JSON 索引检查 |
 | [ID 生成器](IdentifierGenerator.md) | 接入日志、事件、队列及多实例发号时 | 共享 Redis、节点占用、租约有效性与故障处理 |
 | [数据库读写分离](DatabaseReadWriteSeparation.md) | 迁移查询、配置读库或规划多个读副本时 | 读写上下文、连接配置、一致性边界和健康检查 |
 | [数据库日志](DatabaseLogger.md) | 调整日志吞吐、内存预算或排查日志积压时 | 非阻塞入队、重要日志预留缓冲、文件恢复、入库与监控指标 |

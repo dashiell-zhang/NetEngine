@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using EventBus.Database.Persistence;
 using Repository.Tool.Configuration;
 using Microsoft.EntityFrameworkCore.Design;
@@ -7,6 +8,7 @@ namespace Repository.Tool.Factories;
 /// <summary>
 /// 在工具中离线创建 EventBus 写模型
 /// </summary>
+[Display(Name = "事件总线（EventBus）", Order = 3)]
 public sealed class EventBusContextFactory : IDesignTimeDbContextFactory<EventBusDatabaseContext>
 {
 

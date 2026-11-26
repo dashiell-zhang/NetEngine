@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Logger.Database.Persistence;
 using Repository.Tool.Configuration;
 using Microsoft.EntityFrameworkCore.Design;
@@ -7,6 +8,7 @@ namespace Repository.Tool.Factories;
 /// <summary>
 /// 在工具中离线创建 Log 写模型
 /// </summary>
+[Display(Name = "日志（Log）", Order = 2)]
 public sealed class LogContextFactory : IDesignTimeDbContextFactory<LogDatabaseContext>
 {
 

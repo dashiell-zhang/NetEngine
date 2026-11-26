@@ -238,7 +238,7 @@ services.AddPostgreSqlContext<DatabaseContext>(writeConnectionString,
     snapshot: snapshot, migrationHistoryTable: DatabaseContext.MigrationHistoryTable);
 ```
 
-`Repository.Tool` 使用无参数的 `UsePostgreSqlPartitioning()` 进行离线建模和迁移 SQL 生成，不查询数据库。无快照可以建模和查询，但通过 `SaveChanges` 写入会被拒绝；需要保存数据的独立工具也必须先加载快照
+`Repository.Tool` 的业务和日志设计时工厂使用无参数的 `UsePostgreSqlPartitioning()` 进行离线建模和迁移 SQL 生成。加载分区快照后，独立工具才可以通过 `SaveChanges` 写入分区表
 
 #### 实体与保存约定
 

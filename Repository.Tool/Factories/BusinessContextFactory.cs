@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Repository;
 using Repository.Tool.Configuration;
 using Microsoft.EntityFrameworkCore.Design;
@@ -7,6 +8,7 @@ namespace Repository.Tool.Factories;
 /// <summary>
 /// 在工具中离线创建 Business 写模型
 /// </summary>
+[Display(Name = "业务（Business）", Order = 1)]
 public sealed class BusinessContextFactory : IDesignTimeDbContextFactory<DatabaseContext>
 {
 

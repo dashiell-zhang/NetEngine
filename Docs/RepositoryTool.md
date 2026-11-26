@@ -1,15 +1,15 @@
 # 数据库工具
 
-`Repository.Tool` 是一次性工具和 EF Core 设计时入口，不启动业务宿主、日志、事件、ID 或任务后台服务。无参数运行只显示帮助，不访问数据库
+`Repository.Tool` 提供 JSON 索引差异 SQL 和 EF Core 设计时入口。直接运行时，在控制台按序号选择要检查的数据库上下文
 
 ## 项目目录
 
 | 目录或文件 | 职责 |
 |---|---|
-| `Program.cs` | 命令行入口与操作选择 |
+| `Program.cs` | 控制台菜单与数据库上下文选择 |
 | `appsettings.json` | Business、Log、EventBus 连接配置 |
 | `Configuration/ToolDatabaseOptions.cs` | 配置读取、参数校验及上下文选项 |
-| `Factories` | 三个写上下文的 EF Core 设计时工厂 |
+| `Factories` | 写上下文的 EF Core 设计时工厂 |
 | `Scripts/JsonIndexScript.cs` | JSON 索引差异 SQL 生成 |
 | `Migrations` | 首次生成迁移后创建，保存迁移和模型快照 |
 
@@ -17,11 +17,11 @@
 
 ## 配置与目标
 
-默认读取项目中的 [appsettings.json](../Repository.Tool/appsettings.json)，其中 Business、Log、EventBus 对应三个写模型。当前三项沿用原工具连接，指向同一个数据库；需要拆库时分别修改对应项。所选目标连接缺失时直接报错，不回退其他模型的连接
+工具按所选上下文读取对应连接。模板提供 Business、Log、EventBus 三项连接，默认指向同一个数据库。拆库时分别配置对应项，缺少所选连接时工具会报错。 [工具连接配置](../Repository.Tool/appsettings.json)
 
 配置文件随构建和发布复制到输出目录，设计时工厂按工具程序集位置读取，不依赖程序包管理控制台或终端的当前目录。修改项目配置后正常构建即可生效，不需要额外设置配置路径，也不读取 WebAPI 的配置
 
-迁移通过 EF Core 的 `-Context` 选择模型，JSON 索引命令通过 `--target` 选择模型。工具配置统一由 appsettings.json 管理
+迁移通过 EF Core 的 `-Context` 或 `--context` 选择模型，JSON 索引检查通过控制台菜单选择模型
 
 ## EF Core 迁移
 
@@ -97,11 +97,15 @@ dotnet ef database update --project Repository.Tool --startup-project Repository
 
 ## JSON 索引差异
 
+在 Visual Studio 中将 `Repository.Tool` 设为启动项目后，按 `Ctrl+F5`。也可以在仓库根目录运行：
+
 ```powershell
-dotnet run --project Repository.Tool -- json-index --target Business
+dotnet run --project Repository.Tool
 ```
 
-此命令连接选定库，只读取索引目录并输出 SQL，不执行 DDL。EF 模型决定实际 schema、表名、列名和 JSON 属性名；未指定 schema 时按该连接的 search_path 解析
+按菜单显示的序号选择数据库上下文，然后按 Enter。工具连接选定库，只读取索引目录并输出供审查的 SQL。EF 模型决定实际 schema、表名、列名和 JSON 属性名。未指定 schema 时按该连接的 `search_path` 解析
+
+工具自动发现本项目中的 `IDesignTimeDbContextFactory<TContext>`。新增写上下文时，在本项目添加对应的设计时工厂和连接配置即可。菜单默认显示上下文类型全名，工厂可以用 `Display` 特性设置名称和顺序。未设置顺序的选项按类型全名排序，排在已设置顺序的选项之后
 
 比较范围只包括当前模型拥有的表以及工具保留的 `jsonbIX_` 加哈希名称。模型外表和人工命名索引不列为删除候选。不要手工修改工具拥有的索引或复用其保留名称；调整索引声明后重新生成差异并审查执行
 
